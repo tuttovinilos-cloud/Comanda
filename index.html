@@ -358,9 +358,9 @@ tbody::before{content:"";display:block;height:44px;}
   <div style="padding:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="analyticsTopCards"></div>
   <div style="padding:0 16px 16px;display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
     <div class="client-card"><div class="client-card-header"><div class="client-name">Cliente top</div></div><div id="analyticsTopClient"></div></div>
-    <div class="client-card"><div class="client-card-header"><div class="client-name">Pedidos recurrentes</div></div><div id="analyticsRecurring"></div></div>
-    <div class="client-card"><div class="client-card-header"><div class="client-name">Materiales utilizados</div></div><div id="analyticsMaterials"></div></div>
-    <div class="client-card"><div class="client-card-header"><div class="client-name">Tipos de impresión utilizados</div></div><div id="analyticsPrints"></div></div>
+    <div class="client-card"><div class="client-card-header"><div class="client-name">Recurrencia del cliente</div></div><div id="analyticsRecurring"></div></div>
+    <div class="client-card"><div class="client-card-header"><div class="client-name">Materiales por metros</div></div><div id="analyticsMaterials"></div></div>
+    <div class="client-card"><div class="client-card-header"><div class="client-name">Tipos de impresión por metros</div></div><div id="analyticsPrints"></div></div>
     <div class="client-card" style="grid-column:1/-1"><div class="client-card-header"><div class="client-name">Frecuencia de cliente</div></div><div id="analyticsFrequency"></div></div>
   </div>
 </div>
@@ -1072,10 +1072,49 @@ function fillStatsYearOptions(){
   if(!sel.value) sel.value = String(fallback);
   if(Number(sel.value) < 2000 || Number(sel.value) > 2100) sel.value = String(fallback);
 }
-function topEntries(arr, field){
+function parseMeters(value){
+  if(value === null || value === undefined) return 0;
+  let str = String(value).trim().toLowerCase();
+  if(!str) return 0;
+
+  str = str.replace(/,/g, '.');
+
+  if(str.includes('medio metro') || str === 'medio' || str === '1/2' || str.includes('1/2m') || str.includes('1/2 m')){
+    return 0.5;
+  }
+
+  const match = str.match(/-?\d+(\.\d+)?/);
+  if(!match) return 0;
+
+  const num = parseFloat(match[0]);
+  return Number.isFinite(num) ? num : 0;
+}
+function sumByField(arr, field, normalizer){
   const map = {};
   arr.forEach(item=>{
-    const key = (item[field] || 'Sin dato').trim() || 'Sin dato';
+    const rawKey = item?.[field];
+    const key = normalizer
+      ? normalizer(rawKey)
+      : ((rawKey || 'Sin dato').trim ? (rawKey || 'Sin dato').trim() : String(rawKey || 'Sin dato'));
+    const finalKey = key || 'Sin dato';
+    const meters = parseMeters(item?.cantidad);
+    map[finalKey] = (map[finalKey] || 0) + meters;
+  });
+  return Object.entries(map).sort((a,b)=>b[1]-a[1]);
+}
+function sumByClient(arr){
+  const map = {};
+  arr.forEach(item=>{
+    const key = (item?.clienteNombre || 'Sin dato').trim() || 'Sin dato';
+    const meters = parseMeters(item?.cantidad);
+    map[key] = (map[key] || 0) + meters;
+  });
+  return Object.entries(map).sort((a,b)=>b[1]-a[1]);
+}
+function countByClient(arr){
+  const map = {};
+  arr.forEach(item=>{
+    const key = (item?.clienteNombre || 'Sin dato').trim() || 'Sin dato';
     map[key] = (map[key] || 0) + 1;
   });
   return Object.entries(map).sort((a,b)=>b[1]-a[1]);
@@ -1105,35 +1144,29 @@ function renderAnalytics(){
     return true;
   });
 
-  const topClient = topEntries(scoped, 'clienteNombre');
-  const recurrent = topClient.filter(([,count])=>count >= 2);
-  const materials = topEntries(scoped.map(o=>({material: normalizeMaterialValue(o.material)})), 'material');
-  const prints = topEntries(scoped.map(o=>({tipoImpresion: normalizePrintValue(o.tipoImpresion)})), 'tipoImpresion');
+  const clientMeters = sumByClient(scoped);
+  const recurrent = countByClient(scoped).filter(([,count])=>count >= 2);
+  const clientFrequency = countByClient(scoped);
+  const materials = sumByField(scoped, 'material', v => normalizeMaterialValue(v));
+  const prints = sumByField(scoped, 'tipoImpresion', v => normalizePrintValue(v));
   const uniqueClients = new Set(scoped.map(o=>norm(o.clienteNombre)).filter(Boolean)).size;
+  const totalMeters = scoped.reduce((acc,o)=>acc + parseMeters(o?.cantidad), 0);
   const totalRevenue = scoped.reduce((acc,o)=>acc + getOrderFinalPrice(o), 0);
 
   document.getElementById('analyticsTopCards').innerHTML = `
     <div class="stat" style="padding:14px"><span class="stat-label">Pedidos</span><span class="stat-num">${scoped.length}</span></div>
     <div class="stat" style="padding:14px"><span class="stat-label">Clientes únicos</span><span class="stat-num">${uniqueClients}</span></div>
+    <div class="stat" style="padding:14px"><span class="stat-label">Metros impresos</span><span class="stat-num">${totalMeters.toFixed(2)}</span></div>
     <div class="stat" style="padding:14px"><span class="stat-label">Facturación aprox.</span><span class="stat-num">${formatMoney(totalRevenue)}</span></div>
-    <div class="stat" style="padding:14px"><span class="stat-label">Cliente top</span><span class="stat-num">${topClient[0]?.[0] || '—'}</span></div>
   `;
-  renderSimpleRanking('analyticsTopClient', topClient, c => c + ' pedidos');
-  renderSimpleRanking('analyticsRecurring', recurrent, c => c + ' repeticiones');
-  renderSimpleRanking('analyticsMaterials', materials, c => c + ' usos');
-  renderSimpleRanking('analyticsPrints', prints, c => c + ' usos');
-
-  const now = new Date();
-  const frequencies = [
-    ['Semanal', orders.filter(o=>{const d=getOrderDate(o); return d && ((now-d)/(1000*60*60*24)) <= 7;}).length],
-    ['Mensual', orders.filter(o=>{const d=getOrderDate(o); return d && d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();}).length],
-    ['Trimestral', orders.filter(o=>{const d=getOrderDate(o); if(!d) return false; const qm=Math.floor(now.getMonth()/3), qd=Math.floor(d.getMonth()/3); return d.getFullYear()===now.getFullYear() && qm===qd;}).length],
-    ['Anual', orders.filter(o=>{const d=getOrderDate(o); return d && d.getFullYear()===now.getFullYear();}).length]
-  ];
-  document.getElementById('analyticsFrequency').innerHTML = frequencies.map(([label,count])=>`
-    <div class="client-row" style="justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-      <strong style="color:var(--text)">${label}</strong><span style="color:var(--accent2)">${count} pedidos</span>
-    </div>`).join('');
+  renderSimpleRanking('analyticsTopClient', clientMeters, c => c.toFixed(2) + ' m');
+  renderSimpleRanking('analyticsRecurring', recurrent, c => c + ' pedidos');
+  renderSimpleRanking('analyticsMaterials', materials, c => c.toFixed(2) + ' m');
+  renderSimpleRanking('analyticsPrints', prints, c => c.toFixed(2) + ' m');
+  renderSimpleRanking('analyticsFrequency', clientFrequency, c => {
+    const pct = scoped.length ? (c / scoped.length) * 100 : 0;
+    return `${c} pedidos · ${pct.toFixed(1)}%`;
+  });
 }
 
 function populateOrderFilters(){
