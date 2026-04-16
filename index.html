@@ -1433,24 +1433,53 @@ function saveOrder() {
   if(!nombre){showToast('⚠️ Escribe el nombre del cliente');return;}
 
   // Case-insensitive lookup
-  let client=findClient(nombre);
-  if(!client){
-    const modalidadSeleccionada = document.getElementById('f_modalidad').value;
-    const precioEditadoActual = modalidadSeleccionada === 'Editado' ? toMoneyNumber(document.getElementById('f_precio_editado').value) : null;
-    client={
-      id:newId(clients),
-      nombre,
-      telefono:'',
-      correo:'',
-      notas:'',
-      tipo_cliente: modalidadSeleccionada === 'Editado' ? 'Especial' : normalizeClientMode(modalidadSeleccionada || 'Cliente Standar'),
-      precio_especial: precioEditadoActual
+let client=findClient(nombre);
+if(!client){
+  const modalidadSeleccionada = document.getElementById('f_modalidad').value;
+  const precioEditadoActual = modalidadSeleccionada === 'Editado'
+    ? toMoneyNumber(document.getElementById('f_precio_editado').value)
+    : null;
+
+  const nuevoCliente = {
+    nombre,
+    telefono: '',
+    correo: '',
+    notas: '',
+    tipo_cliente: modalidadSeleccionada === 'Editado'
+      ? 'Especial'
+      : 'Basico',
+    precio_especial: precioEditadoActual
+  };
+
+  if(useSupabase && supabase){
+    const { data, error } = await supabase
+      .from('clientes')
+      .insert([nuevoCliente])
+      .select()
+      .single();
+
+    if(error){
+      console.error('Error creando cliente en Supabase:', error);
+      showToast('⚠️ No se pudo crear el cliente en Supabase');
+      return;
+    }
+
+    client = {
+      ...data,
+      notas: data.notas || ''
     };
-    clients.push(client);
-    showToast(`👤 Cliente "${nombre}" registrado`);
   }else{
-    applyClientProfileToOrderForm(client);
+    client = {
+      id:newId(clients),
+      ...nuevoCliente
+    };
   }
+
+  clients.push(client);
+  showToast(`👤 Cliente "${nombre}" registrado`);
+}else{
+  applyClientProfileToOrderForm(client);
+}
 
   const pricing = getCurrentPricing();
   const order={
