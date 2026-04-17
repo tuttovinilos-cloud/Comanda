@@ -1772,6 +1772,127 @@ async function saveClient(){
       }
 
       clients[idx] = actualizado;
+
+      orders.forEach(o => {
+        if(o.clienteId === editingClientId){
+          o.clienteNombre = nombre;
+        }
+      });
+
+      persistLocal();
+      if (supabaseClient) queueSupabaseSync();
+
+      closeModal('clientBackdrop');
+      renderClients();
+      renderTable();
+      showToast('✅ Cliente actualizado');
+      return;
+    }
+  } else {
+    const existing = findClient(nombre);
+    if(existing){
+      showToast(`⚠️ "${existing.nombre}" ya existe. Abriendo ficha…`);
+      closeModal('clientBackdrop');
+      setTimeout(() => openClientModal(existing.id), 300);
+      return;
+    }
+
+    let nuevo = {
+      id: newId(clients),
+      nombre,
+      telefono,
+      correo,
+      notas,
+      tipo_cliente: 'Basico',
+      precio_especial: null
+    };
+
+    if (supabaseClient) {
+      const { data, error } = await supabaseClient
+        .from('clientes')
+        .insert([{
+          nombre,
+          telefono,
+          correo,
+          notas,
+          tipo_cliente: 'Basico',
+          precio_especial: null
+        }])
+        .select()
+        .single();
+
+      if(error){
+        console.error('Error creando cliente en Supabase:', error);
+        showToast('⚠️ No se pudo crear el cliente');
+        return;
+      }
+
+      nuevo = {
+        id: Number(data.id),
+        nombre: data.nombre || nombre,
+        telefono: data.telefono || '',
+        correo: data.correo || '',
+        notas: data.notas || '',
+        tipo_cliente: data.tipo_cliente || 'Basico',
+        precio_especial: data.precio_especial ?? null
+      };
+    }
+
+    clients.push(nuevo);
+    persistLocal();
+    if (supabaseClient) queueSupabaseSync();
+
+    closeModal('clientBackdrop');
+    renderClients();
+    renderTable();
+    showToast('✅ Cliente registrado');
+    return;
+  }
+}
+
+      if(telefono && !existing.telefono) existing.telefono = telefono;
+      if(correo && !existing.correo) existing.correo = correo;
+      if(notas) existing.notas = existing.notas ? existing.notas + ' | ' + notas : notas;
+
+      if (supabaseClient) {
+        await supabaseClient.from('clientes').delete().eq('id', editingClientId);
+      }
+
+      clients = clients.filter(c => c.id !== editingClientId);
+      showToast(`🔗 Fusionado con "${existing.nombre}" (${mergedCount} pedidos movidos)`);
+    } else {
+      const idx = clients.findIndex(c => c.id === editingClientId);
+      if(idx < 0){ showToast('⚠️ Cliente no encontrado'); return; }
+
+      const anterior = clients[idx];
+      const actualizado = {
+        ...anterior,
+        id: editingClientId,
+        nombre,
+        telefono,
+        correo,
+        notas
+      };
+
+      if (supabaseClient) {
+        const { error } = await supabaseClient
+          .from('clientes')
+          .update({
+            nombre,
+            telefono,
+            correo,
+            notas
+          })
+          .eq('id', editingClientId);
+
+        if(error){
+          console.error('Error actualizando cliente en Supabase:', error);
+          showToast('⚠️ No se pudo actualizar el cliente');
+          return;
+        }
+      }
+
+      clients[idx] = actualizado;
       orders.forEach(o => {
         if(o.clienteId === editingClientId) o.clienteNombre = nombre;
       });
