@@ -1760,11 +1760,168 @@ function populateMaterialAndPrintSelects(){
 async function addNewMaterial(){
   const nombre = prompt('Nombre del material');
   if(nombre === null) return;
+
   const limpio = nombre.trim();
   if(!limpio){
     showToast('⚠️ Escribe un nombre válido');
     return;
   }
+
+  const precio = prompt(`Precio base para "${limpio}"`, '0');
+  if(precio === null) return;
+
+  const precioBase = toMoneyNumber(precio);
+
+  if(!supabaseClient){
+    showToast('⚠️ Supabase no está conectado');
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from('materiales')
+    .upsert(
+      [{ nombre: limpio, precio_base: precioBase, activo: true }],
+      { onConflict: 'nombre' }
+    );
+
+  if(error){
+    console.error('Error guardando material:', error);
+    showToast('❌ Error guardando material en Supabase');
+    return;
+  }
+
+  MATERIAL_PRICES[limpio] = precioBase;
+  await loadRemoteCatalogs?.();
+  save();
+  renderMaterialsConfig();
+  populateMaterialAndPrintSelects();
+  updatePricePreview();
+  updateQuickPricePreview?.();
+  renderTable();
+  showToast(`✅ Material "${limpio}" guardado en Supabase`);
+}
+
+async function addNewPrintType(){
+  const nombre = prompt('Nombre del tipo de impresión');
+  if(nombre === null) return;
+
+  const limpio = nombre.trim();
+  if(!limpio){
+    showToast('⚠️ Escribe un nombre válido');
+    return;
+  }
+
+  const precio = prompt(`Precio extra para "${limpio}"`, '0');
+  if(precio === null) return;
+
+  const precioExtra = toMoneyNumber(precio);
+
+  if(!supabaseClient){
+    showToast('⚠️ Supabase no está conectado');
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from('tipos_impresion')
+    .upsert(
+      [{ nombre: limpio, precio_extra: precioExtra, activo: true }],
+      { onConflict: 'nombre' }
+    );
+
+  if(error){
+    console.error('Error guardando tipo de impresión:', error);
+    showToast('❌ Error guardando impresión en Supabase');
+    return;
+  }
+
+  PRINT_PRICES[limpio] = precioExtra;
+  await loadRemoteCatalogs?.();
+  save();
+  renderMaterialsConfig();
+  populateMaterialAndPrintSelects();
+  updatePricePreview();
+  updateQuickPricePreview?.();
+  renderTable();
+  showToast(`✅ Tipo de impresión "${limpio}" guardado en Supabase`);
+}
+
+async function saveClientModeConfig(){
+  if(!supabaseClient){
+    save();
+    renderClientModesConfig();
+    renderTable();
+    showToast('💾 Guardado local');
+    return;
+  }
+
+  const payload = Object.entries(CLIENT_MODE_PERCENTAGES).map(([nombre, porcentaje]) => ({
+    nombre,
+    porcentaje_ajuste: toMoneyNumber(porcentaje),
+    activo: true
+  }));
+
+  const { error } = await supabaseClient
+    .from('modalidades_cliente')
+    .upsert(payload, { onConflict: 'nombre' });
+
+  if(error){
+    console.error('Error guardando modalidades:', error);
+    showToast('❌ Error guardando modalidades en Supabase');
+    return;
+  }
+
+  save();
+  renderClientModesConfig();
+  renderTable();
+  showToast('✅ Modalidades guardadas en Supabase');
+}
+
+async function savePriceConfig(){
+  if(!supabaseClient){
+    save();
+    renderMaterialsConfig();
+    populateMaterialAndPrintSelects();
+    showToast('💾 Guardado local');
+    return;
+  }
+
+  const materialPayload = Object.entries(MATERIAL_PRICES).map(([nombre, precio]) => ({
+    nombre,
+    precio_base: toMoneyNumber(precio),
+    activo: true
+  }));
+
+  const printPayload = Object.entries(PRINT_PRICES).map(([nombre, precio]) => ({
+    nombre,
+    precio_extra: toMoneyNumber(precio),
+    activo: true
+  }));
+
+  const { error: materialError } = await supabaseClient
+    .from('materiales')
+    .upsert(materialPayload, { onConflict: 'nombre' });
+
+  if(materialError){
+    console.error('Error guardando materiales:', materialError);
+    showToast('❌ Error guardando materiales');
+    return;
+  }
+
+  const { error: printError } = await supabaseClient
+    .from('tipos_impresion')
+    .upsert(printPayload, { onConflict: 'nombre' });
+
+  if(printError){
+    console.error('Error guardando tipos de impresión:', printError);
+    showToast('❌ Error guardando tipos de impresión');
+    return;
+  }
+
+  save();
+  renderMaterialsConfig();
+  populateMaterialAndPrintSelects();
+  showToast('✅ Precios guardados en Supabase');
+}
   if(MATERIAL_PRICES[limpio] != null){
     showToast('⚠️ Ese material ya existe');
     return;
