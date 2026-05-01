@@ -81,7 +81,7 @@ async function cargarPedidos() {
           </select>
         </td>
 
-        <td>${p.fecha_entrega ?? ""}</td>
+        <td>${p.fecha_entrega || "—"}</td>
       </tr>
     `;
 
