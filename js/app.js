@@ -149,16 +149,20 @@ async function saveOrder() {
   const tipo_impresion = document.getElementById("f_impresion")?.value || "";
   const fecha_entrega = document.getElementById("f_entrega")?.value || "";
 
-  const datosPedido = {
-    fecha,
-    operador,
-    cliente,
-    descripcion,
-    cantidad,
-    material,
-    tipo_impresion,
-    fecha_entrega
-  };
+const archivoData = await subirArchivoPedido();
+
+const datosPedido = {
+  fecha,
+  operador,
+  cliente,
+  descripcion,
+  cantidad,
+  material,
+  tipo_impresion,
+  fecha_entrega,
+  archivo_url: archivoData.archivo_url,
+  archivo_nombre: archivoData.archivo_nombre
+};
 
   let error;
 
