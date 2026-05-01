@@ -53,3 +53,35 @@ async function cargarPedidos() {
 
 // Ejecutar al cargar
 window.addEventListener("DOMContentLoaded", cargarPedidos);
+// ---------------------------
+// Guardar pedido
+// ---------------------------
+
+async function guardarPedido() {
+  const fila = document.querySelector("tr"); // fila de ingreso
+
+  const fecha = fila.querySelector('input[type="date"]').value;
+  const operador = fila.querySelector('select').value;
+  const cliente = fila.querySelector('input[placeholder="Cliente"]').value;
+  const descripcion = fila.querySelector('textarea').value;
+  const cantidad = fila.querySelector('input[placeholder="Cantidad / m"]').value;
+
+  const { error } = await supabaseClient.from("pedidos").insert([
+    {
+      fecha,
+      operador,
+      cliente,
+      descripcion,
+      cantidad
+    }
+  ]);
+
+  if (error) {
+    console.error("Error guardando:", error);
+    return;
+  }
+
+  alert("Pedido guardado");
+
+  cargarPedidos(); // recargar tabla
+}
