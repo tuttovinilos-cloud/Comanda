@@ -8,7 +8,7 @@ const PAGE_PERMISSIONS = {
   "clientes.html": "puede_clientes",
   "materiales.html": "puede_materiales",
   "estadisticas.html": "puede_estadisticas",
-  "configuracion.html": "puede_configuracion"
+  "configuracion.html": "puede_configuracion",
   "marketing.html": "puede_marketing"
 };
 
@@ -16,6 +16,7 @@ const CURRENT_PAGE = (location.pathname.split("/").pop() || "index.html").toLowe
 const REQUIRED_PERMISSION = PAGE_PERMISSIONS[CURRENT_PAGE] || "puede_pedidos";
 
 let operadorActual = null;
+window.operadorActual = null;
 
 // =========================================
 // CSS DEL LOGIN
@@ -141,20 +142,20 @@ function injectAuthStyles() {
 
     .auth-topbar{
       position:fixed;
-      right:14px;
-      bottom:14px;
-      z-index:9999;
+      right:16px;
+      bottom:16px;
+      z-index:999999;
       display:flex;
       align-items:center;
       gap:8px;
       background:#13161d;
       border:1px solid #2a3048;
       border-radius:999px;
-      padding:7px 8px 7px 12px;
-      box-shadow:0 10px 35px #0008;
+      padding:8px 10px 8px 14px;
+      box-shadow:0 10px 35px #000a;
       color:#e2e8f0;
       font-family:'Barlow Condensed',Arial,sans-serif;
-      font-size:11px;
+      font-size:12px;
       font-weight:700;
       letter-spacing:1px;
       text-transform:uppercase;
@@ -162,7 +163,7 @@ function injectAuthStyles() {
 
     .auth-topbar span{
       color:#60a5fa;
-      max-width:150px;
+      max-width:160px;
       overflow:hidden;
       text-overflow:ellipsis;
       white-space:nowrap;
@@ -173,10 +174,10 @@ function injectAuthStyles() {
       background:transparent;
       color:#94a3b8;
       border-radius:999px;
-      padding:5px 8px;
+      padding:6px 10px;
       cursor:pointer;
       font-family:'Barlow Condensed',Arial,sans-serif;
-      font-size:10px;
+      font-size:11px;
       font-weight:700;
       letter-spacing:1px;
       text-transform:uppercase;
@@ -218,7 +219,6 @@ function tienePermiso(op) {
   if (!op) return false;
   if (op.activo === false) return false;
 
-  // Roberto / Administrador entra a todo.
   if (op.rol === "Administrador") return true;
 
   return op[REQUIRED_PERMISSION] === true;
@@ -254,7 +254,7 @@ async function mostrarLogin(mensaje = "") {
   if (viejo) viejo.remove();
 
   const options = operadores.map(op => {
-    return `<option value="${op.id}">${op.nombre} · ${op.rol || "Operador"}</option>`;
+    return `<option value="${op.id}">${op.nombre}</option>`;
   }).join("");
 
   const html = `
@@ -262,14 +262,14 @@ async function mostrarLogin(mensaje = "") {
       <div class="auth-card">
         <div class="auth-head">
           <div class="auth-title">Acceso requerido</div>
-          <div class="auth-sub">Selecciona tu usuario e introduce la clave para entrar a este módulo.</div>
+          <div class="auth-sub">Selecciona tu usuario e introduce la clave para entrar.</div>
         </div>
 
         <div class="auth-body">
           <div class="auth-error" id="authError">${mensaje || ""}</div>
 
           <div class="auth-field">
-            <label>Operador</label>
+            <label>Usuario</label>
             <select id="authUser">
               ${options}
             </select>
@@ -336,6 +336,7 @@ async function loginOperador() {
   }
 
   operadorActual = op;
+  window.operadorActual = op;
   setSesionOperador(op);
 
   const backdrop = document.getElementById("authBackdrop");
@@ -350,6 +351,8 @@ async function loginOperador() {
 // =========================================
 function logoutOperador() {
   clearSesionOperador();
+  operadorActual = null;
+  window.operadorActual = null;
   location.reload();
 }
 
@@ -362,11 +365,12 @@ function pintarTopbarSesion() {
   const viejo = document.getElementById("authTopbar");
   if (viejo) viejo.remove();
 
-  if (!operadorActual) return;
+  const sesion = operadorActual || getSesionOperador();
+  if (!sesion) return;
 
   const html = `
     <div class="auth-topbar" id="authTopbar">
-      <span>${operadorActual.nombre || "Usuario"}</span>
+      <span>${sesion.nombre || "Usuario"}</span>
       <button class="auth-logout" onclick="logoutOperador()">Salir</button>
     </div>
   `;
@@ -378,17 +382,18 @@ function pintarTopbarSesion() {
 // PONER OPERADOR DEFAULT EN COMANDA
 // =========================================
 function aplicarOperadorDefault() {
-  if (!operadorActual) return;
+  const sesion = operadorActual || getSesionOperador();
+  if (!sesion) return;
 
   const qOperador = document.getElementById("q_operador");
   const fOperador = document.getElementById("f_operador");
 
   if (qOperador && !qOperador.value) {
-    qOperador.value = operadorActual.nombre;
+    qOperador.value = sesion.nombre;
   }
 
   if (fOperador && !fOperador.value) {
-    fOperador.value = operadorActual.nombre;
+    fOperador.value = sesion.nombre;
   }
 }
 
@@ -405,7 +410,6 @@ async function protegerPagina() {
     return;
   }
 
-  // Revalidar contra Supabase para que permisos actualizados tengan efecto.
   const operadores = await obtenerOperadores();
   const actualizado = operadores.find(o => String(o.id) === String(sesion.id));
 
@@ -422,7 +426,9 @@ async function protegerPagina() {
   }
 
   operadorActual = actualizado;
+  window.operadorActual = actualizado;
   setSesionOperador(actualizado);
+
   pintarTopbarSesion();
   aplicarOperadorDefault();
 }
@@ -430,4 +436,11 @@ async function protegerPagina() {
 // =========================================
 // INICIO
 // =========================================
-window.addEventListener("DOMContentLoaded", protegerPagina);
+window.addEventListener("DOMContentLoaded", async () => {
+  await protegerPagina();
+
+  setTimeout(() => {
+    pintarTopbarSesion();
+    aplicarOperadorDefault();
+  }, 300);
+});
