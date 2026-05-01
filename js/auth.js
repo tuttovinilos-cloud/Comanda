@@ -9,6 +9,7 @@ const PAGE_PERMISSIONS = {
   "materiales.html": "puede_materiales",
   "estadisticas.html": "puede_estadisticas",
   "configuracion.html": "puede_configuracion"
+  "marketing.html": "puede_marketing"
 };
 
 const CURRENT_PAGE = (location.pathname.split("/").pop() || "index.html").toLowerCase();
