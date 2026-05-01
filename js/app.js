@@ -58,11 +58,11 @@ async function cargarPedidos() {
         <td>${p.precio ?? ""}</td>
 
         <td>
-          <select 
-            class="cell-select"
-            onchange="actualizarCampoPedido(${p.id}, 'estatus_trabajo', this.value)"
-            onclick="event.stopPropagation()"
-          >
+     <select 
+  class="cell-select ${claseTrabajo(p.estatus_trabajo)}"
+  onchange="actualizarCampoPedido(${p.id}, 'estatus_trabajo', this.value); this.className='cell-select ' + claseTrabajo(this.value)"
+  onclick="event.stopPropagation()"
+>
             <option ${p.estatus_trabajo === "Solicitud" ? "selected" : ""}>Solicitud</option>
             <option ${p.estatus_trabajo === "Revisado" ? "selected" : ""}>Revisado</option>
             <option ${p.estatus_trabajo === "Listo" ? "selected" : ""}>Listo</option>
@@ -70,11 +70,11 @@ async function cargarPedidos() {
         </td>
 
         <td>
-          <select 
-            class="cell-select"
-            onchange="actualizarCampoPedido(${p.id}, 'estatus_pago', this.value)"
-            onclick="event.stopPropagation()"
-          >
+    <select 
+  class="cell-select ${clasePago(p.estatus_pago)}"
+  onchange="actualizarCampoPedido(${p.id}, 'estatus_pago', this.value); this.className='cell-select ' + clasePago(this.value)"
+  onclick="event.stopPropagation()"
+>
             <option ${p.estatus_pago === "Pendiente" ? "selected" : ""}>Pendiente</option>
             <option ${p.estatus_pago === "Abonado" ? "selected" : ""}>Abonado</option>
             <option ${p.estatus_pago === "Pagado" ? "selected" : ""}>Pagado</option>
@@ -368,7 +368,28 @@ function badgePago(valor) {
 
   return `<span class="badge">${estado}</span>`;
 }
+// ---------------------------
+// Clases de color para select
+// ---------------------------
+function claseTrabajo(valor) {
+  const estado = valor || "";
 
+  if (estado === "Solicitud") return "status-solicitud";
+  if (estado === "Revisado") return "status-revisado";
+  if (estado === "Listo") return "status-listo";
+
+  return "";
+}
+
+function clasePago(valor) {
+  const estado = valor || "";
+
+  if (estado === "Pendiente") return "pago-pendiente";
+  if (estado === "Abonado") return "pago-abonado";
+  if (estado === "Pagado") return "pago-pagado";
+
+  return "";
+}
 // ---------------------------
 // Inicio
 // ---------------------------
