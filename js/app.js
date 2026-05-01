@@ -3,6 +3,7 @@ console.log("Supabase:", window.supabaseClient);
 
 let pedidoEditandoId = null;
 let pedidosDB = [];
+let archivoSeleccionado = null;
 
 // ---------------------------
 // Indicador Supabase
