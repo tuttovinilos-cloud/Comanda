@@ -398,3 +398,51 @@ window.addEventListener("DOMContentLoaded", () => {
   ponerFechaHoy();
   cargarPedidos();
 });
+// ---------------------------
+// Seleccionar archivo
+// ---------------------------
+function handleFileSelect(event) {
+  archivoSeleccionado = event.target.files[0] || null;
+
+  if (archivoSeleccionado) {
+    alert("Archivo seleccionado: " + archivoSeleccionado.name);
+  }
+}
+
+// ---------------------------
+// Subir archivo a Supabase Storage
+// ---------------------------
+async function subirArchivoPedido() {
+  if (!archivoSeleccionado) {
+    return {
+      archivo_url: null,
+      archivo_nombre: null
+    };
+  }
+
+  const nombreLimpio = archivoSeleccionado.name.replace(/\s+/g, "_");
+  const ruta = `pedidos/${Date.now()}_${nombreLimpio}`;
+
+  const { error } = await supabaseClient.storage
+    .from("adjuntos-pedidos")
+    .upload(ruta, archivoSeleccionado);
+
+  if (error) {
+    console.error("Error subiendo archivo:", error);
+    alert("Error subiendo archivo");
+
+    return {
+      archivo_url: null,
+      archivo_nombre: null
+    };
+  }
+
+  const { data } = supabaseClient.storage
+    .from("adjuntos-pedidos")
+    .getPublicUrl(ruta);
+
+  return {
+    archivo_url: data.publicUrl,
+    archivo_nombre: archivoSeleccionado.name
+  };
+}
