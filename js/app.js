@@ -26,6 +26,7 @@ async function cargarPedidos() {
   }
 
   console.log("Pedidos:", data);
+  pedidosDB = data || [];
 
   const tabla = document.getElementById("orderTableBody");;
   if (!tabla) return;
@@ -34,7 +35,7 @@ async function cargarPedidos() {
 
   data.forEach(p => {
     const fila = `
-      <tr>
+      <tr onclick="openEditOrder(${p.id})">
         <td>${p.id ?? ""}</td>
         <td>${p.fecha ?? ""}</td>
         <td>${p.operador ?? ""}</td>
