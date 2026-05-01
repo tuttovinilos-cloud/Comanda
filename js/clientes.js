@@ -118,17 +118,34 @@ function renderClientes() {
 
   if (!tbody) return;
 
-  const lista = clientesDB.filter(c => {
-    const texto = [
-      c.nombre,
-      c.tipo_cliente,
-      c.telefono,
-      c.correo,
-      c.notas
-    ].join(" ").toLowerCase();
+let lista = clientesDB.filter(c => {
+  const texto = [
+    c.nombre,
+    c.tipo_cliente,
+    c.telefono,
+    c.correo,
+    c.notas
+  ].join(" ").toLowerCase();
 
-    return !filtro || texto.includes(filtro);
-  });
+  return !filtro || texto.includes(filtro);
+});
+
+const orden = document.getElementById("ordenClientes")?.value || "nombre_az";
+
+lista.sort((a, b) => {
+  const nombreA = String(a.nombre || "").toLowerCase();
+  const nombreB = String(b.nombre || "").toLowerCase();
+
+  const pedidosA = pedidosDelCliente(a.nombre).length;
+  const pedidosB = pedidosDelCliente(b.nombre).length;
+
+  if (orden === "nombre_az") return nombreA.localeCompare(nombreB);
+  if (orden === "nombre_za") return nombreB.localeCompare(nombreA);
+  if (orden === "pedidos_mayor") return pedidosB - pedidosA;
+  if (orden === "pedidos_menor") return pedidosA - pedidosB;
+
+  return 0;
+});
 
   if (count) count.textContent = `${clientesDB.length} clientes`;
   if (dupCount) dupCount.textContent = `${contarDuplicados()} posibles duplicados`;
