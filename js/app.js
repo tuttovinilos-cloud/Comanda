@@ -42,8 +42,8 @@ async function cargarPedidos() {
         <td>${p.material ?? ""}</td>
         <td>${p.tipo_impresion ?? ""}</td>
         <td>${p.precio ?? ""}</td>
-        <td>${p.estatus_trabajo ?? ""}</td>
-        <td>${p.estatus_pago ?? ""}</td>
+<td>${badgeTrabajo(p.estatus_trabajo)}</td>
+<td>${badgePago(p.estatus_pago)}</td>
         <td>${p.fecha_entrega ?? ""}</td>
       </tr>
     `;
