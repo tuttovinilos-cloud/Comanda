@@ -41,7 +41,13 @@ async function cargarPedidos() {
         <td>${p.operador ?? ""}</td>
         <td>${p.cliente ?? ""}</td>
         <td>${p.descripcion ?? ""}</td>
-        <td>${p.cantidad ?? ""}</td>
+        <td>
+  <input 
+    value="${p.cantidad ?? ""}" 
+    onchange="actualizarCampoPedido(${p.id}, 'cantidad', this.value)"
+    onclick="event.stopPropagation()"
+  />
+</td>
         <td>${p.material ?? ""}</td>
         <td>${p.tipo_impresion ?? ""}</td>
         <td>${p.precio ?? ""}</td>
@@ -299,4 +305,21 @@ function closeModal(id) {
   }
 
   pedidoEditandoId = null;
+}
+// ---------------------------
+// Actualizar campo rápido en Supabase
+// ---------------------------
+async function actualizarCampoPedido(id, campo, valor) {
+  const { error } = await supabaseClient
+    .from("pedidos")
+    .update({ [campo]: valor })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error actualizando campo:", error);
+    alert("Error actualizando");
+    return;
+  }
+
+  console.log(`Pedido ${id} actualizado: ${campo} = ${valor}`);
 }
