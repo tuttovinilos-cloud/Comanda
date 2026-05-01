@@ -314,3 +314,10 @@ async function recargarTodo() {
 // Inicio
 // ---------------------------
 window.addEventListener("DOMContentLoaded", recargarTodo);
+<td class="check-cell">
+  <input type="checkbox" class="op-mod-operador" data-id="${op.id}" ${op.puede_modificar_operador ? "checked" : ""}>
+</td>
+
+<td class="check-cell">
+  <input type="checkbox" class="op-mod-cantidad" data-id="${op.id}" ${op.puede_modificar_cantidad ? "checked" : ""}>
+</td>
