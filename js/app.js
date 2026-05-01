@@ -25,7 +25,7 @@ async function cargarPedidos() {
 
   console.log("Pedidos:", data);
 
-  const tabla = document.querySelector("tbody");
+  const tabla = document.getElementById("orderTableBody");;
   if (!tabla) return;
 
   tabla.innerHTML = "";
