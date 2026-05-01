@@ -1,3 +1,6 @@
+Perfecto. Te lo envié completo con la función para **ocultar botones según permisos** ya integrada. Reemplaza todo tu `auth.js` por este. El archivo que mandaste ya estaba bien estructurado; solo faltaba aplicar la visibilidad del menú después del login y después de validar la sesión. 
+
+```javascript
 console.log("Auth JS conectado");
 
 // =========================================
@@ -344,6 +347,7 @@ async function loginOperador() {
 
   pintarTopbarSesion();
   aplicarOperadorDefault();
+  aplicarVisibilidadMenu();
 }
 
 // =========================================
@@ -398,6 +402,51 @@ function aplicarOperadorDefault() {
 }
 
 // =========================================
+// OCULTAR BOTONES SEGÚN PERMISOS
+// =========================================
+function aplicarVisibilidadMenu() {
+  const sesion = operadorActual || getSesionOperador();
+  if (!sesion) return;
+
+  const reglas = [
+    { selector: 'a[href="index.html"]', permiso: "puede_pedidos" },
+    { selector: 'a[href="./index.html"]', permiso: "puede_pedidos" },
+
+    { selector: 'a[href="clientes.html"]', permiso: "puede_clientes" },
+    { selector: 'a[href="./clientes.html"]', permiso: "puede_clientes" },
+
+    { selector: 'a[href="materiales.html"]', permiso: "puede_materiales" },
+    { selector: 'a[href="./materiales.html"]', permiso: "puede_materiales" },
+
+    { selector: 'a[href="estadisticas.html"]', permiso: "puede_estadisticas" },
+    { selector: 'a[href="./estadisticas.html"]', permiso: "puede_estadisticas" },
+
+    { selector: 'a[href="marketing.html"]', permiso: "puede_marketing" },
+    { selector: 'a[href="./marketing.html"]', permiso: "puede_marketing" },
+
+    { selector: 'a[href="configuracion.html"]', permiso: "puede_configuracion" },
+    { selector: 'a[href="./configuracion.html"]', permiso: "puede_configuracion" }
+  ];
+
+  reglas.forEach(regla => {
+    const botones = document.querySelectorAll(regla.selector);
+
+    botones.forEach(btn => {
+      if (sesion.rol === "Administrador") {
+        btn.style.display = "";
+        return;
+      }
+
+      if (sesion[regla.permiso] !== true) {
+        btn.style.display = "none";
+      } else {
+        btn.style.display = "";
+      }
+    });
+  });
+}
+
+// =========================================
 // PROTEGER PÁGINA
 // =========================================
 async function protegerPagina() {
@@ -431,6 +480,7 @@ async function protegerPagina() {
 
   pintarTopbarSesion();
   aplicarOperadorDefault();
+  aplicarVisibilidadMenu();
 }
 
 // =========================================
@@ -442,5 +492,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   setTimeout(() => {
     pintarTopbarSesion();
     aplicarOperadorDefault();
+    aplicarVisibilidadMenu();
   }, 300);
 });
+```
+
+Después de pegarlo, guarda, sube a GitHub y prueba así: **Salir → entrar con Chico o Rubén → Ctrl + F5**. Ahí deberían ocultarse Materiales, Estadísticas, Configuración y Marketing si no tienen permiso.
