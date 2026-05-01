@@ -6,6 +6,7 @@ let pedidosDB = [];
 let archivoSeleccionado = null;
 let materialesDB = [];
 let tiposImpresionDB = [];
+let clientesBusquedaDB = [];
 
 // ---------------------------
 // Indicador Supabase
@@ -15,6 +16,17 @@ if (badge) badge.textContent = "SUPABASE";
 
 const badgeBox = document.getElementById("storageBadge");
 if (badgeBox) badgeBox.classList.add("ok");
+
+// ---------------------------
+// Normalizar texto para búsqueda
+// ---------------------------
+function normalizarBusqueda(valor) {
+  return String(valor || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
 
 // ---------------------------
 // Cargar materiales desde Supabase
@@ -99,6 +111,24 @@ async function cargarTiposImpresion() {
 }
 
 // ---------------------------
+// Cargar clientes para buscar por teléfono/correo/notas
+// ---------------------------
+async function cargarClientesBusqueda() {
+  const { data, error } = await supabaseClient
+    .from("clientes")
+    .select("nombre, telefono, correo, notas");
+
+  if (error) {
+    console.warn("No se pudieron cargar clientes para búsqueda:", error);
+    clientesBusquedaDB = [];
+    return;
+  }
+
+  clientesBusquedaDB = data || [];
+  console.log("Clientes para búsqueda cargados:", clientesBusquedaDB);
+}
+
+// ---------------------------
 // Cargar pedidos desde Supabase
 // ---------------------------
 async function cargarPedidos() {
@@ -177,6 +207,9 @@ async function cargarPedidos() {
 
     tabla.insertAdjacentHTML("beforeend", fila);
   });
+
+  cargarOperadoresFiltroDesdeTabla();
+  onSearch();
 }
 
 // ---------------------------
@@ -229,7 +262,7 @@ async function saveQuickOrder() {
   archivoSeleccionado = null;
   limpiarFilaRapida();
   ponerFechaHoy();
-  cargarPedidos();
+  await cargarPedidos();
 }
 
 // ---------------------------
@@ -295,7 +328,7 @@ async function saveOrder() {
   pedidoEditandoId = null;
   archivoSeleccionado = null;
   closeModal("orderBackdrop");
-  cargarPedidos();
+  await cargarPedidos();
 }
 
 // ---------------------------
@@ -600,56 +633,9 @@ async function subirArchivoPedido() {
 }
 
 // ---------------------------
-// Inicio
-// ---------------------------
-window.addEventListener("DOMContentLoaded", () => {
-  ponerFechaHoy();
-  cargarMateriales();
-  cargarTiposImpresion();
-  cargarPedidos();
-});
-// ---------------------------
-// Clientes para búsqueda por teléfono/correo
-// ---------------------------
-let clientesBusquedaDB = [];
-
-// ---------------------------
-// Normalizar texto
-// ---------------------------
-function normalizarBusqueda(valor) {
-  return String(valor || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
-
-// ---------------------------
-// Cargar clientes para buscador
-// ---------------------------
-async function cargarClientesBusqueda() {
-  const { data, error } = await supabaseClient
-    .from("clientes")
-    .select("nombre, telefono, correo, notas");
-
-  if (error) {
-    console.warn("No se pudieron cargar clientes para búsqueda:", error);
-    clientesBusquedaDB = [];
-    return;
-  }
-
-  clientesBusquedaDB = data || [];
-  console.log("Clientes para búsqueda cargados:", clientesBusquedaDB);
-}
-
-// ---------------------------
 // Buscar / filtrar comanda
 // ---------------------------
-async function onSearch() {
-  if (!clientesBusquedaDB.length) {
-    await cargarClientesBusqueda();
-  }
-
+function onSearch() {
   const texto = normalizarBusqueda(document.getElementById("searchInput")?.value || "");
   const estadoFiltro = document.getElementById("filterStatus")?.value || "";
   const pagoFiltro = document.getElementById("filterPago")?.value || "";
@@ -661,7 +647,6 @@ async function onSearch() {
 
   filas.forEach(fila => {
     const celdas = fila.querySelectorAll("td");
-
     if (!celdas.length) return;
 
     const fecha = celdas[1]?.textContent.trim() || "";
@@ -678,10 +663,7 @@ async function onSearch() {
     const archivo = celdas[12]?.textContent.trim() || "";
 
     const clienteNorm = normalizarBusqueda(cliente);
-
-    const clienteRelacionado = clientesBusquedaDB.find(c => {
-      return normalizarBusqueda(c.nombre) === clienteNorm;
-    });
+    const clienteRelacionado = clientesBusquedaDB.find(c => normalizarBusqueda(c.nombre) === clienteNorm);
 
     const telefonoCliente = clienteRelacionado?.telefono || "";
     const correoCliente = clienteRelacionado?.correo || "";
@@ -707,29 +689,12 @@ async function onSearch() {
 
     let mostrar = true;
 
-    if (texto && !contenido.includes(texto)) {
-      mostrar = false;
-    }
-
-    if (estadoFiltro && estatus !== estadoFiltro) {
-      mostrar = false;
-    }
-
-    if (pagoFiltro && pago !== pagoFiltro) {
-      mostrar = false;
-    }
-
-    if (operadorFiltro && operador !== operadorFiltro) {
-      mostrar = false;
-    }
-
-    if (desde && fecha < desde) {
-      mostrar = false;
-    }
-
-    if (hasta && fecha > hasta) {
-      mostrar = false;
-    }
+    if (texto && !contenido.includes(texto)) mostrar = false;
+    if (estadoFiltro && estatus !== estadoFiltro) mostrar = false;
+    if (pagoFiltro && pago !== pagoFiltro) mostrar = false;
+    if (operadorFiltro && operador !== operadorFiltro) mostrar = false;
+    if (desde && fecha < desde) mostrar = false;
+    if (hasta && fecha > hasta) mostrar = false;
 
     fila.style.display = mostrar ? "" : "none";
   });
@@ -762,84 +727,12 @@ function cargarOperadoresFiltroDesdeTabla() {
 }
 
 // ---------------------------
-// Ejecutar después de cargar pedidos
+// Inicio
 // ---------------------------
-setTimeout(() => {
-  cargarClientesBusqueda();
-  cargarOperadoresFiltroDesdeTabla();
-}, 1200);
-
-
-=====================================================
-PASO FINAL
-=====================================================
-
-1) Guarda / Commit.
-2) Abre la comanda.
-3) Haz Ctrl + Shift + R.
-4) Prueba buscar por:
-   - Cliente
-   - Descripción
-   - Material
-   - Operador
-   - Teléfono del cliente
-
-// ---------------------------
-// BUSCADOR COMANDA
-// ---------------------------
-function onSearch() {
-  const texto = (document.getElementById("searchInput")?.value || "")
-    .toLowerCase()
-    .trim();
-
-  const estado = document.getElementById("filterStatus")?.value || "";
-  const pago = document.getElementById("filterPago")?.value || "";
-  const desde = document.getElementById("filterFechaDesde")?.value || "";
-  const hasta = document.getElementById("filterFechaHasta")?.value || "";
-  const operadorFiltro = document.getElementById("filterOperador")?.value || "";
-
-  const filas = document.querySelectorAll("#orderTableBody tr");
-
-  filas.forEach(fila => {
-    const celdas = fila.querySelectorAll("td");
-
-    if (!celdas.length) return;
-
-    const fecha = celdas[1]?.textContent.trim() || "";
-    const operador = celdas[2]?.textContent.trim() || "";
-    const cliente = celdas[3]?.textContent.trim() || "";
-    const descripcion = celdas[4]?.textContent.trim() || "";
-    const cantidad = celdas[5]?.querySelector("input")?.value || celdas[5]?.textContent.trim() || "";
-    const material = celdas[6]?.textContent.trim() || "";
-    const impresion = celdas[7]?.textContent.trim() || "";
-    const estatus = celdas[9]?.querySelector("select")?.value || "";
-    const pagoActual = celdas[10]?.querySelector("select")?.value || "";
-    const entrega = celdas[11]?.textContent.trim() || "";
-    const archivo = celdas[12]?.textContent.trim() || "";
-
-    const contenido = [
-      fecha,
-      operador,
-      cliente,
-      descripcion,
-      cantidad,
-      material,
-      impresion,
-      estatus,
-      pagoActual,
-      entrega,
-      archivo
-    ].join(" ").toLowerCase();
-
-    let mostrar = true;
-
-    if (texto && !contenido.includes(texto)) mostrar = false;
-    if (estado && estatus !== estado) mostrar = false;
-    if (pago && pagoActual !== pago) mostrar = false;
-    if (operadorFiltro && operador !== operadorFiltro) mostrar = false;
-    if (desde && fecha < desde) mostrar = false;
-    if (hasta && fecha > hasta) mostrar = false;
-
-    fila.style.display = mostrar ? "" : "none";
-  });
-}
+window.addEventListener("DOMContentLoaded", async () => {
+  ponerFechaHoy();
+  await cargarClientesBusqueda();
+  await cargarMateriales();
+  await cargarTiposImpresion();
+  await cargarPedidos();
+});
