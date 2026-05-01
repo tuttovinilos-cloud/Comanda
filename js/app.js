@@ -1,9 +1,12 @@
 console.log("APP JS conectado correctamente");
 console.log("Supabase:", window.supabaseClient);
+
 let pedidoEditandoId = null;
 let pedidosDB = [];
 
-// Forzar indicador a Supabase
+// ---------------------------
+// Indicador Supabase
+// ---------------------------
 const badge = document.getElementById("storageBadgeText");
 if (badge) badge.textContent = "SUPABASE";
 
@@ -11,9 +14,8 @@ const badgeBox = document.getElementById("storageBadge");
 if (badgeBox) badgeBox.classList.add("ok");
 
 // ---------------------------
-// Cargar pedidos
+// Cargar pedidos desde Supabase
 // ---------------------------
-
 async function cargarPedidos() {
   const { data, error } = await supabaseClient
     .from("pedidos")
@@ -28,12 +30,12 @@ async function cargarPedidos() {
   console.log("Pedidos:", data);
   pedidosDB = data || [];
 
-  const tabla = document.getElementById("orderTableBody");;
+  const tabla = document.getElementById("orderTableBody");
   if (!tabla) return;
 
   tabla.innerHTML = "";
 
-  data.forEach(p => {
+  pedidosDB.forEach(p => {
     const fila = `
       <tr onclick="openEditOrder(${p.id})">
         <td>${p.id ?? ""}</td>
@@ -41,81 +43,98 @@ async function cargarPedidos() {
         <td>${p.operador ?? ""}</td>
         <td>${p.cliente ?? ""}</td>
         <td>${p.descripcion ?? ""}</td>
-<td>
-  <input 
-    class="cell-edit"
-    value="${p.cantidad ?? ""}" 
-    onchange="actualizarCampoPedido(${p.id}, 'cantidad', this.value)"
-    onclick="event.stopPropagation()"
-  />
-</td>
+
+        <td>
+          <input 
+            class="cell-edit"
+            value="${p.cantidad ?? ""}" 
+            onchange="actualizarCampoPedido(${p.id}, 'cantidad', this.value)"
+            onclick="event.stopPropagation()"
+          />
+        </td>
+
         <td>${p.material ?? ""}</td>
         <td>${p.tipo_impresion ?? ""}</td>
         <td>${p.precio ?? ""}</td>
-<td>
-  <select 
-    onchange="actualizarCampoPedido(${p.id}, 'estatus_trabajo', this.value)"
-    onclick="event.stopPropagation()"
-  >
-    <option ${p.estatus_trabajo === "Solicitud" ? "selected" : ""}>Solicitud</option>
-    <option ${p.estatus_trabajo === "Revisado" ? "selected" : ""}>Revisado</option>
-    <option ${p.estatus_trabajo === "Listo" ? "selected" : ""}>Listo</option>
-  </select>
-</td>
-<td>
-  <select 
-    onchange="actualizarCampoPedido(${p.id}, 'estatus_pago', this.value)"
-    onclick="event.stopPropagation()"
-  >
-    <option ${p.estatus_pago === "Pendiente" ? "selected" : ""}>Pendiente</option>
-    <option ${p.estatus_pago === "Abonado" ? "selected" : ""}>Abonado</option>
-    <option ${p.estatus_pago === "Pagado" ? "selected" : ""}>Pagado</option>
-  </select>
-</td>
+
+        <td>
+          <select 
+            class="cell-select"
+            onchange="actualizarCampoPedido(${p.id}, 'estatus_trabajo', this.value)"
+            onclick="event.stopPropagation()"
+          >
+            <option ${p.estatus_trabajo === "Solicitud" ? "selected" : ""}>Solicitud</option>
+            <option ${p.estatus_trabajo === "Revisado" ? "selected" : ""}>Revisado</option>
+            <option ${p.estatus_trabajo === "Listo" ? "selected" : ""}>Listo</option>
+          </select>
+        </td>
+
+        <td>
+          <select 
+            class="cell-select"
+            onchange="actualizarCampoPedido(${p.id}, 'estatus_pago', this.value)"
+            onclick="event.stopPropagation()"
+          >
+            <option ${p.estatus_pago === "Pendiente" ? "selected" : ""}>Pendiente</option>
+            <option ${p.estatus_pago === "Abonado" ? "selected" : ""}>Abonado</option>
+            <option ${p.estatus_pago === "Pagado" ? "selected" : ""}>Pagado</option>
+          </select>
+        </td>
+
         <td>${p.fecha_entrega ?? ""}</td>
       </tr>
     `;
+
     tabla.insertAdjacentHTML("beforeend", fila);
   });
 }
 
-// Ejecutar al cargar
-window.addEventListener("DOMContentLoaded", cargarPedidos);
 // ---------------------------
-// Guardar pedido
+// Guardar desde fila rápida
 // ---------------------------
+async function saveQuickOrder() {
+  const fecha = document.getElementById("q_fecha")?.value || "";
+  const operador = document.getElementById("q_operador")?.value || "";
+  const cliente = document.getElementById("q_cliente")?.value || "";
+  const descripcion = document.getElementById("q_descripcion")?.value || "";
+  const cantidad = document.getElementById("q_cantidad")?.value || "";
+  const material = document.getElementById("q_material")?.value || "";
+  const tipo_impresion = document.getElementById("q_impresion")?.value || "";
+  const estatus_trabajo = document.getElementById("q_estatus_trabajo")?.value || "Solicitud";
+  const estatus_pago = document.getElementById("q_estatus_pago")?.value || "Pendiente";
+  const fecha_entrega = document.getElementById("q_entrega")?.value || "";
 
-async function guardarPedido() {
-  const fila = document.querySelector("tr"); // fila de ingreso
+  if (!cliente && !descripcion) {
+    alert("Coloca al menos cliente o descripción");
+    return;
+  }
 
-  const fecha = fila.querySelector('input[type="date"]').value;
-  const operador = fila.querySelector('select').value;
-  const cliente = fila.querySelector('input[placeholder="Cliente"]').value;
-  const descripcion = fila.querySelector('textarea').value;
-  const cantidad = fila.querySelector('input[placeholder="Cantidad / m"]').value;
-
-  const { error } = await supabaseClient.from("pedidos").insert([
-    {
-      fecha,
-      operador,
-      cliente,
-      descripcion,
-      cantidad
-    }
-  ]);
+  const { error } = await supabaseClient.from("pedidos").insert([{
+    fecha,
+    operador,
+    cliente,
+    descripcion,
+    cantidad,
+    material,
+    tipo_impresion,
+    estatus_trabajo,
+    estatus_pago,
+    fecha_entrega
+  }]);
 
   if (error) {
-    console.error("Error guardando:", error);
+    console.error("Error guardando pedido rápido:", error);
+    alert("Error guardando pedido");
     return;
   }
 
   alert("Pedido guardado");
 
-  cargarPedidos(); // recargar tabla
+  limpiarFilaRapida();
+  ponerFechaHoy();
+  cargarPedidos();
 }
-// ---------------------------
-// Guardar desde botón GUARDAR del modal
-// ---------------------------
+
 // ---------------------------
 // Guardar / actualizar pedido desde modal
 // ---------------------------
@@ -169,54 +188,98 @@ async function saveOrder() {
   alert(pedidoEditandoId ? "Pedido actualizado" : "Pedido guardado");
 
   pedidoEditandoId = null;
-
-  const modal = document.getElementById("orderBackdrop");
-  if (modal) modal.style.display = "none";
-
+  closeModal("orderBackdrop");
   cargarPedidos();
 }
-// ---------------------------
-// Guardar desde fila rápida
-// ---------------------------
-async function saveQuickOrder() {
-  const fecha = document.getElementById("q_fecha")?.value || "";
-  const operador = document.getElementById("q_operador")?.value || "";
-  const cliente = document.getElementById("q_cliente")?.value || "";
-  const descripcion = document.getElementById("q_descripcion")?.value || "";
-  const cantidad = document.getElementById("q_cantidad")?.value || "";
-  const material = document.getElementById("q_material")?.value || "";
-  const tipo_impresion = document.getElementById("q_impresion")?.value || "";
-  const estatus_trabajo = document.getElementById("q_estatus_trabajo")?.value || "Solicitud";
-  const estatus_pago = document.getElementById("q_estatus_pago")?.value || "Pendiente";
-  const fecha_entrega = document.getElementById("q_entrega")?.value || "";
 
-  if (!cliente && !descripcion) {
-    alert("Coloca al menos cliente o descripción");
-    return;
-  }
-
-  const { error } = await supabaseClient.from("pedidos").insert([{
-    fecha,
-    operador,
-    cliente,
-    descripcion,
-    cantidad,
-    material,
-    tipo_impresion,
-    estatus_trabajo,
-    estatus_pago,
-    fecha_entrega
-  }]);
+// ---------------------------
+// Actualizar campo rápido en Supabase
+// ---------------------------
+async function actualizarCampoPedido(id, campo, valor) {
+  const { error } = await supabaseClient
+    .from("pedidos")
+    .update({ [campo]: valor })
+    .eq("id", id);
 
   if (error) {
-    console.error("Error guardando pedido rápido:", error);
-    alert("Error guardando pedido");
+    console.error("Error actualizando campo:", error);
+    alert("Error actualizando");
     return;
   }
 
-  alert("Pedido guardado");
-  cargarPedidos();
+  console.log(`Pedido ${id} actualizado: ${campo} = ${valor}`);
 }
+
+// ---------------------------
+// Abrir pedido para editar
+// ---------------------------
+function openEditOrder(id) {
+  const pedido = pedidosDB.find(p => Number(p.id) === Number(id));
+
+  if (!pedido) {
+    alert("No se encontró el pedido");
+    return;
+  }
+
+  pedidoEditandoId = pedido.id;
+
+  document.getElementById("f_fecha").value = pedido.fecha || "";
+  document.getElementById("f_operador").value = pedido.operador || "";
+  document.getElementById("f_cliente").value = pedido.cliente || "";
+  document.getElementById("f_descripcion").value = pedido.descripcion || "";
+  document.getElementById("f_cantidad").value = pedido.cantidad || "";
+  document.getElementById("f_material").value = pedido.material || "";
+  document.getElementById("f_impresion").value = pedido.tipo_impresion || "";
+  document.getElementById("f_entrega").value = pedido.fecha_entrega || "";
+
+  const titulo = document.getElementById("orderModalTitle");
+  if (titulo) titulo.textContent = "EDITAR PEDIDO #" + pedido.id;
+
+  const modal = document.getElementById("orderBackdrop");
+  if (modal) modal.style.display = "flex";
+}
+
+// ---------------------------
+// Abrir modal nuevo pedido
+// ---------------------------
+function openOrderModal() {
+  pedidoEditandoId = null;
+
+  document.getElementById("f_fecha").value = new Date().toISOString().split("T")[0];
+  document.getElementById("f_operador").value = "";
+  document.getElementById("f_cliente").value = "";
+  document.getElementById("f_descripcion").value = "";
+  document.getElementById("f_cantidad").value = "";
+  document.getElementById("f_material").value = "";
+  document.getElementById("f_impresion").value = "";
+  document.getElementById("f_entrega").value = "";
+
+  const titulo = document.getElementById("orderModalTitle");
+  if (titulo) titulo.textContent = "NUEVO PEDIDO";
+
+  const modal = document.getElementById("orderBackdrop");
+  if (modal) modal.style.display = "flex";
+}
+
+// ---------------------------
+// Cerrar modal genérico
+// ---------------------------
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) modal.style.display = "none";
+
+  pedidoEditandoId = null;
+}
+
+// ---------------------------
+// Cerrar modal al tocar fondo oscuro
+// ---------------------------
+function bdClick(event, id) {
+  if (event.target.id === id) {
+    closeModal(id);
+  }
+}
+
 // ---------------------------
 // Fecha automática
 // ---------------------------
@@ -234,9 +297,41 @@ function ponerFechaHoy() {
   }
 }
 
-window.addEventListener("DOMContentLoaded", ponerFechaHoy);
+// ---------------------------
+// Limpiar fila rápida después de guardar
+// ---------------------------
+function limpiarFilaRapida() {
+  const campos = [
+    "q_cliente",
+    "q_descripcion",
+    "q_cantidad",
+    "q_monto_abono",
+    "q_entrega"
+  ];
+
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+
+  const estatusTrabajo = document.getElementById("q_estatus_trabajo");
+  if (estatusTrabajo) estatusTrabajo.value = "Solicitud";
+
+  const estatusPago = document.getElementById("q_estatus_pago");
+  if (estatusPago) estatusPago.value = "Pendiente";
+}
+
+// ---------------------------
+// Limpiar fila rápida manual
+// ---------------------------
+function clearQuickEntry() {
+  limpiarFilaRapida();
+  ponerFechaHoy();
+}
+
 // ---------------------------
 // Badges de estado
+// Se dejan por compatibilidad, aunque ahora usamos select directo en tabla.
 // ---------------------------
 function badgeTrabajo(valor) {
   const estado = valor || "";
@@ -273,72 +368,11 @@ function badgePago(valor) {
 
   return `<span class="badge">${estado}</span>`;
 }
+
 // ---------------------------
-// Abrir pedido para editar
+// Inicio
 // ---------------------------
-function openEditOrder(id) {
-  const pedido = pedidosDB.find(p => Number(p.id) === Number(id));
-
-  if (!pedido) {
-    alert("No se encontró el pedido");
-    return;
-  }
-
-  pedidoEditandoId = pedido.id;
-
-  document.getElementById("f_fecha").value = pedido.fecha || "";
-  document.getElementById("f_operador").value = pedido.operador || "";
-  document.getElementById("f_cliente").value = pedido.cliente || "";
-  document.getElementById("f_descripcion").value = pedido.descripcion || "";
-  document.getElementById("f_cantidad").value = pedido.cantidad || "";
-  document.getElementById("f_material").value = pedido.material || "";
-  document.getElementById("f_impresion").value = pedido.tipo_impresion || "";
-  document.getElementById("f_entrega").value = pedido.fecha_entrega || "";
-
-  const titulo = document.getElementById("orderModalTitle");
-  if (titulo) titulo.textContent = "EDITAR PEDIDO #" + pedido.id;
-
-  const modal = document.getElementById("orderBackdrop");
-  if (modal) modal.style.display = "flex";
-}
-// ---------------------------
-// Cerrar modal genérico
-// ---------------------------
-function closeModal(id) {
-  const modal = document.getElementById(id);
-  if (modal) modal.style.display = "none";
-
-  pedidoEditandoId = null;
-}
-// ---------------------------
-// Cerrar modal
-// ---------------------------
-function closeModal(id) {
-  console.log("cerrando modal:", id); // para verificar
-
-  const modal = document.getElementById(id);
-  if (modal) {
-    modal.style.display = "none";
-  } else {
-    console.log("no encontró modal");
-  }
-
-  pedidoEditandoId = null;
-}
-// ---------------------------
-// Actualizar campo rápido en Supabase
-// ---------------------------
-async function actualizarCampoPedido(id, campo, valor) {
-  const { error } = await supabaseClient
-    .from("pedidos")
-    .update({ [campo]: valor })
-    .eq("id", id);
-
-  if (error) {
-    console.error("Error actualizando campo:", error);
-    alert("Error actualizando");
-    return;
-  }
-
-  console.log(`Pedido ${id} actualizado: ${campo} = ${valor}`);
-}
+window.addEventListener("DOMContentLoaded", () => {
+  ponerFechaHoy();
+  cargarPedidos();
+});
