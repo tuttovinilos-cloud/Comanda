@@ -180,3 +180,41 @@ function ponerFechaHoy() {
 }
 
 window.addEventListener("DOMContentLoaded", ponerFechaHoy);
+// ---------------------------
+// Badges de estado
+// ---------------------------
+function badgeTrabajo(valor) {
+  const estado = valor || "";
+
+  if (estado === "Solicitud") {
+    return `<span class="badge" style="background:#FF3B3022;color:#FF3B30;border:1px solid #FF3B30">Solicitud</span>`;
+  }
+
+  if (estado === "Revisado") {
+    return `<span class="badge" style="background:#FFD60A22;color:#FFD60A;border:1px solid #FFD60A">Revisado</span>`;
+  }
+
+  if (estado === "Listo") {
+    return `<span class="badge" style="background:#30D15822;color:#30D158;border:1px solid #30D158">Listo</span>`;
+  }
+
+  return `<span class="badge">${estado}</span>`;
+}
+
+function badgePago(valor) {
+  const estado = valor || "";
+
+  if (estado === "Pendiente") {
+    return `<span class="badge" style="background:#FF453A22;color:#FF453A;border:1px solid #FF453A">Pendiente</span>`;
+  }
+
+  if (estado === "Abonado") {
+    return `<span class="badge" style="background:#FF9F0A22;color:#FF9F0A;border:1px solid #FF9F0A">Abonado</span>`;
+  }
+
+  if (estado === "Pagado") {
+    return `<span class="badge" style="background:#32D74B22;color:#32D74B;border:1px solid #32D74B">Pagado</span>`;
+  }
+
+  return `<span class="badge">${estado}</span>`;
+}
