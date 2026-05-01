@@ -261,11 +261,16 @@ async function guardarTodosTiposImpresion() {
 // ---------------------------
 // Nuevo material
 // ---------------------------
+// ---------------------------
+// Nuevo material
+// ---------------------------
 async function nuevoMaterial() {
+  const nombreUnico = "Nuevo material " + Date.now();
+
   const { error } = await supabaseClient
     .from("materiales")
     .insert([{
-      nombre: "Nuevo material",
+      nombre: nombreUnico,
       precio_base: 0,
       activo: true
     }]);
