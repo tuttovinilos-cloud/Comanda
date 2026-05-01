@@ -162,3 +162,21 @@ async function saveQuickOrder() {
   alert("Pedido guardado");
   cargarPedidos();
 }
+// ---------------------------
+// Fecha automática
+// ---------------------------
+function ponerFechaHoy() {
+  const hoy = new Date().toISOString().split("T")[0];
+
+  const qFecha = document.getElementById("q_fecha");
+  if (qFecha && !qFecha.value) {
+    qFecha.value = hoy;
+  }
+
+  const fFecha = document.getElementById("f_fecha");
+  if (fFecha && !fFecha.value) {
+    fFecha.value = hoy;
+  }
+}
+
+window.addEventListener("DOMContentLoaded", ponerFechaHoy);
