@@ -91,6 +91,9 @@ async function guardarPedido() {
 // ---------------------------
 // Guardar desde botón GUARDAR del modal
 // ---------------------------
+// ---------------------------
+// Guardar / actualizar pedido desde modal
+// ---------------------------
 async function saveOrder() {
   const fecha = document.getElementById("f_fecha")?.value || "";
   const operador = document.getElementById("f_operador")?.value || "";
@@ -101,7 +104,7 @@ async function saveOrder() {
   const tipo_impresion = document.getElementById("f_impresion")?.value || "";
   const fecha_entrega = document.getElementById("f_entrega")?.value || "";
 
-  const { error } = await supabaseClient.from("pedidos").insert([{
+  const datosPedido = {
     fecha,
     operador,
     cliente,
@@ -109,10 +112,28 @@ async function saveOrder() {
     cantidad,
     material,
     tipo_impresion,
-    estatus_trabajo: "Solicitud",
-    estatus_pago: "Pendiente",
     fecha_entrega
-  }]);
+  };
+
+  let error;
+
+  if (pedidoEditandoId) {
+    const respuesta = await supabaseClient
+      .from("pedidos")
+      .update(datosPedido)
+      .eq("id", pedidoEditandoId);
+
+    error = respuesta.error;
+  } else {
+    datosPedido.estatus_trabajo = "Solicitud";
+    datosPedido.estatus_pago = "Pendiente";
+
+    const respuesta = await supabaseClient
+      .from("pedidos")
+      .insert([datosPedido]);
+
+    error = respuesta.error;
+  }
 
   if (error) {
     console.error("Error guardando pedido:", error);
@@ -120,7 +141,13 @@ async function saveOrder() {
     return;
   }
 
-  alert("Pedido guardado");
+  alert(pedidoEditandoId ? "Pedido actualizado" : "Pedido guardado");
+
+  pedidoEditandoId = null;
+
+  const modal = document.getElementById("orderBackdrop");
+  if (modal) modal.style.display = "none";
+
   cargarPedidos();
 }
 // ---------------------------
