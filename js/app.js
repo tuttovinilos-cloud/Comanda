@@ -1,5 +1,7 @@
 console.log("APP JS conectado correctamente");
 console.log("Supabase:", window.supabaseClient);
+let pedidoEditandoId = null;
+let pedidosDB = [];
 
 // Forzar indicador a Supabase
 const badge = document.getElementById("storageBadgeText");
