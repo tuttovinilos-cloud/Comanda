@@ -109,19 +109,22 @@ async function saveQuickOrder() {
     alert("Coloca al menos cliente o descripción");
     return;
   }
+const archivoData = await subirArchivoPedido();
 
-  const { error } = await supabaseClient.from("pedidos").insert([{
-    fecha,
-    operador,
-    cliente,
-    descripcion,
-    cantidad,
-    material,
-    tipo_impresion,
-    estatus_trabajo,
-    estatus_pago,
-    fecha_entrega
-  }]);
+const { error } = await supabaseClient.from("pedidos").insert([{
+  fecha,
+  operador,
+  cliente,
+  descripcion,
+  cantidad,
+  material,
+  tipo_impresion,
+  estatus_trabajo,
+  estatus_pago,
+  fecha_entrega,
+  archivo_url: archivoData.archivo_url,
+  archivo_nombre: archivoData.archivo_nombre
+}]);
 
   if (error) {
     console.error("Error guardando pedido rápido:", error);
@@ -449,4 +452,72 @@ async function subirArchivoPedido() {
     archivo_url: data.publicUrl,
     archivo_nombre: archivoSeleccionado.name
   };
+}
+// ---------------------------
+// Archivo desde modal
+// ---------------------------
+function handleFileSelect(event) {
+  archivoSeleccionado = event.target.files[0] || null;
+
+  if (archivoSeleccionado) {
+    alert("Archivo seleccionado: " + archivoSeleccionado.name);
+  }
+}
+
+// ---------------------------
+// Archivo desde fila rápida
+// ---------------------------
+function openQuickAttach() {
+  const input = document.getElementById("rowFileInput");
+  if (input) input.click();
+}
+
+function handleRowFileSelect(event) {
+  archivoSeleccionado = event.target.files[0] || null;
+
+  if (archivoSeleccionado) {
+    alert("Archivo seleccionado: " + archivoSeleccionado.name);
+  }
+}
+
+// ---------------------------
+// Subir archivo a Supabase Storage
+// ---------------------------
+async function subirArchivoPedido() {
+  if (!archivoSeleccionado) {
+    return {
+      archivo_url: null,
+      archivo_nombre: null
+    };
+  }
+
+  const nombreLimpio = archivoSeleccionado.name.replace(/\s+/g, "_");
+  const ruta = `pedidos/${Date.now()}_${nombreLimpio}`;
+
+  const { error } = await supabaseClient.storage
+    .from("adjuntos-pedidos")
+    .upload(ruta, archivoSeleccionado);
+
+  if (error) {
+    console.error("Error subiendo archivo:", error);
+    alert("Error subiendo archivo");
+
+    return {
+      archivo_url: null,
+      archivo_nombre: null
+    };
+  }
+
+  const { data } = supabaseClient.storage
+    .from("adjuntos-pedidos")
+    .getPublicUrl(ruta);
+
+  const resultado = {
+    archivo_url: data.publicUrl,
+    archivo_nombre: archivoSeleccionado.name
+  };
+
+  archivoSeleccionado = null;
+
+  return resultado;
 }
