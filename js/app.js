@@ -120,3 +120,45 @@ async function saveOrder() {
   alert("Pedido guardado");
   cargarPedidos();
 }
+// ---------------------------
+// Guardar desde fila rápida
+// ---------------------------
+async function saveQuickOrder() {
+  const fecha = document.getElementById("q_fecha")?.value || "";
+  const operador = document.getElementById("q_operador")?.value || "";
+  const cliente = document.getElementById("q_cliente")?.value || "";
+  const descripcion = document.getElementById("q_descripcion")?.value || "";
+  const cantidad = document.getElementById("q_cantidad")?.value || "";
+  const material = document.getElementById("q_material")?.value || "";
+  const tipo_impresion = document.getElementById("q_impresion")?.value || "";
+  const estatus_trabajo = document.getElementById("q_estatus_trabajo")?.value || "Solicitud";
+  const estatus_pago = document.getElementById("q_estatus_pago")?.value || "Pendiente";
+  const fecha_entrega = document.getElementById("q_entrega")?.value || "";
+
+  if (!cliente && !descripcion) {
+    alert("Coloca al menos cliente o descripción");
+    return;
+  }
+
+  const { error } = await supabaseClient.from("pedidos").insert([{
+    fecha,
+    operador,
+    cliente,
+    descripcion,
+    cantidad,
+    material,
+    tipo_impresion,
+    estatus_trabajo,
+    estatus_pago,
+    fecha_entrega
+  }]);
+
+  if (error) {
+    console.error("Error guardando pedido rápido:", error);
+    alert("Error guardando pedido");
+    return;
+  }
+
+  alert("Pedido guardado");
+  cargarPedidos();
+}
