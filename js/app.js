@@ -276,3 +276,12 @@ function openEditOrder(id) {
   const modal = document.getElementById("orderBackdrop");
   if (modal) modal.style.display = "flex";
 }
+// ---------------------------
+// Cerrar modal genérico
+// ---------------------------
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) modal.style.display = "none";
+
+  pedidoEditandoId = null;
+}
