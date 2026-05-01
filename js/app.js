@@ -102,7 +102,7 @@ async function saveQuickOrder() {
   const tipo_impresion = document.getElementById("q_impresion")?.value || "";
   const estatus_trabajo = document.getElementById("q_estatus_trabajo")?.value || "Solicitud";
   const estatus_pago = document.getElementById("q_estatus_pago")?.value || "Pendiente";
-  const fecha_entrega = document.getElementById("q_entrega")?.value || "";
+  const fecha_entrega = document.getElementById("q_entrega")?.value || null;
 
   if (!cliente && !descripcion) {
     alert("Coloca al menos cliente o descripción");
