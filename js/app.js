@@ -85,3 +85,38 @@ async function guardarPedido() {
 
   cargarPedidos(); // recargar tabla
 }
+// ---------------------------
+// Guardar desde botón GUARDAR del modal
+// ---------------------------
+async function saveOrder() {
+  const fecha = document.getElementById("f_fecha")?.value || "";
+  const operador = document.getElementById("f_operador")?.value || "";
+  const cliente = document.getElementById("f_cliente")?.value || "";
+  const descripcion = document.getElementById("f_descripcion")?.value || "";
+  const cantidad = document.getElementById("f_cantidad")?.value || "";
+  const material = document.getElementById("f_material")?.value || "";
+  const tipo_impresion = document.getElementById("f_impresion")?.value || "";
+  const fecha_entrega = document.getElementById("f_entrega")?.value || "";
+
+  const { error } = await supabaseClient.from("pedidos").insert([{
+    fecha,
+    operador,
+    cliente,
+    descripcion,
+    cantidad,
+    material,
+    tipo_impresion,
+    estatus_trabajo: "Solicitud",
+    estatus_pago: "Pendiente",
+    fecha_entrega
+  }]);
+
+  if (error) {
+    console.error("Error guardando pedido:", error);
+    alert("Error guardando pedido");
+    return;
+  }
+
+  alert("Pedido guardado");
+  cargarPedidos();
+}
