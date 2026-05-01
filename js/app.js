@@ -221,3 +221,31 @@ function badgePago(valor) {
 
   return `<span class="badge">${estado}</span>`;
 }
+// ---------------------------
+// Abrir pedido para editar
+// ---------------------------
+function openEditOrder(id) {
+  const pedido = pedidosDB.find(p => Number(p.id) === Number(id));
+
+  if (!pedido) {
+    alert("No se encontró el pedido");
+    return;
+  }
+
+  pedidoEditandoId = pedido.id;
+
+  document.getElementById("f_fecha").value = pedido.fecha || "";
+  document.getElementById("f_operador").value = pedido.operador || "";
+  document.getElementById("f_cliente").value = pedido.cliente || "";
+  document.getElementById("f_descripcion").value = pedido.descripcion || "";
+  document.getElementById("f_cantidad").value = pedido.cantidad || "";
+  document.getElementById("f_material").value = pedido.material || "";
+  document.getElementById("f_impresion").value = pedido.tipo_impresion || "";
+  document.getElementById("f_entrega").value = pedido.fecha_entrega || "";
+
+  const titulo = document.getElementById("orderModalTitle");
+  if (titulo) titulo.textContent = "EDITAR PEDIDO #" + pedido.id;
+
+  const modal = document.getElementById("orderBackdrop");
+  if (modal) modal.style.display = "flex";
+}
