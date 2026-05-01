@@ -285,3 +285,18 @@ function closeModal(id) {
 
   pedidoEditandoId = null;
 }
+// ---------------------------
+// Cerrar modal
+// ---------------------------
+function closeModal(id) {
+  console.log("cerrando modal:", id); // para verificar
+
+  const modal = document.getElementById(id);
+  if (modal) {
+    modal.style.display = "none";
+  } else {
+    console.log("no encontró modal");
+  }
+
+  pedidoEditandoId = null;
+}
