@@ -51,7 +51,16 @@ async function cargarPedidos() {
         <td>${p.material ?? ""}</td>
         <td>${p.tipo_impresion ?? ""}</td>
         <td>${p.precio ?? ""}</td>
-<td>${badgeTrabajo(p.estatus_trabajo)}</td>
+<td>
+  <select 
+    onchange="actualizarCampoPedido(${p.id}, 'estatus_trabajo', this.value)"
+    onclick="event.stopPropagation()"
+  >
+    <option ${p.estatus_trabajo === "Solicitud" ? "selected" : ""}>Solicitud</option>
+    <option ${p.estatus_trabajo === "Revisado" ? "selected" : ""}>Revisado</option>
+    <option ${p.estatus_trabajo === "Listo" ? "selected" : ""}>Listo</option>
+  </select>
+</td>
 <td>${badgePago(p.estatus_pago)}</td>
         <td>${p.fecha_entrega ?? ""}</td>
       </tr>
