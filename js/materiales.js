@@ -287,12 +287,14 @@ async function nuevoMaterial() {
 
 // ---------------------------
 // Nuevo tipo de impresión
-// ---------------------------
+
 async function nuevoTipoImpresion() {
+  const nombreUnico = "Nuevo tipo " + Date.now();
+
   const { error } = await supabaseClient
     .from("tipos_impresion")
     .insert([{
-      nombre: "Nuevo tipo",
+      nombre: nombreUnico,
       precio_extra: 0,
       activo: true
     }]);
