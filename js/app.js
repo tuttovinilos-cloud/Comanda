@@ -61,7 +61,16 @@ async function cargarPedidos() {
     <option ${p.estatus_trabajo === "Listo" ? "selected" : ""}>Listo</option>
   </select>
 </td>
-<td>${badgePago(p.estatus_pago)}</td>
+<td>
+  <select 
+    onchange="actualizarCampoPedido(${p.id}, 'estatus_pago', this.value)"
+    onclick="event.stopPropagation()"
+  >
+    <option ${p.estatus_pago === "Pendiente" ? "selected" : ""}>Pendiente</option>
+    <option ${p.estatus_pago === "Abonado" ? "selected" : ""}>Abonado</option>
+    <option ${p.estatus_pago === "Pagado" ? "selected" : ""}>Pagado</option>
+  </select>
+</td>
         <td>${p.fecha_entrega ?? ""}</td>
       </tr>
     `;
