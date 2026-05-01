@@ -41,8 +41,9 @@ async function cargarPedidos() {
         <td>${p.operador ?? ""}</td>
         <td>${p.cliente ?? ""}</td>
         <td>${p.descripcion ?? ""}</td>
-        <td>
+<td>
   <input 
+    class="cell-edit"
     value="${p.cantidad ?? ""}" 
     onchange="actualizarCampoPedido(${p.id}, 'cantidad', this.value)"
     onclick="event.stopPropagation()"
