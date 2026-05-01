@@ -37,6 +37,10 @@ async function cargarPedidos() {
   tabla.innerHTML = "";
 
   pedidosDB.forEach(p => {
+    const archivo = p.archivo_url
+      ? `<a class="file-link-chip" href="${p.archivo_url}" target="_blank" onclick="event.stopPropagation()">📎 ${p.archivo_nombre || "Archivo"}</a>`
+      : "—";
+
     const fila = `
       <tr onclick="openEditOrder(${p.id})">
         <td>${p.id ?? ""}</td>
@@ -59,11 +63,11 @@ async function cargarPedidos() {
         <td>${p.precio ?? ""}</td>
 
         <td>
-     <select 
-  class="cell-select ${claseTrabajo(p.estatus_trabajo)}"
-  onchange="actualizarCampoPedido(${p.id}, 'estatus_trabajo', this.value); this.className='cell-select ' + claseTrabajo(this.value)"
-  onclick="event.stopPropagation()"
->
+          <select 
+            class="cell-select ${claseTrabajo(p.estatus_trabajo)}"
+            onchange="actualizarCampoPedido(${p.id}, 'estatus_trabajo', this.value); this.className='cell-select ' + claseTrabajo(this.value)"
+            onclick="event.stopPropagation()"
+          >
             <option ${p.estatus_trabajo === "Solicitud" ? "selected" : ""}>Solicitud</option>
             <option ${p.estatus_trabajo === "Revisado" ? "selected" : ""}>Revisado</option>
             <option ${p.estatus_trabajo === "Listo" ? "selected" : ""}>Listo</option>
@@ -71,11 +75,11 @@ async function cargarPedidos() {
         </td>
 
         <td>
-    <select 
-  class="cell-select ${clasePago(p.estatus_pago)}"
-  onchange="actualizarCampoPedido(${p.id}, 'estatus_pago', this.value); this.className='cell-select ' + clasePago(this.value)"
-  onclick="event.stopPropagation()"
->
+          <select 
+            class="cell-select ${clasePago(p.estatus_pago)}"
+            onchange="actualizarCampoPedido(${p.id}, 'estatus_pago', this.value); this.className='cell-select ' + clasePago(this.value)"
+            onclick="event.stopPropagation()"
+          >
             <option ${p.estatus_pago === "Pendiente" ? "selected" : ""}>Pendiente</option>
             <option ${p.estatus_pago === "Abonado" ? "selected" : ""}>Abonado</option>
             <option ${p.estatus_pago === "Pagado" ? "selected" : ""}>Pagado</option>
@@ -83,6 +87,7 @@ async function cargarPedidos() {
         </td>
 
         <td>${p.fecha_entrega || "—"}</td>
+        <td>${archivo}</td>
       </tr>
     `;
 
@@ -109,22 +114,27 @@ async function saveQuickOrder() {
     alert("Coloca al menos cliente o descripción");
     return;
   }
-const archivoData = await subirArchivoPedido();
 
-const { error } = await supabaseClient.from("pedidos").insert([{
-  fecha,
-  operador,
-  cliente,
-  descripcion,
-  cantidad,
-  material,
-  tipo_impresion,
-  estatus_trabajo,
-  estatus_pago,
-  fecha_entrega,
-  archivo_url: archivoData.archivo_url,
-  archivo_nombre: archivoData.archivo_nombre
-}]);
+  console.log("Archivo antes de guardar:", archivoSeleccionado);
+
+  const archivoData = await subirArchivoPedido();
+
+  console.log("Archivo subido:", archivoData);
+
+  const { error } = await supabaseClient.from("pedidos").insert([{
+    fecha,
+    operador,
+    cliente,
+    descripcion,
+    cantidad,
+    material,
+    tipo_impresion,
+    estatus_trabajo,
+    estatus_pago,
+    fecha_entrega,
+    archivo_url: archivoData.archivo_url,
+    archivo_nombre: archivoData.archivo_nombre
+  }]);
 
   if (error) {
     console.error("Error guardando pedido rápido:", error);
@@ -134,6 +144,7 @@ const { error } = await supabaseClient.from("pedidos").insert([{
 
   alert("Pedido guardado");
 
+  archivoSeleccionado = null;
   limpiarFilaRapida();
   ponerFechaHoy();
   cargarPedidos();
@@ -150,22 +161,26 @@ async function saveOrder() {
   const cantidad = document.getElementById("f_cantidad")?.value || "";
   const material = document.getElementById("f_material")?.value || "";
   const tipo_impresion = document.getElementById("f_impresion")?.value || "";
-  const fecha_entrega = document.getElementById("f_entrega")?.value || "";
+  const fecha_entrega = document.getElementById("f_entrega")?.value || null;
 
-const archivoData = await subirArchivoPedido();
+  const archivoData = await subirArchivoPedido();
 
-const datosPedido = {
-  fecha,
-  operador,
-  cliente,
-  descripcion,
-  cantidad,
-  material,
-  tipo_impresion,
-  fecha_entrega,
-  archivo_url: archivoData.archivo_url,
-  archivo_nombre: archivoData.archivo_nombre
-};
+  const datosPedido = {
+    fecha,
+    operador,
+    cliente,
+    descripcion,
+    cantidad,
+    material,
+    tipo_impresion,
+    fecha_entrega
+  };
+
+  // Solo cambia el archivo si el usuario seleccionó uno nuevo.
+  if (archivoData.archivo_url) {
+    datosPedido.archivo_url = archivoData.archivo_url;
+    datosPedido.archivo_nombre = archivoData.archivo_nombre;
+  }
 
   let error;
 
@@ -196,6 +211,7 @@ const datosPedido = {
   alert(pedidoEditandoId ? "Pedido actualizado" : "Pedido guardado");
 
   pedidoEditandoId = null;
+  archivoSeleccionado = null;
   closeModal("orderBackdrop");
   cargarPedidos();
 }
@@ -230,6 +246,7 @@ function openEditOrder(id) {
   }
 
   pedidoEditandoId = pedido.id;
+  archivoSeleccionado = null;
 
   document.getElementById("f_fecha").value = pedido.fecha || "";
   document.getElementById("f_operador").value = pedido.operador || "";
@@ -243,6 +260,25 @@ function openEditOrder(id) {
   const titulo = document.getElementById("orderModalTitle");
   if (titulo) titulo.textContent = "EDITAR PEDIDO #" + pedido.id;
 
+  const fileName = document.getElementById("fileName");
+  const fileGeneric = document.getElementById("fileGeneric");
+  const filePreview = document.getElementById("filePreview");
+  const fileEmpty = document.getElementById("fileEmpty");
+  const fileIconBig = document.getElementById("fileIconBig");
+
+  if (pedido.archivo_url) {
+    if (fileEmpty) fileEmpty.style.display = "none";
+    if (filePreview) filePreview.style.display = "flex";
+    if (fileGeneric) fileGeneric.style.display = "block";
+    if (fileIconBig) fileIconBig.textContent = "📎";
+    if (fileName) fileName.textContent = pedido.archivo_nombre || "Archivo adjunto";
+  } else {
+    if (fileEmpty) fileEmpty.style.display = "flex";
+    if (filePreview) filePreview.style.display = "none";
+    if (fileGeneric) fileGeneric.style.display = "none";
+    if (fileName) fileName.textContent = "";
+  }
+
   const modal = document.getElementById("orderBackdrop");
   if (modal) modal.style.display = "flex";
 }
@@ -252,6 +288,7 @@ function openEditOrder(id) {
 // ---------------------------
 function openOrderModal() {
   pedidoEditandoId = null;
+  archivoSeleccionado = null;
 
   document.getElementById("f_fecha").value = new Date().toISOString().split("T")[0];
   document.getElementById("f_operador").value = "";
@@ -264,6 +301,16 @@ function openOrderModal() {
 
   const titulo = document.getElementById("orderModalTitle");
   if (titulo) titulo.textContent = "NUEVO PEDIDO";
+
+  const fileEmpty = document.getElementById("fileEmpty");
+  const filePreview = document.getElementById("filePreview");
+  const fileGeneric = document.getElementById("fileGeneric");
+  const fileName = document.getElementById("fileName");
+
+  if (fileEmpty) fileEmpty.style.display = "flex";
+  if (filePreview) filePreview.style.display = "none";
+  if (fileGeneric) fileGeneric.style.display = "none";
+  if (fileName) fileName.textContent = "";
 
   const modal = document.getElementById("orderBackdrop");
   if (modal) modal.style.display = "flex";
@@ -327,6 +374,11 @@ function limpiarFilaRapida() {
 
   const estatusPago = document.getElementById("q_estatus_pago");
   if (estatusPago) estatusPago.value = "Pendiente";
+
+  const rowFileInput = document.getElementById("rowFileInput");
+  if (rowFileInput) rowFileInput.value = "";
+
+  archivoSeleccionado = null;
 }
 
 // ---------------------------
@@ -337,45 +389,6 @@ function clearQuickEntry() {
   ponerFechaHoy();
 }
 
-// ---------------------------
-// Badges de estado
-// Se dejan por compatibilidad, aunque ahora usamos select directo en tabla.
-// ---------------------------
-function badgeTrabajo(valor) {
-  const estado = valor || "";
-
-  if (estado === "Solicitud") {
-    return `<span class="badge" style="background:#FF3B3022;color:#FF3B30;border:1px solid #FF3B30">Solicitud</span>`;
-  }
-
-  if (estado === "Revisado") {
-    return `<span class="badge" style="background:#FFD60A22;color:#FFD60A;border:1px solid #FFD60A">Revisado</span>`;
-  }
-
-  if (estado === "Listo") {
-    return `<span class="badge" style="background:#30D15822;color:#30D158;border:1px solid #30D158">Listo</span>`;
-  }
-
-  return `<span class="badge">${estado}</span>`;
-}
-
-function badgePago(valor) {
-  const estado = valor || "";
-
-  if (estado === "Pendiente") {
-    return `<span class="badge" style="background:#FF453A22;color:#FF453A;border:1px solid #FF453A">Pendiente</span>`;
-  }
-
-  if (estado === "Abonado") {
-    return `<span class="badge" style="background:#FF9F0A22;color:#FF9F0A;border:1px solid #FF9F0A">Abonado</span>`;
-  }
-
-  if (estado === "Pagado") {
-    return `<span class="badge" style="background:#32D74B22;color:#32D74B;border:1px solid #32D74B">Pagado</span>`;
-  }
-
-  return `<span class="badge">${estado}</span>`;
-}
 // ---------------------------
 // Clases de color para select
 // ---------------------------
@@ -398,61 +411,7 @@ function clasePago(valor) {
 
   return "";
 }
-// ---------------------------
-// Inicio
-// ---------------------------
-window.addEventListener("DOMContentLoaded", () => {
-  ponerFechaHoy();
-  cargarPedidos();
-});
-// ---------------------------
-// Seleccionar archivo
-// ---------------------------
-function handleFileSelect(event) {
-  archivoSeleccionado = event.target.files[0] || null;
 
-  if (archivoSeleccionado) {
-    alert("Archivo seleccionado: " + archivoSeleccionado.name);
-  }
-}
-
-// ---------------------------
-// Subir archivo a Supabase Storage
-// ---------------------------
-async function subirArchivoPedido() {
-  if (!archivoSeleccionado) {
-    return {
-      archivo_url: null,
-      archivo_nombre: null
-    };
-  }
-
-  const nombreLimpio = archivoSeleccionado.name.replace(/\s+/g, "_");
-  const ruta = `pedidos/${Date.now()}_${nombreLimpio}`;
-
-  const { error } = await supabaseClient.storage
-    .from("adjuntos-pedidos")
-    .upload(ruta, archivoSeleccionado);
-
-  if (error) {
-    console.error("Error subiendo archivo:", error);
-    alert("Error subiendo archivo");
-
-    return {
-      archivo_url: null,
-      archivo_nombre: null
-    };
-  }
-
-  const { data } = supabaseClient.storage
-    .from("adjuntos-pedidos")
-    .getPublicUrl(ruta);
-
-  return {
-    archivo_url: data.publicUrl,
-    archivo_nombre: archivoSeleccionado.name
-  };
-}
 // ---------------------------
 // Archivo desde modal
 // ---------------------------
@@ -461,6 +420,18 @@ function handleFileSelect(event) {
 
   if (archivoSeleccionado) {
     alert("Archivo seleccionado: " + archivoSeleccionado.name);
+
+    const fileEmpty = document.getElementById("fileEmpty");
+    const filePreview = document.getElementById("filePreview");
+    const fileGeneric = document.getElementById("fileGeneric");
+    const fileName = document.getElementById("fileName");
+    const fileIconBig = document.getElementById("fileIconBig");
+
+    if (fileEmpty) fileEmpty.style.display = "none";
+    if (filePreview) filePreview.style.display = "flex";
+    if (fileGeneric) fileGeneric.style.display = "block";
+    if (fileIconBig) fileIconBig.textContent = "📎";
+    if (fileName) fileName.textContent = archivoSeleccionado.name;
   }
 }
 
@@ -481,6 +452,26 @@ function handleRowFileSelect(event) {
 }
 
 // ---------------------------
+// Quitar archivo seleccionado
+// ---------------------------
+function removeFile() {
+  archivoSeleccionado = null;
+
+  const input = document.getElementById("f_archivo");
+  if (input) input.value = "";
+
+  const fileEmpty = document.getElementById("fileEmpty");
+  const filePreview = document.getElementById("filePreview");
+  const fileGeneric = document.getElementById("fileGeneric");
+  const fileName = document.getElementById("fileName");
+
+  if (fileEmpty) fileEmpty.style.display = "flex";
+  if (filePreview) filePreview.style.display = "none";
+  if (fileGeneric) fileGeneric.style.display = "none";
+  if (fileName) fileName.textContent = "";
+}
+
+// ---------------------------
 // Subir archivo a Supabase Storage
 // ---------------------------
 async function subirArchivoPedido() {
@@ -491,7 +482,11 @@ async function subirArchivoPedido() {
     };
   }
 
-  const nombreLimpio = archivoSeleccionado.name.replace(/\s+/g, "_");
+  const nombreLimpio = archivoSeleccionado.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w.\-]+/g, "_");
+
   const ruta = `pedidos/${Date.now()}_${nombreLimpio}`;
 
   const { error } = await supabaseClient.storage
@@ -521,3 +516,12 @@ async function subirArchivoPedido() {
 
   return resultado;
 }
+
+// ---------------------------
+// Inicio
+// ---------------------------
+window.addEventListener("DOMContentLoaded", () => {
+  ponerFechaHoy();
+  cargarPedidos();
+});
+
