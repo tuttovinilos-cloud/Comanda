@@ -783,3 +783,63 @@ PASO FINAL
    - Material
    - Operador
    - Teléfono del cliente
+
+// ---------------------------
+// BUSCADOR COMANDA
+// ---------------------------
+function onSearch() {
+  const texto = (document.getElementById("searchInput")?.value || "")
+    .toLowerCase()
+    .trim();
+
+  const estado = document.getElementById("filterStatus")?.value || "";
+  const pago = document.getElementById("filterPago")?.value || "";
+  const desde = document.getElementById("filterFechaDesde")?.value || "";
+  const hasta = document.getElementById("filterFechaHasta")?.value || "";
+  const operadorFiltro = document.getElementById("filterOperador")?.value || "";
+
+  const filas = document.querySelectorAll("#orderTableBody tr");
+
+  filas.forEach(fila => {
+    const celdas = fila.querySelectorAll("td");
+
+    if (!celdas.length) return;
+
+    const fecha = celdas[1]?.textContent.trim() || "";
+    const operador = celdas[2]?.textContent.trim() || "";
+    const cliente = celdas[3]?.textContent.trim() || "";
+    const descripcion = celdas[4]?.textContent.trim() || "";
+    const cantidad = celdas[5]?.querySelector("input")?.value || celdas[5]?.textContent.trim() || "";
+    const material = celdas[6]?.textContent.trim() || "";
+    const impresion = celdas[7]?.textContent.trim() || "";
+    const estatus = celdas[9]?.querySelector("select")?.value || "";
+    const pagoActual = celdas[10]?.querySelector("select")?.value || "";
+    const entrega = celdas[11]?.textContent.trim() || "";
+    const archivo = celdas[12]?.textContent.trim() || "";
+
+    const contenido = [
+      fecha,
+      operador,
+      cliente,
+      descripcion,
+      cantidad,
+      material,
+      impresion,
+      estatus,
+      pagoActual,
+      entrega,
+      archivo
+    ].join(" ").toLowerCase();
+
+    let mostrar = true;
+
+    if (texto && !contenido.includes(texto)) mostrar = false;
+    if (estado && estatus !== estado) mostrar = false;
+    if (pago && pagoActual !== pago) mostrar = false;
+    if (operadorFiltro && operador !== operadorFiltro) mostrar = false;
+    if (desde && fecha < desde) mostrar = false;
+    if (hasta && fecha > hasta) mostrar = false;
+
+    fila.style.display = mostrar ? "" : "none";
+  });
+}
