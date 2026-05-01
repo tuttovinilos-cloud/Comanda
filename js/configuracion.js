@@ -79,7 +79,7 @@ function renderOperadores() {
   }
 
   if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="10" class="empty">Sin operadores</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="13" class="empty">Sin operadores</td></tr>`;
     return;
   }
 
@@ -127,6 +127,18 @@ function renderOperadores() {
           <input type="checkbox" class="op-configuracion" data-id="${op.id}" ${op.puede_configuracion ? "checked" : ""}>
         </td>
 
+        <td class="check-cell">
+          <input type="checkbox" class="op-marketing" data-id="${op.id}" ${op.puede_marketing ? "checked" : ""}>
+        </td>
+
+        <td class="check-cell">
+          <input type="checkbox" class="op-mod-operador" data-id="${op.id}" ${op.puede_modificar_operador !== false ? "checked" : ""}>
+        </td>
+
+        <td class="check-cell">
+          <input type="checkbox" class="op-mod-cantidad" data-id="${op.id}" ${op.puede_modificar_cantidad !== false ? "checked" : ""}>
+        </td>
+
         <td>
           <select class="active-select op-activo" data-id="${op.id}">
             <option value="true" ${activo ? "selected" : ""}>Activo</option>
@@ -162,6 +174,9 @@ function aplicarRol(id) {
   const materiales = document.querySelector(`.op-materiales[data-id="${id}"]`);
   const estadisticas = document.querySelector(`.op-estadisticas[data-id="${id}"]`);
   const configuracion = document.querySelector(`.op-configuracion[data-id="${id}"]`);
+  const marketing = document.querySelector(`.op-marketing[data-id="${id}"]`);
+  const modOperador = document.querySelector(`.op-mod-operador[data-id="${id}"]`);
+  const modCantidad = document.querySelector(`.op-mod-cantidad[data-id="${id}"]`);
 
   if (rol === "Administrador") {
     if (pedidos) pedidos.checked = true;
@@ -169,6 +184,9 @@ function aplicarRol(id) {
     if (materiales) materiales.checked = true;
     if (estadisticas) estadisticas.checked = true;
     if (configuracion) configuracion.checked = true;
+    if (marketing) marketing.checked = true;
+    if (modOperador) modOperador.checked = true;
+    if (modCantidad) modCantidad.checked = true;
   }
 
   if (rol === "Supervisor") {
@@ -177,6 +195,9 @@ function aplicarRol(id) {
     if (materiales) materiales.checked = true;
     if (estadisticas) estadisticas.checked = true;
     if (configuracion) configuracion.checked = false;
+    if (marketing) marketing.checked = true;
+    if (modOperador) modOperador.checked = true;
+    if (modCantidad) modCantidad.checked = true;
   }
 
   if (rol === "Operador") {
@@ -185,6 +206,9 @@ function aplicarRol(id) {
     if (materiales) materiales.checked = false;
     if (estadisticas) estadisticas.checked = false;
     if (configuracion) configuracion.checked = false;
+    if (marketing) marketing.checked = false;
+    if (modOperador) modOperador.checked = false;
+    if (modCantidad) modCantidad.checked = false;
   }
 
   if (rol === "Solo lectura") {
@@ -193,6 +217,9 @@ function aplicarRol(id) {
     if (materiales) materiales.checked = false;
     if (estadisticas) estadisticas.checked = false;
     if (configuracion) configuracion.checked = false;
+    if (marketing) marketing.checked = false;
+    if (modOperador) modOperador.checked = false;
+    if (modCantidad) modCantidad.checked = false;
   }
 }
 
@@ -213,6 +240,9 @@ async function nuevoOperador() {
       puede_materiales: false,
       puede_estadisticas: false,
       puede_configuracion: false,
+      puede_marketing: false,
+      puede_modificar_operador: false,
+      puede_modificar_cantidad: false,
       activo: true
     }]);
 
@@ -236,11 +266,16 @@ async function guardarTodosOperadores() {
     const nombre = document.querySelector(`.op-nombre[data-id="${id}"]`)?.value.trim() || "";
     const clave = document.querySelector(`.op-clave[data-id="${id}"]`)?.value.trim() || "";
     const rol = document.querySelector(`.op-rol[data-id="${id}"]`)?.value || "Operador";
+
     const puede_pedidos = document.querySelector(`.op-pedidos[data-id="${id}"]`)?.checked || false;
     const puede_clientes = document.querySelector(`.op-clientes[data-id="${id}"]`)?.checked || false;
     const puede_materiales = document.querySelector(`.op-materiales[data-id="${id}"]`)?.checked || false;
     const puede_estadisticas = document.querySelector(`.op-estadisticas[data-id="${id}"]`)?.checked || false;
     const puede_configuracion = document.querySelector(`.op-configuracion[data-id="${id}"]`)?.checked || false;
+    const puede_marketing = document.querySelector(`.op-marketing[data-id="${id}"]`)?.checked || false;
+    const puede_modificar_operador = document.querySelector(`.op-mod-operador[data-id="${id}"]`)?.checked || false;
+    const puede_modificar_cantidad = document.querySelector(`.op-mod-cantidad[data-id="${id}"]`)?.checked || false;
+
     const activo = document.querySelector(`.op-activo[data-id="${id}"]`)?.value === "true";
 
     if (!nombre) return null;
@@ -256,6 +291,9 @@ async function guardarTodosOperadores() {
         puede_materiales,
         puede_estadisticas,
         puede_configuracion,
+        puede_marketing,
+        puede_modificar_operador,
+        puede_modificar_cantidad,
         activo
       })
       .eq("id", id);
@@ -314,10 +352,3 @@ async function recargarTodo() {
 // Inicio
 // ---------------------------
 window.addEventListener("DOMContentLoaded", recargarTodo);
-<td class="check-cell">
-  <input type="checkbox" class="op-mod-operador" data-id="${op.id}" ${op.puede_modificar_operador ? "checked" : ""}>
-</td>
-
-<td class="check-cell">
-  <input type="checkbox" class="op-mod-cantidad" data-id="${op.id}" ${op.puede_modificar_cantidad ? "checked" : ""}>
-</td>
