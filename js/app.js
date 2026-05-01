@@ -4,6 +4,8 @@ console.log("Supabase:", window.supabaseClient);
 let pedidoEditandoId = null;
 let pedidosDB = [];
 let archivoSeleccionado = null;
+let materialesDB = [];
+let tiposImpresionDB = [];
 
 // ---------------------------
 // Indicador Supabase
@@ -13,6 +15,88 @@ if (badge) badge.textContent = "SUPABASE";
 
 const badgeBox = document.getElementById("storageBadge");
 if (badgeBox) badgeBox.classList.add("ok");
+
+// ---------------------------
+// Cargar materiales desde Supabase
+// ---------------------------
+async function cargarMateriales() {
+  const { data, error } = await supabaseClient
+    .from("materiales")
+    .select("id, nombre, precio_base, activo")
+    .eq("activo", true)
+    .order("nombre", { ascending: true });
+
+  if (error) {
+    console.error("Error cargando materiales:", error);
+    return;
+  }
+
+  materialesDB = data || [];
+
+  const selects = [
+    document.getElementById("q_material"),
+    document.getElementById("f_material")
+  ];
+
+  selects.forEach(select => {
+    if (!select) return;
+
+    const valorActual = select.value;
+    select.innerHTML = `<option value="">Material</option>`;
+
+    materialesDB.forEach(m => {
+      select.insertAdjacentHTML(
+        "beforeend",
+        `<option value="${m.nombre}">${m.nombre}</option>`
+      );
+    });
+
+    if (valorActual) select.value = valorActual;
+  });
+
+  console.log("Materiales cargados:", materialesDB);
+}
+
+// ---------------------------
+// Cargar tipos de impresión desde Supabase
+// ---------------------------
+async function cargarTiposImpresion() {
+  const { data, error } = await supabaseClient
+    .from("tipos_impresion")
+    .select("id, nombre, precio_extra, activo")
+    .eq("activo", true)
+    .order("nombre", { ascending: true });
+
+  if (error) {
+    console.error("Error cargando tipos de impresión:", error);
+    return;
+  }
+
+  tiposImpresionDB = data || [];
+
+  const selects = [
+    document.getElementById("q_impresion"),
+    document.getElementById("f_impresion")
+  ];
+
+  selects.forEach(select => {
+    if (!select) return;
+
+    const valorActual = select.value;
+    select.innerHTML = `<option value="">Impresión</option>`;
+
+    tiposImpresionDB.forEach(t => {
+      select.insertAdjacentHTML(
+        "beforeend",
+        `<option value="${t.nombre}">${t.nombre}</option>`
+      );
+    });
+
+    if (valorActual) select.value = valorActual;
+  });
+
+  console.log("Tipos de impresión cargados:", tiposImpresionDB);
+}
 
 // ---------------------------
 // Cargar pedidos desde Supabase
@@ -116,9 +200,7 @@ async function saveQuickOrder() {
   }
 
   console.log("Archivo antes de guardar:", archivoSeleccionado);
-
   const archivoData = await subirArchivoPedido();
-
   console.log("Archivo subido:", archivoData);
 
   const { error } = await supabaseClient.from("pedidos").insert([{
@@ -522,6 +604,7 @@ async function subirArchivoPedido() {
 // ---------------------------
 window.addEventListener("DOMContentLoaded", () => {
   ponerFechaHoy();
+  cargarMateriales();
+  cargarTiposImpresion();
   cargarPedidos();
 });
-
