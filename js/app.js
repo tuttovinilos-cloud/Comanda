@@ -29,6 +29,50 @@ function normalizarBusqueda(valor) {
 }
 
 // ---------------------------
+// Crear cliente automáticamente si no existe
+// ---------------------------
+async function asegurarClienteExiste(nombreCliente) {
+  const nombre = String(nombreCliente || "").trim();
+  if (!nombre) return;
+
+  const nombreNormalizado = normalizarBusqueda(nombre);
+
+  const { data, error } = await supabaseClient
+    .from("clientes")
+    .select("id, nombre")
+    .limit(1000);
+
+  if (error) {
+    console.warn("No se pudo verificar cliente:", error);
+    return;
+  }
+
+  const existe = (data || []).some(c => {
+    return normalizarBusqueda(c.nombre) === nombreNormalizado;
+  });
+
+  if (existe) return;
+
+  const { error: insertError } = await supabaseClient
+    .from("clientes")
+    .insert([{
+      nombre: nombre,
+      tipo_cliente: "Cliente Standar",
+      telefono: "",
+      correo: "",
+      notas: "",
+      activo: true
+    }]);
+
+  if (insertError) {
+    console.warn("No se pudo crear cliente automáticamente:", insertError);
+    return;
+  }
+
+  console.log("Cliente creado automáticamente:", nombre);
+}
+
+// ---------------------------
 // Cargar materiales desde Supabase
 // ---------------------------
 async function cargarMateriales() {
@@ -236,6 +280,8 @@ async function saveQuickOrder() {
   const archivoData = await subirArchivoPedido();
   console.log("Archivo subido:", archivoData);
 
+  await asegurarClienteExiste(cliente);
+
   const { error } = await supabaseClient.from("pedidos").insert([{
     fecha,
     operador,
@@ -280,6 +326,8 @@ async function saveOrder() {
 
   const archivoData = await subirArchivoPedido();
 
+  await asegurarClienteExiste(cliente);
+
   const datosPedido = {
     fecha,
     operador,
@@ -291,7 +339,6 @@ async function saveOrder() {
     fecha_entrega
   };
 
-  // Solo cambia el archivo si el usuario seleccionó uno nuevo.
   if (archivoData.archivo_url) {
     datosPedido.archivo_url = archivoData.archivo_url;
     datosPedido.archivo_nombre = archivoData.archivo_nombre;
