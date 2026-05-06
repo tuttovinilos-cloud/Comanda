@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>COMANDA · PRODUCCIÓN</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+#orderTableBody tr:nth-child(even){
+  background:rgba(255,255,255,0.015);
+}
+
+#orderTableBody tr:hover{
+  background:rgba(59,130,246,0.08);
+  transition:background 0.2s ease;
+}
+
+#orderTableBody td{
+  vertical-align:middle;
+  padding:10px 10px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+
+#orderTableBody td:nth-child(2){
+  color:#7f8ea3;
+  font-size:12px;
+  font-family:var(--mono);
+}
+
+#orderTableBody td:nth-child(3){
+  font-weight:700;
+  font-family:var(--head);
+  letter-spacing:.5px;
+  color:#8ec5ff;
+}
+
+#orderTableBody td:nth-child(4){
+  color:#5ea8ff;
+  font-weight:700;
+}
+
+#orderTableBody td:nth-child(5){
+  color:#e5edf8;
+  line-height:1.25;
+}
+
+#orderTableBody td:nth-child(6){
+  color:#ffffff;
+  font-family:var(--mono);
+  font-weight:700;
+}
+
+#orderTableBody td:nth-child(7){
+  color:#c7d2e4;
+}
+
+#orderTableBody td:nth-child(8){
+  color:#9fd0ff;
+}
+
+#orderTableBody td:nth-child(12){
+  color:#9aa8bc;
+  font-family:var(--mono);
+}
+
+*,*::before,*::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+:root{
+  --bg:#0d0f14;
+  --panel:#13161d;
+  --panel2:#181c26;
+  --border:#1e2330;
+  --border2:#2a3048;
+  --text:#e2e8f0;
+  --muted:#64748b;
+  --muted2:#94a3b8;
+  --accent:#3b82f6;
+  --accent2:#60a5fa;
+  --red:#FF3B30;
+  --yellow:#FFD60A;
+  --green:#30D158;
+  --mono:'Share Tech Mono',monospace;
+  --head:'Barlow Condensed',sans-serif;
+  --body:'Barlow',sans-serif;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  min-height:100vh;
+  -webkit-tap-highlight-color:transparent;
+}
+
+::-webkit-scrollbar{
+  width:4px;
+  height:4px;
+}
+
+::-webkit-scrollbar-track{
+  background:var(--bg);
+}
+
+::-webkit-scrollbar-thumb{
+  background:var(--border2);
+  border-radius:4px;
+}
+
+/* HEADER */
+.header{
+  background:var(--panel);
+  border-bottom:2px solid var(--accent);
+  padding:0 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-height:54px;
+  position:sticky;
+  top:0;
+  z-index:200;
+  box-shadow:0 4px 24px #0009;
+}
+
+.logo{
+  font-family:var(--head);
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:3px;
+  color:var(--accent2);
+  text-transform:uppercase;
+}
+
+.logo small{
+  color:var(--muted);
+  font-weight:400;
+  font-size:11px;
+  letter-spacing:1px;
+  margin-left:6px;
+}
+
+.header-tabs{
+  display:flex;
+  gap:4px;
+  margin-left:auto;
+  flex-wrap:wrap;
+}
+
+.tab-btn{
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  padding:6px 14px;
+  border:1px solid var(--border2);
+  background:transparent;
+  color:var(--muted);
+  cursor:pointer;
+  border-radius:4px;
+  transition:all .2s;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.tab-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent2);
+  background:#3b82f611;
+}
+
+.tab-btn.active{
+  background:var(--accent);
+  color:#fff;
+  border-color:var(--accent);
+  box-shadow:0 0 14px #3b82f644;
+}
+
+
+/* BOTONES ROBERTO VISIBLES
+   Ahora los botones se ven siempre en el header.
+   Luego, cuando confirmemos la variable exacta del login, se pueden ocultar por rol.
+*/
+.admin-only{
+  display:inline-flex !important;
+}
+
+.admin-only.show{
+  display:inline-flex !important;
+}
+
+.tab-btn.admin-tool{
+  border-color:#30D15866;
+  color:#b7ffca;
+  background:linear-gradient(180deg,#30D15818,#30D1580a);
+  box-shadow:0 0 0 1px #30D15811 inset;
+}
+
+.tab-btn.admin-tool:hover{
+  border-color:var(--green);
+  color:#fff;
+  background:#30D15824;
+  box-shadow:0 0 14px #30D15833;
+}
+
+.admin-tools-label{
+  align-items:center;
+  justify-content:center;
+  padding:6px 10px;
+  border-radius:4px;
+  border:1px solid #30D15833;
+  color:#30D158;
+  background:#30D1580b;
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+}
+
+@media(max-width:640px){
+  .header-tabs{
+    gap:6px;
+  }
+
+  .tab-btn{
+    flex:1 1 calc(50% - 3px);
+    min-width:135px;
+    padding:9px 8px;
+    font-size:11px;
+    min-height:38px;
+  }
+
+  .admin-tools-label{
+    display:flex !important;
+    flex:1 1 100%;
+    width:100%;
+    min-height:30px;
+  }
+
+  .tab-btn.admin-tool{
+    display:flex !important;
+    flex:1 1 calc(50% - 3px);
+    min-width:145px;
+  }
+}
+
+/* TOOLBAR */
+.toolbar{
+  display:flex;
+  gap:8px;
+  padding:12px 16px;
+  flex-wrap:wrap;
+  border-bottom:1px solid var(--border);
+  align-items:center;
+}
+
+.search-wrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:var(--panel);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:8px 12px;
+  flex:1;
+  min-width:240px;
+}
+
+.search-wrap input{
+  background:none;
+  border:none;
+  outline:none;
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:13px;
+  width:100%;
+}
+
+.search-wrap input::placeholder{
+  color:var(--muted);
+}
+
+.filter-sel{
+  background:var(--panel);
+  border:1px solid var(--border2);
+  color:var(--text);
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:1px;
+  padding:8px 10px;
+  border-radius:6px;
+  outline:none;
+  cursor:pointer;
+}
+
+.btn-add{
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  padding:8px 16px;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+  transition:all .2s;
+  text-decoration:none;
+}
+
+.btn-add:active{
+  opacity:.8;
+}
+
+.storage-badge{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:var(--panel);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:8px 10px;
+  white-space:nowrap;
+}
+
+.storage-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--yellow);
+}
+
+.storage-badge.ok .storage-dot{
+  background:var(--green);
+}
+
+.storage-badge span{
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1px;
+  color:var(--muted2);
+  text-transform:uppercase;
+}
+
+/* TABLE */
+.table-wrap{
+  overflow-x:auto;
+  padding:0 0 90px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:1150px;
+}
+
+thead tr{
+  border-bottom:2px solid var(--border2);
+  background:var(--panel);
+}
+
+th{
+  position:sticky;
+  top:54px;
+  z-index:10;
+  background:var(--panel);
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--muted);
+  padding:10px 10px;
+  text-align:left;
+  white-space:nowrap;
+}
+
+tbody tr{
+  border-bottom:1px solid var(--border);
+  transition:background .12s;
+  cursor:pointer;
+}
+
+tbody tr:hover{
+  background:var(--panel2);
+}
+
+td{
+  padding:9px 10px;
+  font-size:13px;
+  vertical-align:middle;
+}
+
+tbody::before{
+  content:"";
+  display:block;
+  height:15px;
+}
+
+.empty{
+  text-align:center;
+  padding:60px 20px;
+  color:var(--muted);
+  font-family:var(--head);
+  font-size:15px;
+  letter-spacing:2px;
+}
+
+/* QUICK ENTRY */
+.quick-entry-row th{
+  background:var(--panel2);
+  padding:6px;
+  border-bottom:1px solid var(--border2);
+  position:sticky;
+  top:92px;
+  z-index:9;
+}
+
+.quick-input,
+.quick-select,
+.quick-btn{
+  width:100%;
+  background:var(--bg);
+  border:1px solid var(--border2);
+  color:var(--text);
+  border-radius:6px;
+  padding:7px 8px;
+  font-family:var(--body);
+  font-size:12px;
+  outline:none;
+}
+
+.quick-input:focus,
+.quick-select:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px #3b82f622;
+}
+
+.quick-select option{
+  background:var(--panel);
+}
+
+.quick-btn{
+  font-family:var(--head);
+  font-weight:700;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  background:var(--accent);
+  border-color:var(--accent);
+  cursor:pointer;
+  color:#fff;
+}
+
+.quick-btn.secondary{
+  background:transparent;
+  color:var(--muted2);
+  border-color:var(--border2);
+}
+
+.quick-hint{
+  font-size:10px;
+  color:var(--muted);
+  margin-top:2px;
+  text-align:left;
+}
+
+.quick-textarea{
+  min-height:34px;
+  resize:vertical;
+  line-height:1.25;
+}
+
+.quick-textarea:focus{
+  min-height:90px;
+}
+
+.quick-mini-btn{
+  width:32px;
+  min-width:32px;
+  height:32px;
+  border-radius:6px;
+  border:1px dashed var(--border2);
+  background:transparent;
+  color:var(--accent2);
+  cursor:pointer;
+  font-weight:700;
+}
+
+.quick-mini-btn:hover{
+  border-color:var(--accent);
+  background:#3b82f611;
+}
+
+/* MODAL */
+.backdrop{
+  position:fixed;
+  inset:0;
+  background:#000b;
+  z-index:500;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  backdrop-filter:blur(3px);
+  padding:0;
+}
+
+@media(min-width:600px){
+  .backdrop{
+    align-items:center;
+    padding:16px;
+  }
+}
+
+.modal{
+  background:var(--panel);
+  border:1px solid var(--border2);
+  width:100%;
+  max-width:512px;
+  max-height:94vh;
+  overflow-y:auto;
+  border-radius:14px 14px 0 0;
+  box-shadow:0 -8px 60px #000c;
+  animation:slideUp .22s ease;
+}
+
+@media(min-width:600px){
+  .modal{
+    border-radius:12px;
+    animation:popIn .18s ease;
+  }
+}
+
+@keyframes slideUp{
+  from{
+    transform:translateY(50px);
+    opacity:0;
+  }
+  to{
+    transform:none;
+    opacity:1;
+  }
+}
+
+@keyframes popIn{
+  from{
+    transform:scale(.96) translateY(10px);
+    opacity:0;
+  }
+  to{
+    transform:none;
+    opacity:1;
+  }
+}
+
+.modal-handle{
+  width:36px;
+  height:4px;
+  background:var(--border2);
+  border-radius:2px;
+  margin:10px auto 0;
+}
+
+.modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 20px;
+  border-bottom:1px solid var(--border);
+}
+
+.modal-title{
+  font-family:var(--head);
+  font-size:17px;
+  font-weight:900;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+
+.modal-close{
+  width:30px;
+  height:30px;
+  border-radius:6px;
+  border:1px solid var(--border2);
+  background:transparent;
+  color:var(--muted);
+  cursor:pointer;
+  font-size:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all .2s;
+}
+
+.modal-close:hover{
+  border-color:var(--red);
+  color:var(--red);
+}
+
+.modal-body{
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.modal-footer{
+  padding:14px 20px;
+  border-top:1px solid var(--border);
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.form-full{
+  grid-column:1/-1;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.field label{
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--muted);
+  text-transform:uppercase;
+}
+
+.field input,
+.field select,
+.field textarea{
+  background:var(--bg);
+  border:1px solid var(--border2);
+  color:var(--text);
+  border-radius:7px;
+  padding:10px 12px;
+  font-family:var(--body);
+  font-size:14px;
+  outline:none;
+  transition:border .2s;
+  width:100%;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px #3b82f622;
+}
+
+.field textarea{
+  resize:vertical;
+  min-height:70px;
+}
+
+.field select option{
+  background:var(--panel);
+}
+
+.field input::placeholder,
+.field textarea::placeholder{
+  color:var(--muted);
+}
+
+/* FILE */
+.file-drop{
+  border:2px dashed var(--border2);
+  border-radius:8px;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  transition:border-color .2s,background .2s;
+  min-height:80px;
+}
+
+.file-drop:hover{
+  border-color:var(--accent);
+  background:#3b82f611;
+}
+
+.file-preview-box{
+  border:1px solid var(--border2);
+  border-radius:8px;
+  overflow:hidden;
+  position:relative;
+  background:var(--bg);
+  min-height:80px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.file-remove-btn{
+  position:absolute;
+  top:6px;
+  right:6px;
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  background:#0009;
+  border:1px solid #ffffff22;
+  color:#fff;
+  font-size:12px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:background .2s;
+}
+
+.file-remove-btn:hover{
+  background:#FF3B30cc;
+}
+
+.quick-attach-link,
+.file-link-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border:1px solid var(--border2);
+  border-radius:6px;
+  background:transparent;
+  color:var(--accent2);
+  cursor:pointer;
+  font-family:var(--head);
+  font-size:11px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  transition:all .2s;
+  text-decoration:none;
+}
+
+.quick-attach-link:hover,
+.file-link-chip:hover{
+  border-color:var(--accent);
+  background:#3b82f611;
+}
+
+/* EDITABLE CELLS */
+.cell-edit{
+  width:80px;
+  background:transparent;
+  color:var(--text);
+  border:1px solid transparent;
+  border-radius:6px;
+  padding:6px 8px;
+  font-family:var(--mono);
+  font-size:13px;
+  outline:none;
+}
+
+.cell-edit:hover{
+  border-color:var(--border2);
+  background:var(--panel2);
+}
+
+.cell-edit:focus{
+  border-color:var(--accent);
+  background:var(--panel);
+}
+
+.cell-select{
+  background:transparent;
+  color:var(--text);
+  border:1px solid transparent;
+  border-radius:6px;
+  padding:6px 8px;
+  font-family:var(--mono);
+  font-size:13px;
+  outline:none;
+  cursor:pointer;
+}
+
+.cell-select:hover{
+  border-color:var(--border2);
+  background:var(--panel2);
+}
+
+.cell-select:focus{
+  border-color:var(--accent);
+  background:var(--panel);
+}
+
+.cell-select option{
+  background:var(--panel);
+  color:var(--text);
+}
+
+.cell-select.status-solicitud{
+  color:#FF3B30;
+  border-color:#FF3B3044;
+  background:#FF3B3011;
+}
+
+.cell-select.status-revisado{
+  color:#FFD60A;
+  border-color:#FFD60A44;
+  background:#FFD60A11;
+}
+
+.cell-select.status-listo{
+  color:#30D158;
+  border-color:#30D15844;
+  background:#30D15811;
+}
+
+.cell-select.pago-pendiente{
+  color:#FF453A;
+  border-color:#FF453A44;
+  background:#FF453A11;
+}
+
+.cell-select.pago-abonado{
+  color:#FF9F0A;
+  border-color:#FF9F0A44;
+  background:#FF9F0A11;
+}
+
+.cell-select.pago-pagado{
+  color:#32D74B;
+  border-color:#32D74B44;
+  background:#32D74B11;
+}
+
+.cell-select.status-solicitud:hover,
+.cell-select.status-revisado:hover,
+.cell-select.status-listo:hover,
+.cell-select.pago-pendiente:hover,
+.cell-select.pago-abonado:hover,
+.cell-select.pago-pagado:hover{
+  filter:brightness(1.15);
+}
+
+/* RESPONSIVE */
+@media(max-width:980px){
+  .header{
+    height:auto;
+    min-height:54px;
+    flex-wrap:wrap;
+    padding:10px 12px;
+  }
+
+  .header-tabs{
+    width:100%;
+    margin-left:0;
+    flex-wrap:wrap;
+  }
+
+  th{
+    top:96px;
+  }
+
+  .quick-entry-row th{
+    top:134px;
+  }
+
+  table{
+    min-width:850px;
+  }
+}
+
+@media(max-width:640px){
+  .toolbar{
+    padding:10px;
+    gap:6px;
+  }
+
+  .search-wrap{
+    min-width:100%;
+  }
+
+  .filter-sel,
+  .btn-add{
+    font-size:11px;
+    padding:7px 9px;
+  }
+
+  .table-wrap{
+    padding-bottom:110px;
+  }
+
+  table{
+    min-width:780px;
+  }
+
+  th,
+  td{
+    padding:8px 6px;
+  }
+
+  .quick-input,
+  .quick-select,
+  .quick-btn{
+    font-size:11px;
+    padding:6px 6px;
+  }
+
+  th,
+  .quick-entry-row th{
+    position:static;
+    top:auto;
+  }
+
+  tbody::before{
+    display:none;
+    height:0;
+  }
+}
+
+@media(max-width:480px){
+  .logo small{
+    display:none;
+  }
+
+  th,
+  .quick-entry-row th{
+    position:static;
+    top:auto;
+  }
+
+  tbody::before{
+    display:none;
+    height:0;
+  }
+}
+
+#rowFileInput{
+  display:none;
+}
+
+/* Refuerzo responsive para botones Roberto */
+@media(max-width:640px){
+  .header{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:8px;
+    padding-bottom:10px;
+  }
+
+  .header-tabs{
+    width:100%;
+    margin-left:0;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px;
+  }
+
+  .header-tabs .tab-btn{
+    width:100%;
+    min-width:0;
+    padding:10px 8px;
+    font-size:10px;
+  }
+
+  .header-tabs .admin-tools-label{
+    grid-column:1 / -1;
+    width:100%;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<header class="header">
+  <div class="logo">COMANDA<small>PRODUCCIÓN</small></div>
+
+  <div class="header-tabs">
+    <a class="tab-btn active" id="tabBtnComanda" href="index.html">📋 Pedidos</a>
+    <span class="admin-only admin-tools-label" id="robertoToolsLabel">Herramientas Roberto</span>
+    <a class="tab-btn admin-only admin-tool" id="tabBtnCotizador" href="Cotizador.html" title="Cotizador solo para Roberto">🧾 Cotizador</a>
+    <a class="tab-btn admin-only admin-tool" id="tabBtnIdeas" href="Organizador%20de%20ideas.html" title="Organizador de ideas solo para Roberto">🧠 Organizador</a>
+    <a class="tab-btn" id="tabBtnClientes" href="clientes.html">👤 Clientes</a>
+    <a class="tab-btn" id="tabBtnMateriales" href="materiales.html">💲 Materiales</a>
+    <a class="tab-btn" id="tabBtnEstadisticas" href="estadisticas.html">📊 Estadísticas</a>
+    <a class="tab-btn" href="marketing.html">📣 Marketing</a>
+    <a class="tab-btn" href="configuracion.html">⚙️ Configuración</a>
+    <button class="tab-btn" id="btnSalirSesion" type="button" onclick="logoutUser()">🚪 Salir</button>
+  </div>
+</header>
+
+<div id="tab-comanda" class="tab-content active">
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      🔎
+      <input id="searchInput" type="text" placeholder="Nombre, descripción, operador, material o archivo..." oninput="onSearch()"/>
+    </div>
+
+    <select class="filter-sel" id="filterStatus" onchange="onSearch()">
+      <option value="">Todos</option>
+      <option value="Solicitud">🔴 Solicitud</option>
+      <option value="Revisado">🟡 Revisado</option>
+      <option value="Listo">🟢 Listo</option>
+    </select>
+
+    <select class="filter-sel" id="filterPago" onchange="onSearch()">
+      <option value="">Pago</option>
+      <option value="Pendiente">Pendiente</option>
+      <option value="Abonado">Abonado</option>
+      <option value="Pagado">Pagado</option>
+    </select>
+
+    <input class="filter-sel" id="filterFechaDesde" type="date" onchange="onSearch()" title="Desde"/>
+    <input class="filter-sel" id="filterFechaHasta" type="date" onchange="onSearch()" title="Hasta"/>
+
+    <select class="filter-sel" id="filterOperador" onchange="onSearch()">
+      <option value="">Operador</option>
+    </select>
+
+    <div class="storage-badge ok" id="storageBadge">
+      <div class="storage-dot"></div>
+      <span id="storageBadgeText">Supabase</span>
+    </div>
+
+    <button class="btn-add" onclick="openOrderModal()">+ Nuevo</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Fecha</th>
+          <th>Operador</th>
+          <th>Cliente</th>
+          <th>Descripción</th>
+          <th>Cantidad</th>
+          <th>Material</th>
+          <th>Impresión</th>
+          <th>Precio</th>
+          <th>Estatus</th>
+          <th>Pago</th>
+          <th>Entrega</th>
+          <th>Archivo</th>
+          <th></th>
+        </tr>
+
+        <tr class="quick-entry-row">
+          <th><button class="quick-btn secondary" type="button" onclick="clearQuickEntry()">✕</button></th>
+
+          <th><input class="quick-input" id="q_fecha" type="date"/></th>
+
+          <th>
+            <select class="quick-select" id="q_operador">
+              <option value="">Operador</option>
+              <option value="Roberto">Roberto</option>
+              <option value="Ricardo">Ricardo</option>
+              <option value="Chico">Chico</option>
+              <option value="Ruben">Ruben</option>
+              <option value="Miguel">Miguel</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </th>
+
+          <th>
+            <input class="quick-input" id="q_cliente" type="text" list="quickClientsList" placeholder="Cliente"/>
+            <div class="quick-hint" id="quickClientHint"></div>
+          </th>
+
+          <th>
+            <textarea class="quick-input quick-textarea" id="q_descripcion" placeholder="Descripción"></textarea>
+          </th>
+
+          <th><input class="quick-input" id="q_cantidad" type="text" placeholder="Cantidad / m"/></th>
+
+          <th><select class="quick-select" id="q_material"></select></th>
+
+          <th><select class="quick-select" id="q_impresion"></select></th>
+
+          <th><div class="quick-hint" id="q_precio_preview">$0.00</div></th>
+
+          <th>
+            <select class="quick-select" id="q_estatus_trabajo">
+              <option selected>Solicitud</option>
+              <option>Revisado</option>
+              <option>Listo</option>
+            </select>
+          </th>
+
+          <th>
+            <select class="quick-select" id="q_estatus_pago">
+              <option selected>Pendiente</option>
+              <option>Abonado</option>
+              <option>Pagado</option>
+            </select>
+          </th>
+
+          <th><input class="quick-input" id="q_entrega" type="date"/></th>
+
+          <th>
+            <button class="quick-mini-btn" type="button" title="Adjuntar archivo" onclick="openQuickAttach()">📎</button>
+          </th>
+
+          <th><button class="quick-btn" type="button" onclick="saveQuickOrder()">Guardar</button></th>
+        </tr>
+      </thead>
+
+      <tbody id="orderTableBody"></tbody>
+    </table>
+
+    <div id="emptyState" class="empty" style="display:none">— SIN PEDIDOS —</div>
+    <div class="pagination" id="paginationBar"></div>
+  </div>
+
+  <datalist id="quickClientsList"></datalist>
+</div>
+
+<!-- MODAL PEDIDO -->
+<div class="backdrop" id="orderBackdrop" style="display:none" onclick="bdClick(event,'orderBackdrop')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+
+    <div class="modal-header">
+      <span class="modal-title" id="orderModalTitle">NUEVO PEDIDO</span>
+      <button class="modal-close" onclick="closeModal('orderBackdrop')">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="f_fecha"/>
+        </div>
+
+        <div class="field">
+          <label>Operador</label>
+          <select id="f_operador">
+            <option value="">Seleccionar…</option>
+            <option value="Roberto">Roberto</option>
+            <option value="Ricardo">Ricardo</option>
+            <option value="Chico">Chico</option>
+            <option value="Ruben">Ruben</option>
+            <option value="Miguel">Miguel</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Cliente</label>
+        <input type="text" id="f_cliente" placeholder="Nombre del cliente…" autocomplete="off"/>
+      </div>
+
+      <div class="field form-full">
+        <label>Descripción del trabajo</label>
+        <textarea id="f_descripcion" placeholder="Ej: stickers, banner, lona…" rows="3"></textarea>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Cantidad / Metros</label>
+          <input type="text" id="f_cantidad" placeholder="Ej: 5"/>
+        </div>
+
+        <div class="field">
+          <label>Fecha de entrega</label>
+          <input type="date" id="f_entrega"/>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Material</label>
+          <select id="f_material"></select>
+        </div>
+
+        <div class="field">
+          <label>Tipo de impresión</label>
+          <select id="f_impresion"></select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Imagen / Archivo de referencia</label>
+
+        <div id="filePreviewArea" onclick="document.getElementById('f_archivo').click()" style="cursor:pointer">
+          <div id="fileEmpty" class="file-drop">
+            <span style="font-size:28px">📎</span>
+            <span style="font-family:var(--head);font-size:12px;letter-spacing:1px;color:var(--muted)">TOCA PARA ADJUNTAR</span>
+            <span style="font-size:11px;color:var(--muted)">Imagen, PDF o cualquier archivo</span>
+          </div>
+
+          <div id="filePreview" style="display:none" class="file-preview-box">
+            <div id="fileGeneric" style="display:none;text-align:center;padding:16px">
+              <div id="fileIconBig" style="font-size:40px">📎</div>
+              <div id="fileName" style="font-size:12px;color:var(--muted2);margin-top:6px;word-break:break-all"></div>
+            </div>
+
+            <button class="file-remove-btn" onclick="event.stopPropagation();removeFile()" title="Quitar archivo">✕</button>
+          </div>
+        </div>
+
+        <input type="file" id="f_archivo" style="display:none" onchange="handleFileSelect(event)"/>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button style="font-family:var(--head);font-size:12px;letter-spacing:1px;padding:8px 16px;background:transparent;color:var(--muted);border:1px solid var(--border2);border-radius:6px;cursor:pointer" onclick="closeModal('orderBackdrop')">CANCELAR</button>
+      <button class="btn-add" onclick="saveOrder()">GUARDAR</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="rowFileInput" style="display:none" onchange="handleRowFileSelect(event)"/>
+
+<div class="toast" id="toast" style="display:none"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js?v=3"></script>
+
+
+<script>
+/* Botones exclusivos para Roberto
+   - No rompe auth.js ni app.js.
+   - Ocultos por defecto.
+   - Se muestran solo si la sesión detectada pertenece a Roberto.
+*/
+(function(){
+  const ROBERTO_RE = /\broberto\b/i;
+  const SESSION_KEY_RE = /(login|auth|session|current|actual|usuario|user|operador|perfil|role|rol)/i;
+  const IGNORE_KEY_RE = /(clientes|pedidos|materiales|impresion|precios|orders|products|settings|config|operadores_list|lista)/i;
+
+  function normalize(value){
+    return String(value || "").trim();
+  }
+
+  function valueLooksRoberto(value){
+    if(!value) return false;
+
+    if(typeof value === "string"){
+      return ROBERTO_RE.test(value);
+    }
+
+    if(typeof value === "object"){
+      const directFields = [
+        "nombre","name","usuario","user","username","operador","operator",
+        "displayName","email","rol","role","perfil","login"
+      ];
+
+      for(const field of directFields){
+        if(value[field] && ROBERTO_RE.test(normalize(value[field]))) return true;
+      }
+
+      // Revisión profunda limitada para objetos pequeños de sesión.
+      try{
+        const json = JSON.stringify(value);
+        return json.length < 2500 && ROBERTO_RE.test(json);
+      }catch(e){
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  function storageHasRoberto(storage){
+    try{
+      for(let i=0; i<storage.length; i++){
+        const key = storage.key(i) || "";
+        if(!SESSION_KEY_RE.test(key) || IGNORE_KEY_RE.test(key)) continue;
+
+        const raw = storage.getItem(key);
+        if(valueLooksRoberto(raw)) return true;
+
+        try{
+          const parsed = JSON.parse(raw);
+          if(valueLooksRoberto(parsed)) return true;
+        }catch(e){}
+      }
+    }catch(e){}
+    return false;
+  }
+
+  function globalsHaveRoberto(){
+    const names = [
+      "currentUser","loggedUser","authUser","sessionUser","usuarioActual",
+      "operadorActual","TV_USER","TV_AUTH","AUTH_USER"
+    ];
+
+    for(const name of names){
+      try{
+        if(valueLooksRoberto(window[name])) return true;
+      }catch(e){}
+    }
+
+    try{
+      if(valueLooksRoberto(document.body.dataset.user)) return true;
+      if(valueLooksRoberto(document.body.dataset.usuario)) return true;
+      if(valueLooksRoberto(document.documentElement.dataset.user)) return true;
+    }catch(e){}
+
+    return false;
+  }
+
+  function selectsHaveRoberto(){
+    try{
+      const ids = ["q_operador", "f_operador", "operador", "responsable", "usuario", "loginUser"];
+      for(const id of ids){
+        const el = document.getElementById(id);
+        if(el && valueLooksRoberto(el.value)) return true;
+      }
+    }catch(e){}
+    return false;
+  }
+
+  function urlAllowsRobertoTools(){
+    try{
+      const params = new URLSearchParams(window.location.search);
+      return valueLooksRoberto(params.get("usuario")) || valueLooksRoberto(params.get("user"));
+    }catch(e){
+      return false;
+    }
+  }
+
+  function isRoberto(){
+    return storageHasRoberto(localStorage) || storageHasRoberto(sessionStorage) || globalsHaveRoberto() || selectsHaveRoberto() || urlAllowsRobertoTools();
+  }
+
+  function setRobertoButtons(){
+    // Botones visibles para confirmar que aparecen en GitHub Pages.
+    document.querySelectorAll(".admin-only").forEach(el=>{
+      el.classList.add("show");
+    });
+  }
+
+  window.actualizarBotonesRoberto = setRobertoButtons;
+
+  document.addEventListener("DOMContentLoaded", setRobertoButtons);
+  document.addEventListener("change", (e)=>{
+    if(e.target && ["q_operador", "f_operador", "operador", "responsable", "usuario", "loginUser"].includes(e.target.id)){
+      setRobertoButtons();
+    }
+  });
+  window.addEventListener("load", setRobertoButtons);
+
+  // Por si auth.js termina de cargar después del HTML.
+  setTimeout(setRobertoButtons, 300);
+  setTimeout(setRobertoButtons, 1000);
+  setTimeout(setRobertoButtons, 2500);
+})();
+</script>
+
+
+<script>
+function logoutUser(){
+  try{
+    localStorage.clear();
+    sessionStorage.clear();
+
+    if(window.supabaseClient && typeof window.supabaseClient.auth?.signOut === "function"){
+      window.supabaseClient.auth.signOut();
+    }
+
+    if(window.supabase && typeof window.supabase.auth?.signOut === "function"){
+      window.supabase.auth.signOut();
+    }
+  }catch(e){
+    console.warn("Error cerrando sesión:", e);
+  }
+
+  window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>
