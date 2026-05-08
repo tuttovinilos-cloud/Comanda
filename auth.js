@@ -8,11 +8,18 @@ const PAGE_PERMISSIONS = {
   "clientes.html": "puede_clientes",
   "materiales.html": "puede_materiales",
   "estadisticas.html": "puede_estadisticas",
-  "configuracion.html": "puede_configuracion"
+  "configuracion.html": "puede_configuracion",
+  "marketing.html": "puede_marketing"
 };
 
 const CURRENT_PAGE = (location.pathname.split("/").pop() || "index.html").toLowerCase();
 const REQUIRED_PERMISSION = PAGE_PERMISSIONS[CURRENT_PAGE] || "puede_pedidos";
+
+// Pages that should be restricted to Administrador only (e.g. Roberto tools).
+const ADMIN_ONLY_PAGES = new Set([
+  "cotizador.html",
+  "organizador%20de%20ideas.html",
+]);
 
 let operadorActual = null;
 
@@ -217,8 +224,11 @@ function tienePermiso(op) {
   if (!op) return false;
   if (op.activo === false) return false;
 
-  // Roberto / Administrador entra a todo.
+  // Administrador entra a todo.
   if (op.rol === "Administrador") return true;
+
+  // Some tools are admin-only regardless of checkbox permissions.
+  if (ADMIN_ONLY_PAGES.has(CURRENT_PAGE)) return false;
 
   return op[REQUIRED_PERMISSION] === true;
 }
