@@ -9,118 +9,14 @@ const PAGE_PERMISSIONS = {
   "materiales.html": "puede_materiales",
   "estadisticas.html": "puede_estadisticas",
   "configuracion.html": "puede_configuracion",
-  "marketing.html": "puede_marketing"
+  "cotizador.html": "puede_cotizador",
+  "organizador de ideas.html": "puede_organizador"
 };
 
 const CURRENT_PAGE = (location.pathname.split("/").pop() || "index.html").toLowerCase();
 const REQUIRED_PERMISSION = PAGE_PERMISSIONS[CURRENT_PAGE] || "puede_pedidos";
 
-// Pages that should be restricted to Administrador only (e.g. Roberto tools).
-const ADMIN_ONLY_PAGES = new Set([
-  "cotizador.html",
-  "organizador%20de%20ideas.html",
-  "configuracion.html",
-]);
-
 let operadorActual = null;
-
-function getSupabaseClient() {
-  return window.supabaseClient || window.db || null;
-}
-
-function setHidden(el, hidden) {
-  if (!el) return;
-  if (hidden) {
-    el.style.display = "none";
-    el.setAttribute("aria-hidden", "true");
-    el.setAttribute("tabindex", "-1");
-  } else {
-    el.style.display = "";
-    el.removeAttribute("aria-hidden");
-    el.removeAttribute("tabindex");
-  }
-}
-
-function aplicarPermisosMenu(op) {
-  const isAdmin = op?.rol === "Administrador";
-
-  const rules = [
-    { href: "index.html", key: "puede_pedidos" },
-    { href: "clientes.html", key: "puede_clientes" },
-    { href: "materiales.html", key: "puede_materiales" },
-    { href: "estadisticas.html", key: "puede_estadisticas" },
-    { href: "configuracion.html", key: "puede_configuracion" },
-    { href: "marketing.html", key: "puede_marketing" },
-  ];
-
-  document.querySelectorAll(".header-tabs a.tab-btn").forEach(a => {
-    const href = (a.getAttribute("href") || "").trim();
-    if (!href) return;
-
-    if (/^cotizador\.html$/i.test(href) || /^organizador/i.test(href)) {
-      setHidden(a, !isAdmin);
-      return;
-    }
-
-    if (/^configuracion\.html$/i.test(href)) {
-      // Configuracion: solo Administrador.
-      setHidden(a, !isAdmin);
-      return;
-    }
-
-    const rule = rules.find(r => r.href.toLowerCase() === href.toLowerCase());
-    if (!rule) return;
-
-    const allowed = isAdmin ? true : op?.[rule.key] === true;
-    setHidden(a, !allowed);
-  });
-
-  document.querySelectorAll(".admin-only").forEach(el => {
-    setHidden(el, !isAdmin);
-  });
-}
-
-function mostrarSinModulos() {
-  // Show a blocking message when the user has no enabled modules.
-  const old = document.getElementById("noModulesBackdrop");
-  if (old) old.remove();
-
-  const html = `
-    <div class="auth-backdrop" id="noModulesBackdrop">
-      <div class="auth-card">
-        <div class="auth-head">
-          <div class="auth-title">Acceso sin modulos</div>
-          <div class="auth-sub">No tienes modulos asignados. Contacta al administrador.</div>
-        </div>
-        <div class="auth-body">
-          <button class="auth-btn auth-btn-primary" type="button" onclick="logoutOperador()">Salir</button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  document.body.insertAdjacentHTML("beforeend", html);
-}
-
-function validarModulosVisibles(op) {
-  const isAdmin = op?.rol === "Administrador";
-  if (isAdmin) return;
-
-  const visible = Array.from(document.querySelectorAll(".header-tabs a.tab-btn"))
-    .filter(a => (a.style.display || "") !== "none")
-    .filter(a => {
-      const href = (a.getAttribute("href") || "").trim().toLowerCase();
-      // Ignore empty and "exit" (usually a button, not a link).
-      return !!href;
-    });
-
-  if (visible.length === 0) {
-    mostrarSinModulos();
-  } else {
-    const old = document.getElementById("noModulesBackdrop");
-    if (old) old.remove();
-  }
-}
 
 // =========================================
 // CSS DEL LOGIN
@@ -322,13 +218,6 @@ function clearSesionOperador() {
 function tienePermiso(op) {
   if (!op) return false;
   if (op.activo === false) return false;
-
-  // Administrador entra a todo.
-  if (op.rol === "Administrador") return true;
-
-  // Some tools are admin-only regardless of checkbox permissions.
-  if (ADMIN_ONLY_PAGES.has(CURRENT_PAGE)) return false;
-
   return op[REQUIRED_PERMISSION] === true;
 }
 
@@ -336,13 +225,7 @@ function tienePermiso(op) {
 // CARGAR OPERADORES ACTIVOS
 // =========================================
 async function obtenerOperadores() {
-  const client = getSupabaseClient();
-  if (!client) {
-    console.error("Supabase client not available. Did js/supabase.js load?");
-    return [];
-  }
-
-  const { data, error } = await client
+  const { data, error } = await supabaseClient
     .from("operadores")
     .select("*")
     .eq("activo", true)
@@ -362,62 +245,13 @@ async function obtenerOperadores() {
 async function mostrarLogin(mensaje = "") {
   injectAuthStyles();
 
-  // The login modal should only be used on login.html.
-  // If called from any other page, redirect to login and pass the message.
-  if (CURRENT_PAGE !== "login.html") {
-    const q = mensaje ? ("?msg=" + encodeURIComponent(mensaje)) : "";
-    window.location.href = "login.html" + q;
-    return;
-  }
-
-  // Render the modal shell immediately. If operator loading is slow/hangs,
-  // users should still see the login UI.
-  const existing = document.getElementById("authBackdrop");
-  if (!existing) {
-    const shell = `
-      <div class="auth-backdrop" id="authBackdrop">
-        <div class="auth-card">
-          <div class="auth-head">
-            <div class="auth-title">Acceso requerido</div>
-            <div class="auth-sub">Cargando...</div>
-          </div>
-          <div class="auth-body">
-            <div class="auth-error" id="authError"></div>
-            <div class="auth-field">
-              <label>Operador</label>
-              <select id="authUser" disabled><option value="">Cargando operadores...</option></select>
-            </div>
-            <div class="auth-field">
-              <label>Clave</label>
-              <input id="authPass" type="password" placeholder="Clave" autocomplete="current-password">
-            </div>
-            <button class="auth-btn" id="authLoginBtn" type="button" onclick="loginOperador()" disabled>Entrar</button>
-          </div>
-        </div>
-      </div>
-    `;
-    document.body.insertAdjacentHTML("beforeend", shell);
-  }
-
-  const operadores = await Promise.race([
-    obtenerOperadores(),
-    new Promise(resolve => setTimeout(() => resolve(null), 8000)),
-  ]);
-
-  if (!operadores) {
-    const eb = document.getElementById("authError");
-    if (eb) {
-      eb.textContent = "No se pudieron cargar operadores (timeout). Contacta al administrador.";
-      eb.style.display = "block";
-    }
-    return;
-  }
+  const operadores = await obtenerOperadores();
 
   const viejo = document.getElementById("authBackdrop");
   if (viejo) viejo.remove();
 
   const options = operadores.map(op => {
-    return `<option value="${op.id}">${op.nombre} · ${op.rol || "Operador"}</option>`;
+    return `<option value="${op.id}">${op.nombre}</option>`;
   }).join("");
 
   const html = `
@@ -471,18 +305,7 @@ async function loginOperador() {
   const clave = document.getElementById("authPass")?.value || "";
   const errorBox = document.getElementById("authError");
 
-  const operadores = await Promise.race([
-    obtenerOperadores(),
-    new Promise(resolve => setTimeout(() => resolve(null), 8000)),
-  ]);
-
-  if (!operadores) {
-    if (errorBox) {
-      errorBox.textContent = "No se pudieron cargar operadores (timeout). Contacta al administrador.";
-      errorBox.style.display = "block";
-    }
-    return;
-  }
+  const operadores = await obtenerOperadores();
   const op = operadores.find(o => String(o.id) === String(userId));
 
   if (!op) {
@@ -511,19 +334,12 @@ async function loginOperador() {
 
   operadorActual = op;
   setSesionOperador(op);
-  aplicarPermisosMenu(op);
-  validarModulosVisibles(op);
 
   const backdrop = document.getElementById("authBackdrop");
   if (backdrop) backdrop.remove();
 
   pintarTopbarSesion();
   aplicarOperadorDefault();
-
-  // If we logged in from the login screen, jump into the app.
-  if (CURRENT_PAGE === "login.html") {
-    window.location.href = "index.html";
-  }
 }
 
 // =========================================
@@ -579,24 +395,10 @@ function aplicarOperadorDefault() {
 async function protegerPagina() {
   injectAuthStyles();
 
-  // Login screen: always show login (and bounce to index if already logged in).
-  if (CURRENT_PAGE === "login.html") {
-    const sesion = getSesionOperador();
-    if (sesion) {
-      // If already logged, go to the main app entry.
-      window.location.href = "index.html";
-      return;
-    }
-    const msg = new URLSearchParams(location.search).get("msg") || "";
-    await mostrarLogin(msg);
-    return;
-  }
-
   const sesion = getSesionOperador();
 
   if (!sesion) {
-    // Do not show the modal on non-login pages; redirect to login instead.
-    window.location.href = "login.html";
+    await mostrarLogin();
     return;
   }
 
@@ -618,8 +420,6 @@ async function protegerPagina() {
 
   operadorActual = actualizado;
   setSesionOperador(actualizado);
-  aplicarPermisosMenu(actualizado);
-  validarModulosVisibles(actualizado);
   pintarTopbarSesion();
   aplicarOperadorDefault();
 }
@@ -627,9 +427,4 @@ async function protegerPagina() {
 // =========================================
 // INICIO
 // =========================================
-if (document.readyState === "loading") {
-  window.addEventListener("DOMContentLoaded", protegerPagina);
-} else {
-  // In some pages we load auth.js dynamically; DOMContentLoaded may have already fired.
-  protegerPagina();
-}
+window.addEventListener("DOMContentLoaded", protegerPagina);
