@@ -195,7 +195,7 @@ body{
    Luego, cuando confirmemos la variable exacta del login, se pueden ocultar por rol.
 */
 .admin-only{
-  display:none !important;
+  display:inline-flex !important;
 }
 
 .admin-only.show{
@@ -244,14 +244,14 @@ body{
     min-height:38px;
   }
 
-  .admin-tools-label.show{
+  .admin-tools-label{
     display:flex !important;
     flex:1 1 100%;
     width:100%;
     min-height:30px;
   }
 
-  .tab-btn.admin-tool.show{
+  .tab-btn.admin-tool{
     display:flex !important;
     flex:1 1 calc(50% - 3px);
     min-width:145px;
@@ -1012,7 +1012,7 @@ tbody::before{
     <a class="tab-btn" id="tabBtnEstadisticas" href="estadisticas.html">📊 Estadísticas</a>
     <a class="tab-btn" href="marketing.html">📣 Marketing</a>
     <a class="tab-btn" href="configuracion.html">⚙️ Configuración</a>
-    <button class="tab-btn" id="btnSalirSesion" type="button" onclick="logoutOperador()">🚪 Salir</button>
+    <button class="tab-btn" id="btnSalirSesion" type="button" onclick="logoutUser()">🚪 Salir</button>
   </div>
 </header>
 
@@ -1245,12 +1245,6 @@ tbody::before{
 
 <div class="toast" id="toast" style="display:none"></div>
 
-<!--
-  LOGIN / SESIÓN:
-  js/auth.js controla el panel de acceso.
-  Si no existe localStorage.comanda_operador_actual, muestra el login.
-  El botón 🚪 Salir usa logoutOperador(), definido en js/auth.js.
--->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script src="js/auth.js"></script>
@@ -1365,10 +1359,9 @@ tbody::before{
   }
 
   function setRobertoButtons(){
-    const permitido = isRoberto();
-
+    // Botones visibles para confirmar que aparecen en GitHub Pages.
     document.querySelectorAll(".admin-only").forEach(el=>{
-      el.classList.toggle("show", permitido);
+      el.classList.add("show");
     });
   }
 
@@ -1387,6 +1380,28 @@ tbody::before{
   setTimeout(setRobertoButtons, 1000);
   setTimeout(setRobertoButtons, 2500);
 })();
+</script>
+
+
+<script>
+function logoutUser(){
+  try{
+    localStorage.clear();
+    sessionStorage.clear();
+
+    if(window.supabaseClient && typeof window.supabaseClient.auth?.signOut === "function"){
+      window.supabaseClient.auth.signOut();
+    }
+
+    if(window.supabase && typeof window.supabase.auth?.signOut === "function"){
+      window.supabase.auth.signOut();
+    }
+  }catch(e){
+    console.warn("Error cerrando sesión:", e);
+  }
+
+  window.location.href = "login.html";
+}
 </script>
 
 </body>
