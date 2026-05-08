@@ -362,7 +362,48 @@ async function obtenerOperadores() {
 async function mostrarLogin(mensaje = "") {
   injectAuthStyles();
 
-  const operadores = await obtenerOperadores();
+  // Render the modal shell immediately. If operator loading is slow/hangs,
+  // users should still see the login UI.
+  const existing = document.getElementById("authBackdrop");
+  if (!existing) {
+    const shell = `
+      <div class="auth-backdrop" id="authBackdrop">
+        <div class="auth-card">
+          <div class="auth-head">
+            <div class="auth-title">Acceso requerido</div>
+            <div class="auth-sub">Cargando...</div>
+          </div>
+          <div class="auth-body">
+            <div class="auth-error" id="authError"></div>
+            <div class="auth-field">
+              <label>Operador</label>
+              <select id="authUser" disabled><option value="">Cargando operadores...</option></select>
+            </div>
+            <div class="auth-field">
+              <label>Clave</label>
+              <input id="authPass" type="password" placeholder="Clave" autocomplete="current-password">
+            </div>
+            <button class="auth-btn" id="authLoginBtn" type="button" onclick="loginOperador()" disabled>Entrar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML("beforeend", shell);
+  }
+
+  const operadores = await Promise.race([
+    obtenerOperadores(),
+    new Promise(resolve => setTimeout(() => resolve(null), 8000)),
+  ]);
+
+  if (!operadores) {
+    const eb = document.getElementById("authError");
+    if (eb) {
+      eb.textContent = "No se pudieron cargar operadores (timeout). Contacta al administrador.";
+      eb.style.display = "block";
+    }
+    return;
+  }
 
   const viejo = document.getElementById("authBackdrop");
   if (viejo) viejo.remove();
@@ -422,7 +463,18 @@ async function loginOperador() {
   const clave = document.getElementById("authPass")?.value || "";
   const errorBox = document.getElementById("authError");
 
-  const operadores = await obtenerOperadores();
+  const operadores = await Promise.race([
+    obtenerOperadores(),
+    new Promise(resolve => setTimeout(() => resolve(null), 8000)),
+  ]);
+
+  if (!operadores) {
+    if (errorBox) {
+      errorBox.textContent = "No se pudieron cargar operadores (timeout). Contacta al administrador.";
+      errorBox.style.display = "block";
+    }
+    return;
+  }
   const op = operadores.find(o => String(o.id) === String(userId));
 
   if (!op) {
