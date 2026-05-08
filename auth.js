@@ -80,6 +80,48 @@ function aplicarPermisosMenu(op) {
   });
 }
 
+function mostrarSinModulos() {
+  // Show a blocking message when the user has no enabled modules.
+  const old = document.getElementById("noModulesBackdrop");
+  if (old) old.remove();
+
+  const html = `
+    <div class="auth-backdrop" id="noModulesBackdrop">
+      <div class="auth-card">
+        <div class="auth-head">
+          <div class="auth-title">Acceso sin modulos</div>
+          <div class="auth-sub">No tienes modulos asignados. Contacta al administrador.</div>
+        </div>
+        <div class="auth-body">
+          <button class="auth-btn auth-btn-primary" type="button" onclick="logoutOperador()">Salir</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML("beforeend", html);
+}
+
+function validarModulosVisibles(op) {
+  const isAdmin = op?.rol === "Administrador";
+  if (isAdmin) return;
+
+  const visible = Array.from(document.querySelectorAll(".header-tabs a.tab-btn"))
+    .filter(a => (a.style.display || "") !== "none")
+    .filter(a => {
+      const href = (a.getAttribute("href") || "").trim().toLowerCase();
+      // Ignore empty and "exit" (usually a button, not a link).
+      return !!href;
+    });
+
+  if (visible.length === 0) {
+    mostrarSinModulos();
+  } else {
+    const old = document.getElementById("noModulesBackdrop");
+    if (old) old.remove();
+  }
+}
+
 // =========================================
 // CSS DEL LOGIN
 // =========================================
@@ -410,6 +452,7 @@ async function loginOperador() {
   operadorActual = op;
   setSesionOperador(op);
   aplicarPermisosMenu(op);
+  validarModulosVisibles(op);
 
   const backdrop = document.getElementById("authBackdrop");
   if (backdrop) backdrop.remove();
@@ -514,6 +557,7 @@ async function protegerPagina() {
   operadorActual = actualizado;
   setSesionOperador(actualizado);
   aplicarPermisosMenu(actualizado);
+  validarModulosVisibles(actualizado);
   pintarTopbarSesion();
   aplicarOperadorDefault();
 }
