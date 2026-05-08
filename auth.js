@@ -362,6 +362,14 @@ async function obtenerOperadores() {
 async function mostrarLogin(mensaje = "") {
   injectAuthStyles();
 
+  // The login modal should only be used on login.html.
+  // If called from any other page, redirect to login and pass the message.
+  if (CURRENT_PAGE !== "login.html") {
+    const q = mensaje ? ("?msg=" + encodeURIComponent(mensaje)) : "";
+    window.location.href = "login.html" + q;
+    return;
+  }
+
   // Render the modal shell immediately. If operator loading is slow/hangs,
   // users should still see the login UI.
   const existing = document.getElementById("authBackdrop");
@@ -579,14 +587,16 @@ async function protegerPagina() {
       window.location.href = "index.html";
       return;
     }
-    await mostrarLogin();
+    const msg = new URLSearchParams(location.search).get("msg") || "";
+    await mostrarLogin(msg);
     return;
   }
 
   const sesion = getSesionOperador();
 
   if (!sesion) {
-    await mostrarLogin();
+    // Do not show the modal on non-login pages; redirect to login instead.
+    window.location.href = "login.html";
     return;
   }
 
