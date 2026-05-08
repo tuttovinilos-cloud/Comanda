@@ -1,9 +1,14 @@
-// Conexión a Supabase
+// Supabase connection (frontend-safe publishable key)
+// Exposes window.supabaseClient and window.db for the rest of the app.
 
 const SUPABASE_URL = "https://ujfdsabypflseijatxba.supabase.co";
 const SUPABASE_KEY = "sb_publishable_CiZo8xFKkaT7mdRrQUYxuQ_48F6Vx3w";
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+if (!window.supabase) {
+  console.error("Supabase SDK not loaded. Check the <script> tag for @supabase/supabase-js.");
+} else {
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  window.supabaseClient = supabaseClient;
+  window.db = supabaseClient;
+}
 
-window.supabaseClient = supabaseClient;
-window.db = supabaseClient;

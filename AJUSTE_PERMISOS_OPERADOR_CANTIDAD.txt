@@ -1,0 +1,369 @@
+AJUSTE: OPERADOR AUTOMÁTICO + PERMISOS PARA MODIFICAR OPERADOR Y CANTIDAD
+
+Objetivo:
+1) Si inicia Roberto, el operador queda automáticamente como Roberto.
+2) Agregar 2 permisos nuevos en Configuración:
+   - Modificar operador
+   - Modificar cantidad
+3) Si el permiso está apagado, el usuario no puede cambiar el operador ni las cantidades.
+
+
+=====================================================
+PASO 1 — SUPABASE SQL
+=====================================================
+
+Pega esto en Supabase → SQL Editor y dale Run:
+
+alter table operadores
+add column if not exists puede_modificar_operador boolean default true;
+
+alter table operadores
+add column if not exists puede_modificar_cantidad boolean default true;
+
+update operadores
+set puede_modificar_operador = true,
+    puede_modificar_cantidad = true
+where rol = 'Administrador';
+
+update operadores
+set puede_modificar_operador = false,
+    puede_modificar_cantidad = false
+where rol in ('Operador', 'Solo lectura');
+
+
+=====================================================
+PASO 2 — CONFIGURACION.HTML
+=====================================================
+
+En configuracion.html busca estos encabezados:
+
+<th>Pedidos</th>
+<th>Clientes</th>
+<th>Materiales</th>
+<th>Estadísticas</th>
+<th>Config.</th>
+<th>Activo</th>
+
+Reemplázalos por:
+
+<th>Pedidos</th>
+<th>Clientes</th>
+<th>Materiales</th>
+<th>Estadísticas</th>
+<th>Config.</th>
+<th>Mod. operador</th>
+<th>Mod. cantidad</th>
+<th>Activo</th>
+
+IMPORTANTE:
+Como agregaste 2 columnas, si ves algo como colspan="10", cámbialo por colspan="12".
+
+
+=====================================================
+PASO 3 — CONFIGURACION.JS: AGREGAR CHECKBOXES EN renderOperadores()
+=====================================================
+
+En js/configuracion.js busca este bloque:
+
+<td class="check-cell">
+  <input type="checkbox" class="op-configuracion" data-id="${op.id}" ${op.puede_configuracion ? "checked" : ""}>
+</td>
+
+Justo DESPUÉS pega esto:
+
+<td class="check-cell">
+  <input type="checkbox" class="op-mod-operador" data-id="${op.id}" ${op.puede_modificar_operador !== false ? "checked" : ""}>
+</td>
+
+<td class="check-cell">
+  <input type="checkbox" class="op-mod-cantidad" data-id="${op.id}" ${op.puede_modificar_cantidad !== false ? "checked" : ""}>
+</td>
+
+
+=====================================================
+PASO 4 — CONFIGURACION.JS: aplicarRol()
+=====================================================
+
+Dentro de function aplicarRol(id) busca:
+
+const configuracion = document.querySelector(`.op-configuracion[data-id="${id}"]`);
+
+Debajo pega:
+
+const modOperador = document.querySelector(`.op-mod-operador[data-id="${id}"]`);
+const modCantidad = document.querySelector(`.op-mod-cantidad[data-id="${id}"]`);
+
+
+Luego dentro de cada rol agrega:
+
+ADMINISTRADOR:
+if (modOperador) modOperador.checked = true;
+if (modCantidad) modCantidad.checked = true;
+
+SUPERVISOR:
+if (modOperador) modOperador.checked = true;
+if (modCantidad) modCantidad.checked = true;
+
+OPERADOR:
+if (modOperador) modOperador.checked = false;
+if (modCantidad) modCantidad.checked = false;
+
+SOLO LECTURA:
+if (modOperador) modOperador.checked = false;
+if (modCantidad) modCantidad.checked = false;
+
+
+=====================================================
+PASO 5 — CONFIGURACION.JS: nuevoOperador()
+=====================================================
+
+En nuevoOperador(), dentro del insert, busca:
+
+puede_configuracion: false,
+activo: true
+
+Reemplázalo por:
+
+puede_configuracion: false,
+puede_modificar_operador: false,
+puede_modificar_cantidad: false,
+activo: true
+
+
+=====================================================
+PASO 6 — CONFIGURACION.JS: guardarTodosOperadores()
+=====================================================
+
+Dentro de guardarTodosOperadores(), busca estas líneas:
+
+const puede_configuracion = document.querySelector(`.op-configuracion[data-id="${id}"]`)?.checked || false;
+const activo = document.querySelector(`.op-activo[data-id="${id}"]`)?.value === "true";
+
+Reemplázalas por:
+
+const puede_configuracion = document.querySelector(`.op-configuracion[data-id="${id}"]`)?.checked || false;
+const puede_modificar_operador = document.querySelector(`.op-mod-operador[data-id="${id}"]`)?.checked || false;
+const puede_modificar_cantidad = document.querySelector(`.op-mod-cantidad[data-id="${id}"]`)?.checked || false;
+const activo = document.querySelector(`.op-activo[data-id="${id}"]`)?.value === "true";
+
+
+Luego dentro del update busca:
+
+puede_configuracion,
+activo
+
+Reemplázalo por:
+
+puede_configuracion,
+puede_modificar_operador,
+puede_modificar_cantidad,
+activo
+
+
+=====================================================
+PASO 7 — AUTH.JS: ASEGURAR OPERADOR AUTOMÁTICO
+=====================================================
+
+En js/auth.js busca esta función:
+
+function aplicarOperadorDefault() {
+
+Borra esa función completa y reemplázala por esta:
+
+function aplicarOperadorDefault() {
+  if (!operadorActual) return;
+
+  const puedeCambiarOperador = operadorActual.puede_modificar_operador !== false;
+
+  const qOperador = document.getElementById("q_operador");
+  const fOperador = document.getElementById("f_operador");
+
+  [qOperador, fOperador].forEach(el => {
+    if (!el) return;
+
+    // Si no tiene permiso, siempre queda el usuario iniciado.
+    if (!puedeCambiarOperador) {
+      el.value = operadorActual.nombre;
+      el.disabled = true;
+      el.title = "No tienes permiso para modificar el operador";
+      return;
+    }
+
+    // Si tiene permiso, solo lo coloca por defecto si está vacío.
+    if (!el.value) {
+      el.value = operadorActual.nombre;
+    }
+
+    el.disabled = false;
+    el.title = "";
+  });
+}
+
+
+=====================================================
+PASO 8 — APP.JS: AGREGAR FUNCIONES DE PERMISOS
+=====================================================
+
+En js/app.js pega esto ANTES de la función cargarPedidos():
+
+// ---------------------------
+// Permisos del usuario actual
+// ---------------------------
+function getOperadorSesion() {
+  try {
+    return JSON.parse(localStorage.getItem("comanda_operador_actual") || "null");
+  } catch {
+    return null;
+  }
+}
+
+function puedeModificarOperador() {
+  const op = getOperadorSesion();
+  if (!op) return true;
+  if (op.rol === "Administrador") return true;
+  return op.puede_modificar_operador !== false;
+}
+
+function puedeModificarCantidad() {
+  const op = getOperadorSesion();
+  if (!op) return true;
+  if (op.rol === "Administrador") return true;
+  return op.puede_modificar_cantidad !== false;
+}
+
+function aplicarPermisosComanda() {
+  const op = getOperadorSesion();
+  if (!op) return;
+
+  const puedeOp = puedeModificarOperador();
+  const puedeCant = puedeModificarCantidad();
+
+  const qOperador = document.getElementById("q_operador");
+  const fOperador = document.getElementById("f_operador");
+
+  [qOperador, fOperador].forEach(el => {
+    if (!el) return;
+
+    if (!puedeOp) {
+      el.value = op.nombre;
+      el.disabled = true;
+      el.title = "No tienes permiso para modificar el operador";
+    } else {
+      el.disabled = false;
+      el.title = "";
+      if (!el.value) el.value = op.nombre;
+    }
+  });
+
+  const fCantidad = document.getElementById("f_cantidad");
+  if (fCantidad) {
+    fCantidad.disabled = !puedeCant;
+    fCantidad.title = !puedeCant ? "No tienes permiso para modificar cantidades" : "";
+  }
+
+  document.querySelectorAll(".cell-edit").forEach(input => {
+    input.disabled = !puedeCant;
+    input.title = !puedeCant ? "No tienes permiso para modificar cantidades" : "";
+  });
+}
+
+
+=====================================================
+PASO 9 — APP.JS: LLAMAR aplicarPermisosComanda()
+=====================================================
+
+En cargarPedidos(), al final de la función, después de:
+
+onSearch();
+
+agrega:
+
+aplicarPermisosComanda();
+
+
+En openEditOrder(id), al final después de:
+
+if (modal) modal.style.display = "flex";
+
+agrega:
+
+aplicarPermisosComanda();
+
+
+En openOrderModal(), al final después de:
+
+if (modal) modal.style.display = "flex";
+
+agrega:
+
+aplicarPermisosComanda();
+
+
+=====================================================
+PASO 10 — APP.JS: FORZAR OPERADOR EN GUARDADO
+=====================================================
+
+En saveQuickOrder(), cambia esta línea:
+
+const operador = document.getElementById("q_operador")?.value || "";
+
+por estas:
+
+let operador = document.getElementById("q_operador")?.value || "";
+const opSesionQuick = getOperadorSesion();
+if (!puedeModificarOperador() && opSesionQuick?.nombre) {
+  operador = opSesionQuick.nombre;
+}
+
+
+En saveOrder(), cambia esta línea:
+
+const operador = document.getElementById("f_operador")?.value || "";
+
+por estas:
+
+let operador = document.getElementById("f_operador")?.value || "";
+const opSesionModal = getOperadorSesion();
+if (!puedeModificarOperador() && opSesionModal?.nombre) {
+  operador = opSesionModal.nombre;
+}
+
+
+En saveOrder(), después de crear datosPedido, busca:
+
+const datosPedido = {
+  fecha,
+  operador,
+  cliente,
+  descripcion,
+  cantidad,
+  material,
+  tipo_impresion,
+  fecha_entrega
+};
+
+Justo después de ese bloque pega:
+
+if (!puedeModificarCantidad() && pedidoEditandoId) {
+  delete datosPedido.cantidad;
+}
+
+
+=====================================================
+PASO FINAL
+=====================================================
+
+1) Guarda / Commit todos los archivos.
+2) Abre configuracion.html.
+3) Haz Ctrl + Shift + R.
+4) Deben aparecer dos columnas nuevas:
+   - Mod. operador
+   - Mod. cantidad
+5) Desmarca esas opciones para Ruben/Chico/Miguel si quieres.
+6) Guarda cambios.
+7) Cierra sesión.
+8) Entra como ese usuario.
+9) El operador quedará fijo y la cantidad no se podrá modificar.
+
+IMPORTANTE:
+Si quieres que un operador sí pueda crear pedidos con cantidad, pero no editar cantidades viejas, eso se puede ajustar después.
