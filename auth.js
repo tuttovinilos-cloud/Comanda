@@ -565,4 +565,9 @@ async function protegerPagina() {
 // =========================================
 // INICIO
 // =========================================
-window.addEventListener("DOMContentLoaded", protegerPagina);
+if (document.readyState === "loading") {
+  window.addEventListener("DOMContentLoaded", protegerPagina);
+} else {
+  // In some pages we load auth.js dynamically; DOMContentLoaded may have already fired.
+  protegerPagina();
+}
