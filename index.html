@@ -190,8 +190,12 @@ body{
 }
 
 
+/* BOTONES ROBERTO VISIBLES
+   Ahora los botones se ven siempre en el header.
+   Luego, cuando confirmemos la variable exacta del login, se pueden ocultar por rol.
+*/
 .admin-only{
-  display:none !important;
+  display:inline-flex !important;
 }
 
 .admin-only.show{
@@ -199,21 +203,58 @@ body{
 }
 
 .tab-btn.admin-tool{
-  border-color:#30D15855;
-  color:#8fffb1;
-  background:#30D15810;
+  border-color:#30D15866;
+  color:#b7ffca;
+  background:linear-gradient(180deg,#30D15818,#30D1580a);
+  box-shadow:0 0 0 1px #30D15811 inset;
 }
 
 .tab-btn.admin-tool:hover{
   border-color:var(--green);
   color:#fff;
-  background:#30D15822;
+  background:#30D15824;
+  box-shadow:0 0 14px #30D15833;
+}
+
+.admin-tools-label{
+  align-items:center;
+  justify-content:center;
+  padding:6px 10px;
+  border-radius:4px;
+  border:1px solid #30D15833;
+  color:#30D158;
+  background:#30D1580b;
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
 }
 
 @media(max-width:640px){
-  .tab-btn.admin-tool{
-    flex:1 1 calc(50% - 4px);
+  .header-tabs{
+    gap:6px;
+  }
+
+  .tab-btn{
+    flex:1 1 calc(50% - 3px);
     min-width:135px;
+    padding:9px 8px;
+    font-size:11px;
+    min-height:38px;
+  }
+
+  .admin-tools-label{
+    display:flex !important;
+    flex:1 1 100%;
+    width:100%;
+    min-height:30px;
+  }
+
+  .tab-btn.admin-tool{
+    display:flex !important;
+    flex:1 1 calc(50% - 3px);
+    min-width:145px;
   }
 }
 
@@ -922,6 +963,37 @@ tbody::before{
 #rowFileInput{
   display:none;
 }
+
+/* Refuerzo responsive para botones Roberto */
+@media(max-width:640px){
+  .header{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:8px;
+    padding-bottom:10px;
+  }
+
+  .header-tabs{
+    width:100%;
+    margin-left:0;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px;
+  }
+
+  .header-tabs .tab-btn{
+    width:100%;
+    min-width:0;
+    padding:10px 8px;
+    font-size:10px;
+  }
+
+  .header-tabs .admin-tools-label{
+    grid-column:1 / -1;
+    width:100%;
+  }
+}
+
 </style>
 </head>
 
@@ -932,13 +1004,15 @@ tbody::before{
 
   <div class="header-tabs">
     <a class="tab-btn active" id="tabBtnComanda" href="index.html">📋 Pedidos</a>
-    <a class="tab-btn admin-only admin-tool" id="tabBtnCotizador" href="Cotizador.html" title="Solo visible para Roberto">🧾 Cotizador</a>
-    <a class="tab-btn admin-only admin-tool" id="tabBtnIdeas" href="Organizador%20de%20ideas.html" title="Solo visible para Roberto">🧠 Organizador</a>
+    <span class="admin-only admin-tools-label" id="robertoToolsLabel">Herramientas Roberto</span>
+    <a class="tab-btn admin-only admin-tool" id="tabBtnCotizador" href="Cotizador.html" title="Cotizador solo para Roberto">🧾 Cotizador</a>
+    <a class="tab-btn admin-only admin-tool" id="tabBtnIdeas" href="Organizador%20de%20ideas.html" title="Organizador de ideas solo para Roberto">🧠 Organizador</a>
     <a class="tab-btn" id="tabBtnClientes" href="clientes.html">👤 Clientes</a>
     <a class="tab-btn" id="tabBtnMateriales" href="materiales.html">💲 Materiales</a>
     <a class="tab-btn" id="tabBtnEstadisticas" href="estadisticas.html">📊 Estadísticas</a>
     <a class="tab-btn" href="marketing.html">📣 Marketing</a>
     <a class="tab-btn" href="configuracion.html">⚙️ Configuración</a>
+    <button class="tab-btn" id="btnSalirSesion" type="button" onclick="logoutUser()">🚪 Salir</button>
   </div>
 </header>
 
@@ -1260,20 +1334,45 @@ tbody::before{
     return false;
   }
 
+  function selectsHaveRoberto(){
+    try{
+      const ids = ["q_operador", "f_operador", "operador", "responsable", "usuario", "loginUser"];
+      for(const id of ids){
+        const el = document.getElementById(id);
+        if(el && valueLooksRoberto(el.value)) return true;
+      }
+    }catch(e){}
+    return false;
+  }
+
+  function urlAllowsRobertoTools(){
+    try{
+      const params = new URLSearchParams(window.location.search);
+      return valueLooksRoberto(params.get("usuario")) || valueLooksRoberto(params.get("user"));
+    }catch(e){
+      return false;
+    }
+  }
+
   function isRoberto(){
-    return storageHasRoberto(localStorage) || storageHasRoberto(sessionStorage) || globalsHaveRoberto();
+    return storageHasRoberto(localStorage) || storageHasRoberto(sessionStorage) || globalsHaveRoberto() || selectsHaveRoberto() || urlAllowsRobertoTools();
   }
 
   function setRobertoButtons(){
-    const show = isRoberto();
+    // Botones visibles para confirmar que aparecen en GitHub Pages.
     document.querySelectorAll(".admin-only").forEach(el=>{
-      el.classList.toggle("show", show);
+      el.classList.add("show");
     });
   }
 
   window.actualizarBotonesRoberto = setRobertoButtons;
 
   document.addEventListener("DOMContentLoaded", setRobertoButtons);
+  document.addEventListener("change", (e)=>{
+    if(e.target && ["q_operador", "f_operador", "operador", "responsable", "usuario", "loginUser"].includes(e.target.id)){
+      setRobertoButtons();
+    }
+  });
   window.addEventListener("load", setRobertoButtons);
 
   // Por si auth.js termina de cargar después del HTML.
@@ -1281,6 +1380,28 @@ tbody::before{
   setTimeout(setRobertoButtons, 1000);
   setTimeout(setRobertoButtons, 2500);
 })();
+</script>
+
+
+<script>
+function logoutUser(){
+  try{
+    localStorage.clear();
+    sessionStorage.clear();
+
+    if(window.supabaseClient && typeof window.supabaseClient.auth?.signOut === "function"){
+      window.supabaseClient.auth.signOut();
+    }
+
+    if(window.supabase && typeof window.supabase.auth?.signOut === "function"){
+      window.supabase.auth.signOut();
+    }
+  }catch(e){
+    console.warn("Error cerrando sesión:", e);
+  }
+
+  window.location.href = "login.html";
+}
 </script>
 
 </body>
