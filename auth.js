@@ -24,6 +24,10 @@ const ADMIN_ONLY_PAGES = new Set([
 
 let operadorActual = null;
 
+function getSupabaseClient() {
+  return window.supabaseClient || window.db || null;
+}
+
 function setHidden(el, hidden) {
   if (!el) return;
   if (hidden) {
@@ -290,7 +294,13 @@ function tienePermiso(op) {
 // CARGAR OPERADORES ACTIVOS
 // =========================================
 async function obtenerOperadores() {
-  const { data, error } = await supabaseClient
+  const client = getSupabaseClient();
+  if (!client) {
+    console.error("Supabase client not available. Did js/supabase.js load?");
+    return [];
+  }
+
+  const { data, error } = await client
     .from("operadores")
     .select("*")
     .eq("activo", true)
