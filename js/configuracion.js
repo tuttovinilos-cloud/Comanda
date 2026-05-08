@@ -1,4 +1,4 @@
-console.log("Configuración JS conectado");
+﻿console.log("ConfiguraciÃ³n JS conectado");
 
 let operadoresDB = [];
 
@@ -21,7 +21,7 @@ function toast(msg) {
 }
 
 // ---------------------------
-// Escapar HTML básico
+// Escapar HTML bÃ¡sico
 // ---------------------------
 function escapeHtml(value) {
   return String(value ?? "")
@@ -38,6 +38,7 @@ async function cargarOperadoresAdmin() {
   const { data, error } = await supabaseClient
     .from("operadores")
     .select("*")
+    .eq("activo", true)
     .order("nombre", { ascending: true });
 
   if (error) {
@@ -64,7 +65,6 @@ function renderOperadores() {
     const texto = [
       op.nombre,
       op.clave,
-      op.rol,
       op.activo ? "activo" : "inactivo"
     ].join(" ").toLowerCase();
 
@@ -79,7 +79,7 @@ function renderOperadores() {
   }
 
   if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="13" class="empty">Sin operadores</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="14" class="empty">Sin operadores</td></tr>`;
     return;
   }
 
@@ -96,15 +96,6 @@ function renderOperadores() {
 
         <td>
           <input class="clave-input op-clave" data-id="${op.id}" value="${escapeHtml(op.clave || "")}" placeholder="Clave">
-        </td>
-
-        <td>
-          <select class="role-select op-rol" data-id="${op.id}" onchange="aplicarRol(${op.id})">
-            <option ${op.rol === "Administrador" ? "selected" : ""}>Administrador</option>
-            <option ${op.rol === "Supervisor" ? "selected" : ""}>Supervisor</option>
-            <option ${op.rol === "Operador" ? "selected" : ""}>Operador</option>
-            <option ${op.rol === "Solo lectura" ? "selected" : ""}>Solo lectura</option>
-          </select>
         </td>
 
         <td class="check-cell">
@@ -129,6 +120,12 @@ function renderOperadores() {
 
         <td class="check-cell">
           <input type="checkbox" class="op-marketing" data-id="${op.id}" ${op.puede_marketing ? "checked" : ""}>
+        </td>
+        <td class="check-cell">
+          <input type="checkbox" class="op-cotizador" data-id="${op.id}" ${op.puede_cotizador ? "checked" : ""}>
+        </td>
+        <td class="check-cell">
+          <input type="checkbox" class="op-organizador" data-id="${op.id}" ${op.puede_organizador ? "checked" : ""}>
         </td>
 
         <td class="check-cell">
@@ -164,66 +161,6 @@ function filtrarOperadores() {
 }
 
 // ---------------------------
-// Aplicar permisos según rol
-// ---------------------------
-function aplicarRol(id) {
-  const rol = document.querySelector(`.op-rol[data-id="${id}"]`)?.value || "Operador";
-
-  const pedidos = document.querySelector(`.op-pedidos[data-id="${id}"]`);
-  const clientes = document.querySelector(`.op-clientes[data-id="${id}"]`);
-  const materiales = document.querySelector(`.op-materiales[data-id="${id}"]`);
-  const estadisticas = document.querySelector(`.op-estadisticas[data-id="${id}"]`);
-  const configuracion = document.querySelector(`.op-configuracion[data-id="${id}"]`);
-  const marketing = document.querySelector(`.op-marketing[data-id="${id}"]`);
-  const modOperador = document.querySelector(`.op-mod-operador[data-id="${id}"]`);
-  const modCantidad = document.querySelector(`.op-mod-cantidad[data-id="${id}"]`);
-
-  if (rol === "Administrador") {
-    if (pedidos) pedidos.checked = true;
-    if (clientes) clientes.checked = true;
-    if (materiales) materiales.checked = true;
-    if (estadisticas) estadisticas.checked = true;
-    if (configuracion) configuracion.checked = true;
-    if (marketing) marketing.checked = true;
-    if (modOperador) modOperador.checked = true;
-    if (modCantidad) modCantidad.checked = true;
-  }
-
-  if (rol === "Supervisor") {
-    if (pedidos) pedidos.checked = true;
-    if (clientes) clientes.checked = true;
-    if (materiales) materiales.checked = true;
-    if (estadisticas) estadisticas.checked = true;
-    if (configuracion) configuracion.checked = false;
-    if (marketing) marketing.checked = true;
-    if (modOperador) modOperador.checked = true;
-    if (modCantidad) modCantidad.checked = true;
-  }
-
-  if (rol === "Operador") {
-    if (pedidos) pedidos.checked = true;
-    if (clientes) clientes.checked = true;
-    if (materiales) materiales.checked = false;
-    if (estadisticas) estadisticas.checked = false;
-    if (configuracion) configuracion.checked = false;
-    if (marketing) marketing.checked = false;
-    if (modOperador) modOperador.checked = false;
-    if (modCantidad) modCantidad.checked = false;
-  }
-
-  if (rol === "Solo lectura") {
-    if (pedidos) pedidos.checked = true;
-    if (clientes) clientes.checked = false;
-    if (materiales) materiales.checked = false;
-    if (estadisticas) estadisticas.checked = false;
-    if (configuracion) configuracion.checked = false;
-    if (marketing) marketing.checked = false;
-    if (modOperador) modOperador.checked = false;
-    if (modCantidad) modCantidad.checked = false;
-  }
-}
-
-// ---------------------------
 // Nuevo operador
 // ---------------------------
 async function nuevoOperador() {
@@ -231,16 +168,17 @@ async function nuevoOperador() {
 
   const { error } = await supabaseClient
     .from("operadores")
-    .insert([{
+      .insert([{
       nombre: nombreUnico,
       clave: "0000",
-      rol: "Operador",
       puede_pedidos: true,
       puede_clientes: true,
       puede_materiales: false,
       puede_estadisticas: false,
       puede_configuracion: false,
       puede_marketing: false,
+      puede_cotizador: false,
+      puede_organizador: false,
       puede_modificar_operador: false,
       puede_modificar_cantidad: false,
       activo: true
@@ -252,7 +190,7 @@ async function nuevoOperador() {
     return;
   }
 
-  toast("Operador añadido");
+  toast("Operador aÃ±adido");
   await cargarOperadoresAdmin();
 }
 
@@ -265,14 +203,14 @@ async function guardarTodosOperadores() {
 
     const nombre = document.querySelector(`.op-nombre[data-id="${id}"]`)?.value.trim() || "";
     const clave = document.querySelector(`.op-clave[data-id="${id}"]`)?.value.trim() || "";
-    const rol = document.querySelector(`.op-rol[data-id="${id}"]`)?.value || "Operador";
-
     const puede_pedidos = document.querySelector(`.op-pedidos[data-id="${id}"]`)?.checked || false;
     const puede_clientes = document.querySelector(`.op-clientes[data-id="${id}"]`)?.checked || false;
     const puede_materiales = document.querySelector(`.op-materiales[data-id="${id}"]`)?.checked || false;
     const puede_estadisticas = document.querySelector(`.op-estadisticas[data-id="${id}"]`)?.checked || false;
     const puede_configuracion = document.querySelector(`.op-configuracion[data-id="${id}"]`)?.checked || false;
     const puede_marketing = document.querySelector(`.op-marketing[data-id="${id}"]`)?.checked || false;
+    const puede_cotizador = document.querySelector(`.op-cotizador[data-id="${id}"]`)?.checked || false;
+    const puede_organizador = document.querySelector(`.op-organizador[data-id="${id}"]`)?.checked || false;
     const puede_modificar_operador = document.querySelector(`.op-mod-operador[data-id="${id}"]`)?.checked || false;
     const puede_modificar_cantidad = document.querySelector(`.op-mod-cantidad[data-id="${id}"]`)?.checked || false;
 
@@ -285,13 +223,14 @@ async function guardarTodosOperadores() {
       .update({
         nombre,
         clave,
-        rol,
         puede_pedidos,
         puede_clientes,
         puede_materiales,
         puede_estadisticas,
         puede_configuracion,
         puede_marketing,
+        puede_cotizador,
+        puede_organizador,
         puede_modificar_operador,
         puede_modificar_cantidad,
         activo
@@ -319,7 +258,7 @@ async function guardarTodosOperadores() {
 
 // ---------------------------
 // Eliminar operador
-// NOTA: lo desactiva, no borra.
+// NOTA: elimina de forma definitiva.
 // ---------------------------
 async function eliminarOperador(id) {
   const confirmar = confirm("¿Eliminar/desactivar este operador?");
@@ -327,16 +266,16 @@ async function eliminarOperador(id) {
 
   const { error } = await supabaseClient
     .from("operadores")
-    .update({ activo: false })
+    .delete()
     .eq("id", id);
 
   if (error) {
     console.error("Error eliminando operador:", error);
-    toast("Error eliminando operador");
+    toast("No se pudo eliminar: " + (error.message || "sin detalle"));
     return;
   }
 
-  toast("Operador desactivado");
+  toast("Operador eliminado");
   await cargarOperadoresAdmin();
 }
 
@@ -345,10 +284,11 @@ async function eliminarOperador(id) {
 // ---------------------------
 async function recargarTodo() {
   await cargarOperadoresAdmin();
-  toast("Configuración recargada");
+  toast("ConfiguraciÃ³n recargada");
 }
 
 // ---------------------------
 // Inicio
 // ---------------------------
 window.addEventListener("DOMContentLoaded", recargarTodo);
+

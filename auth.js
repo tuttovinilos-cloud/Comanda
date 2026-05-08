@@ -8,7 +8,9 @@ const PAGE_PERMISSIONS = {
   "clientes.html": "puede_clientes",
   "materiales.html": "puede_materiales",
   "estadisticas.html": "puede_estadisticas",
-  "configuracion.html": "puede_configuracion"
+  "configuracion.html": "puede_configuracion",
+  "cotizador.html": "puede_cotizador",
+  "organizador de ideas.html": "puede_organizador"
 };
 
 const CURRENT_PAGE = (location.pathname.split("/").pop() || "index.html").toLowerCase();
@@ -216,10 +218,6 @@ function clearSesionOperador() {
 function tienePermiso(op) {
   if (!op) return false;
   if (op.activo === false) return false;
-
-  // Roberto / Administrador entra a todo.
-  if (op.rol === "Administrador") return true;
-
   return op[REQUIRED_PERMISSION] === true;
 }
 
@@ -253,7 +251,7 @@ async function mostrarLogin(mensaje = "") {
   if (viejo) viejo.remove();
 
   const options = operadores.map(op => {
-    return `<option value="${op.id}">${op.nombre} · ${op.rol || "Operador"}</option>`;
+    return `<option value="${op.id}">${op.nombre}</option>`;
   }).join("");
 
   const html = `
