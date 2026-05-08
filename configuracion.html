@@ -2,11 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Configuración · Comanda</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:,">
 
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -25,6 +26,7 @@
       --green:#30D158;
       --red:#FF3B30;
       --yellow:#FFD60A;
+      --orange:#FF9F0A;
       --mono:'Share Tech Mono',monospace;
       --head:'Barlow Condensed',sans-serif;
       --body:'Barlow',sans-serif;
@@ -35,12 +37,13 @@
       color:var(--text);
       font-family:var(--body);
       min-height:100vh;
+      padding-bottom:90px;
     }
 
     .header{
       background:var(--panel);
       border-bottom:2px solid var(--accent);
-      padding:0 16px;
+      padding:10px 16px;
       display:flex;
       align-items:center;
       gap:12px;
@@ -49,6 +52,7 @@
       top:0;
       z-index:50;
       box-shadow:0 4px 24px #0009;
+      flex-wrap:wrap;
     }
 
     .logo{
@@ -58,6 +62,7 @@
       letter-spacing:3px;
       color:var(--accent2);
       text-transform:uppercase;
+      white-space:nowrap;
     }
 
     .logo small{
@@ -156,6 +161,7 @@
       gap:6px;
       transition:all .2s;
       white-space:nowrap;
+      text-decoration:none;
     }
 
     .btn:hover{filter:brightness(1.1)}
@@ -207,6 +213,7 @@
       font-size:12px;
       color:var(--muted2);
       margin-top:2px;
+      line-height:1.45;
     }
 
     .card-actions{
@@ -216,6 +223,21 @@
       flex-wrap:wrap;
     }
 
+    .info-box{
+      margin:16px;
+      background:#3b82f611;
+      border:1px solid #3b82f633;
+      color:var(--muted2);
+      border-radius:10px;
+      padding:12px 14px;
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    .info-box strong{
+      color:var(--accent2);
+    }
+
     .table-scroll{
       overflow-x:auto;
     }
@@ -223,7 +245,7 @@
     table{
       width:100%;
       border-collapse:collapse;
-      min-width:1350px;
+      min-width:1500px;
     }
 
     th{
@@ -236,6 +258,7 @@
       text-align:left;
       padding:10px;
       border-bottom:1px solid var(--border2);
+      white-space:nowrap;
     }
 
     td{
@@ -244,7 +267,9 @@
       vertical-align:middle;
     }
 
-    tr:hover td{background:#ffffff03}
+    tr:hover td{
+      background:#ffffff03;
+    }
 
     input, select{
       width:100%;
@@ -270,11 +295,12 @@
 
     .name-input{min-width:150px}
     .clave-input{min-width:100px}
+    .jerarquia-select{min-width:135px}
     .active-select{min-width:105px}
 
     .check-cell{
       text-align:center;
-      min-width:90px;
+      min-width:86px;
     }
 
     .check-cell input{
@@ -311,6 +337,11 @@
       color:#FF3B30;
     }
 
+    .mini-btn:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+    }
+
     .badge{
       font-family:var(--head);
       font-size:11px;
@@ -324,151 +355,163 @@
       white-space:nowrap;
     }
 
-    .badge.ok{
-      color:#30D158;
-      border-color:#30D15844;
-      background:#30D15811;
-    }
-
     .empty{
       color:var(--muted);
-      padding:30px;
+      padding:28px;
       text-align:center;
       font-family:var(--head);
       letter-spacing:1.5px;
       text-transform:uppercase;
     }
 
-    .note{
-      background:#3b82f611;
-      border:1px solid #3b82f633;
-      border-radius:10px;
-      padding:12px 14px;
-      color:var(--muted2);
-      font-size:13px;
-      line-height:1.45;
-    }
-
     .toast{
       position:fixed;
       left:50%;
-      bottom:24px;
+      bottom:84px;
       transform:translateX(-50%);
       background:var(--panel2);
-      border:1px solid var(--border2);
       color:var(--text);
-      padding:12px 18px;
+      border:1px solid var(--border2);
       border-radius:10px;
-      box-shadow:0 10px 35px #000a;
-      z-index:100;
+      padding:10px 16px;
+      z-index:999999;
+      display:none;
+      box-shadow:0 12px 35px #0008;
       font-family:var(--head);
       font-size:13px;
+      font-weight:800;
       letter-spacing:1px;
-      display:none;
+      text-transform:uppercase;
+      max-width:90vw;
+      text-align:center;
     }
 
-    @media(max-width:950px){
+    @media(max-width:760px){
       .header{
-        height:auto;
-        flex-wrap:wrap;
-        padding:10px 12px;
+        align-items:flex-start;
       }
 
       .header-tabs{
-        margin-left:0;
         width:100%;
+        margin-left:0;
       }
-    }
 
-    @media(max-width:600px){
-      .layout{padding:10px}
-      .toolbar{padding:10px}
-      .search-wrap{min-width:100%}
-      .card-header{flex-direction:column;align-items:flex-start}
+      .tab-btn{
+        flex:1 1 calc(50% - 6px);
+        justify-content:center;
+        font-size:11px;
+        padding:9px 8px;
+      }
+
+      .toolbar{
+        padding:10px;
+      }
+
+      .search-wrap{
+        min-width:100%;
+      }
+
+      .btn{
+        flex:1 1 auto;
+        justify-content:center;
+      }
+
+      .layout{
+        padding:10px;
+      }
+
+      .card-header{
+        padding:13px;
+      }
+
+      .card-title{
+        font-size:18px;
+      }
     }
   </style>
 </head>
 
 <body>
+  <header class="header">
+    <div class="logo">COMANDA<small>Configuración</small></div>
 
-<header class="header">
-  <div class="logo">COMANDA<small>CONFIGURACIÓN</small></div>
+    <!-- Este menú lo reconstruye auth.js según permisos -->
+    <nav class="header-tabs" data-auth-menu></nav>
+  </header>
 
-  <div class="header-tabs">
-    <a class="tab-btn" href="index.html">📋 Pedidos</a>
-    <a class="tab-btn" href="clientes.html">👤 Clientes</a>
-    <a class="tab-btn" href="materiales.html">💲 Materiales</a>
-    <a class="tab-btn" href="estadisticas.html">📊 Estadísticas</a>
-    <a class="tab-btn" href="marketing.html">📣 Marketing</a>
-    <a class="tab-btn active" href="configuracion.html">⚙️ Configuración</a>
-  </div>
-</header>
-
-<div class="toolbar">
-  <div class="search-wrap">
-    🔎
-    <input id="searchOperadores" type="text" placeholder="Buscar operador o estado..." oninput="filtrarOperadores()"/>
-  </div>
-
-  <button class="btn" onclick="nuevoOperador()">+ Añadir operador</button>
-  <button class="btn success" onclick="guardarTodosOperadores()">Guardar cambios</button>
-  <button class="btn secondary" onclick="recargarTodo()">⟳ Recargar</button>
-</div>
-
-<div class="layout">
-  <div class="note">
-    <strong>Permisos por módulo:</strong> activa solo los checks que cada operador puede usar (Pedidos, Clientes, Materiales, Estadísticas, Configuración, Marketing, etc.).
-    <br>
-    <strong>Nota:</strong> Esto guarda permisos en Supabase. Para bloquear páginas de verdad, el login debe leer estos permisos desde la tabla operadores.
-  </div>
-
-  <section class="card">
-    <div class="card-header">
-      <div>
-        <div class="card-title">Operadores y permisos</div>
-        <div class="card-sub">Agrega empleados, clave y accesos por módulo.</div>
-      </div>
-
-      <div class="card-actions">
-        <span class="badge ok" id="operadoresCount">0 operadores</span>
-      </div>
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input id="searchOperadores" type="text" placeholder="Buscar operador, clave o estado..." oninput="filtrarOperadores()"/>
     </div>
 
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Clave</th>
-            <th>Pedidos</th>
-            <th>Clientes</th>
-            <th>Materiales</th>
-            <th>Estadísticas</th>
-            <th>Config.</th>
-            <th>Marketing</th>
-            <th>Cotizador</th>
-            <th>Organizador</th>
-            <th>Mod. operador</th>
-            <th>Mod. cantidad</th>
-            <th>Activo</th>
-            <th>Eliminar</th>
-          </tr>
-        </thead>
+    <button class="btn" type="button" onclick="nuevoOperador()">+ Nuevo operador</button>
+    <button class="btn success" type="button" onclick="guardarTodosOperadores()">Guardar cambios</button>
+    <button class="btn secondary" type="button" onclick="recargarTodo()">Recargar</button>
+    <button class="btn danger" type="button" onclick="logout()">Salir</button>
+  </div>
 
-        <tbody id="operadoresBody">
-          <tr><td colspan="14" class="empty">Cargando operadores...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-</div>
+  <main class="layout">
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Operadores y permisos</div>
+          <div class="card-sub">
+            La jerarquía funciona como plantilla rápida. Los permisos marcados son los que realmente controlan el acceso.
+          </div>
+        </div>
 
-<div class="toast" id="toast"></div>
+        <div class="card-actions">
+          <span class="badge" id="operadoresCount">0 activos</span>
+        </div>
+      </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/configuracion.js"></script>
+      <div class="info-box">
+        <strong>Regla:</strong> si un operador no tiene permiso para un módulo, no debe ver ni entrar a esa página.
+        Si no puede modificar operador o cantidad, esos campos quedan bloqueados en la comanda.
+        Roberto queda protegido con acceso total.
+      </div>
 
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Operador</th>
+              <th>Clave</th>
+              <th>Jerarquía</th>
+              <th>Pedidos</th>
+              <th>Clientes</th>
+              <th>Materiales</th>
+              <th>Estadísticas</th>
+              <th>Config.</th>
+              <th>Marketing</th>
+              <th>Cotizador</th>
+              <th>Organizador</th>
+              <th>Mod. operador</th>
+              <th>Mod. cantidad</th>
+              <th>Activo</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+
+          <tbody id="operadoresBody">
+            <tr>
+              <td colspan="15" class="empty">Cargando operadores...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/configuracion.js"></script>
 </body>
 </html>
