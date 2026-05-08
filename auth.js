@@ -19,9 +19,62 @@ const REQUIRED_PERMISSION = PAGE_PERMISSIONS[CURRENT_PAGE] || "puede_pedidos";
 const ADMIN_ONLY_PAGES = new Set([
   "cotizador.html",
   "organizador%20de%20ideas.html",
+  "configuracion.html",
 ]);
 
 let operadorActual = null;
+
+function setHidden(el, hidden) {
+  if (!el) return;
+  if (hidden) {
+    el.style.display = "none";
+    el.setAttribute("aria-hidden", "true");
+    el.setAttribute("tabindex", "-1");
+  } else {
+    el.style.display = "";
+    el.removeAttribute("aria-hidden");
+    el.removeAttribute("tabindex");
+  }
+}
+
+function aplicarPermisosMenu(op) {
+  const isAdmin = op?.rol === "Administrador";
+
+  const rules = [
+    { href: "index.html", key: "puede_pedidos" },
+    { href: "clientes.html", key: "puede_clientes" },
+    { href: "materiales.html", key: "puede_materiales" },
+    { href: "estadisticas.html", key: "puede_estadisticas" },
+    { href: "configuracion.html", key: "puede_configuracion" },
+    { href: "marketing.html", key: "puede_marketing" },
+  ];
+
+  document.querySelectorAll(".header-tabs a.tab-btn").forEach(a => {
+    const href = (a.getAttribute("href") || "").trim();
+    if (!href) return;
+
+    if (/^cotizador\.html$/i.test(href) || /^organizador/i.test(href)) {
+      setHidden(a, !isAdmin);
+      return;
+    }
+
+    if (/^configuracion\.html$/i.test(href)) {
+      // Configuracion: solo Administrador.
+      setHidden(a, !isAdmin);
+      return;
+    }
+
+    const rule = rules.find(r => r.href.toLowerCase() === href.toLowerCase());
+    if (!rule) return;
+
+    const allowed = isAdmin ? true : op?.[rule.key] === true;
+    setHidden(a, !allowed);
+  });
+
+  document.querySelectorAll(".admin-only").forEach(el => {
+    setHidden(el, !isAdmin);
+  });
+}
 
 // =========================================
 // CSS DEL LOGIN
@@ -346,12 +399,18 @@ async function loginOperador() {
 
   operadorActual = op;
   setSesionOperador(op);
+  aplicarPermisosMenu(op);
 
   const backdrop = document.getElementById("authBackdrop");
   if (backdrop) backdrop.remove();
 
   pintarTopbarSesion();
   aplicarOperadorDefault();
+
+  // If we logged in from the login screen, jump into the app.
+  if (CURRENT_PAGE === "login.html") {
+    window.location.href = "index.html";
+  }
 }
 
 // =========================================
@@ -407,6 +466,18 @@ function aplicarOperadorDefault() {
 async function protegerPagina() {
   injectAuthStyles();
 
+  // Login screen: always show login (and bounce to index if already logged in).
+  if (CURRENT_PAGE === "login.html") {
+    const sesion = getSesionOperador();
+    if (sesion) {
+      // If already logged, go to the main app entry.
+      window.location.href = "index.html";
+      return;
+    }
+    await mostrarLogin();
+    return;
+  }
+
   const sesion = getSesionOperador();
 
   if (!sesion) {
@@ -432,6 +503,7 @@ async function protegerPagina() {
 
   operadorActual = actualizado;
   setSesionOperador(actualizado);
+  aplicarPermisosMenu(actualizado);
   pintarTopbarSesion();
   aplicarOperadorDefault();
 }
