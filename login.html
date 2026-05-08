@@ -2,53 +2,516 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>COMANDA · Login</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="icon" href="data:,">
 
   <style>
-    body{
+    *,*::before,*::after{
+      box-sizing:border-box;
       margin:0;
+      padding:0;
+    }
+
+    :root{
+      --bg:#0d0f14;
+      --panel:#13161d;
+      --panel2:#181c26;
+      --border:#1e2330;
+      --border2:#2a3048;
+      --text:#e2e8f0;
+      --muted:#64748b;
+      --muted2:#94a3b8;
+      --accent:#3b82f6;
+      --accent2:#60a5fa;
+      --green:#30D158;
+      --red:#FF3B30;
+      --yellow:#FFD60A;
+      --head:'Barlow Condensed',Arial,sans-serif;
+      --body:'Barlow',Arial,sans-serif;
+      --mono:'Share Tech Mono',monospace;
+    }
+
+    body{
       min-height:100vh;
+      min-height:100dvh;
       display:flex;
       align-items:center;
       justify-content:center;
-      background:#0b0f17;
-      color:#e2e8f0;
-      font-family:'Barlow',Arial,sans-serif;
+      background:
+        radial-gradient(circle at top left, #1e3a8a55, transparent 34%),
+        radial-gradient(circle at bottom right, #3b82f633, transparent 32%),
+        var(--bg);
+      color:var(--text);
+      font-family:var(--body);
+      padding:18px;
+      padding-top:calc(18px + env(safe-area-inset-top));
+      padding-bottom:calc(18px + env(safe-area-inset-bottom));
     }
-    .shell{
-      width:min(520px, 92vw);
-      padding:22px;
-      border:1px solid #1e293b;
-      border-radius:14px;
-      background:#0f172a;
-      box-shadow:0 30px 90px rgba(0,0,0,.55);
+
+    .login-wrap{
+      width:100%;
+      max-width:430px;
     }
+
     .brand{
-      display:flex;
-      align-items:baseline;
-      gap:10px;
-      font-family:'Barlow Condensed',Arial,sans-serif;
-      letter-spacing:2px;
+      text-align:center;
+      margin-bottom:16px;
+    }
+
+    .brand-title{
+      font-family:var(--head);
+      font-size:34px;
+      font-weight:900;
+      letter-spacing:3px;
+      line-height:1;
+      color:var(--accent2);
+      text-transform:uppercase;
+      text-shadow:0 0 24px #3b82f666;
+    }
+
+    .brand-sub{
+      margin-top:6px;
+      font-size:12px;
+      color:var(--muted2);
+      letter-spacing:1px;
       text-transform:uppercase;
     }
-    .brand b{font-size:26px;color:#60a5fa}
-    .brand small{font-size:12px;color:#94a3b8}
-    .hint{margin-top:10px;color:#94a3b8;font-size:13px;line-height:1.35}
+
+    .card{
+      width:100%;
+      background:linear-gradient(180deg,#151923,#10131b);
+      border:1px solid var(--border2);
+      border-radius:18px;
+      box-shadow:0 24px 80px #000c;
+      overflow:hidden;
+    }
+
+    .head{
+      padding:20px;
+      border-bottom:1px solid var(--border);
+    }
+
+    .title{
+      font-family:var(--head);
+      font-size:23px;
+      font-weight:900;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      color:var(--text);
+    }
+
+    .sub{
+      margin-top:5px;
+      font-size:13px;
+      color:var(--muted2);
+      line-height:1.4;
+    }
+
+    .body{
+      padding:20px;
+      display:flex;
+      flex-direction:column;
+      gap:13px;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    .field label{
+      font-family:var(--head);
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:1.7px;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+
+    .field input,
+    .field select{
+      width:100%;
+      min-height:44px;
+      background:#0d0f14;
+      color:var(--text);
+      border:1px solid var(--border2);
+      border-radius:10px;
+      padding:11px 12px;
+      outline:none;
+      font-family:var(--body);
+      font-size:15px;
+    }
+
+    .field input:focus,
+    .field select:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 2px #3b82f622;
+    }
+
+    select option{
+      background:var(--panel);
+      color:var(--text);
+    }
+
+    .btn{
+      min-height:44px;
+      margin-top:4px;
+      background:var(--accent);
+      color:white;
+      border:none;
+      border-radius:10px;
+      padding:12px 14px;
+      cursor:pointer;
+      font-family:var(--head);
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:1.8px;
+      text-transform:uppercase;
+      transition:.2s;
+    }
+
+    .btn:hover{
+      filter:brightness(1.08);
+      box-shadow:0 0 20px #3b82f655;
+    }
+
+    .btn:active{
+      transform:scale(.98);
+    }
+
+    .btn:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      box-shadow:none;
+    }
+
+    .error{
+      display:none;
+      background:#FF3B3011;
+      border:1px solid #FF3B3044;
+      color:#ff867f;
+      border-radius:10px;
+      padding:11px 12px;
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    .ok{
+      display:none;
+      background:#30D15811;
+      border:1px solid #30D15844;
+      color:#7af59a;
+      border-radius:10px;
+      padding:11px 12px;
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    .foot{
+      padding:14px 20px;
+      border-top:1px solid var(--border);
+      color:var(--muted);
+      font-size:11px;
+      line-height:1.45;
+      text-align:center;
+    }
+
+    .loading-row{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:var(--muted2);
+      font-size:12px;
+      font-family:var(--mono);
+    }
+
+    .spinner{
+      width:14px;
+      height:14px;
+      border:2px solid #ffffff22;
+      border-top-color:var(--accent2);
+      border-radius:50%;
+      animation:spin .75s linear infinite;
+    }
+
+    @keyframes spin{
+      to{transform:rotate(360deg)}
+    }
+
+    @media(max-width:420px){
+      body{
+        align-items:flex-start;
+        padding-top:46px;
+      }
+
+      .brand-title{
+        font-size:29px;
+      }
+
+      .card{
+        border-radius:16px;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <div class="shell">
-    <div class="brand"><b>COMANDA</b><small>Acceso</small></div>
-    <div class="hint">Ingresa con tu operador y clave para continuar.</div>
+  <div class="login-wrap">
+    <div class="brand">
+      <div class="brand-title">COMANDA</div>
+      <div class="brand-sub">Tuttovinilos · Acceso interno</div>
+    </div>
+
+    <div class="card">
+      <div class="head">
+        <div class="title">Iniciar sesión</div>
+        <div class="sub">Selecciona tu operador e introduce tu clave para entrar al módulo permitido.</div>
+      </div>
+
+      <div class="body">
+        <div class="error" id="loginError"></div>
+        <div class="ok" id="loginOk"></div>
+
+        <div class="loading-row" id="loadingBox">
+          <span class="spinner"></span>
+          <span>Cargando operadores...</span>
+        </div>
+
+        <div class="field" id="userField" style="display:none">
+          <label>Operador</label>
+          <select id="loginUser"></select>
+        </div>
+
+        <div class="field" id="passField" style="display:none">
+          <label>Clave</label>
+          <input id="loginPass" type="password" placeholder="Clave" autocomplete="current-password"/>
+        </div>
+
+        <button class="btn" id="loginBtn" type="button" style="display:none">Entrar</button>
+      </div>
+
+      <div class="foot">
+        Si un operador no aparece aquí, revisa que esté creado y activo en Configuración.
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.js"></script>
-  <script src="js/auth.js"></script>
+
+  <script>
+    // =====================================================
+    // LOGIN · COMANDA TUTTOVINILOS
+    // Este login trabaja con la misma sesión que auth.js:
+    // localStorage["comanda_operador_actual"]
+    // =====================================================
+
+    const AUTH_STORAGE_KEY = "comanda_operador_actual";
+
+    const PAGE_LINKS = [
+      { page: "index.html", permission: "puede_pedidos" },
+      { page: "clientes.html", permission: "puede_clientes" },
+      { page: "materiales.html", permission: "puede_materiales" },
+      { page: "estadisticas.html", permission: "puede_estadisticas" },
+      { page: "marketing.html", permission: "puede_marketing" },
+      { page: "Cotizador.html", permission: "puede_cotizador" },
+      { page: "Organizador de ideas.html", permission: "puede_organizador" },
+      { page: "configuracion.html", permission: "puede_configuracion" }
+    ];
+
+    let operadoresLogin = [];
+
+    function esRoberto(op) {
+      return String(op?.nombre || "").trim().toLowerCase() === "roberto";
+    }
+
+    function operadorActivo(op) {
+      return op && op.activo !== false;
+    }
+
+    function getSesionOperador() {
+      try {
+        return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || "null");
+      } catch {
+        return null;
+      }
+    }
+
+    function setSesionOperador(op) {
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(op));
+    }
+
+    function clearSesionOperador() {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+    }
+
+    function getLandingPage(op) {
+      if (!operadorActivo(op)) return null;
+
+      // Roberto siempre entra a pedidos.
+      if (esRoberto(op)) return "index.html";
+
+      const first = PAGE_LINKS.find(item => op[item.permission] === true);
+      return first ? first.page : null;
+    }
+
+    function showError(msg) {
+      const errorBox = document.getElementById("loginError");
+      const okBox = document.getElementById("loginOk");
+
+      if (okBox) okBox.style.display = "none";
+
+      errorBox.textContent = msg;
+      errorBox.style.display = "block";
+    }
+
+    function showOk(msg) {
+      const errorBox = document.getElementById("loginError");
+      const okBox = document.getElementById("loginOk");
+
+      if (errorBox) errorBox.style.display = "none";
+
+      okBox.textContent = msg;
+      okBox.style.display = "block";
+    }
+
+    function setLoading(isLoading) {
+      const loadingBox = document.getElementById("loadingBox");
+      const userField = document.getElementById("userField");
+      const passField = document.getElementById("passField");
+      const loginBtn = document.getElementById("loginBtn");
+
+      loadingBox.style.display = isLoading ? "flex" : "none";
+      userField.style.display = isLoading ? "none" : "flex";
+      passField.style.display = isLoading ? "none" : "flex";
+      loginBtn.style.display = isLoading ? "none" : "block";
+      loginBtn.disabled = isLoading;
+    }
+
+    async function obtenerOperadoresActivos() {
+      if (!window.supabaseClient) {
+        showError("Supabase no está conectado. Revisa js/supabase.js");
+        return [];
+      }
+
+      const { data, error } = await supabaseClient
+        .from("operadores")
+        .select("*")
+        .eq("activo", true)
+        .order("nombre", { ascending: true });
+
+      if (error) {
+        console.error("Error cargando operadores:", error);
+        showError("No se pudieron cargar operadores desde Supabase.");
+        return [];
+      }
+
+      return data || [];
+    }
+
+    function llenarSelectOperadores(operadores) {
+      const select = document.getElementById("loginUser");
+
+      if (!operadores.length) {
+        select.innerHTML = "";
+        showError("No hay operadores activos.");
+        return;
+      }
+
+      select.innerHTML = operadores.map(op => {
+        return `<option value="${op.id}">${op.nombre}</option>`;
+      }).join("");
+    }
+
+    async function doLogin() {
+      const select = document.getElementById("loginUser");
+      const pass = document.getElementById("loginPass");
+      const btn = document.getElementById("loginBtn");
+
+      const userId = select.value;
+      const clave = String(pass.value || "");
+
+      const op = operadoresLogin.find(o => String(o.id) === String(userId));
+
+      if (!op) {
+        showError("Usuario no encontrado.");
+        return;
+      }
+
+      if (op.activo === false) {
+        showError("Este operador está inactivo.");
+        return;
+      }
+
+      if (String(op.clave || "") !== clave) {
+        showError("Clave incorrecta.");
+        pass.focus();
+        pass.select();
+        return;
+      }
+
+      const destino = getLandingPage(op);
+
+      if (!destino) {
+        showError("Este usuario no tiene ningún módulo habilitado.");
+        return;
+      }
+
+      btn.disabled = true;
+      showOk("Acceso correcto. Entrando...");
+
+      setSesionOperador(op);
+
+      setTimeout(() => {
+        location.href = destino;
+      }, 350);
+    }
+
+    async function initLogin() {
+      // Si viene de logout, limpiamos sesión.
+      const params = new URLSearchParams(location.search);
+      if (params.has("logout")) {
+        clearSesionOperador();
+      }
+
+      // Si ya hay sesión válida y NO viene de logout, redirige al módulo permitido.
+      const sesion = getSesionOperador();
+      if (sesion && operadorActivo(sesion) && !params.has("logout")) {
+        const destino = getLandingPage(sesion);
+        if (destino) {
+          location.href = destino;
+          return;
+        }
+      }
+
+      setLoading(true);
+
+      operadoresLogin = await obtenerOperadoresActivos();
+
+      llenarSelectOperadores(operadoresLogin);
+
+      setLoading(false);
+
+      const pass = document.getElementById("loginPass");
+      const btn = document.getElementById("loginBtn");
+
+      btn.addEventListener("click", doLogin);
+
+      pass.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") doLogin();
+      });
+
+      setTimeout(() => {
+        pass.focus();
+      }, 100);
+    }
+
+    window.addEventListener("DOMContentLoaded", initLogin);
+  </script>
 </body>
 </html>
-
