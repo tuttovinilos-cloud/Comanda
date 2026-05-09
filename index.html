@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>COMANDA · Producción</title>
+<link rel="icon" href="data:,">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#0d0f14;
+  --panel:#13161d;
+  --panel2:#181c26;
+  --border:#1e2330;
+  --border2:#2a3048;
+  --text:#e2e8f0;
+  --muted:#64748b;
+  --muted2:#94a3b8;
+  --accent:#3b82f6;
+  --accent2:#60a5fa;
+  --red:#FF3B30;
+  --yellow:#FFD60A;
+  --green:#30D158;
+  --orange:#FF9F0A;
+  --mono:'Share Tech Mono',monospace;
+  --head:'Barlow Condensed',sans-serif;
+  --body:'Barlow',sans-serif;
+}
+
+html{scroll-behavior:smooth}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  min-height:100vh;
+  -webkit-tap-highlight-color:transparent;
+  padding-bottom:90px;
+}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* HEADER */
+.header{
+  background:var(--panel);
+  border-bottom:2px solid var(--accent);
+  padding:10px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-height:58px;
+  position:sticky;
+  top:0;
+  z-index:200;
+  box-shadow:0 4px 24px #0009;
+  flex-wrap:wrap;
+}
+
+.logo{
+  font-family:var(--head);
+  font-size:21px;
+  font-weight:900;
+  letter-spacing:3px;
+  color:var(--accent2);
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.logo small{
+  color:var(--muted);
+  font-weight:400;
+  font-size:11px;
+  letter-spacing:1px;
+  margin-left:6px;
+}
+
+.header-tabs{
+  display:flex;
+  gap:6px;
+  margin-left:auto;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.tab-btn{
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  padding:7px 14px;
+  border:1px solid var(--border2);
+  background:transparent;
+  color:var(--muted2);
+  cursor:pointer;
+  border-radius:5px;
+  transition:all .2s;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+
+.tab-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent2);
+  background:#3b82f611;
+}
+
+.tab-btn.active{
+  background:var(--accent);
+  color:#fff;
+  border-color:var(--accent);
+  box-shadow:0 0 14px #3b82f644;
+}
+
+/* TOOLBAR */
+.toolbar{
+  display:flex;
+  gap:8px;
+  padding:12px 16px;
+  flex-wrap:wrap;
+  border-bottom:1px solid var(--border);
+  align-items:center;
+}
+
+.search-wrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:var(--panel);
+  border:1px solid var(--border2);
+  border-radius:7px;
+  padding:9px 12px;
+  flex:1;
+  min-width:260px;
+}
+
+.search-wrap input{
+  background:none;
+  border:none;
+  outline:none;
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:13px;
+  width:100%;
+}
+
+.search-wrap input::placeholder{color:var(--muted)}
+
+.filter-sel{
+  background:var(--panel);
+  border:1px solid var(--border2);
+  color:var(--text);
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:1px;
+  padding:8px 10px;
+  border-radius:7px;
+  outline:none;
+  cursor:pointer;
+  min-height:38px;
+}
+
+.btn-add{
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  padding:9px 14px;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:7px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  white-space:nowrap;
+  transition:all .2s;
+  text-decoration:none;
+  min-height:38px;
+}
+
+.btn-add:hover{filter:brightness(1.1)}
+
+.btn-add.secondary{
+  background:transparent;
+  color:var(--muted2);
+  border:1px solid var(--border2);
+}
+
+.storage-badge{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:var(--panel);
+  border:1px solid var(--border2);
+  border-radius:7px;
+  padding:8px 10px;
+  white-space:nowrap;
+  min-height:38px;
+}
+
+.storage-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--yellow);
+}
+
+.storage-badge.ok .storage-dot{background:var(--green)}
+
+.storage-badge span{
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1px;
+  color:var(--muted2);
+  text-transform:uppercase;
+}
+
+/* TABLE */
+.table-wrap{
+  overflow-x:auto;
+  padding:0 0 90px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:1180px;
+}
+
+thead tr{
+  border-bottom:2px solid var(--border2);
+  background:var(--panel);
+}
+
+th{
+  position:sticky;
+  top:58px;
+  z-index:10;
+  background:var(--panel);
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--muted);
+  padding:10px 10px;
+  text-align:left;
+  white-space:nowrap;
+}
+
+td{
+  padding:10px 10px;
+  font-size:13px;
+  vertical-align:middle;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+
+tbody tr{
+  transition:background .12s;
+  cursor:pointer;
+}
+
+tbody tr:nth-child(even){background:rgba(255,255,255,0.015)}
+tbody tr:hover{background:rgba(59,130,246,0.08)}
+
+tbody::before{
+  content:"";
+  display:block;
+  height:14px;
+}
+
+#orderTableBody td:nth-child(2){
+  color:#7f8ea3;
+  font-size:12px;
+  font-family:var(--mono);
+}
+
+#orderTableBody td:nth-child(3){
+  font-weight:700;
+  font-family:var(--head);
+  letter-spacing:.5px;
+  color:#8ec5ff;
+}
+
+#orderTableBody td:nth-child(4){
+  color:#5ea8ff;
+  font-weight:700;
+}
+
+#orderTableBody td:nth-child(5){
+  color:#e5edf8;
+  line-height:1.25;
+}
+
+.cell-edit,
+.cell-select,
+.quick-input,
+.quick-select,
+.quick-btn{
+  width:100%;
+  background:var(--bg);
+  border:1px solid var(--border2);
+  color:var(--text);
+  border-radius:7px;
+  padding:7px 8px;
+  font-family:var(--body);
+  font-size:12px;
+  outline:none;
+}
+
+.cell-edit:focus,
+.cell-select:focus,
+.quick-input:focus,
+.quick-select:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px #3b82f622;
+}
+
+.cell-select option,
+.quick-select option{
+  background:var(--panel);
+  color:var(--text);
+}
+
+.cell-edit:disabled,
+.quick-input:disabled,
+.quick-select:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+.quick-entry-row th{
+  background:var(--panel2);
+  padding:6px;
+  border-bottom:1px solid var(--border2);
+  position:sticky;
+  top:96px;
+  z-index:9;
+}
+
+.quick-btn{
+  font-family:var(--head);
+  font-weight:800;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  background:var(--accent);
+  border-color:var(--accent);
+  cursor:pointer;
+  color:#fff;
+  min-height:34px;
+}
+
+.quick-btn.secondary{
+  background:transparent;
+  color:var(--muted2);
+  border-color:var(--border2);
+}
+
+.quick-textarea{
+  min-height:34px;
+  resize:vertical;
+  line-height:1.25;
+}
+
+.quick-textarea:focus{min-height:90px}
+
+.quick-hint{
+  font-size:10px;
+  color:var(--muted);
+  margin-top:2px;
+  text-align:left;
+}
+
+.quick-mini-btn{
+  width:34px;
+  min-width:34px;
+  height:34px;
+  border-radius:7px;
+  border:1px dashed var(--border2);
+  background:transparent;
+  color:var(--accent2);
+  cursor:pointer;
+  font-weight:700;
+}
+
+.quick-mini-btn:hover{
+  border-color:var(--accent);
+  background:#3b82f611;
+}
+
+.status-solicitud{color:var(--red);border-color:#FF3B3044;background:#FF3B3011}
+.status-revisado{color:var(--yellow);border-color:#FFD60A44;background:#FFD60A11}
+.status-listo{color:var(--green);border-color:#30D15844;background:#30D15811}
+
+.pago-pendiente{color:var(--red);border-color:#FF3B3044;background:#FF3B3011}
+.pago-abonado{color:var(--orange);border-color:#FF9F0A44;background:#FF9F0A11}
+.pago-pagado{color:var(--green);border-color:#30D15844;background:#30D15811}
+
+.empty{
+  text-align:center;
+  padding:60px 20px;
+  color:var(--muted);
+  font-family:var(--head);
+  font-size:15px;
+  letter-spacing:2px;
+}
+
+.file-link-chip,
+.quick-attach-link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border:1px solid var(--border2);
+  border-radius:7px;
+  background:transparent;
+  color:var(--accent2);
+  cursor:pointer;
+  font-family:var(--head);
+  font-size:11px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  text-decoration:none;
+  transition:all .2s;
+}
+
+.file-link-chip:hover,
+.quick-attach-link:hover{
+  border-color:var(--accent);
+  background:#3b82f611;
+}
+
+/* MODAL */
+.backdrop{
+  position:fixed;
+  inset:0;
+  background:#000b;
+  z-index:500;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  backdrop-filter:blur(3px);
+  padding:0;
+}
+
+@media(min-width:600px){
+  .backdrop{
+    align-items:center;
+    padding:16px;
+  }
+}
+
+.modal{
+  background:var(--panel);
+  border:1px solid var(--border2);
+  width:100%;
+  max-width:560px;
+  max-height:94vh;
+  overflow-y:auto;
+  border-radius:14px 14px 0 0;
+  box-shadow:0 -8px 60px #000c;
+  animation:slideUp .22s ease;
+}
+
+@media(min-width:600px){
+  .modal{
+    border-radius:12px;
+    animation:popIn .18s ease;
+  }
+}
+
+@keyframes slideUp{
+  from{transform:translateY(50px);opacity:0}
+  to{transform:none;opacity:1}
+}
+
+@keyframes popIn{
+  from{transform:scale(.96) translateY(10px);opacity:0}
+  to{transform:none;opacity:1}
+}
+
+.modal-handle{
+  width:36px;
+  height:4px;
+  background:var(--border2);
+  border-radius:2px;
+  margin:10px auto 0;
+}
+
+.modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 20px;
+  border-bottom:1px solid var(--border);
+}
+
+.modal-title{
+  font-family:var(--head);
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+
+.modal-close{
+  width:32px;
+  height:32px;
+  border-radius:7px;
+  border:1px solid var(--border2);
+  background:transparent;
+  color:var(--muted);
+  cursor:pointer;
+  font-size:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all .2s;
+}
+
+.modal-close:hover{
+  border-color:var(--red);
+  color:var(--red);
+}
+
+.modal-body{
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.modal-footer{
+  padding:14px 20px;
+  border-top:1px solid var(--border);
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.form-full{grid-column:1/-1}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.field label{
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--muted);
+  text-transform:uppercase;
+}
+
+.field input,
+.field select,
+.field textarea{
+  background:var(--bg);
+  border:1px solid var(--border2);
+  color:var(--text);
+  border-radius:8px;
+  padding:10px 12px;
+  font-family:var(--body);
+  font-size:14px;
+  outline:none;
+  transition:border .2s;
+  width:100%;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px #3b82f622;
+}
+
+.field input:disabled,
+.field select:disabled,
+.field textarea:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+.field textarea{
+  resize:vertical;
+  min-height:76px;
+}
+
+.field select option{background:var(--panel)}
+
+.file-drop{
+  border:2px dashed var(--border2);
+  border-radius:10px;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  transition:border-color .2s,background .2s;
+  min-height:90px;
+}
+
+.file-drop:hover{
+  border-color:var(--accent);
+  background:#3b82f611;
+}
+
+.file-preview-box{
+  border:1px solid var(--border2);
+  border-radius:10px;
+  overflow:hidden;
+  position:relative;
+  background:var(--bg);
+  min-height:90px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.file-remove-btn{
+  position:absolute;
+  top:6px;
+  right:6px;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:#0009;
+  border:1px solid #ffffff22;
+  color:#fff;
+  font-size:12px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.file-remove-btn:hover{background:#FF3B30cc}
+
+#rowFileInput{display:none}
+
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:84px;
+  transform:translateX(-50%);
+  background:var(--panel2);
+  color:var(--text);
+  border:1px solid var(--border2);
+  border-radius:10px;
+  padding:10px 16px;
+  z-index:999999;
+  display:none;
+  box-shadow:0 12px 35px #0008;
+  font-family:var(--head);
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  max-width:90vw;
+  text-align:center;
+}
+
+@media(max-width:980px){
+  .header{
+    align-items:flex-start;
+  }
+
+  .header-tabs{
+    width:100%;
+    margin-left:0;
+  }
+
+  .tab-btn{
+    flex:1 1 calc(50% - 6px);
+    justify-content:center;
+    font-size:11px;
+    padding:9px 8px;
+  }
+
+  th{top:104px}
+  .quick-entry-row th{top:142px}
+}
+
+@media(max-width:640px){
+  .toolbar{
+    padding:10px;
+    gap:6px;
+  }
+
+  .search-wrap{min-width:100%}
+
+  .filter-sel,
+  .btn-add{
+    font-size:11px;
+    padding:8px 9px;
+    flex:1 1 auto;
+  }
+
+  .storage-badge{
+    flex:1 1 100%;
+    justify-content:center;
+  }
+
+  .table-wrap{padding-bottom:110px}
+  table{min-width:1020px}
+
+  th,td{padding:8px 6px}
+
+  .modal-body{padding:16px}
+  .form-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+<header class="header">
+  <div class="logo">COMANDA<small>Producción</small></div>
+  <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
+</header>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/>
+      <path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input id="searchInput" type="text" placeholder="Nombre, teléfono o descripción..." oninput="onSearch()"/>
+  </div>
+
+  <select class="filter-sel" id="filterStatus" onchange="onSearch()">
+    <option value="">Todos</option>
+    <option value="Solicitud">🔴 Solicitud</option>
+    <option value="Revisado">🟡 Revisado</option>
+    <option value="Listo">🟢 Listo</option>
+  </select>
+
+  <select class="filter-sel" id="filterPago" onchange="onSearch()">
+    <option value="">Pago</option>
+    <option value="Pendiente">Pendiente</option>
+    <option value="Abonado">Abonado</option>
+    <option value="Pagado">Pagado</option>
+  </select>
+
+  <input class="filter-sel" id="filterFechaDesde" type="date" onchange="onSearch()" title="Desde"/>
+  <input class="filter-sel" id="filterFechaHasta" type="date" onchange="onSearch()" title="Hasta"/>
+
+  <select class="filter-sel" id="filterOperador" onchange="onSearch()">
+    <option value="">Operador</option>
+  </select>
+
+  <div class="storage-badge" id="storageBadge">
+    <div class="storage-dot"></div>
+    <span id="storageBadgeText">Local</span>
+  </div>
+
+  <button class="btn-add" type="button" onclick="openOrderModal()">+ Nuevo</button>
+  <button class="btn-add secondary" type="button" onclick="localStorage.removeItem('comanda_operador_actual'); location.href='login.html?logout=1';">Salir</button>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Fecha</th>
+        <th>Operador</th>
+        <th>Cliente</th>
+        <th>Descripción</th>
+        <th>Cantidad</th>
+        <th>Material</th>
+        <th>Impresión</th>
+        <th>Precio</th>
+        <th>Estatus</th>
+        <th>Pago</th>
+        <th>Entrega</th>
+        <th>Archivo</th>
+      </tr>
+
+      <tr class="quick-entry-row">
+        <th>
+          <button class="quick-btn secondary" type="button" onclick="clearQuickEntry()">✕</button>
+        </th>
+
+        <th>
+          <input class="quick-input" id="q_fecha" type="date"/>
+        </th>
+
+        <th>
+          <select class="quick-select" id="q_operador">
+            <option value="">Operador</option>
+            <option value="Roberto">Roberto</option>
+            <option value="Ricardo">Ricardo</option>
+            <option value="Chico">Chico</option>
+            <option value="Carlos">Carlos</option>
+            <option value="Alejandro">Alejandro</option>
+            <option value="Ruben">Ruben</option>
+            <option value="Ana">Ana</option>
+            <option value="Miguel">Miguel</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </th>
+
+        <th>
+          <input class="quick-input" id="q_cliente" type="text" placeholder="Cliente"/>
+          <div class="quick-hint" id="quickClientHint"></div>
+        </th>
+
+        <th>
+          <textarea class="quick-input quick-textarea" id="q_descripcion" placeholder="Descripción"></textarea>
+        </th>
+
+        <th>
+          <input class="quick-input" id="q_cantidad" type="text" placeholder="Cantidad / m"/>
+        </th>
+
+        <th>
+          <select class="quick-select" id="q_material">
+            <option value="">Material</option>
+          </select>
+        </th>
+
+        <th>
+          <select class="quick-select" id="q_impresion">
+            <option value="">Impresión</option>
+          </select>
+        </th>
+
+        <th>
+          <div class="quick-hint" id="q_precio_preview">$0.00</div>
+        </th>
+
+        <th>
+          <select class="quick-select" id="q_estatus_trabajo">
+            <option selected>Solicitud</option>
+            <option>Revisado</option>
+            <option>Listo</option>
+          </select>
+        </th>
+
+        <th>
+          <select class="quick-select" id="q_estatus_pago">
+            <option selected>Pendiente</option>
+            <option>Abonado</option>
+            <option>Pagado</option>
+          </select>
+        </th>
+
+        <th>
+          <input class="quick-input" id="q_entrega" type="date"/>
+        </th>
+
+        <th>
+          <button class="quick-mini-btn" type="button" title="Adjuntar archivo" onclick="openQuickAttach()">📎</button>
+          <button class="quick-btn" type="button" onclick="saveQuickOrder()" style="margin-top:5px">Guardar</button>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody id="orderTableBody"></tbody>
+  </table>
+
+  <div id="emptyState" class="empty" style="display:none">— SIN PEDIDOS —</div>
+</div>
+
+<!-- MODAL PEDIDO -->
+<div class="backdrop" id="orderBackdrop" style="display:none" onclick="bdClick(event,'orderBackdrop')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+
+    <div class="modal-header">
+      <span class="modal-title" id="orderModalTitle">NUEVO PEDIDO</span>
+      <button class="modal-close" type="button" onclick="closeModal('orderBackdrop')">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="f_fecha"/>
+        </div>
+
+        <div class="field">
+          <label>Operador</label>
+          <select id="f_operador">
+            <option value="">Seleccionar…</option>
+            <option value="Roberto">Roberto</option>
+            <option value="Ricardo">Ricardo</option>
+            <option value="Chico">Chico</option>
+            <option value="Carlos">Carlos</option>
+            <option value="Alejandro">Alejandro</option>
+            <option value="Ruben">Ruben</option>
+            <option value="Ana">Ana</option>
+            <option value="Miguel">Miguel</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Cliente</label>
+        <input type="text" id="f_cliente" placeholder="Nombre del cliente..." autocomplete="off"/>
+      </div>
+
+      <div class="field form-full">
+        <label>Descripción del trabajo</label>
+        <textarea id="f_descripcion" placeholder="Ej: Banner exterior 3x1m..." rows="3"></textarea>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Cantidad / Metros</label>
+          <input type="text" id="f_cantidad" placeholder="Ej: 5 m² / 1200 stickers"/>
+        </div>
+
+        <div class="field">
+          <label>Fecha de entrega</label>
+          <input type="date" id="f_entrega"/>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Material</label>
+          <select id="f_material">
+            <option value="">Material</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Tipo de impresión</label>
+          <select id="f_impresion">
+            <option value="">Impresión</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Imagen / Archivo de referencia</label>
+
+        <div id="filePreviewArea" onclick="document.getElementById('f_archivo').click()" style="cursor:pointer">
+          <div id="fileEmpty" class="file-drop">
+            <span style="font-size:28px">📎</span>
+            <span style="font-family:var(--head);font-size:12px;letter-spacing:1px;color:var(--muted)">TOCA PARA ADJUNTAR</span>
+            <span style="font-size:11px;color:var(--muted)">Imagen, PDF o archivo</span>
+          </div>
+
+          <div id="filePreview" style="display:none" class="file-preview-box">
+            <img id="fileImg" style="display:none;max-height:160px;border-radius:6px;object-fit:contain;width:100%"/>
+
+            <div id="fileGeneric" style="display:none;text-align:center;padding:16px">
+              <div id="fileIconBig" style="font-size:40px"></div>
+              <div id="fileName" style="font-size:12px;color:var(--muted2);margin-top:6px;word-break:break-all"></div>
+            </div>
+
+            <button class="file-remove-btn" type="button" onclick="event.stopPropagation();removeFile()" title="Quitar archivo">✕</button>
+          </div>
+        </div>
+
+        <input type="file" id="f_archivo" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" style="display:none" onchange="handleFileSelect(event)"/>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-add secondary" type="button" onclick="closeModal('orderBackdrop')">Cancelar</button>
+      <button class="btn-add" type="button" onclick="saveOrder()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="rowFileInput" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" onchange="handleRowFileSelect(event)"/>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+
+<script>
+/*
+  RESPALDO INTERNO
+  Esto evita que el botón Salir y el menú fallen si js/auth.js no carga por caché o ruta.
+*/
+window.logout = window.logout || function(){
+  localStorage.removeItem("comanda_operador_actual");
+  location.href = "login.html?logout=1";
+};
+
+(function(){
+  const AUTH_KEY = "comanda_operador_actual";
+
+  const links = [
+    { page:"index.html", label:"📋 Pedidos", permission:"puede_pedidos" },
+    { page:"clientes.html", label:"👤 Clientes", permission:"puede_clientes" },
+    { page:"materiales.html", label:"💲 Materiales", permission:"puede_materiales" },
+    { page:"estadisticas.html", label:"📊 Estadísticas", permission:"puede_estadisticas" },
+    { page:"marketing.html", label:"📣 Marketing", permission:"puede_marketing" },
+    { page:"Cotizador.html", label:"🧾 Cotizador", permission:"puede_cotizador" },
+    { page:"Organizador de ideas.html", label:"💡 Organizador", permission:"puede_organizador" },
+    { page:"configuracion.html", label:"⚙️ Configuración", permission:"puede_configuracion" }
+  ];
+
+  function getOp(){
+    try{
+      return JSON.parse(localStorage.getItem(AUTH_KEY) || "null");
+    }catch(e){
+      return null;
+    }
+  }
+
+  function isRoberto(op){
+    return String(op && op.nombre || "").trim().toLowerCase() === "roberto";
+  }
+
+  function hasPermission(op, perm){
+    if(!op || op.activo === false) return false;
+    if(isRoberto(op)) return true;
+    return op[perm] === true;
+  }
+
+  function firstAllowed(op){
+    if(isRoberto(op)) return "index.html";
+
+    const item = links.find(l => op && op[l.permission] === true);
+    return item ? item.page : "login.html";
+  }
+
+  function renderMenu(){
+    const op = getOp();
+
+    if(!op || op.activo === false){
+      location.href = "login.html";
+      return;
+    }
+
+    const menu = document.getElementById("authMenu");
+    if(!menu) return;
+
+    // Si auth.js ya llenó el menú, no duplicamos.
+    if(menu.children.length > 0) return;
+
+    links.forEach(item => {
+      if(!hasPermission(op, item.permission)) return;
+
+      const a = document.createElement("a");
+      a.href = item.page;
+      a.textContent = item.label;
+      a.className = "tab-btn";
+
+      if(item.page.toLowerCase() === "index.html"){
+        a.classList.add("active");
+      }
+
+      menu.appendChild(a);
+    });
+
+    if(!hasPermission(op, "puede_pedidos")){
+      location.href = firstAllowed(op);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", renderMenu);
+  setTimeout(renderMenu, 500);
+})();
+</script>
+
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
