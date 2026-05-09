@@ -40,7 +40,7 @@ body{
   font-family:var(--body);
   min-height:100vh;
   -webkit-tap-highlight-color:transparent;
-  padding-bottom:100px;
+  padding-bottom:110px;
 }
 
 button,input,select,textarea{
@@ -144,6 +144,14 @@ button{
   border-radius:7px;
   cursor:pointer;
   margin-left:auto;
+}
+
+.mobile-menu-extra{
+  display:none;
+}
+
+.menu-action-btn{
+  width:100%;
 }
 
 /* TOOLBAR */
@@ -259,10 +267,12 @@ button{
   text-transform:uppercase;
 }
 
+.desktop-only{display:flex}
+
 /* TABLE */
 .table-wrap{
   overflow-x:auto;
-  padding:12px 0 120px;
+  padding:12px 0 130px;
   -webkit-overflow-scrolling:touch;
 }
 
@@ -431,6 +441,13 @@ tbody::before{
 .quick-mini-btn:hover{
   border-color:var(--accent);
   background:#3b82f611;
+}
+
+.add-symbol-btn{
+  font-size:24px;
+  font-weight:900;
+  line-height:1;
+  padding:4px 8px;
 }
 
 /* STATUS */
@@ -738,7 +755,7 @@ tbody::before{
   .quick-entry-row th{top:142px}
 }
 
-/* MOBILE MEJORADO */
+/* MOBILE */
 @media(max-width:760px){
   body{
     padding-bottom:130px;
@@ -797,22 +814,28 @@ tbody::before{
     order:2;
   }
 
-  .storage-badge{
-    flex:1 1 100%;
+  .desktop-only{
+    display:none !important;
+  }
+
+  .mobile-menu-extra{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+    grid-column:1 / -1;
+    padding-top:8px;
+    border-top:1px solid var(--border);
+  }
+
+  .mobile-menu-extra .storage-badge{
+    width:100%;
     justify-content:center;
-    order:3;
   }
 
-  .btn-add{
-    flex:1 1 calc(50% - 7px);
-    order:4;
+  .mobile-menu-extra .btn-add{
+    width:100%;
   }
 
-  /*
-    IMPORTANTE:
-    En móvil se quita sticky de la fila rápida
-    para que no se monte encima del panel.
-  */
   th{
     position:static;
     top:auto;
@@ -849,7 +872,7 @@ tbody::before{
   }
 }
 
-/* IPHONE PEQUEÑO */
+/* IPHONE SE */
 @media(max-width:430px){
   .header-tabs.open{
     grid-template-columns:1fr;
@@ -859,8 +882,7 @@ tbody::before{
     display:none;
   }
 
-  .filter-sel,
-  .btn-add{
+  .filter-sel{
     flex:1 1 100%;
   }
 
@@ -918,13 +940,10 @@ tbody::before{
     <option value="">Operador</option>
   </select>
 
-  <div class="storage-badge" id="storageBadge">
+  <div class="storage-badge desktop-only" id="storageBadge">
     <div class="storage-dot"></div>
     <span id="storageBadgeText">Local</span>
   </div>
-
-  <button class="btn-add" type="button" onclick="openOrderModal()">+ Nuevo</button>
-  <button class="btn-add secondary" type="button" onclick="localStorage.removeItem('comanda_operador_actual'); location.href='login.html?logout=1';">Salir</button>
 </div>
 
 <div class="table-wrap">
@@ -958,15 +977,6 @@ tbody::before{
         <th>
           <select class="quick-select" id="q_operador">
             <option value="">Operador</option>
-            <option value="Roberto">Roberto</option>
-            <option value="Ricardo">Ricardo</option>
-            <option value="Chico">Chico</option>
-            <option value="Carlos">Carlos</option>
-            <option value="Alejandro">Alejandro</option>
-            <option value="Ruben">Ruben</option>
-            <option value="Ana">Ana</option>
-            <option value="Miguel">Miguel</option>
-            <option value="Otro">Otro</option>
           </select>
         </th>
 
@@ -1021,7 +1031,7 @@ tbody::before{
 
         <th>
           <button class="quick-mini-btn" type="button" title="Adjuntar archivo" onclick="openQuickAttach()">📎</button>
-          <button class="quick-btn" type="button" onclick="saveQuickOrder()" style="margin-top:5px">Guardar</button>
+          <button class="quick-btn add-symbol-btn" type="button" onclick="saveQuickOrder()" style="margin-top:5px" title="Guardar pedido">+</button>
         </th>
       </tr>
     </thead>
@@ -1053,15 +1063,6 @@ tbody::before{
           <label>Operador</label>
           <select id="f_operador">
             <option value="">Seleccionar…</option>
-            <option value="Roberto">Roberto</option>
-            <option value="Ricardo">Ricardo</option>
-            <option value="Chico">Chico</option>
-            <option value="Carlos">Carlos</option>
-            <option value="Alejandro">Alejandro</option>
-            <option value="Ruben">Ruben</option>
-            <option value="Ana">Ana</option>
-            <option value="Miguel">Miguel</option>
-            <option value="Otro">Otro</option>
           </select>
         </div>
       </div>
@@ -1147,7 +1148,9 @@ tbody::before{
 <script>
 /*
   RESPALDO INTERNO:
-  Evita que el botón Salir y el menú fallen si js/auth.js no carga por caché o ruta.
+  - Salir funciona aunque auth.js falle.
+  - Menú móvil tiene Supabase/Local y Salir.
+  - Operadores se cargan desde Supabase tabla operadores.
 */
 window.logout = window.logout || function(){
   localStorage.removeItem("comanda_operador_actual");
@@ -1203,7 +1206,7 @@ window.logout = window.logout || function(){
     const menu = document.getElementById("authMenu");
     if(!menu) return;
 
-    if(menu.children.length > 0) return;
+    if(menu.querySelector(".tab-btn")) return;
 
     links.forEach(item => {
       if(!hasPermission(op, item.permission)) return;
@@ -1220,6 +1223,11 @@ window.logout = window.logout || function(){
       menu.appendChild(a);
     });
 
+    const extra = document.getElementById("mobileMenuExtra");
+    if(extra && extra.parentElement !== menu){
+      menu.appendChild(extra);
+    }
+
     if(!hasPermission(op, "puede_pedidos")){
       location.href = firstAllowed(op);
     }
@@ -1230,30 +1238,144 @@ window.logout = window.logout || function(){
     const menu = document.getElementById("authMenu");
 
     if(!header || !menu) return;
-    if(document.getElementById("mobileMenuBtn")) return;
 
-    const btn = document.createElement("button");
-    btn.id = "mobileMenuBtn";
-    btn.className = "mobile-menu-btn";
-    btn.type = "button";
-    btn.textContent = "☰ Menú";
+    if(!document.getElementById("mobileMenuBtn")){
+      const btn = document.createElement("button");
+      btn.id = "mobileMenuBtn";
+      btn.className = "mobile-menu-btn";
+      btn.type = "button";
+      btn.textContent = "☰ Menú";
 
-    btn.onclick = function(){
-      menu.classList.toggle("open");
-    };
+      btn.onclick = function(){
+        menu.classList.toggle("open");
+      };
 
-    header.insertBefore(btn, menu);
+      header.insertBefore(btn, menu);
+    }
+
+    if(!document.getElementById("mobileMenuExtra")){
+      const extra = document.createElement("div");
+      extra.id = "mobileMenuExtra";
+      extra.className = "mobile-menu-extra";
+
+      extra.innerHTML = `
+        <div class="storage-badge" id="storageBadgeMobile">
+          <div class="storage-dot"></div>
+          <span id="storageBadgeTextMobile">Local</span>
+        </div>
+
+        <button class="btn-add secondary menu-action-btn" type="button" onclick="localStorage.removeItem('comanda_operador_actual'); location.href='login.html?logout=1';">
+          Salir
+        </button>
+      `;
+
+      menu.appendChild(extra);
+    }
+  }
+
+  function syncStorageBadge(){
+    const desktopText = document.getElementById("storageBadgeText");
+    const mobileText = document.getElementById("storageBadgeTextMobile");
+    const desktopBadge = document.getElementById("storageBadge");
+    const mobileBadge = document.getElementById("storageBadgeMobile");
+
+    if(desktopText && mobileText){
+      mobileText.textContent = desktopText.textContent;
+    }
+
+    if(desktopBadge && mobileBadge){
+      mobileBadge.className = desktopBadge.className.replace("desktop-only", "").trim();
+    }
+  }
+
+  function setSelectOptions(select, operadores, placeholder){
+    if(!select) return;
+
+    const current = select.value;
+    select.innerHTML = `<option value="">${placeholder}</option>`;
+
+    operadores.forEach(op => {
+      const opt = document.createElement("option");
+      opt.value = op.nombre;
+      opt.textContent = op.nombre;
+      select.appendChild(opt);
+    });
+
+    if(current){
+      select.value = current;
+    }
+  }
+
+  async function cargarOperadoresEnComanda(){
+    const fallback = [
+      { nombre:"Roberto" },
+      { nombre:"Ricardo" },
+      { nombre:"Chico" },
+      { nombre:"Carlos" },
+      { nombre:"Alejandro" },
+      { nombre:"Ruben" },
+      { nombre:"Ana" },
+      { nombre:"Miguel" }
+    ];
+
+    let operadores = fallback;
+
+    try{
+      if(window.supabaseClient){
+        const { data, error } = await window.supabaseClient
+          .from("operadores")
+          .select("nombre, activo")
+          .eq("activo", true)
+          .order("nombre", { ascending:true });
+
+        if(!error && Array.isArray(data) && data.length){
+          operadores = data;
+        }
+      }
+    }catch(e){
+      console.warn("No se pudieron cargar operadores desde Supabase:", e);
+    }
+
+    setSelectOptions(document.getElementById("q_operador"), operadores, "Operador");
+    setSelectOptions(document.getElementById("f_operador"), operadores, "Seleccionar…");
+    setSelectOptions(document.getElementById("filterOperador"), operadores, "Operador");
+
+    const opActual = getOp();
+
+    if(opActual && opActual.nombre){
+      const puedeCambiarOperador = isRoberto(opActual) || opActual.puede_modificar_operador === true;
+
+      ["q_operador", "f_operador"].forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+
+        if(!puedeCambiarOperador){
+          el.value = opActual.nombre;
+          el.disabled = true;
+        }else if(!el.value && id === "q_operador"){
+          el.value = opActual.nombre;
+        }
+      });
+    }
   }
 
   document.addEventListener("DOMContentLoaded", function(){
     setupMobileMenu();
     renderFallbackMenu();
+    cargarOperadoresEnComanda();
+    syncStorageBadge();
+
+    setInterval(syncStorageBadge, 600);
 
     setTimeout(function(){
       setupMobileMenu();
       renderFallbackMenu();
-    }, 500);
+      cargarOperadoresEnComanda();
+      syncStorageBadge();
+    }, 700);
   });
+
+  window.cargarOperadoresEnComanda = cargarOperadoresEnComanda;
 })();
 </script>
 
