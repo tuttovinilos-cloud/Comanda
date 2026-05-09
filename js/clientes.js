@@ -1,10 +1,11 @@
-console.log("Clientes JS conectado");
+console.log("Clientes JS v15 conectado");
 
 let clientesDB = [];
 let pedidosDB = [];
+let clientesCombinados = [];
 
 // ===========================
-// SUPABASE SEGURO
+// SUPABASE
 // ===========================
 function dbClientes() {
   return window.supabaseClient || window.supabase;
@@ -12,11 +13,10 @@ function dbClientes() {
 
 function validarSupabaseClientes() {
   if (!dbClientes()) {
-    console.error("No existe conexión Supabase. Revisa js/supabase.js");
+    console.error("No existe conexión Supabase");
     toast("No existe conexión Supabase");
     return false;
   }
-
   return true;
 }
 
@@ -62,60 +62,52 @@ function normalizarNombre(nombre) {
     .trim();
 }
 
-function tokensNombre(nombre) {
-  const stop = new Set([
-    "cliente",
-    "sr",
-    "sra",
-    "senor",
-    "senora",
-    "el",
-    "la",
-    "los",
-    "las",
-    "de",
-    "del",
-    "y"
-  ]);
-
-  return normalizarNombre(nombre)
-    .split(" ")
-    .map(t => t.trim())
-    .filter(t => t.length >= 3 && !stop.has(t));
+function nombreBonito(nombre) {
+  return String(nombre || "")
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
-function similitudClientes(a, b) {
-  const na = normalizarNombre(a);
-  const nb = normalizarNombre(b);
-
-  if (!na || !nb) return false;
-  if (na === nb) return true;
-
-  if (na.length >= 4 && nb.includes(na)) return true;
-  if (nb.length >= 4 && na.includes(nb)) return true;
-
-  const ta = tokensNombre(na);
-  const tb = tokensNombre(nb);
-
-  if (!ta.length || !tb.length) return false;
-
-  const setB = new Set(tb);
-  const inter = ta.filter(t => setB.has(t));
-  const menor = Math.min(ta.length, tb.length);
-
-  return inter.length >= menor && menor >= 1;
+function fechaCorta(valor) {
+  return String(valor || "").slice(0, 10) || "—";
 }
 
 function clientePorId(id) {
   return clientesDB.find(c => Number(c.id) === Number(id));
 }
 
-function contarPedidosNombre(nombre) {
-  return pedidosDelCliente(nombre).length;
+function pedidosDelCliente(nombre) {
+  const n = normalizarNombre(nombre);
+  return pedidosDB.filter(p => normalizarNombre(p.cliente) === n);
 }
 
-function fechaTexto(valor) {
-  return String(valor || "").slice(0, 10) || "Sin fecha";
+function pedidosPorNombreNormalizado() {
+  const mapa = {};
+
+  pedidosDB.forEach(p => {
+    const nombre = nombreBonito(p.cliente);
+    const norm = normalizarNombre(nombre);
+
+    if (!norm) return;
+
+    if (!mapa[norm]) {
+      mapa[norm] = {
+        nombre,
+        norm,
+        pedidos: [],
+        ultimoUso: ""
+      };
+    }
+
+    mapa[norm].pedidos.push(p);
+
+    const fecha = fechaCorta(p.fecha);
+    if (fecha !== "—" && fecha > mapa[norm].ultimoUso) {
+      mapa[norm].ultimoUso = fecha;
+    }
+  });
+
+  return mapa;
 }
 
 // ===========================
@@ -136,9 +128,6 @@ async function cargarClientesAdmin() {
   }
 
   clientesDB = data || [];
-
-  renderClientes();
-  renderDuplicados();
 }
 
 async function cargarPedidosClientes() {
@@ -159,214 +148,430 @@ async function cargarPedidosClientes() {
 }
 
 // ===========================
-// PEDIDOS POR CLIENTE
+// COMBINAR CLIENTES + PEDIDOS
 // ===========================
-function pedidosDelCliente(nombre) {
-  const n = normalizarNombre(nombre);
+function construirClientesCombinados() {
+  const mapaPedidos = pedidosPorNombreNormalizado();
+  const mapaClientes = {};
 
-  return pedidosDB.filter(p => {
-    return normalizarNombre(p.cliente) === n;
+  clientesDB.forEach(c => {
+    const norm = normalizarNombre(c.nombre);
+    if (!norm) return;
+
+    mapaClientes[norm] = c;
+  });
+
+  const combinados = [];
+
+  // 1. Clientes registrados
+  clientesDB.forEach(c => {
+    const norm = normalizarNombre(c.nombre);
+    if (!norm) return;
+
+    const infoPedidos = mapaPedidos[norm];
+    const pedidos = infoPedidos?.pedidos || [];
+
+    combinados.push({
+      origenKey: norm,
+      id: c.id,
+      nombre: c.nombre,
+      tipo_cliente: c.tipo_cliente || "Cliente Standar",
+      telefono: c.telefono || "",
+      correo: c.correo || "",
+      notas: c.notas || "",
+      activo: c.activo !== false,
+      registrado: true,
+      enPedidos: !!infoPedidos,
+      origen: infoPedidos ? "mix" : "db",
+      pedidos,
+      pedidosCount: pedidos.length,
+      ultimoUso: infoPedidos?.ultimoUso || "—"
+    });
+  });
+
+  // 2. Clientes que existen en pedidos pero no en clientes
+  Object.values(mapaPedidos).forEach(info => {
+    if (mapaClientes[info.norm]) return;
+
+    combinados.push({
+      origenKey: info.norm,
+      id: null,
+      nombre: info.nombre,
+      tipo_cliente: "Cliente Standar",
+      telefono: "",
+      correo: "",
+      notas: "",
+      activo: true,
+      registrado: false,
+      enPedidos: true,
+      origen: "pedidos",
+      pedidos: info.pedidos,
+      pedidosCount: info.pedidos.length,
+      ultimoUso: info.ultimoUso || "—"
+    });
+  });
+
+  clientesCombinados = combinados;
+}
+
+// ===========================
+// RESUMEN
+// ===========================
+function renderResumenClientes() {
+  const registrados = clientesDB.length;
+  const enPedidos = Object.keys(pedidosPorNombreNormalizado()).length;
+  const faltantes = clientesCombinados.filter(c => !c.registrado && c.enPedidos).length;
+
+  const clientesCount = document.getElementById("clientesCount");
+  const clientesPedidosCount = document.getElementById("clientesPedidosCount");
+  const clientesFaltantesCount = document.getElementById("clientesFaltantesCount");
+
+  if (clientesCount) clientesCount.textContent = `${registrados} registrados`;
+  if (clientesPedidosCount) clientesPedidosCount.textContent = `${enPedidos} en pedidos`;
+  if (clientesFaltantesCount) clientesFaltantesCount.textContent = `${faltantes} faltantes`;
+}
+
+// ===========================
+// CLIENTES FALTANTES
+// ===========================
+function renderClientesFaltantes() {
+  const tbody = document.getElementById("clientesFaltantesBody");
+  if (!tbody) return;
+
+  const faltantes = clientesCombinados
+    .filter(c => !c.registrado && c.enPedidos)
+    .sort((a, b) => b.pedidosCount - a.pedidosCount);
+
+  if (!faltantes.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="empty">No hay clientes faltantes</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = "";
+
+  faltantes.forEach(c => {
+    const row = `
+      <tr>
+        <td><strong>${escapeHtml(c.nombre)}</strong></td>
+        <td>${c.pedidosCount}</td>
+        <td>${escapeHtml(c.ultimoUso)}</td>
+        <td>
+          <button class="mini-btn warn" onclick="registrarClienteDesdePedido('${escapeHtml(c.origenKey)}')">
+            Registrar
+          </button>
+        </td>
+      </tr>
+    `;
+
+    tbody.insertAdjacentHTML("beforeend", row);
   });
 }
 
 // ===========================
-// DETECTAR DUPLICADO EXACTO AL GUARDAR
+// RENDER CLIENTES
 // ===========================
-function buscarClienteConMismoNombre(nombreNuevo, idActual) {
-  const nuevoNorm = normalizarNombre(nombreNuevo);
+function renderClientes() {
+  const tbody = document.getElementById("clientesBody");
+  if (!tbody) return;
 
-  if (!nuevoNorm) return null;
+  const filtro = normalizarNombre(document.getElementById("searchClientes")?.value || "");
+  const orden = document.getElementById("ordenClientes")?.value || "nombre_az";
 
-  return clientesDB.find(c => {
-    if (Number(c.id) === Number(idActual)) return false;
-    return normalizarNombre(c.nombre) === nuevoNorm;
-  }) || null;
+  let lista = [...clientesCombinados];
+
+  if (orden === "solo_pedidos") {
+    lista = lista.filter(c => !c.registrado && c.enPedidos);
+  }
+
+  if (orden === "registrados") {
+    lista = lista.filter(c => c.registrado);
+  }
+
+  if (filtro) {
+    lista = lista.filter(c => {
+      const texto = normalizarNombre([
+        c.nombre,
+        c.tipo_cliente,
+        c.telefono,
+        c.correo,
+        c.notas,
+        c.origen
+      ].join(" "));
+
+      return texto.includes(filtro);
+    });
+  }
+
+  lista.sort((a, b) => {
+    const na = normalizarNombre(a.nombre);
+    const nb = normalizarNombre(b.nombre);
+
+    if (orden === "nombre_az") return na.localeCompare(nb);
+    if (orden === "nombre_za") return nb.localeCompare(na);
+    if (orden === "pedidos_mayor") return b.pedidosCount - a.pedidosCount;
+    if (orden === "pedidos_menor") return a.pedidosCount - b.pedidosCount;
+
+    return na.localeCompare(nb);
+  });
+
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty">Sin clientes</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = "";
+
+  lista.forEach(c => {
+    const origenTexto =
+      c.origen === "mix" ? "Registrado + pedidos" :
+      c.origen === "db" ? "Registrado" :
+      "Solo pedidos";
+
+    const origenClass =
+      c.origen === "mix" ? "mix" :
+      c.origen === "db" ? "db" :
+      "pedidos";
+
+    if (!c.registrado) {
+      const filaSoloPedido = `
+        <tr>
+          <td>
+            <strong>${escapeHtml(c.nombre)}</strong>
+          </td>
+
+          <td>
+            <span class="origin-pill ${origenClass}">${origenTexto}</span>
+          </td>
+
+          <td>—</td>
+          <td>—</td>
+          <td>—</td>
+          <td>Detectado automáticamente desde pedidos</td>
+
+          <td>
+            <button class="mini-btn info" onclick="verHistorialNombre('${escapeHtml(c.origenKey)}')">
+              ${c.pedidosCount} pedidos
+            </button>
+          </td>
+
+          <td>
+            <span class="origin-pill pedidos">No registrado</span>
+          </td>
+
+          <td>
+            <button class="mini-btn warn" onclick="registrarClienteDesdePedido('${escapeHtml(c.origenKey)}')">
+              Registrar
+            </button>
+          </td>
+        </tr>
+      `;
+
+      tbody.insertAdjacentHTML("beforeend", filaSoloPedido);
+      return;
+    }
+
+    const fila = `
+      <tr data-id="${c.id}">
+        <td>
+          <input class="name-input cli-nombre" data-id="${c.id}" value="${escapeHtml(c.nombre)}">
+        </td>
+
+        <td>
+          <span class="origin-pill ${origenClass}">${origenTexto}</span>
+        </td>
+
+        <td>
+          <select class="type-select cli-tipo" data-id="${c.id}">
+            <option ${c.tipo_cliente === "Cliente VIP" ? "selected" : ""}>Cliente VIP</option>
+            <option ${c.tipo_cliente === "Cliente Standar" ? "selected" : ""}>Cliente Standar</option>
+            <option ${c.tipo_cliente === "Cliente basico" ? "selected" : ""}>Cliente basico</option>
+            <option ${c.tipo_cliente === "Editado" ? "selected" : ""}>Editado</option>
+          </select>
+        </td>
+
+        <td>
+          <input class="phone-input cli-telefono" data-id="${c.id}" value="${escapeHtml(c.telefono)}" placeholder="Teléfono">
+        </td>
+
+        <td>
+          <input class="email-input cli-correo" data-id="${c.id}" value="${escapeHtml(c.correo)}" placeholder="Correo">
+        </td>
+
+        <td>
+          <textarea class="notes-input cli-notas" data-id="${c.id}" placeholder="Notas">${escapeHtml(c.notas)}</textarea>
+        </td>
+
+        <td>
+          <button class="mini-btn info" onclick="verHistorialCliente(${c.id})">
+            ${c.pedidosCount} pedidos
+          </button>
+        </td>
+
+        <td>
+          <select class="active-select cli-activo" data-id="${c.id}">
+            <option value="true" ${c.activo ? "selected" : ""}>Activo</option>
+            <option value="false" ${!c.activo ? "selected" : ""}>Inactivo</option>
+          </select>
+        </td>
+
+        <td>
+          <button class="mini-btn del" onclick="eliminarCliente(${c.id})">Eliminar</button>
+        </td>
+      </tr>
+    `;
+
+    tbody.insertAdjacentHTML("beforeend", fila);
+  });
+}
+
+function filtrarClientes() {
+  renderClientes();
 }
 
 // ===========================
-// UNIFICAR POR CAMBIO DE NOMBRE
+// REGISTRAR DESDE PEDIDOS
 // ===========================
-async function unificarClientePorCambioNombre(clienteOrigen, clientePrincipal, datosEditadosOrigen = {}) {
-  if (!validarSupabaseClientes()) return false;
+async function registrarClienteDesdePedido(origenKey) {
+  if (!validarSupabaseClientes()) return;
 
-  if (!clienteOrigen || !clientePrincipal) {
-    toast("No se pudo unificar");
-    return false;
+  const item = clientesCombinados.find(c => c.origenKey === origenKey && !c.registrado);
+
+  if (!item) {
+    toast("Cliente no encontrado");
+    return;
   }
 
-  const pedidosOrigen = pedidosDelCliente(clienteOrigen.nombre);
+  const confirmar = confirm(`¿Registrar "${item.nombre}" en la tabla de clientes?`);
+  if (!confirmar) return;
 
-  const confirmar = confirm(
-    `⚠️ NOMBRE DUPLICADO DETECTADO\n\n` +
-    `Ya existe un cliente llamado:\n${clientePrincipal.nombre}\n\n` +
-    `Estás intentando cambiar:\n${clienteOrigen.nombre}\n\n` +
-    `por:\n${clientePrincipal.nombre}\n\n` +
-    `Si continúas:\n` +
-    `1. Los pedidos de "${clienteOrigen.nombre}" pasarán a "${clientePrincipal.nombre}".\n` +
-    `2. Se conservará "${clientePrincipal.nombre}" como cliente principal.\n` +
-    `3. Se eliminará/desactivará "${clienteOrigen.nombre}".\n\n` +
-    `¿Deseas unificar?`
-  );
-
-  if (!confirmar) {
-    toast("Unificación cancelada");
-    return false;
-  }
-
-  // 1. Actualizar pedidos del cliente origen hacia el cliente principal
-  for (const pedido of pedidosOrigen) {
-    const { error } = await dbClientes()
-      .from("pedidos")
-      .update({ cliente: clientePrincipal.nombre })
-      .eq("id", pedido.id);
-
-    if (error) {
-      console.error("Error actualizando pedido:", error);
-      toast("Error unificando pedidos");
-      return false;
-    }
-  }
-
-  // 2. Mezclar datos útiles
-  const telefonoFinal =
-    clientePrincipal.telefono ||
-    datosEditadosOrigen.telefono ||
-    clienteOrigen.telefono ||
-    "";
-
-  const correoFinal =
-    clientePrincipal.correo ||
-    datosEditadosOrigen.correo ||
-    clienteOrigen.correo ||
-    "";
-
-  const notasFinales = [
-    clientePrincipal.notas,
-    datosEditadosOrigen.notas,
-    clienteOrigen.notas,
-    `Unificado desde: ${clienteOrigen.nombre}`
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  const tipoFinal =
-    clientePrincipal.tipo_cliente ||
-    datosEditadosOrigen.tipo_cliente ||
-    clienteOrigen.tipo_cliente ||
-    "Cliente Standar";
-
-  const { error: errorMaster } = await dbClientes()
+  const { error } = await dbClientes()
     .from("clientes")
-    .update({
-      telefono: telefonoFinal,
-      correo: correoFinal,
-      notas: notasFinales,
-      tipo_cliente: tipoFinal,
+    .insert([{
+      nombre: item.nombre,
+      tipo_cliente: "Cliente Standar",
+      telefono: "",
+      correo: "",
+      notas: "Creado desde pedidos",
       activo: true
-    })
-    .eq("id", clientePrincipal.id);
+    }]);
 
-  if (errorMaster) {
-    console.error("Error actualizando cliente principal:", errorMaster);
-    toast("Error actualizando cliente principal");
-    return false;
+  if (error) {
+    console.error("Error registrando cliente:", error);
+    toast("Error registrando cliente");
+    return;
   }
 
-  // 3. Intentar eliminar el cliente duplicado
-  const { error: deleteError } = await dbClientes()
-    .from("clientes")
-    .delete()
-    .eq("id", clienteOrigen.id);
-
-  // Si no deja eliminar, lo desactiva
-  if (deleteError) {
-    console.warn("No se pudo eliminar cliente, se desactiva:", deleteError);
-
-    const { error: inactiveError } = await dbClientes()
-      .from("clientes")
-      .update({
-        activo: false,
-        notas: [
-          clienteOrigen.notas,
-          `Cliente unificado con: ${clientePrincipal.nombre}`
-        ].filter(Boolean).join("\n")
-      })
-      .eq("id", clienteOrigen.id);
-
-    if (inactiveError) {
-      console.error("Error desactivando duplicado:", inactiveError);
-      toast("Error desactivando cliente duplicado");
-      return false;
-    }
-  }
-
-  toast("Clientes unificados");
+  toast("Cliente registrado");
   await recargarTodo();
-  return true;
+}
+
+async function sincronizarClientesDesdePedidos() {
+  if (!validarSupabaseClientes()) return;
+
+  const faltantes = clientesCombinados.filter(c => !c.registrado && c.enPedidos);
+
+  if (!faltantes.length) {
+    toast("No hay clientes faltantes");
+    return;
+  }
+
+  const confirmar = confirm(`Se van a registrar ${faltantes.length} clientes detectados en pedidos. ¿Continuar?`);
+  if (!confirmar) return;
+
+  const nuevos = faltantes.map(c => ({
+    nombre: c.nombre,
+    tipo_cliente: "Cliente Standar",
+    telefono: "",
+    correo: "",
+    notas: "Creado desde pedidos",
+    activo: true
+  }));
+
+  const { error } = await dbClientes()
+    .from("clientes")
+    .insert(nuevos);
+
+  if (error) {
+    console.error("Error sincronizando clientes:", error);
+    toast("Error sincronizando clientes");
+    return;
+  }
+
+  toast("Clientes sincronizados");
+  await recargarTodo();
 }
 
 // ===========================
-// DUPLICADOS AUTOMÁTICOS VISUALES
+// DUPLICADOS VISUALES
 // ===========================
+function tokensNombre(nombre) {
+  return normalizarNombre(nombre)
+    .split(" ")
+    .filter(t => t.length >= 3);
+}
+
+function similitudClientes(a, b) {
+  const na = normalizarNombre(a);
+  const nb = normalizarNombre(b);
+
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+
+  if (na.length >= 4 && nb.includes(na)) return true;
+  if (nb.length >= 4 && na.includes(nb)) return true;
+
+  const ta = tokensNombre(na);
+  const tb = tokensNombre(nb);
+
+  if (!ta.length || !tb.length) return false;
+
+  const setB = new Set(tb);
+  const inter = ta.filter(t => setB.has(t));
+
+  return inter.length >= Math.min(ta.length, tb.length);
+}
+
 function detectarGruposDuplicados() {
-  const clientes = clientesDB
-    .filter(c => String(c.nombre || "").trim())
+  const base = clientesCombinados
+    .filter(c => c.nombre)
     .map(c => ({
       ...c,
-      norm: normalizarNombre(c.nombre),
-      pedidosCount: contarPedidosNombre(c.nombre)
+      norm: normalizarNombre(c.nombre)
     }));
 
-  const parent = {};
+  const usados = new Set();
+  const grupos = [];
 
-  clientes.forEach(c => {
-    parent[c.id] = c.id;
-  });
+  for (let i = 0; i < base.length; i++) {
+    if (usados.has(i)) continue;
 
-  function find(x) {
-    if (parent[x] !== x) parent[x] = find(parent[x]);
-    return parent[x];
-  }
+    const grupo = [base[i]];
+    usados.add(i);
 
-  function union(a, b) {
-    const ra = find(a);
-    const rb = find(b);
+    for (let j = i + 1; j < base.length; j++) {
+      if (usados.has(j)) continue;
 
-    if (ra !== rb) parent[rb] = ra;
-  }
-
-  for (let i = 0; i < clientes.length; i++) {
-    for (let j = i + 1; j < clientes.length; j++) {
-      if (similitudClientes(clientes[i].nombre, clientes[j].nombre)) {
-        union(clientes[i].id, clientes[j].id);
+      if (similitudClientes(base[i].nombre, base[j].nombre)) {
+        grupo.push(base[j]);
+        usados.add(j);
       }
+    }
+
+    if (grupo.length > 1) {
+      grupo.sort((a, b) => {
+        if (b.pedidosCount !== a.pedidosCount) return b.pedidosCount - a.pedidosCount;
+        return String(b.nombre).length - String(a.nombre).length;
+      });
+
+      grupos.push({
+        clientes: grupo,
+        sugerido: grupo[0],
+        totalPedidos: grupo.reduce((acc, c) => acc + c.pedidosCount, 0)
+      });
     }
   }
 
-  const gruposMap = {};
-
-  clientes.forEach(c => {
-    const root = find(c.id);
-
-    if (!gruposMap[root]) gruposMap[root] = [];
-    gruposMap[root].push(c);
-  });
-
-  return Object.values(gruposMap)
-    .filter(g => g.length > 1)
-    .map(grupo => {
-      const ordenados = [...grupo].sort((a, b) => {
-        if (b.pedidosCount !== a.pedidosCount) return b.pedidosCount - a.pedidosCount;
-        return String(b.nombre || "").length - String(a.nombre || "").length;
-      });
-
-      return {
-        clientes: ordenados,
-        sugerido: ordenados[0],
-        totalPedidos: ordenados.reduce((acc, c) => acc + c.pedidosCount, 0)
-      };
-    })
-    .sort((a, b) => b.totalPedidos - a.totalPedidos);
+  return grupos.sort((a, b) => b.totalPedidos - a.totalPedidos);
 }
 
 function renderDuplicados() {
@@ -390,137 +595,27 @@ function renderDuplicados() {
 
   grupos.forEach(grupo => {
     const chips = grupo.clientes.map(c => {
-      return `<span class="dup-chip"><strong>${escapeHtml(c.nombre)}</strong> · ${c.pedidosCount} pedidos</span>`;
-    }).join("");
+      const origen =
+        c.origen === "mix" ? "registrado + pedidos" :
+        c.origen === "db" ? "registrado" :
+        "solo pedidos";
 
-    const ids = grupo.clientes.map(c => c.id).join(",");
+      return `<span class="dup-chip"><strong>${escapeHtml(c.nombre)}</strong> · ${c.pedidosCount} pedidos · ${origen}</span>`;
+    }).join("");
 
     const fila = `
       <tr>
-        <td>
-          <div class="dup-group">${chips}</div>
-        </td>
-
-        <td>
-          <strong style="color:var(--accent2)">${escapeHtml(grupo.sugerido.nombre)}</strong>
-        </td>
-
+        <td><div class="dup-group">${chips}</div></td>
+        <td><strong style="color:var(--accent2)">${escapeHtml(grupo.sugerido.nombre)}</strong></td>
         <td>${grupo.totalPedidos}</td>
-
         <td>
-          <button class="mini-btn warn" onclick="unificarGrupoClientes('${ids}', ${grupo.sugerido.id})">
-            Unificar
-          </button>
+          <span class="badge warn">Revisar manual</span>
         </td>
       </tr>
     `;
 
     tbody.insertAdjacentHTML("beforeend", fila);
   });
-}
-
-// ===========================
-// RENDER CLIENTES
-// ===========================
-function renderClientes() {
-  const tbody = document.getElementById("clientesBody");
-  const count = document.getElementById("clientesCount");
-  const filtro = (document.getElementById("searchClientes")?.value || "").toLowerCase().trim();
-
-  if (!tbody) return;
-
-  let lista = clientesDB.filter(c => {
-    const texto = [
-      c.nombre,
-      c.tipo_cliente,
-      c.telefono,
-      c.correo,
-      c.notas
-    ].join(" ").toLowerCase();
-
-    return !filtro || texto.includes(filtro);
-  });
-
-  const orden = document.getElementById("ordenClientes")?.value || "nombre_az";
-
-  lista.sort((a, b) => {
-    const nombreA = String(a.nombre || "").toLowerCase();
-    const nombreB = String(b.nombre || "").toLowerCase();
-
-    const pedidosA = pedidosDelCliente(a.nombre).length;
-    const pedidosB = pedidosDelCliente(b.nombre).length;
-
-    if (orden === "nombre_az") return nombreA.localeCompare(nombreB);
-    if (orden === "nombre_za") return nombreB.localeCompare(nombreA);
-    if (orden === "pedidos_mayor") return pedidosB - pedidosA;
-    if (orden === "pedidos_menor") return pedidosA - pedidosB;
-
-    return 0;
-  });
-
-  if (count) count.textContent = `${clientesDB.length} clientes`;
-
-  if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="8" class="empty">Sin clientes</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = "";
-
-  lista.forEach(c => {
-    const pedidos = pedidosDelCliente(c.nombre);
-    const activo = c.activo !== false;
-
-    const fila = `
-      <tr data-id="${c.id}">
-        <td>
-          <input class="name-input cli-nombre" data-id="${c.id}" value="${escapeHtml(c.nombre)}">
-        </td>
-
-        <td>
-          <select class="type-select cli-tipo" data-id="${c.id}">
-            <option ${c.tipo_cliente === "Cliente VIP" ? "selected" : ""}>Cliente VIP</option>
-            <option ${c.tipo_cliente === "Cliente Standar" ? "selected" : ""}>Cliente Standar</option>
-            <option ${c.tipo_cliente === "Cliente basico" ? "selected" : ""}>Cliente basico</option>
-            <option ${c.tipo_cliente === "Editado" ? "selected" : ""}>Editado</option>
-          </select>
-        </td>
-
-        <td>
-          <input class="phone-input cli-telefono" data-id="${c.id}" value="${escapeHtml(c.telefono || "")}" placeholder="Teléfono">
-        </td>
-
-        <td>
-          <input class="email-input cli-correo" data-id="${c.id}" value="${escapeHtml(c.correo || "")}" placeholder="Correo">
-        </td>
-
-        <td>
-          <textarea class="notes-input cli-notas" data-id="${c.id}" placeholder="Notas">${escapeHtml(c.notas || "")}</textarea>
-        </td>
-
-        <td>
-          <button class="mini-btn info" onclick="verHistorialCliente(${c.id})">${pedidos.length} pedidos</button>
-        </td>
-
-        <td>
-          <select class="active-select cli-activo" data-id="${c.id}">
-            <option value="true" ${activo ? "selected" : ""}>Activo</option>
-            <option value="false" ${!activo ? "selected" : ""}>Inactivo</option>
-          </select>
-        </td>
-
-        <td>
-          <button class="mini-btn del" onclick="eliminarCliente(${c.id})">Eliminar</button>
-        </td>
-      </tr>
-    `;
-
-    tbody.insertAdjacentHTML("beforeend", fila);
-  });
-}
-
-function filtrarClientes() {
-  renderClientes();
 }
 
 // ===========================
@@ -553,48 +648,57 @@ async function nuevoCliente() {
 }
 
 // ===========================
-// GUARDAR TODOS CON DETECCIÓN DE DUPLICADO
+// GUARDAR CLIENTES
 // ===========================
+function buscarClienteConMismoNombre(nombreNuevo, idActual) {
+  const nuevoNorm = normalizarNombre(nombreNuevo);
+
+  if (!nuevoNorm) return null;
+
+  return clientesDB.find(c => {
+    if (Number(c.id) === Number(idActual)) return false;
+    return normalizarNombre(c.nombre) === nuevoNorm;
+  }) || null;
+}
+
 async function guardarTodosClientes() {
   if (!validarSupabaseClientes()) return;
 
-  // Primero revisa si estás cambiando un cliente hacia un nombre que ya existe
+  // Revisar duplicado exacto antes de guardar
   for (const c of clientesDB) {
     const id = c.id;
+    const input = document.querySelector(`.cli-nombre[data-id="${id}"]`);
+    if (!input) continue;
 
-    const nombreNuevo = document.querySelector(`.cli-nombre[data-id="${id}"]`)?.value.trim() || "";
-    const tipo_cliente = document.querySelector(`.cli-tipo[data-id="${id}"]`)?.value || "Cliente Standar";
-    const telefono = document.querySelector(`.cli-telefono[data-id="${id}"]`)?.value.trim() || "";
-    const correo = document.querySelector(`.cli-correo[data-id="${id}"]`)?.value.trim() || "";
-    const notas = document.querySelector(`.cli-notas[data-id="${id}"]`)?.value.trim() || "";
-    const activo = document.querySelector(`.cli-activo[data-id="${id}"]`)?.value === "true";
-
+    const nombreNuevo = input.value.trim();
     if (!nombreNuevo) continue;
 
-    const nombreAnteriorNorm = normalizarNombre(c.nombre);
-    const nombreNuevoNorm = normalizarNombre(nombreNuevo);
-
-    const cambioNombre = nombreAnteriorNorm !== nombreNuevoNorm;
+    const cambioNombre = normalizarNombre(nombreNuevo) !== normalizarNombre(c.nombre);
 
     if (cambioNombre) {
-      const clienteDuplicado = buscarClienteConMismoNombre(nombreNuevo, id);
+      const duplicado = buscarClienteConMismoNombre(nombreNuevo, id);
 
-      if (clienteDuplicado) {
-        await unificarClientePorCambioNombre(c, clienteDuplicado, {
-          nombre: nombreNuevo,
-          tipo_cliente,
-          telefono,
-          correo,
-          notas,
-          activo
-        });
+      if (duplicado) {
+        const confirmar = confirm(
+          `⚠️ Nombre duplicado detectado\n\n` +
+          `Ya existe: ${duplicado.nombre}\n\n` +
+          `Estás intentando cambiar:\n${c.nombre}\n\n` +
+          `por:\n${duplicado.nombre}\n\n` +
+          `Si continúas, los pedidos de "${c.nombre}" pasarán a "${duplicado.nombre}".\n\n` +
+          `¿Deseas unificar?`
+        );
 
+        if (!confirmar) {
+          toast("Guardado cancelado");
+          return;
+        }
+
+        await unificarCliente(c, duplicado);
         return;
       }
     }
   }
 
-  // Si no hay duplicado, guardar normal
   const updates = clientesDB.map(c => {
     const id = c.id;
 
@@ -620,16 +724,11 @@ async function guardarTodosClientes() {
       .eq("id", id);
   }).filter(Boolean);
 
-  if (!updates.length) {
-    toast("No hay clientes para guardar");
-    return;
-  }
-
   const resultados = await Promise.all(updates);
   const error = resultados.find(r => r.error)?.error;
 
   if (error) {
-    console.error("Error guardando clientes:", error);
+    console.error("Error guardando:", error);
     toast("Error guardando clientes");
     return;
   }
@@ -638,20 +737,64 @@ async function guardarTodosClientes() {
   await recargarTodo();
 }
 
+async function unificarCliente(origen, principal) {
+  const pedidosOrigen = pedidosDelCliente(origen.nombre);
+
+  for (const pedido of pedidosOrigen) {
+    const { error } = await dbClientes()
+      .from("pedidos")
+      .update({ cliente: principal.nombre })
+      .eq("id", pedido.id);
+
+    if (error) {
+      console.error("Error actualizando pedido:", error);
+      toast("Error unificando pedidos");
+      return;
+    }
+  }
+
+  const notasFinales = [
+    principal.notas,
+    origen.notas,
+    `Unificado desde: ${origen.nombre}`
+  ].filter(Boolean).join("\n");
+
+  await dbClientes()
+    .from("clientes")
+    .update({
+      telefono: principal.telefono || origen.telefono || "",
+      correo: principal.correo || origen.correo || "",
+      notas: notasFinales,
+      activo: true
+    })
+    .eq("id", principal.id);
+
+  const { error: deleteError } = await dbClientes()
+    .from("clientes")
+    .delete()
+    .eq("id", origen.id);
+
+  if (deleteError) {
+    await dbClientes()
+      .from("clientes")
+      .update({ activo: false })
+      .eq("id", origen.id);
+  }
+
+  toast("Clientes unificados");
+  await recargarTodo();
+}
+
 // ===========================
-// ELIMINAR CLIENTE
+// ELIMINAR
 // ===========================
 async function eliminarCliente(id) {
   if (!validarSupabaseClientes()) return;
 
   const cliente = clientePorId(id);
+  if (!cliente) return;
 
-  if (!cliente) {
-    toast("Cliente no encontrado");
-    return;
-  }
-
-  const confirmar = confirm(`¿Eliminar de la lista activa a ${cliente.nombre}?`);
+  const confirmar = confirm(`¿Desactivar cliente "${cliente.nombre}"?`);
   if (!confirmar) return;
 
   const { error } = await dbClientes()
@@ -660,108 +803,12 @@ async function eliminarCliente(id) {
     .eq("id", id);
 
   if (error) {
-    console.error("Error eliminando cliente:", error);
+    console.error("Error eliminando:", error);
     toast("Error eliminando cliente");
     return;
   }
 
-  toast("Cliente eliminado");
-  await recargarTodo();
-}
-
-// ===========================
-// UNIFICAR GRUPO DESDE SECCIÓN DUPLICADOS
-// ===========================
-async function unificarGrupoClientes(idsTexto, masterId) {
-  if (!validarSupabaseClientes()) return;
-
-  const ids = String(idsTexto || "")
-    .split(",")
-    .map(id => Number(id))
-    .filter(Boolean);
-
-  const master = clientePorId(masterId);
-
-  if (!master) {
-    toast("Cliente principal no encontrado");
-    return;
-  }
-
-  const clientesGrupo = ids
-    .map(id => clientePorId(id))
-    .filter(Boolean);
-
-  const duplicados = clientesGrupo.filter(c => Number(c.id) !== Number(masterId));
-
-  if (!duplicados.length) {
-    toast("No hay duplicados para unificar");
-    return;
-  }
-
-  const nombresDuplicados = duplicados.map(c => c.nombre).join(", ");
-
-  const confirmar = confirm(
-    `Todos los pedidos de:\n\n${nombresDuplicados}\n\npasarán a:\n\n${master.nombre}\n\n¿Continuar?`
-  );
-
-  if (!confirmar) return;
-
-  for (const dup of duplicados) {
-    const pedidos = pedidosDelCliente(dup.nombre);
-
-    for (const pedido of pedidos) {
-      const { error } = await dbClientes()
-        .from("pedidos")
-        .update({ cliente: master.nombre })
-        .eq("id", pedido.id);
-
-      if (error) {
-        console.error("Error actualizando pedido:", error);
-        toast("Error unificando pedidos");
-        return;
-      }
-    }
-  }
-
-  const telefono = master.telefono || duplicados.find(c => c.telefono)?.telefono || "";
-  const correo = master.correo || duplicados.find(c => c.correo)?.correo || "";
-
-  const notasExtra = duplicados
-    .map(c => c.notas)
-    .filter(Boolean)
-    .join("\n");
-
-  const notasFinales = [master.notas, notasExtra]
-    .filter(Boolean)
-    .join("\n");
-
-  await dbClientes()
-    .from("clientes")
-    .update({
-      telefono,
-      correo,
-      notas: notasFinales,
-      activo: true
-    })
-    .eq("id", master.id);
-
-  for (const dup of duplicados) {
-    const { error } = await dbClientes()
-      .from("clientes")
-      .delete()
-      .eq("id", dup.id);
-
-    if (error) {
-      console.warn("No se pudo eliminar, se desactiva:", dup.nombre, error);
-
-      await dbClientes()
-        .from("clientes")
-        .update({ activo: false })
-        .eq("id", dup.id);
-    }
-  }
-
-  toast("Clientes unificados");
+  toast("Cliente desactivado");
   await recargarTodo();
 }
 
@@ -769,16 +816,25 @@ async function unificarGrupoClientes(idsTexto, masterId) {
 // HISTORIAL
 // ===========================
 function verHistorialCliente(id) {
-  const cliente = clientesDB.find(c => Number(c.id) === Number(id));
+  const cliente = clientePorId(id);
   if (!cliente) return;
 
-  const pedidos = pedidosDelCliente(cliente.nombre);
+  abrirHistorial(cliente.nombre, pedidosDelCliente(cliente.nombre));
+}
 
+function verHistorialNombre(origenKey) {
+  const item = clientesCombinados.find(c => c.origenKey === origenKey);
+  if (!item) return;
+
+  abrirHistorial(item.nombre, item.pedidos || []);
+}
+
+function abrirHistorial(nombre, pedidos) {
   const title = document.getElementById("historyTitle");
   const body = document.getElementById("historyBody");
   const backdrop = document.getElementById("historyBackdrop");
 
-  if (title) title.textContent = `Historial · ${cliente.nombre}`;
+  if (title) title.textContent = `Historial · ${nombre}`;
   if (!body) return;
 
   if (!pedidos.length) {
@@ -790,7 +846,7 @@ function verHistorialCliente(id) {
       const item = `
         <div class="history-item">
           <div class="history-top">
-            <span>#${p.id} · ${fechaTexto(p.fecha)}</span>
+            <span>#${p.id} · ${fechaCorta(p.fecha)}</span>
             <span>${escapeHtml(p.estatus_trabajo || "")} / ${escapeHtml(p.estatus_pago || "")}</span>
           </div>
 
@@ -823,12 +879,19 @@ function cerrarHistorialSiFondo(event) {
 }
 
 // ===========================
-// RECARGAR
+// RECARGAR TODO
 // ===========================
 async function recargarTodo() {
   await cargarPedidosClientes();
   await cargarClientesAdmin();
-  toast("Clientes recargados");
+
+  construirClientesCombinados();
+  renderResumenClientes();
+  renderClientesFaltantes();
+  renderDuplicados();
+  renderClientes();
+
+  toast("Clientes actualizados");
 }
 
 // ===========================
