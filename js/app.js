@@ -1,5 +1,6 @@
-Copia este archivo completo como js/app.js:
+Copia este completo como:
 
+/js/app.js
 console.log("APP JS conectado correctamente");
 console.log("Supabase:", window.supabaseClient);
 let pedidoEditandoId = null;
@@ -11,10 +12,16 @@ let clientesBusquedaDB = [];
 // ---------------------------
 // Indicador Supabase
 // ---------------------------
-const badge = document.getElementById("storageBadgeText");
-if (badge) badge.textContent = "SUPABASE";
-const badgeBox = document.getElementById("storageBadge");
-if (badgeBox) badgeBox.classList.add("ok");
+function marcarSupabaseActivo() {
+  const badge = document.getElementById("storageBadgeText");
+  if (badge) badge.textContent = "SUPABASE";
+  const badgeBox = document.getElementById("storageBadge");
+  if (badgeBox) badgeBox.classList.add("ok");
+  const badgeMobile = document.getElementById("storageBadgeTextMobile");
+  if (badgeMobile) badgeMobile.textContent = "SUPABASE";
+  const badgeMobileBox = document.getElementById("storageBadgeMobile");
+  if (badgeMobileBox) badgeMobileBox.classList.add("ok");
+}
 // ---------------------------
 // Normalizar texto para búsqueda
 // ---------------------------
@@ -24,6 +31,31 @@ function normalizarBusqueda(valor) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
+}
+// ---------------------------
+// Sesión / permisos básicos
+// ---------------------------
+function getOperadorSesionLocal() {
+  try {
+    return JSON.parse(localStorage.getItem("comanda_operador_actual") || "null");
+  } catch (e) {
+    return null;
+  }
+}
+function esRobertoLocal(op) {
+  return String(op?.nombre || "").trim().toLowerCase() === "roberto";
+}
+function puedeModificarOperadorLocal() {
+  const op = getOperadorSesionLocal();
+  if (!op) return false;
+  if (esRobertoLocal(op)) return true;
+  return op.puede_modificar_operador === true;
+}
+function puedeModificarCantidadLocal() {
+  const op = getOperadorSesionLocal();
+  if (!op) return false;
+  if (esRobertoLocal(op)) return true;
+  return op.puede_modificar_cantidad === true;
 }
 // ---------------------------
 // Crear cliente automáticamente si no existe
@@ -61,6 +93,63 @@ async function asegurarClienteExiste(nombreCliente) {
   console.log("Cliente creado automáticamente:", nombre);
 }
 // ---------------------------
+// Cargar operadores desde Supabase
+// ---------------------------
+async function cargarOperadoresComandaDesdeSupabase() {
+  const fallback = [
+    { nombre: "Roberto" },
+    { nombre: "Ricardo" },
+    { nombre: "Chico" },
+    { nombre: "Carlos" },
+    { nombre: "Alejandro" },
+    { nombre: "Ruben" },
+    { nombre: "Ana" },
+    { nombre: "Miguel" }
+  ];
+  let operadores = fallback;
+  try {
+    const { data, error } = await supabaseClient
+      .from("operadores")
+      .select("nombre, activo")
+      .eq("activo", true)
+      .order("nombre", { ascending: true });
+    if (!error && Array.isArray(data) && data.length) {
+      operadores = data;
+    }
+  } catch (e) {
+    console.warn("No se pudieron cargar operadores:", e);
+  }
+  llenarSelectOperadores(document.getElementById("q_operador"), operadores, "Operador");
+  llenarSelectOperadores(document.getElementById("f_operador"), operadores, "Seleccionar…");
+  llenarSelectOperadores(document.getElementById("filterOperador"), operadores, "Operador");
+  aplicarOperadorSesion();
+}
+function llenarSelectOperadores(select, operadores, placeholder) {
+  if (!select) return;
+  const actual = select.value;
+  select.innerHTML = `<option value="">${placeholder}</option>`;
+  operadores.forEach(op => {
+    const opt = document.createElement("option");
+    opt.value = op.nombre;
+    opt.textContent = op.nombre;
+    select.appendChild(opt);
+  });
+  if (actual) select.value = actual;
+}
+function aplicarOperadorSesion() {
+  const op = getOperadorSesionLocal();
+  if (!op?.nombre) return;
+  const puedeCambiar = puedeModificarOperadorLocal();
+  ["q_operador", "f_operador"].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = op.nombre;
+    if (!puedeCambiar) {
+      el.disabled = true;
+    }
+  });
+}
+// ---------------------------
 // Cargar materiales desde Supabase
 // ---------------------------
 async function cargarMateriales() {
@@ -83,10 +172,10 @@ async function cargarMateriales() {
     const valorActual = select.value;
     select.innerHTML = `<option value="">Material</option>`;
     materialesDB.forEach(m => {
-      select.insertAdjacentHTML(
-        "beforeend",
-        `<option value="${m.nombre}">${m.nombre}</option>`
-      );
+      const opt = document.createElement("option");
+      opt.value = m.nombre;
+      opt.textContent = m.nombre;
+      select.appendChild(opt);
     });
     if (valorActual) select.value = valorActual;
   });
@@ -115,17 +204,17 @@ async function cargarTiposImpresion() {
     const valorActual = select.value;
     select.innerHTML = `<option value="">Impresión</option>`;
     tiposImpresionDB.forEach(t => {
-      select.insertAdjacentHTML(
-        "beforeend",
-        `<option value="${t.nombre}">${t.nombre}</option>`
-      );
+      const opt = document.createElement("option");
+      opt.value = t.nombre;
+      opt.textContent = t.nombre;
+      select.appendChild(opt);
     });
     if (valorActual) select.value = valorActual;
   });
   console.log("Tipos de impresión cargados:", tiposImpresionDB);
 }
 // ---------------------------
-// Cargar clientes para buscar por teléfono/correo/notas
+// Cargar clientes para búsqueda
 // ---------------------------
 async function cargarClientesBusqueda() {
   const { data, error } = await supabaseClient
@@ -138,6 +227,17 @@ async function cargarClientesBusqueda() {
   }
   clientesBusquedaDB = data || [];
   console.log("Clientes para búsqueda cargados:", clientesBusquedaDB);
+}
+// ---------------------------
+// Escapar HTML
+// ---------------------------
+function escapeHtml(valor) {
+  return String(valor ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 // ---------------------------
 // Cargar pedidos desde Supabase
@@ -154,34 +254,42 @@ async function cargarPedidos() {
   console.log("Pedidos:", data);
   pedidosDB = data || [];
   const tabla = document.getElementById("orderTableBody");
+  const emptyState = document.getElementById("emptyState");
   if (!tabla) return;
   tabla.innerHTML = "";
+  if (!pedidosDB.length && emptyState) {
+    emptyState.style.display = "block";
+  } else if (emptyState) {
+    emptyState.style.display = "none";
+  }
   pedidosDB.forEach(p => {
     const archivo = p.archivo_url
-      ? `<a class="file-link-chip" href="${p.archivo_url}" target="_blank" onclick="event.stopPropagation()">📎 ${p.archivo_nombre || "Archivo"}</a>`
+      ? `<a class="file-link-chip" href="${escapeHtml(p.archivo_url)}" target="_blank" onclick="event.stopPropagation()">📎 ${escapeHtml(p.archivo_nombre || "Archivo")}</a>`
       : "—";
+    const cantidadDisabled = puedeModificarCantidadLocal() ? "" : "disabled";
     const fila = `
-      <tr onclick="openEditOrder(${p.id})">
-        <td>${p.id ?? ""}</td>
-        <td>${p.fecha ?? ""}</td>
-        <td>${p.operador ?? ""}</td>
-        <td>${p.cliente ?? ""}</td>
-        <td>${p.descripcion ?? ""}</td>
+      <tr onclick="openEditOrder(${Number(p.id)})">
+        <td>${escapeHtml(p.id)}</td>
+        <td>${escapeHtml(p.fecha)}</td>
+        <td>${escapeHtml(p.operador)}</td>
+        <td>${escapeHtml(p.cliente)}</td>
+        <td>${escapeHtml(p.descripcion)}</td>
         <td>
           <input 
             class="cell-edit"
-            value="${p.cantidad ?? ""}" 
-            onchange="actualizarCampoPedido(${p.id}, 'cantidad', this.value)"
+            value="${escapeHtml(p.cantidad)}" 
+            onchange="actualizarCampoPedido(${Number(p.id)}, 'cantidad', this.value)"
             onclick="event.stopPropagation()"
+            ${cantidadDisabled}
           />
         </td>
-        <td>${p.material ?? ""}</td>
-        <td>${p.tipo_impresion ?? ""}</td>
-        <td>${p.precio ?? ""}</td>
+        <td>${escapeHtml(p.material)}</td>
+        <td>${escapeHtml(p.tipo_impresion)}</td>
+        <td>${escapeHtml(p.precio)}</td>
         <td>
           <select 
             class="cell-select ${claseTrabajo(p.estatus_trabajo)}"
-            onchange="actualizarCampoPedido(${p.id}, 'estatus_trabajo', this.value); this.className='cell-select ' + claseTrabajo(this.value)"
+            onchange="actualizarCampoPedido(${Number(p.id)}, 'estatus_trabajo', this.value); this.className='cell-select ' + claseTrabajo(this.value)"
             onclick="event.stopPropagation()"
           >
             <option ${p.estatus_trabajo === "Solicitud" ? "selected" : ""}>Solicitud</option>
@@ -192,7 +300,7 @@ async function cargarPedidos() {
         <td>
           <select 
             class="cell-select ${clasePago(p.estatus_pago)}"
-            onchange="actualizarCampoPedido(${p.id}, 'estatus_pago', this.value); this.className='cell-select ' + clasePago(this.value)"
+            onchange="actualizarCampoPedido(${Number(p.id)}, 'estatus_pago', this.value); this.className='cell-select ' + clasePago(this.value)"
             onclick="event.stopPropagation()"
           >
             <option ${p.estatus_pago === "Pendiente" ? "selected" : ""}>Pendiente</option>
@@ -200,21 +308,23 @@ async function cargarPedidos() {
             <option ${p.estatus_pago === "Pagado" ? "selected" : ""}>Pagado</option>
           </select>
         </td>
-        <td>${p.fecha_entrega || "—"}</td>
+        <td>${escapeHtml(p.fecha_entrega || "—")}</td>
         <td>${archivo}</td>
       </tr>
     `;
     tabla.insertAdjacentHTML("beforeend", fila);
   });
-  cargarOperadoresFiltroDesdeTabla();
   onSearch();
+  if (typeof aplicarPermisosComanda === "function") {
+    aplicarPermisosComanda();
+  }
 }
 // ---------------------------
 // Guardar desde fila rápida
 // ---------------------------
 async function saveQuickOrder() {
-  const fecha = document.getElementById("q_fecha")?.value || "";
-  const operador = document.getElementById("q_operador")?.value || "";
+  let fecha = document.getElementById("q_fecha")?.value || "";
+  let operador = document.getElementById("q_operador")?.value || "";
   const cliente = document.getElementById("q_cliente")?.value || "";
   const descripcion = document.getElementById("q_descripcion")?.value || "";
   const cantidad = document.getElementById("q_cantidad")?.value || "";
@@ -223,13 +333,18 @@ async function saveQuickOrder() {
   const estatus_trabajo = document.getElementById("q_estatus_trabajo")?.value || "Solicitud";
   const estatus_pago = document.getElementById("q_estatus_pago")?.value || "Pendiente";
   const fecha_entrega = document.getElementById("q_entrega")?.value || null;
+  const opSesion = getOperadorSesionLocal();
+  if (!puedeModificarOperadorLocal() && opSesion?.nombre) {
+    operador = opSesion.nombre;
+  }
+  if (!fecha) {
+    fecha = new Date().toISOString().split("T")[0];
+  }
   if (!cliente && !descripcion) {
     alert("Coloca al menos cliente o descripción");
     return;
   }
-  console.log("Archivo antes de guardar:", archivoSeleccionado);
   const archivoData = await subirArchivoPedido();
-  console.log("Archivo subido:", archivoData);
   await asegurarClienteExiste(cliente);
   const { error } = await supabaseClient.from("pedidos").insert([{
     fecha,
@@ -250,24 +365,31 @@ async function saveQuickOrder() {
     alert("Error guardando pedido");
     return;
   }
-  alert("Pedido guardado");
   archivoSeleccionado = null;
   limpiarFilaRapida();
   ponerFechaHoy();
+  await cargarClientesBusqueda();
   await cargarPedidos();
 }
 // ---------------------------
 // Guardar / actualizar pedido desde modal
 // ---------------------------
 async function saveOrder() {
-  const fecha = document.getElementById("f_fecha")?.value || "";
-  const operador = document.getElementById("f_operador")?.value || "";
+  let fecha = document.getElementById("f_fecha")?.value || "";
+  let operador = document.getElementById("f_operador")?.value || "";
   const cliente = document.getElementById("f_cliente")?.value || "";
   const descripcion = document.getElementById("f_descripcion")?.value || "";
   const cantidad = document.getElementById("f_cantidad")?.value || "";
   const material = document.getElementById("f_material")?.value || "";
   const tipo_impresion = document.getElementById("f_impresion")?.value || "";
   const fecha_entrega = document.getElementById("f_entrega")?.value || null;
+  const opSesion = getOperadorSesionLocal();
+  if (!puedeModificarOperadorLocal() && opSesion?.nombre) {
+    operador = opSesion.nombre;
+  }
+  if (!fecha) {
+    fecha = new Date().toISOString().split("T")[0];
+  }
   const archivoData = await subirArchivoPedido();
   await asegurarClienteExiste(cliente);
   const datosPedido = {
@@ -275,11 +397,13 @@ async function saveOrder() {
     operador,
     cliente,
     descripcion,
-    cantidad,
     material,
     tipo_impresion,
     fecha_entrega
   };
+  if (puedeModificarCantidadLocal()) {
+    datosPedido.cantidad = cantidad;
+  }
   if (archivoData.archivo_url) {
     datosPedido.archivo_url = archivoData.archivo_url;
     datosPedido.archivo_nombre = archivoData.archivo_nombre;
@@ -294,6 +418,7 @@ async function saveOrder() {
   } else {
     datosPedido.estatus_trabajo = "Solicitud";
     datosPedido.estatus_pago = "Pendiente";
+    datosPedido.cantidad = cantidad;
     const respuesta = await supabaseClient
       .from("pedidos")
       .insert([datosPedido]);
@@ -304,16 +429,26 @@ async function saveOrder() {
     alert("Error guardando pedido");
     return;
   }
-  alert(pedidoEditandoId ? "Pedido actualizado" : "Pedido guardado");
   pedidoEditandoId = null;
   archivoSeleccionado = null;
   closeModal("orderBackdrop");
+  await cargarClientesBusqueda();
   await cargarPedidos();
 }
 // ---------------------------
 // Actualizar campo rápido en Supabase
 // ---------------------------
 async function actualizarCampoPedido(id, campo, valor) {
+  if (campo === "cantidad" && !puedeModificarCantidadLocal()) {
+    alert("No tienes permiso para modificar cantidad.");
+    await cargarPedidos();
+    return;
+  }
+  if (campo === "operador" && !puedeModificarOperadorLocal()) {
+    alert("No tienes permiso para modificar operador.");
+    await cargarPedidos();
+    return;
+  }
   const { error } = await supabaseClient
     .from("pedidos")
     .update({ [campo]: valor })
@@ -344,6 +479,14 @@ function openEditOrder(id) {
   document.getElementById("f_material").value = pedido.material || "";
   document.getElementById("f_impresion").value = pedido.tipo_impresion || "";
   document.getElementById("f_entrega").value = pedido.fecha_entrega || "";
+  if (!puedeModificarCantidadLocal()) {
+    const cantidadInput = document.getElementById("f_cantidad");
+    if (cantidadInput) cantidadInput.disabled = true;
+  }
+  if (!puedeModificarOperadorLocal()) {
+    const operadorInput = document.getElementById("f_operador");
+    if (operadorInput) operadorInput.disabled = true;
+  }
   const titulo = document.getElementById("orderModalTitle");
   if (titulo) titulo.textContent = "EDITAR PEDIDO #" + pedido.id;
   const fileName = document.getElementById("fileName");
@@ -380,6 +523,11 @@ function openOrderModal() {
   document.getElementById("f_material").value = "";
   document.getElementById("f_impresion").value = "";
   document.getElementById("f_entrega").value = "";
+  const opSesion = getOperadorSesionLocal();
+  if (opSesion?.nombre) {
+    const fOperador = document.getElementById("f_operador");
+    if (fOperador) fOperador.value = opSesion.nombre;
+  }
   const titulo = document.getElementById("orderModalTitle");
   if (titulo) titulo.textContent = "NUEVO PEDIDO";
   const fileEmpty = document.getElementById("fileEmpty");
@@ -400,6 +548,11 @@ function closeModal(id) {
   const modal = document.getElementById(id);
   if (modal) modal.style.display = "none";
   pedidoEditandoId = null;
+  const cantidadInput = document.getElementById("f_cantidad");
+  if (cantidadInput) cantidadInput.disabled = false;
+  const operadorInput = document.getElementById("f_operador");
+  if (operadorInput) operadorInput.disabled = false;
+  aplicarOperadorSesion();
 }
 // ---------------------------
 // Cerrar modal al tocar fondo oscuro
@@ -424,7 +577,7 @@ function ponerFechaHoy() {
   }
 }
 // ---------------------------
-// Limpiar fila rápida después de guardar
+// Limpiar fila rápida
 // ---------------------------
 function limpiarFilaRapida() {
   const campos = [
@@ -445,6 +598,7 @@ function limpiarFilaRapida() {
   const rowFileInput = document.getElementById("rowFileInput");
   if (rowFileInput) rowFileInput.value = "";
   archivoSeleccionado = null;
+  aplicarOperadorSesion();
 }
 // ---------------------------
 // Limpiar fila rápida manual
@@ -476,7 +630,6 @@ function clasePago(valor) {
 function handleFileSelect(event) {
   archivoSeleccionado = event.target.files[0] || null;
   if (archivoSeleccionado) {
-    alert("Archivo seleccionado: " + archivoSeleccionado.name);
     const fileEmpty = document.getElementById("fileEmpty");
     const filePreview = document.getElementById("filePreview");
     const fileGeneric = document.getElementById("fileGeneric");
@@ -585,6 +738,11 @@ function onSearch() {
     const telefonoCliente = clienteRelacionado?.telefono || "";
     const correoCliente = clienteRelacionado?.correo || "";
     const notasCliente = clienteRelacionado?.notas || "";
+    /*
+      IMPORTANTE:
+      operador NO está dentro del contenido general.
+      Para buscar operador se usa únicamente el filtro Operador.
+    */
     const contenido = normalizarBusqueda([
       fecha,
       cliente,
@@ -612,32 +770,25 @@ function onSearch() {
   });
 }
 // ---------------------------
-// Cargar operadores en filtro
-// ---------------------------
-function cargarOperadoresFiltroDesdeTabla() {
-  const select = document.getElementById("filterOperador");
-  if (!select) return;
-  const actual = select.value;
-  const filas = document.querySelectorAll("#orderTableBody tr");
-  const operadores = new Set();
-  filas.forEach(fila => {
-    const celdas = fila.querySelectorAll("td");
-    const operador = celdas[2]?.textContent.trim();
-    if (operador) operadores.add(operador);
-  });
-  select.innerHTML = `<option value="">Operador</option>`;
-  [...operadores].sort().forEach(op => {
-    select.insertAdjacentHTML("beforeend", `<option value="${op}">${op}</option>`);
-  });
-  if (actual) select.value = actual;
-}
-// ---------------------------
 // Inicio
 // ---------------------------
 window.addEventListener("DOMContentLoaded", async () => {
+  marcarSupabaseActivo();
+  if (!window.supabaseClient) {
+    console.error("No existe window.supabaseClient. Revisa /js/supabase.js");
+    return;
+  }
   ponerFechaHoy();
+  await cargarOperadoresComandaDesdeSupabase();
+  if (typeof cargarOperadoresEnComanda === "function") {
+    await cargarOperadoresEnComanda();
+  }
   await cargarClientesBusqueda();
   await cargarMateriales();
   await cargarTiposImpresion();
   await cargarPedidos();
+  aplicarOperadorSesion();
+  if (typeof aplicarPermisosComanda === "function") {
+    aplicarPermisosComanda();
+  }
 });
