@@ -99,23 +99,23 @@ function similitudClientes(a, b) {
 
   if (!ta.length || !tb.length) return false;
 
-  const setA = new Set(ta);
   const setB = new Set(tb);
-
   const inter = ta.filter(t => setB.has(t));
   const menor = Math.min(ta.length, tb.length);
 
-  if (inter.length >= menor && menor >= 1) return true;
+  return inter.length >= menor && menor >= 1;
+}
 
-  return false;
+function clientePorId(id) {
+  return clientesDB.find(c => Number(c.id) === Number(id));
 }
 
 function contarPedidosNombre(nombre) {
   return pedidosDelCliente(nombre).length;
 }
 
-function clientePorId(id) {
-  return clientesDB.find(c => Number(c.id) === Number(id));
+function fechaTexto(valor) {
+  return String(valor || "").slice(0, 10) || "Sin fecha";
 }
 
 // ===========================
@@ -170,7 +170,143 @@ function pedidosDelCliente(nombre) {
 }
 
 // ===========================
-// DUPLICADOS
+// DETECTAR DUPLICADO EXACTO AL GUARDAR
+// ===========================
+function buscarClienteConMismoNombre(nombreNuevo, idActual) {
+  const nuevoNorm = normalizarNombre(nombreNuevo);
+
+  if (!nuevoNorm) return null;
+
+  return clientesDB.find(c => {
+    if (Number(c.id) === Number(idActual)) return false;
+    return normalizarNombre(c.nombre) === nuevoNorm;
+  }) || null;
+}
+
+// ===========================
+// UNIFICAR POR CAMBIO DE NOMBRE
+// ===========================
+async function unificarClientePorCambioNombre(clienteOrigen, clientePrincipal, datosEditadosOrigen = {}) {
+  if (!validarSupabaseClientes()) return false;
+
+  if (!clienteOrigen || !clientePrincipal) {
+    toast("No se pudo unificar");
+    return false;
+  }
+
+  const pedidosOrigen = pedidosDelCliente(clienteOrigen.nombre);
+
+  const confirmar = confirm(
+    `⚠️ NOMBRE DUPLICADO DETECTADO\n\n` +
+    `Ya existe un cliente llamado:\n${clientePrincipal.nombre}\n\n` +
+    `Estás intentando cambiar:\n${clienteOrigen.nombre}\n\n` +
+    `por:\n${clientePrincipal.nombre}\n\n` +
+    `Si continúas:\n` +
+    `1. Los pedidos de "${clienteOrigen.nombre}" pasarán a "${clientePrincipal.nombre}".\n` +
+    `2. Se conservará "${clientePrincipal.nombre}" como cliente principal.\n` +
+    `3. Se eliminará/desactivará "${clienteOrigen.nombre}".\n\n` +
+    `¿Deseas unificar?`
+  );
+
+  if (!confirmar) {
+    toast("Unificación cancelada");
+    return false;
+  }
+
+  // 1. Actualizar pedidos del cliente origen hacia el cliente principal
+  for (const pedido of pedidosOrigen) {
+    const { error } = await dbClientes()
+      .from("pedidos")
+      .update({ cliente: clientePrincipal.nombre })
+      .eq("id", pedido.id);
+
+    if (error) {
+      console.error("Error actualizando pedido:", error);
+      toast("Error unificando pedidos");
+      return false;
+    }
+  }
+
+  // 2. Mezclar datos útiles
+  const telefonoFinal =
+    clientePrincipal.telefono ||
+    datosEditadosOrigen.telefono ||
+    clienteOrigen.telefono ||
+    "";
+
+  const correoFinal =
+    clientePrincipal.correo ||
+    datosEditadosOrigen.correo ||
+    clienteOrigen.correo ||
+    "";
+
+  const notasFinales = [
+    clientePrincipal.notas,
+    datosEditadosOrigen.notas,
+    clienteOrigen.notas,
+    `Unificado desde: ${clienteOrigen.nombre}`
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const tipoFinal =
+    clientePrincipal.tipo_cliente ||
+    datosEditadosOrigen.tipo_cliente ||
+    clienteOrigen.tipo_cliente ||
+    "Cliente Standar";
+
+  const { error: errorMaster } = await dbClientes()
+    .from("clientes")
+    .update({
+      telefono: telefonoFinal,
+      correo: correoFinal,
+      notas: notasFinales,
+      tipo_cliente: tipoFinal,
+      activo: true
+    })
+    .eq("id", clientePrincipal.id);
+
+  if (errorMaster) {
+    console.error("Error actualizando cliente principal:", errorMaster);
+    toast("Error actualizando cliente principal");
+    return false;
+  }
+
+  // 3. Intentar eliminar el cliente duplicado
+  const { error: deleteError } = await dbClientes()
+    .from("clientes")
+    .delete()
+    .eq("id", clienteOrigen.id);
+
+  // Si no deja eliminar, lo desactiva
+  if (deleteError) {
+    console.warn("No se pudo eliminar cliente, se desactiva:", deleteError);
+
+    const { error: inactiveError } = await dbClientes()
+      .from("clientes")
+      .update({
+        activo: false,
+        notas: [
+          clienteOrigen.notas,
+          `Cliente unificado con: ${clientePrincipal.nombre}`
+        ].filter(Boolean).join("\n")
+      })
+      .eq("id", clienteOrigen.id);
+
+    if (inactiveError) {
+      console.error("Error desactivando duplicado:", inactiveError);
+      toast("Error desactivando cliente duplicado");
+      return false;
+    }
+  }
+
+  toast("Clientes unificados");
+  await recargarTodo();
+  return true;
+}
+
+// ===========================
+// DUPLICADOS AUTOMÁTICOS VISUALES
 // ===========================
 function detectarGruposDuplicados() {
   const clientes = clientesDB
@@ -252,7 +388,7 @@ function renderDuplicados() {
 
   tbody.innerHTML = "";
 
-  grupos.forEach((grupo, index) => {
+  grupos.forEach(grupo => {
     const chips = grupo.clientes.map(c => {
       return `<span class="dup-chip"><strong>${escapeHtml(c.nombre)}</strong> · ${c.pedidosCount} pedidos</span>`;
     }).join("");
@@ -417,11 +553,48 @@ async function nuevoCliente() {
 }
 
 // ===========================
-// GUARDAR TODOS
+// GUARDAR TODOS CON DETECCIÓN DE DUPLICADO
 // ===========================
 async function guardarTodosClientes() {
   if (!validarSupabaseClientes()) return;
 
+  // Primero revisa si estás cambiando un cliente hacia un nombre que ya existe
+  for (const c of clientesDB) {
+    const id = c.id;
+
+    const nombreNuevo = document.querySelector(`.cli-nombre[data-id="${id}"]`)?.value.trim() || "";
+    const tipo_cliente = document.querySelector(`.cli-tipo[data-id="${id}"]`)?.value || "Cliente Standar";
+    const telefono = document.querySelector(`.cli-telefono[data-id="${id}"]`)?.value.trim() || "";
+    const correo = document.querySelector(`.cli-correo[data-id="${id}"]`)?.value.trim() || "";
+    const notas = document.querySelector(`.cli-notas[data-id="${id}"]`)?.value.trim() || "";
+    const activo = document.querySelector(`.cli-activo[data-id="${id}"]`)?.value === "true";
+
+    if (!nombreNuevo) continue;
+
+    const nombreAnteriorNorm = normalizarNombre(c.nombre);
+    const nombreNuevoNorm = normalizarNombre(nombreNuevo);
+
+    const cambioNombre = nombreAnteriorNorm !== nombreNuevoNorm;
+
+    if (cambioNombre) {
+      const clienteDuplicado = buscarClienteConMismoNombre(nombreNuevo, id);
+
+      if (clienteDuplicado) {
+        await unificarClientePorCambioNombre(c, clienteDuplicado, {
+          nombre: nombreNuevo,
+          tipo_cliente,
+          telefono,
+          correo,
+          notas,
+          activo
+        });
+
+        return;
+      }
+    }
+  }
+
+  // Si no hay duplicado, guardar normal
   const updates = clientesDB.map(c => {
     const id = c.id;
 
@@ -497,7 +670,7 @@ async function eliminarCliente(id) {
 }
 
 // ===========================
-// UNIFICAR CLIENTES
+// UNIFICAR GRUPO DESDE SECCIÓN DUPLICADOS
 // ===========================
 async function unificarGrupoClientes(idsTexto, masterId) {
   if (!validarSupabaseClientes()) return;
@@ -533,7 +706,6 @@ async function unificarGrupoClientes(idsTexto, masterId) {
 
   if (!confirmar) return;
 
-  // 1. Actualizar pedidos por nombre exacto normalizado
   for (const dup of duplicados) {
     const pedidos = pedidosDelCliente(dup.nombre);
 
@@ -551,7 +723,6 @@ async function unificarGrupoClientes(idsTexto, masterId) {
     }
   }
 
-  // 2. Mezclar datos útiles en el cliente principal
   const telefono = master.telefono || duplicados.find(c => c.telefono)?.telefono || "";
   const correo = master.correo || duplicados.find(c => c.correo)?.correo || "";
 
@@ -574,7 +745,6 @@ async function unificarGrupoClientes(idsTexto, masterId) {
     })
     .eq("id", master.id);
 
-  // 3. Eliminar duplicados de clientes
   for (const dup of duplicados) {
     const { error } = await dbClientes()
       .from("clientes")
@@ -620,8 +790,8 @@ function verHistorialCliente(id) {
       const item = `
         <div class="history-item">
           <div class="history-top">
-            <span>#${p.id} · ${p.fecha || "Sin fecha"}</span>
-            <span>${p.estatus_trabajo || ""} / ${p.estatus_pago || ""}</span>
+            <span>#${p.id} · ${fechaTexto(p.fecha)}</span>
+            <span>${escapeHtml(p.estatus_trabajo || "")} / ${escapeHtml(p.estatus_pago || "")}</span>
           </div>
 
           <div class="history-desc">${escapeHtml(p.descripcion || "")}</div>
