@@ -40,7 +40,15 @@ body{
   font-family:var(--body);
   min-height:100vh;
   -webkit-tap-highlight-color:transparent;
-  padding-bottom:90px;
+  padding-bottom:100px;
+}
+
+button,input,select,textarea{
+  font:inherit;
+}
+
+button{
+  touch-action:manipulation;
 }
 
 ::-webkit-scrollbar{width:4px;height:4px}
@@ -58,7 +66,7 @@ body{
   min-height:58px;
   position:sticky;
   top:0;
-  z-index:200;
+  z-index:300;
   box-shadow:0 4px 24px #0009;
   flex-wrap:wrap;
 }
@@ -100,11 +108,12 @@ body{
   background:transparent;
   color:var(--muted2);
   cursor:pointer;
-  border-radius:5px;
+  border-radius:6px;
   transition:all .2s;
   text-decoration:none;
   display:inline-flex;
   align-items:center;
+  justify-content:center;
   gap:6px;
 }
 
@@ -121,6 +130,22 @@ body{
   box-shadow:0 0 14px #3b82f644;
 }
 
+.mobile-menu-btn{
+  display:none;
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  padding:8px 12px;
+  border:1px solid var(--border2);
+  background:var(--panel2);
+  color:var(--accent2);
+  border-radius:7px;
+  cursor:pointer;
+  margin-left:auto;
+}
+
 /* TOOLBAR */
 .toolbar{
   display:flex;
@@ -129,6 +154,9 @@ body{
   flex-wrap:wrap;
   border-bottom:1px solid var(--border);
   align-items:center;
+  background:var(--bg);
+  position:relative;
+  z-index:50;
 }
 
 .search-wrap{
@@ -141,6 +169,7 @@ body{
   padding:9px 12px;
   flex:1;
   min-width:260px;
+  min-height:40px;
 }
 
 .search-wrap input{
@@ -167,7 +196,7 @@ body{
   border-radius:7px;
   outline:none;
   cursor:pointer;
-  min-height:38px;
+  min-height:40px;
 }
 
 .btn-add{
@@ -189,7 +218,7 @@ body{
   white-space:nowrap;
   transition:all .2s;
   text-decoration:none;
-  min-height:38px;
+  min-height:40px;
 }
 
 .btn-add:hover{filter:brightness(1.1)}
@@ -209,7 +238,7 @@ body{
   border-radius:7px;
   padding:8px 10px;
   white-space:nowrap;
-  min-height:38px;
+  min-height:40px;
 }
 
 .storage-dot{
@@ -233,7 +262,8 @@ body{
 /* TABLE */
 .table-wrap{
   overflow-x:auto;
-  padding:0 0 90px;
+  padding:12px 0 120px;
+  -webkit-overflow-scrolling:touch;
 }
 
 table{
@@ -250,7 +280,7 @@ thead tr{
 th{
   position:sticky;
   top:58px;
-  z-index:10;
+  z-index:40;
   background:var(--panel);
   font-family:var(--head);
   font-size:10px;
@@ -258,13 +288,13 @@ th{
   letter-spacing:2px;
   text-transform:uppercase;
   color:var(--muted);
-  padding:10px 10px;
+  padding:10px;
   text-align:left;
   white-space:nowrap;
 }
 
 td{
-  padding:10px 10px;
+  padding:10px;
   font-size:13px;
   vertical-align:middle;
   border-bottom:1px solid rgba(255,255,255,0.06);
@@ -281,7 +311,7 @@ tbody tr:hover{background:rgba(59,130,246,0.08)}
 tbody::before{
   content:"";
   display:block;
-  height:14px;
+  height:10px;
 }
 
 #orderTableBody td:nth-child(2){
@@ -350,7 +380,7 @@ tbody::before{
   border-bottom:1px solid var(--border2);
   position:sticky;
   top:96px;
-  z-index:9;
+  z-index:35;
 }
 
 .quick-btn{
@@ -403,6 +433,7 @@ tbody::before{
   background:#3b82f611;
 }
 
+/* STATUS */
 .status-solicitud{color:var(--red);border-color:#FF3B3044;background:#FF3B3011}
 .status-revisado{color:var(--yellow);border-color:#FFD60A44;background:#FFD60A11}
 .status-listo{color:var(--green);border-color:#30D15844;background:#30D15811}
@@ -458,13 +489,6 @@ tbody::before{
   padding:0;
 }
 
-@media(min-width:600px){
-  .backdrop{
-    align-items:center;
-    padding:16px;
-  }
-}
-
 .modal{
   background:var(--panel);
   border:1px solid var(--border2);
@@ -477,20 +501,8 @@ tbody::before{
   animation:slideUp .22s ease;
 }
 
-@media(min-width:600px){
-  .modal{
-    border-radius:12px;
-    animation:popIn .18s ease;
-  }
-}
-
 @keyframes slideUp{
   from{transform:translateY(50px);opacity:0}
-  to{transform:none;opacity:1}
-}
-
-@keyframes popIn{
-  from{transform:scale(.96) translateY(10px);opacity:0}
   to{transform:none;opacity:1}
 }
 
@@ -686,9 +698,28 @@ tbody::before{
   text-align:center;
 }
 
+/* DESKTOP MODAL */
+@media(min-width:600px){
+  .backdrop{
+    align-items:center;
+    padding:16px;
+  }
+
+  .modal{
+    border-radius:12px;
+    animation:popIn .18s ease;
+  }
+
+  @keyframes popIn{
+    from{transform:scale(.96) translateY(10px);opacity:0}
+    to{transform:none;opacity:1}
+  }
+}
+
+/* TABLET */
 @media(max-width:980px){
   .header{
-    align-items:flex-start;
+    align-items:center;
   }
 
   .header-tabs{
@@ -707,33 +738,146 @@ tbody::before{
   .quick-entry-row th{top:142px}
 }
 
-@media(max-width:640px){
-  .toolbar{
-    padding:10px;
-    gap:6px;
+/* MOBILE MEJORADO */
+@media(max-width:760px){
+  body{
+    padding-bottom:130px;
   }
 
-  .search-wrap{min-width:100%}
+  .header{
+    padding:10px 12px;
+    align-items:center;
+  }
 
-  .filter-sel,
-  .btn-add{
+  .logo{
+    font-size:19px;
+  }
+
+  .mobile-menu-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .header-tabs{
+    display:none;
+    width:100%;
+    margin-left:0;
+    padding-top:8px;
+    border-top:1px solid var(--border);
+  }
+
+  .header-tabs.open{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+  }
+
+  .tab-btn{
+    width:100%;
+    justify-content:center;
     font-size:11px;
-    padding:8px 9px;
-    flex:1 1 auto;
+    min-height:38px;
+    padding:8px 6px;
+  }
+
+  .toolbar{
+    padding:10px;
+    gap:7px;
+  }
+
+  .search-wrap{
+    min-width:100%;
+    order:1;
+  }
+
+  .filter-sel{
+    flex:1 1 calc(50% - 7px);
+    min-width:130px;
+    order:2;
   }
 
   .storage-badge{
     flex:1 1 100%;
     justify-content:center;
+    order:3;
   }
 
-  .table-wrap{padding-bottom:110px}
-  table{min-width:1020px}
+  .btn-add{
+    flex:1 1 calc(50% - 7px);
+    order:4;
+  }
 
-  th,td{padding:8px 6px}
+  /*
+    IMPORTANTE:
+    En móvil se quita sticky de la fila rápida
+    para que no se monte encima del panel.
+  */
+  th{
+    position:static;
+    top:auto;
+  }
 
-  .modal-body{padding:16px}
-  .form-grid{grid-template-columns:1fr}
+  .quick-entry-row th{
+    position:static;
+    top:auto;
+  }
+
+  thead tr:first-child th{
+    position:sticky;
+    top:0;
+    z-index:40;
+  }
+
+  .table-wrap{
+    margin-top:10px;
+    padding-bottom:140px;
+  }
+
+  tbody::before{
+    height:8px;
+  }
+
+  table{
+    min-width:1050px;
+  }
+
+  .quick-input,
+  .quick-select,
+  .quick-btn{
+    min-height:36px;
+  }
+}
+
+/* IPHONE PEQUEÑO */
+@media(max-width:430px){
+  .header-tabs.open{
+    grid-template-columns:1fr;
+  }
+
+  .logo small{
+    display:none;
+  }
+
+  .filter-sel,
+  .btn-add{
+    flex:1 1 100%;
+  }
+
+  .quick-input,
+  .quick-select,
+  .quick-btn{
+    font-size:11px;
+    padding:7px 6px;
+  }
+
+  .modal-body{
+    padding:16px;
+  }
+
+  .form-grid{
+    grid-template-columns:1fr;
+  }
 }
 </style>
 </head>
@@ -1002,8 +1146,8 @@ tbody::before{
 
 <script>
 /*
-  RESPALDO INTERNO
-  Esto evita que el botón Salir y el menú fallen si js/auth.js no carga por caché o ruta.
+  RESPALDO INTERNO:
+  Evita que el botón Salir y el menú fallen si js/auth.js no carga por caché o ruta.
 */
 window.logout = window.logout || function(){
   localStorage.removeItem("comanda_operador_actual");
@@ -1044,12 +1188,11 @@ window.logout = window.logout || function(){
 
   function firstAllowed(op){
     if(isRoberto(op)) return "index.html";
-
     const item = links.find(l => op && op[l.permission] === true);
     return item ? item.page : "login.html";
   }
 
-  function renderMenu(){
+  function renderFallbackMenu(){
     const op = getOp();
 
     if(!op || op.activo === false){
@@ -1060,7 +1203,6 @@ window.logout = window.logout || function(){
     const menu = document.getElementById("authMenu");
     if(!menu) return;
 
-    // Si auth.js ya llenó el menú, no duplicamos.
     if(menu.children.length > 0) return;
 
     links.forEach(item => {
@@ -1083,8 +1225,35 @@ window.logout = window.logout || function(){
     }
   }
 
-  document.addEventListener("DOMContentLoaded", renderMenu);
-  setTimeout(renderMenu, 500);
+  function setupMobileMenu(){
+    const header = document.querySelector(".header");
+    const menu = document.getElementById("authMenu");
+
+    if(!header || !menu) return;
+    if(document.getElementById("mobileMenuBtn")) return;
+
+    const btn = document.createElement("button");
+    btn.id = "mobileMenuBtn";
+    btn.className = "mobile-menu-btn";
+    btn.type = "button";
+    btn.textContent = "☰ Menú";
+
+    btn.onclick = function(){
+      menu.classList.toggle("open");
+    };
+
+    header.insertBefore(btn, menu);
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    setupMobileMenu();
+    renderFallbackMenu();
+
+    setTimeout(function(){
+      setupMobileMenu();
+      renderFallbackMenu();
+    }, 500);
+  });
 })();
 </script>
 
