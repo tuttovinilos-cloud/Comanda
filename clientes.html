@@ -39,12 +39,11 @@ body{
   padding-bottom:90px;
 }
 
-/* Oculta botón rojo flotante de auth.js */
 #authTopbar{
   display:none !important;
 }
 
-/* HEADER TIPO INDEX */
+/* HEADER */
 .header{
   background:var(--panel);
   border-bottom:2px solid var(--accent);
@@ -243,6 +242,7 @@ select option{
 
 .btn.success{background:#16a34a}
 .btn.danger{background:#b91c1c}
+.btn.warn{background:#d97706}
 
 .layout{
   padding:16px;
@@ -297,7 +297,7 @@ select option{
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:1050px;
+  min-width:1080px;
 }
 
 th{
@@ -393,6 +393,12 @@ tr:hover td{
   background:#FFD60A11;
 }
 
+.badge.blue{
+  color:var(--accent2);
+  border-color:#3b82f644;
+  background:#3b82f611;
+}
+
 .empty{
   color:var(--muted);
   padding:30px;
@@ -410,6 +416,10 @@ tr:hover td{
   color:var(--muted2);
   font-size:13px;
   line-height:1.45;
+}
+
+.note strong{
+  color:var(--accent2);
 }
 
 .dup-group{
@@ -433,6 +443,38 @@ tr:hover td{
 .dup-chip strong{
   color:var(--accent2);
   font-weight:700;
+}
+
+.origin-pill{
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1px;
+  padding:4px 8px;
+  border-radius:999px;
+  text-transform:uppercase;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  white-space:nowrap;
+}
+
+.origin-pill.db{
+  color:#30D158;
+  border:1px solid #30D15844;
+  background:#30D15811;
+}
+
+.origin-pill.pedidos{
+  color:#FFD60A;
+  border:1px solid #FFD60A44;
+  background:#FFD60A11;
+}
+
+.origin-pill.mix{
+  color:var(--accent2);
+  border:1px solid #3b82f644;
+  background:#3b82f611;
 }
 
 .toast{
@@ -595,6 +637,16 @@ tr:hover td{
     flex-direction:column;
     align-items:flex-start;
   }
+
+  .card-actions{
+    width:100%;
+  }
+
+  .card-actions .btn,
+  .card-actions .badge{
+    width:100%;
+    justify-content:center;
+  }
 }
 </style>
 </head>
@@ -632,7 +684,7 @@ tr:hover td{
 <div class="toolbar">
   <div class="search-wrap">
     🔎
-    <input id="searchClientes" type="text" placeholder="Buscar cliente, teléfono, correo o notas..." oninput="filtrarClientes()"/>
+    <input id="searchClientes" type="text" placeholder="Buscar cliente, teléfono, correo, notas o nombre en pedidos..." oninput="filtrarClientes()"/>
   </div>
 
   <select id="ordenClientes" onchange="filtrarClientes()">
@@ -640,8 +692,11 @@ tr:hover td{
     <option value="nombre_za">Nombre Z-A</option>
     <option value="pedidos_mayor">Más pedidos</option>
     <option value="pedidos_menor">Menos pedidos</option>
+    <option value="solo_pedidos">Solo detectados en pedidos</option>
+    <option value="registrados">Solo registrados</option>
   </select>
 
+  <button class="btn warn" onclick="sincronizarClientesDesdePedidos()">Sincronizar desde pedidos</button>
   <button class="btn" onclick="nuevoCliente()">+ Añadir cliente</button>
   <button class="btn success" onclick="guardarTodosClientes()">Guardar cambios</button>
   <button class="btn secondary" onclick="recargarTodo()">⟳ Recargar</button>
@@ -650,15 +705,60 @@ tr:hover td{
 <div class="layout">
 
   <div class="note">
-    <strong>Control de clientes:</strong> los nombres parecidos pueden crear clientes duplicados.
-    Revisa la sección <strong>Posibles duplicados</strong> y usa <strong>Unificar</strong> para limpiar pedidos y estadísticas.
+    <strong>Nuevo flujo:</strong> la página de clientes ahora debe leer también los nombres que vienen de <strong>Pedidos</strong>.
+    Si un cliente aparece en pedidos pero no existe en la tabla clientes, se mostrará como <strong>Solo pedidos</strong>.
+    Luego puedes usar <strong>Sincronizar desde pedidos</strong> para registrarlo.
   </div>
 
   <section class="card">
     <div class="card-header">
       <div>
+        <div class="card-title">Resumen de clientes</div>
+        <div class="card-sub">Comparación entre clientes registrados y clientes detectados en pedidos.</div>
+      </div>
+
+      <div class="card-actions">
+        <span class="badge ok" id="clientesCount">0 registrados</span>
+        <span class="badge blue" id="clientesPedidosCount">0 en pedidos</span>
+        <span class="badge warn" id="clientesFaltantesCount">0 faltantes</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Clientes detectados en pedidos no registrados</div>
+        <div class="card-sub">Estos nombres existen en la comanda/pedidos, pero todavía no están guardados como clientes.</div>
+      </div>
+
+      <div class="card-actions">
+        <button class="btn warn" onclick="sincronizarClientesDesdePedidos()">Registrar faltantes</button>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table style="min-width:760px">
+        <thead>
+          <tr>
+            <th>Cliente detectado</th>
+            <th>Pedidos</th>
+            <th>Último uso</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="clientesFaltantesBody">
+          <tr><td colspan="4" class="empty">Cargando clientes faltantes...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <div>
         <div class="card-title">Posibles duplicados</div>
-        <div class="card-sub">Detecta clientes escritos con nombres parecidos. Ej: Armando / Armando Framed / Framed.</div>
+        <div class="card-sub">Aviso visual de nombres parecidos. No se unifica nada sin confirmación.</div>
       </div>
 
       <div class="card-actions">
@@ -687,11 +787,7 @@ tr:hover td{
     <div class="card-header">
       <div>
         <div class="card-title">Clientes</div>
-        <div class="card-sub">Administra clientes, datos de contacto, notas e historial.</div>
-      </div>
-
-      <div class="card-actions">
-        <span class="badge ok" id="clientesCount">0 clientes</span>
+        <div class="card-sub">Lista combinada: registrados + detectados en pedidos.</div>
       </div>
     </div>
 
@@ -699,7 +795,8 @@ tr:hover td{
       <table>
         <thead>
           <tr>
-            <th>Nombre</th>
+            <th>Cliente</th>
+            <th>Origen</th>
             <th>Tipo</th>
             <th>Teléfono</th>
             <th>Correo</th>
@@ -711,7 +808,7 @@ tr:hover td{
         </thead>
 
         <tbody id="clientesBody">
-          <tr><td colspan="8" class="empty">Cargando clientes...</td></tr>
+          <tr><td colspan="9" class="empty">Cargando clientes...</td></tr>
         </tbody>
       </table>
     </div>
@@ -732,9 +829,9 @@ tr:hover td{
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=14"></script>
-<script src="js/auth.js?v=14"></script>
-<script src="js/clientes.js?v=14"></script>
+<script src="js/supabase.js?v=15"></script>
+<script src="js/auth.js?v=15"></script>
+<script src="js/clientes.js?v=15"></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function(){
