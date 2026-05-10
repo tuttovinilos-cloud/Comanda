@@ -217,7 +217,6 @@ section{margin-bottom:18px}
   border-radius:18px;
   padding:16px;
   overflow:hidden;
-  position:relative;
 }
 
 .hero-head{
@@ -487,7 +486,7 @@ footer span{color:var(--orange)}
     <span class="brand-mark">tuttovinilos</span>
     <span class="brand-sub">label optimizer</span>
   </div>
-  <span class="version">v0.4</span>
+  <span class="version">v0.5</span>
 </header>
 
 <section>
@@ -518,7 +517,7 @@ footer span{color:var(--orange)}
     <div class="input-field">
       <label>Ancho</label>
       <div class="control">
-        <input id="labelW" type="number" inputmode="decimal" value="50"/>
+        <input id="labelW" type="number" inputmode="decimal" value="100" step="0.1"/>
         <span class="unit">mm</span>
       </div>
     </div>
@@ -526,7 +525,7 @@ footer span{color:var(--orange)}
     <div class="input-field">
       <label>Alto</label>
       <div class="control">
-        <input id="labelH" type="number" inputmode="decimal" value="30"/>
+        <input id="labelH" type="number" inputmode="decimal" value="50" step="0.1"/>
         <span class="unit">mm</span>
       </div>
     </div>
@@ -591,7 +590,7 @@ footer span{color:var(--orange)}
 </section>
 
 <section>
-  <div class="section-label"><span class="num">05</span> Optimización inteligente</div>
+  <div class="section-label"><span class="num">05</span> Optimización proporcional</div>
   <div class="suggestions" id="suggestionsList">
     <div class="suggestion-empty">Calculando variaciones…</div>
   </div>
@@ -613,8 +612,8 @@ const FORMATS = {
 
 let state = {
   format:'rollo127',
-  labelW:50,
-  labelH:30
+  labelW:100,
+  labelH:50
 };
 
 const $ = id => document.getElementById(id);
@@ -663,8 +662,27 @@ function bestLayout(materialW, materialH, labelW, labelH){
   };
 }
 
+function proportionalSize(w, h, reduceMM){
+  const maxSide = Math.max(w, h);
+  const newMax = maxSide - reduceMM;
+
+  if(newMax <= 0) return null;
+
+  const factor = newMax / maxSide;
+
+  return {
+    w: +(w * factor).toFixed(2),
+    h: +(h * factor).toFixed(2),
+    factor
+  };
+}
+
 function fmt2(n){
   return (Math.round(n * 100) / 100).toFixed(2);
+}
+
+function smartNumber(n){
+  return Number.isInteger(n) ? n : n.toFixed(1);
 }
 
 function recompute(){
@@ -691,14 +709,14 @@ function renderResults(r){
     badge.innerHTML = '<span class="dot"></span> NORMAL';
   }
 
-  $('orientNote').textContent = `${r.placedW}×${r.placedH} mm`;
+  $('orientNote').textContent = `${smartNumber(r.placedW)}×${smartNumber(r.placedH)} mm`;
   $('usedArea').textContent = fmt2(r.usedArea_m2);
   $('wasteArea').textContent = fmt2(Math.max(0, r.wasteArea_m2));
   $('utilVal').textContent = fmt2(r.utilization);
   $('utilBar').style.width = Math.min(100, Math.max(0, r.utilization)) + '%';
 
   $('materialMeta').textContent = `Material ${r.materialW}×${r.materialH} mm`;
-  $('labelMeta').textContent = `Etiqueta ${r.labelW}×${r.labelH} mm · sep 3mm · marco 10mm`;
+  $('labelMeta').textContent = `Etiqueta ${smartNumber(r.labelW)}×${smartNumber(r.labelH)} mm · sep 3mm · marco 10mm`;
 }
 
 function renderPreview(r){
@@ -749,13 +767,12 @@ function renderSuggestions(base){
   const material = FORMATS[state.format];
   let items = [];
 
-  for(const reduction of [1,2,3]){
-    const newW = state.labelW - reduction;
-    const newH = state.labelH - reduction;
+  for(const reduction of [1,2,3,4,5]){
+    const newSize = proportionalSize(state.labelW, state.labelH, reduction);
 
-    if(newW <= 0 || newH <= 0) continue;
+    if(!newSize) continue;
 
-    const r = bestLayout(material.w, material.h, newW, newH);
+    const r = bestLayout(material.w, material.h, newSize.w, newSize.h);
     const gain = r.total - base.total;
 
     if(gain > 0){
@@ -763,15 +780,15 @@ function renderSuggestions(base){
         reduction,
         gain,
         newTotal:r.total,
-        newW,
-        newH,
+        newW:newSize.w,
+        newH:newSize.h,
         util:r.utilization
       });
     }
   }
 
   if(items.length === 0){
-    list.innerHTML = `<div class="suggestion-empty">no hay mejora reduciendo 1–3 mm</div>`;
+    list.innerHTML = `<div class="suggestion-empty">no hay mejora reduciendo proporcionalmente 1–5 mm</div>`;
     return;
   }
 
@@ -780,8 +797,8 @@ function renderSuggestions(base){
   list.innerHTML = items.map(it => `
     <div class="suggestion" data-w="${it.newW}" data-h="${it.newH}">
       <div>
-        <div class="title">Reduciendo <b>${it.reduction} mm</b> ganas <b>+${it.gain}</b> etiquetas</div>
-        <div class="meta">${it.newW}×${it.newH} mm · total ${it.newTotal} · aprov ${fmt2(it.util)}%</div>
+        <div class="title">Bajando <b>${it.reduction} mm</b> proporcional ganas <b>+${it.gain}</b> etiquetas</div>
+        <div class="meta">${smartNumber(it.newW)}×${smartNumber(it.newH)} mm · total ${it.newTotal} · aprov ${fmt2(it.util)}%</div>
       </div>
       <span class="arrow">›</span>
     </div>
