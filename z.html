@@ -1,240 +1,966 @@
-Aquí va completo:
-
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calculadora de Etiquetas - Tuttovinilos</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b0c10" />
+<title>Tuttovinilos · Optimizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
 <style>
-body{
-  font-family: Arial, sans-serif;
-  background:#f4f6f8;
-  margin:0;
-  padding:12px;
-  color:#222;
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+–bg: #0b0c10;
+–surface: #14161c;
+–surface-2: #1a1d25;
+–surface-3: #21252f;
+–border: #2a2f3a;
+–border-strong: #3a4150;
+–text: #ececf0;
+–muted: #7a8090;
+–muted-2: #555b6b;
+–accent: #cdfd50;
+–accent-dim: #6c8a1f;
+–danger: #ff5c5c;
+–info: #4dd0ff;
+–success: #2ed573;
+
+```
+--font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+--font-mono: 'JetBrains Mono', ui-monospace, monospace;
+--font-serif: 'Instrument Serif', serif;
+```
+
 }
-.app{
-  max-width:900px;
-  margin:auto;
-  background:white;
-  border-radius:18px;
-  padding:16px;
-  box-shadow:0 8px 25px rgba(0,0,0,.12);
+
+html, body {
+background: var(–bg);
+color: var(–text);
+font-family: var(–font-display);
+-webkit-font-smoothing: antialiased;
+-webkit-tap-highlight-color: transparent;
+overscroll-behavior-y: none;
 }
-h1{
-  font-size:20px;
-  margin:0 0 15px;
-  color:#0b4f9c;
+
+body {
+min-height: 100vh;
+background-image:
+radial-gradient(circle at 20% 0%, rgba(205, 253, 80, 0.06), transparent 40%),
+radial-gradient(circle at 100% 100%, rgba(77, 208, 255, 0.04), transparent 50%),
+linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+background-size: auto, auto, 24px 24px, 24px 24px;
+background-position: 0 0, 0 0, -1px -1px, -1px -1px;
+padding: 16px 14px calc(40px + env(safe-area-inset-bottom));
+max-width: 560px;
+margin: 0 auto;
 }
-label{
-  font-weight:bold;
-  font-size:14px;
-  margin-top:10px;
-  display:block;
+
+/* HEADER */
+.topbar {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 8px 4px 18px;
+border-bottom: 1px dashed var(–border);
+margin-bottom: 18px;
 }
-input, select{
-  width:100%;
-  padding:12px;
-  margin-top:5px;
-  border:1px solid #ccc;
-  border-radius:10px;
-  font-size:16px;
-  box-sizing:border-box;
+.brand {
+display: flex;
+align-items: baseline;
+gap: 8px;
 }
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
+.brand-mark {
+font-family: var(–font-display);
+font-weight: 800;
+font-size: 18px;
+letter-spacing: -0.02em;
 }
-.result{
-  margin-top:18px;
-  background:#eef6ff;
-  padding:15px;
-  border-radius:14px;
-  font-size:15px;
+.brand-mark::after {
+content: “”;
+display: inline-block;
+width: 6px; height: 6px;
+background: var(–accent);
+border-radius: 50%;
+margin-left: 4px;
+vertical-align: 2px;
+box-shadow: 0 0 12px var(–accent);
 }
-.result b{
-  color:#0b4f9c;
+.brand-sub {
+font-family: var(–font-mono);
+font-size: 10px;
+color: var(–muted);
+letter-spacing: 0.12em;
+text-transform: uppercase;
 }
-.canvas-wrap{
-  margin-top:18px;
-  width:100%;
-  overflow:hidden;
-  background:#ddd;
-  border-radius:14px;
-  padding:8px;
-  box-sizing:border-box;
+.version {
+font-family: var(–font-mono);
+font-size: 10px;
+color: var(–muted-2);
+letter-spacing: 0.1em;
 }
-canvas{
-  width:100%;
-  height:auto;
-  background:white;
-  border-radius:10px;
-  display:block;
+
+/* SECTION */
+section { margin-bottom: 18px; }
+.section-label {
+font-family: var(–font-mono);
+font-size: 10px;
+letter-spacing: 0.18em;
+text-transform: uppercase;
+color: var(–muted);
+margin-bottom: 8px;
+display: flex;
+align-items: center;
+gap: 8px;
 }
-.note{
-  font-size:13px;
-  color:#666;
-  margin-top:10px;
+.section-label::before {
+content: “”;
+width: 14px;
+height: 1px;
+background: var(–muted-2);
 }
-button{
-  width:100%;
-  margin-top:15px;
-  padding:14px;
-  background:#0b4f9c;
-  color:white;
-  border:none;
-  border-radius:12px;
-  font-size:16px;
-  font-weight:bold;
+.section-label .num {
+color: var(–accent);
 }
-@media(max-width:600px){
-  body{
-    padding:8px;
-  }
-  .app{
-    padding:14px;
-    border-radius:14px;
-  }
-  .grid{
-    grid-template-columns:1fr;
-    gap:6px;
-  }
-  h1{
-    font-size:19px;
-  }
-  .result{
-    font-size:14px;
-  }
+
+/* FORMAT SELECTOR */
+.formats {
+display: grid;
+grid-template-columns: 1fr 1fr 1fr;
+gap: 6px;
+}
+.format-btn {
+background: var(–surface);
+border: 1px solid var(–border);
+color: var(–text);
+padding: 12px 6px;
+border-radius: 10px;
+font-family: var(–font-display);
+font-size: 13px;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.18s ease;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 4px;
+min-height: 64px;
+justify-content: center;
+}
+.format-btn:active { transform: scale(0.97); }
+.format-btn .dim {
+font-family: var(–font-mono);
+font-size: 10px;
+color: var(–muted);
+letter-spacing: 0.04em;
+}
+.format-btn[aria-pressed=“true”] {
+background: var(–accent);
+color: #0b0c10;
+border-color: var(–accent);
+box-shadow: 0 0 0 2px rgba(205, 253, 80, 0.15), 0 6px 24px -8px rgba(205, 253, 80, 0.5);
+}
+.format-btn[aria-pressed=“true”] .dim { color: rgba(11, 12, 16, 0.7); }
+
+/* INPUTS */
+.input-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 10px;
+}
+.input-grid.full { grid-template-columns: 1fr; }
+.input-field {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 10px 12px;
+transition: border-color 0.15s ease;
+}
+.input-field:focus-within {
+border-color: var(–accent);
+box-shadow: 0 0 0 3px rgba(205, 253, 80, 0.1);
+}
+.input-field label {
+font-family: var(–font-mono);
+font-size: 10px;
+letter-spacing: 0.1em;
+color: var(–muted);
+text-transform: uppercase;
+}
+.input-field .control {
+display: flex;
+align-items: baseline;
+gap: 6px;
+margin-top: 2px;
+}
+.input-field input {
+flex: 1;
+background: transparent;
+border: none;
+color: var(–text);
+font-family: var(–font-mono);
+font-size: 22px;
+font-weight: 500;
+outline: none;
+width: 100%;
+min-width: 0;
+padding: 0;
+}
+.input-field input::placeholder { color: var(–muted-2); }
+.input-field .unit {
+font-family: var(–font-mono);
+font-size: 11px;
+color: var(–muted);
+letter-spacing: 0.05em;
+}
+
+/* HERO RESULT */
+.hero {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 14px;
+padding: 16px 16px 18px;
+position: relative;
+overflow: hidden;
+}
+.hero::before {
+content: “”;
+position: absolute;
+inset: 0;
+background:
+radial-gradient(circle at 90% 0%, rgba(205, 253, 80, 0.12), transparent 50%);
+pointer-events: none;
+}
+.hero-head {
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 12px;
+position: relative;
+}
+.hero-head .lbl {
+font-family: var(–font-mono);
+font-size: 10px;
+letter-spacing: 0.18em;
+text-transform: uppercase;
+color: var(–muted);
+}
+.badge {
+font-family: var(–font-mono);
+font-size: 10px;
+background: var(–surface-3);
+color: var(–text);
+padding: 4px 8px;
+border-radius: 999px;
+border: 1px solid var(–border);
+letter-spacing: 0.05em;
+display: inline-flex;
+align-items: center;
+gap: 6px;
+}
+.badge.rotated {
+background: rgba(77, 208, 255, 0.12);
+border-color: rgba(77, 208, 255, 0.4);
+color: var(–info);
+}
+.badge.normal {
+background: rgba(205, 253, 80, 0.12);
+border-color: rgba(205, 253, 80, 0.4);
+color: var(–accent);
+}
+.badge .dot {
+width: 5px; height: 5px; border-radius: 50%;
+background: currentColor;
+}
+
+.hero-total {
+display: flex;
+align-items: baseline;
+gap: 12px;
+position: relative;
+}
+.total-num {
+font-family: var(–font-display);
+font-weight: 700;
+font-size: clamp(54px, 16vw, 72px);
+line-height: 0.95;
+letter-spacing: -0.04em;
+color: var(–text);
+font-variant-numeric: tabular-nums;
+}
+.total-num.shake { animation: pop 0.4s ease; }
+@keyframes pop {
+0% { transform: scale(1); }
+40% { transform: scale(1.06); color: var(–accent); }
+100% { transform: scale(1); }
+}
+.total-label {
+font-family: var(–font-serif);
+font-style: italic;
+font-size: 18px;
+color: var(–muted);
+line-height: 1.1;
+padding-bottom: 6px;
+}
+.grid-info {
+margin-top: 12px;
+padding-top: 12px;
+border-top: 1px dashed var(–border);
+display: flex;
+align-items: center;
+gap: 12px;
+font-family: var(–font-mono);
+font-size: 12px;
+color: var(–muted);
+letter-spacing: 0.04em;
+}
+.grid-info b {
+color: var(–text);
+font-weight: 500;
+}
+
+/* STATS */
+.stats {
+display: grid;
+grid-template-columns: 1fr 1fr 1fr;
+gap: 8px;
+margin-top: 12px;
+}
+.stat {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 10px;
+}
+.stat .stat-lbl {
+font-family: var(–font-mono);
+font-size: 9px;
+letter-spacing: 0.15em;
+text-transform: uppercase;
+color: var(–muted);
+}
+.stat .stat-val {
+font-family: var(–font-mono);
+font-size: 18px;
+font-weight: 600;
+margin-top: 4px;
+font-variant-numeric: tabular-nums;
+}
+.stat .stat-unit {
+font-size: 11px;
+color: var(–muted);
+margin-left: 2px;
+font-weight: 400;
+}
+.stat.utilization .stat-val { color: var(–accent); }
+.stat.waste .stat-val { color: var(–danger); }
+
+/* PROGRESS BAR */
+.util-bar {
+margin-top: 8px;
+height: 4px;
+background: var(–surface-3);
+border-radius: 999px;
+overflow: hidden;
+}
+.util-bar > span {
+display: block;
+height: 100%;
+background: linear-gradient(90deg, var(–accent), var(–info));
+border-radius: 999px;
+transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* PREVIEW */
+.preview-wrap {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 14px;
+padding: 14px;
+}
+.preview-canvas {
+width: 100%;
+height: auto;
+background: var(–bg);
+border-radius: 8px;
+border: 1px solid var(–border);
+display: block;
+background-image:
+linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+background-size: 12px 12px;
+max-height: 420px;
+}
+.preview-meta {
+display: flex;
+justify-content: space-between;
+margin-top: 8px;
+font-family: var(–font-mono);
+font-size: 10px;
+color: var(–muted);
+letter-spacing: 0.05em;
+}
+
+/* SUGGESTIONS */
+.suggestions {
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+.suggestion {
+background: linear-gradient(180deg, rgba(205, 253, 80, 0.08), rgba(205, 253, 80, 0.02));
+border: 1px solid rgba(205, 253, 80, 0.25);
+border-radius: 12px;
+padding: 12px 14px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 10px;
+cursor: pointer;
+transition: all 0.15s ease;
+-webkit-tap-highlight-color: transparent;
+}
+.suggestion:active { transform: scale(0.985); }
+.suggestion .body {
+flex: 1;
+min-width: 0;
+}
+.suggestion .body .title {
+font-size: 14px;
+font-weight: 600;
+line-height: 1.25;
+}
+.suggestion .body .title b {
+color: var(–accent);
+font-family: var(–font-mono);
+font-weight: 700;
+}
+.suggestion .body .meta {
+font-family: var(–font-mono);
+font-size: 10px;
+color: var(–muted);
+margin-top: 3px;
+letter-spacing: 0.04em;
+}
+.suggestion .arrow {
+color: var(–accent);
+font-size: 20px;
+flex-shrink: 0;
+}
+.suggestion-empty {
+background: var(–surface);
+border: 1px dashed var(–border);
+border-radius: 12px;
+padding: 14px;
+text-align: center;
+font-family: var(–font-mono);
+font-size: 11px;
+color: var(–muted);
+letter-spacing: 0.05em;
+}
+
+/* FUTURE */
+.future {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 14px;
+padding: 14px;
+margin-top: 6px;
+}
+.future h3 {
+font-family: var(–font-mono);
+font-size: 10px;
+letter-spacing: 0.18em;
+text-transform: uppercase;
+color: var(–muted);
+margin-bottom: 10px;
+display: flex;
+align-items: center;
+gap: 6px;
+}
+.future ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.future li {
+display: flex;
+align-items: center;
+gap: 8px;
+font-size: 13px;
+color: var(–muted);
+padding: 6px 0;
+}
+.future li::before {
+content: “→”;
+color: var(–muted-2);
+font-family: var(–font-mono);
+}
+.future li .lock {
+margin-left: auto;
+font-family: var(–font-mono);
+font-size: 9px;
+color: var(–muted-2);
+letter-spacing: 0.1em;
+border: 1px solid var(–border);
+border-radius: 4px;
+padding: 2px 5px;
+}
+
+/* FOOTER */
+footer {
+margin-top: 24px;
+text-align: center;
+font-family: var(–font-mono);
+font-size: 9px;
+color: var(–muted-2);
+letter-spacing: 0.18em;
+text-transform: uppercase;
+}
+footer span { color: var(–accent); }
+
+/* EMPTY STATE */
+.empty-hint {
+color: var(–muted-2);
+font-family: var(–font-serif);
+font-style: italic;
+font-size: 14px;
+}
+
+/* Larger screens: tighten */
+@media (min-width: 480px) {
+body { padding: 24px 22px 60px; }
+.stats { grid-template-columns: repeat(3, 1fr); }
 }
 </style>
+
 </head>
 <body>
-<div class="app">
-  <h1>Calculadora de etiquetas por material</h1>
-  <label>Material</label>
-  <select id="material">
-    <option value="137">Rollo 137 cm de ancho</option>
-    <option value="127">Rollo 127 cm de ancho</option>
-    <option value="70x82">Pliego 70 x 82 cm</option>
-  </select>
-  <div class="grid">
-    <div>
-      <label>Ancho de etiqueta (cm)</label>
-      <input id="etqAncho" type="number" value="8" step="0.1">
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">tuttovinilos</span>
+    <span class="brand-sub">label optimizer</span>
+  </div>
+  <span class="version">v0.1 · BETA</span>
+</header>
+
+<!-- 01 FORMAT -->
+
+<section>
+  <div class="section-label"><span class="num">01</span> Formato del material</div>
+  <div class="formats" role="tablist" id="formatBtns">
+    <button class="format-btn" type="button" data-format="rollo127" aria-pressed="true">
+      Rollo 127
+      <span class="dim">1270 mm</span>
+    </button>
+    <button class="format-btn" type="button" data-format="rollo137" aria-pressed="false">
+      Rollo 137
+      <span class="dim">1370 mm</span>
+    </button>
+    <button class="format-btn" type="button" data-format="pliego" aria-pressed="false">
+      Pliego
+      <span class="dim">700×820</span>
+    </button>
+  </div>
+</section>
+
+<!-- 02 DIMENSIONS -->
+
+<section>
+  <div class="section-label"><span class="num">02</span> Medidas de la etiqueta</div>
+  <div class="input-grid">
+    <div class="input-field">
+      <label for="labelW">Ancho</label>
+      <div class="control">
+        <input id="labelW" type="number" inputmode="decimal" min="1" step="1" value="50" />
+        <span class="unit">mm</span>
+      </div>
     </div>
-    <div>
-      <label>Alto de etiqueta (cm)</label>
-      <input id="etqAlto" type="number" value="6" step="0.1">
+    <div class="input-field">
+      <label for="labelH">Alto</label>
+      <div class="control">
+        <input id="labelH" type="number" inputmode="decimal" min="1" step="1" value="30" />
+        <span class="unit">mm</span>
+      </div>
     </div>
   </div>
-  <div class="grid">
-    <div>
-      <label>Separación entre etiquetas</label>
-      <input value="0.3 cm / 3 mm" disabled>
+  <div id="rollLengthWrap" style="margin-top:10px;">
+    <div class="input-field">
+      <label for="rollLen">Largo del rollo a calcular</label>
+      <div class="control">
+        <input id="rollLen" type="number" inputmode="decimal" min="0.1" step="0.1" value="1" />
+        <span class="unit">m lineales</span>
+      </div>
     </div>
-    <div>
-      <label>Marco lateral</label>
-      <input value="1 cm por lado" disabled>
+  </div>
+</section>
+
+<!-- 03 RESULT -->
+
+<section>
+  <div class="section-label"><span class="num">03</span> Resultado óptimo</div>
+  <div class="hero">
+    <div class="hero-head">
+      <span class="lbl">Mejor acomodo</span>
+      <span class="badge normal" id="orientBadge"><span class="dot"></span> NORMAL</span>
+    </div>
+    <div class="hero-total">
+      <div class="total-num" id="totalNum">0</div>
+      <div class="total-label">etiquetas<br/>por material</div>
+    </div>
+    <div class="grid-info">
+      <span><b id="colsVal">0</b> col</span>
+      <span style="color:var(--muted-2)">×</span>
+      <span><b id="rowsVal">0</b> filas</span>
+      <span style="margin-left:auto;font-size:10px" id="orientNote">—</span>
     </div>
   </div>
-  <button onclick="calcular()">Calcular</button>
-  <div class="result" id="resultado"></div>
-  <div class="canvas-wrap">
-    <canvas id="canvas"></canvas>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-lbl">Área usada</div>
+      <div class="stat-val"><span id="usedArea">0.00</span><span class="stat-unit">m²</span></div>
+    </div>
+    <div class="stat waste">
+      <div class="stat-lbl">Desperdicio</div>
+      <div class="stat-val"><span id="wasteArea">0.00</span><span class="stat-unit">m²</span></div>
+    </div>
+    <div class="stat utilization">
+      <div class="stat-lbl">Aprov.</div>
+      <div class="stat-val"><span id="utilVal">0</span><span class="stat-unit">%</span></div>
+    </div>
   </div>
-  <div class="note">
-    Nota: en rollos se calcula usando 1 m² de material. En pliego se calcula con la medida fija 70 x 82 cm.
+  <div class="util-bar"><span id="utilBar" style="width:0%"></span></div>
+</section>
+
+<!-- 04 PREVIEW -->
+
+<section>
+  <div class="section-label"><span class="num">04</span> Vista del acomodo</div>
+  <div class="preview-wrap">
+    <div id="previewBox" class="preview-canvas" style="aspect-ratio: 4/3; display:flex; align-items:center; justify-content:center;">
+      <span class="empty-hint">esperando datos…</span>
+    </div>
+    <div class="preview-meta">
+      <span id="materialMeta">—</span>
+      <span id="labelMeta">—</span>
+    </div>
   </div>
-</div>
+</section>
+
+<!-- 05 SUGGESTIONS -->
+
+<section>
+  <div class="section-label"><span class="num">05</span> Optimización inteligente</div>
+  <div class="suggestions" id="suggestionsList">
+    <div class="suggestion-empty">Calculando variaciones…</div>
+  </div>
+</section>
+
+<!-- FUTURE -->
+
+<section>
+  <div class="future">
+    <h3>· Próximamente</h3>
+    <ul>
+      <li>Cotización automática <span class="lock">SOON</span></li>
+      <li>Costo por etiqueta <span class="lock">SOON</span></li>
+      <li>Cálculo de material requerido <span class="lock">SOON</span></li>
+      <li>Comparativo entre materiales <span class="lock">SOON</span></li>
+      <li>Nesting / imposición profesional <span class="lock">SOON</span></li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  TUTTOVINILOS <span>·</span> OPTIMIZE THE CUT
+</footer>
+
 <script>
-function calcular(){
-  const material = document.getElementById("material").value;
-  let etiquetaW = parseFloat(document.getElementById("etqAncho").value);
-  let etiquetaH = parseFloat(document.getElementById("etqAlto").value);
-  const separacion = 0.3;
-  const marcoLateral = 1;
-  let materialW, materialH, areaMaterial;
-  if(material === "70x82"){
-    materialW = 70;
-    materialH = 82;
-    areaMaterial = (materialW * materialH) / 10000;
-  } else {
-    materialW = parseFloat(material);
-    areaMaterial = 1;
-    materialH = 10000 / materialW;
-  }
-  function calcularOpcion(w, h){
-    const anchoUtil = materialW - (marcoLateral * 2);
-    const columnas = Math.floor((anchoUtil + separacion) / (w + separacion));
-    const filas = Math.floor((materialH + separacion) / (h + separacion));
-    const total = columnas * filas;
-    const areaEtiquetas = (total * w * h) / 10000;
-    const desperdicio = areaMaterial - areaEtiquetas;
-    return {
-      w, h, columnas, filas, total,
-      areaEtiquetas, desperdicio
-    };
-  }
-  const normal = calcularOpcion(etiquetaW, etiquetaH);
-  const girada = calcularOpcion(etiquetaH, etiquetaW);
-  const mejor = girada.total > normal.total ? girada : normal;
-  const orientacion = girada.total > normal.total ? "Etiqueta girada" : "Etiqueta normal";
-  document.getElementById("resultado").innerHTML = `
-    <b>Material:</b> ${material === "70x82" ? "Pliego 70 x 82 cm" : "Rollo " + materialW + " cm"}<br>
-    <b>Área calculada:</b> ${areaMaterial.toFixed(3)} m²<br><br>
-    <b>Mejor orientación:</b> ${orientacion}<br>
-    <b>Etiqueta usada:</b> ${mejor.w} x ${mejor.h} cm<br>
-    <b>Columnas:</b> ${mejor.columnas}<br>
-    <b>Filas:</b> ${mejor.filas}<br>
-    <b>Total etiquetas:</b> ${mejor.total}<br><br>
-    <b>Área real de etiquetas:</b> ${mejor.areaEtiquetas.toFixed(3)} m²<br>
-    <b>Desperdicio aproximado:</b> ${Math.max(0, mejor.desperdicio).toFixed(3)} m²<br>
-    <b>Uso del material:</b> ${((mejor.areaEtiquetas / areaMaterial) * 100).toFixed(1)}%
-  `;
-  dibujar(materialW, materialH, mejor, marcoLateral, separacion);
+'use strict';
+
+/* =========================
+   CONSTANTS & FORMATS
+   ========================= */
+const MARGIN_MM = 10;   // 1 cm
+const SPACING_MM = 3;   // 3 mm
+
+const FORMATS = {
+  rollo127: { name: 'Rollo 127', width: 1270, isRoll: true },
+  rollo137: { name: 'Rollo 137', width: 1370, isRoll: true },
+  pliego:   { name: 'Pliego 70×82', width: 700, height: 820, isRoll: false }
+};
+
+let state = {
+  format: 'rollo127',
+  labelW: 50,
+  labelH: 30,
+  rollLengthM: 1
+};
+
+/* =========================
+   CORE MATH
+   ========================= */
+
+// Layout for a given orientation. Returns {cols, rows, total}.
+function layoutFor(workW, workH, lw, lh) {
+  if (lw <= 0 || lh <= 0 || workW <= 0 || workH <= 0) return { cols: 0, rows: 0, total: 0 };
+  const cols = Math.max(0, Math.floor((workW + SPACING_MM) / (lw + SPACING_MM)));
+  const rows = Math.max(0, Math.floor((workH + SPACING_MM) / (lh + SPACING_MM)));
+  return { cols, rows, total: cols * rows };
 }
-function dibujar(materialW, materialH, data, marco, separacion){
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
-  const wrap = canvas.parentElement;
-  canvas.width = wrap.clientWidth - 16;
-  canvas.height = Math.max(280, canvas.width * 0.65);
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const padding = 25;
-  const scaleX = (canvas.width - padding*2) / materialW;
-  const scaleY = (canvas.height - padding*2) / materialH;
-  const scale = Math.min(scaleX, scaleY);
-  const startX = (canvas.width - materialW * scale) / 2;
-  const startY = (canvas.height - materialH * scale) / 2;
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(startX, startY, materialW*scale, materialH*scale);
-  ctx.strokeStyle = "#111";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(startX, startY, materialW*scale, materialH*scale);
-  ctx.fillStyle = "rgba(255,0,0,0.08)";
-  ctx.fillRect(startX, startY, marco*scale, materialH*scale);
-  ctx.fillRect(startX + (materialW-marco)*scale, startY, marco*scale, materialH*scale);
-  ctx.fillStyle = "#60a5fa";
-  ctx.strokeStyle = "#0b4f9c";
-  ctx.lineWidth = 1;
-  const usableStartX = startX + marco * scale;
-  for(let y=0; y<data.filas; y++){
-    for(let x=0; x<data.columnas; x++){
-      const px = usableStartX + x * (data.w + separacion) * scale;
-      const py = startY + y * (data.h + separacion) * scale;
-      ctx.fillRect(px, py, data.w*scale, data.h*scale);
-      ctx.strokeRect(px, py, data.w*scale, data.h*scale);
+
+// Best orientation. Returns full result object.
+function bestLayout(materialW, materialH, labelW, labelH) {
+  const workW = materialW - 2 * MARGIN_MM;
+  const workH = materialH - 2 * MARGIN_MM;
+
+  const normal  = layoutFor(workW, workH, labelW, labelH);
+  const rotated = layoutFor(workW, workH, labelH, labelW);
+
+  const useRotated = rotated.total > normal.total;
+  const chosen = useRotated ? rotated : normal;
+  const placedW = useRotated ? labelH : labelW;
+  const placedH = useRotated ? labelW : labelH;
+
+  const materialAreaMM = materialW * materialH;
+  const usedAreaMM = chosen.total * labelW * labelH;
+  const wasteAreaMM = materialAreaMM - usedAreaMM;
+  const utilization = materialAreaMM > 0 ? (usedAreaMM / materialAreaMM) * 100 : 0;
+
+  return {
+    materialW,
+    materialH,
+    labelW,
+    labelH,
+    placedW,
+    placedH,
+    rotation: useRotated ? 'rotated' : 'normal',
+    cols: chosen.cols,
+    rows: chosen.rows,
+    total: chosen.total,
+    workW,
+    workH,
+    materialArea_m2: materialAreaMM / 1e6,
+    usedArea_m2: usedAreaMM / 1e6,
+    wasteArea_m2: wasteAreaMM / 1e6,
+    utilization
+  };
+}
+
+function getMaterialDims() {
+  const fmt = FORMATS[state.format];
+  if (fmt.isRoll) {
+    return { w: fmt.width, h: Math.round(state.rollLengthM * 1000) };
+  }
+  return { w: fmt.width, h: fmt.height };
+}
+
+/* =========================
+   RENDERING
+   ========================= */
+
+const $ = (id) => document.getElementById(id);
+
+function fmt2(n) { return (Math.round(n * 100) / 100).toFixed(2); }
+function fmt0(n) { return Math.round(n).toString(); }
+
+let lastTotal = 0;
+
+function renderResults(r) {
+  // Total with pop animation when changes
+  const totalEl = $('totalNum');
+  totalEl.textContent = fmt0(r.total);
+  if (r.total !== lastTotal) {
+    totalEl.classList.remove('shake');
+    void totalEl.offsetWidth;
+    totalEl.classList.add('shake');
+    lastTotal = r.total;
+  }
+
+  $('colsVal').textContent = r.cols;
+  $('rowsVal').textContent = r.rows;
+
+  const badge = $('orientBadge');
+  if (r.rotation === 'rotated') {
+    badge.className = 'badge rotated';
+    badge.innerHTML = '<span class="dot"></span> ROTADA 90°';
+    $('orientNote').textContent = `${r.placedW}×${r.placedH} mm colocada`;
+  } else {
+    badge.className = 'badge normal';
+    badge.innerHTML = '<span class="dot"></span> NORMAL';
+    $('orientNote').textContent = `${r.placedW}×${r.placedH} mm colocada`;
+  }
+
+  $('usedArea').textContent  = fmt2(r.usedArea_m2);
+  $('wasteArea').textContent = fmt2(r.wasteArea_m2);
+  $('utilVal').textContent   = fmt2(r.utilization);
+  $('utilBar').style.width   = Math.min(100, Math.max(0, r.utilization)) + '%';
+
+  $('materialMeta').textContent = `Material ${r.materialW}×${r.materialH} mm`;
+  $('labelMeta').textContent    = `Etiqueta ${r.labelW}×${r.labelH} mm · sep ${SPACING_MM} · marco ${MARGIN_MM}`;
+}
+
+function renderPreview(r) {
+  const box = $('previewBox');
+  if (r.total <= 0) {
+    box.style.aspectRatio = '4/3';
+    box.innerHTML = '<span class="empty-hint">no caben etiquetas con esos datos</span>';
+    return;
+  }
+
+  // Build SVG using material coordinates (mm)
+  const W = r.materialW;
+  const H = r.materialH;
+  const pad = MARGIN_MM;
+  const sp = SPACING_MM;
+  const lw = r.placedW;
+  const lh = r.placedH;
+
+  let labels = '';
+  for (let row = 0; row < r.rows; row++) {
+    for (let col = 0; col < r.cols; col++) {
+      const x = pad + col * (lw + sp);
+      const y = pad + row * (lh + sp);
+      labels += `<rect x="${x}" y="${y}" width="${lw}" height="${lh}" rx="1" fill="#cdfd50" opacity="0.92"/>`;
     }
   }
-  ctx.fillStyle = "#111";
-  ctx.font = "13px Arial";
-  ctx.fillText(`${materialW.toFixed(1)} cm`, startX + 8, Math.max(14, startY - 8));
-  ctx.fillText(`${materialH.toFixed(1)} cm`, startX + materialW*scale - 50, startY + 18);
+
+  // Tiny scale: stroke widths and tick sizes need to scale with material size
+  const strokeBig = Math.max(2, Math.min(W, H) * 0.004);
+  const strokeSmall = Math.max(1, Math.min(W, H) * 0.0025);
+
+  const svg = `
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+      <defs>
+        <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+          <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="${strokeSmall}"/>
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width="${W}" height="${H}" fill="#0b0c10"/>
+      <rect x="0" y="0" width="${W}" height="${H}" fill="url(#grid)"/>
+      <rect x="0" y="0" width="${W}" height="${H}" fill="none" stroke="#3a4150" stroke-width="${strokeBig}" stroke-dasharray="${W*0.02},${W*0.012}"/>
+      <rect x="${pad}" y="${pad}" width="${W - 2*pad}" height="${H - 2*pad}" fill="none" stroke="#cdfd50" stroke-width="${strokeSmall}" opacity="0.35" stroke-dasharray="${W*0.012},${W*0.008}"/>
+      ${labels}
+    </svg>
+  `;
+  box.style.aspectRatio = `${W} / ${H}`;
+  box.innerHTML = svg;
 }
-window.addEventListener("resize", calcular);
-calcular();
+
+function renderSuggestions(baseline, materialW, materialH) {
+  const list = $('suggestionsList');
+
+  if (baseline.total === 0) {
+    list.innerHTML = '<div class="suggestion-empty">ingresa medidas válidas</div>';
+    return;
+  }
+
+  const items = [];
+  for (const reduction of [1, 2, 3]) {
+    const newW = state.labelW - reduction;
+    const newH = state.labelH - reduction;
+    if (newW <= 0 || newH <= 0) continue;
+    const r = bestLayout(materialW, materialH, newW, newH);
+    const gain = r.total - baseline.total;
+    if (gain > 0) {
+      items.push({ reduction, gain, newTotal: r.total, newW, newH, util: r.utilization });
+    }
+  }
+
+  if (items.length === 0) {
+    list.innerHTML = '<div class="suggestion-empty">tu acomodo ya está optimizado · no hay ganancia reduciendo 1–3 mm</div>';
+    return;
+  }
+
+  // Sort by gain desc
+  items.sort((a, b) => b.gain - a.gain);
+
+  list.innerHTML = items.map((it) => {
+    const word = it.gain === 1 ? 'etiqueta' : 'etiquetas';
+    return `
+      <div class="suggestion" data-w="${it.newW}" data-h="${it.newH}">
+        <div class="body">
+          <div class="title">Reduciendo <b>${it.reduction} mm</b> ganas <b>+${it.gain}</b> ${word}</div>
+          <div class="meta">→ ${it.newW}×${it.newH} mm · total ${it.newTotal} · aprov ${fmt2(it.util)}%</div>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+    `;
+  }).join('');
+
+  // tap to apply
+  list.querySelectorAll('.suggestion').forEach(el => {
+    el.addEventListener('click', () => {
+      const w = parseInt(el.dataset.w, 10);
+      const h = parseInt(el.dataset.h, 10);
+      state.labelW = w;
+      state.labelH = h;
+      $('labelW').value = w;
+      $('labelH').value = h;
+      recompute();
+    });
+  });
+}
+
+/* =========================
+   COMPUTE LOOP
+   ========================= */
+
+function recompute() {
+  const { w: materialW, h: materialH } = getMaterialDims();
+  const r = bestLayout(materialW, materialH, state.labelW, state.labelH);
+  renderResults(r);
+  renderPreview(r);
+  renderSuggestions(r, materialW, materialH);
+}
+
+/* =========================
+   EVENTS
+   ========================= */
+
+// format buttons
+document.querySelectorAll('.format-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.format-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+    btn.setAttribute('aria-pressed', 'true');
+    state.format = btn.dataset.format;
+
+    // Show/hide roll length
+    const isRoll = FORMATS[state.format].isRoll;
+    $('rollLengthWrap').style.display = isRoll ? '' : 'none';
+
+    recompute();
+  });
+});
+
+function bindNumberInput(id, key, opts = {}) {
+  const el = $(id);
+  el.addEventListener('input', () => {
+    const v = parseFloat(el.value);
+    if (isNaN(v)) return;
+    if (opts.min !== undefined && v < opts.min) return;
+    state[key] = v;
+    recompute();
+  });
+  el.addEventListener('blur', () => {
+    let v = parseFloat(el.value);
+    if (isNaN(v) || v <= 0) {
+      v = opts.fallback;
+      el.value = v;
+      state[key] = v;
+      recompute();
+    }
+  });
+}
+
+bindNumberInput('labelW', 'labelW', { min: 1, fallback: 50 });
+bindNumberInput('labelH', 'labelH', { min: 1, fallback: 30 });
+bindNumberInput('rollLen', 'rollLengthM', { min: 0.1, fallback: 1 });
+
+// initial paint
+recompute();
 </script>
+
 </body>
 </html>
