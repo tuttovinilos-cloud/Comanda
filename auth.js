@@ -1,4 +1,4 @@
-conectado");
+console.log("Auth JS conectado");
 
 // =========================================
 // CONFIGURACIÓN DE ACCESO POR PÁGINA
