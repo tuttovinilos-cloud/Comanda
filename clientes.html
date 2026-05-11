@@ -311,6 +311,30 @@ td{
 
 tr:hover td{background:#ffffff03}
 
+.select-cell{
+  width:46px;
+  text-align:center;
+}
+
+.client-check,.master-check{
+  width:18px;
+  height:18px;
+  accent-color:var(--accent);
+  cursor:pointer;
+}
+
+.fusion-hint{
+  color:var(--muted2);
+  font-family:var(--head);
+  font-size:12px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:7px 10px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  background:#ffffff04;
+}
+
 .client-main{
   min-width:260px;
 }
@@ -744,12 +768,14 @@ tr:hover td{background:#ffffff03}
   </select>
 
   <button class="btn" onclick="nuevoCliente()">+ Añadir cliente</button>
+  <button class="btn success" onclick="fusionarClientesSeleccionados()">Fusionar seleccionados</button>
+  <span class="fusion-hint" id="fusionHint">0 seleccionados</span>
 </div>
 
 <div class="layout">
 
   <div class="note">
-    <strong>Clientes:</strong> el nombre se muestra en azul y con tamaño ajustado. La cantidad de pedidos funciona como acceso directo al historial.
+    <strong>Clientes:</strong> marca varios clientes con la casilla y usa “Fusionar seleccionados” para unir nombres duplicados sin cambiar el diseño.
   </div>
 
   <section class="card">
@@ -768,6 +794,7 @@ tr:hover td{background:#ffffff03}
       <table>
         <thead>
           <tr>
+            <th class="select-cell"><input class="master-check" type="checkbox" id="checkTodosClientes" onchange="toggleTodosClientes(this.checked)" title="Seleccionar todos"/></th>
             <th>Cliente</th>
             <th>Notas</th>
             <th>Pedidos / Historial</th>
@@ -777,7 +804,7 @@ tr:hover td{background:#ffffff03}
         </thead>
 
         <tbody id="clientesBody">
-          <tr><td colspan="5" class="empty">Cargando clientes...</td></tr>
+          <tr><td colspan="6" class="empty">Cargando clientes...</td></tr>
         </tbody>
       </table>
     </div>
@@ -864,6 +891,7 @@ console.log("CLIENTES HTML conectado");
 
 let clientesDB = [];
 let pedidosDB = [];
+let clientesSeleccionados = new Set();
 
 function db(){
   return window.supabaseClient;
@@ -990,7 +1018,7 @@ async function cargarClientes(){
   if(error){
     console.error("Error cargando clientes:", error);
     document.getElementById("clientesBody").innerHTML = `
-      <tr><td colspan="5" class="empty">Error cargando clientes: ${escapeHtml(error.message)}</td></tr>
+      <tr><td colspan="6" class="empty">Error cargando clientes: ${escapeHtml(error.message)}</td></tr>
     `;
     return;
   }
@@ -1060,10 +1088,11 @@ function renderClientes(lista){
     count.textContent = `${lista.length} cliente${lista.length === 1 ? "" : "s"}`;
   }
 
+  actualizarHintFusion();
   if(!tbody) return;
 
   if(!lista.length){
-    tbody.innerHTML = `<tr><td colspan="5" class="empty">Sin clientes</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">Sin clientes</td></tr>`;
     return;
   }
 
@@ -1080,6 +1109,9 @@ function renderClientes(lista){
 
     return `
       <tr>
+        <td class="select-cell">
+          <input class="client-check" type="checkbox" value="${Number(c.id)}" ${clientesSeleccionados.has(Number(c.id)) ? "checked" : ""} onchange="toggleClienteSeleccionado(${Number(c.id)}, this.checked)"/>
+        </td>
         <td class="client-main">
           <div class="client-name">${escapeHtml(c.nombre || "")}</div>
           <div class="client-meta">
@@ -1111,6 +1143,44 @@ function renderClientes(lista){
       </tr>
     `;
   }).join("");
+}
+
+
+function toggleClienteSeleccionado(id, marcado){
+  id = Number(id);
+  if(marcado){
+    clientesSeleccionados.add(id);
+  }else{
+    clientesSeleccionados.delete(id);
+  }
+  actualizarHintFusion();
+}
+
+function toggleTodosClientes(marcado){
+  const checks = document.querySelectorAll('.client-check');
+  checks.forEach(ch => {
+    const id = Number(ch.value);
+    ch.checked = marcado;
+    if(marcado) clientesSeleccionados.add(id);
+    else clientesSeleccionados.delete(id);
+  });
+  actualizarHintFusion();
+}
+
+function actualizarHintFusion(){
+  const hint = document.getElementById('fusionHint');
+  if(hint){
+    const total = clientesSeleccionados.size;
+    hint.textContent = `${total} seleccionado${total === 1 ? '' : 's'}`;
+  }
+
+  const master = document.getElementById('checkTodosClientes');
+  const checks = [...document.querySelectorAll('.client-check')];
+  if(master && checks.length){
+    const marcados = checks.filter(ch => ch.checked).length;
+    master.checked = marcados === checks.length;
+    master.indeterminate = marcados > 0 && marcados < checks.length;
+  }
 }
 
 function nuevoCliente(){
@@ -1319,6 +1389,123 @@ async function guardarClienteModal(){
     console.error("Error guardando/fusionando cliente:", error);
     alert("Error guardando/fusionando cliente: " + (error.message || error));
   }
+}
+
+
+async function fusionarClientesSeleccionados(){
+  if(!validarSupabase()) return;
+
+  const seleccionados = clientesDB.filter(c => clientesSeleccionados.has(Number(c.id)));
+
+  if(seleccionados.length < 2){
+    alert('Marca al menos 2 clientes para fusionar.');
+    return;
+  }
+
+  const resumen = seleccionados.map(c => `- ${c.nombre}`).join('\n');
+  const sugerido = nombreBonito(seleccionados[0].nombre || '');
+  const nombreFinalInput = prompt(
+    `Vas a fusionar estos clientes:\n\n${resumen}\n\n¿Qué nombre final deseas colocarle?`,
+    sugerido
+  );
+
+  const nombreFinal = nombreBonito(nombreFinalInput);
+  if(!nombreFinal){
+    alert('Debes colocar un nombre final para fusionar.');
+    return;
+  }
+
+  const confirmar = confirm(
+    `Confirmar fusión:\n\n${resumen}\n\nNombre final:\n${nombreFinal}\n\nEsto actualizará todos los pedidos de esos clientes y dejará un solo registro.`
+  );
+
+  if(!confirmar) return;
+
+  try{
+    // Si ya existe un cliente con ese nombre fuera de la selección, se usa como principal.
+    let principal = clientesDB.find(c =>
+      normalizar(c.nombre) === normalizar(nombreFinal) &&
+      !clientesSeleccionados.has(Number(c.id))
+    );
+
+    // Si no existe fuera, usamos el seleccionado con más información.
+    if(!principal){
+      principal = seleccionados
+        .slice()
+        .sort((a,b) => cantidadDatosCliente(b) - cantidadDatosCliente(a))[0];
+    }
+
+    const todosAFusionar = [...seleccionados];
+    if(!todosAFusionar.some(c => Number(c.id) === Number(principal.id))){
+      todosAFusionar.push(principal);
+    }
+
+    // Mover pedidos de todos los nombres seleccionados al nombre final.
+    for(const c of todosAFusionar){
+      await actualizarPedidosDeCliente(c.nombre, nombreFinal);
+    }
+
+    // Mezclar datos: conserva teléfono/correo/notas si existen.
+    let datosFusionados = {
+      nombre:nombreFinal,
+      tipo_cliente:'Cliente Standar',
+      telefono:'',
+      correo:'',
+      notas:'',
+      activo:true
+    };
+
+    for(const c of todosAFusionar){
+      datosFusionados = mezclarDatosCliente(datosFusionados, c);
+    }
+
+    datosFusionados.nombre = nombreFinal;
+
+    const { error:updateError } = await db()
+      .from('clientes')
+      .update(datosFusionados)
+      .eq('id', principal.id);
+
+    if(updateError) throw updateError;
+
+    const idsEliminar = todosAFusionar
+      .filter(c => Number(c.id) !== Number(principal.id))
+      .map(c => c.id);
+
+    if(idsEliminar.length){
+      const { error:deleteError } = await db()
+        .from('clientes')
+        .delete()
+        .in('id', idsEliminar);
+
+      if(deleteError) throw deleteError;
+    }
+
+    // Limpieza extra: elimina duplicados exactos que hayan quedado con el mismo nombre.
+    await cargarPedidos();
+    await cargarClientes();
+    await fusionarDuplicadosExactosCliente(nombreFinal, principal.id);
+
+    clientesSeleccionados.clear();
+    await cargarPedidos();
+    await cargarClientes();
+    filtrarClientes();
+
+    mostrarToast(`Clientes fusionados como ${nombreFinal}`);
+  }catch(error){
+    console.error('Error fusionando clientes seleccionados:', error);
+    alert('Error fusionando clientes: ' + (error.message || error));
+  }
+}
+
+function cantidadDatosCliente(c){
+  let total = 0;
+  if(c?.telefono) total++;
+  if(c?.correo) total++;
+  if(c?.notas) total++;
+  if(c?.tipo_cliente) total++;
+  if(c?.activo === true) total++;
+  return total;
 }
 
 async function eliminarCliente(id){
