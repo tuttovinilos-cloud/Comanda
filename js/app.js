@@ -1092,16 +1092,43 @@ window.addEventListener("DOMContentLoaded", async () => {
   marcarSupabaseActivo();
   ponerFechaHoy();
 
-  await cargarOperadoresComandaDesdeSupabase();
-
-  if (typeof cargarOperadoresEnComanda === "function") {
-    await cargarOperadoresEnComanda();
+  try {
+    await cargarPedidos();
+  } catch (e) {
+    console.error("Error cargando pedidos al iniciar:", e);
   }
 
-  await cargarClientesBusqueda();
-  await cargarMateriales();
-  await cargarTiposImpresion();
-  await cargarPedidos();
+  try {
+    await cargarOperadoresComandaDesdeSupabase();
+  } catch (e) {
+    console.error("Error cargando operadores:", e);
+  }
+
+  try {
+    if (typeof cargarOperadoresEnComanda === "function") {
+      await cargarOperadoresEnComanda();
+    }
+  } catch (e) {
+    console.error("Error cargando operadores (fallback):", e);
+  }
+
+  try {
+    await cargarClientesBusqueda();
+  } catch (e) {
+    console.error("Error cargando clientes para búsqueda:", e);
+  }
+
+  try {
+    await cargarMateriales();
+  } catch (e) {
+    console.error("Error cargando materiales:", e);
+  }
+
+  try {
+    await cargarTiposImpresion();
+  } catch (e) {
+    console.error("Error cargando tipos de impresión:", e);
+  }
 
   aplicarOperadorSesion();
 
@@ -1109,6 +1136,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     aplicarPermisosComanda();
   }
 });
+
 
 
 
