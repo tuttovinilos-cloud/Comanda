@@ -7,7 +7,6 @@ let archivoSeleccionado = null;
 let materialesDB = [];
 let tiposImpresionDB = [];
 let clientesBusquedaDB = [];
-    clientesCatalogoDB = [];
 let clientesCatalogoDB = [];
 
 // ===========================
@@ -58,6 +57,7 @@ function normalizarBusqueda(valor) {
 function nombreBonito(valor) {
   const limpio = String(valor || "").trim().replace(/\s+/g, " ");
   if (!limpio) return "";
+
   return limpio
     .split(" ")
     .map(p => p ? (p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()) : "")
@@ -147,7 +147,9 @@ async function asegurarClienteExiste(nombreCliente) {
     return normalizarBusqueda(c.nombre) === nombreNormalizado;
   });
 
-  if (clienteExistente) return String(clienteExistente.nombre || nombreBonito(nombre)).trim();
+  if (clienteExistente) {
+    return String(clienteExistente.nombre || nombreBonito(nombre)).trim();
+  }
 
   const nombreFinal = nombreBonito(nombre);
 
@@ -187,24 +189,27 @@ async function cargarClientesBusqueda() {
 
   clientesBusquedaDB = data || [];
   clientesCatalogoDB = [...clientesBusquedaDB];
+
   renderClienteDatalist();
+
   console.log("Clientes para bÃºsqueda cargados:", clientesBusquedaDB);
 }
 
-// ===========================
-// OPERADORES
-// ===========================
 function renderClienteDatalist() {
   const datalist = document.getElementById("clientesDatalist");
   if (!datalist) return;
+
   datalist.innerHTML = "";
 
   const usados = new Set();
+
   clientesCatalogoDB.forEach(c => {
     const nombre = String(c.nombre || "").trim();
     if (!nombre) return;
+
     const key = normalizarBusqueda(nombre);
     if (!key || usados.has(key)) return;
+
     usados.add(key);
 
     const opt = document.createElement("option");
@@ -216,23 +221,31 @@ function renderClienteDatalist() {
 function buscarClienteExactoNormalizado(nombre) {
   const norm = normalizarBusqueda(nombre);
   if (!norm) return null;
+
   return clientesCatalogoDB.find(c => normalizarBusqueda(c.nombre) === norm) || null;
 }
 
 function puntajeParecidoCliente(a, b) {
   const na = normalizarBusqueda(a);
   const nb = normalizarBusqueda(b);
+
   if (!na || !nb) return 0;
   if (na === nb) return 1;
   if (na.includes(nb) || nb.includes(na)) return 0.92;
 
   const ta = na.split(" ").filter(Boolean);
   const tb = nb.split(" ").filter(Boolean);
+
   if (!ta.length || !tb.length) return 0;
 
   const sb = new Set(tb);
+
   let match = 0;
-  ta.forEach(t => { if (sb.has(t)) match++; });
+
+  ta.forEach(t => {
+    if (sb.has(t)) match++;
+  });
+
   return match / Math.max(ta.length, tb.length);
 }
 
@@ -242,6 +255,7 @@ function buscarClienteParecido(nombre) {
 
   clientesCatalogoDB.forEach(c => {
     const s = puntajeParecidoCliente(nombre, c.nombre);
+
     if (s > score) {
       score = s;
       mejor = c;
@@ -253,26 +267,58 @@ function buscarClienteParecido(nombre) {
 
 async function resolverNombreClienteAntesDeGuardar(nombreIngresado) {
   const nombre = String(nombreIngresado || "").trim();
+
   if (!nombre) return { ok: true, nombreFinal: "" };
 
   const exacto = buscarClienteExactoNormalizado(nombre);
-  if (exacto) return { ok: true, nombreFinal: String(exacto.nombre || "").trim() };
+
+  if (exacto) {
+    return {
+      ok: true,
+      nombreFinal: String(exacto.nombre || "").trim()
+    };
+  }
 
   const parecido = buscarClienteParecido(nombre);
-  if (!parecido) return { ok: true, nombreFinal: nombreBonito(nombre) };
+
+  if (!parecido) {
+    return {
+      ok: true,
+      nombreFinal: nombreBonito(nombre)
+    };
+  }
 
   const accion = prompt(
     `Posible cliente existente.\n\nEscribiste: ${nombre}\nDetectado: ${parecido.nombre}\n\n1 = Usar existente\n2 = Crear nuevo\n3 = Cancelar`,
     "1"
   );
 
-  if (accion === null || accion.trim() === "3") return { ok: false, cancelado: true };
-  if (accion.trim() === "1") return { ok: true, nombreFinal: String(parecido.nombre || "").trim() };
-  if (accion.trim() === "2") return { ok: true, nombreFinal: nombreBonito(nombre) };
+  if (accion === null || accion.trim() === "3") {
+    return { ok: false, cancelado: true };
+  }
 
-  alert("Opción inválida. Operación cancelada.");
+  if (accion.trim() === "1") {
+    return {
+      ok: true,
+      nombreFinal: String(parecido.nombre || "").trim()
+    };
+  }
+
+  if (accion.trim() === "2") {
+    return {
+      ok: true,
+      nombreFinal: nombreBonito(nombre)
+    };
+  }
+
+  alert("OpciÃ³n invÃ¡lida. OperaciÃ³n cancelada.");
+
   return { ok: false, cancelado: true };
 }
+
+// ===========================
+// OPERADORES
+// ===========================
 async function cargarOperadoresComandaDesdeSupabase() {
   const fallback = [
     { nombre: "Roberto" },
@@ -327,12 +373,14 @@ function llenarSelectOperadores(select, operadores, placeholder) {
 
 function aplicarOperadorSesion() {
   const op = getOperadorSesionLocal();
+
   if (!op || !op.nombre) return;
 
   const puedeCambiar = puedeModificarOperadorLocal();
 
   ["q_operador", "f_operador"].forEach(id => {
     const el = document.getElementById(id);
+
     if (!el) return;
 
     el.value = op.nombre;
@@ -465,6 +513,7 @@ async function cargarPedidos() {
   }
 
   pedidosDB = data || [];
+
   console.log("Pedidos cargados:", pedidosDB);
 
   const tabla = document.getElementById("orderTableBody");
@@ -587,6 +636,7 @@ async function saveQuickOrder() {
 
   const decisionCliente = await resolverNombreClienteAntesDeGuardar(cliente);
   if (!decisionCliente.ok) return;
+
   cliente = await asegurarClienteExiste(decisionCliente.nombreFinal || cliente) || cliente;
 
   const { error } = await db()
@@ -650,6 +700,7 @@ async function saveOrder() {
 
   const decisionCliente = await resolverNombreClienteAntesDeGuardar(cliente);
   if (!decisionCliente.ok) return;
+
   cliente = await asegurarClienteExiste(decisionCliente.nombreFinal || cliente) || cliente;
 
   const archivoData = await subirArchivoPedido();
@@ -1024,6 +1075,7 @@ function onSearch() {
 
   filas.forEach(fila => {
     const celdas = fila.querySelectorAll("td");
+
     if (!celdas.length) return;
 
     const fecha = celdas[1]?.textContent.trim() || "";
@@ -1093,6 +1145,12 @@ window.addEventListener("DOMContentLoaded", async () => {
   ponerFechaHoy();
 
   try {
+    await cargarClientesBusqueda();
+  } catch (e) {
+    console.error("Error cargando clientes para bÃºsqueda:", e);
+  }
+
+  try {
     await cargarPedidos();
   } catch (e) {
     console.error("Error cargando pedidos al iniciar:", e);
@@ -1109,13 +1167,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       await cargarOperadoresEnComanda();
     }
   } catch (e) {
-    console.error("Error cargando operadores (fallback):", e);
-  }
-
-  try {
-    await cargarClientesBusqueda();
-  } catch (e) {
-    console.error("Error cargando clientes para búsqueda:", e);
+    console.error("Error cargando operadores fallback:", e);
   }
 
   try {
@@ -1127,7 +1179,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   try {
     await cargarTiposImpresion();
   } catch (e) {
-    console.error("Error cargando tipos de impresión:", e);
+    console.error("Error cargando tipos de impresiÃ³n:", e);
   }
 
   aplicarOperadorSesion();
@@ -1136,14 +1188,3 @@ window.addEventListener("DOMContentLoaded", async () => {
     aplicarPermisosComanda();
   }
 });
-
-
-
-
-
-
-
-
-
-
-
