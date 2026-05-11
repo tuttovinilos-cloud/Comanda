@@ -769,6 +769,8 @@ tr:hover td{background:#ffffff03}
 
   <button class="btn" onclick="nuevoCliente()">+ Añadir cliente</button>
   <button class="btn success" onclick="fusionarClientesSeleccionados()">Fusionar seleccionados</button>
+  <button class="btn" onclick="limpiarSeleccionClientes()">Limpiar selección</button>
+  <button class="btn" onclick="deshacerUltimaFusionClientes()">↶ Deshacer última fusión</button>
   <span class="fusion-hint" id="fusionHint">0 seleccionados</span>
 </div>
 
@@ -892,6 +894,7 @@ console.log("CLIENTES HTML conectado");
 let clientesDB = [];
 let pedidosDB = [];
 let clientesSeleccionados = new Set();
+const CLIENTES_FUSION_UNDO_KEY = "tutto_ultima_fusion_clientes_v1";
 
 function db(){
   return window.supabaseClient;
@@ -1080,7 +1083,155 @@ function filtrarClientes(){
   renderClientes(lista);
 }
 
+
+function obtenerIdsVisiblesClientes(){
+  return new Set(
+    [...document.querySelectorAll('.client-check')]
+      .map(ch => Number(ch.value))
+      .filter(id => Number.isFinite(id))
+  );
+}
+
+function limpiarSeleccionClientes(mostrarMensaje = true){
+  clientesSeleccionados.clear();
+
+  document.querySelectorAll('.client-check').forEach(ch => {
+    ch.checked = false;
+  });
+
+  const master = document.getElementById('checkTodosClientes');
+  if(master){
+    master.checked = false;
+    master.indeterminate = false;
+  }
+
+  actualizarHintFusion();
+  if(mostrarMensaje) mostrarToast('Selección limpia');
+}
+
+function limpiarSeleccionesOcultas(listaVisible = []){
+  const idsValidos = new Set(listaVisible.map(c => Number(c.id)));
+
+  [...clientesSeleccionados].forEach(id => {
+    if(!idsValidos.has(Number(id))){
+      clientesSeleccionados.delete(Number(id));
+    }
+  });
+}
+
+function guardarBackupFusionClientes(backup){
+  try{
+    localStorage.setItem(CLIENTES_FUSION_UNDO_KEY, JSON.stringify({
+      ...backup,
+      fecha_backup: new Date().toISOString()
+    }));
+  }catch(error){
+    console.warn('No se pudo guardar backup de fusión:', error);
+  }
+}
+
+function leerBackupFusionClientes(){
+  try{
+    const raw = localStorage.getItem(CLIENTES_FUSION_UNDO_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(error){
+    console.warn('No se pudo leer backup de fusión:', error);
+    return null;
+  }
+}
+
+function limpiarBackupFusionClientes(){
+  localStorage.removeItem(CLIENTES_FUSION_UNDO_KEY);
+}
+
+async function insertarClienteRestaurado(cliente){
+  if(!cliente) return;
+
+  const completo = {
+    id: cliente.id,
+    nombre: cliente.nombre || '',
+    tipo_cliente: cliente.tipo_cliente || 'Cliente Standar',
+    telefono: cliente.telefono || '',
+    correo: cliente.correo || '',
+    notas: cliente.notas || '',
+    activo: cliente.activo !== false
+  };
+
+  let res = await db().from('clientes').insert([completo]);
+
+  // Algunas tablas no permiten reinsertar el ID manualmente. En ese caso restaura sin ID.
+  if(res.error){
+    const sinId = {...completo};
+    delete sinId.id;
+    res = await db().from('clientes').insert([sinId]);
+  }
+
+  if(res.error) throw res.error;
+}
+
+async function deshacerUltimaFusionClientes(){
+  if(!validarSupabase()) return;
+
+  const backup = leerBackupFusionClientes();
+  if(!backup){
+    alert('No hay una fusión reciente para deshacer.');
+    return;
+  }
+
+  const confirmar = confirm(
+    `Deshacer última fusión:\n\nCliente final: ${backup.nombre_final || ''}\nClientes fusionados: ${(backup.clientes_originales || []).map(c => c.nombre).join(', ')}\n\nEsto restaurará los nombres anteriores en pedidos y volverá a crear los clientes eliminados si es posible.`
+  );
+
+  if(!confirmar) return;
+
+  try{
+    // 1) Restaurar pedidos a su cliente anterior.
+    for(const pedido of (backup.pedidos_originales || [])){
+      const { error } = await db()
+        .from('pedidos')
+        .update({ cliente: pedido.cliente })
+        .eq('id', pedido.id);
+
+      if(error) throw error;
+    }
+
+    // 2) Restaurar el cliente principal como estaba antes de la fusión.
+    if(backup.principal_original?.id){
+      const original = {...backup.principal_original};
+      delete original.id;
+
+      const { error } = await db()
+        .from('clientes')
+        .update(original)
+        .eq('id', backup.principal_original.id);
+
+      if(error) throw error;
+    }
+
+    // 3) Reinsertar clientes que se habían eliminado.
+    for(const cliente of (backup.clientes_eliminados || [])){
+      const existe = clientesDB.some(c => Number(c.id) === Number(cliente.id));
+      if(!existe){
+        await insertarClienteRestaurado(cliente);
+      }
+    }
+
+    limpiarBackupFusionClientes();
+    limpiarSeleccionClientes(false);
+    await cargarPedidos();
+    await cargarClientes();
+    filtrarClientes();
+
+    mostrarToast('Fusión deshecha');
+  }catch(error){
+    console.error('Error deshaciendo fusión:', error);
+    alert('No se pudo deshacer completamente la fusión: ' + (error.message || error));
+  }
+}
+
 function renderClientes(lista){
+  limpiarSeleccionesOcultas(lista);
+
   const tbody = document.getElementById("clientesBody");
   const count = document.getElementById("clientesCount");
 
@@ -1093,6 +1244,7 @@ function renderClientes(lista){
 
   if(!lista.length){
     tbody.innerHTML = `<tr><td colspan="6" class="empty">Sin clientes</td></tr>`;
+    limpiarSeleccionClientes(false);
     return;
   }
 
@@ -1143,6 +1295,9 @@ function renderClientes(lista){
       </tr>
     `;
   }).join("");
+
+  // Importante: sincroniza el Set con los checks visibles para que no queden selecciones ocultas.
+  actualizarHintFusion();
 }
 
 
@@ -1176,7 +1331,13 @@ function actualizarHintFusion(){
 
   const master = document.getElementById('checkTodosClientes');
   const checks = [...document.querySelectorAll('.client-check')];
-  if(master && checks.length){
+  if(master){
+    if(!checks.length){
+      master.checked = false;
+      master.indeterminate = false;
+      return;
+    }
+
     const marcados = checks.filter(ch => ch.checked).length;
     master.checked = marcados === checks.length;
     master.indeterminate = marcados > 0 && marcados < checks.length;
@@ -1440,6 +1601,22 @@ async function fusionarClientesSeleccionados(){
       todosAFusionar.push(principal);
     }
 
+    const nombresAFusionar = todosAFusionar.map(c => normalizar(c.nombre));
+    const pedidosOriginales = pedidosDB
+      .filter(p => nombresAFusionar.includes(normalizar(p.cliente)))
+      .map(p => ({ id:p.id, cliente:p.cliente }));
+
+    const backupFusion = {
+      nombre_final:nombreFinal,
+      principal_id:principal.id,
+      principal_original:{...principal},
+      clientes_originales:todosAFusionar.map(c => ({...c})),
+      clientes_eliminados:todosAFusionar
+        .filter(c => Number(c.id) !== Number(principal.id))
+        .map(c => ({...c})),
+      pedidos_originales:pedidosOriginales
+    };
+
     // Mover pedidos de todos los nombres seleccionados al nombre final.
     for(const c of todosAFusionar){
       await actualizarPedidosDeCliente(c.nombre, nombreFinal);
@@ -1486,7 +1663,8 @@ async function fusionarClientesSeleccionados(){
     await cargarClientes();
     await fusionarDuplicadosExactosCliente(nombreFinal, principal.id);
 
-    clientesSeleccionados.clear();
+    guardarBackupFusionClientes(backupFusion);
+    limpiarSeleccionClientes(false);
     await cargarPedidos();
     await cargarClientes();
     filtrarClientes();
