@@ -7,6 +7,7 @@ let archivoSeleccionado = null;
 let materialesDB = [];
 let tiposImpresionDB = [];
 let clientesBusquedaDB = [];
+let clientesCatalogoDB = [];
 
 // ===========================
 // SUPABASE SEGURO
@@ -499,7 +500,9 @@ async function saveQuickOrder() {
 
   const archivoData = await subirArchivoPedido();
 
-  cliente = await asegurarClienteExiste(cliente) || cliente;
+  const decisionCliente = await resolverNombreClienteAntesDeGuardar(cliente);
+  if (!decisionCliente.ok) return;
+  cliente = await asegurarClienteExiste(decisionCliente.nombreFinal || cliente) || cliente;
 
   const { error } = await db()
     .from("pedidos")
@@ -560,7 +563,9 @@ async function saveOrder() {
     fecha = new Date().toISOString().split("T")[0];
   }
 
-  cliente = await asegurarClienteExiste(cliente) || cliente;
+  const decisionCliente = await resolverNombreClienteAntesDeGuardar(cliente);
+  if (!decisionCliente.ok) return;
+  cliente = await asegurarClienteExiste(decisionCliente.nombreFinal || cliente) || cliente;
 
   const archivoData = await subirArchivoPedido();
 
@@ -1019,3 +1024,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     aplicarPermisosComanda();
   }
 });
+
+
+
+
+
