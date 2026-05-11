@@ -856,8 +856,8 @@ tr:hover td{background:#ffffff03}
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=19"></script>
-<script src="js/auth.js?v=19"></script>
+<script src="js/supabase.js?v=24"></script>
+<script src="js/auth.js?v=24"></script>
 
 <script>
 console.log("CLIENTES HTML conectado");
@@ -871,7 +871,7 @@ function db(){
 
 function validarSupabase(){
   if(!db()){
-    alert("No existe conexiÃ³n Supabase. Revisa js/supabase.js");
+    alert("No existe conexiÃ³n Supabase. Revisa js/supabase.js?v=24");
     console.error("No existe window.supabaseClient");
     return false;
   }
@@ -943,12 +943,15 @@ async function cargarPedidos(){
 }
 
 async function crearClientesDesdePedidos(){
-  const nombresPedidos = [...new Set(
-    pedidosDB
-      .map(p => String(p.cliente || "").trim())
-      .filter(Boolean)
-      .map(nombreBonito)
-  )];
+  const mapaNombres = {};
+  pedidosDB.forEach(p => {
+    const bruto = String(p.cliente || "").trim();
+    if(!bruto) return;
+    const norm = normalizar(bruto);
+    if(!norm) return;
+    if(!mapaNombres[norm]) mapaNombres[norm] = nombreBonito(bruto);
+  });
+  const nombresPedidos = Object.values(mapaNombres);
 
   const existentes = new Set(
     clientesDB.map(c => normalizar(c.nombre))
@@ -1223,33 +1226,38 @@ async function eliminarCliente(id){
   const cliente = clientesDB.find(c => Number(c.id) === Number(id));
 
   if(!cliente){
-    alert("No se encontrÃ³ el cliente.");
+    alert("No se encontró el cliente.");
+    return;
+  }
+
+  if(normalizar(cliente.nombre) === "roberto"){
+    alert("Roberto no se puede eliminar ni desactivar.");
     return;
   }
 
   const pedidos = contarPedidosCliente(cliente.nombre);
 
   const confirmar = confirm(
-    `Â¿Seguro que deseas eliminar este cliente?\n\nCliente: ${cliente.nombre}\nPedidos registrados: ${pedidos}\n\nEsto eliminarÃ¡ el registro de la tabla clientes, pero NO borra sus pedidos.`
+    `¿Seguro que deseas desactivar este cliente?\n\nCliente: ${cliente.nombre}\nPedidos registrados: ${pedidos}\n\nNo se borrará el historial de pedidos.`
   );
 
   if(!confirmar) return;
 
   const { error } = await db()
     .from("clientes")
-    .delete()
+    .update({ activo:false })
     .eq("id", id);
 
   if(error){
-    console.error("Error eliminando cliente:", error);
-    alert("Error eliminando cliente: " + error.message);
+    console.error("Error desactivando cliente:", error);
+    alert("Error desactivando cliente: " + error.message);
     return;
   }
 
   await cargarClientes();
   filtrarClientes();
 
-  mostrarToast("Cliente eliminado");
+  mostrarToast("Cliente desactivado");
 }
 
 function verHistorialCliente(id){
@@ -1316,3 +1324,6 @@ document.addEventListener("DOMContentLoaded", function(){
 
 </body>
 </html>
+
+
+

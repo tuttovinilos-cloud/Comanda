@@ -268,7 +268,9 @@ function buscarClienteParecido(nombre) {
 async function resolverNombreClienteAntesDeGuardar(nombreIngresado) {
   const nombre = String(nombreIngresado || "").trim();
 
-  if (!nombre) return { ok: true, nombreFinal: "" };
+  if (!nombre) {
+    return { ok: true, nombreFinal: "" };
+  }
 
   const exacto = buscarClienteExactoNormalizado(nombre);
 
@@ -279,41 +281,12 @@ async function resolverNombreClienteAntesDeGuardar(nombreIngresado) {
     };
   }
 
-  const parecido = buscarClienteParecido(nombre);
-
-  if (!parecido) {
-    return {
-      ok: true,
-      nombreFinal: nombreBonito(nombre)
-    };
-  }
-
-  const accion = prompt(
-    `Posible cliente existente.\n\nEscribiste: ${nombre}\nDetectado: ${parecido.nombre}\n\n1 = Usar existente\n2 = Crear nuevo\n3 = Cancelar`,
-    "1"
-  );
-
-  if (accion === null || accion.trim() === "3") {
-    return { ok: false, cancelado: true };
-  }
-
-  if (accion.trim() === "1") {
-    return {
-      ok: true,
-      nombreFinal: String(parecido.nombre || "").trim()
-    };
-  }
-
-  if (accion.trim() === "2") {
-    return {
-      ok: true,
-      nombreFinal: nombreBonito(nombre)
-    };
-  }
-
-  alert("Opción inválida. Operación cancelada.");
-
-  return { ok: false, cancelado: true };
+  // Sin prompts de "posible duplicado":
+  // si no hay match exacto normalizado, se crea como nuevo nombre bonito.
+  return {
+    ok: true,
+    nombreFinal: nombreBonito(nombre)
+  };
 }
 
 // ===========================
@@ -1188,3 +1161,4 @@ window.addEventListener("DOMContentLoaded", async () => {
     aplicarPermisosComanda();
   }
 });
+
