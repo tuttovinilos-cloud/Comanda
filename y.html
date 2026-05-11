@@ -18,7 +18,7 @@ header h1{margin:0;font-size:18px;line-height:1.2}.wrap{padding:14px;max-width:1
 .card h2{margin:0 0 12px;font-size:16px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}input,select,button{width:100%;padding:11px;border-radius:11px;border:none;font-size:14px}input,select{background:#06111f;border:1px solid #244b72;color:white}button{background:linear-gradient(135deg,#1688ff,#0057c8);color:white;font-weight:800;cursor:pointer}button.orange{background:linear-gradient(135deg,#ff8616,#c65300)}button.gray{background:#172d47}.hint{font-size:12px;color:var(--muted);line-height:1.45}.warn{color:var(--yellow)}.ok{color:var(--green)}.bad{color:var(--red)}
 #preview{background:white;border-radius:12px;padding:10px;overflow:auto;min-height:260px}#preview svg{max-width:100%;height:auto;display:block;margin:auto}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.kpi{background:var(--card2);padding:12px;border-radius:12px;border:1px solid #214161;min-height:72px}.kpi b{display:block;font-size:20px;line-height:1.15}.kpi span{font-size:12px;color:var(--muted)}
-table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;border-bottom:1px solid #1d3958;text-align:left;white-space:nowrap}.tableWrap{overflow:auto;border:1px solid #1d3958;border-radius:12px}.pill{display:inline-block;padding:5px 8px;border-radius:999px;background:#102a45;border:1px solid #28557b;color:#cfe9ff;font-size:12px}.row{display:flex;gap:10px;align-items:center}.row input[type=checkbox]{width:auto;margin:0}.progress{height:8px;background:#071321;border-radius:999px;overflow:hidden;border:1px solid #1d3958}.bar{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--orange))}.mono{font-family:Consolas,monospace;font-size:12px;color:#cfe9ff}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;border-bottom:1px solid #1d3958;text-align:left;white-space:nowrap}.tableWrap{overflow:auto;border:1px solid #1d3958;border-radius:12px}.pill{display:inline-block;padding:5px 8px;border-radius:999px;background:#102a45;border:1px solid #28557b;color:#cfe9ff;font-size:12px}.row{display:flex;gap:10px;align-items:center}.row input[type=checkbox]{width:auto;margin:0}.progress{height:8px;background:#071321;border-radius:999px;overflow:hidden;border:1px solid #1d3958}.bar{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--orange))}.mono{font-family:Consolas,monospace;font-size:12px;color:#cfe9ff}.money{font-weight:900;color:#22c783}.priceInput{max-width:90px;padding:7px;margin:0}.totalBox{background:#071321;border:1px solid #2b5c86;border-radius:14px;padding:12px;margin-top:10px}.sectionTitle{margin:10px 0 8px;font-size:14px;color:#cfe9ff}.subtle{opacity:.75}
 @media(max-width:800px){.grid,.grid2,.kpis{grid-template-columns:1fr 1fr}.wrap{padding:10px}.card{padding:12px;border-radius:14px}header h1{font-size:16px}.kpi b{font-size:18px}}
 @media(max-width:430px){.grid,.grid2,.kpis{grid-template-columns:1fr}input,select,button{font-size:13px;padding:10px}th,td{padding:7px}.card h2{font-size:15px}}
 </style>
@@ -99,12 +99,57 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;borde
       </table>
     </div>
   </div>
+
+  <div class="card">
+    <h2>5) Lista MTR / Precio por SVG</h2>
+    <p class="hint">Esta sección usa los valores calculados del SVG como si fueran las celdas K43:K47 de tu hoja Datos.</p>
+    <div class="kpis">
+      <div class="kpi"><b id="pK43">0</b><span>K43 · Piezas</span></div>
+      <div class="kpi"><b id="pK44">0</b><span>K44 · Perímetro</span></div>
+      <div class="kpi"><b id="pK45">0</b><span>K45 · Área relleno</span></div>
+      <div class="kpi"><b id="pK46">0</b><span>K46 · Área marco</span></div>
+    </div>
+
+    <h3 class="sectionTitle">MTR · Materiales base</h3>
+    <div class="tableWrap">
+      <table id="mtrTable">
+        <tr><th>Material</th><th>Unidad</th><th>Cant.</th><th>Precio</th><th>Total</th></tr>
+      </table>
+    </div>
+
+    <h3 class="sectionTitle">MTR · Front Lit</h3>
+    <div class="tableWrap">
+      <table id="frontlitTable">
+        <tr><th>Partida</th><th>Unidad</th><th>Cant.</th><th>Precio</th><th>Total</th><th>Base</th></tr>
+      </table>
+    </div>
+    <div class="totalBox">
+      <div class="grid2">
+        <div>
+          <label>Margen / multiplicador venta</label>
+          <input id="saleMultiplier" type="number" value="1" min="0" step="0.01" onchange="renderPricing(lastResults)">
+        </div>
+        <div>
+          <label>Total Front Lit</label>
+          <div class="kpi"><b id="frontlitTotal">$0.00</b><span id="frontlitTotalVenta">Venta: $0.00</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
 let svgText = "";
 let svgDoc = null;
 let currentFileName = "";
+let lastResults = null;
+
+const PRICES = {
+  pvc3:11, pvc5:13, pvc9:17, pvc15:25, pvc18:30,
+  acrilico1:11, acrilico2:24, acrilico3espejo:53, acrilico3transp:39, acrilico3color:37, acrilico5transp:51, acrilico5color:71, acrilico8:115,
+  modulosCalido:0.4, cable18:1.5, chuponesL:1.2, estano:14, pegaAcrilico:15, pegaSoldadura:18, pernos:2, teipeNegro:15, bandaAluminio:6
+};
 
 const UNITS = {
   mm:0.001, cm:0.01, m:1, in:0.0254,
@@ -116,6 +161,8 @@ function setStatus(txt,pct=0){ $("status").innerHTML = txt; $("bar").style.width
 function fmtM(v){ return v.toFixed(4)+" m"; }
 function fmtM2(v){ return v.toFixed(4)+" m²"; }
 function fmtCm(v){ return (v*100).toFixed(2)+" cm"; }
+function money(v){ return "$" + (Number(v)||0).toFixed(2); }
+function qty(v){ return (Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(4)).replace(/\.0000$/,""); }
 
 $("fileInput").addEventListener("change", async e=>{
   const file = e.target.files[0]; if(!file) return;
@@ -406,6 +453,85 @@ function renderResults(info, piezas, vectorPerM, maskPerM, areaRellenoM2, areaMa
     html += `<tr><td>${d.n}</td><td>${d.pixels}</td><td>${fmtCm(d.anchoM)}</td><td>${fmtCm(d.altoM)}</td><td>${fmtM2(d.marcoM2)}</td><td>${d.ang.toFixed(1)}°</td></tr>`;
   });
   $("tabla").innerHTML = html;
+
+  lastResults = {
+    piezas,
+    perimetroM: vectorPerM,
+    perimetroMaskM: maskPerM,
+    areaRellenoM2,
+    areaMarcoM2,
+    areaSeleccionM2: areaSelM2,
+    anchoM: info.realWm,
+    altoM: info.realHm
+  };
+  renderPricing(lastResults);
+}
+
+function priceInput(key){
+  return `<input class="priceInput" type="number" step="0.01" value="${PRICES[key]}" data-key="${key}" onchange="PRICES[this.dataset.key]=Number(this.value)||0; renderPricing(lastResults)">`;
+}
+
+function renderPricing(c){
+  if(!c) return;
+  const piezas = c.piezas || 0;
+  const K44 = c.perimetroM || 0;
+  const K45 = c.areaRellenoM2 || 0;
+  const K46 = c.areaMarcoM2 || 0;
+  const K47 = c.areaSeleccionM2 || 0;
+
+  if($("pK43")){
+    $("pK43").innerText = piezas;
+    $("pK44").innerText = fmtM(K44);
+    $("pK45").innerText = fmtM2(K45);
+    $("pK46").innerText = fmtM2(K46);
+  }
+
+  const baseMTR = [
+    ["PVC 3mm", "m²", K46, "pvc3"],
+    ["PVC 5mm", "m²", K46, "pvc5"],
+    ["PVC 9mm", "m²", K46, "pvc9"],
+    ["PVC 15mm", "m²", K46, "pvc15"],
+    ["PVC 18mm", "m²", K46, "pvc18"],
+    ["Acrílico 3mm color", "m²", K46, "acrilico3color"],
+    ["Acrílico 5mm transp.", "m²", K46, "acrilico5transp"],
+    ["Acrílico 8mm", "m²", K46, "acrilico8"],
+    ["Banda aluminio", "ml", K44 + (piezas * 0.1), "bandaAluminio"]
+  ];
+
+  let mtrHtml = `<tr><th>Material</th><th>Unidad</th><th>Cant.</th><th>Precio</th><th>Total</th></tr>`;
+  baseMTR.forEach(r=>{
+    const total = r[2] * PRICES[r[3]];
+    mtrHtml += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${qty(r[2])}</td><td>${priceInput(r[3])}</td><td class="money">${money(total)}</td></tr>`;
+  });
+  if($("mtrTable")) $("mtrTable").innerHTML = mtrHtml;
+
+  // Fórmula tomada de Datos!G72 Front Lit:
+  // PVC 9mm + Acrílico 3mm color + Módulos + Cable + Chupones + Estaño + Pegas + Pernos + Teipe + Banda aluminio.
+  const frontlit = [
+    ["PVC 9mm", "m²", K46, "pvc9", "K46 área marco"],
+    ["Acrílico 3mm color", "m²", K46, "acrilico3color", "K46 área marco"],
+    ["Módulos cálidos", "und", Math.ceil(K45 * 220), "modulosCalido", "ROUNDUP(K45×220)"],
+    ["Cable 18", "m", Math.ceil((Math.sqrt(K46) * 2) + (piezas * 0.4) + 2), "cable18", "ROUNDUP((√K46×2)+(K43×0.4)+2)"],
+    ["Chupones L", "und", piezas * 4, "chuponesL", "K43×4"],
+    ["Estaño", "und", K45 / 20, "estano", "K45/20"],
+    ["Pega acrílico", "und", K44 / 15, "pegaAcrilico", "K44/15"],
+    ["Pega acrílico soldadura", "und", K44 / 20, "pegaSoldadura", "K44/20"],
+    ["Pernos 19×25", "und", K45 / 1000, "pernos", "K45/1000"],
+    ["Teipe negro", "und", K44 / 30, "teipeNegro", "K44/30"],
+    ["Banda aluminio", "ml", K44 + (piezas * 0.1), "bandaAluminio", "K44+(K43×0.1)"]
+  ];
+
+  let totalFrontlit = 0;
+  let frontHtml = `<tr><th>Partida</th><th>Unidad</th><th>Cant.</th><th>Precio</th><th>Total</th><th>Base</th></tr>`;
+  frontlit.forEach(r=>{
+    const total = r[2] * PRICES[r[3]];
+    totalFrontlit += total;
+    frontHtml += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${qty(r[2])}</td><td>${priceInput(r[3])}</td><td class="money">${money(total)}</td><td class="subtle">${r[4]}</td></tr>`;
+  });
+  if($("frontlitTable")) $("frontlitTable").innerHTML = frontHtml;
+  const mult = Number($("saleMultiplier")?.value || 1);
+  if($("frontlitTotal")) $("frontlitTotal").innerText = money(totalFrontlit);
+  if($("frontlitTotalVenta")) $("frontlitTotalVenta").innerText = "Venta: " + money(totalFrontlit * mult);
 }
 </script>
 </body>
