@@ -1,1022 +1,1219 @@
-console.log("APP JS conectado correctamente");
-console.log("Supabase window:", window.supabaseClient);
-
-let pedidoEditandoId = null;
-let pedidosDB = [];
-let archivoSeleccionado = null;
-let materialesDB = [];
-let tiposImpresionDB = [];
-let clientesBusquedaDB = [];
-
-// ===========================
-// SUPABASE SEGURO
-// ===========================
-function db() {
-  return window.supabaseClient;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>COMANDA · Producción</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f14;
+  --panel:#13161d;
+  --panel2:#181c26;
+  --border:#1e2330;
+  --border2:#2a3048;
+  --text:#e2e8f0;
+  --muted:#64748b;
+  --muted2:#94a3b8;
+  --accent:#3b82f6;
+  --accent2:#60a5fa;
+  --red:#FF3B30;
+  --yellow:#FFD60A;
+  --green:#30D158;
+  --orange:#FF9F0A;
+  --mono:'Share Tech Mono',monospace;
+  --head:'Barlow Condensed',sans-serif;
+  --body:'Barlow',sans-serif;
+  --sticky-head-top:58px;
+  --sticky-quick-top:96px;
 }
-
-function validarSupabase() {
-  if (!db()) {
-    console.error("No existe window.supabaseClient. Revisa /js/supabase.js");
-    alert("No existe conexión Supabase. Revisa /js/supabase.js");
-    return false;
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  min-height:100vh;
+  -webkit-tap-highlight-color:transparent;
+  padding-bottom:110px;
+}
+button,input,select,textarea{font:inherit}
+button{touch-action:manipulation}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+/* HEADER */
+.header{
+  background:var(--panel);
+  border-bottom:2px solid var(--accent);
+  padding:10px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-height:58px;
+  position:sticky;
+  top:0;
+  z-index:300;
+  box-shadow:0 4px 24px #0009;
+  flex-wrap:wrap;
+}
+.logo{
+  font-family:var(--head);
+  font-size:21px;
+  font-weight:900;
+  letter-spacing:3px;
+  color:var(--accent2);
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.logo small{
+  color:var(--muted);
+  font-weight:400;
+  font-size:11px;
+  letter-spacing:1px;
+  margin-left:6px;
+}
+.header-tabs{
+  display:flex;
+  gap:6px;
+  margin-left:auto;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.tab-btn{
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  padding:7px 14px;
+  border:1px solid var(--border2);
+  background:transparent;
+  color:var(--muted2);
+  cursor:pointer;
+  border-radius:6px;
+  transition:all .2s;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+.tab-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent2);
+  background:#3b82f611;
+}
+.tab-btn.active{
+  background:var(--accent);
+  color:#fff;
+  border-color:var(--accent);
+  box-shadow:0 0 14px #3b82f644;
+}
+.mobile-menu-btn{
+  display:none;
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  padding:8px 12px;
+  border:1px solid var(--border2);
+  background:var(--panel2);
+  color:var(--accent2);
+  border-radius:7px;
+  cursor:pointer;
+  margin-left:auto;
+}
+.mobile-menu-extra{display:none}
+.menu-action-btn{width:100%}
+/* TOOLBAR */
+.toolbar{
+  display:flex;
+  gap:8px;
+  padding:12px 16px;
+  flex-wrap:wrap;
+  border-bottom:1px solid var(--border);
+  align-items:center;
+  background:var(--bg);
+  position:relative;
+  z-index:50;
+}
+.search-wrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:var(--panel);
+  border:1px solid var(--border2);
+  border-radius:7px;
+  padding:9px 12px;
+  flex:1;
+  min-width:260px;
+  min-height:40px;
+}
+.search-wrap input{
+  background:none;
+  border:none;
+  outline:none;
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:13px;
+  width:100%;
+}
+.search-wrap input::placeholder{color:var(--muted)}
+.filter-sel{
+  background:var(--panel);
+  border:1px solid var(--border2);
+  color:var(--text);
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:1px;
+  padding:8px 10px;
+  border-radius:7px;
+  outline:none;
+  cursor:pointer;
+  min-height:40px;
+}
+.btn-add{
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  padding:9px 14px;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:7px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  white-space:nowrap;
+  transition:all .2s;
+  text-decoration:none;
+  min-height:40px;
+}
+.btn-add:hover{filter:brightness(1.1)}
+.btn-add.secondary{
+  background:transparent;
+  color:var(--muted2);
+  border:1px solid var(--border2);
+}
+.storage-badge{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:var(--panel);
+  border:1px solid var(--border2);
+  border-radius:7px;
+  padding:8px 10px;
+  white-space:nowrap;
+  min-height:40px;
+}
+.storage-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--yellow);
+}
+.storage-badge.ok .storage-dot{background:var(--green)}
+.storage-badge span{
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1px;
+  color:var(--muted2);
+  text-transform:uppercase;
+}
+.desktop-only{display:flex}
+/* TABLE */
+.table-wrap{
+  overflow-x:auto;
+  margin-top:80px;
+  padding:12px 0 130px;
+  -webkit-overflow-scrolling:touch;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:1180px;
+}
+thead tr{
+  border-bottom:2px solid var(--border2);
+  background:var(--panel);
+}
+th{
+  position:sticky;
+  top:var(--sticky-head-top);
+  z-index:40;
+  background:var(--panel);
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--muted);
+  padding:10px;
+  text-align:left;
+  white-space:nowrap;
+}
+td{
+  padding:10px;
+  font-size:13px;
+  vertical-align:middle;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+tbody tr{
+  transition:background .12s;
+  cursor:pointer;
+}
+tbody tr:nth-child(even){background:rgba(255,255,255,0.015)}
+tbody tr:hover{background:rgba(59,130,246,0.08)}
+tbody::before{
+  content:"";
+  display:block;
+  height:10px;
+}
+#orderTableBody td:nth-child(2){
+  color:#7f8ea3;
+  font-size:12px;
+  font-family:var(--mono);
+}
+#orderTableBody td:nth-child(3){
+  font-weight:700;
+  font-family:var(--head);
+  letter-spacing:.5px;
+  color:#8ec5ff;
+}
+#orderTableBody td:nth-child(4){
+  color:#5ea8ff;
+  font-weight:700;
+}
+#orderTableBody td:nth-child(5){
+  color:#e5edf8;
+  line-height:1.25;
+}
+.cell-edit,
+.cell-select,
+.quick-input,
+.quick-select,
+.quick-btn{
+  width:100%;
+  background:var(--bg);
+  border:1px solid var(--border2);
+  color:var(--text);
+  border-radius:7px;
+  padding:7px 8px;
+  font-family:var(--body);
+  font-size:12px;
+  outline:none;
+}
+.cell-edit:focus,
+.cell-select:focus,
+.quick-input:focus,
+.quick-select:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px #3b82f622;
+}
+.cell-select option,
+.quick-select option{
+  background:var(--panel);
+  color:var(--text);
+}
+.cell-edit:disabled,
+.quick-input:disabled,
+.quick-select:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+.quick-entry-row th{
+  background:var(--panel2);
+  padding:6px;
+  border-bottom:1px solid var(--border2);
+  position:sticky;
+  top:var(--sticky-quick-top);
+  z-index:35;
+}
+.quick-btn{
+  font-family:var(--head);
+  font-weight:800;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  background:var(--accent);
+  border-color:var(--accent);
+  cursor:pointer;
+  color:#fff;
+  min-height:34px;
+}
+.quick-btn.secondary{
+  background:transparent;
+  color:var(--muted2);
+  border-color:var(--border2);
+}
+.quick-textarea{
+  min-height:34px;
+  resize:vertical;
+  line-height:1.25;
+}
+.quick-textarea:focus{min-height:90px}
+.quick-hint{
+  font-size:10px;
+  color:var(--muted);
+  margin-top:2px;
+  text-align:left;
+}
+.quick-mini-btn{
+  width:34px;
+  min-width:34px;
+  height:34px;
+  border-radius:7px;
+  border:1px dashed var(--border2);
+  background:transparent;
+  color:var(--accent2);
+  cursor:pointer;
+  font-weight:700;
+}
+.quick-mini-btn:hover{
+  border-color:var(--accent);
+  background:#3b82f611;
+}
+.add-symbol-btn{
+  font-size:24px;
+  font-weight:900;
+  line-height:1;
+  padding:4px 8px;
+  width:70%;
+  min-width:34px;
+  margin-inline:auto;
+}
+/* STATUS */
+.status-solicitud{color:var(--red);border-color:#FF3B3044;background:#FF3B3011}
+.status-revisado{color:var(--yellow);border-color:#FFD60A44;background:#FFD60A11}
+.status-listo{color:var(--green);border-color:#30D15844;background:#30D15811}
+.pago-pendiente{color:var(--red);border-color:#FF3B3044;background:#FF3B3011}
+.pago-abonado{color:var(--orange);border-color:#FF9F0A44;background:#FF9F0A11}
+.pago-pagado{color:var(--green);border-color:#30D15844;background:#30D15811}
+.empty{
+  text-align:center;
+  padding:60px 20px;
+  color:var(--muted);
+  font-family:var(--head);
+  font-size:15px;
+  letter-spacing:2px;
+}
+.file-link-chip,
+.quick-attach-link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border:1px solid var(--border2);
+  border-radius:7px;
+  background:transparent;
+  color:var(--accent2);
+  cursor:pointer;
+  font-family:var(--head);
+  font-size:11px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  text-decoration:none;
+  transition:all .2s;
+}
+.file-link-chip:hover,
+.quick-attach-link:hover{
+  border-color:var(--accent);
+  background:#3b82f611;
+}
+/* MODAL */
+.backdrop{
+  position:fixed;
+  inset:0;
+  background:#000b;
+  z-index:500;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  backdrop-filter:blur(3px);
+  padding:0;
+}
+.modal{
+  background:var(--panel);
+  border:1px solid var(--border2);
+  width:100%;
+  max-width:560px;
+  max-height:94vh;
+  overflow-y:auto;
+  border-radius:14px 14px 0 0;
+  box-shadow:0 -8px 60px #000c;
+  animation:slideUp .22s ease;
+}
+@keyframes slideUp{
+  from{transform:translateY(50px);opacity:0}
+  to{transform:none;opacity:1}
+}
+.modal-handle{
+  width:36px;
+  height:4px;
+  background:var(--border2);
+  border-radius:2px;
+  margin:10px auto 0;
+}
+.modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 20px;
+  border-bottom:1px solid var(--border);
+}
+.modal-title{
+  font-family:var(--head);
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.modal-close{
+  width:32px;
+  height:32px;
+  border-radius:7px;
+  border:1px solid var(--border2);
+  background:transparent;
+  color:var(--muted);
+  cursor:pointer;
+  font-size:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all .2s;
+}
+.modal-close:hover{
+  border-color:var(--red);
+  color:var(--red);
+}
+.modal-body{
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.modal-footer{
+  padding:14px 20px;
+  border-top:1px solid var(--border);
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.form-full{grid-column:1/-1}
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+.field label{
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--muted);
+  text-transform:uppercase;
+}
+.field input,
+.field select,
+.field textarea{
+  background:var(--bg);
+  border:1px solid var(--border2);
+  color:var(--text);
+  border-radius:8px;
+  padding:10px 12px;
+  font-family:var(--body);
+  font-size:14px;
+  outline:none;
+  transition:border .2s;
+  width:100%;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px #3b82f622;
+}
+.field input:disabled,
+.field select:disabled,
+.field textarea:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+.field textarea{
+  resize:vertical;
+  min-height:76px;
+}
+.field select option{background:var(--panel)}
+.file-drop{
+  border:2px dashed var(--border2);
+  border-radius:10px;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  transition:border-color .2s,background .2s;
+  min-height:90px;
+}
+.file-drop:hover{
+  border-color:var(--accent);
+  background:#3b82f611;
+}
+.file-preview-box{
+  border:1px solid var(--border2);
+  border-radius:10px;
+  overflow:hidden;
+  position:relative;
+  background:var(--bg);
+  min-height:90px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.file-remove-btn{
+  position:absolute;
+  top:6px;
+  right:6px;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:#0009;
+  border:1px solid #ffffff22;
+  color:#fff;
+  font-size:12px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.file-remove-btn:hover{background:#FF3B30cc}
+#rowFileInput{display:none}
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:84px;
+  transform:translateX(-50%);
+  background:var(--panel2);
+  color:var(--text);
+  border:1px solid var(--border2);
+  border-radius:10px;
+  padding:10px 16px;
+  z-index:999999;
+  display:none;
+  box-shadow:0 12px 35px #0008;
+  font-family:var(--head);
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  max-width:90vw;
+  text-align:center;
+}
+/* DESKTOP MODAL */
+@media(min-width:600px){
+  .backdrop{
+    align-items:center;
+    padding:16px;
   }
-
-  return true;
-}
-
-// ===========================
-// INDICADOR SUPABASE
-// ===========================
-function marcarSupabaseActivo() {
-  const badge = document.getElementById("storageBadgeText");
-  if (badge) badge.textContent = "SUPABASE";
-
-  const badgeBox = document.getElementById("storageBadge");
-  if (badgeBox) badgeBox.classList.add("ok");
-
-  const badgeMobile = document.getElementById("storageBadgeTextMobile");
-  if (badgeMobile) badgeMobile.textContent = "SUPABASE";
-
-  const badgeMobileBox = document.getElementById("storageBadgeMobile");
-  if (badgeMobileBox) badgeMobileBox.classList.add("ok");
-}
-
-// ===========================
-// UTILIDADES
-// ===========================
-function normalizarBusqueda(valor) {
-  return String(valor || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
-
-function nombreBonito(valor) {
-  const limpio = String(valor || "").trim().replace(/\s+/g, " ");
-  if (!limpio) return "";
-  return limpio
-    .split(" ")
-    .map(p => p ? (p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()) : "")
-    .join(" ");
-}
-
-function escapeHtml(valor) {
-  return String(valor ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function mostrarToast(mensaje) {
-  const toast = document.getElementById("toast");
-
-  if (!toast) {
-    console.log(mensaje);
-    return;
+  .modal{
+    border-radius:12px;
+    animation:popIn .18s ease;
   }
-
-  toast.textContent = mensaje;
-  toast.style.display = "block";
-
-  setTimeout(() => {
-    toast.style.display = "none";
-  }, 2200);
-}
-
-// ===========================
-// SESIÓN / PERMISOS
-// ===========================
-function getOperadorSesionLocal() {
-  try {
-    return JSON.parse(localStorage.getItem("comanda_operador_actual") || "null");
-  } catch (e) {
-    return null;
+  @keyframes popIn{
+    from{transform:scale(.96) translateY(10px);opacity:0}
+    to{transform:none;opacity:1}
   }
 }
-
-function esRobertoLocal(op) {
-  return String(op && op.nombre ? op.nombre : "")
-    .trim()
-    .toLowerCase() === "roberto";
-}
-
-function puedeModificarOperadorLocal() {
-  const op = getOperadorSesionLocal();
-
-  if (!op) return false;
-  if (esRobertoLocal(op)) return true;
-
-  return op.puede_modificar_operador === true;
-}
-
-function puedeModificarCantidadLocal() {
-  const op = getOperadorSesionLocal();
-
-  if (!op) return false;
-  if (esRobertoLocal(op)) return true;
-
-  return op.puede_modificar_cantidad === true;
-}
-
-// ===========================
-// CLIENTES
-// ===========================
-async function asegurarClienteExiste(nombreCliente) {
-  const nombre = String(nombreCliente || "").trim();
-  if (!nombre) return "";
-
-  const nombreNormalizado = normalizarBusqueda(nombre);
-
-  const { data, error } = await db()
-    .from("clientes")
-    .select("id, nombre")
-    .limit(1000);
-
-  if (error) {
-    console.warn("No se pudo verificar cliente:", error);
-    return nombreBonito(nombre);
+/* TABLET */
+@media(max-width:980px){
+  .header{
+    align-items:center;
   }
-
-  const clienteExistente = (data || []).find(c => {
-    return normalizarBusqueda(c.nombre) === nombreNormalizado;
-  });
-
-  if (clienteExistente) return String(clienteExistente.nombre || nombreBonito(nombre)).trim();
-
-  const nombreFinal = nombreBonito(nombre);
-
-  const { error: insertError } = await db()
-    .from("clientes")
-    .insert([{
-      nombre: nombreFinal,
-      tipo_cliente: "Cliente Standar",
-      telefono: "",
-      correo: "",
-      notas: "",
-      activo: true
-    }]);
-
-  if (insertError) {
-    console.warn("No se pudo crear cliente automáticamente:", insertError);
-    return nombreFinal;
+  .header-tabs{
+    width:100%;
+    margin-left:0;
   }
-
-  console.log("Cliente creado automáticamente:", nombreFinal);
-  return nombreFinal;
-}
-
-async function cargarClientesBusqueda() {
-  const { data, error } = await db()
-    .from("clientes")
-    .select("nombre, telefono, correo, notas");
-
-  if (error) {
-    console.warn("No se pudieron cargar clientes para búsqueda:", error);
-    clientesBusquedaDB = [];
-    return;
+  .tab-btn{
+    flex:1 1 calc(50% - 6px);
+    justify-content:center;
+    font-size:11px;
+    padding:9px 8px;
   }
-
-  clientesBusquedaDB = data || [];
-  console.log("Clientes para búsqueda cargados:", clientesBusquedaDB);
+  th{top:104px}
+  .quick-entry-row th{top:142px}
 }
-
-// ===========================
-// OPERADORES
-// ===========================
-async function cargarOperadoresComandaDesdeSupabase() {
-  const fallback = [
-    { nombre: "Roberto" },
-    { nombre: "Ricardo" },
-    { nombre: "Chico" },
-    { nombre: "Carlos" },
-    { nombre: "Alejandro" },
-    { nombre: "Ruben" },
-    { nombre: "Ana" },
-    { nombre: "Miguel" }
-  ];
-
-  let operadores = fallback;
-
-  try {
-    const { data, error } = await db()
-      .from("operadores")
-      .select("nombre, activo")
-      .eq("activo", true)
-      .order("nombre", { ascending: true });
-
-    if (!error && Array.isArray(data) && data.length) {
-      operadores = data;
-    }
-  } catch (e) {
-    console.warn("No se pudieron cargar operadores:", e);
+/* MOBILE */
+@media(max-width:760px){
+  body{
+    padding-bottom:130px;
   }
-
-  llenarSelectOperadores(document.getElementById("q_operador"), operadores, "Operador");
-  llenarSelectOperadores(document.getElementById("f_operador"), operadores, "Seleccionar…");
-  llenarSelectOperadores(document.getElementById("filterOperador"), operadores, "Operador");
-
-  aplicarOperadorSesion();
-}
-
-function llenarSelectOperadores(select, operadores, placeholder) {
-  if (!select) return;
-
-  const actual = select.value;
-
-  select.innerHTML = `<option value="">${placeholder}</option>`;
-
-  operadores.forEach(op => {
-    const opt = document.createElement("option");
-    opt.value = op.nombre;
-    opt.textContent = op.nombre;
-    select.appendChild(opt);
-  });
-
-  if (actual) select.value = actual;
-}
-
-function aplicarOperadorSesion() {
-  const op = getOperadorSesionLocal();
-  if (!op || !op.nombre) return;
-
-  const puedeCambiar = puedeModificarOperadorLocal();
-
-  ["q_operador", "f_operador"].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-
-    el.value = op.nombre;
-    el.disabled = !puedeCambiar;
-  });
-}
-
-// ===========================
-// MATERIALES
-// ===========================
-async function cargarMateriales() {
-  const { data, error } = await db()
-    .from("materiales")
-    .select("id, nombre, precio_base, activo")
-    .eq("activo", true)
-    .order("nombre", { ascending: true });
-
-  if (error) {
-    console.error("Error cargando materiales:", error);
-    return;
+  .header{
+    padding:10px 12px;
+    align-items:center;
   }
-
-  materialesDB = data || [];
-
-  const selects = [
-    document.getElementById("q_material"),
-    document.getElementById("f_material")
-  ];
-
-  selects.forEach(select => {
-    if (!select) return;
-
-    const valorActual = select.value;
-
-    select.innerHTML = `<option value="">Material</option>`;
-
-    materialesDB.forEach(m => {
-      const opt = document.createElement("option");
-      opt.value = m.nombre;
-      opt.textContent = m.nombre;
-      select.appendChild(opt);
-    });
-
-    if (valorActual) select.value = valorActual;
-  });
-
-  console.log("Materiales cargados:", materialesDB);
-}
-
-// ===========================
-// TIPOS DE IMPRESIÓN
-// ===========================
-async function cargarTiposImpresion() {
-  const { data, error } = await db()
-    .from("tipos_impresion")
-    .select("id, nombre, precio_extra, activo")
-    .eq("activo", true)
-    .order("nombre", { ascending: true });
-
-  if (error) {
-    console.error("Error cargando tipos de impresión:", error);
-    return;
+  .logo{
+    font-size:19px;
   }
-
-  tiposImpresionDB = data || [];
-
-  const selects = [
-    document.getElementById("q_impresion"),
-    document.getElementById("f_impresion")
-  ];
-
-  selects.forEach(select => {
-    if (!select) return;
-
-    const valorActual = select.value;
-
-    select.innerHTML = `<option value="">Impresión</option>`;
-
-    tiposImpresionDB.forEach(t => {
-      const opt = document.createElement("option");
-      opt.value = t.nombre;
-      opt.textContent = t.nombre;
-      select.appendChild(opt);
-    });
-
-    if (valorActual) select.value = valorActual;
-  });
-
-  console.log("Tipos de impresión cargados:", tiposImpresionDB);
-}
-
-// ===========================
-// COLORES DE ESTATUS
-// ===========================
-function claseTrabajo(valor) {
-  const estado = valor || "";
-
-  if (estado === "Solicitud") return "status-solicitud";
-  if (estado === "Revisado") return "status-revisado";
-  if (estado === "Listo") return "status-listo";
-
-  return "";
-}
-
-function clasePago(valor) {
-  const estado = valor || "";
-
-  if (estado === "Pendiente") return "pago-pendiente";
-  if (estado === "Abonado") return "pago-abonado";
-  if (estado === "Pagado") return "pago-pagado";
-
-  return "";
-}
-
-// ===========================
-// CARGAR PEDIDOS
-// ===========================
-async function cargarPedidos() {
-  if (!validarSupabase()) return;
-
-  const { data, error } = await db()
-    .from("pedidos")
-    .select("*")
-    .order("id", { ascending: false });
-
-  if (error) {
-    console.error("Error cargando pedidos:", error);
-    alert("Error cargando pedidos: " + error.message);
-    return;
+  .mobile-menu-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
   }
-
-  pedidosDB = data || [];
-  console.log("Pedidos cargados:", pedidosDB);
-
-  const tabla = document.getElementById("orderTableBody");
-  const emptyState = document.getElementById("emptyState");
-
-  if (!tabla) return;
-
-  tabla.innerHTML = "";
-
-  if (!pedidosDB.length) {
-    if (emptyState) emptyState.style.display = "block";
-    return;
+  .header-tabs{
+    display:none;
+    width:100%;
+    margin-left:0;
+    padding-top:8px;
+    border-top:1px solid var(--border);
   }
-
-  if (emptyState) emptyState.style.display = "none";
-
-  pedidosDB.forEach(p => {
-    const id = Number(p.id);
-
-    const archivo = p.archivo_url
-      ? `<a class="file-link-chip" href="${escapeHtml(p.archivo_url)}" target="_blank" onclick="event.stopPropagation()">📎 ${escapeHtml(p.archivo_nombre || "Archivo")}</a>`
-      : "—";
-
-    const cantidadDisabled = puedeModificarCantidadLocal() ? "" : "disabled";
-
-    const fila = `
-      <tr onclick="openEditOrder(${id})">
-        <td>${escapeHtml(p.id)}</td>
-        <td>${escapeHtml(p.fecha)}</td>
-        <td>${escapeHtml(p.operador)}</td>
-        <td>${escapeHtml(p.cliente)}</td>
-        <td>${escapeHtml(p.descripcion)}</td>
-
-        <td>
-          <input 
-            class="cell-edit"
-            value="${escapeHtml(p.cantidad)}" 
-            onchange="actualizarCampoPedido(${id}, 'cantidad', this.value)"
-            onclick="event.stopPropagation()"
-            ${cantidadDisabled}
-          />
-        </td>
-
-        <td>${escapeHtml(p.material)}</td>
-        <td>${escapeHtml(p.tipo_impresion)}</td>
-        <td>${escapeHtml(p.precio)}</td>
-
-        <td>
-          <select 
-            class="cell-select ${claseTrabajo(p.estatus_trabajo)}"
-            onchange="actualizarCampoPedido(${id}, 'estatus_trabajo', this.value); this.className='cell-select ' + claseTrabajo(this.value)"
-            onclick="event.stopPropagation()"
-          >
-            <option ${p.estatus_trabajo === "Solicitud" ? "selected" : ""}>Solicitud</option>
-            <option ${p.estatus_trabajo === "Revisado" ? "selected" : ""}>Revisado</option>
-            <option ${p.estatus_trabajo === "Listo" ? "selected" : ""}>Listo</option>
-          </select>
-        </td>
-
-        <td>
-          <select 
-            class="cell-select ${clasePago(p.estatus_pago)}"
-            onchange="actualizarCampoPedido(${id}, 'estatus_pago', this.value); this.className='cell-select ' + clasePago(this.value)"
-            onclick="event.stopPropagation()"
-          >
-            <option ${p.estatus_pago === "Pendiente" ? "selected" : ""}>Pendiente</option>
-            <option ${p.estatus_pago === "Abonado" ? "selected" : ""}>Abonado</option>
-            <option ${p.estatus_pago === "Pagado" ? "selected" : ""}>Pagado</option>
-          </select>
-        </td>
-
-        <td>${escapeHtml(p.fecha_entrega || "—")}</td>
-        <td>${archivo}</td>
+  .header-tabs.open{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+  .tab-btn{
+    width:100%;
+    justify-content:center;
+    font-size:11px;
+    min-height:38px;
+    padding:8px 6px;
+  }
+  .toolbar{
+    padding:10px;
+    gap:7px;
+  }
+  .search-wrap{
+    min-width:100%;
+    flex:1 1 100%;
+    order:1;
+  }
+  #filterStatus,
+  #filterPago,
+  #filterFechaDesde,
+  #filterFechaHasta,
+  #filterOperador{
+    flex:1 1 calc(20% - 7px);
+    min-width:0;
+    order:2;
+    font-size:8.5px;
+    padding:7px 2px;
+  }
+  .desktop-only{
+    display:none !important;
+  }
+  .mobile-menu-extra{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+    grid-column:1 / -1;
+    padding-top:8px;
+    border-top:1px solid var(--border);
+  }
+  .mobile-menu-extra .storage-badge{
+    width:100%;
+    justify-content:center;
+  }
+  .mobile-menu-extra .btn-add{
+    width:100%;
+  }
+  .add-symbol-btn{
+    width:70%;
+    max-width:42px;
+    min-width:38px;
+  }
+  th{
+    position:static;
+    top:auto;
+  }
+  .quick-entry-row th{
+    position:static;
+    top:auto;
+  }
+  thead tr:first-child th{
+    position:sticky;
+    top:0;
+    z-index:40;
+  }
+  .table-wrap{
+    margin-top:10px;
+    padding-bottom:140px;
+  }
+  tbody::before{
+    height:8px;
+  }
+  table{
+    min-width:1050px;
+  }
+  .quick-input,
+  .quick-select,
+  .quick-btn{
+    min-height:36px;
+  }
+}
+/* IPHONE SE */
+@media(max-width:430px){
+  .header-tabs.open{
+    grid-template-columns:1fr;
+  }
+  .logo small{
+    display:none;
+  }
+  #filterStatus,
+  #filterPago,
+  #filterFechaDesde,
+  #filterFechaHasta,
+  #filterOperador{
+    flex:1 1 calc(20% - 7px);
+    min-width:0;
+    font-size:8px;
+    padding:7px 2px;
+  }
+  .quick-input,
+  .quick-select,
+  .quick-btn{
+    font-size:11px;
+    padding:7px 6px;
+  }
+  .modal-body{
+    padding:16px;
+  }
+  .form-grid{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="logo">COMANDA<small>Producción</small></div>
+  <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
+</header>
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/>
+      <path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input id="searchInput" type="text" placeholder="Nombre, teléfono o descripción..." oninput="onSearch()"/>
+  </div>
+  <select class="filter-sel" id="filterStatus" onchange="onSearch()">
+    <option value="">Solicitud</option>
+    <option value="Solicitud">🔴 Solicitud</option>
+    <option value="Revisado">🟡 Revisado</option>
+    <option value="Listo">🟢 Listo</option>
+  </select>
+  <select class="filter-sel" id="filterPago" onchange="onSearch()">
+    <option value="">Pago</option>
+    <option value="Pendiente">Pendiente</option>
+    <option value="Abonado">Abonado</option>
+    <option value="Pagado">Pagado</option>
+  </select>
+  <input class="filter-sel" id="filterFechaDesde" type="date" onchange="onSearch()" title="Desde"/>
+  <input class="filter-sel" id="filterFechaHasta" type="date" onchange="onSearch()" title="Hasta"/>
+  <select class="filter-sel" id="filterOperador" onchange="onSearch()">
+    <option value="">Operador</option>
+  </select>
+  <div class="storage-badge desktop-only" id="storageBadge">
+    <div class="storage-dot"></div>
+    <span id="storageBadgeText">Local</span>
+  </div>
+</div>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Fecha</th>
+        <th>Operador</th>
+        <th>Cliente</th>
+        <th>Descripción</th>
+        <th>Cantidad</th>
+        <th>Material</th>
+        <th>Impresión</th>
+        <th>Precio</th>
+        <th>Estatus</th>
+        <th>Pago</th>
+        <th>Entrega</th>
+        <th>Archivo</th>
       </tr>
-    `;
-
-    tabla.insertAdjacentHTML("beforeend", fila);
-  });
-
-  onSearch();
-
-  if (typeof aplicarPermisosComanda === "function") {
-    aplicarPermisosComanda();
+      <tr class="quick-entry-row">
+        <th>
+          <button class="quick-btn secondary" type="button" onclick="clearQuickEntry()">✕</button>
+        </th>
+        <th>
+          <input class="quick-input" id="q_fecha" type="date"/>
+        </th>
+        <th>
+          <select class="quick-select" id="q_operador">
+            <option value="">Operador</option>
+          </select>
+        </th>
+        <th>
+          <input class="quick-input" id="q_cliente" type="text" placeholder="Cliente" list="clientesDatalist" autocomplete="off"/>
+          <datalist id="clientesDatalist"></datalist>
+          <div class="quick-hint" id="quickClientHint"></div>
+        </th>
+        <th>
+          <textarea class="quick-input quick-textarea" id="q_descripcion" placeholder="Descripción"></textarea>
+        </th>
+        <th>
+          <input class="quick-input" id="q_cantidad" type="text" placeholder="Cantidad / m"/>
+        </th>
+        <th>
+          <select class="quick-select" id="q_material">
+            <option value="">Material</option>
+          </select>
+        </th>
+        <th>
+          <select class="quick-select" id="q_impresion">
+            <option value="">Impresión</option>
+          </select>
+        </th>
+        <th>
+          <div class="quick-hint" id="q_precio_preview">$0.00</div>
+        </th>
+        <th>
+          <select class="quick-select" id="q_estatus_trabajo">
+            <option selected>Solicitud</option>
+            <option>Revisado</option>
+            <option>Listo</option>
+          </select>
+        </th>
+        <th>
+          <select class="quick-select" id="q_estatus_pago">
+            <option selected>Pendiente</option>
+            <option>Abonado</option>
+            <option>Pagado</option>
+          </select>
+        </th>
+        <th>
+          <input class="quick-input" id="q_entrega" type="date"/>
+        </th>
+        <th>
+          <button class="quick-mini-btn" type="button" title="Adjuntar archivo" onclick="openQuickAttach()">📎</button>
+          <button class="quick-btn add-symbol-btn" type="button" onclick="saveQuickOrder()" style="margin-top:5px" title="Guardar pedido">+</button>
+        </th>
+      </tr>
+    </thead>
+    <tbody id="orderTableBody"></tbody>
+  </table>
+  <div id="emptyState" class="empty" style="display:none">— SIN PEDIDOS —</div>
+</div>
+<div class="backdrop" id="orderBackdrop" style="display:none" onclick="bdClick(event,'orderBackdrop')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="orderModalTitle">NUEVO PEDIDO</span>
+      <button class="modal-close" type="button" onclick="closeModal('orderBackdrop')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="f_fecha"/>
+        </div>
+        <div class="field">
+          <label>Operador</label>
+          <select id="f_operador">
+            <option value="">Seleccionar…</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Cliente</label>
+        <input type="text" id="f_cliente" placeholder="Nombre del cliente..." autocomplete="off" list="clientesDatalist"/>
+      </div>
+      <div class="field form-full">
+        <label>Descripción del trabajo</label>
+        <textarea id="f_descripcion" placeholder="Ej: Banner exterior 3x1m..." rows="3"></textarea>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Cantidad / Metros</label>
+          <input type="text" id="f_cantidad" placeholder="Ej: 5 m² / 1200 stickers"/>
+        </div>
+        <div class="field">
+          <label>Fecha de entrega</label>
+          <input type="date" id="f_entrega"/>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Material</label>
+          <select id="f_material">
+            <option value="">Material</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tipo de impresión</label>
+          <select id="f_impresion">
+            <option value="">Impresión</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Imagen / Archivo de referencia</label>
+        <div id="filePreviewArea" onclick="document.getElementById('f_archivo').click()" style="cursor:pointer">
+          <div id="fileEmpty" class="file-drop">
+            <span style="font-size:28px">📎</span>
+            <span style="font-family:var(--head);font-size:12px;letter-spacing:1px;color:var(--muted)">TOCA PARA ADJUNTAR</span>
+            <span style="font-size:11px;color:var(--muted)">Imagen, PDF o archivo</span>
+          </div>
+          <div id="filePreview" style="display:none" class="file-preview-box">
+            <img id="fileImg" style="display:none;max-height:160px;border-radius:6px;object-fit:contain;width:100%"/>
+            <div id="fileGeneric" style="display:none;text-align:center;padding:16px">
+              <div id="fileIconBig" style="font-size:40px"></div>
+              <div id="fileName" style="font-size:12px;color:var(--muted2);margin-top:6px;word-break:break-all"></div>
+            </div>
+            <button class="file-remove-btn" type="button" onclick="event.stopPropagation();removeFile()" title="Quitar archivo">✕</button>
+          </div>
+        </div>
+        <input type="file" id="f_archivo" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" style="display:none" onchange="handleFileSelect(event)"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-add secondary" type="button" onclick="closeModal('orderBackdrop')">Cancelar</button>
+      <button class="btn-add" type="button" onclick="saveOrder()">Guardar</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="rowFileInput" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" onchange="handleRowFileSelect(event)"/>
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=7"></script>
+<script>
+window.logout = window.logout || function(){
+  localStorage.removeItem("comanda_operador_actual");
+  location.href = "login.html?logout=1";
+};
+function marcarSupabaseSiListo(){
+  const badgeText = document.getElementById("storageBadgeText");
+  const badgeBox = document.getElementById("storageBadge");
+  if(window.supabaseClient){
+    if(badgeText) badgeText.textContent = "SUPABASE";
+    if(badgeBox) badgeBox.classList.add("ok");
   }
 }
 
-// ===========================
-// GUARDAR FILA RÁPIDA
-// ===========================
-async function saveQuickOrder() {
-  if (!validarSupabase()) return;
+function updateStickyOffsets(){
+  const header = document.querySelector(".header");
+  const toolbar = document.querySelector(".toolbar");
+  if(!header || !toolbar) return;
 
-  let fecha = document.getElementById("q_fecha")?.value || "";
-  let operador = document.getElementById("q_operador")?.value || "";
-  let cliente = document.getElementById("q_cliente")?.value || "";
-  const descripcion = document.getElementById("q_descripcion")?.value || "";
-  const cantidad = document.getElementById("q_cantidad")?.value || "";
-  const material = document.getElementById("q_material")?.value || "";
-  const tipo_impresion = document.getElementById("q_impresion")?.value || "";
-  const estatus_trabajo = document.getElementById("q_estatus_trabajo")?.value || "Solicitud";
-  const estatus_pago = document.getElementById("q_estatus_pago")?.value || "Pendiente";
-  const fecha_entrega = document.getElementById("q_entrega")?.value || null;
+  const h = Math.ceil(header.getBoundingClientRect().height);
+  const t = Math.ceil(toolbar.getBoundingClientRect().height);
 
-  const opSesion = getOperadorSesionLocal();
-
-  if (!puedeModificarOperadorLocal() && opSesion && opSesion.nombre) {
-    operador = opSesion.nombre;
-  }
-
-  if (!fecha) {
-    fecha = new Date().toISOString().split("T")[0];
-  }
-
-  if (!cliente && !descripcion) {
-    alert("Coloca al menos cliente o descripción.");
-    return;
-  }
-
-  const archivoData = await subirArchivoPedido();
-
-  cliente = await asegurarClienteExiste(cliente) || cliente;
-
-  const { error } = await db()
-    .from("pedidos")
-    .insert([{
-      fecha,
-      operador,
-      cliente,
-      descripcion,
-      cantidad,
-      material,
-      tipo_impresion,
-      estatus_trabajo,
-      estatus_pago,
-      fecha_entrega,
-      archivo_url: archivoData.archivo_url,
-      archivo_nombre: archivoData.archivo_nombre
-    }]);
-
-  if (error) {
-    console.error("Error guardando pedido rápido:", error);
-    alert("Error guardando pedido: " + error.message);
-    return;
-  }
-
-  archivoSeleccionado = null;
-
-  limpiarFilaRapida();
-  ponerFechaHoy();
-
-  await cargarClientesBusqueda();
-  await cargarPedidos();
-
-  mostrarToast("Pedido guardado");
+  document.documentElement.style.setProperty("--sticky-head-top", `${h}px`);
+  document.documentElement.style.setProperty("--sticky-quick-top", `${h + t}px`);
 }
-
-// ===========================
-// GUARDAR MODAL
-// ===========================
-async function saveOrder() {
-  if (!validarSupabase()) return;
-
-  let fecha = document.getElementById("f_fecha")?.value || "";
-  let operador = document.getElementById("f_operador")?.value || "";
-  let cliente = document.getElementById("f_cliente")?.value || "";
-  const descripcion = document.getElementById("f_descripcion")?.value || "";
-  const cantidad = document.getElementById("f_cantidad")?.value || "";
-  const material = document.getElementById("f_material")?.value || "";
-  const tipo_impresion = document.getElementById("f_impresion")?.value || "";
-  const fecha_entrega = document.getElementById("f_entrega")?.value || null;
-
-  const opSesion = getOperadorSesionLocal();
-
-  if (!puedeModificarOperadorLocal() && opSesion && opSesion.nombre) {
-    operador = opSesion.nombre;
-  }
-
-  if (!fecha) {
-    fecha = new Date().toISOString().split("T")[0];
-  }
-
-  cliente = await asegurarClienteExiste(cliente) || cliente;
-
-  const archivoData = await subirArchivoPedido();
-
-  const datosPedido = {
-    fecha,
-    operador,
-    cliente,
-    descripcion,
-    material,
-    tipo_impresion,
-    fecha_entrega
-  };
-
-  if (puedeModificarCantidadLocal() || !pedidoEditandoId) {
-    datosPedido.cantidad = cantidad;
-  }
-
-  if (archivoData.archivo_url) {
-    datosPedido.archivo_url = archivoData.archivo_url;
-    datosPedido.archivo_nombre = archivoData.archivo_nombre;
-  }
-
-  let error;
-
-  if (pedidoEditandoId) {
-    const respuesta = await db()
-      .from("pedidos")
-      .update(datosPedido)
-      .eq("id", pedidoEditandoId);
-
-    error = respuesta.error;
-  } else {
-    datosPedido.estatus_trabajo = "Solicitud";
-    datosPedido.estatus_pago = "Pendiente";
-
-    const respuesta = await db()
-      .from("pedidos")
-      .insert([datosPedido]);
-
-    error = respuesta.error;
-  }
-
-  if (error) {
-    console.error("Error guardando pedido:", error);
-    alert("Error guardando pedido: " + error.message);
-    return;
-  }
-
-  pedidoEditandoId = null;
-  archivoSeleccionado = null;
-
-  closeModal("orderBackdrop");
-
-  await cargarClientesBusqueda();
-  await cargarPedidos();
-
-  mostrarToast("Pedido guardado");
-}
-
-// ===========================
-// ACTUALIZAR CAMPO RÁPIDO
-// ===========================
-async function actualizarCampoPedido(id, campo, valor) {
-  if (!validarSupabase()) return;
-
-  if (campo === "cantidad" && !puedeModificarCantidadLocal()) {
-    alert("No tienes permiso para modificar cantidad.");
-    await cargarPedidos();
-    return;
-  }
-
-  if (campo === "operador" && !puedeModificarOperadorLocal()) {
-    alert("No tienes permiso para modificar operador.");
-    await cargarPedidos();
-    return;
-  }
-
-  const { error } = await db()
-    .from("pedidos")
-    .update({ [campo]: valor })
-    .eq("id", id);
-
-  if (error) {
-    console.error("Error actualizando campo:", error);
-    alert("Error actualizando: " + error.message);
-    return;
-  }
-
-  console.log(`Pedido ${id} actualizado: ${campo} = ${valor}`);
-}
-
-// ===========================
-// EDITAR PEDIDO
-// ===========================
-function openEditOrder(id) {
-  const pedido = pedidosDB.find(p => Number(p.id) === Number(id));
-
-  if (!pedido) {
-    alert("No se encontró el pedido.");
-    return;
-  }
-
-  pedidoEditandoId = pedido.id;
-  archivoSeleccionado = null;
-
-  document.getElementById("f_fecha").value = pedido.fecha || "";
-  document.getElementById("f_operador").value = pedido.operador || "";
-  document.getElementById("f_cliente").value = pedido.cliente || "";
-  document.getElementById("f_descripcion").value = pedido.descripcion || "";
-  document.getElementById("f_cantidad").value = pedido.cantidad || "";
-  document.getElementById("f_material").value = pedido.material || "";
-  document.getElementById("f_impresion").value = pedido.tipo_impresion || "";
-  document.getElementById("f_entrega").value = pedido.fecha_entrega || "";
-
-  const cantidadInput = document.getElementById("f_cantidad");
-  if (cantidadInput) cantidadInput.disabled = !puedeModificarCantidadLocal();
-
-  const operadorInput = document.getElementById("f_operador");
-  if (operadorInput) operadorInput.disabled = !puedeModificarOperadorLocal();
-
-  const titulo = document.getElementById("orderModalTitle");
-  if (titulo) titulo.textContent = "EDITAR PEDIDO #" + pedido.id;
-
-  const fileName = document.getElementById("fileName");
-  const fileGeneric = document.getElementById("fileGeneric");
-  const filePreview = document.getElementById("filePreview");
-  const fileEmpty = document.getElementById("fileEmpty");
-  const fileIconBig = document.getElementById("fileIconBig");
-
-  if (pedido.archivo_url) {
-    if (fileEmpty) fileEmpty.style.display = "none";
-    if (filePreview) filePreview.style.display = "flex";
-    if (fileGeneric) fileGeneric.style.display = "block";
-    if (fileIconBig) fileIconBig.textContent = "📎";
-    if (fileName) fileName.textContent = pedido.archivo_nombre || "Archivo adjunto";
-  } else {
-    if (fileEmpty) fileEmpty.style.display = "flex";
-    if (filePreview) filePreview.style.display = "none";
-    if (fileGeneric) fileGeneric.style.display = "none";
-    if (fileName) fileName.textContent = "";
-  }
-
-  const modal = document.getElementById("orderBackdrop");
-  if (modal) modal.style.display = "flex";
-}
-
-// ===========================
-// MODAL NUEVO
-// ===========================
-function openOrderModal() {
-  pedidoEditandoId = null;
-  archivoSeleccionado = null;
-
-  document.getElementById("f_fecha").value = new Date().toISOString().split("T")[0];
-  document.getElementById("f_operador").value = "";
-  document.getElementById("f_cliente").value = "";
-  document.getElementById("f_descripcion").value = "";
-  document.getElementById("f_cantidad").value = "";
-  document.getElementById("f_material").value = "";
-  document.getElementById("f_impresion").value = "";
-  document.getElementById("f_entrega").value = "";
-
-  const cantidadInput = document.getElementById("f_cantidad");
-  if (cantidadInput) cantidadInput.disabled = false;
-
-  const operadorInput = document.getElementById("f_operador");
-  if (operadorInput) operadorInput.disabled = !puedeModificarOperadorLocal();
-
-  const opSesion = getOperadorSesionLocal();
-
-  if (opSesion && opSesion.nombre && operadorInput) {
-    operadorInput.value = opSesion.nombre;
-  }
-
-  const titulo = document.getElementById("orderModalTitle");
-  if (titulo) titulo.textContent = "NUEVO PEDIDO";
-
-  const fileEmpty = document.getElementById("fileEmpty");
-  const filePreview = document.getElementById("filePreview");
-  const fileGeneric = document.getElementById("fileGeneric");
-  const fileName = document.getElementById("fileName");
-
-  if (fileEmpty) fileEmpty.style.display = "flex";
-  if (filePreview) filePreview.style.display = "none";
-  if (fileGeneric) fileGeneric.style.display = "none";
-  if (fileName) fileName.textContent = "";
-
-  const modal = document.getElementById("orderBackdrop");
-  if (modal) modal.style.display = "flex";
-}
-
-// ===========================
-// CERRAR MODAL
-// ===========================
-function closeModal(id) {
-  const modal = document.getElementById(id);
-  if (modal) modal.style.display = "none";
-
-  pedidoEditandoId = null;
-
-  const cantidadInput = document.getElementById("f_cantidad");
-  if (cantidadInput) cantidadInput.disabled = false;
-
-  const operadorInput = document.getElementById("f_operador");
-  if (operadorInput) operadorInput.disabled = false;
-
-  aplicarOperadorSesion();
-}
-
-function bdClick(event, id) {
-  if (event.target.id === id) {
-    closeModal(id);
-  }
-}
-
-// ===========================
-// FECHA
-// ===========================
-function ponerFechaHoy() {
-  const hoy = new Date().toISOString().split("T")[0];
-
-  const qFecha = document.getElementById("q_fecha");
-  if (qFecha && !qFecha.value) qFecha.value = hoy;
-
-  const fFecha = document.getElementById("f_fecha");
-  if (fFecha && !fFecha.value) fFecha.value = hoy;
-}
-
-// ===========================
-// LIMPIAR FILA RÁPIDA
-// ===========================
-function limpiarFilaRapida() {
-  const campos = [
-    "q_cliente",
-    "q_descripcion",
-    "q_cantidad",
-    "q_monto_abono",
-    "q_entrega"
+(function(){
+  const AUTH_KEY = "comanda_operador_actual";
+  const links = [
+    { page:"index.html", label:"📋 Pedidos", permission:"puede_pedidos" },
+    { page:"clientes.html", label:"👤 Clientes", permission:"puede_clientes" },
+    { page:"materiales.html", label:"💲 Materiales", permission:"puede_materiales" },
+    { page:"estadisticas.html", label:"📊 Estadísticas", permission:"puede_estadisticas" },
+    { page:"marketing.html", label:"📣 Marketing", permission:"puede_marketing" },
+    { page:"Cotizador.html", label:"🧾 Cotizador", permission:"puede_cotizador" },
+    { page:"Organizador de ideas.html", label:"💡 Organizador", permission:"puede_organizador" },
+    { page:"configuracion.html", label:"⚙️ Configuración", permission:"puede_configuracion" }
   ];
-
-  campos.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = "";
-  });
-
-  const estatusTrabajo = document.getElementById("q_estatus_trabajo");
-  if (estatusTrabajo) estatusTrabajo.value = "Solicitud";
-
-  const estatusPago = document.getElementById("q_estatus_pago");
-  if (estatusPago) estatusPago.value = "Pendiente";
-
-  const rowFileInput = document.getElementById("rowFileInput");
-  if (rowFileInput) rowFileInput.value = "";
-
-  archivoSeleccionado = null;
-
-  aplicarOperadorSesion();
-}
-
-function clearQuickEntry() {
-  limpiarFilaRapida();
-  ponerFechaHoy();
-}
-
-// ===========================
-// ARCHIVOS
-// ===========================
-function handleFileSelect(event) {
-  archivoSeleccionado = event.target.files[0] || null;
-
-  if (!archivoSeleccionado) return;
-
-  const fileEmpty = document.getElementById("fileEmpty");
-  const filePreview = document.getElementById("filePreview");
-  const fileGeneric = document.getElementById("fileGeneric");
-  const fileName = document.getElementById("fileName");
-  const fileIconBig = document.getElementById("fileIconBig");
-
-  if (fileEmpty) fileEmpty.style.display = "none";
-  if (filePreview) filePreview.style.display = "flex";
-  if (fileGeneric) fileGeneric.style.display = "block";
-  if (fileIconBig) fileIconBig.textContent = "📎";
-  if (fileName) fileName.textContent = archivoSeleccionado.name;
-}
-
-function openQuickAttach() {
-  const input = document.getElementById("rowFileInput");
-  if (input) input.click();
-}
-
-function handleRowFileSelect(event) {
-  archivoSeleccionado = event.target.files[0] || null;
-
-  if (archivoSeleccionado) {
-    mostrarToast("Archivo seleccionado");
+  function getOp(){
+    try{
+      return JSON.parse(localStorage.getItem(AUTH_KEY) || "null");
+    }catch(e){
+      return null;
+    }
   }
-}
-
-function removeFile() {
-  archivoSeleccionado = null;
-
-  const input = document.getElementById("f_archivo");
-  if (input) input.value = "";
-
-  const fileEmpty = document.getElementById("fileEmpty");
-  const filePreview = document.getElementById("filePreview");
-  const fileGeneric = document.getElementById("fileGeneric");
-  const fileName = document.getElementById("fileName");
-
-  if (fileEmpty) fileEmpty.style.display = "flex";
-  if (filePreview) filePreview.style.display = "none";
-  if (fileGeneric) fileGeneric.style.display = "none";
-  if (fileName) fileName.textContent = "";
-}
-
-async function subirArchivoPedido() {
-  if (!archivoSeleccionado) {
-    return {
-      archivo_url: null,
-      archivo_nombre: null
-    };
+  function isRoberto(op){
+    return String(op && op.nombre || "").trim().toLowerCase() === "roberto";
   }
-
-  const nombreLimpio = archivoSeleccionado.name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\w.\-]+/g, "_");
-
-  const ruta = `pedidos/${Date.now()}_${nombreLimpio}`;
-
-  const { error } = await db().storage
-    .from("adjuntos-pedidos")
-    .upload(ruta, archivoSeleccionado);
-
-  if (error) {
-    console.error("Error subiendo archivo:", error);
-    alert("Error subiendo archivo: " + error.message);
-
-    return {
-      archivo_url: null,
-      archivo_nombre: null
-    };
+  function hasPermission(op, perm){
+    if(!op || op.activo === false) return false;
+    if(isRoberto(op)) return true;
+    return op[perm] === true;
   }
-
-  const { data } = db().storage
-    .from("adjuntos-pedidos")
-    .getPublicUrl(ruta);
-
-  const resultado = {
-    archivo_url: data.publicUrl,
-    archivo_nombre: archivoSeleccionado.name
-  };
-
-  archivoSeleccionado = null;
-
-  return resultado;
-}
-
-// ===========================
-// BUSCAR / FILTRAR
-// ===========================
-function onSearch() {
-  const texto = normalizarBusqueda(document.getElementById("searchInput")?.value || "");
-  const estadoFiltro = document.getElementById("filterStatus")?.value || "";
-  const pagoFiltro = document.getElementById("filterPago")?.value || "";
-  const desde = document.getElementById("filterFechaDesde")?.value || "";
-  const hasta = document.getElementById("filterFechaHasta")?.value || "";
-  const operadorFiltro = document.getElementById("filterOperador")?.value || "";
-
-  const filas = document.querySelectorAll("#orderTableBody tr");
-
-  filas.forEach(fila => {
-    const celdas = fila.querySelectorAll("td");
-    if (!celdas.length) return;
-
-    const fecha = celdas[1]?.textContent.trim() || "";
-    const operador = celdas[2]?.textContent.trim() || "";
-    const cliente = celdas[3]?.textContent.trim() || "";
-    const descripcion = celdas[4]?.textContent.trim() || "";
-    const cantidad = celdas[5]?.querySelector("input")?.value || celdas[5]?.textContent.trim() || "";
-    const material = celdas[6]?.textContent.trim() || "";
-    const impresion = celdas[7]?.textContent.trim() || "";
-    const precio = celdas[8]?.textContent.trim() || "";
-    const estatus = celdas[9]?.querySelector("select")?.value || celdas[9]?.textContent.trim() || "";
-    const pago = celdas[10]?.querySelector("select")?.value || celdas[10]?.textContent.trim() || "";
-    const entrega = celdas[11]?.textContent.trim() || "";
-    const archivo = celdas[12]?.textContent.trim() || "";
-
-    const clienteNorm = normalizarBusqueda(cliente);
-
-    const clienteRelacionado = clientesBusquedaDB.find(c => {
-      return normalizarBusqueda(c.nombre) === clienteNorm;
+  function firstAllowed(op){
+    if(isRoberto(op)) return "index.html";
+    const item = links.find(l => op && op[l.permission] === true);
+    return item ? item.page : "login.html";
+  }
+  function renderFallbackMenu(){
+    const op = getOp();
+    if(!op || op.activo === false){
+      location.href = "login.html";
+      return;
+    }
+    const menu = document.getElementById("authMenu");
+    if(!menu) return;
+    if(!menu.querySelector(".tab-btn")){
+      links.forEach(item => {
+        const a = document.createElement("a");
+        a.href = item.page;
+        a.textContent = item.label;
+        a.className = "tab-btn";
+        if(item.page.toLowerCase() === "index.html"){
+          a.classList.add("active");
+        }
+        menu.appendChild(a);
+      });
+      const logoutBtn = document.createElement("button");
+      logoutBtn.type = "button";
+      logoutBtn.className = "tab-btn";
+      logoutBtn.textContent = "Salir";
+      logoutBtn.onclick = function(){
+        localStorage.removeItem("comanda_operador_actual");
+        location.href = "login.html?logout=1";
+      };
+      menu.appendChild(logoutBtn);
+    }
+    const extra = document.getElementById("mobileMenuExtra");
+    if(extra && extra.parentElement !== menu){
+      menu.appendChild(extra);
+    }
+    if(!hasPermission(op, "puede_pedidos")){
+      location.href = firstAllowed(op);
+    }
+  }
+  function setupMobileMenu(){
+    const header = document.querySelector(".header");
+    const menu = document.getElementById("authMenu");
+    if(!header || !menu) return;
+    if(!document.getElementById("mobileMenuBtn")){
+      const btn = document.createElement("button");
+      btn.id = "mobileMenuBtn";
+      btn.className = "mobile-menu-btn";
+      btn.type = "button";
+      btn.textContent = "☰ Menú";
+      btn.onclick = function(){
+        menu.classList.toggle("open");
+        updateStickyOffsets();
+      };
+      header.insertBefore(btn, menu);
+    }
+    if(!document.getElementById("mobileMenuExtra")){
+      const extra = document.createElement("div");
+      extra.id = "mobileMenuExtra";
+      extra.className = "mobile-menu-extra";
+      extra.innerHTML = `
+        <div class="storage-badge" id="storageBadgeMobile">
+          <div class="storage-dot"></div>
+          <span id="storageBadgeTextMobile">Local</span>
+        </div>
+      `;
+      menu.appendChild(extra);
+    }
+  }
+  function syncStorageBadge(){
+    const desktopText = document.getElementById("storageBadgeText");
+    const mobileText = document.getElementById("storageBadgeTextMobile");
+    const desktopBadge = document.getElementById("storageBadge");
+    const mobileBadge = document.getElementById("storageBadgeMobile");
+    if(desktopText && mobileText){
+      mobileText.textContent = desktopText.textContent;
+    }
+    if(desktopBadge && mobileBadge){
+      mobileBadge.className = desktopBadge.className.replace("desktop-only", "").trim();
+    }
+  }
+  function setSelectOptions(select, operadores, placeholder){
+    if(!select) return;
+    const current = select.value;
+    select.innerHTML = `<option value="">${placeholder}</option>`;
+    operadores.forEach(op => {
+      const opt = document.createElement("option");
+      opt.value = op.nombre;
+      opt.textContent = op.nombre;
+      select.appendChild(opt);
     });
-
-    const telefonoCliente = clienteRelacionado ? clienteRelacionado.telefono || "" : "";
-    const correoCliente = clienteRelacionado ? clienteRelacionado.correo || "" : "";
-    const notasCliente = clienteRelacionado ? clienteRelacionado.notas || "" : "";
-
-    /*
-      OPERADOR NO VA AQUÍ.
-      Para operador se usa solamente el filtro Operador.
-    */
-    const contenido = normalizarBusqueda([
-      fecha,
-      cliente,
-      descripcion,
-      cantidad,
-      material,
-      impresion,
-      precio,
-      estatus,
-      pago,
-      entrega,
-      archivo,
-      telefonoCliente,
-      correoCliente,
-      notasCliente
-    ].join(" "));
-
-    let mostrar = true;
-
-    if (texto && !contenido.includes(texto)) mostrar = false;
-    if (estadoFiltro && estatus !== estadoFiltro) mostrar = false;
-    if (pagoFiltro && pago !== pagoFiltro) mostrar = false;
-    if (operadorFiltro && operador !== operadorFiltro) mostrar = false;
-    if (desde && fecha < desde) mostrar = false;
-    if (hasta && fecha > hasta) mostrar = false;
-
-    fila.style.display = mostrar ? "" : "none";
+    if(current){
+      select.value = current;
+    }
+  }
+  async function cargarOperadoresEnComanda(){
+    const fallback = [
+      { nombre:"Roberto" },
+      { nombre:"Ricardo" },
+      { nombre:"Chico" },
+      { nombre:"Carlos" },
+      { nombre:"Alejandro" },
+      { nombre:"Ruben" },
+      { nombre:"Ana" },
+      { nombre:"Miguel" }
+    ];
+    let operadores = fallback;
+    try{
+      if(window.supabaseClient){
+        const { data, error } = await window.supabaseClient
+          .from("operadores")
+          .select("nombre, activo")
+          .eq("activo", true)
+          .order("nombre", { ascending:true });
+        if(!error && Array.isArray(data) && data.length){
+          operadores = data;
+        }
+      }
+    }catch(e){
+      console.warn("No se pudieron cargar operadores desde Supabase:", e);
+    }
+    setSelectOptions(document.getElementById("q_operador"), operadores, "Operador");
+    setSelectOptions(document.getElementById("f_operador"), operadores, "Seleccionar…");
+    setSelectOptions(document.getElementById("filterOperador"), operadores, "Operador");
+    const opActual = getOp();
+    if(opActual && opActual.nombre){
+      const puedeCambiarOperador = isRoberto(opActual) || opActual.puede_modificar_operador === true;
+      ["q_operador", "f_operador"].forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        if(!puedeCambiarOperador){
+          el.value = opActual.nombre;
+          el.disabled = true;
+        }else{
+          el.value = opActual.nombre;
+        }
+      });
+    }
+  }
+  document.addEventListener("DOMContentLoaded", function(){
+    marcarSupabaseSiListo();
+    setupMobileMenu();
+    renderFallbackMenu();
+    updateStickyOffsets();
+    cargarOperadoresEnComanda();
+    syncStorageBadge();
+    window.addEventListener("resize", updateStickyOffsets);
+    setInterval(syncStorageBadge, 600);
+    setTimeout(function(){
+      marcarSupabaseSiListo();
+      setupMobileMenu();
+      renderFallbackMenu();
+      updateStickyOffsets();
+      cargarOperadoresEnComanda();
+      syncStorageBadge();
+    }, 700);
   });
-}
+  window.cargarOperadoresEnComanda = cargarOperadoresEnComanda;
+})();
+</script>
+<script src="js/auth.js?v=7"></script>
+<script src="js/app.js?v=7"></script>
+</body>
+</html>
 
-// ===========================
-// INICIO
-// ===========================
-window.addEventListener("DOMContentLoaded", async () => {
-  if (!validarSupabase()) return;
-
-  marcarSupabaseActivo();
-  ponerFechaHoy();
-
-  await cargarOperadoresComandaDesdeSupabase();
-
-  if (typeof cargarOperadoresEnComanda === "function") {
-    await cargarOperadoresEnComanda();
-  }
-
-  await cargarClientesBusqueda();
-  await cargarMateriales();
-  await cargarTiposImpresion();
-  await cargarPedidos();
-
-  aplicarOperadorSesion();
-
-  if (typeof aplicarPermisosComanda === "function") {
-    aplicarPermisosComanda();
-  }
-});
 
