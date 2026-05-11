@@ -235,7 +235,7 @@ button{touch-action:manipulation}
 .table-wrap{
   overflow-x:auto;
   margin-top:0;
-  padding:8px 0 130px;
+  padding:0 0 130px;
   -webkit-overflow-scrolling:touch;
 }
 table{
@@ -248,8 +248,8 @@ thead tr{
   background:var(--panel);
 }
 th{
-  position:static;
-  top:auto;
+  position:sticky;
+  top:var(--sticky-head-top);
   z-index:40;
   background:var(--panel);
   font-family:var(--head);
@@ -277,7 +277,7 @@ tbody tr:hover{background:rgba(59,130,246,0.08)}
 tbody::before{
   content:"";
   display:block;
-  height:0;
+  height:6px;
 }
 #orderTableBody td:nth-child(2){
   color:#7f8ea3;
@@ -337,7 +337,7 @@ tbody::before{
   border-bottom:1px solid var(--border2);
   position:static;
   top:auto;
-  z-index:35;
+  z-index:20;
 }
 .quick-btn{
   font-family:var(--head);
@@ -1010,9 +1010,15 @@ function marcarSupabaseSiListo(){
 }
 
 function updateStickyOffsets(){
-  // Sticky interno de tabla desactivado para evitar solapes visuales.
-  document.documentElement.style.setProperty("--sticky-head-top", `0px`);
-  document.documentElement.style.setProperty("--sticky-quick-top", `0px`);
+  const header = document.querySelector(".header");
+  const toolbar = document.querySelector(".toolbar");
+  if(!header || !toolbar) return;
+
+  const h = Math.ceil(header.getBoundingClientRect().height);
+  const t = Math.ceil(toolbar.getBoundingClientRect().height);
+
+  document.documentElement.style.setProperty("--sticky-head-top", `${h + t}px`);
+  document.documentElement.style.setProperty("--sticky-quick-top", `${h + t}px`);
 }
 (function(){
   const AUTH_KEY = "comanda_operador_actual";
