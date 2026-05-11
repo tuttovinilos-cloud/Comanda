@@ -1,1329 +1,1437 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>Clientes · Comanda</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
-:root{
-  --bg:#0d0f14;
-  --panel:#13161d;
-  --panel2:#181c26;
-  --border:#1e2330;
-  --border2:#2a3048;
-  --text:#e2e8f0;
-  --muted:#64748b;
-  --muted2:#94a3b8;
-  --accent:#3b82f6;
-  --accent2:#60a5fa;
-  --green:#30D158;
-  --red:#FF3B30;
-  --yellow:#FFD60A;
-  --orange:#FF9F0A;
-  --mono:'Share Tech Mono',monospace;
-  --head:'Barlow Condensed',sans-serif;
-  --body:'Barlow',sans-serif;
-}
-
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:var(--body);
-  min-height:100vh;
-  padding-bottom:90px;
-}
-
-button,input,select,textarea{font:inherit}
-button{touch-action:manipulation}
-#authTopbar{display:none!important}
-
-.header{
-  background:var(--panel);
-  border-bottom:2px solid var(--accent);
-  padding:10px 16px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  min-height:58px;
-  position:sticky;
-  top:0;
-  z-index:300;
-  box-shadow:0 4px 24px #0009;
-  flex-wrap:wrap;
-}
-
-.logo{
-  font-family:var(--head);
-  font-size:21px;
-  font-weight:900;
-  letter-spacing:3px;
-  color:var(--accent2);
-  text-transform:uppercase;
-  white-space:nowrap;
-}
-
-.logo small{
-  color:var(--muted);
-  font-weight:400;
-  font-size:11px;
-  letter-spacing:1px;
-  margin-left:6px;
-}
-
-.mobile-menu-btn{
-  display:none;
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-  padding:8px 12px;
-  border:1px solid var(--border2);
-  background:var(--panel2);
-  color:var(--accent2);
-  border-radius:7px;
-  cursor:pointer;
-  margin-left:auto;
-}
-
-.header-tabs{
-  display:flex;
-  gap:6px;
-  margin-left:auto;
-  align-items:center;
-  flex-wrap:wrap;
-}
-
-.tab-btn,.menu-status{
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:700;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-  padding:7px 14px;
-  border:1px solid var(--border2);
-  background:transparent;
-  color:var(--muted2);
-  cursor:pointer;
-  border-radius:6px;
-  transition:all .2s;
-  text-decoration:none;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  min-height:38px;
-}
-
-.tab-btn:hover{
-  border-color:var(--accent);
-  color:var(--accent2);
-  background:#3b82f611;
-}
-
-.tab-btn.active{
-  background:var(--accent);
-  color:#fff;
-  border-color:var(--accent);
-  box-shadow:0 0 14px #3b82f644;
-}
-
-.menu-status{cursor:default}
-
-.status-dot{
-  width:9px;
-  height:9px;
-  border-radius:50%;
-  background:var(--green);
-  display:inline-block;
-}
-
-.menu-extra{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.toolbar{
-  display:flex;
-  gap:8px;
-  padding:14px 16px;
-  border-bottom:1px solid var(--border);
-  flex-wrap:wrap;
-  align-items:center;
-}
-
-.search-wrap{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  background:var(--panel);
-  border:1px solid var(--border2);
-  border-radius:7px;
-  padding:9px 12px;
-  flex:1;
-  min-width:260px;
-}
-
-.search-wrap input{
-  background:none;
-  border:none;
-  outline:none;
-  color:var(--text);
-  font-family:var(--mono);
-  font-size:13px;
-  width:100%;
-}
-
-input,select,textarea{
-  width:100%;
-  background:var(--bg);
-  border:1px solid var(--border2);
-  color:var(--text);
-  border-radius:7px;
-  padding:8px 10px;
-  outline:none;
-  font-family:var(--body);
-  font-size:13px;
-}
-
-textarea{
-  min-height:78px;
-  resize:vertical;
-}
-
-input:focus,select:focus,textarea:focus{
-  border-color:var(--accent);
-  box-shadow:0 0 0 2px #3b82f622;
-}
-
-select option{
-  background:var(--panel);
-  color:var(--text);
-}
-
-.btn{
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:700;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-  padding:9px 14px;
-  background:var(--accent);
-  color:#fff;
-  border:none;
-  border-radius:7px;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  transition:all .2s;
-  white-space:nowrap;
-}
-
-.btn:hover{filter:brightness(1.1)}
-.btn.success{background:#16a34a}
-.btn.danger{background:#dc2626}
-.btn.secondary{
-  background:transparent;
-  color:var(--muted2);
-  border:1px solid var(--border2);
-}
-
-.layout{
-  padding:16px;
-  display:grid;
-  gap:16px;
-}
-
-.card{
-  background:var(--panel);
-  border:1px solid var(--border2);
-  border-radius:12px;
-  overflow:hidden;
-  box-shadow:0 10px 30px #0004;
-}
-
-.card-header{
-  padding:16px;
-  border-bottom:1px solid var(--border);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  flex-wrap:wrap;
-}
-
-.card-title{
-  font-family:var(--head);
-  font-size:20px;
-  font-weight:900;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-}
-
-.card-sub{
-  font-size:12px;
-  color:var(--muted2);
-  margin-top:2px;
-}
-
-.card-actions{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  flex-wrap:wrap;
-}
-
-.table-scroll{overflow-x:auto}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  min-width:920px;
-}
-
-th{
-  background:var(--panel2);
-  color:var(--muted);
-  font-family:var(--head);
-  font-size:11px;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-  text-align:left;
-  padding:10px;
-  border-bottom:1px solid var(--border2);
-}
-
-td{
-  padding:10px;
-  border-bottom:1px solid var(--border);
-  vertical-align:middle;
-  font-size:13px;
-}
-
-tr:hover td{background:#ffffff03}
-
-.client-main{
-  min-width:260px;
-}
-
-.client-name{
-  font-family:var(--head);
-  font-size:22px;
-  line-height:1;
-  font-weight:900;
-  letter-spacing:.5px;
-  color:var(--accent2);
-  text-transform:uppercase;
-  margin-bottom:6px;
-}
-
-.client-meta{
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  color:var(--muted2);
-  font-size:12px;
-}
-
-.client-meta span{
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  background:#ffffff05;
-  border:1px solid var(--border);
-  padding:4px 7px;
-  border-radius:999px;
-}
-
-.notes-cell{
-  max-width:260px;
-  color:var(--muted2);
-  line-height:1.35;
-}
-
-.pedidos-btn{
-  border:1px solid #3b82f644;
-  background:#3b82f611;
-  color:var(--accent2);
-  border-radius:10px;
-  padding:10px 12px;
-  cursor:pointer;
-  font-family:var(--head);
-  font-size:14px;
-  font-weight:900;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  min-width:115px;
-  text-align:center;
-}
-
-.pedidos-btn strong{
-  display:block;
-  font-size:22px;
-  color:#fff;
-  line-height:1;
-}
-
-.pedidos-btn small{
-  display:block;
-  margin-top:3px;
-  color:var(--muted2);
-  font-size:10px;
-  letter-spacing:1.2px;
-}
-
-.pedidos-btn:hover{
-  border-color:var(--accent);
-  background:#3b82f622;
-}
-
-.actions-row{
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-}
-
-.mini-btn{
-  border:1px solid var(--border2);
-  background:transparent;
-  color:var(--muted2);
-  border-radius:6px;
-  padding:8px 11px;
-  cursor:pointer;
-  font-family:var(--head);
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  white-space:nowrap;
-}
-
-.mini-btn:hover{
-  border-color:var(--accent);
-  color:var(--accent2);
-  background:#3b82f611;
-}
-
-.mini-btn.del{
-  background:#FF3B3011;
-  border-color:#FF3B3044;
-  color:#FF3B30;
-}
-
-.badge{
-  font-family:var(--head);
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  padding:5px 9px;
-  border-radius:999px;
-  border:1px solid var(--border2);
-  color:var(--muted2);
-  white-space:nowrap;
-}
-
-.badge.ok{
-  color:#30D158;
-  border-color:#30D15844;
-  background:#30D15811;
-}
-
-.badge.off{
-  color:#FF3B30;
-  border-color:#FF3B3044;
-  background:#FF3B3011;
-}
-
-.badge.type{
-  color:#60a5fa;
-  border-color:#3b82f644;
-  background:#3b82f611;
-}
-
-.empty{
-  color:var(--muted);
-  padding:30px;
-  text-align:center;
-  font-family:var(--head);
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-}
-
-.note{
-  background:#3b82f611;
-  border:1px solid #3b82f633;
-  border-radius:10px;
-  padding:12px 14px;
-  color:var(--muted2);
-  font-size:13px;
-  line-height:1.45;
-}
-
-.note strong{color:var(--accent2)}
-
-.toast{
-  position:fixed;
-  left:50%;
-  bottom:24px;
-  transform:translateX(-50%);
-  background:var(--panel2);
-  border:1px solid var(--border2);
-  color:var(--text);
-  padding:12px 18px;
-  border-radius:10px;
-  box-shadow:0 10px 35px #000a;
-  z-index:1000;
-  font-family:var(--head);
-  font-size:13px;
-  letter-spacing:1px;
-  display:none;
-  text-align:center;
-}
-
-.modal-backdrop{
-  position:fixed;
-  inset:0;
-  background:#000b;
-  z-index:900;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:16px;
-  backdrop-filter:blur(4px);
-}
-
-.modal{
-  width:100%;
-  max-width:760px;
-  max-height:88vh;
-  overflow:auto;
-  background:var(--panel);
-  border:1px solid var(--border2);
-  border-radius:14px;
-  box-shadow:0 24px 80px #000d;
-}
-
-.modal-header{
-  padding:16px;
-  border-bottom:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-
-.modal-title{
-  font-family:var(--head);
-  font-size:18px;
-  font-weight:900;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-}
-
-.modal-body{
-  padding:16px;
-  display:grid;
-  gap:12px;
-}
-
-.modal-footer{
-  padding:14px 16px;
-  border-top:1px solid var(--border);
-  display:flex;
-  justify-content:flex-end;
-  gap:8px;
-  flex-wrap:wrap;
-}
-
-.form-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-
-.form-full{grid-column:1/-1}
-
-.field{
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-}
-
-.field label{
-  font-family:var(--head);
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-  color:var(--muted);
-}
-
-.history-item{
-  border:1px solid var(--border2);
-  border-radius:10px;
-  padding:11px;
-  margin-bottom:8px;
-  background:var(--bg);
-}
-
-.history-top{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  color:var(--muted2);
-  font-family:var(--mono);
-  font-size:12px;
-  margin-bottom:6px;
-  flex-wrap:wrap;
-}
-
-.history-desc{
-  color:var(--text);
-  font-size:13px;
-  line-height:1.4;
-}
-
-@media(max-width:760px){
-  .header{padding:10px 12px}
-  .logo{font-size:19px}
-  .logo small{display:none}
-
-  .mobile-menu-btn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-  }
-
-  .header-tabs{
-    display:none;
-    width:100%;
-    margin-left:0;
-    padding-top:14px;
-    border-top:1px solid var(--border);
-  }
-
-  .header-tabs.open{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:8px;
-  }
-
-  .tab-btn,.menu-status{
-    width:100%;
-    justify-content:center;
-    font-size:11px;
-    min-height:42px;
-    padding:9px 8px;
-    border-radius:8px;
-  }
-
-  .menu-extra{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-  }
-
-  .toolbar{padding:10px}
-  .search-wrap{min-width:100%}
-
-  #ordenClientes,
-  #filtroTipoCliente,
-  #filtroEstadoCliente{
-    flex:1 1 100%;
-  }
-
-  .toolbar .btn{
-    flex:1 1 100%;
-  }
-
-  .layout{padding:10px}
-
-  .card-header{
-    flex-direction:column;
-    align-items:flex-start;
-  }
-
-  .card-actions{
-    width:100%;
-  }
-
-  .card-actions .badge{
-    width:100%;
-    text-align:center;
-  }
-
-  .form-grid{
-    grid-template-columns:1fr;
-  }
-
-  .modal{
-    max-height:92vh;
-  }
-
-  .modal-footer .btn{
-    width:100%;
-  }
-
-  table{
-    min-width:760px;
-  }
-
-  .client-name{
-    font-size:19px;
-  }
-
-  .notes-cell{
-    max-width:190px;
-  }
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Clientes · Comanda</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+
+  <style>
+    :root{
+      --bg:#070b12;
+      --panel:#0d1320;
+      --panel2:#101827;
+      --line:#213049;
+      --line2:#162236;
+      --text:#eaf2ff;
+      --muted:#91a4bf;
+      --blue:#2f80ed;
+      --blue2:#56a2ff;
+      --green:#18c964;
+      --red:#ff4d4f;
+      --yellow:#f5b83d;
+      --shadow:0 18px 50px rgba(0,0,0,.35);
+      --radius:14px;
+      --font:'Inter',system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      --mono:'Arial Narrow',Arial,sans-serif;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:var(--font);
+      background:linear-gradient(180deg,#08111f 0%,#060a10 100%);
+      color:var(--text);
+      font-size:14px;
+    }
+
+    button,input,select,textarea{
+      font-family:inherit;
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      background:rgba(8,13,22,.94);
+      backdrop-filter:blur(12px);
+      border-bottom:1px solid #1d60d8;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:10px 14px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      min-width:max-content;
+    }
+
+    .brand h1{
+      margin:0;
+      font-size:22px;
+      letter-spacing:7px;
+      color:#5aa2ff;
+      font-weight:900;
+      font-family:var(--mono);
+      text-transform:uppercase;
+    }
+
+    .brand span{
+      color:#7890ad;
+      font-size:10px;
+      letter-spacing:2px;
+      text-transform:uppercase;
+    }
+
+    .nav{
+      display:flex;
+      gap:6px;
+      align-items:center;
+      overflow-x:auto;
+      padding-bottom:2px;
+    }
+
+    .nav a,.nav button{
+      border:1px solid var(--line);
+      background:#0a101b;
+      color:#c8d8ef;
+      text-decoration:none;
+      padding:10px 14px;
+      border-radius:6px;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      white-space:nowrap;
+      cursor:pointer;
+    }
+
+    .nav a.active{
+      background:var(--blue);
+      color:white;
+      border-color:var(--blue);
+    }
+
+    .nav .status{
+      color:#bfffcf;
+    }
+
+    .wrap{
+      padding:14px;
+      max-width:1800px;
+      margin:0 auto;
+    }
+
+    .filters{
+      display:grid;
+      grid-template-columns:2fr 1fr 1fr 180px;
+      gap:10px;
+      margin-bottom:12px;
+    }
+
+    .input,.select,.textarea{
+      width:100%;
+      background:#070c15;
+      border:1px solid var(--line);
+      color:var(--text);
+      border-radius:8px;
+      padding:11px 12px;
+      outline:none;
+      font-size:14px;
+    }
+
+    .textarea{
+      min-height:90px;
+      resize:vertical;
+    }
+
+    .input:focus,.select:focus,.textarea:focus{
+      border-color:var(--blue);
+      box-shadow:0 0 0 3px rgba(47,128,237,.18);
+    }
+
+    .actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+
+    .btn{
+      border:0;
+      border-radius:8px;
+      padding:11px 15px;
+      color:white;
+      background:#172235;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:1.5px;
+      text-transform:uppercase;
+      cursor:pointer;
+    }
+
+    .btn:hover{filter:brightness(1.08)}
+    .btn-blue{background:var(--blue)}
+    .btn-green{background:#089949}
+    .btn-red{background:#421018;color:#ffb3b6;border:1px solid #7b1d2a}
+    .btn-dark{background:#0b111d;border:1px solid var(--line)}
+    .btn-small{padding:8px 10px;font-size:10px}
+    .btn-disabled{opacity:.45;pointer-events:none}
+
+    .notice{
+      background:#0c1728;
+      border:1px solid #17355f;
+      color:#a9c4e8;
+      padding:14px;
+      border-radius:10px;
+      margin-bottom:14px;
+      line-height:1.45;
+    }
+
+    .notice strong{
+      color:#67a9ff;
+    }
+
+    .card{
+      background:rgba(13,19,32,.96);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .card-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:18px 16px;
+      border-bottom:1px solid var(--line2);
+    }
+
+    .card-head h2{
+      margin:0;
+      font-size:22px;
+      font-family:var(--mono);
+      letter-spacing:3px;
+      text-transform:uppercase;
+    }
+
+    .card-head p{
+      margin:4px 0 0;
+      color:#9db0ca;
+      font-size:12px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid #13582e;
+      color:#58ff91;
+      background:#07130d;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:1px;
+      text-transform:uppercase;
+    }
+
+    .table-wrap{
+      overflow:auto;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:1100px;
+    }
+
+    th{
+      background:#131a27;
+      color:#6f85a3;
+      text-align:left;
+      padding:11px 14px;
+      font-size:10px;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      border-bottom:1px solid var(--line);
+      white-space:nowrap;
+    }
+
+    td{
+      padding:12px 14px;
+      border-bottom:1px solid #151d2b;
+      vertical-align:middle;
+    }
+
+    tr:hover td{
+      background:#0f1725;
+    }
+
+    .client-name{
+      color:#5aa2ff;
+      font-size:21px;
+      font-weight:950;
+      letter-spacing:1.5px;
+      font-family:var(--mono);
+      text-transform:uppercase;
+      line-height:1.05;
+      max-width:430px;
+      word-break:break-word;
+    }
+
+    .subline{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-top:7px;
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      font-size:11px;
+      color:#9fb1cb;
+      background:#0a111d;
+      border:1px solid #1a263a;
+      border-radius:999px;
+      padding:5px 8px;
+    }
+
+    .history-btn{
+      min-width:120px;
+      border:1px solid #214672;
+      background:#0b1728;
+      color:white;
+      border-radius:8px;
+      padding:10px 12px;
+      cursor:pointer;
+      text-align:center;
+    }
+
+    .history-btn strong{
+      display:block;
+      font-size:22px;
+      color:#ffffff;
+      line-height:1;
+    }
+
+    .history-btn span{
+      display:block;
+      margin-top:3px;
+      font-size:9px;
+      letter-spacing:1px;
+      text-transform:uppercase;
+      color:#9db8dc;
+      font-weight:900;
+    }
+
+    .active{
+      color:#56ff93;
+      border:1px solid #14572e;
+      background:#07170e;
+      padding:6px 9px;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:1px;
+      text-transform:uppercase;
+    }
+
+    .inactive{
+      color:#ffb4b4;
+      border:1px solid #5c2028;
+      background:#1a080c;
+      padding:6px 9px;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:1px;
+      text-transform:uppercase;
+    }
+
+    .row-actions{
+      display:flex;
+      gap:7px;
+      flex-wrap:wrap;
+    }
+
+    .empty{
+      text-align:center;
+      padding:35px;
+      color:#91a4bf;
+    }
+
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,.68);
+      z-index:100;
+      padding:16px;
+    }
+
+    .modal.show{
+      display:flex;
+    }
+
+    .modal-box{
+      width:min(720px,100%);
+      max-height:90vh;
+      overflow:auto;
+      background:#0d1422;
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow:0 25px 80px rgba(0,0,0,.55);
+    }
+
+    .modal-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:16px;
+      border-bottom:1px solid var(--line2);
+    }
+
+    .modal-head h3{
+      margin:0;
+      font-family:var(--mono);
+      letter-spacing:2px;
+      font-size:21px;
+      text-transform:uppercase;
+    }
+
+    .close{
+      background:#101827;
+      color:white;
+      border:1px solid var(--line);
+      width:38px;
+      height:38px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:900;
+    }
+
+    .modal-body{
+      padding:16px;
+    }
+
+    .form-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    .form-full{
+      grid-column:1/-1;
+    }
+
+    label{
+      display:block;
+      color:#8ba0bd;
+      font-size:10px;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      font-weight:900;
+      margin-bottom:6px;
+    }
+
+    .modal-foot{
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      padding:16px;
+      border-top:1px solid var(--line2);
+    }
+
+    .toast{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      z-index:200;
+      background:#0d1728;
+      border:1px solid #265181;
+      color:#dcecff;
+      padding:13px 15px;
+      border-radius:10px;
+      box-shadow:var(--shadow);
+      display:none;
+      max-width:420px;
+    }
+
+    .toast.show{
+      display:block;
+    }
+
+    .danger-text{
+      color:#ff8b8b;
+      font-size:12px;
+      line-height:1.4;
+    }
+
+    .history-list{
+      display:grid;
+      gap:9px;
+    }
+
+    .history-item{
+      background:#08101c;
+      border:1px solid #17243a;
+      border-radius:10px;
+      padding:12px;
+    }
+
+    .history-item strong{
+      color:#fff;
+    }
+
+    .history-meta{
+      margin-top:5px;
+      color:#8ea4c0;
+      font-size:12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    @media(max-width:900px){
+      .topbar{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+      .brand h1{
+        font-size:20px;
+      }
+
+      .nav{
+        width:100%;
+      }
+
+      .filters{
+        grid-template-columns:1fr;
+      }
+
+      .card-head{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+      table{
+        min-width:0;
+      }
+
+      thead{
+        display:none;
+      }
+
+      table,tr,td,tbody{
+        display:block;
+        width:100%;
+      }
+
+      tr{
+        border-bottom:1px solid var(--line);
+        padding:12px 0;
+      }
+
+      td{
+        border:0;
+        padding:8px 14px;
+      }
+
+      td::before{
+        content:attr(data-label);
+        display:block;
+        color:#667c99;
+        font-size:9px;
+        letter-spacing:1.5px;
+        text-transform:uppercase;
+        margin-bottom:4px;
+        font-weight:900;
+      }
+
+      .client-name{
+        font-size:20px;
+      }
+
+      .form-grid{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
 </head>
 
 <body>
-
-<header class="header">
-  <div class="logo">COMANDA<small>CLIENTES</small></div>
-
-  <button class="mobile-menu-btn" id="mobileMenuBtn" type="button">☰ Menú</button>
-
-  <nav class="header-tabs" id="authMenu">
-    <a class="tab-btn" href="index.html">📋 Pedidos</a>
-    <a class="tab-btn active" href="clientes.html">👤 Clientes</a>
-    <a class="tab-btn" href="materiales.html">💲 Materiales</a>
-    <a class="tab-btn" href="estadisticas.html">📊 Estadísticas</a>
-    <a class="tab-btn" href="marketing.html">📣 Marketing</a>
-    <a class="tab-btn" href="Cotizador.html">🧾 Cotizador</a>
-    <a class="tab-btn" href="Organizador de ideas.html">💡 Organizador</a>
-    <a class="tab-btn" href="configuracion.html">⚙️ Configuración</a>
-    <button class="tab-btn" type="button" onclick="localStorage.removeItem('comanda_operador_actual'); location.href='login.html?logout=1';">Salir</button>
-
-    <div class="menu-extra">
-      <div class="menu-status">
-        <span class="status-dot"></span>
-        Supabase
-      </div>
+  <header class="topbar">
+    <div class="brand">
+      <h1>COMANDA</h1>
+      <span>Clientes</span>
     </div>
-  </nav>
-</header>
 
-<div class="toolbar">
-  <div class="search-wrap">
-    🔎
-    <input id="searchClientes" type="text" placeholder="Buscar cliente, teléfono, correo o notas..." oninput="filtrarClientes()"/>
-  </div>
+    <nav class="nav" id="mainNav">
+      <a href="index.html" data-perm="pedidos">📋 Pedidos</a>
+      <a href="clientes.html" class="active" data-perm="clientes">👥 Clientes</a>
+      <a href="materiales.html" data-perm="materiales">💲 Materiales</a>
+      <a href="estadisticas.html" data-perm="estadisticas">📊 Estadísticas</a>
+      <a href="marketing.html" data-perm="marketing">📣 Marketing</a>
+      <a href="Cotizador.html" data-perm="cotizador">🧾 Cotizador</a>
+      <a href="Organizador de ideas.html" data-perm="organizador">💡 Organizador</a>
+      <a href="configuracion.html" data-perm="configuracion">⚙️ Configuración</a>
+      <button onclick="salir()">Salir</button>
+      <a href="#" class="status">● Supabase</a>
+    </nav>
+  </header>
 
-  <select id="filtroTipoCliente" onchange="filtrarClientes()">
-    <option value="">Todos los tipos</option>
-    <option value="Cliente Standar">Cliente Standar</option>
-    <option value="Cliente VIP">Cliente VIP</option>
-    <option value="Cliente Básico">Cliente Básico</option>
-    <option value="Cliente Editado">Cliente Editado</option>
-  </select>
+  <main class="wrap">
+    <section class="filters">
+      <input class="input" id="searchInput" placeholder="Buscar cliente, teléfono, correo o nota..." />
+      <select class="select" id="tipoFilter">
+        <option value="">Todos los tipos</option>
+        <option value="Cliente Standar">Cliente Standar</option>
+        <option value="VIP">VIP</option>
+        <option value="Básico">Básico</option>
+        <option value="Proveedor">Proveedor</option>
+      </select>
+      <select class="select" id="estadoFilter">
+        <option value="">Todos</option>
+        <option value="activo">Activos</option>
+        <option value="inactivo">Inactivos</option>
+      </select>
+      <select class="select" id="ordenFilter">
+        <option value="az">Nombre A-Z</option>
+        <option value="za">Nombre Z-A</option>
+        <option value="pedidos">Más pedidos</option>
+        <option value="recientes">Más recientes</option>
+      </select>
+    </section>
 
-  <select id="filtroEstadoCliente" onchange="filtrarClientes()">
-    <option value="">Todos</option>
-    <option value="activo">Activos</option>
-    <option value="inactivo">Inactivos</option>
-  </select>
+    <section class="actions">
+      <button class="btn btn-blue" onclick="abrirModalNuevo()">+ Añadir cliente</button>
+      <button class="btn btn-dark" onclick="cargarTodo()">⟳ Recargar</button>
+      <button class="btn btn-green" onclick="sincronizarClientesDesdePedidos()">Sincronizar desde pedidos</button>
+      <button class="btn btn-dark" onclick="fusionarDuplicadosExactos()">Fusionar duplicados exactos</button>
+    </section>
 
-  <select id="ordenClientes" onchange="filtrarClientes()">
-    <option value="nombre_az">Nombre A-Z</option>
-    <option value="nombre_za">Nombre Z-A</option>
-    <option value="pedidos_mayor">Más pedidos</option>
-    <option value="pedidos_menor">Menos pedidos</option>
-  </select>
+    <div class="notice">
+      <strong>Clientes:</strong> al editar un cliente, el sistema actualiza automáticamente los pedidos viejos, fusiona duplicados con el mismo nombre y recalcula el historial.
+    </div>
 
-  <button class="btn" onclick="nuevoCliente()">+ Añadir cliente</button>
-</div>
-
-<div class="layout">
-
-  <div class="note">
-    <strong>Clientes:</strong> el nombre se muestra en azul y con tamaño ajustado. La cantidad de pedidos funciona como acceso directo al historial.
-  </div>
-
-  <section class="card">
-    <div class="card-header">
-      <div>
-        <div class="card-title">Clientes</div>
-        <div class="card-sub">Crear, editar, eliminar y revisar historial de pedidos por cliente.</div>
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Clientes</h2>
+          <p>Crear, editar, unificar y revisar historial de pedidos por cliente.</p>
+        </div>
+        <span class="pill" id="clientCount">0 clientes</span>
       </div>
 
-      <div class="card-actions">
-        <span class="badge ok" id="clientesCount">0 clientes</span>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Notas</th>
+              <th>Pedidos / Historial</th>
+              <th>Estado</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="clientesBody">
+            <tr>
+              <td colspan="5" class="empty">Cargando clientes...</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </div>
+    </section>
+  </main>
 
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th>Notas</th>
-            <th>Pedidos / Historial</th>
-            <th>Estado</th>
-            <th>Acción</th>
-          </tr>
-        </thead>
-
-        <tbody id="clientesBody">
-          <tr><td colspan="5" class="empty">Cargando clientes...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-</div>
-
-<div class="modal-backdrop" id="clienteBackdrop" onclick="cerrarClienteSiFondo(event)">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="clienteModalTitle">Nuevo cliente</div>
-      <button class="mini-btn" onclick="cerrarModalCliente()">Cerrar</button>
-    </div>
-
-    <div class="modal-body">
-      <input type="hidden" id="clienteId"/>
-
-      <div class="form-grid">
-        <div class="field form-full">
-          <label>Nombre del cliente</label>
-          <input id="clienteNombre" type="text" placeholder="Ej: Armando Framed"/>
-        </div>
-
-        <div class="field">
-          <label>Tipo de cliente</label>
-          <select id="clienteTipo">
-            <option value="Cliente Standar">Cliente Standar</option>
-            <option value="Cliente VIP">Cliente VIP</option>
-            <option value="Cliente Básico">Cliente Básico</option>
-            <option value="Cliente Editado">Cliente Editado</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Estado</label>
-          <select id="clienteActivo">
-            <option value="true">Activo</option>
-            <option value="false">Inactivo</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Teléfono</label>
-          <input id="clienteTelefono" type="text" placeholder="Teléfono"/>
-        </div>
-
-        <div class="field">
-          <label>Correo</label>
-          <input id="clienteCorreo" type="email" placeholder="correo@ejemplo.com"/>
-        </div>
-
-        <div class="field form-full">
-          <label>Notas</label>
-          <textarea id="clienteNotas" placeholder="Notas importantes del cliente..."></textarea>
-        </div>
+  <!-- Modal cliente -->
+  <div class="modal" id="clienteModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="modalTitle">Añadir cliente</h3>
+        <button class="close" onclick="cerrarModal()">×</button>
       </div>
-    </div>
 
-    <div class="modal-footer">
-      <button class="btn secondary" onclick="cerrarModalCliente()">Cancelar</button>
-      <button class="btn success" onclick="guardarClienteModal()">Guardar cliente</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop" id="historyBackdrop" onclick="cerrarHistorialSiFondo(event)">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="historyTitle">Historial</div>
-      <button class="mini-btn" onclick="cerrarHistorial()">Cerrar</button>
-    </div>
-
-    <div class="modal-body" id="historyBody"></div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=24"></script>
-<script src="js/auth.js?v=24"></script>
-
-<script>
-console.log("CLIENTES HTML conectado");
-
-let clientesDB = [];
-let pedidosDB = [];
-
-function db(){
-  return window.supabaseClient;
-}
-
-function validarSupabase(){
-  if(!db()){
-    alert("No existe conexión Supabase. Revisa js/supabase.js?v=24");
-    console.error("No existe window.supabaseClient");
-    return false;
-  }
-  return true;
-}
-
-function normalizar(valor){
-  return String(valor || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
-
-function nombreBonito(valor){
-  const limpio = String(valor || "").trim().replace(/\s+/g, " ");
-  if(!limpio) return "";
-
-  return limpio
-    .split(" ")
-    .map(p => p ? p.charAt(0).toUpperCase() + p.slice(1).toLowerCase() : "")
-    .join(" ");
-}
-
-function escapeHtml(valor){
-  return String(valor ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function mostrarToast(mensaje){
-  const toast = document.getElementById("toast");
-  if(!toast){
-    console.log(mensaje);
-    return;
-  }
-
-  toast.textContent = mensaje;
-  toast.style.display = "block";
-
-  setTimeout(() => {
-    toast.style.display = "none";
-  }, 2200);
-}
-
-function contarPedidosCliente(nombre){
-  const n = normalizar(nombre);
-  if(!n) return 0;
-
-  return pedidosDB.filter(p => normalizar(p.cliente) === n).length;
-}
-
-async function cargarPedidos(){
-  const { data, error } = await db()
-    .from("pedidos")
-    .select("id, fecha, cliente, descripcion, cantidad, material, tipo_impresion, estatus_trabajo, estatus_pago, fecha_entrega")
-    .order("id", { ascending:false });
-
-  if(error){
-    console.warn("No se pudieron cargar pedidos:", error);
-    pedidosDB = [];
-    return;
-  }
-
-  pedidosDB = data || [];
-}
-
-async function crearClientesDesdePedidos(){
-  const mapaNombres = {};
-  pedidosDB.forEach(p => {
-    const bruto = String(p.cliente || "").trim();
-    if(!bruto) return;
-    const norm = normalizar(bruto);
-    if(!norm) return;
-    if(!mapaNombres[norm]) mapaNombres[norm] = nombreBonito(bruto);
-  });
-  const nombresPedidos = Object.values(mapaNombres);
-
-  const existentes = new Set(
-    clientesDB.map(c => normalizar(c.nombre))
-  );
-
-  const nuevos = nombresPedidos
-    .filter(nombre => !existentes.has(normalizar(nombre)))
-    .map(nombre => ({
-      nombre,
-      tipo_cliente:"Cliente Standar",
-      telefono:"",
-      correo:"",
-      notas:"",
-      activo:true
-    }));
-
-  if(!nuevos.length) return;
-
-  const { error } = await db()
-    .from("clientes")
-    .insert(nuevos);
-
-  if(error){
-    console.warn("No se pudieron crear clientes desde pedidos:", error);
-    return;
-  }
-
-  console.log("Clientes creados desde pedidos:", nuevos);
-}
-
-async function cargarClientes(){
-  if(!validarSupabase()) return;
-
-  const { data, error } = await db()
-    .from("clientes")
-    .select("id, nombre, tipo_cliente, telefono, correo, notas, activo")
-    .order("nombre", { ascending:true });
-
-  if(error){
-    console.error("Error cargando clientes:", error);
-    document.getElementById("clientesBody").innerHTML = `
-      <tr><td colspan="5" class="empty">Error cargando clientes: ${escapeHtml(error.message)}</td></tr>
-    `;
-    return;
-  }
-
-  clientesDB = data || [];
-}
-
-async function inicializarClientes(){
-  if(!validarSupabase()) return;
-
-  await cargarPedidos();
-  await cargarClientes();
-  await crearClientesDesdePedidos();
-  await cargarClientes();
-
-  filtrarClientes();
-}
-
-function filtrarClientes(){
-  const texto = normalizar(document.getElementById("searchClientes")?.value || "");
-  const tipoFiltro = document.getElementById("filtroTipoCliente")?.value || "";
-  const estadoFiltro = document.getElementById("filtroEstadoCliente")?.value || "";
-  const orden = document.getElementById("ordenClientes")?.value || "nombre_az";
-
-  let lista = [...clientesDB];
-
-  lista = lista.filter(c => {
-    const contenido = normalizar([
-      c.nombre,
-      c.tipo_cliente,
-      c.telefono,
-      c.correo,
-      c.notas
-    ].join(" "));
-
-    if(texto && !contenido.includes(texto)) return false;
-    if(tipoFiltro && c.tipo_cliente !== tipoFiltro) return false;
-
-    if(estadoFiltro === "activo" && c.activo !== true) return false;
-    if(estadoFiltro === "inactivo" && c.activo === true) return false;
-
-    return true;
-  });
-
-  lista.sort((a,b) => {
-    const na = String(a.nombre || "");
-    const nb = String(b.nombre || "");
-    const pa = contarPedidosCliente(a.nombre);
-    const pb = contarPedidosCliente(b.nombre);
-
-    if(orden === "nombre_az") return na.localeCompare(nb);
-    if(orden === "nombre_za") return nb.localeCompare(na);
-    if(orden === "pedidos_mayor") return pb - pa;
-    if(orden === "pedidos_menor") return pa - pb;
-
-    return 0;
-  });
-
-  renderClientes(lista);
-}
-
-function renderClientes(lista){
-  const tbody = document.getElementById("clientesBody");
-  const count = document.getElementById("clientesCount");
-
-  if(count){
-    count.textContent = `${lista.length} cliente${lista.length === 1 ? "" : "s"}`;
-  }
-
-  if(!tbody) return;
-
-  if(!lista.length){
-    tbody.innerHTML = `<tr><td colspan="5" class="empty">Sin clientes</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = lista.map(c => {
-    const pedidos = contarPedidosCliente(c.nombre);
-
-    const estado = c.activo === true
-      ? `<span class="badge ok">Activo</span>`
-      : `<span class="badge off">Inactivo</span>`;
-
-    const tipo = c.tipo_cliente || "Cliente Standar";
-    const telefono = c.telefono || "Sin teléfono";
-    const correo = c.correo || "Sin correo";
-
-    return `
-      <tr>
-        <td class="client-main">
-          <div class="client-name">${escapeHtml(c.nombre || "")}</div>
-          <div class="client-meta">
-            <span>${escapeHtml(tipo)}</span>
-            <span>📞 ${escapeHtml(telefono)}</span>
-            <span>✉️ ${escapeHtml(correo)}</span>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-full">
+            <label>Nombre del cliente</label>
+            <input class="input" id="clienteNombre" placeholder="Ej: Armando Framed" />
           </div>
-        </td>
 
-        <td class="notes-cell">
-          ${escapeHtml(c.notas || "—")}
-        </td>
-
-        <td>
-          <button class="pedidos-btn" onclick="verHistorialCliente(${Number(c.id)})">
-            <strong>${pedidos}</strong>
-            <small>${pedidos === 1 ? "Pedido" : "Pedidos"} / Historial</small>
-          </button>
-        </td>
-
-        <td>${estado}</td>
-
-        <td>
-          <div class="actions-row">
-            <button class="mini-btn" onclick="editarCliente(${Number(c.id)})">Editar</button>
-            <button class="mini-btn del" onclick="eliminarCliente(${Number(c.id)})">Eliminar</button>
+          <div>
+            <label>Teléfono</label>
+            <input class="input" id="clienteTelefono" placeholder="Ej: 0414..." />
           </div>
-        </td>
-      </tr>
-    `;
-  }).join("");
-}
 
-function nuevoCliente(){
-  document.getElementById("clienteModalTitle").textContent = "Nuevo cliente";
-  document.getElementById("clienteId").value = "";
-  document.getElementById("clienteNombre").value = "";
-  document.getElementById("clienteTipo").value = "Cliente Standar";
-  document.getElementById("clienteTelefono").value = "";
-  document.getElementById("clienteCorreo").value = "";
-  document.getElementById("clienteNotas").value = "";
-  document.getElementById("clienteActivo").value = "true";
+          <div>
+            <label>Correo</label>
+            <input class="input" id="clienteCorreo" placeholder="correo@cliente.com" />
+          </div>
 
-  document.getElementById("clienteBackdrop").style.display = "flex";
+          <div>
+            <label>Tipo</label>
+            <select class="select" id="clienteTipo">
+              <option value="Cliente Standar">Cliente Standar</option>
+              <option value="VIP">VIP</option>
+              <option value="Básico">Básico</option>
+              <option value="Proveedor">Proveedor</option>
+            </select>
+          </div>
 
-  setTimeout(() => {
-    document.getElementById("clienteNombre").focus();
-  }, 150);
-}
+          <div>
+            <label>Estado</label>
+            <select class="select" id="clienteActivo">
+              <option value="true">Activo</option>
+              <option value="false">Inactivo</option>
+            </select>
+          </div>
 
-function editarCliente(id){
-  const cliente = clientesDB.find(c => Number(c.id) === Number(id));
+          <div class="form-full">
+            <label>Notas</label>
+            <textarea class="textarea" id="clienteNotas" placeholder="Notas internas del cliente..."></textarea>
+          </div>
 
-  if(!cliente){
-    alert("No se encontró el cliente.");
-    return;
-  }
-
-  document.getElementById("clienteModalTitle").textContent = "Editar cliente";
-  document.getElementById("clienteId").value = cliente.id;
-  document.getElementById("clienteNombre").value = cliente.nombre || "";
-  document.getElementById("clienteTipo").value = cliente.tipo_cliente || "Cliente Standar";
-  document.getElementById("clienteTelefono").value = cliente.telefono || "";
-  document.getElementById("clienteCorreo").value = cliente.correo || "";
-  document.getElementById("clienteNotas").value = cliente.notas || "";
-  document.getElementById("clienteActivo").value = cliente.activo === true ? "true" : "false";
-
-  document.getElementById("clienteBackdrop").style.display = "flex";
-}
-
-function cerrarModalCliente(){
-  document.getElementById("clienteBackdrop").style.display = "none";
-}
-
-function cerrarClienteSiFondo(event){
-  if(event.target.id === "clienteBackdrop"){
-    cerrarModalCliente();
-  }
-}
-
-async function guardarClienteModal(){
-  if(!validarSupabase()) return;
-
-  const id = document.getElementById("clienteId").value;
-  const nombre = nombreBonito(document.getElementById("clienteNombre").value);
-
-  if(!nombre){
-    alert("Coloca el nombre del cliente.");
-    return;
-  }
-
-  const datos = {
-    nombre,
-    tipo_cliente: document.getElementById("clienteTipo").value || "Cliente Standar",
-    telefono: document.getElementById("clienteTelefono").value.trim(),
-    correo: document.getElementById("clienteCorreo").value.trim(),
-    notas: document.getElementById("clienteNotas").value.trim(),
-    activo: document.getElementById("clienteActivo").value === "true"
-  };
-
-  const duplicado = clientesDB.find(c => {
-    return normalizar(c.nombre) === normalizar(nombre) && Number(c.id) !== Number(id || 0);
-  });
-
-  if(duplicado){
-    const continuar = confirm(`Ya existe un cliente igual o parecido:\n\n${duplicado.nombre}\n\n¿Deseas guardar de todos modos?`);
-    if(!continuar) return;
-  }
-
-  let error;
-
-  if(id){
-    const res = await db()
-      .from("clientes")
-      .update(datos)
-      .eq("id", id);
-
-    error = res.error;
-  }else{
-    const res = await db()
-      .from("clientes")
-      .insert([datos]);
-
-    error = res.error;
-  }
-
-  if(error){
-    console.error("Error guardando cliente:", error);
-    alert("Error guardando cliente: " + error.message);
-    return;
-  }
-
-  cerrarModalCliente();
-  await cargarClientes();
-  filtrarClientes();
-
-  mostrarToast("Cliente guardado");
-}
-
-async function eliminarCliente(id){
-  const cliente = clientesDB.find(c => Number(c.id) === Number(id));
-
-  if(!cliente){
-    alert("No se encontr� el cliente.");
-    return;
-  }
-
-  if(normalizar(cliente.nombre) === "roberto"){
-    alert("Roberto no se puede eliminar ni desactivar.");
-    return;
-  }
-
-  const pedidos = contarPedidosCliente(cliente.nombre);
-
-  const confirmar = confirm(
-    `�Seguro que deseas desactivar este cliente?\n\nCliente: ${cliente.nombre}\nPedidos registrados: ${pedidos}\n\nNo se borrar� el historial de pedidos.`
-  );
-
-  if(!confirmar) return;
-
-  const { error } = await db()
-    .from("clientes")
-    .update({ activo:false })
-    .eq("id", id);
-
-  if(error){
-    console.error("Error desactivando cliente:", error);
-    alert("Error desactivando cliente: " + error.message);
-    return;
-  }
-
-  await cargarClientes();
-  filtrarClientes();
-
-  mostrarToast("Cliente desactivado");
-}
-
-function verHistorialCliente(id){
-  const cliente = clientesDB.find(c => Number(c.id) === Number(id));
-
-  if(!cliente){
-    alert("No se encontró el cliente.");
-    return;
-  }
-
-  const nombreNorm = normalizar(cliente.nombre);
-  const pedidos = pedidosDB.filter(p => normalizar(p.cliente) === nombreNorm);
-
-  document.getElementById("historyTitle").textContent = `Historial · ${cliente.nombre}`;
-
-  const body = document.getElementById("historyBody");
-
-  if(!pedidos.length){
-    body.innerHTML = `<div class="empty">Este cliente no tiene pedidos registrados</div>`;
-  }else{
-    body.innerHTML = pedidos.map(p => `
-      <div class="history-item">
-        <div class="history-top">
-          <span>#${escapeHtml(p.id)} · ${escapeHtml(p.fecha || "")}</span>
-          <span>${escapeHtml(p.estatus_trabajo || "")} / ${escapeHtml(p.estatus_pago || "")}</span>
-        </div>
-        <div class="history-desc">
-          <strong>${escapeHtml(p.descripcion || "")}</strong><br>
-          Cantidad: ${escapeHtml(p.cantidad || "")}<br>
-          Material: ${escapeHtml(p.material || "")}<br>
-          Impresión: ${escapeHtml(p.tipo_impresion || "")}<br>
-          Entrega: ${escapeHtml(p.fecha_entrega || "—")}
+          <div class="form-full" id="mergeWarning" style="display:none">
+            <p class="danger-text">
+              ⚠️ Este nombre coincide con otro cliente existente. Al guardar, el sistema fusionará el cliente y moverá los pedidos al nombre oficial.
+            </p>
+          </div>
         </div>
       </div>
-    `).join("");
-  }
 
-  document.getElementById("historyBackdrop").style.display = "flex";
-}
+      <div class="modal-foot">
+        <button class="btn btn-dark" onclick="cerrarModal()">Cancelar</button>
+        <button class="btn btn-blue" onclick="guardarCliente()">Guardar</button>
+      </div>
+    </div>
+  </div>
 
-function cerrarHistorial(){
-  document.getElementById("historyBackdrop").style.display = "none";
-}
+  <!-- Modal historial -->
+  <div class="modal" id="historialModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="historialTitle">Historial</h3>
+        <button class="close" onclick="cerrarHistorial()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="history-list" id="historialBody"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-dark" onclick="cerrarHistorial()">Cerrar</button>
+      </div>
+    </div>
+  </div>
 
-function cerrarHistorialSiFondo(event){
-  if(event.target.id === "historyBackdrop"){
-    cerrarHistorial();
-  }
-}
+  <div class="toast" id="toast"></div>
 
-document.addEventListener("DOMContentLoaded", function(){
-  const btn = document.getElementById("mobileMenuBtn");
-  const menu = document.getElementById("authMenu");
+  <script>
+    const supabase = window.supabaseClient || window.supabase || null;
 
-  if(btn && menu){
-    btn.addEventListener("click", function(){
-      menu.classList.toggle("open");
+    let CLIENTES = [];
+    let PEDIDOS = [];
+    let clienteEditando = null;
+
+    const PAGE_PERMISSION = "clientes";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      validarSesionBasica();
+      aplicarMenuPorPermisos();
+
+      document.getElementById("searchInput").addEventListener("input", renderClientes);
+      document.getElementById("tipoFilter").addEventListener("change", renderClientes);
+      document.getElementById("estadoFilter").addEventListener("change", renderClientes);
+      document.getElementById("ordenFilter").addEventListener("change", renderClientes);
+      document.getElementById("clienteNombre").addEventListener("input", revisarPosibleFusion);
+
+      await cargarTodo();
     });
-  }
 
-  inicializarClientes();
-});
-</script>
+    function validarSesionBasica(){
+      const raw = localStorage.getItem("comanda_operador_actual");
+      if(!raw){
+        window.location.href = "login.html";
+        return;
+      }
 
+      try{
+        const user = JSON.parse(raw);
+        if(user.activo === false || user.activo === "false"){
+          localStorage.removeItem("comanda_operador_actual");
+          window.location.href = "login.html";
+          return;
+        }
+
+        if(user[PAGE_PERMISSION] === false && normalizar(user.nombre) !== "roberto"){
+          const destino = primeraPaginaPermitida(user);
+          window.location.href = destino;
+        }
+      }catch(e){
+        localStorage.removeItem("comanda_operador_actual");
+        window.location.href = "login.html";
+      }
+    }
+
+    function primeraPaginaPermitida(user){
+      const mapa = [
+        ["pedidos","index.html"],
+        ["clientes","clientes.html"],
+        ["materiales","materiales.html"],
+        ["estadisticas","estadisticas.html"],
+        ["marketing","marketing.html"],
+        ["cotizador","Cotizador.html"],
+        ["organizador","Organizador de ideas.html"],
+        ["configuracion","configuracion.html"]
+      ];
+
+      for(const [perm,url] of mapa){
+        if(user[perm]) return url;
+      }
+
+      return "login.html";
+    }
+
+    function aplicarMenuPorPermisos(){
+      let user = null;
+      try{ user = JSON.parse(localStorage.getItem("comanda_operador_actual") || "null"); }catch(e){}
+
+      if(!user) return;
+
+      const esRoberto = normalizar(user.nombre) === "roberto";
+
+      document.querySelectorAll("#mainNav [data-perm]").forEach(el => {
+        const perm = el.dataset.perm;
+        if(!esRoberto && user[perm] === false){
+          el.style.display = "none";
+        }
+      });
+    }
+
+    function salir(){
+      localStorage.removeItem("comanda_operador_actual");
+      window.location.href = "login.html";
+    }
+
+    function assertSupabase(){
+      if(!supabase || !supabase.from){
+        mostrarToast("No se encontró conexión Supabase. Revisa js/supabase.js");
+        throw new Error("Supabase no configurado");
+      }
+    }
+
+    async function cargarTodo(){
+      assertSupabase();
+
+      const body = document.getElementById("clientesBody");
+      body.innerHTML = `<tr><td colspan="5" class="empty">Cargando clientes...</td></tr>`;
+
+      const { data: clientes, error: errorClientes } = await supabase
+        .from("clientes")
+        .select("*")
+        .order("nombre", { ascending:true });
+
+      if(errorClientes){
+        console.error(errorClientes);
+        mostrarToast("Error cargando clientes");
+        return;
+      }
+
+      const { data: pedidos, error: errorPedidos } = await supabase
+        .from("pedidos")
+        .select("*")
+        .order("fecha", { ascending:false });
+
+      if(errorPedidos){
+        console.error(errorPedidos);
+        mostrarToast("Error cargando pedidos");
+        return;
+      }
+
+      CLIENTES = clientes || [];
+      PEDIDOS = pedidos || [];
+
+      renderClientes();
+    }
+
+    function normalizar(texto){
+      return String(texto || "")
+        .trim()
+        .replace(/\s+/g," ")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"");
+    }
+
+    function tituloBonito(nombre){
+      return String(nombre || "")
+        .trim()
+        .replace(/\s+/g," ")
+        .toLowerCase()
+        .replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    function contarPedidosCliente(nombre){
+      const n = normalizar(nombre);
+      return PEDIDOS.filter(p => normalizar(p.cliente) === n).length;
+    }
+
+    function pedidosCliente(nombre){
+      const n = normalizar(nombre);
+      return PEDIDOS.filter(p => normalizar(p.cliente) === n);
+    }
+
+    function obtenerClientesUnicos(){
+      const mapa = new Map();
+
+      for(const c of CLIENTES){
+        const key = normalizar(c.nombre);
+        if(!key) continue;
+
+        if(!mapa.has(key)){
+          mapa.set(key, c);
+        }else{
+          const actual = mapa.get(key);
+          const actualTieneDatos = cantidadDatosCliente(actual);
+          const nuevoTieneDatos = cantidadDatosCliente(c);
+
+          if(nuevoTieneDatos > actualTieneDatos){
+            mapa.set(key, c);
+          }
+        }
+      }
+
+      return [...mapa.values()];
+    }
+
+    function cantidadDatosCliente(c){
+      let total = 0;
+      if(c.telefono) total++;
+      if(c.correo) total++;
+      if(c.notas) total++;
+      if(c.tipo) total++;
+      return total;
+    }
+
+    function renderClientes(){
+      const body = document.getElementById("clientesBody");
+      const search = normalizar(document.getElementById("searchInput").value);
+      const tipo = document.getElementById("tipoFilter").value;
+      const estado = document.getElementById("estadoFilter").value;
+      const orden = document.getElementById("ordenFilter").value;
+
+      let lista = obtenerClientesUnicos();
+
+      lista = lista.filter(c => {
+        const activo = c.activo !== false;
+        const texto = normalizar([
+          c.nombre,
+          c.telefono,
+          c.correo,
+          c.tipo,
+          c.notas
+        ].join(" "));
+
+        if(search && !texto.includes(search)) return false;
+        if(tipo && c.tipo !== tipo) return false;
+        if(estado === "activo" && !activo) return false;
+        if(estado === "inactivo" && activo) return false;
+
+        return true;
+      });
+
+      lista.sort((a,b) => {
+        if(orden === "az") return String(a.nombre || "").localeCompare(String(b.nombre || ""));
+        if(orden === "za") return String(b.nombre || "").localeCompare(String(a.nombre || ""));
+        if(orden === "pedidos") return contarPedidosCliente(b.nombre) - contarPedidosCliente(a.nombre);
+        if(orden === "recientes") return String(b.created_at || "").localeCompare(String(a.created_at || ""));
+        return 0;
+      });
+
+      document.getElementById("clientCount").textContent = `${lista.length} clientes`;
+
+      if(!lista.length){
+        body.innerHTML = `<tr><td colspan="5" class="empty">No hay clientes para mostrar.</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = lista.map(c => {
+        const pedidos = contarPedidosCliente(c.nombre);
+        const activo = c.activo !== false;
+        const telefono = c.telefono || "Sin teléfono";
+        const correo = c.correo || "Sin correo";
+        const tipo = c.tipo || "Cliente Standar";
+
+        return `
+          <tr>
+            <td data-label="Cliente">
+              <div class="client-name">${escapeHtml(c.nombre || "")}</div>
+              <div class="subline">
+                <span class="tag">${escapeHtml(tipo)}</span>
+                <span class="tag">📞 ${escapeHtml(telefono)}</span>
+                <span class="tag">✉️ ${escapeHtml(correo)}</span>
+              </div>
+            </td>
+
+            <td data-label="Notas">
+              ${escapeHtml(c.notas || "—")}
+            </td>
+
+            <td data-label="Pedidos / Historial">
+              <button class="history-btn" onclick="abrirHistorial('${c.id}')">
+                <strong>${pedidos}</strong>
+                <span>Pedidos / Historial</span>
+              </button>
+            </td>
+
+            <td data-label="Estado">
+              <span class="${activo ? "active" : "inactive"}">${activo ? "Activo" : "Inactivo"}</span>
+            </td>
+
+            <td data-label="Acción">
+              <div class="row-actions">
+                <button class="btn btn-small btn-dark" onclick="abrirModalEditar('${c.id}')">Editar</button>
+                <button class="btn btn-small btn-red" onclick="desactivarCliente('${c.id}')">${activo ? "Desactivar" : "Activar"}</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function abrirModalNuevo(){
+      clienteEditando = null;
+      document.getElementById("modalTitle").textContent = "Añadir cliente";
+      document.getElementById("clienteNombre").value = "";
+      document.getElementById("clienteTelefono").value = "";
+      document.getElementById("clienteCorreo").value = "";
+      document.getElementById("clienteTipo").value = "Cliente Standar";
+      document.getElementById("clienteActivo").value = "true";
+      document.getElementById("clienteNotas").value = "";
+      document.getElementById("mergeWarning").style.display = "none";
+      document.getElementById("clienteModal").classList.add("show");
+      setTimeout(()=>document.getElementById("clienteNombre").focus(),100);
+    }
+
+    function abrirModalEditar(id){
+      const c = CLIENTES.find(x => String(x.id) === String(id));
+      if(!c){
+        mostrarToast("Cliente no encontrado");
+        return;
+      }
+
+      clienteEditando = JSON.parse(JSON.stringify(c));
+
+      document.getElementById("modalTitle").textContent = "Editar cliente";
+      document.getElementById("clienteNombre").value = c.nombre || "";
+      document.getElementById("clienteTelefono").value = c.telefono || "";
+      document.getElementById("clienteCorreo").value = c.correo || "";
+      document.getElementById("clienteTipo").value = c.tipo || "Cliente Standar";
+      document.getElementById("clienteActivo").value = c.activo === false ? "false" : "true";
+      document.getElementById("clienteNotas").value = c.notas || "";
+      revisarPosibleFusion();
+
+      document.getElementById("clienteModal").classList.add("show");
+    }
+
+    function cerrarModal(){
+      document.getElementById("clienteModal").classList.remove("show");
+      clienteEditando = null;
+    }
+
+    function revisarPosibleFusion(){
+      const nombre = document.getElementById("clienteNombre").value;
+      const key = normalizar(nombre);
+
+      if(!key){
+        document.getElementById("mergeWarning").style.display = "none";
+        return;
+      }
+
+      const encontrados = CLIENTES.filter(c => {
+        if(clienteEditando && String(c.id) === String(clienteEditando.id)) return false;
+        return normalizar(c.nombre) === key;
+      });
+
+      document.getElementById("mergeWarning").style.display = encontrados.length ? "block" : "none";
+    }
+
+    async function guardarCliente(){
+      assertSupabase();
+
+      const nombreNuevo = tituloBonito(document.getElementById("clienteNombre").value);
+      const telefono = document.getElementById("clienteTelefono").value.trim();
+      const correo = document.getElementById("clienteCorreo").value.trim();
+      const tipo = document.getElementById("clienteTipo").value;
+      const activo = document.getElementById("clienteActivo").value === "true";
+      const notas = document.getElementById("clienteNotas").value.trim();
+
+      if(!nombreNuevo){
+        mostrarToast("Debes colocar el nombre del cliente");
+        return;
+      }
+
+      try{
+        if(clienteEditando){
+          await editarClienteConFusion(clienteEditando, {
+            nombre:nombreNuevo,
+            telefono,
+            correo,
+            tipo,
+            activo,
+            notas
+          });
+        }else{
+          await crearClienteSinDuplicar({
+            nombre:nombreNuevo,
+            telefono,
+            correo,
+            tipo,
+            activo,
+            notas
+          });
+        }
+
+        cerrarModal();
+        await cargarTodo();
+        mostrarToast("Cliente guardado correctamente");
+      }catch(error){
+        console.error(error);
+        mostrarToast("Error guardando cliente: " + (error.message || error));
+      }
+    }
+
+    async function crearClienteSinDuplicar(nuevo){
+      const keyNuevo = normalizar(nuevo.nombre);
+      const existente = CLIENTES.find(c => normalizar(c.nombre) === keyNuevo);
+
+      if(existente){
+        const actualizado = mezclarCliente(existente, nuevo);
+
+        const { error } = await supabase
+          .from("clientes")
+          .update(actualizado)
+          .eq("id", existente.id);
+
+        if(error) throw error;
+
+        await actualizarPedidosPorNombre(nuevo.nombre, existente.nombre);
+        return;
+      }
+
+      const { error } = await supabase
+        .from("clientes")
+        .insert([nuevo]);
+
+      if(error) throw error;
+    }
+
+    async function editarClienteConFusion(original, nuevo){
+      const nombreAnterior = tituloBonito(original.nombre);
+      const nombreNuevo = tituloBonito(nuevo.nombre);
+      const keyNuevo = normalizar(nombreNuevo);
+
+      const clientesMismoNombre = CLIENTES.filter(c => normalizar(c.nombre) === keyNuevo);
+      const clienteDestinoExistente = clientesMismoNombre.find(c => String(c.id) !== String(original.id));
+
+      if(clienteDestinoExistente){
+        const fusionado = mezclarCliente(clienteDestinoExistente, nuevo);
+
+        const { error: errorUpdateDestino } = await supabase
+          .from("clientes")
+          .update(fusionado)
+          .eq("id", clienteDestinoExistente.id);
+
+        if(errorUpdateDestino) throw errorUpdateDestino;
+
+        await actualizarPedidosPorNombre(nombreAnterior, clienteDestinoExistente.nombre);
+        await actualizarPedidosPorNombre(nombreNuevo, clienteDestinoExistente.nombre);
+
+        const { error: errorDeleteOriginal } = await supabase
+          .from("clientes")
+          .delete()
+          .eq("id", original.id);
+
+        if(errorDeleteOriginal) throw errorDeleteOriginal;
+
+        await fusionarClientesDuplicadosPorNombre(clienteDestinoExistente.nombre);
+        return;
+      }
+
+      const { error: errorCliente } = await supabase
+        .from("clientes")
+        .update(nuevo)
+        .eq("id", original.id);
+
+      if(errorCliente) throw errorCliente;
+
+      if(normalizar(nombreAnterior) !== normalizar(nombreNuevo)){
+        await actualizarPedidosPorNombre(nombreAnterior, nombreNuevo);
+      }
+
+      await fusionarClientesDuplicadosPorNombre(nombreNuevo);
+    }
+
+    function mezclarCliente(base, nuevo){
+      return {
+        nombre: nuevo.nombre || base.nombre,
+        telefono: nuevo.telefono || base.telefono || "",
+        correo: nuevo.correo || base.correo || "",
+        tipo: nuevo.tipo || base.tipo || "Cliente Standar",
+        activo: nuevo.activo,
+        notas: combinarNotas(base.notas, nuevo.notas)
+      };
+    }
+
+    function combinarNotas(a,b){
+      a = String(a || "").trim();
+      b = String(b || "").trim();
+
+      if(a && b && normalizar(a) !== normalizar(b)) return `${a}\n${b}`;
+      return b || a || "";
+    }
+
+    async function actualizarPedidosPorNombre(nombreAnterior, nombreNuevo){
+      const keyAnterior = normalizar(nombreAnterior);
+      const pedidosActualizar = PEDIDOS.filter(p => normalizar(p.cliente) === keyAnterior);
+
+      if(!pedidosActualizar.length) return;
+
+      for(const p of pedidosActualizar){
+        const { error } = await supabase
+          .from("pedidos")
+          .update({ cliente:nombreNuevo })
+          .eq("id", p.id);
+
+        if(error) throw error;
+      }
+    }
+
+    async function fusionarClientesDuplicadosPorNombre(nombre){
+      const key = normalizar(nombre);
+      const duplicados = CLIENTES.filter(c => normalizar(c.nombre) === key);
+
+      if(duplicados.length <= 1) return;
+
+      const principal = duplicados
+        .slice()
+        .sort((a,b) => cantidadDatosCliente(b) - cantidadDatosCliente(a))[0];
+
+      const datosFusionados = duplicados.reduce((acc,c) => mezclarCliente(acc,c), principal);
+
+      const { error: errorUpdate } = await supabase
+        .from("clientes")
+        .update(datosFusionados)
+        .eq("id", principal.id);
+
+      if(errorUpdate) throw errorUpdate;
+
+      const idsEliminar = duplicados
+        .filter(c => String(c.id) !== String(principal.id))
+        .map(c => c.id);
+
+      if(idsEliminar.length){
+        const { error: errorDelete } = await supabase
+          .from("clientes")
+          .delete()
+          .in("id", idsEliminar);
+
+        if(errorDelete) throw errorDelete;
+      }
+    }
+
+    async function fusionarDuplicadosExactos(){
+      assertSupabase();
+
+      if(!confirm("¿Fusionar clientes duplicados por nombre exacto normalizado?")) return;
+
+      try{
+        const grupos = new Map();
+
+        for(const c of CLIENTES){
+          const key = normalizar(c.nombre);
+          if(!key) continue;
+          if(!grupos.has(key)) grupos.set(key, []);
+          grupos.get(key).push(c);
+        }
+
+        let total = 0;
+
+        for(const [key, grupo] of grupos){
+          if(grupo.length <= 1) continue;
+
+          const principal = grupo
+            .slice()
+            .sort((a,b) => cantidadDatosCliente(b) - cantidadDatosCliente(a))[0];
+
+          for(const c of grupo){
+            await actualizarPedidosPorNombre(c.nombre, principal.nombre);
+          }
+
+          const fusionado = grupo.reduce((acc,c) => mezclarCliente(acc,c), principal);
+
+          const { error:updateError } = await supabase
+            .from("clientes")
+            .update(fusionado)
+            .eq("id", principal.id);
+
+          if(updateError) throw updateError;
+
+          const idsEliminar = grupo
+            .filter(c => String(c.id) !== String(principal.id))
+            .map(c => c.id);
+
+          if(idsEliminar.length){
+            const { error:deleteError } = await supabase
+              .from("clientes")
+              .delete()
+              .in("id", idsEliminar);
+
+            if(deleteError) throw deleteError;
+          }
+
+          total += idsEliminar.length;
+        }
+
+        await cargarTodo();
+        mostrarToast(`Fusión terminada. Duplicados eliminados: ${total}`);
+      }catch(error){
+        console.error(error);
+        mostrarToast("Error fusionando duplicados: " + (error.message || error));
+      }
+    }
+
+    async function sincronizarClientesDesdePedidos(){
+      assertSupabase();
+
+      if(!confirm("Esto creará clientes faltantes detectados en pedidos. ¿Continuar?")) return;
+
+      try{
+        const clientesKeys = new Set(CLIENTES.map(c => normalizar(c.nombre)));
+        const faltantes = [];
+
+        for(const p of PEDIDOS){
+          const nombre = tituloBonito(p.cliente);
+          const key = normalizar(nombre);
+
+          if(!key) continue;
+
+          if(!clientesKeys.has(key)){
+            clientesKeys.add(key);
+            faltantes.push({
+              nombre,
+              telefono:"",
+              correo:"",
+              tipo:"Cliente Standar",
+              notas:"Creado automáticamente desde pedidos",
+              activo:true
+            });
+          }
+        }
+
+        if(faltantes.length){
+          const { error } = await supabase
+            .from("clientes")
+            .insert(faltantes);
+
+          if(error) throw error;
+        }
+
+        await cargarTodo();
+        mostrarToast(`Sincronización lista. Clientes creados: ${faltantes.length}`);
+      }catch(error){
+        console.error(error);
+        mostrarToast("Error sincronizando clientes: " + (error.message || error));
+      }
+    }
+
+    async function desactivarCliente(id){
+      const c = CLIENTES.find(x => String(x.id) === String(id));
+      if(!c) return;
+
+      const nuevoEstado = c.activo === false ? true : false;
+      const texto = nuevoEstado ? "activar" : "desactivar";
+
+      if(!confirm(`¿Seguro que deseas ${texto} a ${c.nombre}?`)) return;
+
+      const { error } = await supabase
+        .from("clientes")
+        .update({ activo:nuevoEstado })
+        .eq("id", id);
+
+      if(error){
+        console.error(error);
+        mostrarToast("Error cambiando estado del cliente");
+        return;
+      }
+
+      await cargarTodo();
+      mostrarToast("Estado actualizado");
+    }
+
+    function abrirHistorial(id){
+      const c = CLIENTES.find(x => String(x.id) === String(id));
+      if(!c) return;
+
+      const lista = pedidosCliente(c.nombre);
+
+      document.getElementById("historialTitle").textContent = `Historial · ${c.nombre}`;
+
+      const body = document.getElementById("historialBody");
+
+      if(!lista.length){
+        body.innerHTML = `<div class="empty">Este cliente no tiene pedidos registrados.</div>`;
+      }else{
+        body.innerHTML = lista.map(p => `
+          <div class="history-item">
+            <strong>${escapeHtml(p.descripcion || "Sin descripción")}</strong>
+            <div class="history-meta">
+              <span>📅 ${escapeHtml(p.fecha || "Sin fecha")}</span>
+              <span>👤 ${escapeHtml(p.operador || "Sin operador")}</span>
+              <span>📦 ${escapeHtml(p.material || "Sin material")}</span>
+              <span>🖨️ ${escapeHtml(p.tipo_impresion || "Sin tipo")}</span>
+              <span>🔢 ${escapeHtml(p.cantidad || "")}</span>
+              <span>Trabajo: ${escapeHtml(p.estatus_trabajo || "")}</span>
+              <span>Pago: ${escapeHtml(p.estatus_pago || "")}</span>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      document.getElementById("historialModal").classList.add("show");
+    }
+
+    function cerrarHistorial(){
+      document.getElementById("historialModal").classList.remove("show");
+    }
+
+    function mostrarToast(msg){
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(()=>t.classList.remove("show"),3500);
+    }
+
+    function escapeHtml(text){
+      return String(text ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    window.addEventListener("keydown", e => {
+      if(e.key === "Escape"){
+        cerrarModal();
+        cerrarHistorial();
+      }
+    });
+  </script>
 </body>
 </html>
-
-
-
