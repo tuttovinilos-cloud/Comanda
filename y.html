@@ -1,1 +1,345 @@
-hola
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Analizador SVG Tuttovinilos</title>
+
+<style>
+:root{
+--bg:#06101e;
+--card:#0c1b2f;
+--line:#254b70;
+--text:#eef7ff;
+--muted:#92abc4;
+--blue:#1688ff;
+--orange:#ff8616;
+--green:#22c783;
+--red:#ff4d5e;
+}
+
+*{box-sizing:border-box}
+
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:#06101e;
+color:var(--text);
+}
+
+header{
+padding:15px;
+background:linear-gradient(135deg,#06305f,#0b5dab,#ff7b00);
+}
+
+header h1{
+margin:0;
+font-size:18px;
+}
+
+.wrap{
+padding:15px;
+max-width:1200px;
+margin:auto;
+}
+
+.card{
+background:#0c1b2f;
+border:1px solid var(--line);
+border-radius:16px;
+padding:14px;
+margin-bottom:14px;
+}
+
+.card h2{
+margin-top:0;
+font-size:16px;
+}
+
+input,select,button{
+width:100%;
+padding:10px;
+border-radius:10px;
+border:none;
+margin-bottom:10px;
+font-size:14px;
+}
+
+input,select{
+background:#06111f;
+border:1px solid #244b72;
+color:white;
+}
+
+button{
+background:linear-gradient(135deg,#1688ff,#0057c8);
+color:white;
+font-weight:bold;
+cursor:pointer;
+}
+
+button.orange{
+background:linear-gradient(135deg,#ff8616,#c65300);
+}
+
+#preview{
+background:white;
+border-radius:12px;
+padding:10px;
+overflow:auto;
+min-height:300px;
+}
+
+#preview svg{
+max-width:100%;
+height:auto;
+display:block;
+margin:auto;
+}
+
+.kpis{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:10px;
+}
+
+.kpi{
+background:#08192c;
+padding:12px;
+border-radius:12px;
+border:1px solid #214161;
+}
+
+.kpi b{
+display:block;
+font-size:22px;
+}
+
+.kpi span{
+font-size:12px;
+color:var(--muted);
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+font-size:12px;
+}
+
+th,td{
+padding:7px;
+border-bottom:1px solid #1d3958;
+text-align:left;
+}
+
+.small{
+font-size:12px;
+color:var(--muted);
+}
+
+@media(max-width:700px){
+.kpis{
+grid-template-columns:1fr;
+}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>📐 Analizador SVG · Tuttovinilos</h1>
+</header>
+
+<div class="wrap">
+
+<div class="card">
+<h2>Subir SVG</h2>
+
+<input type="file" id="fileInput" accept=".svg">
+
+<select id="unit">
+<option value="mm">mm</option>
+<option value="cm" selected>cm</option>
+<option value="m">m</option>
+<option value="in">in</option>
+</select>
+
+<input id="realWidth" type="number" value="120" placeholder="Ancho real">
+
+<button onclick="analizarSVG()">Analizar SVG</button>
+<button class="orange" onclick="cargarDemo()">Demo</button>
+</div>
+
+<div class="card">
+<h2>Vista previa</h2>
+<div id="preview"></div>
+</div>
+
+<div class="card">
+<h2>Resultados</h2>
+
+<div class="kpis">
+<div class="kpi">
+<b id="kPiezas">0</b>
+<span>Piezas</span>
+</div>
+
+<div class="kpi">
+<b id="kPerimetro">0</b>
+<span>Perímetro</span>
+</div>
+
+<div class="kpi">
+<b id="kAreaSel">0</b>
+<span>Área selección</span>
+</div>
+
+<div class="kpi">
+<b id="kAreaVisual">0</b>
+<span>Área visual</span>
+</div>
+</div>
+
+<br>
+
+<table id="tabla">
+<tr>
+<th>#</th>
+<th>Tipo</th>
+<th>Ancho</th>
+<th>Alto</th>
+<th>Perímetro</th>
+</tr>
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+let svgDoc = null;
+
+document.getElementById("fileInput").addEventListener("change", async function(e){
+
+const file = e.target.files[0];
+
+if(!file) return;
+
+const text = await file.text();
+
+document.getElementById("preview").innerHTML = text;
+
+svgDoc = document.querySelector("#preview svg");
+
+if(svgDoc){
+svgDoc.removeAttribute("width");
+svgDoc.removeAttribute("height");
+}
+
+});
+
+function cargarDemo(){
+
+const demo = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 250">
+<path d="M50 180 L90 60 L130 180 Z" fill="#111"/>
+<rect x="160" y="70" width="80" height="110" fill="#111"/>
+<circle cx="310" cy="125" r="55" fill="#111"/>
+</svg>
+`;
+
+document.getElementById("preview").innerHTML = demo;
+
+svgDoc = document.querySelector("#preview svg");
+
+analizarSVG();
+
+}
+
+function analizarSVG(){
+
+if(!svgDoc){
+alert("Sube un SVG");
+return;
+}
+
+const vb = svgDoc.viewBox.baseVal;
+
+const realWidth = Number(document.getElementById("realWidth").value || 1);
+
+const factor = realWidth / vb.width;
+
+const elementos = svgDoc.querySelectorAll("path,rect,circle,ellipse,polygon,polyline,line");
+
+let totalPerimetro = 0;
+
+let tabla = `
+<tr>
+<th>#</th>
+<th>Tipo</th>
+<th>Ancho</th>
+<th>Alto</th>
+<th>Perímetro</th>
+</tr>
+`;
+
+elementos.forEach((el,index)=>{
+
+let bbox;
+
+try{
+bbox = el.getBBox();
+}catch(e){
+return;
+}
+
+let per = 0;
+
+try{
+if(el.getTotalLength){
+per = el.getTotalLength();
+}
+}catch(e){}
+
+const ancho = bbox.width * factor;
+const alto = bbox.height * factor;
+
+const perReal = per * factor;
+
+totalPerimetro += perReal;
+
+tabla += `
+<tr>
+<td>${index+1}</td>
+<td>${el.tagName}</td>
+<td>${ancho.toFixed(2)}</td>
+<td>${alto.toFixed(2)}</td>
+<td>${perReal.toFixed(2)}</td>
+</tr>
+`;
+
+});
+
+const areaSel = (vb.width * factor) * (vb.height * factor);
+
+document.getElementById("kPiezas").innerText = elementos.length;
+
+document.getElementById("kPerimetro").innerText =
+(totalPerimetro/100).toFixed(2) + " m";
+
+document.getElementById("kAreaSel").innerText =
+(areaSel/10000).toFixed(2) + " m²";
+
+document.getElementById("kAreaVisual").innerText =
+(areaSel/10000*0.62).toFixed(2) + " m²";
+
+document.getElementById("tabla").innerHTML = tabla;
+
+}
+
+</script>
+
+</body>
+</html>
