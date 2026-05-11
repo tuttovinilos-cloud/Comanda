@@ -158,6 +158,7 @@ grid-template-columns:1fr;
 
 <input type="file" id="fileInput" accept=".svg">
 
+<label class="small">Unidad de trabajo</label>
 <select id="unit">
 <option value="mm">mm</option>
 <option value="cm" selected>cm</option>
@@ -165,10 +166,11 @@ grid-template-columns:1fr;
 <option value="in">in</option>
 </select>
 
-<input id="realWidth" type="number" value="120" placeholder="Ancho real">
+<label class="small">Ancho real del diseño</label>
+<input id="realWidth" type="number" value="60" placeholder="Ancho real">
 
 <button onclick="analizarSVG()">Analizar SVG</button>
-<button class="orange" onclick="cargarDemo()">Demo</button>
+<button class="orange" onclick="cargarDemo()">Demo HOLA 60cm</button>
 </div>
 
 <div class="card">
@@ -186,6 +188,16 @@ grid-template-columns:1fr;
 </div>
 
 <div class="kpi">
+<b id="kAncho">0</b>
+<span>Ancho real</span>
+</div>
+
+<div class="kpi">
+<b id="kAlto">0</b>
+<span>Alto real</span>
+</div>
+
+<div class="kpi">
 <b id="kPerimetro">0</b>
 <span>Perímetro</span>
 </div>
@@ -197,7 +209,7 @@ grid-template-columns:1fr;
 
 <div class="kpi">
 <b id="kAreaVisual">0</b>
-<span>Área visual</span>
+<span>Área visual aprox.</span>
 </div>
 </div>
 
@@ -236,6 +248,8 @@ svgDoc = document.querySelector("#preview svg");
 if(svgDoc){
 svgDoc.removeAttribute("width");
 svgDoc.removeAttribute("height");
+svgDoc.style.maxWidth = "100%";
+svgDoc.style.height = "auto";
 }
 
 });
@@ -243,16 +257,20 @@ svgDoc.removeAttribute("height");
 function cargarDemo(){
 
 const demo = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 250">
-<path d="M50 180 L90 60 L130 180 Z" fill="#111"/>
-<rect x="160" y="70" width="80" height="110" fill="#111"/>
-<circle cx="310" cy="125" r="55" fill="#111"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 250">
+<path d="M40 215 L40 30 L95 30 L95 95 C120 60 180 65 190 125 L190 215 L135 215 L135 130 C135 108 100 108 100 130 L100 215 Z" fill="#111"/>
+<circle cx="280" cy="145" r="75" fill="#111"/>
+<circle cx="280" cy="145" r="38" fill="white"/>
+<rect x="380" y="30" width="55" height="185" fill="#111"/>
+<path d="M490 110 C500 60 585 65 585 130 L585 215 L535 215 L530 195 C510 220 450 220 450 170 C450 120 520 135 530 120 C535 105 510 100 505 120 L450 120 C450 120 450 115 490 110 Z M530 160 C500 165 500 190 530 180 Z" fill="#111"/>
 </svg>
 `;
 
 document.getElementById("preview").innerHTML = demo;
 
 svgDoc = document.querySelector("#preview svg");
+
+document.getElementById("realWidth").value = 60;
 
 analizarSVG();
 
@@ -265,23 +283,45 @@ alert("Sube un SVG");
 return;
 }
 
-const vb = svgDoc.viewBox.baseVal;
+let vb;
 
+if(svgDoc.viewBox && svgDoc.viewBox.baseVal && svgDoc.viewBox.baseVal.width > 0){
+vb = svgDoc.viewBox.baseVal;
+}else{
+try{
+const box = svgDoc.getBBox();
+vb = {x:box.x, y:box.y, width:box.width, height:box.height};
+}catch(e){
+alert("El SVG no tiene viewBox válido.");
+return;
+}
+}
+
+const unit = document.getElementById("unit").value;
 const realWidth = Number(document.getElementById("realWidth").value || 1);
 
 const factor = realWidth / vb.width;
 
+const unitToMeters = {
+mm:0.001,
+cm:0.01,
+m:1,
+in:0.0254
+}[unit];
+
+const factorToMeters = factor * unitToMeters;
+
 const elementos = svgDoc.querySelectorAll("path,rect,circle,ellipse,polygon,polyline,line");
 
-let totalPerimetro = 0;
+let totalPerimetroUnit = 0;
 
 let tabla = `
 <tr>
 <th>#</th>
 <th>Tipo</th>
-<th>Ancho</th>
-<th>Alto</th>
-<th>Perímetro</th>
+<th>Ancho ${unit}</th>
+<th>Alto ${unit}</th>
+<th>Perímetro ${unit}</th>
 </tr>
 `;
 
@@ -303,12 +343,16 @@ per = el.getTotalLength();
 }
 }catch(e){}
 
+if(per === 0){
+per = perimetroBasico(el);
+}
+
 const ancho = bbox.width * factor;
 const alto = bbox.height * factor;
 
 const perReal = per * factor;
 
-totalPerimetro += perReal;
+totalPerimetroUnit += perReal;
 
 tabla += `
 <tr>
@@ -322,20 +366,67 @@ tabla += `
 
 });
 
-const areaSel = (vb.width * factor) * (vb.height * factor);
+const anchoReal = vb.width * factor;
+const altoReal = vb.height * factor;
+
+const totalPerimetroM = totalPerimetroUnit * unitToMeters;
+
+const areaSelUnit = anchoReal * altoReal;
+const areaSelM2 = areaSelUnit * Math.pow(unitToMeters, 2);
+
+// Área visual aproximada rápida.
+// Para precisión real avanzada habría que rasterizar y contar pixeles.
+const areaVisualM2 = areaSelM2 * 0.62;
 
 document.getElementById("kPiezas").innerText = elementos.length;
 
+document.getElementById("kAncho").innerText = anchoReal.toFixed(2) + " " + unit;
+
+document.getElementById("kAlto").innerText = altoReal.toFixed(2) + " " + unit;
+
 document.getElementById("kPerimetro").innerText =
-(totalPerimetro/100).toFixed(2) + " m";
+totalPerimetroM.toFixed(2) + " m";
 
 document.getElementById("kAreaSel").innerText =
-(areaSel/10000).toFixed(2) + " m²";
+areaSelM2.toFixed(3) + " m²";
 
 document.getElementById("kAreaVisual").innerText =
-(areaSel/10000*0.62).toFixed(2) + " m²";
+areaVisualM2.toFixed(3) + " m²";
 
 document.getElementById("tabla").innerHTML = tabla;
+
+}
+
+function perimetroBasico(el){
+
+const tag = el.tagName.toLowerCase();
+
+if(tag === "rect"){
+const w = Number(el.getAttribute("width") || 0);
+const h = Number(el.getAttribute("height") || 0);
+return 2 * (w + h);
+}
+
+if(tag === "circle"){
+const r = Number(el.getAttribute("r") || 0);
+return 2 * Math.PI * r;
+}
+
+if(tag === "ellipse"){
+const rx = Number(el.getAttribute("rx") || 0);
+const ry = Number(el.getAttribute("ry") || 0);
+return Math.PI * (3*(rx+ry) - Math.sqrt((3*rx+ry)*(rx+3*ry)));
+}
+
+if(tag === "line"){
+const x1 = Number(el.getAttribute("x1") || 0);
+const y1 = Number(el.getAttribute("y1") || 0);
+const x2 = Number(el.getAttribute("x2") || 0);
+const y2 = Number(el.getAttribute("y2") || 0);
+return Math.hypot(x2-x1,y2-y1);
+}
+
+return 0;
 
 }
 
