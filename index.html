@@ -27,6 +27,8 @@
   --mono:'Share Tech Mono',monospace;
   --head:'Barlow Condensed',sans-serif;
   --body:'Barlow',sans-serif;
+  --sticky-head-top:58px;
+  --sticky-quick-top:96px;
 }
 html{scroll-behavior:smooth}
 body{
@@ -246,7 +248,7 @@ thead tr{
 }
 th{
   position:sticky;
-  top:58px;
+  top:var(--sticky-head-top);
   z-index:40;
   background:var(--panel);
   font-family:var(--head);
@@ -333,7 +335,7 @@ tbody::before{
   padding:6px;
   border-bottom:1px solid var(--border2);
   position:sticky;
-  top:96px;
+  top:var(--sticky-quick-top);
   z-index:35;
 }
 .quick-btn{
@@ -1006,6 +1008,18 @@ function marcarSupabaseSiListo(){
     if(badgeBox) badgeBox.classList.add("ok");
   }
 }
+
+function updateStickyOffsets(){
+  const header = document.querySelector(".header");
+  const toolbar = document.querySelector(".toolbar");
+  if(!header || !toolbar) return;
+
+  const h = Math.ceil(header.getBoundingClientRect().height);
+  const t = Math.ceil(toolbar.getBoundingClientRect().height);
+
+  document.documentElement.style.setProperty("--sticky-head-top", `${h}px`);
+  document.documentElement.style.setProperty("--sticky-quick-top", `${h + t}px`);
+}
 (function(){
   const AUTH_KEY = "comanda_operador_actual";
   const links = [
@@ -1087,6 +1101,7 @@ function marcarSupabaseSiListo(){
       btn.textContent = "☰ Menú";
       btn.onclick = function(){
         menu.classList.toggle("open");
+        updateStickyOffsets();
       };
       header.insertBefore(btn, menu);
     }
@@ -1177,13 +1192,16 @@ function marcarSupabaseSiListo(){
     marcarSupabaseSiListo();
     setupMobileMenu();
     renderFallbackMenu();
+    updateStickyOffsets();
     cargarOperadoresEnComanda();
     syncStorageBadge();
+    window.addEventListener("resize", updateStickyOffsets);
     setInterval(syncStorageBadge, 600);
     setTimeout(function(){
       marcarSupabaseSiListo();
       setupMobileMenu();
       renderFallbackMenu();
+      updateStickyOffsets();
       cargarOperadoresEnComanda();
       syncStorageBadge();
     }, 700);
