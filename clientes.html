@@ -25,6 +25,7 @@
   --green:#30D158;
   --red:#FF3B30;
   --yellow:#FFD60A;
+  --orange:#FF9F0A;
   --mono:'Share Tech Mono',monospace;
   --head:'Barlow Condensed',sans-serif;
   --body:'Barlow',sans-serif;
@@ -38,6 +39,8 @@ body{
   padding-bottom:90px;
 }
 
+button,input,select,textarea{font:inherit}
+button{touch-action:manipulation}
 #authTopbar{display:none!important}
 
 .header{
@@ -191,7 +194,7 @@ input,select,textarea{
 }
 
 textarea{
-  min-height:42px;
+  min-height:70px;
   resize:vertical;
 }
 
@@ -227,6 +230,12 @@ select option{
 
 .btn:hover{filter:brightness(1.1)}
 .btn.success{background:#16a34a}
+.btn.danger{background:#dc2626}
+.btn.secondary{
+  background:transparent;
+  color:var(--muted2);
+  border:1px solid var(--border2);
+}
 
 .layout{
   padding:16px;
@@ -278,7 +287,7 @@ select option{
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:1080px;
+  min-width:1050px;
 }
 
 th{
@@ -297,16 +306,10 @@ td{
   padding:9px 10px;
   border-bottom:1px solid var(--border);
   vertical-align:middle;
+  font-size:13px;
 }
 
 tr:hover td{background:#ffffff03}
-
-.name-input{min-width:190px}
-.phone-input{min-width:135px}
-.email-input{min-width:180px}
-.notes-input{min-width:220px}
-.active-select{max-width:110px}
-.type-select{max-width:145px}
 
 .mini-btn{
   border:1px solid var(--border2);
@@ -360,6 +363,12 @@ tr:hover td{background:#ffffff03}
   background:#30D15811;
 }
 
+.badge.off{
+  color:#FF3B30;
+  border-color:#FF3B3044;
+  background:#FF3B3011;
+}
+
 .empty{
   color:var(--muted);
   padding:30px;
@@ -397,6 +406,7 @@ tr:hover td{background:#ffffff03}
   font-size:13px;
   letter-spacing:1px;
   display:none;
+  text-align:center;
 }
 
 .modal-backdrop{
@@ -439,7 +449,43 @@ tr:hover td{background:#ffffff03}
   text-transform:uppercase;
 }
 
-.modal-body{padding:16px}
+.modal-body{
+  padding:16px;
+  display:grid;
+  gap:12px;
+}
+
+.modal-footer{
+  padding:14px 16px;
+  border-top:1px solid var(--border);
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.form-full{grid-column:1/-1}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.field label{
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--muted);
+}
 
 .history-item{
   border:1px solid var(--border2);
@@ -463,6 +509,12 @@ tr:hover td{background:#ffffff03}
   color:var(--text);
   font-size:13px;
   line-height:1.35;
+}
+
+.actions-row{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
 }
 
 @media(max-width:760px){
@@ -508,7 +560,9 @@ tr:hover td{background:#ffffff03}
   .toolbar{padding:10px}
   .search-wrap{min-width:100%}
 
-  #ordenClientes{
+  #ordenClientes,
+  #filtroTipoCliente,
+  #filtroEstadoCliente{
     flex:1 1 100%;
   }
 
@@ -530,6 +584,19 @@ tr:hover td{background:#ffffff03}
   .card-actions .badge{
     width:100%;
     justify-content:center;
+    text-align:center;
+  }
+
+  .form-grid{
+    grid-template-columns:1fr;
+  }
+
+  .modal{
+    max-height:92vh;
+  }
+
+  .modal-footer .btn{
+    width:100%;
   }
 }
 </style>
@@ -568,6 +635,20 @@ tr:hover td{background:#ffffff03}
     <input id="searchClientes" type="text" placeholder="Buscar cliente, teléfono, correo o notas..." oninput="filtrarClientes()"/>
   </div>
 
+  <select id="filtroTipoCliente" onchange="filtrarClientes()">
+    <option value="">Todos los tipos</option>
+    <option value="Cliente Standar">Cliente Standar</option>
+    <option value="Cliente VIP">Cliente VIP</option>
+    <option value="Cliente Básico">Cliente Básico</option>
+    <option value="Cliente Editado">Cliente Editado</option>
+  </select>
+
+  <select id="filtroEstadoCliente" onchange="filtrarClientes()">
+    <option value="">Todos</option>
+    <option value="activo">Activos</option>
+    <option value="inactivo">Inactivos</option>
+  </select>
+
   <select id="ordenClientes" onchange="filtrarClientes()">
     <option value="nombre_az">Nombre A-Z</option>
     <option value="nombre_za">Nombre Z-A</option>
@@ -576,21 +657,20 @@ tr:hover td{background:#ffffff03}
   </select>
 
   <button class="btn" onclick="nuevoCliente()">+ Añadir cliente</button>
-  <button class="btn success" onclick="guardarTodosClientes()">Guardar cambios</button>
 </div>
 
 <div class="layout">
 
   <div class="note">
-    <strong>Clientes:</strong> esta página se sincroniza automáticamente leyendo todos los nombres usados en pedidos.
-    Si un cliente aparece en pedidos y no existe aquí, se crea solo al abrir esta página.
+    <strong>Clientes:</strong> esta página lee los clientes guardados y también revisa nombres usados en pedidos.
+    Si un cliente aparece en pedidos y no existe en clientes, se crea automáticamente como Cliente Standar.
   </div>
 
   <section class="card">
     <div class="card-header">
       <div>
         <div class="card-title">Clientes</div>
-        <div class="card-sub">Lista generada automáticamente desde pedidos y editable desde aquí.</div>
+        <div class="card-sub">Crear, editar, filtrar y revisar historial de pedidos por cliente.</div>
       </div>
 
       <div class="card-actions">
@@ -621,6 +701,66 @@ tr:hover td{background:#ffffff03}
   </section>
 </div>
 
+<!-- MODAL CREAR / EDITAR CLIENTE -->
+<div class="modal-backdrop" id="clienteBackdrop" onclick="cerrarClienteSiFondo(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="clienteModalTitle">Nuevo cliente</div>
+      <button class="mini-btn" onclick="cerrarModalCliente()">Cerrar</button>
+    </div>
+
+    <div class="modal-body">
+      <input type="hidden" id="clienteId"/>
+
+      <div class="form-grid">
+        <div class="field form-full">
+          <label>Nombre del cliente</label>
+          <input id="clienteNombre" type="text" placeholder="Ej: Armando Framed"/>
+        </div>
+
+        <div class="field">
+          <label>Tipo de cliente</label>
+          <select id="clienteTipo">
+            <option value="Cliente Standar">Cliente Standar</option>
+            <option value="Cliente VIP">Cliente VIP</option>
+            <option value="Cliente Básico">Cliente Básico</option>
+            <option value="Cliente Editado">Cliente Editado</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Estado</label>
+          <select id="clienteActivo">
+            <option value="true">Activo</option>
+            <option value="false">Inactivo</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Teléfono</label>
+          <input id="clienteTelefono" type="text" placeholder="Teléfono"/>
+        </div>
+
+        <div class="field">
+          <label>Correo</label>
+          <input id="clienteCorreo" type="email" placeholder="correo@ejemplo.com"/>
+        </div>
+
+        <div class="field form-full">
+          <label>Notas</label>
+          <textarea id="clienteNotas" placeholder="Notas importantes del cliente..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn secondary" onclick="cerrarModalCliente()">Cancelar</button>
+      <button class="btn success" onclick="guardarClienteModal()">Guardar cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL HISTORIAL -->
 <div class="modal-backdrop" id="historyBackdrop" onclick="cerrarHistorialSiFondo(event)">
   <div class="modal">
     <div class="modal-header">
@@ -635,11 +775,429 @@ tr:hover td{background:#ffffff03}
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=16"></script>
-<script src="js/auth.js?v=16"></script>
-<script src="js/clientes.js?v=16"></script>
+<script src="js/supabase.js?v=17"></script>
+<script src="js/auth.js?v=17"></script>
 
 <script>
+console.log("CLIENTES HTML conectado");
+
+let clientesDB = [];
+let pedidosDB = [];
+
+function db(){
+  return window.supabaseClient;
+}
+
+function validarSupabase(){
+  if(!db()){
+    alert("No existe conexión Supabase. Revisa js/supabase.js");
+    console.error("No existe window.supabaseClient");
+    return false;
+  }
+  return true;
+}
+
+function normalizar(valor){
+  return String(valor || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function nombreBonito(valor){
+  const limpio = String(valor || "").trim().replace(/\s+/g, " ");
+  if(!limpio) return "";
+
+  return limpio
+    .split(" ")
+    .map(p => p ? p.charAt(0).toUpperCase() + p.slice(1).toLowerCase() : "")
+    .join(" ");
+}
+
+function escapeHtml(valor){
+  return String(valor ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function mostrarToast(mensaje){
+  const toast = document.getElementById("toast");
+  if(!toast){
+    console.log(mensaje);
+    return;
+  }
+
+  toast.textContent = mensaje;
+  toast.style.display = "block";
+
+  setTimeout(() => {
+    toast.style.display = "none";
+  }, 2200);
+}
+
+function contarPedidosCliente(nombre){
+  const n = normalizar(nombre);
+  if(!n) return 0;
+
+  return pedidosDB.filter(p => normalizar(p.cliente) === n).length;
+}
+
+async function cargarPedidos(){
+  const { data, error } = await db()
+    .from("pedidos")
+    .select("id, fecha, cliente, descripcion, cantidad, material, tipo_impresion, estatus_trabajo, estatus_pago, fecha_entrega")
+    .order("id", { ascending:false });
+
+  if(error){
+    console.warn("No se pudieron cargar pedidos:", error);
+    pedidosDB = [];
+    return;
+  }
+
+  pedidosDB = data || [];
+}
+
+async function crearClientesDesdePedidos(){
+  const nombresPedidos = [...new Set(
+    pedidosDB
+      .map(p => String(p.cliente || "").trim())
+      .filter(Boolean)
+      .map(nombreBonito)
+  )];
+
+  const existentes = new Set(
+    clientesDB.map(c => normalizar(c.nombre))
+  );
+
+  const nuevos = nombresPedidos
+    .filter(nombre => !existentes.has(normalizar(nombre)))
+    .map(nombre => ({
+      nombre,
+      tipo_cliente:"Cliente Standar",
+      telefono:"",
+      correo:"",
+      notas:"",
+      activo:true
+    }));
+
+  if(!nuevos.length) return;
+
+  const { error } = await db()
+    .from("clientes")
+    .insert(nuevos);
+
+  if(error){
+    console.warn("No se pudieron crear clientes desde pedidos:", error);
+    return;
+  }
+
+  console.log("Clientes creados desde pedidos:", nuevos);
+}
+
+async function cargarClientes(){
+  if(!validarSupabase()) return;
+
+  const { data, error } = await db()
+    .from("clientes")
+    .select("id, nombre, tipo_cliente, telefono, correo, notas, activo")
+    .order("nombre", { ascending:true });
+
+  if(error){
+    console.error("Error cargando clientes:", error);
+    document.getElementById("clientesBody").innerHTML = `
+      <tr><td colspan="8" class="empty">Error cargando clientes: ${escapeHtml(error.message)}</td></tr>
+    `;
+    return;
+  }
+
+  clientesDB = data || [];
+}
+
+async function inicializarClientes(){
+  if(!validarSupabase()) return;
+
+  await cargarPedidos();
+  await cargarClientes();
+  await crearClientesDesdePedidos();
+  await cargarClientes();
+
+  filtrarClientes();
+}
+
+function filtrarClientes(){
+  const texto = normalizar(document.getElementById("searchClientes")?.value || "");
+  const tipoFiltro = document.getElementById("filtroTipoCliente")?.value || "";
+  const estadoFiltro = document.getElementById("filtroEstadoCliente")?.value || "";
+  const orden = document.getElementById("ordenClientes")?.value || "nombre_az";
+
+  let lista = [...clientesDB];
+
+  lista = lista.filter(c => {
+    const contenido = normalizar([
+      c.nombre,
+      c.tipo_cliente,
+      c.telefono,
+      c.correo,
+      c.notas
+    ].join(" "));
+
+    if(texto && !contenido.includes(texto)) return false;
+    if(tipoFiltro && c.tipo_cliente !== tipoFiltro) return false;
+
+    if(estadoFiltro === "activo" && c.activo !== true) return false;
+    if(estadoFiltro === "inactivo" && c.activo === true) return false;
+
+    return true;
+  });
+
+  lista.sort((a,b) => {
+    const na = String(a.nombre || "");
+    const nb = String(b.nombre || "");
+    const pa = contarPedidosCliente(a.nombre);
+    const pb = contarPedidosCliente(b.nombre);
+
+    if(orden === "nombre_az") return na.localeCompare(nb);
+    if(orden === "nombre_za") return nb.localeCompare(na);
+    if(orden === "pedidos_mayor") return pb - pa;
+    if(orden === "pedidos_menor") return pa - pb;
+
+    return 0;
+  });
+
+  renderClientes(lista);
+}
+
+function renderClientes(lista){
+  const tbody = document.getElementById("clientesBody");
+  const count = document.getElementById("clientesCount");
+
+  if(count){
+    count.textContent = `${lista.length} cliente${lista.length === 1 ? "" : "s"}`;
+  }
+
+  if(!tbody) return;
+
+  if(!lista.length){
+    tbody.innerHTML = `<tr><td colspan="8" class="empty">Sin clientes</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lista.map(c => {
+    const pedidos = contarPedidosCliente(c.nombre);
+
+    const estado = c.activo === true
+      ? `<span class="badge ok">Activo</span>`
+      : `<span class="badge off">Inactivo</span>`;
+
+    return `
+      <tr>
+        <td><strong>${escapeHtml(c.nombre || "")}</strong></td>
+        <td>${escapeHtml(c.tipo_cliente || "Cliente Standar")}</td>
+        <td>${escapeHtml(c.telefono || "")}</td>
+        <td>${escapeHtml(c.correo || "")}</td>
+        <td>${escapeHtml(c.notas || "")}</td>
+        <td>${pedidos}</td>
+        <td>${estado}</td>
+        <td>
+          <div class="actions-row">
+            <button class="mini-btn info" onclick="verHistorialCliente(${Number(c.id)})">Historial</button>
+            <button class="mini-btn" onclick="editarCliente(${Number(c.id)})">Editar</button>
+            <button class="mini-btn del" onclick="desactivarActivarCliente(${Number(c.id)})">
+              ${c.activo === true ? "Desactivar" : "Activar"}
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function nuevoCliente(){
+  document.getElementById("clienteModalTitle").textContent = "Nuevo cliente";
+  document.getElementById("clienteId").value = "";
+  document.getElementById("clienteNombre").value = "";
+  document.getElementById("clienteTipo").value = "Cliente Standar";
+  document.getElementById("clienteTelefono").value = "";
+  document.getElementById("clienteCorreo").value = "";
+  document.getElementById("clienteNotas").value = "";
+  document.getElementById("clienteActivo").value = "true";
+
+  document.getElementById("clienteBackdrop").style.display = "flex";
+
+  setTimeout(() => {
+    document.getElementById("clienteNombre").focus();
+  }, 150);
+}
+
+function editarCliente(id){
+  const cliente = clientesDB.find(c => Number(c.id) === Number(id));
+
+  if(!cliente){
+    alert("No se encontró el cliente.");
+    return;
+  }
+
+  document.getElementById("clienteModalTitle").textContent = "Editar cliente";
+  document.getElementById("clienteId").value = cliente.id;
+  document.getElementById("clienteNombre").value = cliente.nombre || "";
+  document.getElementById("clienteTipo").value = cliente.tipo_cliente || "Cliente Standar";
+  document.getElementById("clienteTelefono").value = cliente.telefono || "";
+  document.getElementById("clienteCorreo").value = cliente.correo || "";
+  document.getElementById("clienteNotas").value = cliente.notas || "";
+  document.getElementById("clienteActivo").value = cliente.activo === true ? "true" : "false";
+
+  document.getElementById("clienteBackdrop").style.display = "flex";
+}
+
+function cerrarModalCliente(){
+  document.getElementById("clienteBackdrop").style.display = "none";
+}
+
+function cerrarClienteSiFondo(event){
+  if(event.target.id === "clienteBackdrop"){
+    cerrarModalCliente();
+  }
+}
+
+async function guardarClienteModal(){
+  if(!validarSupabase()) return;
+
+  const id = document.getElementById("clienteId").value;
+  const nombre = nombreBonito(document.getElementById("clienteNombre").value);
+
+  if(!nombre){
+    alert("Coloca el nombre del cliente.");
+    return;
+  }
+
+  const datos = {
+    nombre,
+    tipo_cliente: document.getElementById("clienteTipo").value || "Cliente Standar",
+    telefono: document.getElementById("clienteTelefono").value.trim(),
+    correo: document.getElementById("clienteCorreo").value.trim(),
+    notas: document.getElementById("clienteNotas").value.trim(),
+    activo: document.getElementById("clienteActivo").value === "true"
+  };
+
+  const duplicado = clientesDB.find(c => {
+    return normalizar(c.nombre) === normalizar(nombre) && Number(c.id) !== Number(id || 0);
+  });
+
+  if(duplicado){
+    const continuar = confirm(`Ya existe un cliente parecido/exacto:\n\n${duplicado.nombre}\n\n¿Deseas guardar de todos modos?`);
+    if(!continuar) return;
+  }
+
+  let error;
+
+  if(id){
+    const res = await db()
+      .from("clientes")
+      .update(datos)
+      .eq("id", id);
+
+    error = res.error;
+  }else{
+    const res = await db()
+      .from("clientes")
+      .insert([datos]);
+
+    error = res.error;
+  }
+
+  if(error){
+    console.error("Error guardando cliente:", error);
+    alert("Error guardando cliente: " + error.message);
+    return;
+  }
+
+  cerrarModalCliente();
+  await cargarClientes();
+  filtrarClientes();
+
+  mostrarToast("Cliente guardado");
+}
+
+async function desactivarActivarCliente(id){
+  const cliente = clientesDB.find(c => Number(c.id) === Number(id));
+
+  if(!cliente){
+    alert("No se encontró el cliente.");
+    return;
+  }
+
+  const nuevoEstado = cliente.activo !== true;
+
+  const { error } = await db()
+    .from("clientes")
+    .update({ activo:nuevoEstado })
+    .eq("id", id);
+
+  if(error){
+    console.error("Error actualizando cliente:", error);
+    alert("Error actualizando cliente: " + error.message);
+    return;
+  }
+
+  await cargarClientes();
+  filtrarClientes();
+
+  mostrarToast(nuevoEstado ? "Cliente activado" : "Cliente desactivado");
+}
+
+function verHistorialCliente(id){
+  const cliente = clientesDB.find(c => Number(c.id) === Number(id));
+
+  if(!cliente){
+    alert("No se encontró el cliente.");
+    return;
+  }
+
+  const nombreNorm = normalizar(cliente.nombre);
+
+  const pedidos = pedidosDB.filter(p => normalizar(p.cliente) === nombreNorm);
+
+  document.getElementById("historyTitle").textContent = `Historial · ${cliente.nombre}`;
+
+  const body = document.getElementById("historyBody");
+
+  if(!pedidos.length){
+    body.innerHTML = `<div class="empty">Este cliente no tiene pedidos registrados</div>`;
+  }else{
+    body.innerHTML = pedidos.map(p => `
+      <div class="history-item">
+        <div class="history-top">
+          <span>#${escapeHtml(p.id)} · ${escapeHtml(p.fecha || "")}</span>
+          <span>${escapeHtml(p.estatus_trabajo || "")} / ${escapeHtml(p.estatus_pago || "")}</span>
+        </div>
+        <div class="history-desc">
+          <strong>${escapeHtml(p.descripcion || "")}</strong><br>
+          Cantidad: ${escapeHtml(p.cantidad || "")}<br>
+          Material: ${escapeHtml(p.material || "")}<br>
+          Impresión: ${escapeHtml(p.tipo_impresion || "")}<br>
+          Entrega: ${escapeHtml(p.fecha_entrega || "—")}
+        </div>
+      </div>
+    `).join("");
+  }
+
+  document.getElementById("historyBackdrop").style.display = "flex";
+}
+
+function cerrarHistorial(){
+  document.getElementById("historyBackdrop").style.display = "none";
+}
+
+function cerrarHistorialSiFondo(event){
+  if(event.target.id === "historyBackdrop"){
+    cerrarHistorial();
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function(){
   const btn = document.getElementById("mobileMenuBtn");
   const menu = document.getElementById("authMenu");
@@ -649,6 +1207,8 @@ document.addEventListener("DOMContentLoaded", function(){
       menu.classList.toggle("open");
     });
   }
+
+  inicializarClientes();
 });
 </script>
 
