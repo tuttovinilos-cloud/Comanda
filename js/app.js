@@ -53,6 +53,15 @@ function normalizarBusqueda(valor) {
     .trim();
 }
 
+function nombreBonito(valor) {
+  const limpio = String(valor || "").trim().replace(/\s+/g, " ");
+  if (!limpio) return "";
+  return limpio
+    .split(" ")
+    .map(p => p ? (p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()) : "")
+    .join(" ");
+}
+
 function escapeHtml(valor) {
   return String(valor ?? "")
     .replaceAll("&", "&amp;")
@@ -118,7 +127,7 @@ function puedeModificarCantidadLocal() {
 // ===========================
 async function asegurarClienteExiste(nombreCliente) {
   const nombre = String(nombreCliente || "").trim();
-  if (!nombre) return;
+  if (!nombre) return "";
 
   const nombreNormalizado = normalizarBusqueda(nombre);
 
@@ -129,19 +138,21 @@ async function asegurarClienteExiste(nombreCliente) {
 
   if (error) {
     console.warn("No se pudo verificar cliente:", error);
-    return;
+    return nombreBonito(nombre);
   }
 
-  const existe = (data || []).some(c => {
+  const clienteExistente = (data || []).find(c => {
     return normalizarBusqueda(c.nombre) === nombreNormalizado;
   });
 
-  if (existe) return;
+  if (clienteExistente) return String(clienteExistente.nombre || nombreBonito(nombre)).trim();
+
+  const nombreFinal = nombreBonito(nombre);
 
   const { error: insertError } = await db()
     .from("clientes")
     .insert([{
-      nombre: nombre,
+      nombre: nombreFinal,
       tipo_cliente: "Cliente Standar",
       telefono: "",
       correo: "",
@@ -151,10 +162,11 @@ async function asegurarClienteExiste(nombreCliente) {
 
   if (insertError) {
     console.warn("No se pudo crear cliente automáticamente:", insertError);
-    return;
+    return nombreFinal;
   }
 
-  console.log("Cliente creado automáticamente:", nombre);
+  console.log("Cliente creado automáticamente:", nombreFinal);
+  return nombreFinal;
 }
 
 async function cargarClientesBusqueda() {
@@ -461,7 +473,7 @@ async function saveQuickOrder() {
 
   let fecha = document.getElementById("q_fecha")?.value || "";
   let operador = document.getElementById("q_operador")?.value || "";
-  const cliente = document.getElementById("q_cliente")?.value || "";
+  let cliente = document.getElementById("q_cliente")?.value || "";
   const descripcion = document.getElementById("q_descripcion")?.value || "";
   const cantidad = document.getElementById("q_cantidad")?.value || "";
   const material = document.getElementById("q_material")?.value || "";
@@ -487,7 +499,7 @@ async function saveQuickOrder() {
 
   const archivoData = await subirArchivoPedido();
 
-  await asegurarClienteExiste(cliente);
+  cliente = await asegurarClienteExiste(cliente) || cliente;
 
   const { error } = await db()
     .from("pedidos")
@@ -531,7 +543,7 @@ async function saveOrder() {
 
   let fecha = document.getElementById("f_fecha")?.value || "";
   let operador = document.getElementById("f_operador")?.value || "";
-  const cliente = document.getElementById("f_cliente")?.value || "";
+  let cliente = document.getElementById("f_cliente")?.value || "";
   const descripcion = document.getElementById("f_descripcion")?.value || "";
   const cantidad = document.getElementById("f_cantidad")?.value || "";
   const material = document.getElementById("f_material")?.value || "";
@@ -548,7 +560,7 @@ async function saveOrder() {
     fecha = new Date().toISOString().split("T")[0];
   }
 
-  await asegurarClienteExiste(cliente);
+  cliente = await asegurarClienteExiste(cliente) || cliente;
 
   const archivoData = await subirArchivoPedido();
 
