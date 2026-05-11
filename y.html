@@ -1,436 +1,412 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Analizador SVG Tuttovinilos</title>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Analizador SVG Preciso · Tuttovinilos</title>
 <style>
 :root{
---bg:#06101e;
---card:#0c1b2f;
---line:#254b70;
---text:#eef7ff;
---muted:#92abc4;
---blue:#1688ff;
---orange:#ff8616;
---green:#22c783;
---red:#ff4d5e;
+  --bg:#06101e;--card:#0c1b2f;--card2:#08192c;--line:#254b70;
+  --text:#eef7ff;--muted:#9bb5cf;--blue:#1688ff;--orange:#ff8616;
+  --green:#22c783;--red:#ff4d5e;--yellow:#ffd166;
 }
-
 *{box-sizing:border-box}
-
-body{
-margin:0;
-font-family:Arial,sans-serif;
-background:#06101e;
-color:var(--text);
-}
-
-header{
-padding:15px;
-background:linear-gradient(135deg,#06305f,#0b5dab,#ff7b00);
-}
-
-header h1{
-margin:0;
-font-size:18px;
-}
-
-.wrap{
-padding:15px;
-max-width:1200px;
-margin:auto;
-}
-
-.card{
-background:#0c1b2f;
-border:1px solid var(--line);
-border-radius:16px;
-padding:14px;
-margin-bottom:14px;
-}
-
-.card h2{
-margin-top:0;
-font-size:16px;
-}
-
-input,select,button{
-width:100%;
-padding:10px;
-border-radius:10px;
-border:none;
-margin-bottom:10px;
-font-size:14px;
-}
-
-input,select{
-background:#06111f;
-border:1px solid #244b72;
-color:white;
-}
-
-button{
-background:linear-gradient(135deg,#1688ff,#0057c8);
-color:white;
-font-weight:bold;
-cursor:pointer;
-}
-
-button.orange{
-background:linear-gradient(135deg,#ff8616,#c65300);
-}
-
-#preview{
-background:white;
-border-radius:12px;
-padding:10px;
-overflow:auto;
-min-height:300px;
-}
-
-#preview svg{
-max-width:100%;
-height:auto;
-display:block;
-margin:auto;
-}
-
-.kpis{
-display:grid;
-grid-template-columns:repeat(2,1fr);
-gap:10px;
-}
-
-.kpi{
-background:#08192c;
-padding:12px;
-border-radius:12px;
-border:1px solid #214161;
-}
-
-.kpi b{
-display:block;
-font-size:22px;
-}
-
-.kpi span{
-font-size:12px;
-color:var(--muted);
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-font-size:12px;
-}
-
-th,td{
-padding:7px;
-border-bottom:1px solid #1d3958;
-text-align:left;
-}
-
-.small{
-font-size:12px;
-color:var(--muted);
-}
-
-@media(max-width:700px){
-.kpis{
-grid-template-columns:1fr;
-}
-}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+header{padding:15px;background:linear-gradient(135deg,#06305f,#0b5dab,#ff7b00);position:sticky;top:0;z-index:10}
+header h1{margin:0;font-size:18px;line-height:1.2}.wrap{padding:14px;max-width:1200px;margin:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.card h2{margin:0 0 12px;font-size:16px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}input,select,button{width:100%;padding:11px;border-radius:11px;border:none;font-size:14px}input,select{background:#06111f;border:1px solid #244b72;color:white}button{background:linear-gradient(135deg,#1688ff,#0057c8);color:white;font-weight:800;cursor:pointer}button.orange{background:linear-gradient(135deg,#ff8616,#c65300)}button.gray{background:#172d47}.hint{font-size:12px;color:var(--muted);line-height:1.45}.warn{color:var(--yellow)}.ok{color:var(--green)}.bad{color:var(--red)}
+#preview{background:white;border-radius:12px;padding:10px;overflow:auto;min-height:260px}#preview svg{max-width:100%;height:auto;display:block;margin:auto}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.kpi{background:var(--card2);padding:12px;border-radius:12px;border:1px solid #214161;min-height:72px}.kpi b{display:block;font-size:20px;line-height:1.15}.kpi span{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;border-bottom:1px solid #1d3958;text-align:left;white-space:nowrap}.tableWrap{overflow:auto;border:1px solid #1d3958;border-radius:12px}.pill{display:inline-block;padding:5px 8px;border-radius:999px;background:#102a45;border:1px solid #28557b;color:#cfe9ff;font-size:12px}.row{display:flex;gap:10px;align-items:center}.row input[type=checkbox]{width:auto;margin:0}.progress{height:8px;background:#071321;border-radius:999px;overflow:hidden;border:1px solid #1d3958}.bar{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--orange))}.mono{font-family:Consolas,monospace;font-size:12px;color:#cfe9ff}
+@media(max-width:800px){.grid,.grid2,.kpis{grid-template-columns:1fr 1fr}.wrap{padding:10px}.card{padding:12px;border-radius:14px}header h1{font-size:16px}.kpi b{font-size:18px}}
+@media(max-width:430px){.grid,.grid2,.kpis{grid-template-columns:1fr}input,select,button{font-size:13px;padding:10px}th,td{padding:7px}.card h2{font-size:15px}}
 </style>
 </head>
-
 <body>
-
-<header>
-<h1>📐 Analizador SVG · Tuttovinilos</h1>
-</header>
-
+<header><h1>📐 Analizador SVG Preciso · Tuttovinilos</h1></header>
 <div class="wrap">
+  <div class="card">
+    <h2>1) Importar SVG</h2>
+    <div class="grid2">
+      <div>
+        <label>Archivo SVG</label>
+        <input type="file" id="fileInput" accept=".svg,image/svg+xml">
+      </div>
+      <div>
+        <label>Calidad de análisis</label>
+        <select id="quality">
+          <option value="1800">Rápido · 1800 px</option>
+          <option value="2600" selected>Preciso · 2600 px</option>
+          <option value="3600">Muy preciso · 3600 px</option>
+          <option value="5000">Extremo · 5000 px</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid2">
+      <div>
+        <label>Si el SVG NO trae medidas reales, usar ancho manual</label>
+        <input id="fallbackWidth" type="number" value="60" step="0.01" placeholder="Ej: 60">
+      </div>
+      <div>
+        <label>Unidad del ancho manual</label>
+        <select id="fallbackUnit">
+          <option value="mm">mm</option>
+          <option value="cm" selected>cm</option>
+          <option value="m">m</option>
+          <option value="in">in</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid2">
+      <button onclick="analizarSVG()">Analizar con medidas reales</button>
+      <button class="orange" onclick="cargarDemo()">Demo HOLA 60 cm</button>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <input type="checkbox" id="ignoreWhite" checked>
+      <label for="ignoreWhite" style="margin:0">Ignorar blanco como hueco / vacío</label>
+    </div>
+    <p class="hint">El sistema lee primero <b>width</b>, <b>height</b> y <b>viewBox</b> del SVG. Si el archivo viene de Corel con medidas reales, no necesitas escribir ancho manual.</p>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+    <p class="hint mono" id="status">Listo.</p>
+  </div>
 
-<div class="card">
-<h2>Subir SVG</h2>
+  <div class="card">
+    <h2>2) Vista previa</h2>
+    <div id="preview"></div>
+  </div>
 
-<input type="file" id="fileInput" accept=".svg">
+  <div class="card">
+    <h2>3) Resultados</h2>
+    <div class="kpis">
+      <div class="kpi"><b id="kAncho">0</b><span>Ancho real detectado</span></div>
+      <div class="kpi"><b id="kAlto">0</b><span>Alto real detectado</span></div>
+      <div class="kpi"><b id="kPiezas">0</b><span>Piezas detectadas</span></div>
+      <div class="kpi"><b id="kPerimetro">0</b><span>Perímetro aprox.</span></div>
+      <div class="kpi"><b id="kAreaRelleno">0</b><span>Área de relleno</span></div>
+      <div class="kpi"><b id="kAreaMarco">0</b><span>Área de marco optimizada</span></div>
+      <div class="kpi"><b id="kAreaSel">0</b><span>Área de selección</span></div>
+      <div class="kpi"><b id="kEscala">0</b><span>Escala usada</span></div>
+    </div>
+    <p class="hint" id="method"></p>
+  </div>
 
-<label class="small">Unidad de trabajo</label>
-<select id="unit">
-<option value="mm">mm</option>
-<option value="cm" selected>cm</option>
-<option value="m">m</option>
-<option value="in">in</option>
-</select>
-
-<label class="small">Ancho real del diseño</label>
-<input id="realWidth" type="number" value="60" placeholder="Ancho real">
-
-<button onclick="analizarSVG()">Analizar SVG</button>
-<button class="orange" onclick="cargarDemo()">Demo HOLA 60cm</button>
-</div>
-
-<div class="card">
-<h2>Vista previa</h2>
-<div id="preview"></div>
-</div>
-
-<div class="card">
-<h2>Resultados</h2>
-
-<div class="kpis">
-<div class="kpi">
-<b id="kPiezas">0</b>
-<span>Piezas</span>
-</div>
-
-<div class="kpi">
-<b id="kAncho">0</b>
-<span>Ancho real</span>
-</div>
-
-<div class="kpi">
-<b id="kAlto">0</b>
-<span>Alto real</span>
-</div>
-
-<div class="kpi">
-<b id="kPerimetro">0</b>
-<span>Perímetro</span>
-</div>
-
-<div class="kpi">
-<b id="kAreaSel">0</b>
-<span>Área selección</span>
-</div>
-
-<div class="kpi">
-<b id="kAreaVisual">0</b>
-<span>Área visual aprox.</span>
-</div>
-</div>
-
-<br>
-
-<table id="tabla">
-<tr>
-<th>#</th>
-<th>Tipo</th>
-<th>Ancho</th>
-<th>Alto</th>
-<th>Perímetro</th>
-</tr>
-</table>
-
-</div>
-
+  <div class="card">
+    <h2>4) Detalle por pieza</h2>
+    <div class="tableWrap">
+      <table id="tabla">
+        <tr><th>#</th><th>Pixeles</th><th>Ancho</th><th>Alto</th><th>Marco</th></tr>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script>
-
+let svgText = "";
 let svgDoc = null;
+let currentFileName = "";
 
-document.getElementById("fileInput").addEventListener("change", async function(e){
+const UNITS = {
+  mm:0.001, cm:0.01, m:1, in:0.0254,
+  px:0.0254/96, pt:0.0254/72, pc:0.0254/6
+};
 
-const file = e.target.files[0];
+const $ = id => document.getElementById(id);
+function setStatus(txt,pct=0){ $("status").innerHTML = txt; $("bar").style.width = Math.max(0,Math.min(100,pct))+"%"; }
+function fmtM(v){ return v.toFixed(4)+" m"; }
+function fmtM2(v){ return v.toFixed(4)+" m²"; }
+function fmtCm(v){ return (v*100).toFixed(2)+" cm"; }
 
-if(!file) return;
-
-const text = await file.text();
-
-document.getElementById("preview").innerHTML = text;
-
-svgDoc = document.querySelector("#preview svg");
-
-if(svgDoc){
-svgDoc.removeAttribute("width");
-svgDoc.removeAttribute("height");
-svgDoc.style.maxWidth = "100%";
-svgDoc.style.height = "auto";
-}
-
+$("fileInput").addEventListener("change", async e=>{
+  const file = e.target.files[0]; if(!file) return;
+  currentFileName = file.name;
+  svgText = await file.text();
+  cargarSVGEnPreview(svgText);
+  setStatus("SVG cargado. Presiona analizar.",0);
 });
+
+function cargarSVGEnPreview(text){
+  $("preview").innerHTML = text;
+  svgDoc = $("preview").querySelector("svg");
+  if(svgDoc){
+    svgDoc.style.maxWidth="100%";
+    svgDoc.style.height="auto";
+    svgDoc.style.display="block";
+    svgDoc.style.margin="auto";
+  }
+}
 
 function cargarDemo(){
-
-const demo = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 250">
+  svgText = `<svg xmlns="http://www.w3.org/2000/svg" width="60cm" height="25cm" viewBox="0 0 600 250">
 <path d="M40 215 L40 30 L95 30 L95 95 C120 60 180 65 190 125 L190 215 L135 215 L135 130 C135 108 100 108 100 130 L100 215 Z" fill="#111"/>
-<circle cx="280" cy="145" r="75" fill="#111"/>
-<circle cx="280" cy="145" r="38" fill="white"/>
+<path d="M280 70 A75 75 0 1 1 279.9 70 M280 107 A38 38 0 1 0 280.1 107" fill="#111" fill-rule="evenodd"/>
 <rect x="380" y="30" width="55" height="185" fill="#111"/>
-<path d="M490 110 C500 60 585 65 585 130 L585 215 L535 215 L530 195 C510 220 450 220 450 170 C450 120 520 135 530 120 C535 105 510 100 505 120 L450 120 C450 120 450 115 490 110 Z M530 160 C500 165 500 190 530 180 Z" fill="#111"/>
-</svg>
-`;
-
-document.getElementById("preview").innerHTML = demo;
-
-svgDoc = document.querySelector("#preview svg");
-
-document.getElementById("realWidth").value = 60;
-
-analizarSVG();
-
+<path d="M490 110 C500 60 585 65 585 130 L585 215 L535 215 L530 195 C510 220 450 220 450 170 C450 120 520 135 530 120 C535 105 510 100 505 120 L450 120 C450 120 450 115 490 110 Z M530 160 C500 165 500 190 530 180 Z" fill="#111" fill-rule="evenodd"/>
+</svg>`;
+  cargarSVGEnPreview(svgText);
+  analizarSVG();
 }
 
-function analizarSVG(){
-
-if(!svgDoc){
-alert("Sube un SVG");
-return;
+function parseLength(raw){
+  if(!raw) return null;
+  raw = String(raw).trim();
+  if(raw.endsWith("%")) return null;
+  const m = raw.match(/^([-+]?\d*\.?\d+(?:e[-+]?\d+)?)\s*([a-zA-Z]*)$/);
+  if(!m) return null;
+  const value = Number(m[1]);
+  const unit = (m[2] || "px").toLowerCase();
+  if(!isFinite(value) || !UNITS[unit]) return null;
+  return {value,unit,meters:value*UNITS[unit]};
 }
 
-let vb;
-
-if(svgDoc.viewBox && svgDoc.viewBox.baseVal && svgDoc.viewBox.baseVal.width > 0){
-vb = svgDoc.viewBox.baseVal;
-}else{
-try{
-const box = svgDoc.getBBox();
-vb = {x:box.x, y:box.y, width:box.width, height:box.height};
-}catch(e){
-alert("El SVG no tiene viewBox válido.");
-return;
-}
-}
-
-const unit = document.getElementById("unit").value;
-const realWidth = Number(document.getElementById("realWidth").value || 1);
-
-const factor = realWidth / vb.width;
-
-const unitToMeters = {
-mm:0.001,
-cm:0.01,
-m:1,
-in:0.0254
-}[unit];
-
-const factorToMeters = factor * unitToMeters;
-
-const elementos = svgDoc.querySelectorAll("path,rect,circle,ellipse,polygon,polyline,line");
-
-let totalPerimetroUnit = 0;
-
-let tabla = `
-<tr>
-<th>#</th>
-<th>Tipo</th>
-<th>Ancho ${unit}</th>
-<th>Alto ${unit}</th>
-<th>Perímetro ${unit}</th>
-</tr>
-`;
-
-elementos.forEach((el,index)=>{
-
-let bbox;
-
-try{
-bbox = el.getBBox();
-}catch(e){
-return;
+function getViewBox(svg){
+  const vb = svg.getAttribute("viewBox");
+  if(vb){
+    const p = vb.trim().split(/[\s,]+/).map(Number);
+    if(p.length===4 && p.every(isFinite) && p[2]>0 && p[3]>0){ return {x:p[0],y:p[1],width:p[2],height:p[3]}; }
+  }
+  try{
+    const b = svg.getBBox();
+    if(b.width>0 && b.height>0) return {x:b.x,y:b.y,width:b.width,height:b.height};
+  }catch(e){}
+  return null;
 }
 
-let per = 0;
+function detectRealSize(svg){
+  const vb = getViewBox(svg);
+  if(!vb) throw new Error("El SVG no tiene viewBox ni bounding box válido.");
+  const wLen = parseLength(svg.getAttribute("width"));
+  const hLen = parseLength(svg.getAttribute("height"));
+  let realWm, realHm, method;
 
-try{
-if(el.getTotalLength){
-per = el.getTotalLength();
-}
-}catch(e){}
-
-if(per === 0){
-per = perimetroBasico(el);
-}
-
-const ancho = bbox.width * factor;
-const alto = bbox.height * factor;
-
-const perReal = per * factor;
-
-totalPerimetroUnit += perReal;
-
-tabla += `
-<tr>
-<td>${index+1}</td>
-<td>${el.tagName}</td>
-<td>${ancho.toFixed(2)}</td>
-<td>${alto.toFixed(2)}</td>
-<td>${perReal.toFixed(2)}</td>
-</tr>
-`;
-
-});
-
-const anchoReal = vb.width * factor;
-const altoReal = vb.height * factor;
-
-const totalPerimetroM = totalPerimetroUnit * unitToMeters;
-
-const areaSelUnit = anchoReal * altoReal;
-const areaSelM2 = areaSelUnit * Math.pow(unitToMeters, 2);
-
-// Área visual aproximada rápida.
-// Para precisión real avanzada habría que rasterizar y contar pixeles.
-const areaVisualM2 = areaSelM2 * 0.62;
-
-document.getElementById("kPiezas").innerText = elementos.length;
-
-document.getElementById("kAncho").innerText = anchoReal.toFixed(2) + " " + unit;
-
-document.getElementById("kAlto").innerText = altoReal.toFixed(2) + " " + unit;
-
-document.getElementById("kPerimetro").innerText =
-totalPerimetroM.toFixed(2) + " m";
-
-document.getElementById("kAreaSel").innerText =
-areaSelM2.toFixed(3) + " m²";
-
-document.getElementById("kAreaVisual").innerText =
-areaVisualM2.toFixed(3) + " m²";
-
-document.getElementById("tabla").innerHTML = tabla;
-
+  if(wLen && hLen && wLen.meters>0 && hLen.meters>0){
+    realWm = wLen.meters;
+    realHm = hLen.meters;
+    method = `Medidas leídas del SVG: width=${svg.getAttribute("width")}, height=${svg.getAttribute("height")}`;
+  }else if(wLen && wLen.meters>0){
+    realWm = wLen.meters;
+    realHm = realWm * (vb.height / vb.width);
+    method = `Ancho leído del SVG y alto calculado por proporción: width=${svg.getAttribute("width")}`;
+  }else if(hLen && hLen.meters>0){
+    realHm = hLen.meters;
+    realWm = realHm * (vb.width / vb.height);
+    method = `Alto leído del SVG y ancho calculado por proporción: height=${svg.getAttribute("height")}`;
+  }else{
+    const fw = Number($("fallbackWidth").value || 0);
+    const fu = $("fallbackUnit").value;
+    if(!fw || fw<=0) throw new Error("El SVG no trae medidas reales. Coloca ancho manual de respaldo.");
+    realWm = fw * UNITS[fu];
+    realHm = realWm * (vb.height / vb.width);
+    method = `El SVG no traía medidas reales. Se usó ancho manual: ${fw} ${fu}`;
+  }
+  return {vb,realWm,realHm,method,scaleX:realWm/vb.width,scaleY:realHm/vb.height};
 }
 
-function perimetroBasico(el){
+async function analizarSVG(){
+  try{
+    if(!svgText || !svgDoc){ alert("Sube un SVG primero."); return; }
+    setStatus("Leyendo medidas reales del SVG...",8);
+    const info = detectRealSize(svgDoc);
 
-const tag = el.tagName.toLowerCase();
+    setStatus("Calculando perímetro vectorial aproximado...",18);
+    const vectorPerM = getVectorLengthMeters(svgDoc, info.scaleX, info.scaleY);
 
-if(tag === "rect"){
-const w = Number(el.getAttribute("width") || 0);
-const h = Number(el.getAttribute("height") || 0);
-return 2 * (w + h);
+    setStatus("Rasterizando SVG para área real y huecos...",35);
+    const maskData = await rasterMask(svgText, info.realWm, info.realHm);
+
+    setStatus("Calculando área real de relleno...",55);
+    const pixelAreaM2 = (info.realWm / maskData.w) * (info.realHm / maskData.h);
+    const areaRellenoM2 = maskData.fgCount * pixelAreaM2;
+
+    setStatus("Calculando perímetro por máscara...",65);
+    const perimeterMaskM = perimeterFromMask(maskData.mask, maskData.w, maskData.h, info.realWm/maskData.w, info.realHm/maskData.h);
+
+    setStatus("Detectando piezas conectadas...",78);
+    const components = connectedComponents(maskData.mask, maskData.w, maskData.h);
+
+    setStatus("Calculando área de marco optimizada por pieza...",90);
+    const detail = calcMarcoComponents(components, maskData.w, maskData.h, info.realWm/maskData.w, info.realHm/maskData.h);
+    const areaMarcoM2 = detail.reduce((s,d)=>s+d.marcoM2,0);
+
+    const areaSelM2 = info.realWm * info.realHm;
+    renderResults(info, components.length, vectorPerM || perimeterMaskM, perimeterMaskM, areaRellenoM2, areaMarcoM2, areaSelM2, detail, maskData);
+    setStatus("Análisis completado.",100);
+  }catch(err){
+    console.error(err);
+    setStatus(`<span class="bad">Error: ${err.message}</span>`,0);
+    alert(err.message);
+  }
 }
 
-if(tag === "circle"){
-const r = Number(el.getAttribute("r") || 0);
-return 2 * Math.PI * r;
+function getVectorLengthMeters(svg, sx, sy){
+  let total = 0;
+  const els = svg.querySelectorAll("path,rect,circle,ellipse,polygon,polyline,line");
+  els.forEach(el=>{
+    try{
+      let len = 0;
+      if(el.getTotalLength) len = el.getTotalLength();
+      if(!len) len = basicLength(el);
+      const s = (Math.abs(sx-sy)<1e-12) ? sx : ((sx+sy)/2);
+      total += len * s;
+    }catch(e){}
+  });
+  return total;
 }
 
-if(tag === "ellipse"){
-const rx = Number(el.getAttribute("rx") || 0);
-const ry = Number(el.getAttribute("ry") || 0);
-return Math.PI * (3*(rx+ry) - Math.sqrt((3*rx+ry)*(rx+3*ry)));
+function basicLength(el){
+  const tag = el.tagName.toLowerCase();
+  if(tag==="rect"){
+    const w=+el.getAttribute("width")||0,h=+el.getAttribute("height")||0;return 2*(w+h);
+  }
+  if(tag==="circle"){
+    const r=+el.getAttribute("r")||0;return 2*Math.PI*r;
+  }
+  if(tag==="ellipse"){
+    const rx=+el.getAttribute("rx")||0,ry=+el.getAttribute("ry")||0;
+    return Math.PI*(3*(rx+ry)-Math.sqrt((3*rx+ry)*(rx+3*ry)));
+  }
+  if(tag==="line"){
+    const x1=+el.getAttribute("x1")||0,y1=+el.getAttribute("y1")||0,x2=+el.getAttribute("x2")||0,y2=+el.getAttribute("y2")||0;return Math.hypot(x2-x1,y2-y1);
+  }
+  return 0;
 }
 
-if(tag === "line"){
-const x1 = Number(el.getAttribute("x1") || 0);
-const y1 = Number(el.getAttribute("y1") || 0);
-const x2 = Number(el.getAttribute("x2") || 0);
-const y2 = Number(el.getAttribute("y2") || 0);
-return Math.hypot(x2-x1,y2-y1);
+async function rasterMask(text, realWm, realHm){
+  const maxPx = Number($("quality").value || 2600);
+  const ratio = realHm / realWm;
+  let w,h;
+  if(ratio>=1){ h=maxPx; w=Math.max(20,Math.round(maxPx/ratio)); }
+  else{ w=maxPx; h=Math.max(20,Math.round(maxPx*ratio)); }
+
+  const svgBlob = new Blob([text],{type:"image/svg+xml"});
+  const url = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  img.decoding = "async";
+  img.src = url;
+  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error("No se pudo cargar el SVG como imagen."));});
+
+  const canvas = document.createElement("canvas");
+  canvas.width=w; canvas.height=h;
+  const ctx = canvas.getContext("2d", {willReadFrequently:true});
+  ctx.clearRect(0,0,w,h);
+  ctx.drawImage(img,0,0,w,h);
+  URL.revokeObjectURL(url);
+
+  const data = ctx.getImageData(0,0,w,h).data;
+  const mask = new Uint8Array(w*h);
+  let fgCount = 0;
+  const ignoreWhite = $("ignoreWhite").checked;
+  for(let i=0,p=0;i<data.length;i+=4,p++){
+    const r=data[i],g=data[i+1],b=data[i+2],a=data[i+3];
+    let fg = a>18;
+    if(fg && ignoreWhite && r>242 && g>242 && b>242) fg=false;
+    if(fg){ mask[p]=1; fgCount++; }
+  }
+  return {mask,w,h,fgCount};
 }
 
-return 0;
-
+function perimeterFromMask(mask,w,h,sx,sy){
+  let p=0;
+  for(let y=0;y<h;y++){
+    const row=y*w;
+    for(let x=0;x<w;x++){
+      const idx=row+x;
+      if(!mask[idx]) continue;
+      if(x===0 || !mask[idx-1]) p += sy;
+      if(x===w-1 || !mask[idx+1]) p += sy;
+      if(y===0 || !mask[idx-w]) p += sx;
+      if(y===h-1 || !mask[idx+w]) p += sx;
+    }
+  }
+  return p;
 }
 
+function connectedComponents(mask,w,h){
+  const seen = new Uint8Array(w*h);
+  const comps = [];
+  const qx = new Int32Array(w*h>2500000?2500000:w*h);
+  const qy = new Int32Array(w*h>2500000?2500000:w*h);
+  const minPixels = Math.max(8, Math.round((w*h)*0.000005));
+
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      const start=y*w+x;
+      if(!mask[start] || seen[start]) continue;
+      let head=0,tail=0,count=0,minX=x,maxX=x,minY=y,maxY=y;
+      const pts=[];
+      qx[tail]=x;qy[tail]=y;tail++;seen[start]=1;
+      while(head<tail){
+        const cx=qx[head], cy=qy[head]; head++; count++;
+        if(cx<minX)minX=cx;if(cx>maxX)maxX=cx;if(cy<minY)minY=cy;if(cy>maxY)maxY=cy;
+        if(pts.length<12000 && (count%3===0)) pts.push(cx,cy);
+        const nbs=[[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]];
+        for(const [nx,ny] of nbs){
+          if(nx<0||ny<0||nx>=w||ny>=h) continue;
+          const ni=ny*w+nx;
+          if(mask[ni] && !seen[ni]){ seen[ni]=1; if(tail<qx.length){qx[tail]=nx;qy[tail]=ny;tail++;} }
+        }
+      }
+      if(count>=minPixels) comps.push({count,minX,maxX,minY,maxY,pts});
+    }
+  }
+  comps.sort((a,b)=>b.count-a.count);
+  return comps;
+}
+
+function calcMarcoComponents(comps,w,h,sx,sy){
+  return comps.map((c,idx)=>{
+    let minArea = Infinity, bestW=0, bestH=0, bestAng=0;
+    const pts = c.pts.length ? c.pts : [c.minX,c.minY,c.maxX,c.maxY];
+    for(let ang=0;ang<90;ang+=2){
+      const res = rotatedBBox(pts, ang, sx, sy);
+      if(res.area<minArea){minArea=res.area;bestW=res.width;bestH=res.height;bestAng=ang;}
+    }
+    for(let ang=Math.max(0,bestAng-2);ang<=Math.min(89,bestAng+2);ang+=0.5){
+      const res = rotatedBBox(pts, ang, sx, sy);
+      if(res.area<minArea){minArea=res.area;bestW=res.width;bestH=res.height;bestAng=ang;}
+    }
+    return {
+      n:idx+1,
+      pixels:c.count,
+      anchoM:(c.maxX-c.minX+1)*sx,
+      altoM:(c.maxY-c.minY+1)*sy,
+      marcoM2:minArea,
+      marcoW:bestW,
+      marcoH:bestH,
+      ang:bestAng
+    };
+  });
+}
+
+function rotatedBBox(pts,angDeg,sx,sy){
+  const a=angDeg*Math.PI/180, ca=Math.cos(a), sa=Math.sin(a);
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(let i=0;i<pts.length;i+=2){
+    const x=pts[i]*sx, y=pts[i+1]*sy;
+    const rx=x*ca-y*sa, ry=x*sa+y*ca;
+    if(rx<minX)minX=rx;if(rx>maxX)maxX=rx;if(ry<minY)minY=ry;if(ry>maxY)maxY=ry;
+  }
+  const width=maxX-minX, height=maxY-minY;
+  return {width,height,area:Math.abs(width*height)};
+}
+
+function renderResults(info, piezas, vectorPerM, maskPerM, areaRellenoM2, areaMarcoM2, areaSelM2, detail, maskData){
+  $("kAncho").innerText = fmtCm(info.realWm);
+  $("kAlto").innerText = fmtCm(info.realHm);
+  $("kPiezas").innerText = piezas;
+  $("kPerimetro").innerText = fmtM(vectorPerM);
+  $("kAreaRelleno").innerText = fmtM2(areaRellenoM2);
+  $("kAreaMarco").innerText = fmtM2(areaMarcoM2);
+  $("kAreaSel").innerText = fmtM2(areaSelM2);
+  $("kEscala").innerText = `${(info.scaleX*100).toFixed(4)} cm/u`;
+  $("method").innerHTML = `<span class="pill">${currentFileName || "SVG"}</span> <br><br>${info.method}<br>Canvas usado: ${maskData.w} × ${maskData.h} px. Perímetro vectorial: ${fmtM(vectorPerM)}. Perímetro por máscara: ${fmtM(maskPerM)}.`;
+
+  let html = `<tr><th>#</th><th>Pixeles</th><th>Ancho</th><th>Alto</th><th>Marco</th><th>Ángulo</th></tr>`;
+  detail.forEach(d=>{
+    html += `<tr><td>${d.n}</td><td>${d.pixels}</td><td>${fmtCm(d.anchoM)}</td><td>${fmtCm(d.altoM)}</td><td>${fmtM2(d.marcoM2)}</td><td>${d.ang.toFixed(1)}°</td></tr>`;
+  });
+  $("tabla").innerHTML = html;
+}
 </script>
-
 </body>
 </html>
