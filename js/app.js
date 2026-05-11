@@ -7,6 +7,7 @@ let archivoSeleccionado = null;
 let materialesDB = [];
 let tiposImpresionDB = [];
 let clientesBusquedaDB = [];
+    clientesCatalogoDB = [];
 let clientesCatalogoDB = [];
 
 // ===========================
@@ -173,21 +174,105 @@ async function asegurarClienteExiste(nombreCliente) {
 async function cargarClientesBusqueda() {
   const { data, error } = await db()
     .from("clientes")
-    .select("nombre, telefono, correo, notas");
+    .select("id, nombre, telefono, correo, notas, activo")
+    .eq("activo", true)
+    .order("nombre", { ascending: true });
 
   if (error) {
     console.warn("No se pudieron cargar clientes para bÃºsqueda:", error);
     clientesBusquedaDB = [];
+    clientesCatalogoDB = [];
     return;
   }
 
   clientesBusquedaDB = data || [];
+  clientesCatalogoDB = [...clientesBusquedaDB];
+  renderClienteDatalist();
   console.log("Clientes para bÃºsqueda cargados:", clientesBusquedaDB);
 }
 
 // ===========================
 // OPERADORES
 // ===========================
+function renderClienteDatalist() {
+  const datalist = document.getElementById("clientesDatalist");
+  if (!datalist) return;
+  datalist.innerHTML = "";
+
+  const usados = new Set();
+  clientesCatalogoDB.forEach(c => {
+    const nombre = String(c.nombre || "").trim();
+    if (!nombre) return;
+    const key = normalizarBusqueda(nombre);
+    if (!key || usados.has(key)) return;
+    usados.add(key);
+
+    const opt = document.createElement("option");
+    opt.value = nombre;
+    datalist.appendChild(opt);
+  });
+}
+
+function buscarClienteExactoNormalizado(nombre) {
+  const norm = normalizarBusqueda(nombre);
+  if (!norm) return null;
+  return clientesCatalogoDB.find(c => normalizarBusqueda(c.nombre) === norm) || null;
+}
+
+function puntajeParecidoCliente(a, b) {
+  const na = normalizarBusqueda(a);
+  const nb = normalizarBusqueda(b);
+  if (!na || !nb) return 0;
+  if (na === nb) return 1;
+  if (na.includes(nb) || nb.includes(na)) return 0.92;
+
+  const ta = na.split(" ").filter(Boolean);
+  const tb = nb.split(" ").filter(Boolean);
+  if (!ta.length || !tb.length) return 0;
+
+  const sb = new Set(tb);
+  let match = 0;
+  ta.forEach(t => { if (sb.has(t)) match++; });
+  return match / Math.max(ta.length, tb.length);
+}
+
+function buscarClienteParecido(nombre) {
+  let mejor = null;
+  let score = 0;
+
+  clientesCatalogoDB.forEach(c => {
+    const s = puntajeParecidoCliente(nombre, c.nombre);
+    if (s > score) {
+      score = s;
+      mejor = c;
+    }
+  });
+
+  return score >= 0.6 ? mejor : null;
+}
+
+async function resolverNombreClienteAntesDeGuardar(nombreIngresado) {
+  const nombre = String(nombreIngresado || "").trim();
+  if (!nombre) return { ok: true, nombreFinal: "" };
+
+  const exacto = buscarClienteExactoNormalizado(nombre);
+  if (exacto) return { ok: true, nombreFinal: String(exacto.nombre || "").trim() };
+
+  const parecido = buscarClienteParecido(nombre);
+  if (!parecido) return { ok: true, nombreFinal: nombreBonito(nombre) };
+
+  const accion = prompt(
+    `Posible cliente existente.\n\nEscribiste: ${nombre}\nDetectado: ${parecido.nombre}\n\n1 = Usar existente\n2 = Crear nuevo\n3 = Cancelar`,
+    "1"
+  );
+
+  if (accion === null || accion.trim() === "3") return { ok: false, cancelado: true };
+  if (accion.trim() === "1") return { ok: true, nombreFinal: String(parecido.nombre || "").trim() };
+  if (accion.trim() === "2") return { ok: true, nombreFinal: nombreBonito(nombre) };
+
+  alert("Opción inválida. Operación cancelada.");
+  return { ok: false, cancelado: true };
+}
 async function cargarOperadoresComandaDesdeSupabase() {
   const fallback = [
     { nombre: "Roberto" },
@@ -1024,6 +1109,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     aplicarPermisosComanda();
   }
 });
+
+
+
+
+
 
 
 
