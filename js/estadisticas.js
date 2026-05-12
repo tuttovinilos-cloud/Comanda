@@ -150,6 +150,7 @@ async function cargarPedidosStats() {
   pedidosStatsDB = data || [];
 
   llenarAnios();
+  llenarClientesFiltro();
   renderEstadisticas();
 
   toast("Estadísticas actualizadas");
@@ -185,11 +186,43 @@ function llenarAnios() {
 }
 
 // ===========================
+// LLENAR CLIENTES
+// ===========================
+function llenarClientesFiltro() {
+  const select = document.getElementById("filterCliente");
+  if (!select) return;
+
+  const actual = select.value || "all";
+
+  const clientes = [...new Map(
+    pedidosStatsDB
+      .map(p => String(p.cliente || "").trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, "es"))
+      .map(nombre => [normalizar(nombre), nombre])
+  ).entries()].map(([key, nombre]) => ({ key, nombre }));
+
+  select.innerHTML = `<option value="all">Todos los clientes</option>`;
+
+  clientes.forEach(c => {
+    select.insertAdjacentHTML(
+      "beforeend",
+      `<option value="${escapeHtml(c.key)}">${escapeHtml(c.nombre)}</option>`
+    );
+  });
+
+  if (actual && [...select.options].some(o => o.value === actual)) {
+    select.value = actual;
+  }
+}
+
+// ===========================
 // FILTROS
 // ===========================
 function pedidosFiltrados() {
   const year = document.getElementById("filterYear")?.value || "all";
   const month = document.getElementById("filterMonth")?.value || "all";
+  const cliente = document.getElementById("filterCliente")?.value || "all";
 
   return pedidosStatsDB.filter(p => {
     const fecha = String(p.fecha || "");
@@ -200,6 +233,8 @@ function pedidosFiltrados() {
       const mes = fecha.slice(5, 7);
       if (mes !== month) return false;
     }
+
+    if (cliente !== "all" && normalizar(p.cliente) !== cliente) return false;
 
     return true;
   });
@@ -327,83 +362,28 @@ function renderRanking(containerId, datos, tipo = "metros", limit = 10) {
 }
 
 // ===========================
-// RENDER FRECUENCIA CLIENTES
-// ===========================
-function renderFrecuenciaClientes(datosClientes) {
-  const cont = document.getElementById("frecuenciaClientes");
-  if (!cont) return;
-
-  const recurrentes = [...datosClientes]
-    .filter(c => c.pedidos >= 2 && c.frecuenciaDias !== null)
-    .sort((a, b) => {
-      if (a.frecuenciaDias !== b.frecuenciaDias) {
-        return a.frecuenciaDias - b.frecuenciaDias;
-      }
-
-      return b.pedidos - a.pedidos;
-    })
-    .slice(0, 12);
-
-  if (!recurrentes.length) {
-    cont.innerHTML = `<div class="empty">Sin recurrencia todavía</div>`;
-    return;
-  }
-
-  cont.innerHTML = "";
-
-  const max = Math.max(...recurrentes.map(c => c.frecuenciaDias || 0), 1);
-
-  recurrentes.forEach(c => {
-    const pct = Math.max(100 - ((c.frecuenciaDias / max) * 100), 8);
-
-    const row = `
-      <div class="row">
-        <div class="row-title" title="${escapeHtml(c.nombre)}">${escapeHtml(c.nombre)}</div>
-        <div class="row-val">${escapeHtml(c.frecuenciaTexto)}</div>
-
-        <div class="row-sub">
-          ${fmt(c.pedidos)} pedidos · 
-          Primero: ${escapeHtml(fechaCorta(c.primeraFecha))} · 
-          Último: ${escapeHtml(fechaCorta(c.ultimaFecha))}
-        </div>
-
-        <div class="bar-wrap">
-          <div class="bar" style="width:${pct}%"></div>
-        </div>
-      </div>
-    `;
-
-    cont.insertAdjacentHTML("beforeend", row);
-  });
-}
-
-// ===========================
 // METROS POR MES
 // ===========================
 function renderMetrosPorMes(lista) {
-  const meses = {
-    "01": "Enero",
-    "02": "Febrero",
-    "03": "Marzo",
-    "04": "Abril",
-    "05": "Mayo",
-    "06": "Junio",
-    "07": "Julio",
-    "08": "Agosto",
-    "09": "Septiembre",
-    "10": "Octubre",
-    "11": "Noviembre",
-    "12": "Diciembre"
-  };
+  const meses = [
+    ["01", "Enero"],
+    ["02", "Febrero"],
+    ["03", "Marzo"],
+    ["04", "Abril"],
+    ["05", "Mayo"],
+    ["06", "Junio"],
+    ["07", "Julio"],
+    ["08", "Agosto"],
+    ["09", "Septiembre"],
+    ["10", "Octubre"],
+    ["11", "Noviembre"],
+    ["12", "Diciembre"]
+  ];
 
   const mapa = {};
 
-  Object.keys(meses).forEach(m => {
-    mapa[m] = {
-      nombre: meses[m],
-      total: 0,
-      pedidos: 0
-    };
+  meses.forEach(([key, nombre]) => {
+    mapa[key] = { key, nombre, total: 0, pedidos: 0 };
   });
 
   lista.forEach(p => {
@@ -414,14 +394,27 @@ function renderMetrosPorMes(lista) {
     mapa[mes].pedidos += 1;
   });
 
-  const datos = Object.entries(mapa).map(([key, val]) => ({
-    key,
-    nombre: val.nombre,
-    total: val.total,
-    pedidos: val.pedidos
-  }));
+  const datos = meses.map(([key]) => mapa[key]);
+  const cont = document.getElementById("metrosPorMes");
+  if (!cont) return;
 
-  renderRanking("metrosPorMes", datos, "metros", 12);
+  const max = Math.max(...datos.map(x => x.total), 1);
+  cont.innerHTML = "";
+
+  datos.forEach(item => {
+    const pct = Math.max((item.total / max) * 100, item.total > 0 ? 2 : 0);
+
+    cont.insertAdjacentHTML("beforeend", `
+      <div class="row">
+        <div class="row-title">${escapeHtml(item.nombre)}</div>
+        <div class="row-val">${fmt(item.total)}</div>
+        <div class="row-sub">${fmt(item.pedidos)} pedido${item.pedidos === 1 ? "" : "s"}</div>
+        <div class="bar-wrap">
+          <div class="bar" style="width:${pct}%"></div>
+        </div>
+      </div>
+    `);
+  });
 }
 
 // ===========================
@@ -439,27 +432,18 @@ function renderTablaClientes(datosClientes) {
     .slice(0, 80);
 
   if (!ordenados.length) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty">Sin clientes</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="empty">Sin clientes</td></tr>`;
     return;
   }
 
   tbody.innerHTML = "";
 
   ordenados.forEach(c => {
-    const frecuenciaClass = c.frecuenciaDias === null
-      ? "yellow"
-      : c.frecuenciaDias <= 30
-        ? "green"
-        : c.frecuenciaDias <= 90
-          ? "blue"
-          : "yellow";
-
     const row = `
       <tr>
         <td>${escapeHtml(c.nombre)}</td>
         <td>${fmt(c.pedidos)}</td>
         <td>${fmt(c.total)}</td>
-        <td><span class="pill ${frecuenciaClass}">${escapeHtml(c.frecuenciaTexto)}</span></td>
         <td>${escapeHtml(fechaCorta(c.primeraFecha))}</td>
         <td>${escapeHtml(fechaCorta(c.ultimaFecha))}</td>
         <td><span class="pill green">${fmt(c.listos)}</span></td>
@@ -470,20 +454,6 @@ function renderTablaClientes(datosClientes) {
 
     tbody.insertAdjacentHTML("beforeend", row);
   });
-}
-
-// ===========================
-// KPI RECURRENCIA GENERAL
-// ===========================
-function calcularRecurrenciaGeneral(datosClientes) {
-  const recurrentes = datosClientes
-    .filter(c => c.pedidos >= 2 && c.frecuenciaDias !== null)
-    .map(c => c.frecuenciaDias);
-
-  if (!recurrentes.length) return null;
-
-  const total = recurrentes.reduce((acc, n) => acc + n, 0);
-  return total / recurrentes.length;
 }
 
 // ===========================
@@ -503,25 +473,20 @@ function renderEstadisticas() {
   const porImpresion = agrupar(lista, p => p.tipo_impresion);
   const porOperador = agrupar(lista, p => p.operador, p => 1);
 
-  const recurrenciaGeneral = calcularRecurrenciaGeneral(porCliente);
-
   const kpiPedidos = document.getElementById("kpiPedidos");
   const kpiMetros = document.getElementById("kpiMetros");
   const kpiClientes = document.getElementById("kpiClientes");
   const kpiListos = document.getElementById("kpiListos");
   const kpiPagados = document.getElementById("kpiPagados");
-  const kpiRecurrencia = document.getElementById("kpiRecurrencia");
 
   if (kpiPedidos) kpiPedidos.textContent = fmt(totalPedidos);
   if (kpiMetros) kpiMetros.textContent = fmt(totalMetros);
   if (kpiClientes) kpiClientes.textContent = fmt(clientesUnicos);
   if (kpiListos) kpiListos.textContent = fmt(listos);
   if (kpiPagados) kpiPagados.textContent = fmt(pagados);
-  if (kpiRecurrencia) kpiRecurrencia.textContent = recurrenciaGeneral === null ? "—" : textoFrecuencia(recurrenciaGeneral);
 
   renderRanking("topClientes", porCliente, "metros", 10);
   renderRanking("clientesRecurrentes", porCliente, "pedidos", 10);
-  renderFrecuenciaClientes(porCliente);
   renderRanking("materialesUsados", porMaterial, "metros", 10);
   renderRanking("impresionesUsadas", porImpresion, "metros", 10);
   renderRanking("operadoresUsados", porOperador, "pedidos", 10);
