@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Comanda</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 :root{
   --bg:#0d0f14;
@@ -25,9 +25,10 @@
   --green:#30D158;
   --red:#FF3B30;
   --yellow:#FFD60A;
+  --orange:#FF9F0A;
+  --mono:'Share Tech Mono',monospace;
   --head:'Barlow Condensed',sans-serif;
   --body:'Barlow',sans-serif;
-  --mono:'Share Tech Mono',monospace;
 }
 
 body{
@@ -35,228 +36,280 @@ body{
   color:var(--text);
   font-family:var(--body);
   min-height:100vh;
-  padding-bottom:80px;
+  padding-bottom:90px;
 }
 
-button,input,select,textarea{
-  font:inherit;
-}
-
-button{
-  touch-action:manipulation;
-}
+button,input,select,textarea{font:inherit}
+button{touch-action:manipulation}
+#authTopbar{display:none!important}
 
 .header{
-  position:sticky;
-  top:0;
-  z-index:100;
   background:var(--panel);
   border-bottom:2px solid var(--accent);
   padding:10px 16px;
   display:flex;
   align-items:center;
   gap:12px;
-  flex-wrap:wrap;
+  min-height:58px;
+  position:sticky;
+  top:0;
+  z-index:300;
   box-shadow:0 4px 24px #0009;
+  flex-wrap:wrap;
 }
 
 .logo{
   font-family:var(--head);
-  font-size:22px;
+  font-size:21px;
   font-weight:900;
   letter-spacing:3px;
   color:var(--accent2);
   text-transform:uppercase;
+  white-space:nowrap;
 }
 
 .logo small{
   color:var(--muted);
+  font-weight:400;
   font-size:11px;
   letter-spacing:1px;
   margin-left:6px;
 }
 
-.nav{
+.mobile-menu-btn{
+  display:none;
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  padding:8px 12px;
+  border:1px solid var(--border2);
+  background:var(--panel2);
+  color:var(--accent2);
+  border-radius:7px;
+  cursor:pointer;
+  margin-left:auto;
+}
+
+.header-tabs{
   display:flex;
   gap:6px;
   margin-left:auto;
+  align-items:center;
   flex-wrap:wrap;
 }
 
-.nav a,
-.nav button{
+.tab-btn,.menu-status{
   font-family:var(--head);
   font-size:12px;
   font-weight:700;
-  letter-spacing:1.3px;
+  letter-spacing:1.5px;
   text-transform:uppercase;
-  padding:8px 13px;
+  padding:7px 14px;
   border:1px solid var(--border2);
   background:transparent;
   color:var(--muted2);
-  border-radius:7px;
+  cursor:pointer;
+  border-radius:6px;
+  transition:all .2s;
   text-decoration:none;
-  cursor:pointer;
-}
-
-.nav a.active{
-  background:var(--accent);
-  color:white;
-  border-color:var(--accent);
-}
-
-.nav a:hover,
-.nav button:hover{
-  border-color:var(--accent);
-  color:var(--accent2);
-}
-
-.main{
-  padding:16px;
-  display:grid;
-  gap:16px;
-}
-
-.toolbar{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  align-items:center;
-}
-
-.search{
-  flex:1;
-  min-width:230px;
-  background:var(--panel);
-  border:1px solid var(--border2);
-  border-radius:8px;
-  padding:10px 12px;
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.search input{
-  width:100%;
-  background:transparent;
-  border:0;
-  outline:0;
-  color:var(--text);
-  font-family:var(--mono);
-  font-size:13px;
-}
-
-.btn{
-  border:0;
-  border-radius:8px;
-  padding:10px 14px;
-  background:var(--accent);
-  color:white;
-  cursor:pointer;
-  font-family:var(--head);
-  font-weight:800;
-  font-size:12px;
-  letter-spacing:1.3px;
-  text-transform:uppercase;
   display:inline-flex;
   align-items:center;
   justify-content:center;
   gap:6px;
+  min-height:38px;
+}
+
+.tab-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent2);
+  background:#3b82f611;
+}
+
+.tab-btn.active{
+  background:var(--accent);
+  color:#fff;
+  border-color:var(--accent);
+  box-shadow:0 0 14px #3b82f644;
+}
+
+.menu-status{cursor:default}
+
+.status-dot{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:var(--green);
+  display:inline-block;
+}
+
+.menu-extra{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.toolbar{
+  display:flex;
+  gap:8px;
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.fusion-tools{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.fusion-tools[hidden]{
+  display:none !important;
+}
+
+.search-wrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:var(--panel);
+  border:1px solid var(--border2);
+  border-radius:7px;
+  padding:9px 12px;
+  flex:1;
+  min-width:260px;
+}
+
+.search-wrap input{
+  background:none;
+  border:none;
+  outline:none;
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:13px;
+  width:100%;
+}
+
+input,select,textarea{
+  width:100%;
+  background:var(--bg);
+  border:1px solid var(--border2);
+  color:var(--text);
+  border-radius:7px;
+  padding:8px 10px;
+  outline:none;
+  font-family:var(--body);
+  font-size:13px;
+}
+
+textarea{
+  min-height:78px;
+  resize:vertical;
+}
+
+input:focus,select:focus,textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px #3b82f622;
+}
+
+select option{
+  background:var(--panel);
+  color:var(--text);
+}
+
+.btn{
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  padding:9px 14px;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:7px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  transition:all .2s;
   white-space:nowrap;
 }
 
-.btn:hover{
-  filter:brightness(1.1);
-}
-
+.btn:hover{filter:brightness(1.1)}
+.btn.success{background:#16a34a}
+.btn.danger{background:#dc2626}
 .btn.secondary{
   background:transparent;
   color:var(--muted2);
   border:1px solid var(--border2);
 }
 
-.btn.success{
-  background:#16a34a;
-}
-
-.btn.danger{
-  background:#dc2626;
-}
-
-.fusion-tools{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-
-.fusion-tools[hidden]{
-  display:none!important;
-}
-
-.fusion-hint{
-  color:var(--muted2);
-  font-family:var(--head);
-  font-size:12px;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  padding:8px 10px;
-  border:1px solid var(--border2);
-  border-radius:8px;
-  background:#ffffff05;
+.layout{
+  padding:16px;
+  display:grid;
+  gap:16px;
 }
 
 .card{
   background:var(--panel);
   border:1px solid var(--border2);
-  border-radius:14px;
+  border-radius:12px;
   overflow:hidden;
-  box-shadow:0 10px 30px #0005;
+  box-shadow:0 10px 30px #0004;
 }
 
 .card-header{
   padding:16px;
   border-bottom:1px solid var(--border);
   display:flex;
-  align-items:center;
   justify-content:space-between;
+  align-items:center;
   gap:12px;
   flex-wrap:wrap;
 }
 
 .card-title{
   font-family:var(--head);
-  font-size:22px;
+  font-size:20px;
   font-weight:900;
-  letter-spacing:1.4px;
+  letter-spacing:1.5px;
   text-transform:uppercase;
 }
 
 .card-sub{
+  font-size:12px;
   color:var(--muted2);
-  font-size:13px;
   margin-top:2px;
 }
 
-.table-wrap{
-  overflow:auto;
+.card-actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
 }
+
+.table-scroll{overflow-x:auto}
 
 table{
   width:100%;
-  min-width:960px;
   border-collapse:collapse;
+  min-width:920px;
 }
 
 th{
   background:var(--panel2);
-  color:var(--muted2);
+  color:var(--muted);
   font-family:var(--head);
   font-size:11px;
-  letter-spacing:1.4px;
+  letter-spacing:1.5px;
   text-transform:uppercase;
   text-align:left;
-  padding:11px 10px;
+  padding:10px;
   border-bottom:1px solid var(--border2);
 }
 
@@ -267,21 +320,34 @@ td{
   font-size:13px;
 }
 
-tr:hover td{
-  background:#ffffff04;
-}
+tr:hover td{background:#ffffff03}
 
 .select-cell{
-  width:48px;
+  width:46px;
   text-align:center;
 }
 
-.client-check,
-.master-check{
+.client-check,.master-check{
   width:18px;
   height:18px;
   accent-color:var(--accent);
   cursor:pointer;
+}
+
+.fusion-hint{
+  color:var(--muted2);
+  font-family:var(--head);
+  font-size:12px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:7px 10px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  background:#ffffff04;
+}
+
+.client-main{
+  min-width:260px;
 }
 
 .client-name{
@@ -304,44 +370,19 @@ tr:hover td{
 }
 
 .client-meta span{
-  background:#ffffff06;
-  border:1px solid var(--border);
-  border-radius:999px;
-  padding:4px 7px;
-}
-
-.badge{
   display:inline-flex;
   align-items:center;
-  justify-content:center;
-  padding:5px 9px;
+  gap:4px;
+  background:#ffffff05;
+  border:1px solid var(--border);
+  padding:4px 7px;
   border-radius:999px;
-  border:1px solid var(--border2);
+}
+
+.notes-cell{
+  max-width:260px;
   color:var(--muted2);
-  font-family:var(--head);
-  font-size:11px;
-  font-weight:800;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  white-space:nowrap;
-}
-
-.badge.ok{
-  color:var(--green);
-  border-color:#30D15844;
-  background:#30D15811;
-}
-
-.badge.off{
-  color:var(--red);
-  border-color:#FF3B3044;
-  background:#FF3B3011;
-}
-
-.badge.type{
-  color:var(--accent2);
-  border-color:#3b82f644;
-  background:#3b82f611;
+  line-height:1.35;
 }
 
 .pedidos-btn{
@@ -349,32 +390,38 @@ tr:hover td{
   background:#3b82f611;
   color:var(--accent2);
   border-radius:10px;
-  padding:9px 12px;
+  padding:10px 12px;
   cursor:pointer;
   font-family:var(--head);
-  font-size:13px;
+  font-size:14px;
   font-weight:900;
   letter-spacing:1px;
   text-transform:uppercase;
-  min-width:110px;
+  min-width:115px;
   text-align:center;
 }
 
 .pedidos-btn strong{
   display:block;
-  color:white;
   font-size:22px;
+  color:#fff;
   line-height:1;
 }
 
 .pedidos-btn small{
   display:block;
+  margin-top:3px;
   color:var(--muted2);
   font-size:10px;
-  margin-top:3px;
+  letter-spacing:1.2px;
 }
 
-.actions{
+.pedidos-btn:hover{
+  border-color:var(--accent);
+  background:#3b82f622;
+}
+
+.actions-row{
   display:flex;
   gap:6px;
   flex-wrap:wrap;
@@ -384,12 +431,12 @@ tr:hover td{
   border:1px solid var(--border2);
   background:transparent;
   color:var(--muted2);
-  border-radius:7px;
-  padding:8px 10px;
+  border-radius:6px;
+  padding:8px 11px;
   cursor:pointer;
   font-family:var(--head);
   font-size:11px;
-  font-weight:800;
+  font-weight:700;
   letter-spacing:1px;
   text-transform:uppercase;
   white-space:nowrap;
@@ -398,145 +445,66 @@ tr:hover td{
 .mini-btn:hover{
   border-color:var(--accent);
   color:var(--accent2);
+  background:#3b82f611;
 }
 
 .mini-btn.del{
-  color:var(--red);
+  background:#FF3B3011;
+  border-color:#FF3B3044;
+  color:#FF3B30;
+}
+
+.badge{
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:5px 9px;
+  border-radius:999px;
+  border:1px solid var(--border2);
+  color:var(--muted2);
+  white-space:nowrap;
+}
+
+.badge.ok{
+  color:#30D158;
+  border-color:#30D15844;
+  background:#30D15811;
+}
+
+.badge.off{
+  color:#FF3B30;
   border-color:#FF3B3044;
   background:#FF3B3011;
 }
 
+.badge.type{
+  color:#60a5fa;
+  border-color:#3b82f644;
+  background:#3b82f611;
+}
+
 .empty{
   color:var(--muted);
+  padding:30px;
   text-align:center;
-  padding:32px;
   font-family:var(--head);
-  letter-spacing:1.4px;
+  letter-spacing:1.5px;
   text-transform:uppercase;
 }
 
-.modal-backdrop{
-  position:fixed;
-  inset:0;
-  background:#000b;
-  z-index:500;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:16px;
-  backdrop-filter:blur(4px);
-}
-
-.modal{
-  width:100%;
-  max-width:720px;
-  max-height:88vh;
-  overflow:auto;
-  background:var(--panel);
-  border:1px solid var(--border2);
-  border-radius:14px;
-  box-shadow:0 24px 80px #000d;
-}
-
-.modal-header{
-  padding:16px;
-  border-bottom:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-}
-
-.modal-title{
-  font-family:var(--head);
-  font-size:20px;
-  font-weight:900;
-  letter-spacing:1.4px;
-  text-transform:uppercase;
-}
-
-.modal-body{
-  padding:16px;
-  display:grid;
-  gap:12px;
-}
-
-.modal-footer{
-  padding:14px 16px;
-  border-top:1px solid var(--border);
-  display:flex;
-  justify-content:flex-end;
-  gap:8px;
-  flex-wrap:wrap;
-}
-
-.form-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:12px;
-}
-
-.field label{
-  display:block;
-  color:var(--muted2);
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:800;
-  letter-spacing:1.2px;
-  text-transform:uppercase;
-  margin-bottom:6px;
-}
-
-input,select,textarea{
-  width:100%;
-  background:var(--bg);
-  border:1px solid var(--border2);
-  color:var(--text);
-  border-radius:8px;
-  padding:10px 11px;
-  outline:none;
-  font-size:14px;
-}
-
-textarea{
-  min-height:90px;
-  resize:vertical;
-}
-
-input:focus,
-select:focus,
-textarea:focus{
-  border-color:var(--accent);
-  box-shadow:0 0 0 2px #3b82f633;
-}
-
-.full{
-  grid-column:1/-1;
-}
-
-.history-item{
-  border:1px solid var(--border2);
+.note{
+  background:#3b82f611;
+  border:1px solid #3b82f633;
   border-radius:10px;
-  padding:12px;
-  background:#ffffff04;
-  display:grid;
-  gap:6px;
-}
-
-.history-top{
-  display:flex;
-  justify-content:space-between;
-  gap:8px;
-  flex-wrap:wrap;
+  padding:12px 14px;
   color:var(--muted2);
-  font-family:var(--mono);
-  font-size:12px;
-}
-
-.history-desc{
-  color:var(--text);
+  font-size:13px;
   line-height:1.45;
 }
+
+.note strong{color:var(--accent2)}
 
 .toast{
   position:fixed;
@@ -557,51 +525,208 @@ textarea:focus{
   text-align:center;
 }
 
-@media(max-width:700px){
-  .header{
-    align-items:flex-start;
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  background:#000b;
+  z-index:900;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  backdrop-filter:blur(4px);
+}
+
+.modal{
+  width:100%;
+  max-width:760px;
+  max-height:88vh;
+  overflow:auto;
+  background:var(--panel);
+  border:1px solid var(--border2);
+  border-radius:14px;
+  box-shadow:0 24px 80px #000d;
+}
+
+.modal-header{
+  padding:16px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.modal-title{
+  font-family:var(--head);
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+}
+
+.modal-body{
+  padding:16px;
+  display:grid;
+  gap:12px;
+}
+
+.modal-footer{
+  padding:14px 16px;
+  border-top:1px solid var(--border);
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.form-full{grid-column:1/-1}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.field label{
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.history-item{
+  border:1px solid var(--border2);
+  border-radius:10px;
+  padding:11px;
+  margin-bottom:8px;
+  background:var(--bg);
+}
+
+.history-top{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  color:var(--muted2);
+  font-family:var(--mono);
+  font-size:12px;
+  margin-bottom:6px;
+  flex-wrap:wrap;
+}
+
+.history-desc{
+  color:var(--text);
+  font-size:13px;
+  line-height:1.4;
+}
+
+@media(max-width:760px){
+  .header{padding:10px 12px}
+  .logo{font-size:19px}
+  .logo small{display:none}
+
+  .mobile-menu-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
   }
 
-  .nav{
+  .header-tabs{
+    display:none;
     width:100%;
     margin-left:0;
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
+    padding-top:14px;
+    border-top:1px solid var(--border);
   }
 
-  .nav a,
-  .nav button{
-    width:100%;
-  }
-
-  .main{
-    padding:10px;
-  }
-
-  .toolbar{
+  .header-tabs.open{
     display:grid;
     grid-template-columns:1fr;
+    gap:8px;
   }
 
-  .search{
-    min-width:100%;
+  .tab-btn,.menu-status{
+    width:100%;
+    justify-content:center;
+    font-size:11px;
+    min-height:42px;
+    padding:9px 8px;
+    border-radius:8px;
+  }
+
+  .menu-extra{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .toolbar{padding:10px}
+  .search-wrap{min-width:100%}
+
+  #ordenClientes,
+  #filtroTipoCliente,
+  #filtroEstadoCliente{
+    flex:1 1 100%;
+  }
+
+  .toolbar .btn{
+    flex:1 1 100%;
   }
 
   .fusion-tools{
-    display:grid;
-    grid-template-columns:1fr;
+    width:100%;
   }
 
-  .btn{
+  .fusion-tools .btn{
+    flex:1 1 100%;
+  }
+
+  .layout{padding:10px}
+
+  .card-header{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .card-actions{
     width:100%;
+  }
+
+  .card-actions .badge{
+    width:100%;
+    text-align:center;
   }
 
   .form-grid{
     grid-template-columns:1fr;
   }
 
+  .modal{
+    max-height:92vh;
+  }
+
+  .modal-footer .btn{
+    width:100%;
+  }
+
   table{
-    min-width:880px;
+    min-width:760px;
+  }
+
+  .client-name{
+    font-size:19px;
+  }
+
+  .notes-cell{
+    max-width:190px;
   }
 }
 </style>
@@ -610,100 +735,133 @@ textarea:focus{
 <body>
 
 <header class="header">
-  <div class="logo">TUTTO VINILOS <small>Clientes</small></div>
+  <div class="logo">COMANDA<small>CLIENTES</small></div>
 
-  <nav class="nav">
-    <a href="index.html">Comanda</a>
-    <a href="clientes.html" class="active">Clientes</a>
-    <a href="materiales.html">Materiales</a>
-    <a href="estadisticas.html">Estadísticas</a>
-    <a href="configuracion.html">Configuración</a>
-    <button onclick="cerrarSesion()">Salir</button>
+  <button class="mobile-menu-btn" id="mobileMenuBtn" type="button">☰ Menú</button>
+
+  <nav class="header-tabs" id="authMenu">
+    <a class="tab-btn" href="index.html">📋 Pedidos</a>
+    <a class="tab-btn active" href="clientes.html">👤 Clientes</a>
+    <a class="tab-btn" href="materiales.html">💲 Materiales</a>
+    <a class="tab-btn" href="estadisticas.html">📊 Estadísticas</a>
+    <a class="tab-btn" href="marketing.html">📣 Marketing</a>
+    <a class="tab-btn" href="Cotizador.html">🧾 Cotizador</a>
+    <a class="tab-btn" href="Organizador de ideas.html">💡 Organizador</a>
+    <a class="tab-btn" href="configuracion.html">⚙️ Configuración</a>
+    <button class="tab-btn" type="button" onclick="localStorage.removeItem('comanda_operador_actual'); location.href='login.html?logout=1';">Salir</button>
+
+    <div class="menu-extra">
+      <div class="menu-status">
+        <span class="status-dot"></span>
+        Supabase
+      </div>
+    </div>
   </nav>
 </header>
 
-<main class="main">
+<div class="toolbar">
+  <div class="search-wrap">
+    🔎
+    <input id="searchClientes" type="text" placeholder="Buscar cliente, teléfono, correo o notas..." oninput="filtrarClientes()"/>
+  </div>
 
-  <section class="toolbar">
-    <div class="search">
-      <span>🔎</span>
-      <input id="searchInput" type="search" placeholder="Buscar cliente, teléfono, correo o nota..." oninput="filtrarClientes()" />
-    </div>
+  <select id="filtroTipoCliente" onchange="filtrarClientes()">
+    <option value="">Todos los tipos</option>
+    <option value="Cliente Standar">Cliente Standar</option>
+    <option value="Cliente VIP">Cliente VIP</option>
+    <option value="Cliente Básico">Cliente Básico</option>
+    <option value="Cliente Editado">Cliente Editado</option>
+  </select>
 
-    <button class="btn" onclick="abrirModalCliente()">+ Añadir cliente</button>
-    <button class="btn secondary" onclick="recargarTodo()">Recargar</button>
+  <select id="filtroEstadoCliente" onchange="filtrarClientes()">
+    <option value="">Todos</option>
+    <option value="activo">Activos</option>
+    <option value="inactivo">Inactivos</option>
+  </select>
 
-    <div id="fusionTools" class="fusion-tools" hidden>
-      <button class="btn success" onclick="fusionarClientesSeleccionados()">Fusionar seleccionados</button>
-      <button class="btn secondary" onclick="limpiarSeleccionClientes()">Limpiar selección</button>
-      <button class="btn danger" onclick="deshacerUltimaFusionClientes()">↶ Deshacer última fusión</button>
-      <span id="selectedCounter" class="fusion-hint">0 seleccionados</span>
-    </div>
-  </section>
+  <select id="ordenClientes" onchange="filtrarClientes()">
+    <option value="nombre_az">Nombre A-Z</option>
+    <option value="nombre_za">Nombre Z-A</option>
+    <option value="pedidos_mayor">Más pedidos</option>
+    <option value="pedidos_menor">Menos pedidos</option>
+  </select>
+
+  <button class="btn" onclick="nuevoCliente()">+ Añadir cliente</button>
+  <div class="fusion-tools" id="fusionTools" hidden>
+    <button class="btn success" onclick="fusionarClientesSeleccionados()">Fusionar seleccionados</button>
+    <button class="btn" onclick="limpiarSeleccionClientes()">Limpiar selección</button>
+    <button class="btn" onclick="deshacerUltimaFusionClientes()">↶ Deshacer última fusión</button>
+    <span class="fusion-hint" id="fusionHint">0 seleccionados</span>
+  </div>
+</div>
+
+<div class="layout">
+
+  <div class="note">
+    <strong>Clientes:</strong> marca varios clientes con la casilla y usa “Fusionar seleccionados” para unir nombres duplicados sin cambiar el diseño.
+  </div>
 
   <section class="card">
     <div class="card-header">
       <div>
-        <div class="card-title">Lista de clientes</div>
-        <div id="clientesSub" class="card-sub">Cargando clientes...</div>
+        <div class="card-title">Clientes</div>
+        <div class="card-sub">Crear, editar, eliminar y revisar historial de pedidos por cliente.</div>
+      </div>
+
+      <div class="card-actions">
+        <span class="badge ok" id="clientesCount">0 clientes</span>
       </div>
     </div>
 
-    <div class="table-wrap">
+    <div class="table-scroll">
       <table>
         <thead>
           <tr>
-            <th id="selectHeader" class="select-cell" style="display:none;">
-              <input id="masterCheck" class="master-check" type="checkbox" onchange="toggleSeleccionVisible(this.checked)" />
-            </th>
+            <th class="select-cell fusion-only"><input class="master-check" type="checkbox" id="checkTodosClientes" onchange="toggleTodosClientes(this.checked)" title="Seleccionar todos"/></th>
             <th>Cliente</th>
-            <th>Tipo</th>
-            <th>Contacto</th>
-            <th>Pedidos</th>
-            <th>Estado</th>
             <th>Notas</th>
+            <th>Pedidos / Historial</th>
+            <th>Estado</th>
             <th>Acción</th>
           </tr>
         </thead>
+
         <tbody id="clientesBody">
-          <tr>
-            <td colspan="8" class="empty">Cargando...</td>
-          </tr>
+          <tr><td colspan="6" class="empty">Cargando clientes...</td></tr>
         </tbody>
       </table>
     </div>
   </section>
+</div>
 
-</main>
-
-<div id="clienteModal" class="modal-backdrop" onclick="cerrarModalSiFondo(event)">
+<div class="modal-backdrop" id="clienteBackdrop" onclick="cerrarClienteSiFondo(event)">
   <div class="modal">
     <div class="modal-header">
-      <div id="clienteModalTitle" class="modal-title">Nuevo cliente</div>
+      <div class="modal-title" id="clienteModalTitle">Nuevo cliente</div>
       <button class="mini-btn" onclick="cerrarModalCliente()">Cerrar</button>
     </div>
 
     <div class="modal-body">
-      <input id="clienteId" type="hidden" />
+      <input type="hidden" id="clienteId"/>
 
       <div class="form-grid">
-        <div class="field full">
-          <label>Nombre</label>
-          <input id="clienteNombre" placeholder="Nombre del cliente" />
+        <div class="field form-full">
+          <label>Nombre del cliente</label>
+          <input id="clienteNombre" type="text" placeholder="Ej: Armando Framed"/>
         </div>
 
         <div class="field">
           <label>Tipo de cliente</label>
           <select id="clienteTipo">
-            <option>Cliente Standar</option>
-            <option>Cliente VIP</option>
-            <option>Cliente Básico</option>
-            <option>Editado</option>
+            <option value="Cliente Standar">Cliente Standar</option>
+            <option value="Cliente VIP">Cliente VIP</option>
+            <option value="Cliente Básico">Cliente Básico</option>
+            <option value="Cliente Editado">Cliente Editado</option>
           </select>
         </div>
 
         <div class="field">
-          <label>Activo</label>
+          <label>Estado</label>
           <select id="clienteActivo">
             <option value="true">Activo</option>
             <option value="false">Inactivo</option>
@@ -712,156 +870,108 @@ textarea:focus{
 
         <div class="field">
           <label>Teléfono</label>
-          <input id="clienteTelefono" placeholder="Teléfono" />
+          <input id="clienteTelefono" type="text" placeholder="Teléfono"/>
         </div>
 
         <div class="field">
           <label>Correo</label>
-          <input id="clienteCorreo" placeholder="Correo" />
+          <input id="clienteCorreo" type="email" placeholder="correo@ejemplo.com"/>
         </div>
 
-        <div class="field full">
+        <div class="field form-full">
           <label>Notas</label>
-          <textarea id="clienteNotas" placeholder="Notas del cliente"></textarea>
+          <textarea id="clienteNotas" placeholder="Notas importantes del cliente..."></textarea>
         </div>
       </div>
     </div>
 
     <div class="modal-footer">
       <button class="btn secondary" onclick="cerrarModalCliente()">Cancelar</button>
-      <button class="btn" onclick="guardarClienteModal()">Guardar cliente</button>
+      <button class="btn success" onclick="guardarClienteModal()">Guardar cliente</button>
     </div>
   </div>
 </div>
 
-<div id="historyModal" class="modal-backdrop" onclick="cerrarHistorialSiFondo(event)">
+<div class="modal-backdrop" id="historyBackdrop" onclick="cerrarHistorialSiFondo(event)">
   <div class="modal">
     <div class="modal-header">
-      <div id="historyTitle" class="modal-title">Historial</div>
+      <div class="modal-title" id="historyTitle">Historial</div>
       <button class="mini-btn" onclick="cerrarHistorial()">Cerrar</button>
     </div>
-    <div id="historyBody" class="modal-body"></div>
+
+    <div class="modal-body" id="historyBody"></div>
   </div>
 </div>
 
-<div id="toast" class="toast"></div>
+<div class="toast" id="toast"></div>
 
-<script src="js/supabase.js"></script>
-<script src="js/auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=19"></script>
+<script src="js/auth.js?v=19"></script>
 
 <script>
-/* =========================================================
-   CLIENTES · COMANDA
-   Fusionar solo para Roberto + limpiar selección oculta
-   ========================================================= */
+console.log("CLIENTES HTML conectado");
 
 let clientesDB = [];
 let pedidosDB = [];
-let clientesFiltrados = [];
 let clientesSeleccionados = new Set();
-
-const FUSION_BACKUP_KEY = "tutto_clientes_ultima_fusion";
-
-/* ---------- SUPABASE ---------- */
+const CLIENTES_FUSION_UNDO_KEY = "tutto_ultima_fusion_clientes_v1";
 
 function db(){
-  if(window.supabaseClient) return window.supabaseClient;
-  if(window.supabase) return window.supabase;
-  return null;
+  return window.supabaseClient;
 }
+
+function operadorPuedeFusionarClientes(){
+  const op = typeof window.getSesionOperador === "function" ? window.getSesionOperador() : null;
+  return typeof window.esRoberto === "function" ? window.esRoberto(op) : normalizar(op && op.nombre) === "roberto";
+}
+
+function aplicarPermisosFusionClientes(){
+  const puedeFusionar = operadorPuedeFusionarClientes();
+  const tools = document.getElementById('fusionTools');
+  if(tools) tools.hidden = !puedeFusionar;
+
+  document.querySelectorAll('.fusion-only').forEach(el => {
+    el.style.display = puedeFusionar ? '' : 'none';
+  });
+
+  if(!puedeFusionar){
+    clientesSeleccionados.clear();
+  }
+
+  actualizarHintFusion();
+}
+
 
 function validarSupabase(){
   if(!db()){
-    alert("No se encontró conexión con Supabase. Revisa js/supabase.js");
+    alert("No existe conexión Supabase. Revisa js/supabase.js");
+    console.error("No existe window.supabaseClient");
     return false;
   }
   return true;
 }
 
-/* ---------- OPERADOR / PERMISOS ---------- */
-
-function obtenerOperadorActual(){
-  try{
-    if(window.AUTH && typeof AUTH.getUser === "function"){
-      const u = AUTH.getUser();
-      if(u && (u.nombre || u.name || u.usuario)){
-        return String(u.nombre || u.name || u.usuario).trim();
-      }
-    }
-
-    const keys = [
-      "tutto_user",
-      "tutto_usuario",
-      "usuario_actual",
-      "operador_actual",
-      "auth_user",
-      "comanda_user"
-    ];
-
-    for(const k of keys){
-      const raw = localStorage.getItem(k);
-      if(!raw) continue;
-
-      try{
-        const obj = JSON.parse(raw);
-        if(obj && (obj.nombre || obj.name || obj.usuario || obj.operador)){
-          return String(obj.nombre || obj.name || obj.usuario || obj.operador).trim();
-        }
-      }catch(e){
-        return String(raw).trim();
-      }
-    }
-  }catch(e){}
-
-  return "";
-}
-
-function normalizarTextoPermiso(txt){
-  return String(txt || "")
+function normalizar(valor){
+  return String(valor || "")
+    .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g,"")
-    .trim()
-    .toLowerCase();
-}
-
-function operadorPuedeFusionarClientes(){
-  const operador = normalizarTextoPermiso(obtenerOperadorActual());
-  return operador === "roberto";
-}
-
-function aplicarPermisosFusion(){
-  const puede = operadorPuedeFusionarClientes();
-
-  const tools = document.getElementById("fusionTools");
-  const selectHeader = document.getElementById("selectHeader");
-
-  if(tools) tools.hidden = !puede;
-  if(selectHeader) selectHeader.style.display = puede ? "" : "none";
-
-  if(!puede){
-    clientesSeleccionados.clear();
-  }
-}
-
-/* ---------- HELPERS ---------- */
-
-function normalizar(txt){
-  return String(txt || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g,"")
-    .replace(/\s+/g," ")
-    .trim()
-    .toLowerCase();
-}
-
-function nombreBonito(txt){
-  return String(txt || "")
-    .replace(/\s+/g," ")
+    .replace(/[\u0300-\u036f]/g, "")
     .trim();
 }
 
-function escapeHtml(txt){
-  return String(txt ?? "")
+function nombreBonito(valor){
+  const limpio = String(valor || "").trim().replace(/\s+/g, " ");
+  if(!limpio) return "";
+
+  return limpio
+    .split(" ")
+    .map(p => p ? p.charAt(0).toUpperCase() + p.slice(1).toLowerCase() : "")
+    .join(" ");
+}
+
+function escapeHtml(valor){
+  return String(valor ?? "")
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
     .replaceAll(">","&gt;")
@@ -869,297 +979,432 @@ function escapeHtml(txt){
     .replaceAll("'","&#039;");
 }
 
-function mostrarToast(msg){
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.style.display = "block";
-  clearTimeout(window.__toastTimer);
-  window.__toastTimer = setTimeout(() => {
-    t.style.display = "none";
-  }, 2600);
+function mostrarToast(mensaje){
+  const toast = document.getElementById("toast");
+  if(!toast){
+    console.log(mensaje);
+    return;
+  }
+
+  toast.textContent = mensaje;
+  toast.style.display = "block";
+
+  setTimeout(() => {
+    toast.style.display = "none";
+  }, 2200);
 }
 
 function contarPedidosCliente(nombre){
   const n = normalizar(nombre);
+  if(!n) return 0;
+
   return pedidosDB.filter(p => normalizar(p.cliente) === n).length;
-}
-
-function mezclarDatosCliente(base, extra){
-  return {
-    nombre: base.nombre || extra.nombre || "",
-    tipo_cliente: base.tipo_cliente || extra.tipo_cliente || "Cliente Standar",
-    telefono: base.telefono || extra.telefono || "",
-    correo: base.correo || extra.correo || "",
-    notas: [base.notas, extra.notas]
-      .filter(Boolean)
-      .map(x => String(x).trim())
-      .filter((v,i,a) => v && a.indexOf(v) === i)
-      .join(" | "),
-    activo: base.activo !== false && extra.activo !== false
-  };
-}
-
-function cantidadDatosCliente(c){
-  let total = 0;
-  if(c?.telefono) total++;
-  if(c?.correo) total++;
-  if(c?.notas) total++;
-  if(c?.tipo_cliente) total++;
-  if(c?.activo === true) total++;
-  return total;
-}
-
-/* ---------- CARGA ---------- */
-
-async function inicializarClientes(){
-  aplicarPermisosFusion();
-
-  if(!validarSupabase()) return;
-
-  await cargarPedidos();
-  await cargarClientes();
-
-  filtrarClientes();
-}
-
-async function cargarClientes(){
-  const { data, error } = await db()
-    .from("clientes")
-    .select("*")
-    .order("nombre", { ascending:true });
-
-  if(error){
-    console.error(error);
-    alert("Error cargando clientes: " + error.message);
-    return;
-  }
-
-  clientesDB = data || [];
 }
 
 async function cargarPedidos(){
   const { data, error } = await db()
     .from("pedidos")
-    .select("*")
-    .order("fecha", { ascending:false });
+    .select("id, fecha, cliente, descripcion, cantidad, material, tipo_impresion, estatus_trabajo, estatus_pago, fecha_entrega")
+    .order("id", { ascending:false });
 
   if(error){
-    console.error(error);
-    alert("Error cargando pedidos: " + error.message);
+    console.warn("No se pudieron cargar pedidos:", error);
+    pedidosDB = [];
     return;
   }
 
   pedidosDB = data || [];
 }
 
-async function recargarTodo(){
-  limpiarSeleccionClientes(false);
-  await cargarPedidos();
-  await cargarClientes();
-  filtrarClientes();
-  mostrarToast("Datos recargados");
+async function crearClientesDesdePedidos(){
+  const nombresPedidos = [...new Set(
+    pedidosDB
+      .map(p => String(p.cliente || "").trim())
+      .filter(Boolean)
+      .map(nombreBonito)
+  )];
+
+  const existentes = new Set(
+    clientesDB.map(c => normalizar(c.nombre))
+  );
+
+  const nuevos = nombresPedidos
+    .filter(nombre => !existentes.has(normalizar(nombre)))
+    .map(nombre => ({
+      nombre,
+      tipo_cliente:"Cliente Standar",
+      telefono:"",
+      correo:"",
+      notas:"",
+      activo:true
+    }));
+
+  if(!nuevos.length) return;
+
+  const { error } = await db()
+    .from("clientes")
+    .insert(nuevos);
+
+  if(error){
+    console.warn("No se pudieron crear clientes desde pedidos:", error);
+    return;
+  }
+
+  console.log("Clientes creados desde pedidos:", nuevos);
 }
 
-/* ---------- FILTRO / RENDER ---------- */
+async function cargarClientes(){
+  if(!validarSupabase()) return;
+
+  const { data, error } = await db()
+    .from("clientes")
+    .select("id, nombre, tipo_cliente, telefono, correo, notas, activo")
+    .order("nombre", { ascending:true });
+
+  if(error){
+    console.error("Error cargando clientes:", error);
+    document.getElementById("clientesBody").innerHTML = `
+      <tr><td colspan="6" class="empty">Error cargando clientes: ${escapeHtml(error.message)}</td></tr>
+    `;
+    return;
+  }
+
+  clientesDB = data || [];
+}
+
+async function inicializarClientes(){
+  if(!validarSupabase()) return;
+
+  await cargarPedidos();
+  await cargarClientes();
+  await crearClientesDesdePedidos();
+  await cargarClientes();
+
+  filtrarClientes();
+}
 
 function filtrarClientes(){
-  const q = normalizar(document.getElementById("searchInput").value);
+  const texto = normalizar(document.getElementById("searchClientes")?.value || "");
+  const tipoFiltro = document.getElementById("filtroTipoCliente")?.value || "";
+  const estadoFiltro = document.getElementById("filtroEstadoCliente")?.value || "";
+  const orden = document.getElementById("ordenClientes")?.value || "nombre_az";
 
-  clientesFiltrados = clientesDB.filter(c => {
-    const texto = [
+  let lista = [...clientesDB];
+
+  lista = lista.filter(c => {
+    const contenido = normalizar([
       c.nombre,
       c.tipo_cliente,
       c.telefono,
       c.correo,
       c.notas
-    ].join(" ");
-    return normalizar(texto).includes(q);
+    ].join(" "));
+
+    if(texto && !contenido.includes(texto)) return false;
+    if(tipoFiltro && c.tipo_cliente !== tipoFiltro) return false;
+
+    if(estadoFiltro === "activo" && c.activo !== true) return false;
+    if(estadoFiltro === "inactivo" && c.activo === true) return false;
+
+    return true;
   });
 
-  limpiarSeleccionesOcultas();
-  renderClientes();
+  lista.sort((a,b) => {
+    const na = String(a.nombre || "");
+    const nb = String(b.nombre || "");
+    const pa = contarPedidosCliente(a.nombre);
+    const pb = contarPedidosCliente(b.nombre);
+
+    if(orden === "nombre_az") return na.localeCompare(nb);
+    if(orden === "nombre_za") return nb.localeCompare(na);
+    if(orden === "pedidos_mayor") return pb - pa;
+    if(orden === "pedidos_menor") return pa - pb;
+
+    return 0;
+  });
+
+  renderClientes(lista);
 }
 
-function limpiarSeleccionesOcultas(){
-  const visibles = new Set(clientesFiltrados.map(c => Number(c.id)));
+
+function obtenerIdsVisiblesClientes(){
+  return new Set(
+    [...document.querySelectorAll('.client-check')]
+      .map(ch => Number(ch.value))
+      .filter(id => Number.isFinite(id))
+  );
+}
+
+function limpiarSeleccionClientes(mostrarMensaje = true){
+  clientesSeleccionados.clear();
+
+  document.querySelectorAll('.client-check').forEach(ch => {
+    ch.checked = false;
+  });
+
+  const master = document.getElementById('checkTodosClientes');
+  if(master){
+    master.checked = false;
+    master.indeterminate = false;
+  }
+
+  actualizarHintFusion();
+  if(mostrarMensaje) mostrarToast('Selección limpia');
+}
+
+function limpiarSeleccionesOcultas(listaVisible = []){
+  const idsValidos = new Set(listaVisible.map(c => Number(c.id)));
 
   [...clientesSeleccionados].forEach(id => {
-    if(!visibles.has(Number(id))){
+    if(!idsValidos.has(Number(id))){
       clientesSeleccionados.delete(Number(id));
     }
   });
 }
 
-function renderClientes(){
-  aplicarPermisosFusion();
+function guardarBackupFusionClientes(backup){
+  try{
+    localStorage.setItem(CLIENTES_FUSION_UNDO_KEY, JSON.stringify({
+      ...backup,
+      fecha_backup: new Date().toISOString()
+    }));
+  }catch(error){
+    console.warn('No se pudo guardar backup de fusión:', error);
+  }
+}
 
-  const body = document.getElementById("clientesBody");
-  const puedeFusionar = operadorPuedeFusionarClientes();
+function leerBackupFusionClientes(){
+  try{
+    const raw = localStorage.getItem(CLIENTES_FUSION_UNDO_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(error){
+    console.warn('No se pudo leer backup de fusión:', error);
+    return null;
+  }
+}
 
-  document.getElementById("clientesSub").textContent =
-    `${clientesFiltrados.length} clientes visibles · ${clientesDB.length} registrados`;
+function limpiarBackupFusionClientes(){
+  localStorage.removeItem(CLIENTES_FUSION_UNDO_KEY);
+}
 
-  actualizarContadorSeleccion();
+async function insertarClienteRestaurado(cliente){
+  if(!cliente) return;
 
-  if(!clientesFiltrados.length){
-    body.innerHTML = `
-      <tr>
-        <td colspan="8" class="empty">No hay clientes para mostrar</td>
-      </tr>
-    `;
+  const completo = {
+    id: cliente.id,
+    nombre: cliente.nombre || '',
+    tipo_cliente: cliente.tipo_cliente || 'Cliente Standar',
+    telefono: cliente.telefono || '',
+    correo: cliente.correo || '',
+    notas: cliente.notas || '',
+    activo: cliente.activo !== false
+  };
+
+  let res = await db().from('clientes').insert([completo]);
+
+  // Algunas tablas no permiten reinsertar el ID manualmente. En ese caso restaura sin ID.
+  if(res.error){
+    const sinId = {...completo};
+    delete sinId.id;
+    res = await db().from('clientes').insert([sinId]);
+  }
+
+  if(res.error) throw res.error;
+}
+
+async function deshacerUltimaFusionClientes(){
+  if(!operadorPuedeFusionarClientes()){
+    alert('Solo Roberto puede deshacer fusiones de clientes.');
+    return;
+  }
+  if(!validarSupabase()) return;
+
+  const backup = leerBackupFusionClientes();
+  if(!backup){
+    alert('No hay una fusión reciente para deshacer.');
     return;
   }
 
-  body.innerHTML = clientesFiltrados.map(c => {
-    const id = Number(c.id);
-    const checked = clientesSeleccionados.has(id) ? "checked" : "";
+  const confirmar = confirm(
+    `Deshacer última fusión:\n\nCliente final: ${backup.nombre_final || ''}\nClientes fusionados: ${(backup.clientes_originales || []).map(c => c.nombre).join(', ')}\n\nEsto restaurará los nombres anteriores en pedidos y volverá a crear los clientes eliminados si es posible.`
+  );
+
+  if(!confirmar) return;
+
+  try{
+    // 1) Restaurar pedidos a su cliente anterior.
+    for(const pedido of (backup.pedidos_originales || [])){
+      const { error } = await db()
+        .from('pedidos')
+        .update({ cliente: pedido.cliente })
+        .eq('id', pedido.id);
+
+      if(error) throw error;
+    }
+
+    // 2) Restaurar el cliente principal como estaba antes de la fusión.
+    if(backup.principal_original?.id){
+      const original = {...backup.principal_original};
+      delete original.id;
+
+      const { error } = await db()
+        .from('clientes')
+        .update(original)
+        .eq('id', backup.principal_original.id);
+
+      if(error) throw error;
+    }
+
+    // 3) Reinsertar clientes que se habían eliminado.
+    for(const cliente of (backup.clientes_eliminados || [])){
+      const existe = clientesDB.some(c => Number(c.id) === Number(cliente.id));
+      if(!existe){
+        await insertarClienteRestaurado(cliente);
+      }
+    }
+
+    limpiarBackupFusionClientes();
+    limpiarSeleccionClientes(false);
+    await cargarPedidos();
+    await cargarClientes();
+    filtrarClientes();
+
+    mostrarToast('Fusión deshecha');
+  }catch(error){
+    console.error('Error deshaciendo fusión:', error);
+    alert('No se pudo deshacer completamente la fusión: ' + (error.message || error));
+  }
+}
+
+function renderClientes(lista){
+  const puedeFusionar = operadorPuedeFusionarClientes();
+  if(!puedeFusionar) clientesSeleccionados.clear();
+  limpiarSeleccionesOcultas(lista);
+
+  const tbody = document.getElementById("clientesBody");
+  const count = document.getElementById("clientesCount");
+
+  if(count){
+    count.textContent = `${lista.length} cliente${lista.length === 1 ? "" : "s"}`;
+  }
+
+  actualizarHintFusion();
+  if(!tbody) return;
+
+  if(!lista.length){
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">Sin clientes</td></tr>`;
+    limpiarSeleccionClientes(false);
+    return;
+  }
+
+  tbody.innerHTML = lista.map(c => {
     const pedidos = contarPedidosCliente(c.nombre);
+
+    const estado = c.activo === true
+      ? `<span class="badge ok">Activo</span>`
+      : `<span class="badge off">Inactivo</span>`;
+
+    const tipo = c.tipo_cliente || "Cliente Standar";
+    const telefono = c.telefono || "Sin teléfono";
+    const correo = c.correo || "Sin correo";
 
     return `
       <tr>
-        <td class="select-cell" style="${puedeFusionar ? "" : "display:none;"}">
-          <input
-            class="client-check"
-            type="checkbox"
-            data-id="${id}"
-            ${checked}
-            onchange="toggleClienteSeleccionado(${id}, this.checked)"
-          />
+        <td class="select-cell fusion-only" style="${puedeFusionar ? "" : "display:none"}">
+          <input class="client-check" type="checkbox" value="${Number(c.id)}" ${clientesSeleccionados.has(Number(c.id)) ? "checked" : ""} onchange="toggleClienteSeleccionado(${Number(c.id)}, this.checked)"/>
         </td>
-
-        <td>
-          <div class="client-name">${escapeHtml(c.nombre || "Sin nombre")}</div>
+        <td class="client-main">
+          <div class="client-name">${escapeHtml(c.nombre || "")}</div>
           <div class="client-meta">
-            ${c.id ? `<span>ID ${escapeHtml(c.id)}</span>` : ""}
-            ${c.created_at ? `<span>${escapeHtml(String(c.created_at).slice(0,10))}</span>` : ""}
+            <span>${escapeHtml(tipo)}</span>
+            <span>📞 ${escapeHtml(telefono)}</span>
+            <span>✉️ ${escapeHtml(correo)}</span>
           </div>
         </td>
 
-        <td>
-          <span class="badge type">${escapeHtml(c.tipo_cliente || "Cliente Standar")}</span>
-        </td>
-
-        <td>
-          <div>${escapeHtml(c.telefono || "—")}</div>
-          <div style="color:var(--muted2);font-size:12px;">${escapeHtml(c.correo || "—")}</div>
-        </td>
-
-        <td>
-          <button class="pedidos-btn" onclick="verHistorialCliente(${id})">
-            <strong>${pedidos}</strong>
-            <small>Pedidos</small>
-          </button>
-        </td>
-
-        <td>
-          ${
-            c.activo === false
-            ? `<span class="badge off">Inactivo</span>`
-            : `<span class="badge ok">Activo</span>`
-          }
-        </td>
-
-        <td style="max-width:260px;color:var(--muted2);line-height:1.35;">
+        <td class="notes-cell">
           ${escapeHtml(c.notas || "—")}
         </td>
 
         <td>
-          <div class="actions">
-            <button class="mini-btn" onclick="editarCliente(${id})">Editar</button>
-            <button class="mini-btn" onclick="verHistorialCliente(${id})">Historial</button>
-            <button class="mini-btn del" onclick="eliminarCliente(${id})">Eliminar</button>
+          <button class="pedidos-btn" onclick="verHistorialCliente(${Number(c.id)})">
+            <strong>${pedidos}</strong>
+            <small>${pedidos === 1 ? "Pedido" : "Pedidos"} / Historial</small>
+          </button>
+        </td>
+
+        <td>${estado}</td>
+
+        <td>
+          <div class="actions-row">
+            <button class="mini-btn" onclick="editarCliente(${Number(c.id)})">Editar</button>
+            <button class="mini-btn del" onclick="eliminarCliente(${Number(c.id)})">Eliminar</button>
           </div>
         </td>
       </tr>
     `;
   }).join("");
 
-  sincronizarMasterCheck();
+  // Importante: sincroniza el Set con los checks visibles para que no queden selecciones ocultas.
+  actualizarHintFusion();
+  aplicarPermisosFusionClientes();
 }
 
-/* ---------- SELECCIÓN ---------- */
 
-function toggleClienteSeleccionado(id, checked){
+function toggleClienteSeleccionado(id, marcado){
   if(!operadorPuedeFusionarClientes()){
     clientesSeleccionados.clear();
-    renderClientes();
-    alert("Solo Roberto puede seleccionar clientes para fusionar.");
+    actualizarHintFusion();
     return;
   }
-
   id = Number(id);
-
-  if(checked){
+  if(marcado){
     clientesSeleccionados.add(id);
   }else{
     clientesSeleccionados.delete(id);
   }
-
-  actualizarContadorSeleccion();
-  sincronizarMasterCheck();
+  actualizarHintFusion();
 }
 
-function toggleSeleccionVisible(checked){
-  if(!operadorPuedeFusionarClientes()) return;
-
-  clientesFiltrados.forEach(c => {
-    const id = Number(c.id);
-    if(checked){
-      clientesSeleccionados.add(id);
-    }else{
-      clientesSeleccionados.delete(id);
-    }
-  });
-
-  renderClientes();
-}
-
-function limpiarSeleccionClientes(mostrarMensaje = true){
-  clientesSeleccionados.clear();
-
-  const master = document.getElementById("masterCheck");
-  if(master) master.checked = false;
-
-  document.querySelectorAll(".client-check").forEach(ch => {
-    ch.checked = false;
-  });
-
-  actualizarContadorSeleccion();
-
-  if(mostrarMensaje){
-    mostrarToast("Selección limpiada");
-  }
-}
-
-function actualizarContadorSeleccion(){
-  const counter = document.getElementById("selectedCounter");
-  if(counter){
-    counter.textContent = `${clientesSeleccionados.size} seleccionados`;
-  }
-}
-
-function sincronizarMasterCheck(){
-  const master = document.getElementById("masterCheck");
-  if(!master) return;
-
-  if(!clientesFiltrados.length){
-    master.checked = false;
-    master.indeterminate = false;
+function toggleTodosClientes(marcado){
+  if(!operadorPuedeFusionarClientes()){
+    clientesSeleccionados.clear();
+    actualizarHintFusion();
     return;
   }
-
-  const totalVisibles = clientesFiltrados.length;
-  const seleccionadosVisibles = clientesFiltrados
-    .filter(c => clientesSeleccionados.has(Number(c.id)))
-    .length;
-
-  master.checked = seleccionadosVisibles === totalVisibles;
-  master.indeterminate = seleccionadosVisibles > 0 && seleccionadosVisibles < totalVisibles;
+  const checks = document.querySelectorAll('.client-check');
+  checks.forEach(ch => {
+    const id = Number(ch.value);
+    ch.checked = marcado;
+    if(marcado) clientesSeleccionados.add(id);
+    else clientesSeleccionados.delete(id);
+  });
+  actualizarHintFusion();
 }
 
-/* ---------- MODAL CLIENTE ---------- */
+function actualizarHintFusion(){
+  const hint = document.getElementById('fusionHint');
+  if(hint){
+    const total = clientesSeleccionados.size;
+    hint.textContent = `${total} seleccionado${total === 1 ? '' : 's'}`;
+  }
 
-function abrirModalCliente(){
+  const master = document.getElementById('checkTodosClientes');
+  const checks = [...document.querySelectorAll('.client-check')];
+  if(master){
+    if(!checks.length){
+      master.checked = false;
+      master.indeterminate = false;
+      return;
+    }
+
+    const marcados = checks.filter(ch => ch.checked).length;
+    master.checked = marcados === checks.length;
+    master.indeterminate = marcados > 0 && marcados < checks.length;
+  }
+}
+
+function nuevoCliente(){
   document.getElementById("clienteModalTitle").textContent = "Nuevo cliente";
   document.getElementById("clienteId").value = "";
   document.getElementById("clienteNombre").value = "";
@@ -1169,41 +1414,109 @@ function abrirModalCliente(){
   document.getElementById("clienteNotas").value = "";
   document.getElementById("clienteActivo").value = "true";
 
-  document.getElementById("clienteModal").style.display = "flex";
+  document.getElementById("clienteBackdrop").style.display = "flex";
 
   setTimeout(() => {
     document.getElementById("clienteNombre").focus();
-  }, 100);
+  }, 150);
 }
 
 function editarCliente(id){
-  const c = clientesDB.find(x => Number(x.id) === Number(id));
+  const cliente = clientesDB.find(c => Number(c.id) === Number(id));
 
-  if(!c){
+  if(!cliente){
     alert("No se encontró el cliente.");
     return;
   }
 
   document.getElementById("clienteModalTitle").textContent = "Editar cliente";
-  document.getElementById("clienteId").value = c.id;
-  document.getElementById("clienteNombre").value = c.nombre || "";
-  document.getElementById("clienteTipo").value = c.tipo_cliente || "Cliente Standar";
-  document.getElementById("clienteTelefono").value = c.telefono || "";
-  document.getElementById("clienteCorreo").value = c.correo || "";
-  document.getElementById("clienteNotas").value = c.notas || "";
-  document.getElementById("clienteActivo").value = c.activo === false ? "false" : "true";
+  document.getElementById("clienteId").value = cliente.id;
+  document.getElementById("clienteNombre").value = cliente.nombre || "";
+  document.getElementById("clienteTipo").value = cliente.tipo_cliente || "Cliente Standar";
+  document.getElementById("clienteTelefono").value = cliente.telefono || "";
+  document.getElementById("clienteCorreo").value = cliente.correo || "";
+  document.getElementById("clienteNotas").value = cliente.notas || "";
+  document.getElementById("clienteActivo").value = cliente.activo === true ? "true" : "false";
 
-  document.getElementById("clienteModal").style.display = "flex";
+  document.getElementById("clienteBackdrop").style.display = "flex";
 }
 
 function cerrarModalCliente(){
-  document.getElementById("clienteModal").style.display = "none";
+  document.getElementById("clienteBackdrop").style.display = "none";
 }
 
-function cerrarModalSiFondo(event){
-  if(event.target.id === "clienteModal"){
+function cerrarClienteSiFondo(event){
+  if(event.target.id === "clienteBackdrop"){
     cerrarModalCliente();
   }
+}
+
+function unirNotas(notaA, notaB){
+  const a = String(notaA || "").trim();
+  const b = String(notaB || "").trim();
+
+  if(!a) return b;
+  if(!b) return a;
+  if(normalizar(a) === normalizar(b)) return a;
+
+  return `${a}\n${b}`;
+}
+
+function mezclarDatosCliente(base, nuevo){
+  return {
+    nombre: nuevo.nombre || base.nombre || "",
+    tipo_cliente: nuevo.tipo_cliente || base.tipo_cliente || "Cliente Standar",
+    telefono: nuevo.telefono || base.telefono || "",
+    correo: nuevo.correo || base.correo || "",
+    notas: unirNotas(base.notas, nuevo.notas),
+    activo: typeof nuevo.activo === "boolean" ? nuevo.activo : base.activo !== false
+  };
+}
+
+async function actualizarPedidosDeCliente(nombreAnterior, nombreNuevo){
+  const anterior = normalizar(nombreAnterior);
+  const nuevo = nombreBonito(nombreNuevo);
+
+  if(!anterior || !nuevo) return 0;
+
+  const pedidosActualizar = pedidosDB.filter(p => normalizar(p.cliente) === anterior);
+
+  for(const pedido of pedidosActualizar){
+    const { error } = await db()
+      .from("pedidos")
+      .update({ cliente:nuevo })
+      .eq("id", pedido.id);
+
+    if(error) throw error;
+  }
+
+  return pedidosActualizar.length;
+}
+
+async function fusionarDuplicadosExactosCliente(nombreFinal, idPrincipal){
+  const clave = normalizar(nombreFinal);
+  if(!clave || !idPrincipal) return 0;
+
+  const duplicados = clientesDB.filter(c => {
+    return normalizar(c.nombre) === clave && Number(c.id) !== Number(idPrincipal);
+  });
+
+  if(!duplicados.length) return 0;
+
+  for(const dup of duplicados){
+    await actualizarPedidosDeCliente(dup.nombre, nombreFinal);
+  }
+
+  const idsEliminar = duplicados.map(c => c.id);
+
+  const { error } = await db()
+    .from("clientes")
+    .delete()
+    .in("id", idsEliminar);
+
+  if(error) throw error;
+
+  return idsEliminar.length;
 }
 
 async function guardarClienteModal(){
@@ -1230,23 +1543,16 @@ async function guardarClienteModal(){
     ? clientesDB.find(c => Number(c.id) === Number(id))
     : null;
 
-  const duplicado = clientesDB.find(c =>
-    normalizar(c.nombre) === normalizar(nombre) &&
-    Number(c.id) !== Number(id || 0)
-  );
+  const duplicado = clientesDB.find(c => {
+    return normalizar(c.nombre) === normalizar(nombre) && Number(c.id) !== Number(id || 0);
+  });
 
   try{
     let mensaje = "Cliente guardado";
 
     if(duplicado){
-      const confirmar = confirm(
-        `Ya existe un cliente con ese nombre:\n\n${duplicado.nombre}\n\n¿Quieres fusionarlo con este registro?`
-      );
-
-      if(!confirmar) return;
-
+      // Si el nombre nuevo ya existe, NO crea otro registro. Fusiona en el cliente existente.
       const datosFusionados = mezclarDatosCliente(duplicado, datos);
-      datosFusionados.nombre = nombre;
 
       const { error:updateError } = await db()
         .from("clientes")
@@ -1267,9 +1573,11 @@ async function guardarClienteModal(){
       }
 
       await actualizarPedidosDeCliente(duplicado.nombre, nombre);
-      mensaje = "Cliente fusionado y pedidos actualizados";
+      await fusionarDuplicadosExactosCliente(nombre, duplicado.id);
 
+      mensaje = "Cliente fusionado y pedidos actualizados";
     }else if(id){
+      // Editar cliente normal: actualiza también todos los pedidos que tenían el nombre viejo.
       const { error:updateError } = await db()
         .from("clientes")
         .update(datos)
@@ -1282,7 +1590,9 @@ async function guardarClienteModal(){
         mensaje = "Cliente actualizado y pedidos renombrados";
       }
 
+      await fusionarDuplicadosExactosCliente(nombre, id);
     }else{
+      // Cliente nuevo: antes de insertar ya se validó que no exista igual.
       const { error:insertError } = await db()
         .from("clientes")
         .insert([datos]);
@@ -1297,86 +1607,53 @@ async function guardarClienteModal(){
 
     mostrarToast(mensaje);
   }catch(error){
-    console.error(error);
-    alert("Error guardando cliente: " + (error.message || error));
+    console.error("Error guardando/fusionando cliente:", error);
+    alert("Error guardando/fusionando cliente: " + (error.message || error));
   }
 }
 
-/* ---------- FUSIÓN ---------- */
-
-async function actualizarPedidosDeCliente(nombreAnterior, nombreNuevo){
-  if(!nombreAnterior || !nombreNuevo) return;
-
-  const { error } = await db()
-    .from("pedidos")
-    .update({ cliente:nombreNuevo })
-    .ilike("cliente", nombreAnterior);
-
-  if(error) throw error;
-}
-
-function guardarBackupFusionClientes(backup){
-  localStorage.setItem(FUSION_BACKUP_KEY, JSON.stringify({
-    fecha:new Date().toISOString(),
-    ...backup
-  }));
-}
-
-function obtenerBackupFusionClientes(){
-  const raw = localStorage.getItem(FUSION_BACKUP_KEY);
-  if(!raw) return null;
-
-  try{
-    return JSON.parse(raw);
-  }catch(e){
-    return null;
-  }
-}
 
 async function fusionarClientesSeleccionados(){
   if(!operadorPuedeFusionarClientes()){
-    alert("Solo Roberto puede fusionar clientes.");
+    alert('Solo Roberto puede fusionar clientes.');
     return;
   }
-
   if(!validarSupabase()) return;
 
-  const seleccionados = clientesDB.filter(c =>
-    clientesSeleccionados.has(Number(c.id))
-  );
+  const seleccionados = clientesDB.filter(c => clientesSeleccionados.has(Number(c.id)));
 
   if(seleccionados.length < 2){
-    alert("Marca al menos 2 clientes para fusionar.");
+    alert('Marca al menos 2 clientes para fusionar.');
     return;
   }
 
-  const resumen = seleccionados.map(c => `- ${c.nombre}`).join("\n");
-  const sugerido = nombreBonito(seleccionados[0].nombre || "");
-
+  const resumen = seleccionados.map(c => `- ${c.nombre}`).join('\n');
+  const sugerido = nombreBonito(seleccionados[0].nombre || '');
   const nombreFinalInput = prompt(
     `Vas a fusionar estos clientes:\n\n${resumen}\n\n¿Qué nombre final deseas colocarle?`,
     sugerido
   );
 
   const nombreFinal = nombreBonito(nombreFinalInput);
-
   if(!nombreFinal){
-    alert("Debes colocar un nombre final.");
+    alert('Debes colocar un nombre final para fusionar.');
     return;
   }
 
   const confirmar = confirm(
-    `Confirmar fusión:\n\n${resumen}\n\nNombre final:\n${nombreFinal}\n\nEsto actualizará todos los pedidos y dejará un solo registro.`
+    `Confirmar fusión:\n\n${resumen}\n\nNombre final:\n${nombreFinal}\n\nEsto actualizará todos los pedidos de esos clientes y dejará un solo registro.`
   );
 
   if(!confirmar) return;
 
   try{
+    // Si ya existe un cliente con ese nombre fuera de la selección, se usa como principal.
     let principal = clientesDB.find(c =>
       normalizar(c.nombre) === normalizar(nombreFinal) &&
       !clientesSeleccionados.has(Number(c.id))
     );
 
+    // Si no existe fuera, usamos el seleccionado con más información.
     if(!principal){
       principal = seleccionados
         .slice()
@@ -1384,19 +1661,14 @@ async function fusionarClientesSeleccionados(){
     }
 
     const todosAFusionar = [...seleccionados];
-
     if(!todosAFusionar.some(c => Number(c.id) === Number(principal.id))){
       todosAFusionar.push(principal);
     }
 
     const nombresAFusionar = todosAFusionar.map(c => normalizar(c.nombre));
-
     const pedidosOriginales = pedidosDB
       .filter(p => nombresAFusionar.includes(normalizar(p.cliente)))
-      .map(p => ({
-        id:p.id,
-        cliente:p.cliente
-      }));
+      .map(p => ({ id:p.id, cliente:p.cliente }));
 
     const backupFusion = {
       nombre_final:nombreFinal,
@@ -1409,16 +1681,18 @@ async function fusionarClientesSeleccionados(){
       pedidos_originales:pedidosOriginales
     };
 
+    // Mover pedidos de todos los nombres seleccionados al nombre final.
     for(const c of todosAFusionar){
       await actualizarPedidosDeCliente(c.nombre, nombreFinal);
     }
 
+    // Mezclar datos: conserva teléfono/correo/notas si existen.
     let datosFusionados = {
       nombre:nombreFinal,
-      tipo_cliente:"Cliente Standar",
-      telefono:"",
-      correo:"",
-      notas:"",
+      tipo_cliente:'Cliente Standar',
+      telefono:'',
+      correo:'',
+      notas:'',
       activo:true
     };
 
@@ -1429,9 +1703,9 @@ async function fusionarClientesSeleccionados(){
     datosFusionados.nombre = nombreFinal;
 
     const { error:updateError } = await db()
-      .from("clientes")
+      .from('clientes')
       .update(datosFusionados)
-      .eq("id", principal.id);
+      .eq('id', principal.id);
 
     if(updateError) throw updateError;
 
@@ -1441,110 +1715,40 @@ async function fusionarClientesSeleccionados(){
 
     if(idsEliminar.length){
       const { error:deleteError } = await db()
-        .from("clientes")
+        .from('clientes')
         .delete()
-        .in("id", idsEliminar);
+        .in('id', idsEliminar);
 
       if(deleteError) throw deleteError;
     }
 
+    // Limpieza extra: elimina duplicados exactos que hayan quedado con el mismo nombre.
+    await cargarPedidos();
+    await cargarClientes();
+    await fusionarDuplicadosExactosCliente(nombreFinal, principal.id);
+
     guardarBackupFusionClientes(backupFusion);
-
     limpiarSeleccionClientes(false);
-
     await cargarPedidos();
     await cargarClientes();
     filtrarClientes();
 
     mostrarToast(`Clientes fusionados como ${nombreFinal}`);
-
   }catch(error){
-    console.error(error);
-    alert("Error fusionando clientes: " + (error.message || error));
+    console.error('Error fusionando clientes seleccionados:', error);
+    alert('Error fusionando clientes: ' + (error.message || error));
   }
 }
 
-async function deshacerUltimaFusionClientes(){
-  if(!operadorPuedeFusionarClientes()){
-    alert("Solo Roberto puede deshacer fusiones.");
-    return;
-  }
-
-  if(!validarSupabase()) return;
-
-  const backup = obtenerBackupFusionClientes();
-
-  if(!backup){
-    alert("No hay una fusión reciente para deshacer.");
-    return;
-  }
-
-  const confirmar = confirm(
-    `¿Deshacer la última fusión?\n\nNombre fusionado: ${backup.nombre_final || "—"}\nFecha: ${backup.fecha || "—"}\n\nEsto intentará restaurar clientes y pedidos anteriores.`
-  );
-
-  if(!confirmar) return;
-
-  try{
-    if(backup.principal_original && backup.principal_original.id){
-      const principal = {...backup.principal_original};
-      const id = principal.id;
-      delete principal.id;
-      delete principal.created_at;
-
-      const { error:updateError } = await db()
-        .from("clientes")
-        .update(principal)
-        .eq("id", id);
-
-      if(updateError) throw updateError;
-    }
-
-    if(Array.isArray(backup.clientes_eliminados)){
-      for(const cliente of backup.clientes_eliminados){
-        const restaurar = {...cliente};
-        delete restaurar.created_at;
-
-        const { error:insertError } = await db()
-          .from("clientes")
-          .upsert([restaurar], { onConflict:"id" });
-
-        if(insertError){
-          console.warn("No se pudo restaurar cliente:", cliente, insertError);
-        }
-      }
-    }
-
-    if(Array.isArray(backup.pedidos_originales)){
-      for(const pedido of backup.pedidos_originales){
-        const { error:pedidoError } = await db()
-          .from("pedidos")
-          .update({ cliente:pedido.cliente })
-          .eq("id", pedido.id);
-
-        if(pedidoError){
-          console.warn("No se pudo restaurar pedido:", pedido, pedidoError);
-        }
-      }
-    }
-
-    localStorage.removeItem(FUSION_BACKUP_KEY);
-
-    limpiarSeleccionClientes(false);
-
-    await cargarPedidos();
-    await cargarClientes();
-    filtrarClientes();
-
-    mostrarToast("Última fusión deshecha");
-
-  }catch(error){
-    console.error(error);
-    alert("Error deshaciendo fusión: " + (error.message || error));
-  }
+function cantidadDatosCliente(c){
+  let total = 0;
+  if(c?.telefono) total++;
+  if(c?.correo) total++;
+  if(c?.notas) total++;
+  if(c?.tipo_cliente) total++;
+  if(c?.activo === true) total++;
+  return total;
 }
-
-/* ---------- ELIMINAR / HISTORIAL ---------- */
 
 async function eliminarCliente(id){
   const cliente = clientesDB.find(c => Number(c.id) === Number(id));
@@ -1557,7 +1761,7 @@ async function eliminarCliente(id){
   const pedidos = contarPedidosCliente(cliente.nombre);
 
   const confirmar = confirm(
-    `¿Seguro que deseas eliminar este cliente?\n\nCliente: ${cliente.nombre}\nPedidos registrados: ${pedidos}\n\nEsto elimina el registro de clientes, pero NO borra sus pedidos.`
+    `¿Seguro que deseas eliminar este cliente?\n\nCliente: ${cliente.nombre}\nPedidos registrados: ${pedidos}\n\nEsto eliminará el registro de la tabla clientes, pero NO borra sus pedidos.`
   );
 
   if(!confirmar) return;
@@ -1568,12 +1772,10 @@ async function eliminarCliente(id){
     .eq("id", id);
 
   if(error){
-    console.error(error);
+    console.error("Error eliminando cliente:", error);
     alert("Error eliminando cliente: " + error.message);
     return;
   }
-
-  clientesSeleccionados.delete(Number(id));
 
   await cargarClientes();
   filtrarClientes();
@@ -1616,37 +1818,31 @@ function verHistorialCliente(id){
     `).join("");
   }
 
-  document.getElementById("historyModal").style.display = "flex";
+  document.getElementById("historyBackdrop").style.display = "flex";
 }
 
 function cerrarHistorial(){
-  document.getElementById("historyModal").style.display = "none";
+  document.getElementById("historyBackdrop").style.display = "none";
 }
 
 function cerrarHistorialSiFondo(event){
-  if(event.target.id === "historyModal"){
+  if(event.target.id === "historyBackdrop"){
     cerrarHistorial();
   }
 }
 
-/* ---------- SESIÓN ---------- */
+document.addEventListener("DOMContentLoaded", function(){
+  const btn = document.getElementById("mobileMenuBtn");
+  const menu = document.getElementById("authMenu");
 
-function cerrarSesion(){
-  try{
-    localStorage.removeItem("tutto_user");
-    localStorage.removeItem("tutto_usuario");
-    localStorage.removeItem("usuario_actual");
-    localStorage.removeItem("operador_actual");
-    localStorage.removeItem("auth_user");
-    localStorage.removeItem("comanda_user");
-  }catch(e){}
+  if(btn && menu){
+    btn.addEventListener("click", function(){
+      menu.classList.toggle("open");
+    });
+  }
 
-  window.location.href = "login.html";
-}
-
-/* ---------- INIT ---------- */
-
-document.addEventListener("DOMContentLoaded", inicializarClientes);
+  inicializarClientes();
+});
 </script>
 
 </body>
