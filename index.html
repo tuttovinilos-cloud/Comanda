@@ -604,6 +604,83 @@ tbody::before{
 }
 .file-remove-btn:hover{background:#FF3B30cc}
 #rowFileInput{display:none}
+/* NOTIFICACIONES */
+.noti-btn{
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  padding:8px 12px;
+  border:1px solid var(--border2);
+  background:var(--panel2);
+  color:var(--accent2);
+  border-radius:7px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  min-height:38px;
+  white-space:nowrap;
+}
+.noti-btn:hover{
+  border-color:var(--accent);
+  background:#3b82f611;
+}
+.noti-count{
+  min-width:22px;
+  height:22px;
+  padding:0 6px;
+  border-radius:999px;
+  background:var(--red);
+  color:#fff;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-family:var(--mono);
+  font-size:11px;
+}
+.noti-count.empty{
+  background:var(--border2);
+  color:var(--muted2);
+}
+.noti-list{
+  display:grid;
+  gap:10px;
+}
+.noti-item{
+  border:1px solid var(--border2);
+  background:var(--bg);
+  border-radius:10px;
+  padding:12px;
+  display:grid;
+  gap:6px;
+}
+.noti-item-title{
+  font-family:var(--head);
+  font-size:16px;
+  font-weight:900;
+  letter-spacing:1px;
+  color:var(--accent2);
+  text-transform:uppercase;
+}
+.noti-item-msg{
+  color:var(--text);
+  line-height:1.35;
+  font-size:13px;
+}
+.noti-item-meta{
+  color:var(--muted2);
+  font-family:var(--mono);
+  font-size:11px;
+}
+.noti-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:4px;
+}
+
 .toast{
   position:fixed;
   left:50%;
@@ -801,6 +878,7 @@ tbody::before{
 <header class="header">
   <div class="logo">COMANDA<small>Producción</small></div>
   <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
+  <button class="noti-btn" type="button" onclick="abrirNotificaciones()">🔔 <span class="noti-count empty" id="notiCount">0</span></button>
 </header>
 <div class="toolbar">
   <div class="search-wrap">
@@ -992,6 +1070,25 @@ tbody::before{
   </div>
 </div>
 <input type="file" id="rowFileInput" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" onchange="handleRowFileSelect(event)"/>
+
+<div class="backdrop" id="notiBackdrop" style="display:none" onclick="bdClick(event,'notiBackdrop')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">NOTIFICACIONES</span>
+      <button class="modal-close" type="button" onclick="closeModal('notiBackdrop')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="note" style="margin-bottom:10px">
+        Aquí aparecen los pedidos que fueron marcados como <strong>Listo</strong> y que fueron creados por tu operador.
+      </div>
+      <div class="noti-list" id="notiList">
+        <div class="empty">Cargando notificaciones...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=24"></script>
@@ -1203,7 +1300,7 @@ function updateStickyOffsets(){
 })();
 </script>
 <script src="js/auth.js?v=24"></script>
-<script src="js/app.js?v=24"></script>
+<script src="js/app.js?v=25"></script>
 <script>
 (function(){
   const SUPABASE_URL_FALLBACK = "https://ujfdsabypflseijatxba.supabase.co";
@@ -1290,6 +1387,3 @@ function updateStickyOffsets(){
 </script>
 </body>
 </html>
-
-
-
