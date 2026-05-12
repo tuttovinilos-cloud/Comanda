@@ -39,12 +39,10 @@ body{
   padding-bottom:90px;
 }
 
-/* Oculta botón rojo flotante de auth.js */
 #authTopbar{
   display:none !important;
 }
 
-/* HEADER IGUAL A INDEX */
 .header{
   background:var(--panel);
   border-bottom:2px solid var(--accent);
@@ -155,7 +153,6 @@ body{
   gap:8px;
 }
 
-/* TOOLBAR */
 .toolbar{
   display:flex;
   gap:8px;
@@ -163,6 +160,12 @@ body{
   border-bottom:1px solid var(--border);
   flex-wrap:wrap;
   align-items:center;
+  position:sticky;
+  top:58px;
+  z-index:260;
+  background:rgba(13,15,20,.96);
+  backdrop-filter:blur(10px);
+  box-shadow:0 8px 24px #0006;
 }
 
 input,select{
@@ -219,7 +222,7 @@ select option{
 
 .cards{
   display:grid;
-  grid-template-columns:repeat(6, minmax(0,1fr));
+  grid-template-columns:repeat(5, minmax(0,1fr));
   gap:12px;
 }
 
@@ -418,7 +421,6 @@ td{
   display:none;
 }
 
-/* RESPONSIVE */
 @media(max-width:1200px){
   .cards{grid-template-columns:repeat(3, minmax(0,1fr))}
 }
@@ -480,6 +482,7 @@ td{
     padding:10px;
     display:grid;
     grid-template-columns:1fr 1fr;
+    top:58px;
   }
 
   .toolbar .btn{
@@ -556,6 +559,10 @@ td{
     <option value="12">Diciembre</option>
   </select>
 
+  <select id="filterCliente" onchange="renderEstadisticas()">
+    <option value="all">Todos los clientes</option>
+  </select>
+
   <button class="btn secondary" onclick="cargarPedidosStats()">⟳ Recargar</button>
 </div>
 
@@ -590,12 +597,6 @@ td{
       <div class="stat-num" id="kpiPagados">0</div>
       <div class="stat-sub">Pagos cerrados</div>
     </div>
-
-    <div class="stat-card">
-      <div class="stat-label">Recurrencia</div>
-      <div class="stat-num" id="kpiRecurrencia">—</div>
-      <div class="stat-sub">Promedio entre pedidos</div>
-    </div>
   </section>
 
   <section class="grid">
@@ -617,16 +618,6 @@ td{
         </div>
       </div>
       <div class="list" id="clientesRecurrentes"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">Frecuencia de compra</div>
-          <div class="card-sub">Cada cuántos días vuelve a pedir cada cliente.</div>
-        </div>
-      </div>
-      <div class="list" id="frecuenciaClientes"></div>
     </div>
 
     <div class="card">
@@ -674,7 +665,7 @@ td{
     <div class="card-header">
       <div>
         <div class="card-title">Resumen por cliente</div>
-        <div class="card-sub">Pedidos, metros, listos, pagos y recurrencia por cliente.</div>
+        <div class="card-sub">Pedidos, cantidad, listos, pagos y pendientes por cliente.</div>
       </div>
     </div>
 
@@ -685,7 +676,6 @@ td{
             <th>Cliente</th>
             <th>Pedidos</th>
             <th>Metros</th>
-            <th>Frecuencia</th>
             <th>Primer pedido</th>
             <th>Último pedido</th>
             <th>Listos</th>
@@ -695,7 +685,7 @@ td{
         </thead>
         <tbody id="tablaClientes">
           <tr>
-            <td colspan="9" class="empty">Cargando clientes...</td>
+            <td colspan="8" class="empty">Cargando clientes...</td>
           </tr>
         </tbody>
       </table>
@@ -708,7 +698,7 @@ td{
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=24"></script>
 <script src="js/auth.js?v=24"></script>
-<script src="js/estadisticas.js?v=12"></script>
+<script src="js/estadisticas.js?v=13"></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function(){
@@ -725,4 +715,3 @@ document.addEventListener("DOMContentLoaded", function(){
 
 </body>
 </html>
-
