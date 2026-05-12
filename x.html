@@ -40,7 +40,7 @@ body{
   padding-bottom:80px;
 }
 
-button,input,select{font:inherit}
+button,input,select,textarea{font:inherit}
 
 .header{
   background:var(--panel);
@@ -96,7 +96,7 @@ button,input,select{font:inherit}
 
 .layout{
   display:grid;
-  grid-template-columns:360px 1fr;
+  grid-template-columns:370px 1fr;
   gap:16px;
   padding:16px;
 }
@@ -167,7 +167,16 @@ select{
   outline:none;
 }
 
-input:focus,select:focus{
+input[type="color"]{
+  width:100%;
+  height:42px;
+  background:var(--bg);
+  border:1px solid var(--border2);
+  border-radius:8px;
+  padding:4px;
+}
+
+input:focus,select:focus,textarea:focus{
   border-color:var(--accent);
   box-shadow:0 0 0 2px #3b82f622;
 }
@@ -179,7 +188,7 @@ select option{
 
 .range-row{
   display:grid;
-  grid-template-columns:1fr 52px;
+  grid-template-columns:1fr 60px;
   align-items:center;
   gap:10px;
 }
@@ -273,9 +282,12 @@ select option{
     linear-gradient(-45deg,transparent 75%,#10131a 75%);
   background-size:22px 22px;
   background-position:0 0,0 11px,11px -11px,-11px 0;
+  color:var(--muted2);
+  text-align:center;
 }
 
-.preview-area img{
+.preview-area img,
+.preview-area canvas{
   max-width:100%;
   max-height:72vh;
   object-fit:contain;
@@ -319,6 +331,19 @@ select option{
 
 .note strong{color:var(--accent2)}
 
+textarea{
+  width:100%;
+  height:160px;
+  background:#07090d;
+  border:1px solid var(--border2);
+  color:var(--muted2);
+  border-radius:10px;
+  padding:10px;
+  font-family:var(--mono);
+  font-size:11px;
+  resize:vertical;
+}
+
 .toast{
   position:fixed;
   left:50%;
@@ -338,20 +363,7 @@ select option{
   text-align:center;
 }
 
-textarea{
-  width:100%;
-  height:150px;
-  background:#07090d;
-  border:1px solid var(--border2);
-  color:var(--muted2);
-  border-radius:10px;
-  padding:10px;
-  font-family:var(--mono);
-  font-size:11px;
-  resize:vertical;
-}
-
-@media(max-width:1000px){
+@media(max-width:1100px){
   .layout{grid-template-columns:1fr}
   .preview-grid{grid-template-columns:1fr}
 }
@@ -387,7 +399,7 @@ textarea{
 
 <header class="header">
   <div class="logo">TUTTOVINILOS <small>Vectorizador PRO</small></div>
-  <div class="status"><span class="dot"></span> SVG limpio para CorelDRAW</div>
+  <div class="status"><span class="dot"></span> PNG/JPG → SVG sólido</div>
 </header>
 
 <main class="layout">
@@ -395,7 +407,7 @@ textarea{
   <section class="card">
     <div class="card-header">
       <div class="card-title">Controles</div>
-      <div class="card-sub">Convierte PNG/JPG en SVG editable con reducción de nodos.</div>
+      <div class="card-sub">Convierte imágenes en SVG con colores sólidos y menos nodos.</div>
     </div>
 
     <div class="card-body">
@@ -408,17 +420,48 @@ textarea{
       <div class="field">
         <label>Modo de vectorizado</label>
         <select id="mode">
+          <option value="solidcolor">Color sólido por capas</option>
           <option value="bw">Blanco y negro / Silueta</option>
-          <option value="color">Color por capas</option>
         </select>
       </div>
 
       <div class="field">
-        <label>Fondo</label>
-        <select id="backgroundMode">
-          <option value="transparent">Transparente</option>
-          <option value="white">Blanco</option>
+        <label>Quitar fondo</label>
+        <select id="removeBg">
+          <option value="no">No quitar fondo</option>
+          <option value="auto">Automático por esquinas</option>
+          <option value="white">Quitar fondo blanco</option>
+          <option value="manual">Quitar color manual</option>
         </select>
+      </div>
+
+      <div class="field">
+        <label>Color manual a quitar</label>
+        <input type="color" id="manualBgColor" value="#ffffff"/>
+      </div>
+
+      <div class="field">
+        <label>Tolerancia fondo</label>
+        <div class="range-row">
+          <input type="range" id="bgTolerance" min="0" max="180" value="45"/>
+          <div class="value" id="bgToleranceVal">45</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Cantidad de colores sólidos</label>
+        <div class="range-row">
+          <input type="range" id="colors" min="2" max="12" value="4"/>
+          <div class="value" id="colorsVal">4</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Fuerza de color sólido</label>
+        <div class="range-row">
+          <input type="range" id="solidStrength" min="1" max="10" value="8"/>
+          <div class="value" id="solidStrengthVal">8</div>
+        </div>
       </div>
 
       <div class="field">
@@ -430,18 +473,10 @@ textarea{
       </div>
 
       <div class="field">
-        <label>Cantidad de colores</label>
-        <div class="range-row">
-          <input type="range" id="colors" min="2" max="16" value="4"/>
-          <div class="value" id="colorsVal">4</div>
-        </div>
-      </div>
-
-      <div class="field">
         <label>Eliminar ruido</label>
         <div class="range-row">
-          <input type="range" id="pathomit" min="0" max="80" value="12"/>
-          <div class="value" id="pathomitVal">12</div>
+          <input type="range" id="pathomit" min="0" max="100" value="14"/>
+          <div class="value" id="pathomitVal">14</div>
         </div>
       </div>
 
@@ -462,14 +497,6 @@ textarea{
       </div>
 
       <div class="field">
-        <label>Escala SVG</label>
-        <div class="range-row">
-          <input type="range" id="scale" min="1" max="10" value="1"/>
-          <div class="value" id="scaleVal">1x</div>
-        </div>
-      </div>
-
-      <div class="field">
         <label>Invertir blanco/negro</label>
         <select id="invert">
           <option value="no">No</option>
@@ -478,19 +505,20 @@ textarea{
       </div>
 
       <div class="btns">
-        <button class="btn" onclick="vectorizar()">Vectorizar SVG</button>
+        <button class="btn" onclick="procesarYVectorizar()">Vectorizar SVG</button>
         <button class="btn success" onclick="descargarSVG()">Descargar SVG</button>
         <button class="btn secondary" onclick="copiarSVG()">Copiar SVG</button>
         <button class="btn danger" onclick="limpiar()">Limpiar</button>
       </div>
 
       <div class="note">
-        <strong>Consejo:</strong> para logos simples usa modo blanco/negro, pocos colores, más “eliminar ruido” y más “reducción de nodos”.
+        <strong>Para logos:</strong> usa “Color sólido por capas”, 3 a 6 colores, fuerza 7 a 10. Si quieres quitar el fondo, usa “Automático por esquinas”.
       </div>
 
       <div class="info" id="info">
         <div><strong>Archivo:</strong> —</div>
         <div><strong>Tamaño:</strong> —</div>
+        <div><strong>Colores finales:</strong> —</div>
         <div><strong>Nodos estimados:</strong> —</div>
         <div><strong>SVG:</strong> —</div>
       </div>
@@ -511,6 +539,15 @@ textarea{
 
     <div class="preview-box">
       <div class="preview-head">
+        <div class="preview-title">Imagen limpia / colores sólidos</div>
+      </div>
+      <div class="preview-area">
+        <canvas id="processedCanvas"></canvas>
+      </div>
+    </div>
+
+    <div class="preview-box">
+      <div class="preview-head">
         <div class="preview-title">SVG vectorizado</div>
       </div>
       <div class="preview-area">
@@ -518,7 +555,7 @@ textarea{
       </div>
     </div>
 
-    <div class="preview-box" style="grid-column:1/-1;">
+    <div class="preview-box">
       <div class="preview-head">
         <div class="preview-title">Código SVG</div>
       </div>
@@ -536,19 +573,28 @@ textarea{
 <script>
 let originalFile = null;
 let originalDataURL = "";
-let processedDataURL = "";
 let svgString = "";
+let imgWidth = 0;
+let imgHeight = 0;
+let finalColors = [];
 
 const $ = id => document.getElementById(id);
 
-const ranges = ["threshold","colors","pathomit","ltres","qtres","scale"];
+const ranges = [
+  "bgTolerance",
+  "colors",
+  "solidStrength",
+  "threshold",
+  "pathomit",
+  "ltres",
+  "qtres"
+];
 
 ranges.forEach(id => {
   const input = $(id);
   const val = $(id + "Val");
-
   input.addEventListener("input", () => {
-    val.textContent = id === "scale" ? input.value + "x" : input.value;
+    val.textContent = input.value;
   });
 });
 
@@ -568,6 +614,7 @@ function cargarImagen(e){
   originalFile = file;
 
   const reader = new FileReader();
+
   reader.onload = ev => {
     originalDataURL = ev.target.result;
     $("originalPreview").src = originalDataURL;
@@ -577,47 +624,65 @@ function cargarImagen(e){
 
     const img = new Image();
     img.onload = () => {
+      imgWidth = img.width;
+      imgHeight = img.height;
+
+      const canvas = $("processedCanvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently:true });
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img,0,0);
+
       actualizarInfo({
         archivo:file.name,
         tamano:`${img.width} x ${img.height}px`,
+        colores:"—",
         nodos:"—",
         svg:"—"
       });
     };
+
     img.src = originalDataURL;
   };
+
   reader.readAsDataURL(file);
 }
 
-function actualizarInfo({archivo,tamano,nodos,svg}){
+function actualizarInfo({archivo,tamano,colores,nodos,svg}){
   $("info").innerHTML = `
     <div><strong>Archivo:</strong> ${archivo || "—"}</div>
     <div><strong>Tamaño:</strong> ${tamano || "—"}</div>
+    <div><strong>Colores finales:</strong> ${colores || "—"}</div>
     <div><strong>Nodos estimados:</strong> ${nodos || "—"}</div>
     <div><strong>SVG:</strong> ${svg || "—"}</div>
   `;
 }
 
-async function vectorizar(){
+async function procesarYVectorizar(){
   if(!originalDataURL){
     alert("Primero sube una imagen PNG o JPG.");
     return;
   }
 
   if(typeof ImageTracer === "undefined"){
-    alert("No cargó la librería ImageTracer. Revisa conexión a internet o CDN.");
+    alert("No cargó ImageTracer. Revisa conexión a internet.");
     return;
   }
 
-  toast("Vectorizando...");
+  toast("Procesando colores sólidos...");
 
   const mode = $("mode").value;
+
+  let processedDataURL = "";
 
   if(mode === "bw"){
     processedDataURL = await prepararBlancoNegro(originalDataURL);
   }else{
-    processedDataURL = await prepararColor(originalDataURL);
+    processedDataURL = await prepararColorSolido(originalDataURL);
   }
+
+  toast("Vectorizando SVG...");
 
   const options = obtenerOpciones();
 
@@ -633,6 +698,7 @@ async function vectorizar(){
     actualizarInfo({
       archivo: originalFile ? originalFile.name : "imagen",
       tamano: obtenerTamanoDesdeSVG(svgString),
+      colores: finalColors.length ? finalColors.map(c => rgbToHex(c)).join(", ") : "—",
       nodos,
       svg: kb
     });
@@ -652,7 +718,7 @@ function obtenerOpciones(){
     numberofcolors: mode === "bw" ? 2 : Number($("colors").value),
     mincolorratio: 0.01,
     colorquantcycles: 3,
-    scale: Number($("scale").value),
+    scale: 1,
     strokewidth: 0,
     linefilter: true,
     roundcoords: 1,
@@ -663,27 +729,57 @@ function obtenerOpciones(){
   };
 }
 
-function prepararBlancoNegro(dataURL){
+function prepararColorSolido(dataURL){
   return new Promise(resolve => {
     const img = new Image();
+
     img.onload = () => {
-      const canvas = document.createElement("canvas");
+      const canvas = $("processedCanvas");
       const ctx = canvas.getContext("2d", { willReadFrequently:true });
 
       canvas.width = img.width;
       canvas.height = img.height;
 
-      const fondo = $("backgroundMode").value;
-      if(fondo === "white"){
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0,0,canvas.width,canvas.height);
-      }
-
+      ctx.clearRect(0,0,canvas.width,canvas.height);
       ctx.drawImage(img,0,0);
 
-      const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
-      const d = imageData.data;
+      let imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
 
+      imageData = quitarFondoImageData(imageData, canvas.width, canvas.height);
+
+      const colores = Number($("colors").value);
+      const fuerza = Number($("solidStrength").value);
+
+      finalColors = extraerPaleta(imageData, colores);
+      imageData = aplicarPaletaSolida(imageData, finalColors, fuerza);
+
+      ctx.putImageData(imageData,0,0);
+
+      resolve(canvas.toDataURL("image/png"));
+    };
+
+    img.src = dataURL;
+  });
+}
+
+function prepararBlancoNegro(dataURL){
+  return new Promise(resolve => {
+    const img = new Image();
+
+    img.onload = () => {
+      const canvas = $("processedCanvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently:true });
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img,0,0);
+
+      let imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+      imageData = quitarFondoImageData(imageData, canvas.width, canvas.height);
+
+      const d = imageData.data;
       const threshold = Number($("threshold").value);
       const invertir = $("invert").value === "yes";
 
@@ -712,6 +808,8 @@ function prepararBlancoNegro(dataURL){
         d[i+3] = 255;
       }
 
+      finalColors = [{r:0,g:0,b:0},{r:255,g:255,b:255}];
+
       ctx.putImageData(imageData,0,0);
       resolve(canvas.toDataURL("image/png"));
     };
@@ -720,28 +818,213 @@ function prepararBlancoNegro(dataURL){
   });
 }
 
-function prepararColor(dataURL){
-  return new Promise(resolve => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d", { willReadFrequently:true });
+function quitarFondoImageData(imageData, width, height){
+  const mode = $("removeBg").value;
 
-      canvas.width = img.width;
-      canvas.height = img.height;
+  if(mode === "no") return imageData;
 
-      const fondo = $("backgroundMode").value;
-      if(fondo === "white"){
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0,0,canvas.width,canvas.height);
-      }
+  const d = imageData.data;
+  const tolerance = Number($("bgTolerance").value || 45);
 
-      ctx.drawImage(img,0,0);
-      resolve(canvas.toDataURL("image/png"));
+  let target = { r:255, g:255, b:255 };
+
+  if(mode === "auto"){
+    const corners = [
+      getPixel(d, 0, 0, width),
+      getPixel(d, width - 1, 0, width),
+      getPixel(d, 0, height - 1, width),
+      getPixel(d, width - 1, height - 1, width)
+    ];
+
+    target = {
+      r: Math.round(corners.reduce((s,p)=>s+p.r,0) / corners.length),
+      g: Math.round(corners.reduce((s,p)=>s+p.g,0) / corners.length),
+      b: Math.round(corners.reduce((s,p)=>s+p.b,0) / corners.length)
+    };
+  }
+
+  if(mode === "white"){
+    target = { r:255, g:255, b:255 };
+  }
+
+  if(mode === "manual"){
+    target = hexToRgb($("manualBgColor").value || "#ffffff");
+  }
+
+  for(let i=0;i<d.length;i+=4){
+    const r = d[i];
+    const g = d[i+1];
+    const b = d[i+2];
+
+    const dist = colorDistance({r,g,b}, target);
+
+    if(dist <= tolerance){
+      d[i+3] = 0;
+    }
+  }
+
+  return imageData;
+}
+
+function extraerPaleta(imageData, cantidad){
+  const d = imageData.data;
+  const buckets = new Map();
+  const step = Math.max(1, Math.floor(d.length / 4 / 80000));
+
+  for(let p=0;p<d.length/4;p+=step){
+    const i = p * 4;
+    const a = d[i+3];
+
+    if(a < 30) continue;
+
+    let r = d[i];
+    let g = d[i+1];
+    let b = d[i+2];
+
+    r = Math.round(r / 24) * 24;
+    g = Math.round(g / 24) * 24;
+    b = Math.round(b / 24) * 24;
+
+    const key = `${r},${g},${b}`;
+
+    if(!buckets.has(key)){
+      buckets.set(key, {r,g,b,count:0});
+    }
+
+    buckets.get(key).count++;
+  }
+
+  let paleta = [...buckets.values()]
+    .sort((a,b) => b.count - a.count)
+    .slice(0, cantidad)
+    .map(c => ({r:c.r,g:c.g,b:c.b}));
+
+  if(!paleta.length){
+    paleta = [{r:0,g:0,b:0}];
+  }
+
+  paleta = mejorarPaleta(paleta);
+
+  return paleta;
+}
+
+function mejorarPaleta(paleta){
+  return paleta.map(c => {
+    let {r,g,b} = c;
+
+    const max = Math.max(r,g,b);
+    const min = Math.min(r,g,b);
+    const sat = max - min;
+
+    if(max < 45){
+      return {r:0,g:0,b:0};
+    }
+
+    if(max > 225 && sat < 30){
+      return {r:255,g:255,b:255};
+    }
+
+    if(sat > 25){
+      if(r === max) r = Math.min(255, r + 18);
+      if(g === max) g = Math.min(255, g + 18);
+      if(b === max) b = Math.min(255, b + 18);
+
+      if(r === min) r = Math.max(0, r - 10);
+      if(g === min) g = Math.max(0, g - 10);
+      if(b === min) b = Math.max(0, b - 10);
+    }
+
+    return {
+      r: clampColor(r),
+      g: clampColor(g),
+      b: clampColor(b)
+    };
+  });
+}
+
+function aplicarPaletaSolida(imageData, paleta, fuerza){
+  const d = imageData.data;
+  const intensity = fuerza / 10;
+
+  for(let i=0;i<d.length;i+=4){
+    const a = d[i+3];
+
+    if(a < 30){
+      d[i] = 255;
+      d[i+1] = 255;
+      d[i+2] = 255;
+      d[i+3] = 0;
+      continue;
+    }
+
+    const original = {
+      r:d[i],
+      g:d[i+1],
+      b:d[i+2]
     };
 
-    img.src = dataURL;
-  });
+    const nearest = colorMasCercano(original, paleta);
+
+    d[i] = Math.round(original.r * (1 - intensity) + nearest.r * intensity);
+    d[i+1] = Math.round(original.g * (1 - intensity) + nearest.g * intensity);
+    d[i+2] = Math.round(original.b * (1 - intensity) + nearest.b * intensity);
+    d[i+3] = 255;
+  }
+
+  return imageData;
+}
+
+function colorMasCercano(color, paleta){
+  let best = paleta[0];
+  let bestDist = Infinity;
+
+  for(const c of paleta){
+    const dist = colorDistance(color, c);
+    if(dist < bestDist){
+      bestDist = dist;
+      best = c;
+    }
+  }
+
+  return best;
+}
+
+function colorDistance(a,b){
+  return Math.sqrt(
+    Math.pow(a.r - b.r, 2) +
+    Math.pow(a.g - b.g, 2) +
+    Math.pow(a.b - b.b, 2)
+  );
+}
+
+function getPixel(data, x, y, width){
+  const i = (y * width + x) * 4;
+  return {
+    r:data[i],
+    g:data[i+1],
+    b:data[i+2],
+    a:data[i+3]
+  };
+}
+
+function hexToRgb(hex){
+  hex = String(hex || "#ffffff").replace("#","");
+  return {
+    r:parseInt(hex.substring(0,2),16),
+    g:parseInt(hex.substring(2,4),16),
+    b:parseInt(hex.substring(4,6),16)
+  };
+}
+
+function rgbToHex(c){
+  return "#" + [c.r,c.g,c.b].map(v => {
+    const h = clampColor(v).toString(16);
+    return h.length === 1 ? "0" + h : h;
+  }).join("");
+}
+
+function clampColor(v){
+  return Math.max(0, Math.min(255, Math.round(v)));
 }
 
 function limpiarSVG(svg){
@@ -790,7 +1073,7 @@ function descargarSVG(){
   const a = document.createElement("a");
   const base = originalFile ? originalFile.name.replace(/\.[^.]+$/,"") : "vector";
   a.href = url;
-  a.download = base + "_vector_tuttovinilos.svg";
+  a.download = base + "_svg_solido_tuttovinilos.svg";
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -818,17 +1101,24 @@ async function copiarSVG(){
 function limpiar(){
   originalFile = null;
   originalDataURL = "";
-  processedDataURL = "";
   svgString = "";
+  imgWidth = 0;
+  imgHeight = 0;
+  finalColors = [];
 
   $("fileInput").value = "";
   $("originalPreview").removeAttribute("src");
   $("svgOutput").innerHTML = "Sube una imagen y presiona vectorizar.";
   $("svgText").value = "";
 
+  const canvas = $("processedCanvas");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
   actualizarInfo({
     archivo:"—",
     tamano:"—",
+    colores:"—",
     nodos:"—",
     svg:"—"
   });
