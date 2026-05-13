@@ -26,7 +26,6 @@
   --accent2:#60a5fa;
   --green:#30D158;
   --red:#FF3B30;
-  --yellow:#FFD60A;
   --mono:'Share Tech Mono',monospace;
   --head:'Barlow Condensed',sans-serif;
   --body:'Barlow',sans-serif;
@@ -151,13 +150,11 @@ label{
 
 input[type="file"],
 input[type="range"],
-input[type="number"],
 select{
   width:100%;
 }
 
 input[type="file"],
-input[type="number"],
 select{
   background:var(--bg);
   border:1px solid var(--border2);
@@ -399,7 +396,7 @@ textarea{
 
 <header class="header">
   <div class="logo">TUTTOVINILOS <small>Vectorizador PRO</small></div>
-  <div class="status"><span class="dot"></span> SVG sin fondo al descargar</div>
+  <div class="status"><span class="dot"></span> SVG limpio sin fondo</div>
 </header>
 
 <main class="layout">
@@ -407,7 +404,7 @@ textarea{
   <section class="card">
     <div class="card-header">
       <div class="card-title">Controles</div>
-      <div class="card-sub">Mismo vectorizado anterior, pero la descarga limpia el fondo del SVG.</div>
+      <div class="card-sub">Vectoriza PNG/JPG y elimina el panel/fondo blanco del SVG final.</div>
     </div>
 
     <div class="card-body">
@@ -443,8 +440,8 @@ textarea{
       <div class="field">
         <label>Tolerancia fondo</label>
         <div class="range-row">
-          <input type="range" id="bgTolerance" min="0" max="180" value="45"/>
-          <div class="value" id="bgToleranceVal">45</div>
+          <input type="range" id="bgTolerance" min="0" max="180" value="55"/>
+          <div class="value" id="bgToleranceVal">55</div>
         </div>
       </div>
 
@@ -512,7 +509,7 @@ textarea{
       </div>
 
       <div class="note">
-        <strong>Recomendado:</strong> deja “Automático por esquinas”. Si el fondo no se elimina, usa “Quitar color manual” y selecciona el color del fondo.
+        <strong>Para logos negros sobre fondo blanco:</strong> usa “Blanco y negro / Silueta” + “Quitar fondo blanco”. El archivo descargado elimina el panel blanco.
       </div>
 
       <div class="info" id="info">
@@ -680,7 +677,6 @@ async function procesarYVectorizar(){
   toast("Procesando imagen...");
 
   const mode = $("mode").value;
-
   let processedDataURL = "";
 
   if(mode === "bw"){
@@ -691,15 +687,10 @@ async function procesarYVectorizar(){
 
   toast("Vectorizando SVG...");
 
-  const options = obtenerOpciones();
-
   ImageTracer.imageToSVG(processedDataURL, function(svgstr){
     svgString = limpiarSVG(svgstr);
-
-    // Esta es la versión que se usará para descargar.
     svgSinFondo = limpiarFondoDelSVG(svgString);
 
-    // En pantalla también mostramos la versión sin fondo para validar.
     $("svgOutput").innerHTML = svgSinFondo;
     $("svgText").value = svgSinFondo;
 
@@ -715,7 +706,7 @@ async function procesarYVectorizar(){
     });
 
     toast("SVG generado sin fondo");
-  }, options);
+  }, obtenerOpciones());
 }
 
 function obtenerOpciones(){
@@ -835,6 +826,7 @@ function quitarFondoImageData(imageData, width, height){
   coloresFondoParaEliminar = [
     {r:255,g:255,b:255},
     {r:254,g:254,b:254},
+    {r:250,g:250,b:250},
     {r:245,g:245,b:245},
     {r:240,g:240,b:240}
   ];
@@ -842,7 +834,7 @@ function quitarFondoImageData(imageData, width, height){
   if(mode === "no") return imageData;
 
   const d = imageData.data;
-  const tolerance = Number($("bgTolerance").value || 45);
+  const tolerance = Number($("bgTolerance").value || 55);
 
   let target = { r:255, g:255, b:255 };
 
@@ -886,13 +878,11 @@ function detectarColorFondoPorEsquinas(imageData, width, height){
     getPixel(d, width - 1, height - 1, width)
   ];
 
-  const target = {
+  return {
     r: Math.round(puntos.reduce((s,p)=>s+p.r,0) / puntos.length),
     g: Math.round(puntos.reduce((s,p)=>s+p.g,0) / puntos.length),
     b: Math.round(puntos.reduce((s,p)=>s+p.b,0) / puntos.length)
   };
-
-  return target;
 }
 
 function extraerPaleta(imageData, cantidad){
@@ -1004,11 +994,9 @@ function aplicarPaletaSolida(imageData, paleta, fuerza){
 function limpiarFondoDelSVG(svg){
   let limpio = String(svg || "");
 
-  const colores = coloresFondoParaEliminar.length
-    ? coloresFondoParaEliminar
-    : [{r:255,g:255,b:255}];
-
-  limpio = eliminarElementosPorFill(limpio, colores, 36);
+  limpio = eliminarFondoBlancoDirecto(limpio);
+  limpio = eliminarElementosPorFill(limpio, coloresFondoParaEliminar, 50);
+  limpio = eliminarPanelesGrandesBlancos(limpio);
 
   limpio = limpio
     .replace(/<path[^>]*fill-opacity="0"[^>]*>(?:<\/path>)?/gi, "")
@@ -1016,28 +1004,41 @@ function limpiarFondoDelSVG(svg){
     .replace(/<rect[^>]*fill-opacity="0"[^>]*\/?>/gi, "")
     .replace(/<rect[^>]*opacity="0"[^>]*\/?>/gi, "");
 
-  limpio = limpio
+  return limpio
     .replace(/\s{2,}/g," ")
     .replace(/>\s+</g,"><")
     .trim();
+}
+
+function eliminarFondoBlancoDirecto(svg){
+  let limpio = String(svg || "");
+
+  const blanco = `(?:#fff|#ffffff|white|rgb\$begin:math:text$255\,255\,255\\$end:math:text$|rgb\$begin:math:text$254\,254\,254\\$end:math:text$|rgb\$begin:math:text$250\,250\,250\\$end:math:text$|rgb\$begin:math:text$245\,245\,245\\$end:math:text$|rgb\$begin:math:text$240\,240\,240\\$end:math:text$)`;
+
+  limpio = limpio.replace(new RegExp(`<rect[^>]*(?:fill="${blanco}")[^>]*/?>`, "gi"), "");
+  limpio = limpio.replace(new RegExp(`<path[^>]*(?:fill="${blanco}")[^>]*/?>`, "gi"), "");
+  limpio = limpio.replace(new RegExp(`<path[^>]*(?:fill="${blanco}")[^>]*></path>`, "gi"), "");
+  limpio = limpio.replace(new RegExp(`<polygon[^>]*(?:fill="${blanco}")[^>]*/?>`, "gi"), "");
+  limpio = limpio.replace(new RegExp(`<polyline[^>]*(?:fill="${blanco}")[^>]*/?>`, "gi"), "");
+
+  limpio = limpio.replace(/<rect[^>]*style="[^"]*fill:\s*(#fff|#ffffff|white|rgb\(255,255,255\))[^"]*"[^>]*\/?>/gi, "");
+  limpio = limpio.replace(/<path[^>]*style="[^"]*fill:\s*(#fff|#ffffff|white|rgb\(255,255,255\))[^"]*"[^>]*\/?>/gi, "");
 
   return limpio;
 }
 
 function eliminarElementosPorFill(svg, colores, tolerancia){
-  let salida = svg;
-
+  let salida = String(svg || "");
   const tags = ["path","rect","polygon","polyline"];
 
   tags.forEach(tag => {
-    const re = new RegExp(`<${tag}\\b[^>]*fill="([^"]+)"[^>]*>(?:<\\/${tag}>)?`, "gi");
+    const reNormal = new RegExp(`<${tag}\\b[^>]*fill="([^"]+)"[^>]*>(?:<\\/${tag}>)?`, "gi");
 
-    salida = salida.replace(re, function(match, fill){
+    salida = salida.replace(reNormal, function(match, fill){
       const color = parseFillColor(fill);
       if(!color) return match;
 
       const eliminar = colores.some(c => colorDistance(color, c) <= tolerancia);
-
       return eliminar ? "" : match;
     });
 
@@ -1048,12 +1049,22 @@ function eliminarElementosPorFill(svg, colores, tolerancia){
       if(!color) return match;
 
       const eliminar = colores.some(c => colorDistance(color, c) <= tolerancia);
-
       return eliminar ? "" : match;
     });
   });
 
   return salida;
+}
+
+function eliminarPanelesGrandesBlancos(svg){
+  let limpio = String(svg || "");
+
+  limpio = limpio.replace(/<path[^>]*d="M\s*0\s+0[^"]*"[^>]*fill="rgb\(255,255,255\)"[^>]*\/?>/gi, "");
+  limpio = limpio.replace(/<path[^>]*fill="rgb\(255,255,255\)"[^>]*d="M\s*0\s+0[^"]*"[^>]*\/?>/gi, "");
+
+  limpio = limpio.replace(/<path[^>]*d="M\s*0\s+0[^"]*Z"[^>]*fill="(?:#fff|#ffffff|white|rgb\(255,255,255\))"[^>]*\/?>/gi, "");
+
+  return limpio;
 }
 
 function parseFillColor(fill){
