@@ -1,706 +1,397 @@
 <!DOCTYPE html>
-
 <html lang="es">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>Vectorizador PRO · Tuttovinilos</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PNG/JPG a SVG limpio</title>
 
 <script src="https://cdn.jsdelivr.net/gh/jankovicsandras/imagetracerjs/imagetracer_v1.2.6.js"></script>
 
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
-:root{
-  --bg:#0d0f14;
-  --panel:#13161d;
-  --panel2:#181c26;
-  --border:#1e2330;
-  --border2:#2a3048;
-  --text:#e2e8f0;
-  --muted:#64748b;
-  --muted2:#94a3b8;
-  --accent:#3b82f6;
-  --accent2:#60a5fa;
-  --green:#30D158;
-  --mono:'Share Tech Mono',monospace;
-  --head:'Barlow Condensed',sans-serif;
-  --body:'Barlow',sans-serif;
+*{
+  box-sizing:border-box;
 }
 
 body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:var(--body);
-  min-height:100vh;
-  padding-bottom:80px;
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#101318;
+  color:#e5e7eb;
 }
 
-button,input,select,textarea{font:inherit}
-
-.header{
-  background:var(--panel);
-  border-bottom:2px solid var(--accent);
-  padding:12px 16px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  position:sticky;
-  top:0;
-  z-index:20;
-  box-shadow:0 4px 24px #0009;
-  flex-wrap:wrap;
+header{
+  padding:14px 18px;
+  background:#151922;
+  border-bottom:2px solid #3b82f6;
 }
 
-.logo{
-  font-family:var(--head);
-  font-size:22px;
-  font-weight:900;
-  letter-spacing:3px;
-  color:var(--accent2);
-  text-transform:uppercase;
+header h1{
+  margin:0;
+  font-size:20px;
+  letter-spacing:1px;
 }
 
-.logo small{
-  color:var(--muted);
-  font-size:11px;
-  letter-spacing:1.2px;
-  margin-left:8px;
-}
-
-.status{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  font-family:var(--head);
-  font-size:12px;
-  letter-spacing:1.4px;
-  text-transform:uppercase;
-  color:var(--muted2);
-  border:1px solid var(--border2);
-  padding:8px 12px;
-  border-radius:8px;
-}
-
-.dot{
-  width:9px;
-  height:9px;
-  background:var(--green);
-  border-radius:50%;
-}
-
-.layout{
+.app{
   display:grid;
-  grid-template-columns:370px 1fr;
+  grid-template-columns:320px 1fr;
   gap:16px;
   padding:16px;
 }
 
-.card{
-  background:var(--panel);
-  border:1px solid var(--border2);
+.panel{
+  background:#151922;
+  border:1px solid #2b3344;
   border-radius:14px;
-  overflow:hidden;
-  box-shadow:0 10px 30px #0004;
+  padding:16px;
 }
 
-.card-header{
-  padding:15px;
-  border-bottom:1px solid var(--border);
+.panel h2{
+  margin:0 0 14px;
+  font-size:18px;
 }
 
-.card-title{
-  font-family:var(--head);
-  font-size:20px;
-  font-weight:900;
-  letter-spacing:1.6px;
-  text-transform:uppercase;
+.campo{
+  margin-bottom:14px;
 }
-
-.card-sub{
-  color:var(--muted2);
-  font-size:12px;
-  margin-top:3px;
-  line-height:1.35;
-}
-
-.card-body{
-  padding:15px;
-  display:grid;
-  gap:13px;
-}
-
-.field{display:grid;gap:6px}
 
 label{
-  font-family:var(--head);
+  display:block;
   font-size:12px;
-  font-weight:700;
-  letter-spacing:1.5px;
+  color:#94a3b8;
+  margin-bottom:6px;
   text-transform:uppercase;
-  color:var(--muted2);
+  letter-spacing:1px;
 }
 
-input[type="file"],input[type="range"],select{width:100%}
-
-input[type="file"],select{
-  background:var(--bg);
-  border:1px solid var(--border2);
-  color:var(--text);
-  border-radius:8px;
-  padding:10px;
-  outline:none;
-}
-
-input[type="color"]{
+input,
+select,
+button{
   width:100%;
-  height:42px;
-  background:var(--bg);
-  border:1px solid var(--border2);
+  padding:10px;
   border-radius:8px;
-  padding:4px;
+  border:1px solid #2b3344;
+  background:#0f1218;
+  color:#e5e7eb;
 }
 
-input:focus,select:focus,textarea:focus{
-  border-color:var(--accent);
-  box-shadow:0 0 0 2px #3b82f622;
+input[type="range"]{
+  padding:0;
 }
 
-select option{background:var(--panel);color:var(--text)}
-
-.range-row{
-  display:grid;
-  grid-template-columns:1fr 60px;
-  align-items:center;
-  gap:10px;
-}
-
-.value{
-  font-family:var(--mono);
-  color:var(--accent2);
+.valor{
+  font-size:12px;
+  color:#60a5fa;
   text-align:right;
-  font-size:13px;
+  margin-top:4px;
 }
 
-.btn{
-  font-family:var(--head);
-  font-size:13px;
-  font-weight:800;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-  padding:11px 14px;
-  background:var(--accent);
-  color:#fff;
-  border:none;
-  border-radius:8px;
+button{
   cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  transition:all .2s;
+  border:none;
+  background:#2563eb;
+  font-weight:bold;
+  margin-top:8px;
 }
 
-.btn:hover{filter:brightness(1.12)}
-.btn.success{background:#16a34a}
-.btn.secondary{
-  background:transparent;
-  color:var(--muted2);
-  border:1px solid var(--border2);
+button:hover{
+  filter:brightness(1.1);
 }
-.btn.danger{background:#dc2626}
 
-.btns{display:grid;grid-template-columns:1fr;gap:8px}
+button.green{
+  background:#16a34a;
+}
 
-.preview-grid{
+button.gray{
+  background:#374151;
+}
+
+.vistas{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:16px;
 }
 
-.preview-box{
-  background:#090b10;
-  border:1px solid var(--border2);
+.box{
+  background:#151922;
+  border:1px solid #2b3344;
   border-radius:14px;
   overflow:hidden;
-  min-height:400px;
-  display:flex;
-  flex-direction:column;
+  min-height:360px;
 }
 
-.preview-head{
-  padding:12px 14px;
-  border-bottom:1px solid var(--border);
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  align-items:center;
+.box h3{
+  margin:0;
+  padding:10px 12px;
+  font-size:14px;
+  background:#11151d;
+  border-bottom:1px solid #2b3344;
 }
 
-.preview-title{
-  font-family:var(--head);
-  font-size:16px;
-  font-weight:900;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-}
-
-.preview-area{
-  flex:1;
-  min-height:350px;
+.preview{
+  min-height:320px;
+  padding:14px;
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:15px;
   background:
-    linear-gradient(45deg,#10131a 25%,transparent 25%),
-    linear-gradient(-45deg,#10131a 25%,transparent 25%),
-    linear-gradient(45deg,transparent 75%,#10131a 75%),
-    linear-gradient(-45deg,transparent 75%,#10131a 75%);
+    linear-gradient(45deg,#1f2937 25%,transparent 25%),
+    linear-gradient(-45deg,#1f2937 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#1f2937 75%),
+    linear-gradient(-45deg,transparent 75%,#1f2937 75%);
   background-size:22px 22px;
   background-position:0 0,0 11px,11px -11px,-11px 0;
-  color:var(--muted2);
-  text-align:center;
 }
 
-.preview-area img,.preview-area canvas{
+.preview img,
+.preview canvas,
+.preview svg{
   max-width:100%;
-  max-height:72vh;
-  object-fit:contain;
+  max-height:70vh;
 }
-
-#svgOutput{
-  width:100%;
-  height:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-#svgOutput svg{
-  max-width:100%;
-  max-height:72vh;
-  width:auto;
-  height:auto;
-}
-
-.info{
-  display:grid;
-  gap:8px;
-  font-family:var(--mono);
-  color:var(--muted2);
-  font-size:12px;
-  line-height:1.4;
-}
-
-.info strong{color:var(--accent2)}
-
-.note{
-  background:#3b82f611;
-  border:1px solid #3b82f633;
-  border-radius:10px;
-  padding:12px 14px;
-  color:var(--muted2);
-  font-size:13px;
-  line-height:1.45;
-}
-
-.note strong{color:var(--accent2)}
 
 textarea{
   width:100%;
-  height:160px;
+  height:300px;
   background:#07090d;
-  border:1px solid var(--border2);
-  color:var(--muted2);
-  border-radius:10px;
+  color:#9ca3af;
+  border:1px solid #2b3344;
+  border-radius:8px;
   padding:10px;
-  font-family:var(--mono);
   font-size:11px;
   resize:vertical;
 }
 
-.toast{
-  position:fixed;
-  left:50%;
-  bottom:22px;
-  transform:translateX(-50%);
-  background:var(--panel2);
-  border:1px solid var(--border2);
-  color:var(--text);
-  padding:12px 18px;
-  border-radius:10px;
-  box-shadow:0 10px 35px #000a;
-  z-index:1000;
-  font-family:var(--head);
-  font-size:13px;
-  letter-spacing:1px;
-  display:none;
-  text-align:center;
+.info{
+  margin-top:14px;
+  font-size:12px;
+  line-height:1.5;
+  color:#94a3b8;
 }
 
-@media(max-width:1100px){
-  .layout{grid-template-columns:1fr}
-  .preview-grid{grid-template-columns:1fr}
+.info strong{
+  color:#60a5fa;
 }
 
-@media(max-width:600px){
-  .header{align-items:flex-start;flex-direction:column}
-  .logo{font-size:20px}
-  .logo small{display:block;margin-left:0;margin-top:2px}
-  .layout{padding:10px}
-  .preview-area{min-height:280px}
+@media(max-width:900px){
+  .app{
+    grid-template-columns:1fr;
+  }
+
+  .vistas{
+    grid-template-columns:1fr;
+  }
 }
 </style>
-
 </head>
 
 <body>
 
-<header class="header">
-  <div class="logo">TUTTOVINILOS <small>Vectorizador PRO</small></div>
-  <div class="status"><span class="dot"></span> SVG recortado al contenido</div>
+<header>
+  <h1>Vectorizador limpio PNG/JPG → SVG</h1>
 </header>
 
-<main class="layout">
+<main class="app">
 
-  <section class="card">
-    <div class="card-header">
-      <div class="card-title">Controles</div>
-      <div class="card-sub">El SVG final tendrá un viewBox del tamaño EXACTO del dibujo (igual que CorelDRAW).</div>
+  <section class="panel">
+    <h2>Controles</h2>
+
+    <div class="campo">
+      <label>Imagen PNG / JPG</label>
+      <input type="file" id="fileInput" accept="image/png,image/jpeg,image/jpg">
     </div>
 
-```
-<div class="card-body">
-
-  <div class="field">
-    <label>Imagen PNG / JPG</label>
-    <input type="file" id="fileInput" accept="image/png,image/jpeg,image/jpg"/>
-  </div>
-
-  <div class="field">
-    <label>Modo de vectorizado</label>
-    <select id="mode">
-      <option value="solidcolor" selected>A color (por capas de color)</option>
-      <option value="bw">Blanco y negro / Silueta</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>Quitar fondo antes de vectorizar</label>
-    <select id="removeBg">
-      <option value="auto" selected>Automático por esquinas</option>
-      <option value="white">Quitar fondo blanco</option>
-      <option value="manual">Quitar color manual</option>
-      <option value="no">No quitar fondo</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>Color manual a quitar</label>
-    <input type="color" id="manualBgColor" value="#ffffff"/>
-  </div>
-
-  <div class="field">
-    <label>Tolerancia fondo</label>
-    <div class="range-row">
-      <input type="range" id="bgTolerance" min="0" max="180" value="55"/>
-      <div class="value" id="bgToleranceVal">55</div>
+    <div class="campo">
+      <label>Modo</label>
+      <select id="modo">
+        <option value="color" selected>Color sólido</option>
+        <option value="bw">Blanco y negro</option>
+      </select>
     </div>
-  </div>
 
-  <div class="field">
-    <label>Margen alrededor del dibujo (px)</label>
-    <div class="range-row">
-      <input type="range" id="margen" min="0" max="100" value="0"/>
-      <div class="value" id="margenVal">0</div>
+    <div class="campo">
+      <label>Quitar fondo</label>
+      <select id="fondo">
+        <option value="auto" selected>Automático por esquinas</option>
+        <option value="white">Fondo blanco</option>
+        <option value="manual">Color manual</option>
+        <option value="no">No quitar fondo</option>
+      </select>
     </div>
-  </div>
 
-  <div class="field">
-    <label>Cantidad de colores sólidos</label>
-    <div class="range-row">
-      <input type="range" id="colors" min="2" max="12" value="4"/>
-      <div class="value" id="colorsVal">4</div>
+    <div class="campo">
+      <label>Color manual de fondo</label>
+      <input type="color" id="colorFondo" value="#ffffff">
     </div>
-  </div>
 
-  <div class="field">
-    <label>Fuerza de color sólido</label>
-    <div class="range-row">
-      <input type="range" id="solidStrength" min="1" max="10" value="8"/>
-      <div class="value" id="solidStrengthVal">8</div>
+    <div class="campo">
+      <label>Tolerancia fondo</label>
+      <input type="range" id="tolFondo" min="0" max="180" value="55">
+      <div class="valor" id="tolFondoVal">55</div>
     </div>
-  </div>
 
-  <div class="field">
-    <label>Umbral blanco/negro</label>
-    <div class="range-row">
-      <input type="range" id="threshold" min="0" max="255" value="150"/>
-      <div class="value" id="thresholdVal">150</div>
+    <div class="campo">
+      <label>Cantidad de colores sólidos</label>
+      <input type="range" id="colores" min="2" max="12" value="5">
+      <div class="valor" id="coloresVal">5</div>
     </div>
-  </div>
 
-  <div class="field">
-    <label>Eliminar ruido</label>
-    <div class="range-row">
-      <input type="range" id="pathomit" min="0" max="100" value="14"/>
-      <div class="value" id="pathomitVal">14</div>
+    <div class="campo">
+      <label>Umbral blanco / negro</label>
+      <input type="range" id="umbral" min="0" max="255" value="150">
+      <div class="valor" id="umbralVal">150</div>
     </div>
-  </div>
 
-  <div class="field">
-    <label>Suavizado de líneas</label>
-    <div class="range-row">
-      <input type="range" id="ltres" min="1" max="60" value="18"/>
-      <div class="value" id="ltresVal">18</div>
+    <div class="campo">
+      <label>Eliminar ruido</label>
+      <input type="range" id="ruido" min="0" max="100" value="12">
+      <div class="valor" id="ruidoVal">12</div>
     </div>
-  </div>
 
-  <div class="field">
-    <label>Reducción de nodos</label>
-    <div class="range-row">
-      <input type="range" id="qtres" min="1" max="60" value="18"/>
-      <div class="value" id="qtresVal">18</div>
+    <div class="campo">
+      <label>Suavizado</label>
+      <input type="range" id="suavizado" min="1" max="50" value="12">
+      <div class="valor" id="suavizadoVal">12</div>
     </div>
-  </div>
 
-  <div class="field">
-    <label>Invertir blanco/negro</label>
-    <select id="invert">
-      <option value="no">No</option>
-      <option value="yes">Sí</option>
-    </select>
-  </div>
+    <div class="campo">
+      <label>Reducción de nodos</label>
+      <input type="range" id="nodos" min="1" max="50" value="12">
+      <div class="valor" id="nodosVal">12</div>
+    </div>
 
-  <div class="btns">
-    <button class="btn" onclick="procesarYVectorizar()">Vectorizar SVG</button>
-    <button class="btn success" onclick="descargarSVG()">Descargar SVG recortado</button>
-    <button class="btn secondary" onclick="copiarSVG()">Copiar SVG</button>
-    <button class="btn danger" onclick="limpiar()">Limpiar</button>
-  </div>
+    <div class="campo">
+      <label>Margen del SVG final</label>
+      <input type="range" id="margen" min="0" max="80" value="0">
+      <div class="valor" id="margenVal">0</div>
+    </div>
 
-  <div class="note">
-    <strong>Recorte automático al contenido:</strong> el SVG descargado tiene viewBox y dimensiones EXACTAS del dibujo. Cero lienzo extra, cero panel de fondo.
-  </div>
+    <button onclick="vectorizar()">Vectorizar</button>
+    <button class="green" onclick="descargarSVG()">Descargar SVG limpio</button>
+    <button class="gray" onclick="copiarSVG()">Copiar SVG</button>
 
-  <div class="info" id="info">
-    <div><strong>Archivo:</strong> —</div>
-    <div><strong>Tamaño original:</strong> —</div>
-    <div><strong>Tamaño SVG final:</strong> —</div>
-    <div><strong>viewBox final:</strong> —</div>
-    <div><strong>Color fondo detectado:</strong> —</div>
-    <div><strong>Paths eliminados:</strong> —</div>
-    <div><strong>SVG:</strong> —</div>
-  </div>
-
-</div>
-```
-
+    <div class="info" id="info">
+      <div><strong>Archivo:</strong> —</div>
+      <div><strong>Imagen original:</strong> —</div>
+      <div><strong>SVG final:</strong> —</div>
+      <div><strong>ViewBox:</strong> —</div>
+    </div>
   </section>
 
-  <section class="preview-grid">
+  <section class="vistas">
 
-```
-<div class="preview-box">
-  <div class="preview-head">
-    <div class="preview-title">Imagen original</div>
-  </div>
-  <div class="preview-area">
-    <img id="originalPreview" alt="Vista previa original"/>
-  </div>
-</div>
+    <div class="box">
+      <h3>Original</h3>
+      <div class="preview">
+        <img id="previewOriginal">
+      </div>
+    </div>
 
-<div class="preview-box">
-  <div class="preview-head">
-    <div class="preview-title">Imagen limpia</div>
-  </div>
-  <div class="preview-area">
-    <canvas id="processedCanvas"></canvas>
-  </div>
-</div>
+    <div class="box">
+      <h3>Imagen procesada y recortada</h3>
+      <div class="preview">
+        <canvas id="canvasProcesado"></canvas>
+      </div>
+    </div>
 
-<div class="preview-box">
-  <div class="preview-head">
-    <div class="preview-title">SVG vectorizado (recortado)</div>
-  </div>
-  <div class="preview-area">
-    <div id="svgOutput">Sube una imagen y presiona vectorizar.</div>
-  </div>
-</div>
+    <div class="box">
+      <h3>SVG final sin lienzo extra</h3>
+      <div class="preview" id="svgPreview">
+        Sube una imagen y presiona vectorizar.
+      </div>
+    </div>
 
-<div class="preview-box">
-  <div class="preview-head">
-    <div class="preview-title">Código SVG</div>
-  </div>
-  <div style="padding:14px;">
-    <textarea id="svgText" readonly placeholder="Aquí aparecerá el SVG generado..."></textarea>
-  </div>
-</div>
-```
+    <div class="box">
+      <h3>Código SVG</h3>
+      <div style="padding:12px;">
+        <textarea id="codigoSVG" readonly></textarea>
+      </div>
+    </div>
 
   </section>
 
 </main>
 
-<div class="toast" id="toast"></div>
-
 <script>
-let originalFile = null;
-let originalDataURL = "";
-let svgString = "";       // SVG limpio listo (recortado al contenido)
-let imgWidth = 0;
-let imgHeight = 0;
-let fondoDetectado = null;
-let pathsEliminados = 0;
+let archivoActual = null;
+let imagenDataURL = "";
+let svgFinal = "";
+let anchoOriginal = 0;
+let altoOriginal = 0;
 
 const $ = id => document.getElementById(id);
 
-const ranges = [
-  "bgTolerance","margen","colors","solidStrength",
-  "threshold","pathomit","ltres","qtres"
+const controles = [
+  "tolFondo",
+  "colores",
+  "umbral",
+  "ruido",
+  "suavizado",
+  "nodos",
+  "margen"
 ];
 
-ranges.forEach(id => {
-  const input = $(id);
-  const val = $(id + "Val");
-  input.addEventListener("input", () => { val.textContent = input.value; });
+controles.forEach(id=>{
+  $(id).addEventListener("input",()=>{
+    $(id+"Val").textContent = $(id).value;
+  });
 });
 
-$("fileInput").addEventListener("change", cargarImagen);
-
-function toast(msg){
-  const t = $("toast");
-  t.textContent = msg;
-  t.style.display = "block";
-  setTimeout(()=>t.style.display = "none",2300);
-}
-
-function cargarImagen(e){
+$("fileInput").addEventListener("change", e=>{
   const file = e.target.files[0];
   if(!file) return;
 
-  originalFile = file;
+  archivoActual = file;
 
   const reader = new FileReader();
-
-  reader.onload = ev => {
-    originalDataURL = ev.target.result;
-    $("originalPreview").src = originalDataURL;
-    $("svgOutput").innerHTML = "Imagen cargada. Presiona vectorizar.";
-    $("svgText").value = "";
-    svgString = "";
-    fondoDetectado = null;
-    pathsEliminados = 0;
+  reader.onload = ev=>{
+    imagenDataURL = ev.target.result;
+    $("previewOriginal").src = imagenDataURL;
 
     const img = new Image();
-    img.onload = () => {
-      imgWidth = img.width;
-      imgHeight = img.height;
-
-      const canvas = $("processedCanvas");
-      const ctx = canvas.getContext("2d", { willReadFrequently:true });
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.drawImage(img,0,0);
-
-      actualizarInfo({
-        archivo:file.name,
-        original:`${img.width} × ${img.height}px`
-      });
+    img.onload = ()=>{
+      anchoOriginal = img.width;
+      altoOriginal = img.height;
+      actualizarInfo();
     };
-
-    img.src = originalDataURL;
+    img.src = imagenDataURL;
   };
-
   reader.readAsDataURL(file);
-}
+});
 
-function actualizarInfo(d){
-  $("info").innerHTML = `
-    <div><strong>Archivo:</strong> ${d.archivo || "—"}</div>
-    <div><strong>Tamaño original:</strong> ${d.original || "—"}</div>
-    <div><strong>Tamaño SVG final:</strong> ${d.final || "—"}</div>
-    <div><strong>viewBox final:</strong> ${d.viewbox || "—"}</div>
-    <div><strong>Color fondo detectado:</strong> ${d.fondo || "—"}</div>
-    <div><strong>Paths eliminados:</strong> ${d.eliminados ?? "—"}</div>
-    <div><strong>SVG:</strong> ${d.svg || "—"}</div>
-  `;
-}
-
-async function procesarYVectorizar(){
-  if(!originalDataURL){
-    alert("Primero sube una imagen PNG o JPG.");
+async function vectorizar(){
+  if(!imagenDataURL){
+    alert("Primero sube una imagen.");
     return;
   }
 
   if(typeof ImageTracer === "undefined"){
-    alert("No cargó ImageTracer. Revisa conexión a internet.");
+    alert("No cargó ImageTracer. Revisa internet.");
     return;
   }
 
-  toast("Procesando imagen...");
+  const dataProcesada = await procesarImagen(imagenDataURL);
 
-  const mode = $("mode").value;
-  const processedDataURL = (mode === "bw")
-    ? await prepararBlancoNegro(originalDataURL)
-    : await prepararColorSolido(originalDataURL);
+  ImageTracer.imageToSVG(dataProcesada, function(svg){
+    svg = limpiarSVG(svg);
+    svg = eliminarElementosInvisibles(svg);
+    svg = ajustarViewBoxAlContenido(svg, Number($("margen").value));
 
-  toast("Vectorizando SVG...");
+    svgFinal = svg;
 
-  ImageTracer.imageToSVG(processedDataURL, function(svgstr){
-    // === POST-PROCESAMIENTO EN 3 PASOS ===
+    $("svgPreview").innerHTML = svgFinal;
+    $("codigoSVG").value = svgFinal;
 
-    // 1) Limpieza básica del SVG
-    let svg = limpiezaBasicaSVG(svgstr);
-
-    // 2) Eliminar paths invisibles (opacity=0, el "panel" del fondo)
-    const tras1 = eliminarPathsInvisibles(svg);
-    svg = tras1.svg;
-    pathsEliminados = tras1.eliminados;
-
-    // 3) AJUSTAR EL viewBox AL CONTENIDO REAL (clave!)
-    const margen = Number($("margen").value) || 0;
-    svg = ajustarViewBoxAlContenido(svg, margen);
-
-    svgString = svg;
-
-    // Mostrar
-    $("svgOutput").innerHTML = svg;
-    $("svgText").value = svg;
-
-    // Info
-    const dims = leerDimensionesFinales(svg);
-    const kb = (new Blob([svg]).size / 1024).toFixed(1) + " KB";
-
-    actualizarInfo({
-      archivo: originalFile ? originalFile.name : "imagen",
-      original: `${imgWidth} × ${imgHeight}px`,
-      final: dims.dims,
-      viewbox: dims.viewBox,
-      fondo: fondoDetectado ? rgbToHex(fondoDetectado) : "—",
-      eliminados: pathsEliminados,
-      svg: kb
-    });
-
-    toast("SVG recortado generado");
-  }, obtenerOpciones());
+    actualizarInfo();
+  }, opcionesTracer());
 }
 
-function obtenerOpciones(){
-  const mode = $("mode").value;
-
+function opcionesTracer(){
   return {
-    ltres: Number($("ltres").value) / 10,
-    qtres: Number($("qtres").value) / 10,
-    pathomit: Number($("pathomit").value),
+    ltres: Number($("suavizado").value) / 10,
+    qtres: Number($("nodos").value) / 10,
+    pathomit: Number($("ruido").value),
     colorsampling: 2,
-    numberofcolors: mode === "bw" ? 2 : Number($("colors").value),
+    numberofcolors: $("modo").value === "bw" ? 2 : Number($("colores").value),
     mincolorratio: 0.01,
     colorquantcycles: 3,
     scale: 1,
@@ -714,257 +405,242 @@ function obtenerOpciones(){
   };
 }
 
-// ===================================================
-// PROCESAMIENTO DE PÍXELES (igual que antes)
-// ===================================================
-
-function prepararColorSolido(dataURL){
-  return new Promise(resolve => {
+function procesarImagen(dataURL){
+  return new Promise(resolve=>{
     const img = new Image();
-    img.onload = () => {
-      const canvas = $("processedCanvas");
-      const ctx = canvas.getContext("2d",{willReadFrequently:true});
+    img.onload = ()=>{
+      const canvas = $("canvasProcesado");
+      const ctx = canvas.getContext("2d", {willReadFrequently:true});
+
       canvas.width = img.width;
       canvas.height = img.height;
+
       ctx.clearRect(0,0,canvas.width,canvas.height);
       ctx.drawImage(img,0,0);
 
       let imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
-      imageData = quitarFondoImageData(imageData,canvas.width,canvas.height);
 
-      const colores = Number($("colors").value);
-      const fuerza = Number($("solidStrength").value);
+      imageData = quitarFondo(imageData, canvas.width, canvas.height);
 
-      const paleta = extraerPaleta(imageData,colores);
-      imageData = aplicarPaletaSolida(imageData,paleta,fuerza);
-
-      ctx.putImageData(imageData,0,0);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    img.src = dataURL;
-  });
-}
-
-function prepararBlancoNegro(dataURL){
-  return new Promise(resolve => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = $("processedCanvas");
-      const ctx = canvas.getContext("2d",{willReadFrequently:true});
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.drawImage(img,0,0);
-
-      let imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
-      imageData = quitarFondoImageData(imageData,canvas.width,canvas.height);
-
-      const d = imageData.data;
-      const threshold = Number($("threshold").value);
-      const invertir = $("invert").value === "yes";
-
-      for(let i=0;i<d.length;i+=4){
-        const a = d[i+3];
-        if(a < 20){
-          d[i] = d[i+1] = d[i+2] = 255;
-          d[i+3] = 0;
-          continue;
-        }
-        const gray = d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114;
-        let v = gray < threshold ? 0 : 255;
-        if(invertir) v = 255 - v;
-        d[i] = d[i+1] = d[i+2] = v;
-        d[i+3] = v === 255 ? 0 : 255;
+      if($("modo").value === "bw"){
+        imageData = convertirBlancoNegro(imageData);
+      }else{
+        imageData = reducirColores(imageData);
       }
 
       ctx.putImageData(imageData,0,0);
+
+      const recorte = recortarCanvasPorAlpha(canvas);
+
+      canvas.width = recorte.width;
+      canvas.height = recorte.height;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(recorte.canvas,0,0);
+
       resolve(canvas.toDataURL("image/png"));
     };
     img.src = dataURL;
   });
 }
 
-function quitarFondoImageData(imageData,width,height){
-  const mode = $("removeBg").value;
-  if(mode === "no") return imageData;
+function quitarFondo(imageData,w,h){
+  const modo = $("fondo").value;
+  if(modo === "no") return imageData;
 
   const d = imageData.data;
-  const tolerance = Number($("bgTolerance").value || 55);
+  const tolerancia = Number($("tolFondo").value);
 
   let target = {r:255,g:255,b:255};
 
-  if(mode === "auto") target = detectarColorFondoPorEsquinas(imageData,width,height);
-  if(mode === "white") target = {r:255,g:255,b:255};
-  if(mode === "manual") target = hexToRgb($("manualBgColor").value || "#ffffff");
+  if(modo === "auto"){
+    target = detectarFondoPorEsquinas(imageData,w,h);
+  }
 
-  fondoDetectado = target;
+  if(modo === "white"){
+    target = {r:255,g:255,b:255};
+  }
+
+  if(modo === "manual"){
+    target = hexToRgb($("colorFondo").value);
+  }
 
   for(let i=0;i<d.length;i+=4){
-    const dist = colorDistance({r:d[i],g:d[i+1],b:d[i+2]},target);
-    if(dist <= tolerance) d[i+3] = 0;
+    const c = {r:d[i],g:d[i+1],b:d[i+2]};
+    const dist = distanciaColor(c,target);
+
+    if(dist <= tolerancia){
+      d[i+3] = 0;
+    }
   }
 
   return imageData;
 }
 
-function detectarColorFondoPorEsquinas(imageData,width,height){
+function detectarFondoPorEsquinas(imageData,w,h){
   const d = imageData.data;
-  const muestras = [];
 
-  // 4 esquinas + bordes
   const puntos = [
-    [0,0],[width-1,0],[0,height-1],[width-1,height-1],
-    [Math.floor(width/2),0],[Math.floor(width/2),height-1],
-    [0,Math.floor(height/2)],[width-1,Math.floor(height/2)]
+    [0,0],
+    [w-1,0],
+    [0,h-1],
+    [w-1,h-1],
+    [Math.floor(w/2),0],
+    [Math.floor(w/2),h-1],
+    [0,Math.floor(h/2)],
+    [w-1,Math.floor(h/2)]
   ];
 
-  puntos.forEach(([x,y]) => {
-    const i = (y*width + x)*4;
-    if(d[i+3] > 200) muestras.push({r:d[i],g:d[i+1],b:d[i+2]});
+  let r=0,g=0,b=0,total=0;
+
+  puntos.forEach(([x,y])=>{
+    const i = (y*w+x)*4;
+    r += d[i];
+    g += d[i+1];
+    b += d[i+2];
+    total++;
   });
 
-  if(!muestras.length) return {r:255,g:255,b:255};
-
   return {
-    r: Math.round(muestras.reduce((s,p)=>s+p.r,0)/muestras.length),
-    g: Math.round(muestras.reduce((s,p)=>s+p.g,0)/muestras.length),
-    b: Math.round(muestras.reduce((s,p)=>s+p.b,0)/muestras.length)
+    r:Math.round(r/total),
+    g:Math.round(g/total),
+    b:Math.round(b/total)
   };
 }
 
-function extraerPaleta(imageData,cantidad){
+function convertirBlancoNegro(imageData){
   const d = imageData.data;
-  const buckets = new Map();
-  const step = Math.max(1,Math.floor(d.length/4/80000));
-
-  for(let p=0;p<d.length/4;p+=step){
-    const i = p*4;
-    if(d[i+3] < 30) continue;
-    const r = Math.round(d[i]/24)*24;
-    const g = Math.round(d[i+1]/24)*24;
-    const b = Math.round(d[i+2]/24)*24;
-    const key = `${r},${g},${b}`;
-    if(!buckets.has(key)) buckets.set(key,{r,g,b,count:0});
-    buckets.get(key).count++;
-  }
-
-  let paleta = [...buckets.values()]
-    .sort((a,b)=>b.count-a.count)
-    .slice(0,cantidad)
-    .map(c=>({r:c.r,g:c.g,b:c.b}));
-
-  if(!paleta.length) paleta = [{r:0,g:0,b:0}];
-  return paleta;
-}
-
-function aplicarPaletaSolida(imageData,paleta,fuerza){
-  const d = imageData.data;
-  const intensity = fuerza/10;
+  const umbral = Number($("umbral").value);
 
   for(let i=0;i<d.length;i+=4){
-    if(d[i+3] < 30){
+    if(d[i+3] < 20){
       d[i] = d[i+1] = d[i+2] = 255;
       d[i+3] = 0;
       continue;
     }
-    const o = {r:d[i],g:d[i+1],b:d[i+2]};
-    const n = colorMasCercano(o,paleta);
-    d[i] = Math.round(o.r*(1-intensity) + n.r*intensity);
-    d[i+1] = Math.round(o.g*(1-intensity) + n.g*intensity);
-    d[i+2] = Math.round(o.b*(1-intensity) + n.b*intensity);
-    d[i+3] = 255;
+
+    const gris = d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114;
+    const v = gris < umbral ? 0 : 255;
+
+    d[i] = d[i+1] = d[i+2] = v;
+    d[i+3] = v === 255 ? 0 : 255;
   }
+
   return imageData;
 }
 
-// ===================================================
-// POST-PROCESAMIENTO DEL SVG
-// Aquí está lo importante: dejar el SVG igual que CorelDRAW
-// ===================================================
+function reducirColores(imageData){
+  const d = imageData.data;
+  const cantidad = Number($("colores").value);
+  const paleta = crearPaleta(imageData, cantidad);
 
-function limpiezaBasicaSVG(svg){
-  let limpio = String(svg||"")
-    .replace(/<desc>[\s\S]*?<\/desc>/gi,"")
-    .replace(/<!--[\s\S]*?-->/g,"")
-    .trim();
+  for(let i=0;i<d.length;i+=4){
+    if(d[i+3] < 20){
+      d[i] = d[i+1] = d[i+2] = 255;
+      d[i+3] = 0;
+      continue;
+    }
 
-  if(!limpio.includes('xmlns="http://www.w3.org/2000/svg"')){
-    limpio = limpio.replace("<svg",'<svg xmlns="http://www.w3.org/2000/svg"');
+    const cercano = colorMasCercano({r:d[i],g:d[i+1],b:d[i+2]}, paleta);
+
+    d[i] = cercano.r;
+    d[i+1] = cercano.g;
+    d[i+2] = cercano.b;
+    d[i+3] = 255;
   }
-  return limpio;
+
+  return imageData;
 }
 
-/**
- * Elimina todos los <path>, <rect>, <polygon>, etc. invisibles:
- *  - opacity="0" o muy cercano a 0
- *  - fill-opacity="0"
- *  - fill="none" sin stroke
- *
- * Esto borra el "panel" gigante que ImageTracer mete en M 0 0 ... Z
- * y que ocupa todo el lienzo con opacity 0.
- */
-function eliminarPathsInvisibles(svg){
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svg,"image/svg+xml");
-  const svgEl = doc.querySelector("svg");
+function crearPaleta(imageData,cantidad){
+  const d = imageData.data;
+  const buckets = new Map();
+  const salto = Math.max(1, Math.floor((d.length/4) / 80000));
 
-  if(!svgEl || doc.querySelector("parsererror")){
-    return { svg, eliminados:0 };
+  for(let p=0;p<d.length/4;p+=salto){
+    const i = p*4;
+
+    if(d[i+3] < 30) continue;
+
+    const r = Math.round(d[i] / 32) * 32;
+    const g = Math.round(d[i+1] / 32) * 32;
+    const b = Math.round(d[i+2] / 32) * 32;
+
+    const key = `${r},${g},${b}`;
+
+    if(!buckets.has(key)){
+      buckets.set(key,{r,g,b,count:0});
+    }
+
+    buckets.get(key).count++;
   }
 
-  let eliminados = 0;
-  const todos = [...svgEl.querySelectorAll("path,rect,polygon,polyline,circle,ellipse")];
+  const paleta = Array.from(buckets.values())
+    .sort((a,b)=>b.count-a.count)
+    .slice(0,cantidad)
+    .map(c=>({r:c.r,g:c.g,b:c.b}));
 
-  todos.forEach(el => {
-    // opacity como atributo
-    const op = parseFloat(el.getAttribute("opacity"));
-    if(!isNaN(op) && op <= 0.01){
-      el.remove();
-      eliminados++;
-      return;
-    }
+  return paleta.length ? paleta : [{r:0,g:0,b:0}];
+}
 
-    // fill-opacity
-    const fop = parseFloat(el.getAttribute("fill-opacity"));
-    if(!isNaN(fop) && fop <= 0.01){
-      el.remove();
-      eliminados++;
-      return;
-    }
+function recortarCanvasPorAlpha(canvas){
+  const ctx = canvas.getContext("2d", {willReadFrequently:true});
+  const w = canvas.width;
+  const h = canvas.height;
+  const data = ctx.getImageData(0,0,w,h).data;
 
-    // opacity dentro de style=""
-    const style = el.getAttribute("style") || "";
-    const m = style.match(/(?:^|;)\s*opacity\s*:\s*([0-9.]+)/i);
-    if(m && parseFloat(m[1]) <= 0.01){
-      el.remove();
-      eliminados++;
-      return;
-    }
+  let minX = w;
+  let minY = h;
+  let maxX = -1;
+  let maxY = -1;
 
-    // fill none sin stroke -> invisible
-    const fill = (el.getAttribute("fill") || "").toLowerCase().trim();
-    const stroke = (el.getAttribute("stroke") || "").toLowerCase().trim();
-    if((fill === "none" || fill === "transparent") &&
-       (stroke === "" || stroke === "none" || stroke === "transparent")){
-      el.remove();
-      eliminados++;
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      const i = (y*w+x)*4;
+      if(data[i+3] > 20){
+        if(x < minX) minX = x;
+        if(y < minY) minY = y;
+        if(x > maxX) maxX = x;
+        if(y > maxY) maxY = y;
+      }
     }
-  });
+  }
+
+  if(maxX < minX || maxY < minY){
+    return {canvas, width:w, height:h};
+  }
+
+  const cropW = maxX - minX + 1;
+  const cropH = maxY - minY + 1;
+
+  const nuevo = document.createElement("canvas");
+  nuevo.width = cropW;
+  nuevo.height = cropH;
+
+  const nctx = nuevo.getContext("2d");
+  nctx.drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
 
   return {
-    svg: new XMLSerializer().serializeToString(svgEl),
-    eliminados
+    canvas:nuevo,
+    width:cropW,
+    height:cropH
   };
 }
 
-/**
- * AJUSTA EL viewBox AL BOUNDING BOX REAL DEL CONTENIDO.
- *
- * Usa getBBox() del navegador (motor SVG real) para medir cada
- * elemento. Luego cambia el viewBox y las dimensiones del SVG al
- * tamaño exacto del dibujo, igual que hace CorelDRAW al exportar.
- */
-function ajustarViewBoxAlContenido(svg, margen){
+function limpiarSVG(svg){
+  let limpio = String(svg || "")
+    .replace(/<desc>[\s\S]*?<\/desc>/gi,"")
+    .replace(/<!--[\s\S]*?-->/g,"")
+    .replace(/\s{2,}/g," ")
+    .trim();
+
+  if(!limpio.includes('xmlns="http://www.w3.org/2000/svg"')){
+    limpio = limpio.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+  }
+
+  return limpio;
+}
+
+function eliminarElementosInvisibles(svg){
   const parser = new DOMParser();
   const doc = parser.parseFromString(svg,"image/svg+xml");
   const svgEl = doc.querySelector("svg");
@@ -973,116 +649,183 @@ function ajustarViewBoxAlContenido(svg, margen){
     return svg;
   }
 
-  // Insertar copia temporal en el DOM para usar getBBox real
-  const wrapper = document.createElement("div");
-  wrapper.style.cssText =
-    "position:absolute;left:-99999px;top:0;width:1px;height:1px;overflow:hidden;visibility:hidden;";
-  document.body.appendChild(wrapper);
+  const elementos = svgEl.querySelectorAll("path,rect,polygon,polyline,circle,ellipse,line");
 
-  // Clonar para medir
-  const tempSvg = svgEl.cloneNode(true);
-  wrapper.appendChild(tempSvg);
+  elementos.forEach(el=>{
+    const op = parseFloat(el.getAttribute("opacity"));
+    const fop = parseFloat(el.getAttribute("fill-opacity"));
+    const fill = (el.getAttribute("fill") || "").toLowerCase();
+    const stroke = (el.getAttribute("stroke") || "").toLowerCase();
+    const style = (el.getAttribute("style") || "").toLowerCase();
 
-  try{
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-
-    const medibles = [...tempSvg.querySelectorAll("path,rect,polygon,polyline,circle,ellipse,line")];
-
-    medibles.forEach(el => {
-      try{
-        const bb = el.getBBox();
-        // Saltar elementos sin tamaño
-        if((bb.width === 0 && bb.height === 0) || !isFinite(bb.x)) return;
-
-        if(bb.x < minX) minX = bb.x;
-        if(bb.y < minY) minY = bb.y;
-        if(bb.x + bb.width > maxX) maxX = bb.x + bb.width;
-        if(bb.y + bb.height > maxY) maxY = bb.y + bb.height;
-      }catch(e){
-        // Algunos paths exóticos pueden fallar, los ignoramos
-      }
-    });
-
-    document.body.removeChild(wrapper);
-
-    if(!isFinite(minX) || !isFinite(maxX)){
-      // No medimos nada útil, devolvemos lo que había
-      return new XMLSerializer().serializeToString(svgEl);
+    if(!isNaN(op) && op <= 0.01){
+      el.remove();
+      return;
     }
 
-    // Aplicar margen opcional
-    minX -= margen;
-    minY -= margen;
-    maxX += margen;
-    maxY += margen;
-
-    const w = Math.max(1, maxX - minX);
-    const h = Math.max(1, maxY - minY);
-
-    // viewBox EXACTO del contenido
-    svgEl.setAttribute("viewBox", `${redondear(minX)} ${redondear(minY)} ${redondear(w)} ${redondear(h)}`);
-    svgEl.setAttribute("width", redondear(w));
-    svgEl.setAttribute("height", redondear(h));
-
-    // Asegurar xmlns
-    if(!svgEl.getAttribute("xmlns")){
-      svgEl.setAttribute("xmlns","http://www.w3.org/2000/svg");
+    if(!isNaN(fop) && fop <= 0.01){
+      el.remove();
+      return;
     }
 
-    return formatearSVG(new XMLSerializer().serializeToString(svgEl));
+    if(style.includes("opacity:0")){
+      el.remove();
+      return;
+    }
 
-  }catch(err){
-    if(wrapper.parentNode) document.body.removeChild(wrapper);
+    if((fill === "none" || fill === "transparent") && (!stroke || stroke === "none")){
+      el.remove();
+      return;
+    }
+  });
+
+  return new XMLSerializer().serializeToString(svgEl);
+}
+
+function ajustarViewBoxAlContenido(svg, margen = 0){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svg,"image/svg+xml");
+  const svgEl = doc.querySelector("svg");
+
+  if(!svgEl || doc.querySelector("parsererror")){
     return svg;
   }
-}
 
-function redondear(n){
-  // 3 decimales: precisión sin ensuciar el archivo
-  return Math.round(n * 1000) / 1000;
-}
+  const temp = document.createElement("div");
+  temp.style.position = "absolute";
+  temp.style.left = "-99999px";
+  temp.style.top = "-99999px";
+  temp.style.visibility = "hidden";
 
-function formatearSVG(svg){
-  return String(svg||"")
-    .replace(/\s{2,}/g," ")
+  const clon = svgEl.cloneNode(true);
+  temp.appendChild(clon);
+  document.body.appendChild(temp);
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  const elementos = clon.querySelectorAll("path,rect,polygon,polyline,circle,ellipse,line");
+
+  elementos.forEach(el=>{
+    try{
+      const bb = el.getBBox();
+
+      if(bb.width === 0 && bb.height === 0) return;
+
+      minX = Math.min(minX, bb.x);
+      minY = Math.min(minY, bb.y);
+      maxX = Math.max(maxX, bb.x + bb.width);
+      maxY = Math.max(maxY, bb.y + bb.height);
+    }catch(e){}
+  });
+
+  document.body.removeChild(temp);
+
+  if(!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)){
+    return svg;
+  }
+
+  minX -= margen;
+  minY -= margen;
+  maxX += margen;
+  maxY += margen;
+
+  const w = Math.max(1, maxX - minX);
+  const h = Math.max(1, maxY - minY);
+
+  svgEl.setAttribute("viewBox", `${r(minX)} ${r(minY)} ${r(w)} ${r(h)}`);
+  svgEl.setAttribute("width", r(w));
+  svgEl.setAttribute("height", r(h));
+  svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+  if(!svgEl.getAttribute("xmlns")){
+    svgEl.setAttribute("xmlns","http://www.w3.org/2000/svg");
+  }
+
+  return new XMLSerializer()
+    .serializeToString(svgEl)
     .replace(/>\s+</g,"><")
     .trim();
 }
 
-function leerDimensionesFinales(svg){
-  const vb = svg.match(/viewBox="([^"]+)"/);
-  const w = svg.match(/\bwidth="([^"]+)"/);
-  const h = svg.match(/\bheight="([^"]+)"/);
+function descargarSVG(){
+  if(!svgFinal){
+    alert("Primero vectoriza una imagen.");
+    return;
+  }
 
-  return {
-    viewBox: vb ? vb[1] : "—",
-    dims: (w && h) ? `${w[1]} × ${h[1]}` : "—"
-  };
+  const blob = new Blob([svgFinal], {type:"image/svg+xml"});
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  const nombre = archivoActual ? archivoActual.name.replace(/\.[^.]+$/,"") : "vector";
+  a.href = url;
+  a.download = nombre + "_svg_limpio.svg";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
 }
 
-// ===================================================
-// HELPERS
-// ===================================================
+async function copiarSVG(){
+  if(!svgFinal){
+    alert("Primero vectoriza una imagen.");
+    return;
+  }
+
+  await navigator.clipboard.writeText(svgFinal);
+  alert("SVG copiado.");
+}
+
+function actualizarInfo(){
+  let dims = "—";
+  let vb = "—";
+
+  if(svgFinal){
+    const w = svgFinal.match(/\bwidth="([^"]+)"/);
+    const h = svgFinal.match(/\bheight="([^"]+)"/);
+    const view = svgFinal.match(/viewBox="([^"]+)"/);
+
+    if(w && h) dims = `${w[1]} × ${h[1]}`;
+    if(view) vb = view[1];
+  }
+
+  $("info").innerHTML = `
+    <div><strong>Archivo:</strong> ${archivoActual ? archivoActual.name : "—"}</div>
+    <div><strong>Imagen original:</strong> ${anchoOriginal && altoOriginal ? anchoOriginal + " × " + altoOriginal + " px" : "—"}</div>
+    <div><strong>SVG final:</strong> ${dims}</div>
+    <div><strong>ViewBox:</strong> ${vb}</div>
+  `;
+}
 
 function colorMasCercano(color,paleta){
-  let best = paleta[0], bestDist = Infinity;
-  for(const c of paleta){
-    const dist = colorDistance(color,c);
-    if(dist < bestDist){ bestDist = dist; best = c; }
-  }
-  return best;
+  let mejor = paleta[0];
+  let mejorDist = Infinity;
+
+  paleta.forEach(c=>{
+    const dist = distanciaColor(color,c);
+    if(dist < mejorDist){
+      mejorDist = dist;
+      mejor = c;
+    }
+  });
+
+  return mejor;
 }
 
-function colorDistance(a,b){
-  if(!a||!b) return Infinity;
+function distanciaColor(a,b){
   return Math.sqrt(
-    Math.pow(a.r-b.r,2) + Math.pow(a.g-b.g,2) + Math.pow(a.b-b.b,2)
+    Math.pow(a.r-b.r,2) +
+    Math.pow(a.g-b.g,2) +
+    Math.pow(a.b-b.b,2)
   );
 }
 
 function hexToRgb(hex){
-  hex = String(hex||"#ffffff").replace("#","");
-  if(hex.length === 3) hex = hex.split("").map(x=>x+x).join("");
+  hex = hex.replace("#","");
   return {
     r:parseInt(hex.substring(0,2),16),
     g:parseInt(hex.substring(2,4),16),
@@ -1090,74 +833,8 @@ function hexToRgb(hex){
   };
 }
 
-function rgbToHex(c){
-  if(!c) return "—";
-  return "#" + [c.r,c.g,c.b].map(v=>{
-    const h = Math.max(0,Math.min(255,Math.round(v))).toString(16);
-    return h.length === 1 ? "0"+h : h;
-  }).join("");
-}
-
-// ===================================================
-// EXPORTAR
-// ===================================================
-
-function descargarSVG(){
-  if(!svgString){
-    alert("Primero vectoriza una imagen.");
-    return;
-  }
-
-  const blob = new Blob([svgString],{type:"image/svg+xml"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  const base = originalFile ? originalFile.name.replace(/\.[^.]+$/,"") : "vector";
-  a.href = url;
-  a.download = base + "_recortado.svg";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-  toast("SVG recortado descargado");
-}
-
-async function copiarSVG(){
-  if(!svgString){
-    alert("Primero vectoriza una imagen.");
-    return;
-  }
-
-  try{
-    await navigator.clipboard.writeText(svgString);
-    toast("SVG copiado");
-  }catch(e){
-    $("svgText").value = svgString;
-    $("svgText").select();
-    document.execCommand("copy");
-    toast("SVG copiado");
-  }
-}
-
-function limpiar(){
-  originalFile = null;
-  originalDataURL = "";
-  svgString = "";
-  imgWidth = 0;
-  imgHeight = 0;
-  fondoDetectado = null;
-  pathsEliminados = 0;
-
-  $("fileInput").value = "";
-  $("originalPreview").removeAttribute("src");
-  $("svgOutput").innerHTML = "Sube una imagen y presiona vectorizar.";
-  $("svgText").value = "";
-
-  const canvas = $("processedCanvas");
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  actualizarInfo({});
-  toast("Limpio");
+function r(n){
+  return Math.round(n * 1000) / 1000;
 }
 </script>
 
