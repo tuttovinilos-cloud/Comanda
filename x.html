@@ -26,7 +26,6 @@
   --accent:#3b82f6;
   --accent2:#60a5fa;
   --green:#30D158;
-  --red:#FF3B30;
   --mono:'Share Tech Mono',monospace;
   --head:'Barlow Condensed',sans-serif;
   --body:'Barlow',sans-serif;
@@ -135,10 +134,7 @@ button,input,select,textarea{font:inherit}
   gap:13px;
 }
 
-.field{
-  display:grid;
-  gap:6px;
-}
+.field{display:grid;gap:6px}
 
 label{
   font-family:var(--head);
@@ -149,14 +145,9 @@ label{
   color:var(--muted2);
 }
 
-input[type="file"],
-input[type="range"],
-select{
-  width:100%;
-}
+input[type="file"],input[type="range"],select{width:100%}
 
-input[type="file"],
-select{
+input[type="file"],select{
   background:var(--bg);
   border:1px solid var(--border2);
   color:var(--text);
@@ -179,10 +170,7 @@ input:focus,select:focus,textarea:focus{
   box-shadow:0 0 0 2px #3b82f622;
 }
 
-select option{
-  background:var(--panel);
-  color:var(--text);
-}
+select option{background:var(--panel);color:var(--text)}
 
 .range-row{
   display:grid;
@@ -215,7 +203,6 @@ select option{
   justify-content:center;
   gap:6px;
   transition:all .2s;
-  text-decoration:none;
 }
 
 .btn:hover{filter:brightness(1.12)}
@@ -227,11 +214,7 @@ select option{
 }
 .btn.danger{background:#dc2626}
 
-.btns{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:8px;
-}
+.btns{display:grid;grid-template-columns:1fr;gap:8px}
 
 .preview-grid{
   display:grid;
@@ -284,8 +267,7 @@ select option{
   text-align:center;
 }
 
-.preview-area img,
-.preview-area canvas{
+.preview-area img,.preview-area canvas{
   max-width:100%;
   max-height:72vh;
   object-fit:contain;
@@ -367,28 +349,11 @@ textarea{
 }
 
 @media(max-width:600px){
-  .header{
-    align-items:flex-start;
-    flex-direction:column;
-  }
-
-  .logo{
-    font-size:20px;
-  }
-
-  .logo small{
-    display:block;
-    margin-left:0;
-    margin-top:2px;
-  }
-
-  .layout{
-    padding:10px;
-  }
-
-  .preview-area{
-    min-height:280px;
-  }
+  .header{align-items:flex-start;flex-direction:column}
+  .logo{font-size:20px}
+  .logo small{display:block;margin-left:0;margin-top:2px}
+  .layout{padding:10px}
+  .preview-area{min-height:280px}
 }
 </style>
 
@@ -398,7 +363,7 @@ textarea{
 
 <header class="header">
   <div class="logo">TUTTOVINILOS <small>Vectorizador PRO</small></div>
-  <div class="status"><span class="dot"></span> SVG limpio sin fondo</div>
+  <div class="status"><span class="dot"></span> SVG recortado al contenido</div>
 </header>
 
 <main class="layout">
@@ -406,7 +371,7 @@ textarea{
   <section class="card">
     <div class="card-header">
       <div class="card-title">Controles</div>
-      <div class="card-sub">Vectoriza PNG/JPG y elimina el panel/fondo blanco del SVG final.</div>
+      <div class="card-sub">El SVG final tendrá un viewBox del tamaño EXACTO del dibujo (igual que CorelDRAW).</div>
     </div>
 
 ```
@@ -420,7 +385,7 @@ textarea{
   <div class="field">
     <label>Modo de vectorizado</label>
     <select id="mode">
-      <option value="solidcolor">Color sólido por capas</option>
+      <option value="solidcolor" selected>A color (por capas de color)</option>
       <option value="bw">Blanco y negro / Silueta</option>
     </select>
   </div>
@@ -428,7 +393,7 @@ textarea{
   <div class="field">
     <label>Quitar fondo antes de vectorizar</label>
     <select id="removeBg">
-      <option value="auto">Automático por esquinas</option>
+      <option value="auto" selected>Automático por esquinas</option>
       <option value="white">Quitar fondo blanco</option>
       <option value="manual">Quitar color manual</option>
       <option value="no">No quitar fondo</option>
@@ -445,6 +410,14 @@ textarea{
     <div class="range-row">
       <input type="range" id="bgTolerance" min="0" max="180" value="55"/>
       <div class="value" id="bgToleranceVal">55</div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Margen alrededor del dibujo (px)</label>
+    <div class="range-row">
+      <input type="range" id="margen" min="0" max="100" value="0"/>
+      <div class="value" id="margenVal">0</div>
     </div>
   </div>
 
@@ -504,30 +477,24 @@ textarea{
     </select>
   </div>
 
-  <div class="field">
-    <label>Eliminar path más grande (recomendado)</label>
-    <select id="killBiggest">
-      <option value="yes">Sí, eliminar el fondo automáticamente</option>
-      <option value="no">No</option>
-    </select>
-  </div>
-
   <div class="btns">
     <button class="btn" onclick="procesarYVectorizar()">Vectorizar SVG</button>
-    <button class="btn success" onclick="descargarSVGSinFondo()">Descargar SVG sin fondo</button>
+    <button class="btn success" onclick="descargarSVG()">Descargar SVG recortado</button>
     <button class="btn secondary" onclick="copiarSVG()">Copiar SVG</button>
     <button class="btn danger" onclick="limpiar()">Limpiar</button>
   </div>
 
   <div class="note">
-    <strong>Para logos negros sobre fondo blanco:</strong> usa “Blanco y negro / Silueta” + “Quitar fondo blanco”. El archivo descargado elimina el panel blanco.
+    <strong>Recorte automático al contenido:</strong> el SVG descargado tiene viewBox y dimensiones EXACTAS del dibujo. Cero lienzo extra, cero panel de fondo.
   </div>
 
   <div class="info" id="info">
     <div><strong>Archivo:</strong> —</div>
-    <div><strong>Tamaño:</strong> —</div>
+    <div><strong>Tamaño original:</strong> —</div>
+    <div><strong>Tamaño SVG final:</strong> —</div>
+    <div><strong>viewBox final:</strong> —</div>
     <div><strong>Color fondo detectado:</strong> —</div>
-    <div><strong>Nodos estimados:</strong> —</div>
+    <div><strong>Paths eliminados:</strong> —</div>
     <div><strong>SVG:</strong> —</div>
   </div>
 
@@ -559,7 +526,7 @@ textarea{
 
 <div class="preview-box">
   <div class="preview-head">
-    <div class="preview-title">SVG vectorizado</div>
+    <div class="preview-title">SVG vectorizado (recortado)</div>
   </div>
   <div class="preview-area">
     <div id="svgOutput">Sube una imagen y presiona vectorizar.</div>
@@ -585,32 +552,23 @@ textarea{
 <script>
 let originalFile = null;
 let originalDataURL = "";
-let svgString = "";
-let svgSinFondo = "";
+let svgString = "";       // SVG limpio listo (recortado al contenido)
 let imgWidth = 0;
 let imgHeight = 0;
-let finalColors = [];
 let fondoDetectado = null;
-let coloresFondoParaEliminar = [];
+let pathsEliminados = 0;
 
 const $ = id => document.getElementById(id);
 
 const ranges = [
-  "bgTolerance",
-  "colors",
-  "solidStrength",
-  "threshold",
-  "pathomit",
-  "ltres",
-  "qtres"
+  "bgTolerance","margen","colors","solidStrength",
+  "threshold","pathomit","ltres","qtres"
 ];
 
 ranges.forEach(id => {
   const input = $(id);
   const val = $(id + "Val");
-  input.addEventListener("input", () => {
-    val.textContent = input.value;
-  });
+  input.addEventListener("input", () => { val.textContent = input.value; });
 });
 
 $("fileInput").addEventListener("change", cargarImagen);
@@ -636,10 +594,8 @@ function cargarImagen(e){
     $("svgOutput").innerHTML = "Imagen cargada. Presiona vectorizar.";
     $("svgText").value = "";
     svgString = "";
-    svgSinFondo = "";
-    finalColors = [];
-    coloresFondoParaEliminar = [];
     fondoDetectado = null;
+    pathsEliminados = 0;
 
     const img = new Image();
     img.onload = () => {
@@ -655,10 +611,7 @@ function cargarImagen(e){
 
       actualizarInfo({
         archivo:file.name,
-        tamano:`${img.width} x ${img.height}px`,
-        fondo:"—",
-        nodos:"—",
-        svg:"—"
+        original:`${img.width} × ${img.height}px`
       });
     };
 
@@ -668,13 +621,15 @@ function cargarImagen(e){
   reader.readAsDataURL(file);
 }
 
-function actualizarInfo({archivo,tamano,fondo,nodos,svg}){
+function actualizarInfo(d){
   $("info").innerHTML = `
-    <div><strong>Archivo:</strong> ${archivo || "—"}</div>
-    <div><strong>Tamaño:</strong> ${tamano || "—"}</div>
-    <div><strong>Color fondo detectado:</strong> ${fondo || "—"}</div>
-    <div><strong>Nodos estimados:</strong> ${nodos || "—"}</div>
-    <div><strong>SVG:</strong> ${svg || "—"}</div>
+    <div><strong>Archivo:</strong> ${d.archivo || "—"}</div>
+    <div><strong>Tamaño original:</strong> ${d.original || "—"}</div>
+    <div><strong>Tamaño SVG final:</strong> ${d.final || "—"}</div>
+    <div><strong>viewBox final:</strong> ${d.viewbox || "—"}</div>
+    <div><strong>Color fondo detectado:</strong> ${d.fondo || "—"}</div>
+    <div><strong>Paths eliminados:</strong> ${d.eliminados ?? "—"}</div>
+    <div><strong>SVG:</strong> ${d.svg || "—"}</div>
   `;
 }
 
@@ -692,35 +647,48 @@ async function procesarYVectorizar(){
   toast("Procesando imagen...");
 
   const mode = $("mode").value;
-  let processedDataURL = "";
-
-  if(mode === "bw"){
-    processedDataURL = await prepararBlancoNegro(originalDataURL);
-  }else{
-    processedDataURL = await prepararColorSolido(originalDataURL);
-  }
+  const processedDataURL = (mode === "bw")
+    ? await prepararBlancoNegro(originalDataURL)
+    : await prepararColorSolido(originalDataURL);
 
   toast("Vectorizando SVG...");
 
   ImageTracer.imageToSVG(processedDataURL, function(svgstr){
-    svgString = limpiarSVG(svgstr);
-    svgSinFondo = limpiarFondoDelSVG(svgString);
+    // === POST-PROCESAMIENTO EN 3 PASOS ===
 
-    $("svgOutput").innerHTML = svgSinFondo;
-    $("svgText").value = svgSinFondo;
+    // 1) Limpieza básica del SVG
+    let svg = limpiezaBasicaSVG(svgstr);
 
-    const nodos = contarNodos(svgSinFondo);
-    const kb = (new Blob([svgSinFondo]).size / 1024).toFixed(1) + " KB";
+    // 2) Eliminar paths invisibles (opacity=0, el "panel" del fondo)
+    const tras1 = eliminarPathsInvisibles(svg);
+    svg = tras1.svg;
+    pathsEliminados = tras1.eliminados;
+
+    // 3) AJUSTAR EL viewBox AL CONTENIDO REAL (clave!)
+    const margen = Number($("margen").value) || 0;
+    svg = ajustarViewBoxAlContenido(svg, margen);
+
+    svgString = svg;
+
+    // Mostrar
+    $("svgOutput").innerHTML = svg;
+    $("svgText").value = svg;
+
+    // Info
+    const dims = leerDimensionesFinales(svg);
+    const kb = (new Blob([svg]).size / 1024).toFixed(1) + " KB";
 
     actualizarInfo({
       archivo: originalFile ? originalFile.name : "imagen",
-      tamano: obtenerTamanoDesdeSVG(svgSinFondo),
+      original: `${imgWidth} × ${imgHeight}px`,
+      final: dims.dims,
+      viewbox: dims.viewBox,
       fondo: fondoDetectado ? rgbToHex(fondoDetectado) : "—",
-      nodos,
+      eliminados: pathsEliminados,
       svg: kb
     });
 
-    toast("SVG generado sin fondo");
+    toast("SVG recortado generado");
   }, obtenerOpciones());
 }
 
@@ -746,35 +714,33 @@ function obtenerOpciones(){
   };
 }
 
+// ===================================================
+// PROCESAMIENTO DE PÍXELES (igual que antes)
+// ===================================================
+
 function prepararColorSolido(dataURL){
   return new Promise(resolve => {
     const img = new Image();
-
     img.onload = () => {
       const canvas = $("processedCanvas");
-      const ctx = canvas.getContext("2d", { willReadFrequently:true });
-
+      const ctx = canvas.getContext("2d",{willReadFrequently:true});
       canvas.width = img.width;
       canvas.height = img.height;
-
       ctx.clearRect(0,0,canvas.width,canvas.height);
       ctx.drawImage(img,0,0);
 
       let imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
-
-      imageData = quitarFondoImageData(imageData, canvas.width, canvas.height);
+      imageData = quitarFondoImageData(imageData,canvas.width,canvas.height);
 
       const colores = Number($("colors").value);
       const fuerza = Number($("solidStrength").value);
 
-      finalColors = extraerPaleta(imageData, colores);
-      imageData = aplicarPaletaSolida(imageData, finalColors, fuerza);
+      const paleta = extraerPaleta(imageData,colores);
+      imageData = aplicarPaletaSolida(imageData,paleta,fuerza);
 
       ctx.putImageData(imageData,0,0);
-
       resolve(canvas.toDataURL("image/png"));
     };
-
     img.src = dataURL;
   });
 }
@@ -782,654 +748,341 @@ function prepararColorSolido(dataURL){
 function prepararBlancoNegro(dataURL){
   return new Promise(resolve => {
     const img = new Image();
-
     img.onload = () => {
       const canvas = $("processedCanvas");
-      const ctx = canvas.getContext("2d", { willReadFrequently:true });
-
+      const ctx = canvas.getContext("2d",{willReadFrequently:true});
       canvas.width = img.width;
       canvas.height = img.height;
-
       ctx.clearRect(0,0,canvas.width,canvas.height);
       ctx.drawImage(img,0,0);
 
       let imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
-      imageData = quitarFondoImageData(imageData, canvas.width, canvas.height);
+      imageData = quitarFondoImageData(imageData,canvas.width,canvas.height);
 
       const d = imageData.data;
       const threshold = Number($("threshold").value);
       const invertir = $("invert").value === "yes";
 
       for(let i=0;i<d.length;i+=4){
-        const r = d[i];
-        const g = d[i+1];
-        const b = d[i+2];
         const a = d[i+3];
-
         if(a < 20){
-          d[i] = 255;
-          d[i+1] = 255;
-          d[i+2] = 255;
+          d[i] = d[i+1] = d[i+2] = 255;
           d[i+3] = 0;
           continue;
         }
-
-        const gray = (r*0.299 + g*0.587 + b*0.114);
+        const gray = d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114;
         let v = gray < threshold ? 0 : 255;
-
         if(invertir) v = 255 - v;
-
-        d[i] = v;
-        d[i+1] = v;
-        d[i+2] = v;
+        d[i] = d[i+1] = d[i+2] = v;
         d[i+3] = v === 255 ? 0 : 255;
       }
-
-      finalColors = [{r:0,g:0,b:0},{r:255,g:255,b:255}];
 
       ctx.putImageData(imageData,0,0);
       resolve(canvas.toDataURL("image/png"));
     };
-
     img.src = dataURL;
   });
 }
 
-function quitarFondoImageData(imageData, width, height){
+function quitarFondoImageData(imageData,width,height){
   const mode = $("removeBg").value;
-
-  coloresFondoParaEliminar = [
-    {r:255,g:255,b:255},
-    {r:254,g:254,b:254},
-    {r:250,g:250,b:250},
-    {r:245,g:245,b:245},
-    {r:240,g:240,b:240}
-  ];
-
   if(mode === "no") return imageData;
 
   const d = imageData.data;
   const tolerance = Number($("bgTolerance").value || 55);
 
-  let target = { r:255, g:255, b:255 };
+  let target = {r:255,g:255,b:255};
 
-  if(mode === "auto"){
-    target = detectarColorFondoPorEsquinas(imageData, width, height);
-  }
-
-  if(mode === "white"){
-    target = { r:255, g:255, b:255 };
-  }
-
-  if(mode === "manual"){
-    target = hexToRgb($("manualBgColor").value || "#ffffff");
-  }
+  if(mode === "auto") target = detectarColorFondoPorEsquinas(imageData,width,height);
+  if(mode === "white") target = {r:255,g:255,b:255};
+  if(mode === "manual") target = hexToRgb($("manualBgColor").value || "#ffffff");
 
   fondoDetectado = target;
-  coloresFondoParaEliminar.push(target);
 
   for(let i=0;i<d.length;i+=4){
-    const r = d[i];
-    const g = d[i+1];
-    const b = d[i+2];
-
-    const dist = colorDistance({r,g,b}, target);
-
-    if(dist <= tolerance){
-      d[i+3] = 0;
-    }
+    const dist = colorDistance({r:d[i],g:d[i+1],b:d[i+2]},target);
+    if(dist <= tolerance) d[i+3] = 0;
   }
 
   return imageData;
 }
 
-function detectarColorFondoPorEsquinas(imageData, width, height){
+function detectarColorFondoPorEsquinas(imageData,width,height){
   const d = imageData.data;
+  const muestras = [];
 
+  // 4 esquinas + bordes
   const puntos = [
-    getPixel(d, 0, 0, width),
-    getPixel(d, width - 1, 0, width),
-    getPixel(d, 0, height - 1, width),
-    getPixel(d, width - 1, height - 1, width)
+    [0,0],[width-1,0],[0,height-1],[width-1,height-1],
+    [Math.floor(width/2),0],[Math.floor(width/2),height-1],
+    [0,Math.floor(height/2)],[width-1,Math.floor(height/2)]
   ];
 
+  puntos.forEach(([x,y]) => {
+    const i = (y*width + x)*4;
+    if(d[i+3] > 200) muestras.push({r:d[i],g:d[i+1],b:d[i+2]});
+  });
+
+  if(!muestras.length) return {r:255,g:255,b:255};
+
   return {
-    r: Math.round(puntos.reduce((s,p)=>s+p.r,0) / puntos.length),
-    g: Math.round(puntos.reduce((s,p)=>s+p.g,0) / puntos.length),
-    b: Math.round(puntos.reduce((s,p)=>s+p.b,0) / puntos.length)
+    r: Math.round(muestras.reduce((s,p)=>s+p.r,0)/muestras.length),
+    g: Math.round(muestras.reduce((s,p)=>s+p.g,0)/muestras.length),
+    b: Math.round(muestras.reduce((s,p)=>s+p.b,0)/muestras.length)
   };
 }
 
-function extraerPaleta(imageData, cantidad){
+function extraerPaleta(imageData,cantidad){
   const d = imageData.data;
   const buckets = new Map();
-  const step = Math.max(1, Math.floor(d.length / 4 / 80000));
+  const step = Math.max(1,Math.floor(d.length/4/80000));
 
   for(let p=0;p<d.length/4;p+=step){
-    const i = p * 4;
-    const a = d[i+3];
-
-    if(a < 30) continue;
-
-    let r = d[i];
-    let g = d[i+1];
-    let b = d[i+2];
-
-    r = Math.round(r / 24) * 24;
-    g = Math.round(g / 24) * 24;
-    b = Math.round(b / 24) * 24;
-
+    const i = p*4;
+    if(d[i+3] < 30) continue;
+    const r = Math.round(d[i]/24)*24;
+    const g = Math.round(d[i+1]/24)*24;
+    const b = Math.round(d[i+2]/24)*24;
     const key = `${r},${g},${b}`;
-
-    if(!buckets.has(key)){
-      buckets.set(key, {r,g,b,count:0});
-    }
-
+    if(!buckets.has(key)) buckets.set(key,{r,g,b,count:0});
     buckets.get(key).count++;
   }
 
   let paleta = [...buckets.values()]
-    .sort((a,b) => b.count - a.count)
-    .slice(0, cantidad)
-    .map(c => ({r:c.r,g:c.g,b:c.b}));
+    .sort((a,b)=>b.count-a.count)
+    .slice(0,cantidad)
+    .map(c=>({r:c.r,g:c.g,b:c.b}));
 
-  if(!paleta.length){
-    paleta = [{r:0,g:0,b:0}];
-  }
-
-  return mejorarPaleta(paleta);
+  if(!paleta.length) paleta = [{r:0,g:0,b:0}];
+  return paleta;
 }
 
-function mejorarPaleta(paleta){
-  return paleta.map(c => {
-    let {r,g,b} = c;
-
-    const max = Math.max(r,g,b);
-    const min = Math.min(r,g,b);
-    const sat = max - min;
-
-    if(max < 45){
-      return {r:0,g:0,b:0};
-    }
-
-    if(max > 225 && sat < 30){
-      return {r:255,g:255,b:255};
-    }
-
-    if(sat > 25){
-      if(r === max) r = Math.min(255, r + 18);
-      if(g === max) g = Math.min(255, g + 18);
-      if(b === max) b = Math.min(255, b + 18);
-
-      if(r === min) r = Math.max(0, r - 10);
-      if(g === min) g = Math.max(0, g - 10);
-      if(b === min) b = Math.max(0, b - 10);
-    }
-
-    return {
-      r: clampColor(r),
-      g: clampColor(g),
-      b: clampColor(b)
-    };
-  });
-}
-
-function aplicarPaletaSolida(imageData, paleta, fuerza){
+function aplicarPaletaSolida(imageData,paleta,fuerza){
   const d = imageData.data;
-  const intensity = fuerza / 10;
+  const intensity = fuerza/10;
 
   for(let i=0;i<d.length;i+=4){
-    const a = d[i+3];
-
-    if(a < 30){
-      d[i] = 255;
-      d[i+1] = 255;
-      d[i+2] = 255;
+    if(d[i+3] < 30){
+      d[i] = d[i+1] = d[i+2] = 255;
       d[i+3] = 0;
       continue;
     }
-
-    const original = {
-      r:d[i],
-      g:d[i+1],
-      b:d[i+2]
-    };
-
-    const nearest = colorMasCercano(original, paleta);
-
-    d[i] = Math.round(original.r * (1 - intensity) + nearest.r * intensity);
-    d[i+1] = Math.round(original.g * (1 - intensity) + nearest.g * intensity);
-    d[i+2] = Math.round(original.b * (1 - intensity) + nearest.b * intensity);
+    const o = {r:d[i],g:d[i+1],b:d[i+2]};
+    const n = colorMasCercano(o,paleta);
+    d[i] = Math.round(o.r*(1-intensity) + n.r*intensity);
+    d[i+1] = Math.round(o.g*(1-intensity) + n.g*intensity);
+    d[i+2] = Math.round(o.b*(1-intensity) + n.b*intensity);
     d[i+3] = 255;
   }
-
   return imageData;
 }
 
-/* =========================================================
-   LIMPIEZA DE FONDO DEL SVG  -  VERSION CORREGIDA
-   =========================================================
-
-   Estrategia en cascada:
-
-   1) Parsear el SVG con DOMParser (más confiable que regex).
-   2) Eliminar todos los elementos cuyo fill esté cerca de los
-      colores marcados como fondo (incluyendo el color detectado
-      por esquinas y todos los blancos comunes).
-   3) Eliminar el path/rect MÁS GRANDE si cubre >=85% del viewBox
-      y su color está cerca del color de fondo o es claro.
-   4) Eliminar paths que empiezan con M0 0 / M 0 0 / M0,0
-      sin importar el formato.
-   5) Eliminar <rect> que cubran todo el lienzo.
-   6) Fallback regex por si DOMParser falla.
-========================================================= */
-function limpiarFondoDelSVG(svg){
-  if(!svg) return svg;
-
-  let limpio = String(svg);
-
-  // Fallback de regex primero (rápido y atrapa el 90%)
-  limpio = eliminarFondoBlancoDirecto(limpio);
-  limpio = eliminarElementosPorFill(limpio, coloresFondoParaEliminar, 50);
-  limpio = eliminarPathsQueEmpiezanEnOrigen(limpio);
-
-  // Luego DOMParser para precisión
-  try{
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(limpio, "image/svg+xml");
-
-    if(doc.querySelector("parsererror")){
-      // Si falla, devolvemos lo que ya limpiamos por regex
-      return normalizarSVG(limpio);
-    }
-
-    const svgEl = doc.querySelector("svg");
-    if(!svgEl) return normalizarSVG(limpio);
-
-    // Detectar dimensiones del SVG (del viewBox o width/height)
-    const dims = obtenerDimensionesSVG(svgEl);
-    const areaTotal = dims.w * dims.h;
-
-    // Recopilar todos los elementos pintables
-    const pintables = [...svgEl.querySelectorAll("path,rect,polygon,polyline,circle,ellipse")];
-
-    // 1) Eliminar por color de fondo
-    pintables.forEach(el => {
-      const color = obtenerColorElemento(el);
-      if(!color) return;
-
-      const esFondo = coloresFondoParaEliminar.some(c => colorDistance(color, c) <= 55);
-
-      if(esFondo){
-        el.remove();
-      }
-    });
-
-    // 2) Eliminar el más grande si es claramente el panel de fondo
-    const killBiggest = $("killBiggest") ? $("killBiggest").value : "yes";
-
-    if(killBiggest === "yes" && areaTotal > 0){
-      const vivos = [...svgEl.querySelectorAll("path,rect,polygon,polyline")];
-
-      let mayor = null;
-      let mayorArea = 0;
-
-      vivos.forEach(el => {
-        const area = areaAproximadaElemento(el, dims);
-        if(area > mayorArea){
-          mayorArea = area;
-          mayor = el;
-        }
-      });
-
-      if(mayor && mayorArea / areaTotal >= 0.85){
-        const color = obtenerColorElemento(mayor);
-        // si cubre >=85% del lienzo, casi seguro es el fondo
-        if(esColorClaro(color) || !color){
-          mayor.remove();
-        }
-      }
-    }
-
-    // 3) Eliminar paths que comienzan en el origen (típico del fondo)
-    [...svgEl.querySelectorAll("path")].forEach(p => {
-      const d = (p.getAttribute("d") || "").trim();
-      if(/^M\s*0[\s,]+0/i.test(d) || /^M0[\s,]+0/i.test(d)){
-        const color = obtenerColorElemento(p);
-        if(esColorClaro(color) || !color){
-          p.remove();
-        }
-      }
-    });
-
-    // 4) Eliminar rects que cubran todo el lienzo
-    [...svgEl.querySelectorAll("rect")].forEach(r => {
-      const x = parseFloat(r.getAttribute("x") || "0");
-      const y = parseFloat(r.getAttribute("y") || "0");
-      const w = parseFloat(r.getAttribute("width") || "0");
-      const h = parseFloat(r.getAttribute("height") || "0");
-
-      const cubreTodo = x <= 1 && y <= 1 && w >= dims.w * 0.95 && h >= dims.h * 0.95;
-
-      if(cubreTodo){
-        r.remove();
-      }
-    });
-
-    // Asegurar fondo transparente
-    svgEl.removeAttribute("style");
-    svgEl.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-
-    // Serializar
-    const serializer = new XMLSerializer();
-    let resultado = serializer.serializeToString(svgEl);
-
-    return normalizarSVG(resultado);
-
-  }catch(err){
-    console.warn("Limpieza con DOMParser falló, uso fallback:", err);
-    return normalizarSVG(limpio);
-  }
-}
-
-function normalizarSVG(svg){
-  return String(svg || "")
-    .replace(/\s{2,}/g, " ")
-    .replace(/>\s+</g, "><")
-    .trim();
-}
-
-function obtenerDimensionesSVG(svgEl){
-  const viewBox = svgEl.getAttribute("viewBox");
-
-  if(viewBox){
-    const partes = viewBox.split(/[\s,]+/).map(Number);
-    if(partes.length === 4){
-      return { w: partes[2], h: partes[3] };
-    }
-  }
-
-  const w = parseFloat(svgEl.getAttribute("width") || "0") || imgWidth || 0;
-  const h = parseFloat(svgEl.getAttribute("height") || "0") || imgHeight || 0;
-
-  return { w, h };
-}
-
-function obtenerColorElemento(el){
-  // Probar atributo fill directo
-  let fill = el.getAttribute("fill");
-
-  // Probar style="fill:..."
-  if(!fill){
-    const style = el.getAttribute("style") || "";
-    const m = style.match(/fill\s*:\s*([^;]+)/i);
-    if(m) fill = m[1].trim();
-  }
-
-  if(!fill) return null;
-  return parseFillColor(fill);
-}
-
-function areaAproximadaElemento(el, dims){
-  const tag = el.tagName.toLowerCase();
-
-  if(tag === "rect"){
-    const w = parseFloat(el.getAttribute("width") || "0");
-    const h = parseFloat(el.getAttribute("height") || "0");
-    return w * h;
-  }
-
-  if(tag === "circle"){
-    const r = parseFloat(el.getAttribute("r") || "0");
-    return Math.PI * r * r;
-  }
-
-  if(tag === "ellipse"){
-    const rx = parseFloat(el.getAttribute("rx") || "0");
-    const ry = parseFloat(el.getAttribute("ry") || "0");
-    return Math.PI * rx * ry;
-  }
-
-  if(tag === "path" || tag === "polygon" || tag === "polyline"){
-    // Aproximación por bounding box
-    const datos = tag === "path"
-      ? (el.getAttribute("d") || "")
-      : (el.getAttribute("points") || "");
-
-    const nums = datos.match(/-?\d+(?:\.\d+)?/g);
-    if(!nums || nums.length < 4) return 0;
-
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-
-    for(let i = 0; i < nums.length - 1; i += 2){
-      const x = parseFloat(nums[i]);
-      const y = parseFloat(nums[i+1]);
-      if(!isFinite(x) || !isFinite(y)) continue;
-      if(x < minX) minX = x;
-      if(y < minY) minY = y;
-      if(x > maxX) maxX = x;
-      if(y > maxY) maxY = y;
-    }
-
-    if(!isFinite(minX)) return 0;
-
-    return Math.max(0, maxX - minX) * Math.max(0, maxY - minY);
-  }
-
-  return 0;
-}
-
-function esColorClaro(color){
-  if(!color) return false;
-  const max = Math.max(color.r, color.g, color.b);
-  const min = Math.min(color.r, color.g, color.b);
-  return max > 215 && (max - min) < 40;
-}
-
-/* =========================================================
-   FUNCIONES FALLBACK POR REGEX
-   La regex corrupta del archivo original (con $begin:math...$)
-   se reemplaza por una versión correcta usando RegExp normal.
-========================================================= */
-function eliminarFondoBlancoDirecto(svg){
-  let limpio = String(svg || "");
-
-  // Lista de colores blancos / casi blancos a barrer
-  const blancosRegex = [
-    "#fff(?:fff)?",        // #fff o #ffffff
-    "white",
-    "rgb\\(\\s*255\\s*,\\s*255\\s*,\\s*255\\s*\\)",
-    "rgb\\(\\s*254\\s*,\\s*254\\s*,\\s*254\\s*\\)",
-    "rgb\\(\\s*253\\s*,\\s*253\\s*,\\s*253\\s*\\)",
-    "rgb\\(\\s*252\\s*,\\s*252\\s*,\\s*252\\s*\\)",
-    "rgb\\(\\s*251\\s*,\\s*251\\s*,\\s*251\\s*\\)",
-    "rgb\\(\\s*250\\s*,\\s*250\\s*,\\s*250\\s*\\)",
-    "rgb\\(\\s*248\\s*,\\s*248\\s*,\\s*248\\s*\\)",
-    "rgb\\(\\s*245\\s*,\\s*245\\s*,\\s*245\\s*\\)",
-    "rgb\\(\\s*240\\s*,\\s*240\\s*,\\s*240\\s*\\)"
-  ].join("|");
-
-  const blanco = `(?:${blancosRegex})`;
-
-  // Barre elementos con fill="<blanco>" (con y sin self-closing)
-  const tags = ["rect","path","polygon","polyline","circle","ellipse"];
-
-  tags.forEach(tag => {
-    // <tag ... fill="blanco" ... />
-    const reSelfClose = new RegExp(
-      `<${tag}\\b[^>]*\\sfill="${blanco}"[^>]*\\/>`,
-      "gi"
-    );
-    limpio = limpio.replace(reSelfClose, "");
-
-    // <tag ... fill="blanco" ... ></tag>
-    const reOpenClose = new RegExp(
-      `<${tag}\\b[^>]*\\sfill="${blanco}"[^>]*>[^<]*<\\/${tag}>`,
-      "gi"
-    );
-    limpio = limpio.replace(reOpenClose, "");
-
-    // Caso style="fill:blanco"
-    const reStyleSelf = new RegExp(
-      `<${tag}\\b[^>]*\\sstyle="[^"]*fill\\s*:\\s*${blanco}[^"]*"[^>]*\\/>`,
-      "gi"
-    );
-    limpio = limpio.replace(reStyleSelf, "");
-
-    const reStyleOpen = new RegExp(
-      `<${tag}\\b[^>]*\\sstyle="[^"]*fill\\s*:\\s*${blanco}[^"]*"[^>]*>[^<]*<\\/${tag}>`,
-      "gi"
-    );
-    limpio = limpio.replace(reStyleOpen, "");
-  });
-
-  return limpio;
-}
-
-function eliminarElementosPorFill(svg, colores, tolerancia){
-  let salida = String(svg || "");
-  const tags = ["path","rect","polygon","polyline","circle","ellipse"];
-
-  tags.forEach(tag => {
-    // Self-closing
-    const reSelf = new RegExp(
-      `<${tag}\\b[^>]*fill="([^"]+)"[^>]*\\/>`,
-      "gi"
-    );
-
-    salida = salida.replace(reSelf, function(match, fill){
-      const color = parseFillColor(fill);
-      if(!color) return match;
-      const eliminar = colores.some(c => colorDistance(color, c) <= tolerancia);
-      return eliminar ? "" : match;
-    });
-
-    // Con cierre normal <tag ...></tag>
-    const reOpen = new RegExp(
-      `<${tag}\\b[^>]*fill="([^"]+)"[^>]*>[^<]*<\\/${tag}>`,
-      "gi"
-    );
-
-    salida = salida.replace(reOpen, function(match, fill){
-      const color = parseFillColor(fill);
-      if(!color) return match;
-      const eliminar = colores.some(c => colorDistance(color, c) <= tolerancia);
-      return eliminar ? "" : match;
-    });
-  });
-
-  return salida;
-}
-
-function eliminarPathsQueEmpiezanEnOrigen(svg){
-  let limpio = String(svg || "");
-
-  // Captura paths que empiezan con M 0 0 o M0 0 o M0,0
-  // sin importar si fill viene antes o después del d.
-  const re = /<path\b[^>]*?\bd\s*=\s*"M\s*0[\s,]+0[^"]*"[^>]*?\/?>/gi;
-
-  limpio = limpio.replace(re, function(match){
-    // Solo lo elimino si NO tiene fill="black" o "rgb(0,0,0)"
-    const fillMatch = match.match(/fill\s*=\s*"([^"]+)"/i);
-
-    if(!fillMatch) return ""; // sin fill, fuera
-
-    const color = parseFillColor(fillMatch[1]);
-    if(!color) return "";
-
-    if(esColorClaro(color)){
-      return "";
-    }
-
-    return match;
-  });
-
-  return limpio;
-}
-
-function parseFillColor(fill){
-  fill = String(fill || "").trim().toLowerCase();
-
-  if(!fill || fill === "none" || fill === "transparent") return null;
-
-  if(fill === "white") return {r:255,g:255,b:255};
-  if(fill === "black") return {r:0,g:0,b:0};
-
-  if(fill.startsWith("#")){
-    return hexToRgb(fill);
-  }
-
-  const rgb = fill.match(/rgba?\s*\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)/);
-
-  if(rgb){
-    return {
-      r:Math.round(Number(rgb[1])),
-      g:Math.round(Number(rgb[2])),
-      b:Math.round(Number(rgb[3]))
-    };
-  }
-
-  return null;
-}
-
-function limpiarSVG(svg){
-  let limpio = String(svg || "");
-
-  limpio = limpio
+// ===================================================
+// POST-PROCESAMIENTO DEL SVG
+// Aquí está lo importante: dejar el SVG igual que CorelDRAW
+// ===================================================
+
+function limpiezaBasicaSVG(svg){
+  let limpio = String(svg||"")
     .replace(/<desc>[\s\S]*?<\/desc>/gi,"")
     .replace(/<!--[\s\S]*?-->/g,"")
-    .replace(/\s{2,}/g," ")
-    .replace(/>\s+</g,"><")
     .trim();
 
   if(!limpio.includes('xmlns="http://www.w3.org/2000/svg"')){
-    limpio = limpio.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+    limpio = limpio.replace("<svg",'<svg xmlns="http://www.w3.org/2000/svg"');
   }
-
   return limpio;
 }
 
-function colorMasCercano(color, paleta){
-  let best = paleta[0];
-  let bestDist = Infinity;
+/**
+ * Elimina todos los <path>, <rect>, <polygon>, etc. invisibles:
+ *  - opacity="0" o muy cercano a 0
+ *  - fill-opacity="0"
+ *  - fill="none" sin stroke
+ *
+ * Esto borra el "panel" gigante que ImageTracer mete en M 0 0 ... Z
+ * y que ocupa todo el lienzo con opacity 0.
+ */
+function eliminarPathsInvisibles(svg){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svg,"image/svg+xml");
+  const svgEl = doc.querySelector("svg");
 
-  for(const c of paleta){
-    const dist = colorDistance(color, c);
-    if(dist < bestDist){
-      bestDist = dist;
-      best = c;
-    }
+  if(!svgEl || doc.querySelector("parsererror")){
+    return { svg, eliminados:0 };
   }
 
+  let eliminados = 0;
+  const todos = [...svgEl.querySelectorAll("path,rect,polygon,polyline,circle,ellipse")];
+
+  todos.forEach(el => {
+    // opacity como atributo
+    const op = parseFloat(el.getAttribute("opacity"));
+    if(!isNaN(op) && op <= 0.01){
+      el.remove();
+      eliminados++;
+      return;
+    }
+
+    // fill-opacity
+    const fop = parseFloat(el.getAttribute("fill-opacity"));
+    if(!isNaN(fop) && fop <= 0.01){
+      el.remove();
+      eliminados++;
+      return;
+    }
+
+    // opacity dentro de style=""
+    const style = el.getAttribute("style") || "";
+    const m = style.match(/(?:^|;)\s*opacity\s*:\s*([0-9.]+)/i);
+    if(m && parseFloat(m[1]) <= 0.01){
+      el.remove();
+      eliminados++;
+      return;
+    }
+
+    // fill none sin stroke -> invisible
+    const fill = (el.getAttribute("fill") || "").toLowerCase().trim();
+    const stroke = (el.getAttribute("stroke") || "").toLowerCase().trim();
+    if((fill === "none" || fill === "transparent") &&
+       (stroke === "" || stroke === "none" || stroke === "transparent")){
+      el.remove();
+      eliminados++;
+    }
+  });
+
+  return {
+    svg: new XMLSerializer().serializeToString(svgEl),
+    eliminados
+  };
+}
+
+/**
+ * AJUSTA EL viewBox AL BOUNDING BOX REAL DEL CONTENIDO.
+ *
+ * Usa getBBox() del navegador (motor SVG real) para medir cada
+ * elemento. Luego cambia el viewBox y las dimensiones del SVG al
+ * tamaño exacto del dibujo, igual que hace CorelDRAW al exportar.
+ */
+function ajustarViewBoxAlContenido(svg, margen){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svg,"image/svg+xml");
+  const svgEl = doc.querySelector("svg");
+
+  if(!svgEl || doc.querySelector("parsererror")){
+    return svg;
+  }
+
+  // Insertar copia temporal en el DOM para usar getBBox real
+  const wrapper = document.createElement("div");
+  wrapper.style.cssText =
+    "position:absolute;left:-99999px;top:0;width:1px;height:1px;overflow:hidden;visibility:hidden;";
+  document.body.appendChild(wrapper);
+
+  // Clonar para medir
+  const tempSvg = svgEl.cloneNode(true);
+  wrapper.appendChild(tempSvg);
+
+  try{
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+    const medibles = [...tempSvg.querySelectorAll("path,rect,polygon,polyline,circle,ellipse,line")];
+
+    medibles.forEach(el => {
+      try{
+        const bb = el.getBBox();
+        // Saltar elementos sin tamaño
+        if((bb.width === 0 && bb.height === 0) || !isFinite(bb.x)) return;
+
+        if(bb.x < minX) minX = bb.x;
+        if(bb.y < minY) minY = bb.y;
+        if(bb.x + bb.width > maxX) maxX = bb.x + bb.width;
+        if(bb.y + bb.height > maxY) maxY = bb.y + bb.height;
+      }catch(e){
+        // Algunos paths exóticos pueden fallar, los ignoramos
+      }
+    });
+
+    document.body.removeChild(wrapper);
+
+    if(!isFinite(minX) || !isFinite(maxX)){
+      // No medimos nada útil, devolvemos lo que había
+      return new XMLSerializer().serializeToString(svgEl);
+    }
+
+    // Aplicar margen opcional
+    minX -= margen;
+    minY -= margen;
+    maxX += margen;
+    maxY += margen;
+
+    const w = Math.max(1, maxX - minX);
+    const h = Math.max(1, maxY - minY);
+
+    // viewBox EXACTO del contenido
+    svgEl.setAttribute("viewBox", `${redondear(minX)} ${redondear(minY)} ${redondear(w)} ${redondear(h)}`);
+    svgEl.setAttribute("width", redondear(w));
+    svgEl.setAttribute("height", redondear(h));
+
+    // Asegurar xmlns
+    if(!svgEl.getAttribute("xmlns")){
+      svgEl.setAttribute("xmlns","http://www.w3.org/2000/svg");
+    }
+
+    return formatearSVG(new XMLSerializer().serializeToString(svgEl));
+
+  }catch(err){
+    if(wrapper.parentNode) document.body.removeChild(wrapper);
+    return svg;
+  }
+}
+
+function redondear(n){
+  // 3 decimales: precisión sin ensuciar el archivo
+  return Math.round(n * 1000) / 1000;
+}
+
+function formatearSVG(svg){
+  return String(svg||"")
+    .replace(/\s{2,}/g," ")
+    .replace(/>\s+</g,"><")
+    .trim();
+}
+
+function leerDimensionesFinales(svg){
+  const vb = svg.match(/viewBox="([^"]+)"/);
+  const w = svg.match(/\bwidth="([^"]+)"/);
+  const h = svg.match(/\bheight="([^"]+)"/);
+
+  return {
+    viewBox: vb ? vb[1] : "—",
+    dims: (w && h) ? `${w[1]} × ${h[1]}` : "—"
+  };
+}
+
+// ===================================================
+// HELPERS
+// ===================================================
+
+function colorMasCercano(color,paleta){
+  let best = paleta[0], bestDist = Infinity;
+  for(const c of paleta){
+    const dist = colorDistance(color,c);
+    if(dist < bestDist){ bestDist = dist; best = c; }
+  }
   return best;
 }
 
 function colorDistance(a,b){
-  if(!a || !b) return Infinity;
+  if(!a||!b) return Infinity;
   return Math.sqrt(
-    Math.pow(a.r - b.r, 2) +
-    Math.pow(a.g - b.g, 2) +
-    Math.pow(a.b - b.b, 2)
+    Math.pow(a.r-b.r,2) + Math.pow(a.g-b.g,2) + Math.pow(a.b-b.b,2)
   );
 }
 
-function getPixel(data, x, y, width){
-  const i = (y * width + x) * 4;
-  return {
-    r:data[i],
-    g:data[i+1],
-    b:data[i+2],
-    a:data[i+3]
-  };
-}
-
 function hexToRgb(hex){
-  hex = String(hex || "#ffffff").replace("#","");
-
-  if(hex.length === 3){
-    hex = hex.split("").map(x => x + x).join("");
-  }
-
+  hex = String(hex||"#ffffff").replace("#","");
+  if(hex.length === 3) hex = hex.split("").map(x=>x+x).join("");
   return {
     r:parseInt(hex.substring(0,2),16),
     g:parseInt(hex.substring(2,4),16),
@@ -1439,73 +1092,49 @@ function hexToRgb(hex){
 
 function rgbToHex(c){
   if(!c) return "—";
-  return "#" + [c.r,c.g,c.b].map(v => {
-    const h = clampColor(v).toString(16);
-    return h.length === 1 ? "0" + h : h;
+  return "#" + [c.r,c.g,c.b].map(v=>{
+    const h = Math.max(0,Math.min(255,Math.round(v))).toString(16);
+    return h.length === 1 ? "0"+h : h;
   }).join("");
 }
 
-function clampColor(v){
-  return Math.max(0, Math.min(255, Math.round(v)));
-}
+// ===================================================
+// EXPORTAR
+// ===================================================
 
-function contarNodos(svg){
-  const paths = (svg.match(/<path/gi) || []).length;
-  const polygons = (svg.match(/<polygon/gi) || []).length;
-  const points = (svg.match(/[MLCQZmlcqz]/g) || []).length;
-  return `${paths + polygons} objetos / ${points} comandos`;
-}
-
-function obtenerTamanoDesdeSVG(svg){
-  const viewBox = svg.match(/viewBox="([^"]+)"/);
-  if(viewBox) return `viewBox ${viewBox[1]}`;
-
-  const w = svg.match(/width="([^"]+)"/);
-  const h = svg.match(/height="([^"]+)"/);
-
-  return `${w ? w[1] : "?"} x ${h ? h[1] : "?"}`;
-}
-
-function descargarSVGSinFondo(){
-  if(!svgSinFondo && !svgString){
+function descargarSVG(){
+  if(!svgString){
     alert("Primero vectoriza una imagen.");
     return;
   }
 
-  // Re-limpiar al momento de descargar (por si el usuario cambió opciones)
-  const finalSVG = limpiarFondoDelSVG(svgSinFondo || svgString);
-
-  const blob = new Blob([finalSVG], {type:"image/svg+xml"});
+  const blob = new Blob([svgString],{type:"image/svg+xml"});
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement("a");
   const base = originalFile ? originalFile.name.replace(/\.[^.]+$/,"") : "vector";
   a.href = url;
-  a.download = base + "_sin_fondo.svg";
+  a.download = base + "_recortado.svg";
   document.body.appendChild(a);
   a.click();
   a.remove();
-
   URL.revokeObjectURL(url);
-  toast("SVG sin fondo descargado");
+  toast("SVG recortado descargado");
 }
 
 async function copiarSVG(){
-  if(!svgSinFondo && !svgString){
+  if(!svgString){
     alert("Primero vectoriza una imagen.");
     return;
   }
 
-  const finalSVG = limpiarFondoDelSVG(svgSinFondo || svgString);
-
   try{
-    await navigator.clipboard.writeText(finalSVG);
-    toast("SVG copiado sin fondo");
+    await navigator.clipboard.writeText(svgString);
+    toast("SVG copiado");
   }catch(e){
-    $("svgText").value = finalSVG;
+    $("svgText").value = svgString;
     $("svgText").select();
     document.execCommand("copy");
-    toast("SVG copiado sin fondo");
+    toast("SVG copiado");
   }
 }
 
@@ -1513,12 +1142,10 @@ function limpiar(){
   originalFile = null;
   originalDataURL = "";
   svgString = "";
-  svgSinFondo = "";
   imgWidth = 0;
   imgHeight = 0;
-  finalColors = [];
-  coloresFondoParaEliminar = [];
   fondoDetectado = null;
+  pathsEliminados = 0;
 
   $("fileInput").value = "";
   $("originalPreview").removeAttribute("src");
@@ -1529,14 +1156,7 @@ function limpiar(){
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  actualizarInfo({
-    archivo:"—",
-    tamano:"—",
-    fondo:"—",
-    nodos:"—",
-    svg:"—"
-  });
-
+  actualizarInfo({});
   toast("Limpio");
 }
 </script>
