@@ -301,7 +301,7 @@ tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font
 <script src="js/supabase.js?v=24"></script>
 <script src="js/auth.js?v=24"></script>
 <script>
-console.log('ESTADISTICAS conectado vClienteSearch');
+console.log('ESTADISTICAS conectado vClienteSearch FIX v2 sin precio');
 let pedidosStats = [];
 const $ = id => document.getElementById(id);
 
@@ -323,18 +323,27 @@ function showToast(msg){ const t=$('toast'); if(!t) return; t.textContent=msg; t
 async function cargarPedidosStats(){
   if(!db()){ showToast('No existe conexión Supabase'); return; }
   setEmptyAll('Cargando estadísticas...');
-  const { data, error } = await db()
+  let res = await db()
     .from('pedidos')
-    .select('id,fecha,operador,cliente,descripcion,cantidad,material,tipo_impresion,estatus_trabajo,estatus_pago,fecha_entrega,precio,monto_abonado')
+    .select('id,fecha,operador,cliente,descripcion,cantidad,material,tipo_impresion,estatus_trabajo,estatus_pago,fecha_entrega')
     .order('fecha', { ascending:false });
 
-  if(error){
-    console.error('Error cargando estadísticas:', error);
-    showToast('Error cargando estadísticas');
-    setEmptyAll('Error cargando datos');
+  // Fallback: si Supabase rechaza alguna columna/orden por caché o esquema, intenta una consulta más simple.
+  if(res.error){
+    console.warn('Consulta principal de estadísticas falló. Probando fallback:', res.error);
+    res = await db()
+      .from('pedidos')
+      .select('*')
+      .order('id', { ascending:false });
+  }
+
+  if(res.error){
+    console.error('Error cargando estadísticas:', res.error);
+    showToast('Error cargando estadísticas: ' + (res.error.message || 'revisa consola'));
+    setEmptyAll('Error cargando datos: ' + (res.error.message || 'revisa consola'));
     return;
   }
-  pedidosStats = data || [];
+  pedidosStats = res.data || [];
   llenarFiltros();
   renderEstadisticas();
 }
