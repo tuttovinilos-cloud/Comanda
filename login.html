@@ -46,13 +46,11 @@ button,input,select{font:inherit}
 button{cursor:pointer;touch-action:manipulation;border:0}
 .login-shell{
   width:100%;
-  max-width:1020px;
-  display:grid;
-  grid-template-columns:1fr 420px;
-  gap:18px;
-  align-items:stretch;
+  max-width:430px;
+  display:block;
 }
 .hero{
+  display:none;
   position:relative;
   overflow:hidden;
   border-radius:24px;
@@ -143,12 +141,12 @@ button{cursor:pointer;touch-action:manipulation;border:0}
   line-height:1.28;
 }
 .login-card{
-  background:rgba(255,255,255,.94);
+  background:rgba(255,255,255,.96);
   border:1px solid var(--line);
   border-radius:24px;
   box-shadow:0 12px 38px rgba(0,0,0,.08);
   padding:22px;
-  min-height:560px;
+  min-height:auto;
   display:flex;
   flex-direction:column;
 }
@@ -173,7 +171,7 @@ button{cursor:pointer;touch-action:manipulation;border:0}
   line-height:1.35;
 }
 .status-pill{
-  display:inline-flex;
+  display:none;
   align-items:center;
   gap:7px;
   border:1px solid var(--line);
@@ -299,6 +297,7 @@ select{
   text-transform:uppercase;
 }
 .note{
+  display:none;
   margin-top:auto;
   padding-top:18px;
   color:var(--muted);
@@ -371,9 +370,9 @@ select{
     <div class="card-top">
       <div>
         <div class="card-title">Iniciar sesión</div>
-        <div class="card-sub">Selecciona tu operador para entrar a Comanda.</div>
+        <div class="card-sub">Selecciona tu operador para entrar.</div>
       </div>
-      <div class="status-pill" id="statusPill"><span class="status-dot"></span><span id="statusText">Cargando</span></div>
+
     </div>
 
     <div class="field">
@@ -386,7 +385,7 @@ select{
     <div class="field">
       <label>Clave / PIN</label>
       <div class="password-row">
-        <input id="passInput" type="password" placeholder="Opcional si el operador no tiene clave" autocomplete="current-password"/>
+        <input id="passInput" type="password" placeholder="Clave" autocomplete="current-password"/>
         <button class="icon-btn" type="button" id="togglePass" title="Mostrar clave">👁</button>
       </div>
     </div>
@@ -405,9 +404,7 @@ select{
       <button class="small-btn" type="button" id="clearBtn">Salir / limpiar</button>
     </div>
 
-    <div class="note">
-      Conexión con Supabase usando <b>js/supabase.js</b>. Si no carga, usa una lista local de emergencia.
-    </div>
+
   </section>
 </main>
 
@@ -442,8 +439,10 @@ function showToast(msg,type="ok"){
   setTimeout(()=>{ t.className = "toast"; }, 2600);
 }
 function setStatus(text, ok=false){
-  $("statusText").textContent = text;
-  $("statusPill").classList.toggle("ok", ok);
+  const statusText = $("statusText");
+  const statusPill = $("statusPill");
+  if(statusText) statusText.textContent = text;
+  if(statusPill) statusPill.classList.toggle("ok", ok);
 }
 function db(){ return window.supabaseClient; }
 function isRoberto(op){ return normalizar(op?.nombre) === "roberto"; }
@@ -482,19 +481,7 @@ function validatePassword(op, pass){
 }
 function permissionBadges(op){
   if(!op) return [`<span class="op-badge">Selecciona un usuario</span>`];
-  if(isRoberto(op)) return [`<span class="op-badge ok">Acceso total</span>`];
-  const map = [
-    ["puede_pedidos","Pedidos"],
-    ["puede_clientes","Clientes"],
-    ["puede_materiales","Materiales"],
-    ["puede_estadisticas","Estadísticas"],
-    ["puede_marketing","Marketing"],
-    ["puede_cotizador","Cotizador"],
-    ["puede_organizador","Organizador"],
-    ["puede_configuracion","Config."]
-  ];
-  const badges = map.filter(([k]) => op[k] === true).map(([,label]) => `<span class="op-badge ok">${label}</span>`);
-  return badges.length ? badges : [`<span class="op-badge">Sin permisos definidos</span>`];
+  return [`<span class="op-badge ok">Operador seleccionado</span>`];
 }
 function renderSelect(){
   const sel = $("operadorSelect");
@@ -547,7 +534,7 @@ async function cargarOperadores(){
     console.warn("Usando operadores locales:", error);
     operadoresDB = FALLBACK_OPERADORES;
     setStatus("Local", false);
-    showToast("No se cargaron operadores de Supabase. Usando lista local.", "warn");
+    showToast("No se cargaron operadores. Usando lista local.", "warn");
   }
   renderSelect();
 }
