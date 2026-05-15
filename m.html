@@ -7,331 +7,232 @@
 <title>Dashboard UCJV330 Tuttovinilos</title>
 
 <style>
-/* =========================================================
-   Mimaki.html · Dashboard UCJV330 Tuttovinilos
-   Datos 100% simulados. Sin Supabase. Sin RasterLink.
-   Enfoque: primero tinta, luego estado, producción, errores e historial.
-   ========================================================= */
-
 *{box-sizing:border-box;margin:0;padding:0}
 
 :root{
   --bg:#eef3f8;
   --card:#ffffff;
-  --card2:#f8fbff;
   --navy:#07111f;
-  --navy2:#0d1b2f;
   --line:#d8e3ee;
   --text:#122033;
   --muted:#6e7f92;
-  --muted2:#9aabba;
   --orange:#ff8a1c;
   --blue:#1688ff;
   --green:#20c987;
   --red:#ff4d5e;
   --yellow:#ffd166;
   --shadow:0 10px 24px rgba(7,17,31,.08);
-  --radius:18px;
-  --mono:"Courier New", monospace;
-  --font:Arial, Helvetica, sans-serif;
 }
 
 body{
-  font-family:var(--font);
-  background:
-    radial-gradient(circle at top left,rgba(255,138,28,.11),transparent 28%),
-    linear-gradient(180deg,#f7faff 0%,var(--bg) 100%);
+  font-family:Arial,Helvetica,sans-serif;
+  background:linear-gradient(180deg,#f7faff 0%,#eef3f8 100%);
   color:var(--text);
-  min-height:100vh;
 }
 
-button,input,select{font:inherit}
-button{border:none;cursor:pointer}
-
 .app{
-  max-width:1380px;
-  margin:0 auto;
+  max-width:1400px;
+  margin:auto;
   padding:10px;
 }
 
-/* ===== HEADER COMPACTO ===== */
+/* HEADER */
 
 .topbar{
+  background:white;
+  border-bottom:1px solid var(--line);
   position:sticky;
   top:0;
   z-index:50;
-  background:rgba(247,250,255,.94);
-  backdrop-filter:blur(14px);
-  border-bottom:1px solid var(--line);
 }
 
 .topbar-inner{
-  max-width:1380px;
-  margin:0 auto;
-  padding:9px 10px;
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:8px;
+  display:flex;
+  justify-content:space-between;
   align-items:center;
+  padding:10px;
+  max-width:1400px;
+  margin:auto;
 }
 
 .brand{
   display:flex;
+  gap:10px;
   align-items:center;
-  gap:9px;
-  min-width:0;
 }
 
 .logo{
-  width:38px;
-  height:38px;
+  width:42px;
+  height:42px;
   border-radius:14px;
+  background:linear-gradient(135deg,#07111f,#12375f);
+  color:white;
   display:grid;
   place-items:center;
-  background:linear-gradient(135deg,var(--navy),#12375f);
-  color:white;
   font-weight:900;
-  box-shadow:var(--shadow);
 }
 
 .brand h1{
   font-size:18px;
   color:var(--navy);
-  letter-spacing:-.04em;
-  line-height:1;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
 
 .brand p{
-  margin-top:4px;
   font-size:11px;
   color:var(--muted);
-  font-weight:800;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
 
-.head-right{
+.right-head{
   display:flex;
-  gap:7px;
+  gap:8px;
   align-items:center;
 }
 
 .pill{
+  background:white;
   border:1px solid var(--line);
-  background:var(--card);
   border-radius:999px;
-  padding:8px 10px;
-  display:flex;
-  align-items:center;
-  gap:7px;
-  box-shadow:0 6px 16px rgba(7,17,31,.05);
+  padding:8px 12px;
   font-size:12px;
   font-weight:900;
-  color:var(--navy);
-  white-space:nowrap;
+  display:flex;
+  align-items:center;
+  gap:8px;
 }
 
 .dot{
-  width:9px;
-  height:9px;
+  width:10px;
+  height:10px;
   border-radius:50%;
-  background:var(--green);
-  box-shadow:0 0 0 4px rgba(32,201,135,.12);
-}
-
-.pill.printing .dot{
   background:var(--orange);
-  box-shadow:0 0 0 4px rgba(255,138,28,.16);
-}
-
-.pill.error .dot{
-  background:var(--red);
-  box-shadow:0 0 0 4px rgba(255,77,94,.15);
 }
 
 .clock{
-  border:1px solid var(--line);
-  background:var(--card);
-  border-radius:14px;
-  padding:8px 9px;
-  font-size:11px;
+  font-size:12px;
   color:var(--muted);
-  font-family:var(--mono);
   font-weight:900;
-  box-shadow:0 6px 16px rgba(7,17,31,.05);
-  white-space:nowrap;
 }
 
-/* ===== MINI ESTADO ===== */
+/* STATUS */
 
 .machine-strip{
   margin-top:10px;
   background:var(--navy);
   border-radius:20px;
   padding:10px;
-  color:white;
-  box-shadow:var(--shadow);
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:8px;
+  color:white;
 }
 
-.strip-item{
+.strip{
   background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.10);
-  border-radius:15px;
-  padding:9px;
-  min-width:0;
+  border-radius:14px;
+  padding:10px;
 }
 
-.strip-item small{
-  display:block;
-  color:#a9b9ca;
+.strip small{
   font-size:9px;
-  font-weight:900;
   text-transform:uppercase;
-  letter-spacing:.08em;
-}
-
-.strip-item strong{
-  margin-top:4px;
-  display:block;
-  font-size:15px;
-  line-height:1.05;
+  color:#9fb3c6;
   font-weight:900;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
 
-/* ===== BOTELLAS PRIMERO ===== */
+.strip strong{
+  display:block;
+  margin-top:4px;
+  font-size:16px;
+}
+
+/* BOTTLES */
 
 .ink-board{
   margin-top:10px;
-  background:var(--card);
+  background:white;
   border:1px solid var(--line);
   border-radius:22px;
-  box-shadow:var(--shadow);
   overflow:hidden;
+  box-shadow:var(--shadow);
 }
 
 .board-head{
-  padding:12px;
   display:flex;
   justify-content:space-between;
-  align-items:flex-start;
-  gap:10px;
+  align-items:center;
+  padding:12px;
   border-bottom:1px solid var(--line);
 }
 
 .board-head h2{
-  font-size:17px;
-  color:var(--navy);
-  letter-spacing:-.04em;
+  font-size:18px;
 }
 
 .board-head p{
-  margin-top:3px;
-  color:var(--muted);
   font-size:11px;
-  font-weight:800;
+  color:var(--muted);
 }
 
 .board-actions{
   display:flex;
   gap:8px;
-  align-items:center;
 }
 
-.mini-total{
-  background:#eef5ff;
-  color:var(--navy);
-  border:1px solid #d8e7fb;
-  border-radius:999px;
-  padding:7px 9px;
-  font-size:11px;
-  font-weight:900;
-  white-space:nowrap;
-}
-
-.btn-main{
+.btn{
   background:linear-gradient(135deg,var(--orange),#ffb35f);
   color:white;
-  font-weight:900;
+  border:none;
   border-radius:14px;
-  padding:9px 11px;
-  font-size:12px;
-  box-shadow:0 10px 20px rgba(255,138,28,.22);
-}
-
-.btn-secondary{
-  background:#e8f2ff;
-  color:var(--navy);
+  padding:10px 14px;
   font-weight:900;
-  border-radius:13px;
-  padding:9px 11px;
-  font-size:12px;
+  cursor:pointer;
 }
 
 .bottle-grid{
-  padding:12px;
   display:grid;
   grid-template-columns:repeat(8,1fr);
   gap:8px;
-  align-items:end;
+  padding:12px;
 }
 
 .bottle-card{
   text-align:center;
-  background:linear-gradient(180deg,#ffffff,#f7fbff);
+  background:#f8fbff;
   border:1px solid var(--line);
-  border-radius:17px;
-  padding:8px 5px;
-  min-width:0;
-  position:relative;
+  border-radius:16px;
+  padding:8px 4px;
 }
 
 .bottle-card.low{
-  border-color:rgba(255,77,94,.45);
-  box-shadow:0 0 0 4px rgba(255,77,94,.06);
+  border-color:rgba(255,77,94,.5);
 }
 
 .bottle-label{
   font-size:10px;
   font-weight:900;
-  color:var(--navy);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
 
 .bottle{
-  height:118px;
-  width:38px;
-  margin:6px auto 0;
+  width:40px;
+  height:120px;
+  margin:auto;
   position:relative;
 }
 
 .cap{
-  width:21px;
+  width:20px;
   height:10px;
-  margin:0 auto;
-  border-radius:7px 7px 3px 3px;
-  border:2px solid #aebccd;
-  border-bottom:none;
-  background:#d8e2ec;
+  margin:auto;
+  border-radius:6px 6px 0 0;
+  background:#cfd9e3;
 }
 
 .body{
-  height:108px;
-  border:3px solid #c6d2df;
-  background:#f5f9fd;
-  border-radius:13px 13px 17px 17px;
+  height:110px;
+  border:3px solid #c7d2df;
+  border-radius:12px 12px 18px 18px;
   overflow:hidden;
+  background:#f5f9fd;
   position:relative;
 }
 
@@ -340,66 +241,20 @@ button{border:none;cursor:pointer}
   left:0;
   right:0;
   bottom:0;
-  height:50%;
-  background:var(--c);
-  transition:.3s ease;
-}
-
-.fill:before{
-  content:"";
-  position:absolute;
-  left:-20%;
-  top:-7px;
-  width:140%;
-  height:15px;
-  background:rgba(255,255,255,.35);
-  border-radius:50%;
-}
-
-.shine{
-  position:absolute;
-  top:10px;
-  left:7px;
-  width:7px;
-  height:60px;
-  border-radius:99px;
-  background:rgba(255,255,255,.5);
 }
 
 .percent{
-  margin-top:5px;
-  font-family:var(--mono);
-  color:var(--navy);
+  margin-top:6px;
   font-size:12px;
   font-weight:900;
 }
 
 .ml{
-  margin-top:1px;
+  font-size:9px;
   color:var(--muted);
-  font-size:9px;
-  font-weight:900;
 }
 
-.rate{
-  margin-top:3px;
-  color:var(--muted2);
-  font-size:9px;
-  font-weight:900;
-}
-
-.badge-low{
-  margin-top:4px;
-  display:inline-block;
-  font-size:8px;
-  font-weight:900;
-  color:var(--red);
-  background:#ffe8ea;
-  border-radius:999px;
-  padding:3px 5px;
-}
-
-/* ===== KPIS ===== */
+/* CARDS */
 
 .kpi-grid{
   margin-top:10px;
@@ -409,193 +264,48 @@ button{border:none;cursor:pointer}
 }
 
 .card{
-  background:var(--card);
+  background:white;
   border:1px solid var(--line);
   border-radius:18px;
-  box-shadow:var(--shadow);
   padding:12px;
+  box-shadow:var(--shadow);
 }
 
-.kpi small{
-  display:block;
-  color:var(--muted);
+.card small{
   font-size:10px;
-  font-weight:900;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-}
-
-.kpi strong{
-  margin-top:5px;
-  display:block;
-  color:var(--navy);
-  font-size:22px;
-  line-height:1;
-  font-weight:900;
-  letter-spacing:-.05em;
-}
-
-.kpi span{
-  display:block;
-  margin-top:5px;
-  font-size:11px;
   color:var(--muted);
-  font-weight:800;
+  text-transform:uppercase;
+  font-weight:900;
 }
 
-/* ===== ALERTAS / ERRORES ===== */
+.card strong{
+  display:block;
+  margin-top:6px;
+  font-size:24px;
+}
+
+/* TABLE */
 
 .section-title{
-  margin:16px 0 8px;
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-end;
-  gap:10px;
+  margin:18px 0 8px;
 }
 
 .section-title h2{
-  color:var(--navy);
-  font-size:17px;
-  letter-spacing:-.04em;
+  font-size:18px;
 }
 
 .section-title p{
-  color:var(--muted);
-  font-size:11px;
-  font-weight:800;
-  margin-top:2px;
-}
-
-.ops-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  align-items:start;
-}
-
-.alert-list,
-.error-list{
-  display:grid;
-  gap:8px;
-}
-
-.alert{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:16px;
-  padding:10px;
-  display:flex;
-  gap:9px;
-  align-items:flex-start;
-  box-shadow:0 7px 18px rgba(7,17,31,.05);
-}
-
-.alert-icon{
-  width:27px;
-  height:27px;
-  border-radius:11px;
-  display:grid;
-  place-items:center;
-  font-weight:900;
-  flex:0 0 auto;
-}
-
-.alert.ok .alert-icon{background:#e8fff6;color:#16875d}
-.alert.warn .alert-icon{background:#fff6d9;color:#9b6a00}
-.alert.danger .alert-icon{background:#ffe8ea;color:#d9273a}
-
-.alert strong{
-  display:block;
-  font-size:13px;
-  color:var(--navy);
-}
-
-.alert span{
-  display:block;
-  margin-top:2px;
-  color:var(--muted);
-  font-size:11px;
-  font-weight:800;
-  line-height:1.35;
-}
-
-.error-panel{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:20px;
-  box-shadow:var(--shadow);
-  overflow:hidden;
-}
-
-.error-head{
-  background:var(--navy);
-  color:white;
-  padding:11px 12px;
-  display:flex;
-  justify-content:space-between;
-  gap:8px;
-  align-items:center;
-}
-
-.error-head strong{
-  font-size:13px;
-}
-
-.error-count{
-  background:rgba(255,255,255,.12);
-  border:1px solid rgba(255,255,255,.14);
-  border-radius:999px;
-  padding:5px 8px;
-  font-size:11px;
-  font-weight:900;
-}
-
-.error-row{
-  padding:10px 12px;
-  border-bottom:1px solid var(--line);
-}
-
-.error-row:last-child{border-bottom:none}
-
-.error-row strong{
-  display:block;
-  font-size:13px;
-  color:var(--navy);
-}
-
-.error-row span{
-  display:block;
-  margin-top:3px;
   font-size:11px;
   color:var(--muted);
-  font-weight:800;
-  line-height:1.35;
 }
-
-.sev{
-  display:inline-flex;
-  margin-top:7px;
-  border-radius:999px;
-  padding:4px 7px;
-  font-size:10px;
-  font-weight:900;
-}
-
-.sev.alta{background:#ffe8ea;color:#d9273a}
-.sev.media{background:#fff6d9;color:#9b6a00}
-.sev.baja{background:#e8fff6;color:#16875d}
-
-/* ===== TABLAS ===== */
 
 .table-card{
-  background:var(--card);
+  background:white;
   border:1px solid var(--line);
   border-radius:20px;
+  overflow:auto;
   box-shadow:var(--shadow);
-  overflow:hidden;
 }
-
-.table-scroll{overflow:auto}
 
 table{
   width:100%;
@@ -605,348 +315,91 @@ table{
 th{
   background:var(--navy);
   color:white;
-  text-align:left;
-  padding:11px;
+  padding:10px;
   font-size:10px;
   text-transform:uppercase;
-  letter-spacing:.05em;
-  white-space:nowrap;
 }
 
 td{
-  padding:11px;
+  padding:10px;
   border-bottom:1px solid var(--line);
   font-size:12px;
-  color:#182a3d;
-  vertical-align:middle;
-}
-
-tr:hover td{background:#f8fbff}
-
-.channel{
-  display:inline-flex;
-  gap:7px;
-  align-items:center;
-  font-weight:900;
-  color:var(--navy);
-}
-
-.channel-dot{
-  width:11px;
-  height:11px;
-  border-radius:99px;
-  background:var(--c);
-  border:1px solid rgba(0,0,0,.15);
 }
 
 .status{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:999px;
   padding:5px 8px;
+  border-radius:999px;
   font-size:10px;
   font-weight:900;
-  white-space:nowrap;
 }
 
-.status.Listo{background:#e8fff6;color:#16875d}
-.status.Imprimiendo{background:#fff1e3;color:#b35300}
-.status.Error{background:#ffe8ea;color:#d9273a}
-.status.Pausado{background:#fff6d9;color:#9b6a00}
+.status.Listo{
+  background:#e8fff6;
+  color:#16875d;
+}
+
+.status.Imprimiendo{
+  background:#fff1e3;
+  color:#b35300;
+}
+
+.status.Error{
+  background:#ffe8ea;
+  color:#d9273a;
+}
 
 .order-link{
   color:var(--blue);
   font-weight:900;
-  text-decoration:underline;
   cursor:pointer;
 }
 
-.btn-detail{
-  background:#e8f2ff;
-  color:var(--navy);
-  border-radius:11px;
-  padding:7px 9px;
-  font-size:11px;
-  font-weight:900;
-  white-space:nowrap;
-}
-
-/* ===== FILTROS ===== */
-
-.filters{
-  display:grid;
-  grid-template-columns:1.1fr 1fr 1fr 1fr 1fr auto;
-  gap:8px;
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:18px;
-  padding:10px;
-  box-shadow:var(--shadow);
-  margin-bottom:9px;
-}
-
-.field label{
-  display:block;
-  font-size:9px;
-  color:var(--muted);
-  font-weight:900;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  margin-bottom:4px;
-}
-
-.field input,
-.field select{
-  width:100%;
-  border:1px solid var(--line);
-  background:var(--card2);
-  border-radius:12px;
-  padding:9px;
-  outline:none;
-  color:var(--text);
-  font-size:12px;
-  font-weight:800;
-}
-
-.field input:focus,
-.field select:focus{
-  border-color:rgba(255,138,28,.7);
-  box-shadow:0 0 0 4px rgba(255,138,28,.10);
-}
-
-/* ===== MODAL ===== */
-
-.modal-backdrop{
-  position:fixed;
-  inset:0;
-  z-index:100;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:12px;
-  background:rgba(7,17,31,.58);
-}
-
-.modal-backdrop.show{display:flex}
-
-.modal{
-  width:min(1000px,100%);
-  max-height:92vh;
-  overflow:auto;
-  background:white;
-  border-radius:24px;
-  box-shadow:0 30px 90px rgba(0,0,0,.32);
-}
-
-.modal-head{
-  position:sticky;
-  top:0;
-  z-index:5;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding:12px;
-  background:white;
-  border-bottom:1px solid var(--line);
-}
-
-.modal-head h3{
-  font-size:18px;
-  color:var(--navy);
-  letter-spacing:-.04em;
-}
-
-.close{
-  width:38px;
-  height:38px;
-  border-radius:13px;
-  background:#eef4fa;
-  color:var(--navy);
-  font-size:20px;
-  font-weight:900;
-}
-
-.modal-body{padding:12px}
-
-.detail-layout{
-  display:grid;
-  grid-template-columns:300px 1fr;
-  gap:12px;
-}
-
-.preview{
-  width:300px;
-  height:300px;
-  border-radius:20px;
-  background:
-    radial-gradient(circle at 70% 20%, rgba(255,138,28,.25), transparent 28%),
-    linear-gradient(135deg,rgba(22,136,255,.16),rgba(7,17,31,.08)),
-    repeating-linear-gradient(45deg,#f9fbfe 0,#f9fbfe 12px,#eef4fa 12px,#eef4fa 24px);
-  border:2px dashed #c3d0de;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  padding:18px;
-  color:var(--navy);
-  font-weight:900;
-}
-
-.detail-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:8px;
-}
-
-.info-box{
-  background:#f8fbff;
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:10px;
-}
-
-.info-box small{
-  display:block;
-  color:var(--muted);
-  font-size:9px;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  font-weight:900;
-  margin-bottom:4px;
-}
-
-.info-box strong{
-  color:var(--navy);
-  font-size:12px;
-  font-weight:900;
-}
-
-.modal-section{margin-top:12px}
-.modal-section h4{font-size:14px;color:var(--navy);margin-bottom:8px}
-
-/* ===== RESPONSIVE ===== */
+/* RESPONSIVE */
 
 @media(max-width:980px){
-  .machine-strip{grid-template-columns:repeat(2,1fr)}
-  .bottle-grid{grid-template-columns:repeat(4,1fr)}
-  .kpi-grid{grid-template-columns:repeat(2,1fr)}
-  .ops-grid{grid-template-columns:1fr}
-  .filters{grid-template-columns:repeat(2,1fr)}
-  .filters .btn-secondary{grid-column:1 / -1}
-  table{min-width:850px}
-  .detail-layout{grid-template-columns:1fr}
-  .preview{width:100%;height:240px}
-}
-
-@media(max-width:430px){
-  .app{padding:8px}
-
-  .topbar-inner{
-    grid-template-columns:1fr;
-    padding:8px;
-  }
-
-  .head-right{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-  }
-
-  .pill,.clock{
-    width:100%;
-    justify-content:center;
-    font-size:11px;
-  }
-
-  .brand h1{font-size:18px}
-  .brand p{font-size:10px}
 
   .machine-strip{
-    margin-top:8px;
     grid-template-columns:repeat(2,1fr);
-    border-radius:17px;
-    padding:8px;
-    gap:7px;
-  }
-
-  .strip-item{
-    padding:8px;
-    border-radius:13px;
-  }
-
-  .strip-item strong{font-size:14px}
-
-  .ink-board{
-    margin-top:8px;
-    border-radius:18px;
-  }
-
-  .board-head{
-    padding:10px;
-    display:grid;
-    grid-template-columns:1fr;
-  }
-
-  .board-actions{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-  }
-
-  .mini-total,.btn-main{
-    width:100%;
-    text-align:center;
-    justify-content:center;
   }
 
   .bottle-grid{
-    padding:9px;
-    gap:6px;
     grid-template-columns:repeat(4,1fr);
   }
 
-  .bottle-card{
-    border-radius:14px;
-    padding:7px 3px;
+  .kpi-grid{
+    grid-template-columns:repeat(2,1fr);
   }
 
-  .bottle{
-    height:105px;
-    width:34px;
+  table{
+    min-width:900px;
+  }
+}
+
+@media(max-width:430px){
+
+  .topbar-inner{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
   }
 
-  .body{
-    height:96px;
-    border-radius:12px 12px 15px 15px;
+  .right-head{
+    width:100%;
+    justify-content:space-between;
   }
 
-  .cap{height:9px;width:19px}
+  .machine-strip{
+    grid-template-columns:repeat(2,1fr);
+  }
 
-  .percent{font-size:11px}
-  .ml,.rate{font-size:8px}
+  .bottle-grid{
+    grid-template-columns:repeat(4,1fr);
+  }
 
   .kpi-grid{
     grid-template-columns:repeat(2,1fr);
-    gap:7px;
   }
 
-  .card{
-    border-radius:15px;
-    padding:10px;
-  }
-
-  .kpi strong{font-size:19px}
-  .kpi span{font-size:10px}
-
-  .section-title{
-    margin-top:14px;
-    align-items:flex-start;
-    flex-direction:column;
-  }
-
-  .filters{grid-template-columns:1fr}
-
-  .detail-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -955,822 +408,283 @@ tr:hover td{background:#f8fbff}
 
 <header class="topbar">
   <div class="topbar-inner">
+
     <div class="brand">
       <div class="logo">TV</div>
       <div>
         <h1>Tuttovinilos · UCJV330</h1>
-        <p>Panel operativo de tinta, producción, errores y órdenes UV</p>
+        <p>Panel operativo UV industrial</p>
       </div>
     </div>
 
-    <div class="head-right">
-      <div id="machineState" class="pill printing">
-        <span class="dot"></span>
-        <span id="machineStateText">Imprimiendo</span>
+    <div class="right-head">
+      <div class="pill">
+        <div class="dot"></div>
+        Imprimiendo
       </div>
-      <div class="clock" id="clock">--/--/---- --:--</div>
+
+      <div class="clock" id="clock"></div>
     </div>
+
   </div>
 </header>
 
 <main class="app">
 
   <section class="machine-strip">
-    <div class="strip-item">
+
+    <div class="strip">
       <small>Trabajo actual</small>
-      <strong id="stripTrabajo">UV-0003</strong>
+      <strong>UV-0010</strong>
     </div>
-    <div class="strip-item">
+
+    <div class="strip">
       <small>Operador</small>
-      <strong id="stripOperador">Rubén</strong>
+      <strong>Rubén</strong>
     </div>
-    <div class="strip-item">
+
+    <div class="strip">
       <small>Producción hoy</small>
-      <strong id="stripM2">18.60 m²</strong>
+      <strong>29.8 m²</strong>
     </div>
-    <div class="strip-item">
+
+    <div class="strip">
       <small>Material activo</small>
-      <strong id="stripMaterial">Vinil blanco</strong>
+      <strong>Vinil blanco mate</strong>
     </div>
+
   </section>
 
   <section class="ink-board">
+
     <div class="board-head">
+
       <div>
         <h2>Niveles de tinta</h2>
-        <p>Cian · Magenta · Yellow · Negro · Clear · Clear · White · White</p>
+        <p>C · M · Y · K · CL1 · CL2 · W1 · W2</p>
       </div>
+
       <div class="board-actions">
-        <div class="mini-total" id="inkTotalMini">894 ml hoy</div>
-        <button class="btn-main" id="simulateBtn">+ Simular impresión</button>
+        <button class="btn">+ Simular impresión</button>
       </div>
+
     </div>
 
-    <div class="bottle-grid" id="bottleGrid"></div>
+    <div class="bottle-grid">
+
+      <div class="bottle-card">
+        <div class="bottle-label">C</div>
+        <div class="bottle">
+          <div class="cap"></div>
+          <div class="body">
+            <div class="fill" style="height:68%;background:#00a3ff"></div>
+          </div>
+        </div>
+        <div class="percent">68%</div>
+        <div class="ml">680 ml</div>
+      </div>
+
+      <div class="bottle-card">
+        <div class="bottle-label">M</div>
+        <div class="bottle">
+          <div class="cap"></div>
+          <div class="body">
+            <div class="fill" style="height:59%;background:#e441a3"></div>
+          </div>
+        </div>
+        <div class="percent">59%</div>
+        <div class="ml">590 ml</div>
+      </div>
+
+      <div class="bottle-card">
+        <div class="bottle-label">Y</div>
+        <div class="bottle">
+          <div class="cap"></div>
+          <div class="body">
+            <div class="fill" style="height:76%;background:#ffd32a"></div>
+          </div>
+        </div>
+        <div class="percent">76%</div>
+        <div class="ml">760 ml</div>
+      </div>
+
+      <div class="bottle-card">
+        <div class="bottle-label">K</div>
+        <div class="bottle">
+          <div class="cap"></div>
+          <div class="body">
+            <div class="fill" style="height:52%;background:#111827"></div>
+          </div>
+        </div>
+        <div class="percent">52%</div>
+        <div class="ml">520 ml</div>
+      </div>
+
+      <div class="bottle-card low">
+        <div class="bottle-label">CL1</div>
+        <div class="bottle">
+          <div class="cap"></div>
+          <div class="body">
+            <div class="fill" style="height:19%;background:#9dd7ff"></div>
+          </div>
+        </div>
+        <div class="percent">19%</div>
+        <div class="ml">190 ml</div>
+      </div>
+
+      <div class="bottle-card">
+        <div class="bottle-label">CL2</div>
+        <div class="bottle">
+          <div class="cap"></div>
+          <div class="body">
+            <div class="fill" style="height:36%;background:#bfe8ff"></div>
+          </div>
+        </div>
+        <div class="percent">36%</div>
+        <div class="ml">360 ml</div>
+      </div>
+
+      <div class="bottle-card">
+        <div class="bottle-label">W1</div>
+        <div class="bottle">
+          <div class="cap"></div>
+          <div class="body">
+            <div class="fill" style="height:29%;background:#dde6ee"></div>
+          </div>
+        </div>
+        <div class="percent">29%</div>
+        <div class="ml">290 ml</div>
+      </div>
+
+      <div class="bottle-card low">
+        <div class="bottle-label">W2</div>
+        <div class="bottle">
+          <div class="cap"></div>
+          <div class="body">
+            <div class="fill" style="height:16%;background:#f4f7fb"></div>
+          </div>
+        </div>
+        <div class="percent">16%</div>
+        <div class="ml">160 ml</div>
+      </div>
+
+    </div>
+
   </section>
 
-  <section class="kpi-grid" id="kpiGrid"></section>
+  <section class="kpi-grid">
 
-  <div class="section-title">
-    <div>
-      <h2>Alertas y errores</h2>
-      <p>Estado operativo simulado de la UCJV330.</p>
+    <div class="card">
+      <small>Trabajos hoy</small>
+      <strong>10</strong>
     </div>
-  </div>
 
-  <section class="ops-grid">
-    <div class="alert-list" id="alerts"></div>
+    <div class="card">
+      <small>Tiempo activo</small>
+      <strong>7.8 h</strong>
+    </div>
 
-    <aside class="error-panel">
-      <div class="error-head">
-        <strong>Registro de errores</strong>
-        <span class="error-count" id="errorCount">0 activos</span>
-      </div>
-      <div id="errorList"></div>
-    </aside>
+    <div class="card">
+      <small>Tinta productiva</small>
+      <strong>1497 ml</strong>
+    </div>
+
+    <div class="card">
+      <small>Tinta mantenimiento</small>
+      <strong>219 ml</strong>
+    </div>
+
   </section>
 
   <div class="section-title">
-    <div>
-      <h2>Consumo acumulado</h2>
-      <p>Consumo del día, semana, mes y costo estimado por canal.</p>
-    </div>
+    <h2>Historial de impresiones</h2>
+    <p>10 pedidos simulados con errores, limpiezas y mantenimiento</p>
   </div>
 
   <section class="table-card">
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Canal</th>
-            <th>Hoy</th>
-            <th>Semana</th>
-            <th>Mes</th>
-            <th>Consumo/h</th>
-            <th>Costo hoy</th>
-          </tr>
-        </thead>
-        <tbody id="consumptionBody"></tbody>
-      </table>
-    </div>
-  </section>
 
-  <div class="section-title">
-    <div>
-      <h2>Historial de impresiones</h2>
-      <p>Órdenes simuladas con ficha técnica por trabajo.</p>
-    </div>
-  </div>
+    <table>
 
-  <section class="filters">
-    <div class="field">
-      <label>Cliente</label>
-      <input id="filterCliente" type="text" placeholder="Buscar cliente">
-    </div>
-    <div class="field">
-      <label>Material</label>
-      <select id="filterMaterial"><option value="">Todos</option></select>
-    </div>
-    <div class="field">
-      <label>Modo</label>
-      <select id="filterModo"><option value="">Todos</option></select>
-    </div>
-    <div class="field">
-      <label>Estado</label>
-      <select id="filterEstado"><option value="">Todos</option></select>
-    </div>
-    <div class="field">
-      <label>Fecha</label>
-      <input id="filterFecha" type="date">
-    </div>
-    <button class="btn-secondary" id="clearFilters">Limpiar</button>
-  </section>
+      <thead>
+        <tr>
+          <th>Nº Orden</th>
+          <th>Cliente</th>
+          <th>Material</th>
+          <th>m²</th>
+          <th>Modo</th>
+          <th>Estado</th>
+          <th>Operador</th>
+        </tr>
+      </thead>
 
-  <section class="table-card">
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Nº orden</th>
-            <th>Fecha/hora</th>
-            <th>Cliente</th>
-            <th>Archivo</th>
-            <th>Material</th>
-            <th>m²</th>
-            <th>Modo</th>
-            <th>Estado</th>
-            <th>Operador</th>
-            <th>Acción</th>
-          </tr>
-        </thead>
-        <tbody id="historyBody"></tbody>
-      </table>
-    </div>
+      <tbody>
+
+        <tr>
+          <td><span class="order-link">UV-0010</span></td>
+          <td>OWC</td>
+          <td>Vinil blanco mate</td>
+          <td>3.9</td>
+          <td>White+Color+Clear</td>
+          <td><span class="status Imprimiendo">Imprimiendo</span></td>
+          <td>Rubén</td>
+        </tr>
+
+        <tr>
+          <td><span class="order-link">UV-0009</span></td>
+          <td>Toyo Fox</td>
+          <td>Holográfico</td>
+          <td>2.4</td>
+          <td>Color+Clear</td>
+          <td><span class="status Listo">Listo</span></td>
+          <td>Chico</td>
+        </tr>
+
+        <tr>
+          <td><span class="order-link">UV-0008</span></td>
+          <td>BK3</td>
+          <td>Clear brillante</td>
+          <td>3.2</td>
+          <td>White+Color</td>
+          <td><span class="status Listo">Listo</span></td>
+          <td>Roberto</td>
+        </tr>
+
+        <tr>
+          <td><span class="order-link">UV-0002</span></td>
+          <td>Café Valle Fresco</td>
+          <td>Clear brillante</td>
+          <td>3.6</td>
+          <td>White+Color</td>
+          <td><span class="status Error">Error</span></td>
+          <td>Roberto</td>
+        </tr>
+
+      </tbody>
+
+    </table>
+
   </section>
 
 </main>
 
-<div class="modal-backdrop" id="modalBackdrop">
-  <div class="modal">
-    <div class="modal-head">
-      <h3 id="modalTitle">Detalle de orden</h3>
-      <button class="close" id="closeModal">×</button>
-    </div>
-    <div class="modal-body" id="modalBody"></div>
-  </div>
-</div>
-
 <script>
-/* =========================================================
-   DATOS SIMULADOS
-   ========================================================= */
-
-const TANK_CAPACITY_ML = 1000;
-
-const COST_PER_ML = {
-  C: 0.09,
-  M: 0.09,
-  Y: 0.09,
-  K: 0.085,
-  Clear1: 0.13,
-  Clear2: 0.13,
-  White1: 0.14,
-  White2: 0.14
-};
-
-let machine = {
-  estado: "Imprimiendo",
-  produccionHoy: 18.6,
-  trabajosHoy: 7,
-  tiempoActivo: 6.4,
-  tiempoDetenido: 1.25,
-  consumoTotal: 894,
-  materialMasUsado: "Vinil blanco mate",
-  operadorActivo: "Rubén",
-  trabajoActual: "UV-0003 · Addigrain",
-  materialActivo: "Vinil blanco mate",
-  temperatura: "24°C",
-  humedad: "58%",
-  cola: 4
-};
-
-let bottles = [
-  {key:"C", label:"C", name:"Cian", percent:72, color:"#00a3ff", rate:18},
-  {key:"M", label:"M", name:"Magenta", percent:64, color:"#e441a3", rate:14},
-  {key:"Y", label:"Y", name:"Yellow", percent:81, color:"#ffd32a", rate:12},
-  {key:"K", label:"K", name:"Negro", percent:58, color:"#111827", rate:21},
-  {key:"Clear1", label:"CL1", name:"Clear 1", percent:22, color:"#9dd7ff", rate:27},
-  {key:"Clear2", label:"CL2", name:"Clear 2", percent:41, color:"#bfe8ff", rate:19},
-  {key:"White1", label:"W1", name:"White 1", percent:34, color:"#dde6ee", rate:33},
-  {key:"White2", label:"W2", name:"White 2", percent:18, color:"#f4f7fb", rate:31}
-];
-
-let consumptions = [
-  {key:"C", label:"Cian", today:120, week:620, month:2380},
-  {key:"M", label:"Magenta", today:98, week:510, month:2010},
-  {key:"Y", label:"Yellow", today:86, week:470, month:1860},
-  {key:"K", label:"Negro", today:140, week:700, month:2660},
-  {key:"Clear1", label:"Clear 1", today:110, week:440, month:1540},
-  {key:"Clear2", label:"Clear 2", today:80, week:340, month:1380},
-  {key:"White1", label:"White 1", today:140, week:510, month:1710},
-  {key:"White2", label:"White 2", today:120, week:410, month:1690}
-];
-
-let errors = [
-  {
-    tipo:"Media skew",
-    severidad:"alta",
-    hora:"09:58",
-    orden:"UV-0001",
-    descripcion:"Desviación de material detectada durante impresión. Trabajo marcado como error.",
-    accion:"Revisar alineación del rollo y presión de pinch rollers."
-  },
-  {
-    tipo:"White 2 bajo",
-    severidad:"media",
-    hora:"15:31",
-    orden:"Sistema",
-    descripcion:"Botella White 2 por debajo del 20%. Riesgo en trabajos con base blanca.",
-    accion:"Preparar reposición antes de imprimir trabajos largos."
-  },
-  {
-    tipo:"Pausa operador",
-    severidad:"baja",
-    hora:"12:44",
-    orden:"UV-0002",
-    descripcion:"Pausa manual registrada durante revisión de salida.",
-    accion:"Sin acción crítica."
-  }
-];
-
-let orders = [
-  {
-    id:"UV-0003",
-    fecha:"2026-05-14T15:42:00",
-    cliente:"Addigrain",
-    archivo:"etiquetas_addigrain_50x70.pdf",
-    material:"Vinil blanco mate",
-    m2:4.8,
-    modo:"White+Color+Clear",
-    estado:"Imprimiendo",
-    operador:"Rubén",
-    inicio:"2026-05-14 15:42",
-    fin:"En proceso",
-    duracion:"38 min",
-    icc:"Mimaki_UCJV330_VinilMate_v3.icc",
-    resolucion:"1200 x 1200 dpi",
-    pass:"16 pass",
-    pullback:"Sí",
-    rollo:"137 cm",
-    largo:"3.50 m",
-    velocidad:"7.6 m²/h",
-    temperatura:"24°C",
-    humedad:"58%",
-    tinta:{C:32,M:28,Y:24,K:35,Clear1:31,Clear2:27,White1:44,White2:38},
-    nozzle:"OK",
-    limpieza:"No",
-    errores:"ninguno"
-  },
-  {
-    id:"UV-0002",
-    fecha:"2026-05-14T12:18:00",
-    cliente:"Framed",
-    archivo:"stickers_framed_holografico.ai",
-    material:"Holográfico",
-    m2:2.7,
-    modo:"Color+Clear",
-    estado:"Listo",
-    operador:"Chico",
-    inicio:"2026-05-14 12:18",
-    fin:"2026-05-14 13:04",
-    duracion:"46 min",
-    icc:"Mimaki_Holografico_Clear_v2.icc",
-    resolucion:"900 x 1200 dpi",
-    pass:"12 pass",
-    pullback:"No",
-    rollo:"137 cm",
-    largo:"1.98 m",
-    velocidad:"5.8 m²/h",
-    temperatura:"25°C",
-    humedad:"57%",
-    tinta:{C:22,M:18,Y:16,K:28,Clear1:22,Clear2:22,White1:0,White2:0},
-    nozzle:"Fallo corregido",
-    limpieza:"Sí",
-    errores:"pausa operador"
-  },
-  {
-    id:"UV-0001",
-    fecha:"2026-05-14T09:10:00",
-    cliente:"Café Valle Fresco",
-    archivo:"gourmet_cubo_led_3caras.pdf",
-    material:"Clear brillante",
-    m2:3.6,
-    modo:"White+Color",
-    estado:"Error",
-    operador:"Roberto",
-    inicio:"2026-05-14 09:10",
-    fin:"2026-05-14 10:02",
-    duracion:"52 min",
-    icc:"Mimaki_Clear_WhiteBase_v1.icc",
-    resolucion:"1200 x 900 dpi",
-    pass:"16 pass",
-    pullback:"Sí",
-    rollo:"137 cm",
-    largo:"2.62 m",
-    velocidad:"4.9 m²/h",
-    temperatura:"24°C",
-    humedad:"60%",
-    tinta:{C:38,M:31,Y:29,K:42,Clear1:0,Clear2:0,White1:48,White2:44},
-    nozzle:"Fallo leve",
-    limpieza:"Sí",
-    errores:"media skew"
-  }
-];
-
-/* =========================================================
-   FUNCIONES BASE
-   ========================================================= */
-
-function money(v){ return "$" + Number(v).toFixed(2); }
-
-function fmtDate(iso){
-  const d = new Date(iso);
-  return d.toLocaleString("es-VE", {
-    year:"numeric", month:"2-digit", day:"2-digit",
-    hour:"2-digit", minute:"2-digit"
-  });
-}
-
-function totalInk(order){
-  return Object.values(order.tinta).reduce((a,b)=>a+b,0);
-}
-
-function orderCost(order){
-  return Object.entries(order.tinta).reduce((acc,[key,ml])=>{
-    return acc + ml * (COST_PER_ML[key] || 0);
-  },0);
-}
-
-function bottleColor(key){
-  const b = bottles.find(x=>x.key===key);
-  return b ? b.color : "#ccc";
-}
-
-function bottleName(key){
-  const b = bottles.find(x=>x.key===key);
-  return b ? b.name : key;
-}
-
-function getNextOrderId(){
-  const nums = orders.map(o => Number(o.id.replace("UV-","")));
-  return "UV-" + String(Math.max(...nums) + 1).padStart(4,"0");
-}
-
-/* =========================================================
-   RENDER
-   ========================================================= */
-
 function updateClock(){
   const now = new Date();
-  document.getElementById("clock").textContent = now.toLocaleString("es-VE", {
-    weekday:"short",
-    day:"2-digit",
-    month:"2-digit",
-    hour:"2-digit",
-    minute:"2-digit",
-    second:"2-digit"
-  });
+
+  document.getElementById("clock").innerHTML =
+    now.toLocaleString("es-VE",{
+      weekday:"short",
+      day:"2-digit",
+      month:"2-digit",
+      hour:"2-digit",
+      minute:"2-digit",
+      second:"2-digit"
+    });
 }
 
-function renderMachineState(){
-  const pill = document.getElementById("machineState");
-  const text = document.getElementById("machineStateText");
-
-  text.textContent = machine.estado;
-  pill.className = "pill";
-
-  if(machine.estado === "Imprimiendo") pill.classList.add("printing");
-  if(machine.estado === "Error") pill.classList.add("error");
-}
-
-function renderStrip(){
-  document.getElementById("stripTrabajo").textContent = machine.trabajoActual.split(" · ")[0];
-  document.getElementById("stripOperador").textContent = machine.operadorActivo;
-  document.getElementById("stripM2").textContent = machine.produccionHoy.toFixed(2) + " m²";
-  document.getElementById("stripMaterial").textContent = machine.materialActivo;
-  document.getElementById("inkTotalMini").textContent = machine.consumoTotal.toFixed(0) + " ml hoy";
-}
-
-function renderBottles(){
-  document.getElementById("bottleGrid").innerHTML = bottles.map(b=>{
-    const ml = Math.round((b.percent/100) * TANK_CAPACITY_ML);
-    const low = b.percent < 25;
-
-    return `
-      <article class="bottle-card ${low ? "low" : ""}">
-        <div class="bottle-label">${b.label}</div>
-        <div class="bottle" title="${b.name}">
-          <div class="cap"></div>
-          <div class="body">
-            <div class="fill" style="--c:${b.color};height:${b.percent}%"></div>
-            <div class="shine"></div>
-          </div>
-        </div>
-        <div class="percent">${b.percent}%</div>
-        <div class="ml">${ml} ml</div>
-        <div class="rate">${b.rate} ml/h</div>
-        ${low ? `<span class="badge-low">BAJA</span>` : ""}
-      </article>
-    `;
-  }).join("");
-}
-
-function renderKPIs(){
-  const costToday = consumptions.reduce((acc,c)=>acc + c.today*(COST_PER_ML[c.key] || 0),0);
-
-  const kpis = [
-    ["Trabajos hoy", machine.trabajosHoy, "Órdenes procesadas"],
-    ["Tiempo activo", machine.tiempoActivo.toFixed(1)+" h", "Máquina produciendo"],
-    ["Tiempo detenido", machine.tiempoDetenido.toFixed(1)+" h", "Pausas y espera"],
-    ["Costo tinta hoy", money(costToday), "Estimado"],
-    ["Cola pendiente", machine.cola, "Trabajos en espera"],
-    ["Temp. sala", machine.temperatura, "Ambiente"],
-    ["Humedad", machine.humedad, "Ambiente"],
-    ["Material más usado", machine.materialMasUsado, "Según historial"]
-  ];
-
-  document.getElementById("kpiGrid").innerHTML = kpis.map(k=>`
-    <article class="card kpi">
-      <small>${k[0]}</small>
-      <strong>${k[1]}</strong>
-      <span>${k[2]}</span>
-    </article>
-  `).join("");
-}
-
-function renderAlerts(){
-  const lowWhite = bottles.filter(b => b.key.includes("White") && b.percent < 25);
-  const lowClear = bottles.filter(b => b.key.includes("Clear") && b.percent < 25);
-  const hasError = orders.some(o => o.estado === "Error");
-  const stoppedLong = machine.tiempoDetenido > 1;
-
-  const alerts = [
-    lowWhite.length
-      ? ["danger","!","White bajo", lowWhite.map(b=>`${b.name}: ${b.percent}%`).join(" · ")]
-      : ["ok","✓","White estable","Ambas botellas white están en rango."],
-
-    lowClear.length
-      ? ["danger","!","Clear bajo", lowClear.map(b=>`${b.name}: ${b.percent}%`).join(" · ")]
-      : ["ok","✓","Clear estable","Ambas botellas clear están en rango."],
-
-    hasError
-      ? ["danger","!","Trabajo con error","Existe una orden marcada con error. Revisar registro."]
-      : ["ok","✓","Sin errores críticos","No hay errores activos en trabajos."],
-
-    stoppedLong
-      ? ["warn","!","Tiempo detenido alto",`${machine.tiempoDetenido.toFixed(1)} horas detenido hoy.`]
-      : ["ok","✓","Detención normal",`${machine.tiempoDetenido.toFixed(1)} horas detenido hoy.`]
-  ];
-
-  document.getElementById("alerts").innerHTML = alerts.map(a=>`
-    <article class="alert ${a[0]}">
-      <div class="alert-icon">${a[1]}</div>
-      <div>
-        <strong>${a[2]}</strong>
-        <span>${a[3]}</span>
-      </div>
-    </article>
-  `).join("");
-}
-
-function renderErrors(){
-  const active = errors.filter(e=>e.severidad !== "baja").length;
-  document.getElementById("errorCount").textContent = active + " activos";
-
-  document.getElementById("errorList").innerHTML = errors.map(e=>`
-    <div class="error-row">
-      <strong>${e.hora} · ${e.tipo}</strong>
-      <span>${e.orden} · ${e.descripcion}</span>
-      <span><b>Acción:</b> ${e.accion}</span>
-      <em class="sev ${e.severidad}">${e.severidad.toUpperCase()}</em>
-    </div>
-  `).join("");
-}
-
-function renderConsumption(){
-  document.getElementById("consumptionBody").innerHTML = consumptions.map(c=>{
-    const b = bottles.find(x=>x.key===c.key);
-    const rate = b ? b.rate : 0;
-    const cost = c.today * (COST_PER_ML[c.key] || 0);
-
-    return `
-      <tr>
-        <td>
-          <span class="channel">
-            <span class="channel-dot" style="--c:${bottleColor(c.key)}"></span>
-            ${c.label}
-          </span>
-        </td>
-        <td>${c.today.toFixed(0)} ml</td>
-        <td>${c.week.toFixed(0)} ml</td>
-        <td>${c.month.toFixed(0)} ml</td>
-        <td>${rate} ml/h</td>
-        <td><strong>${money(cost)}</strong></td>
-      </tr>
-    `;
-  }).join("");
-}
-
-function populateFilters(){
-  fillSelect("filterMaterial",[...new Set(orders.map(o=>o.material))]);
-  fillSelect("filterModo",[...new Set(orders.map(o=>o.modo))]);
-  fillSelect("filterEstado",[...new Set(orders.map(o=>o.estado))]);
-}
-
-function fillSelect(id,values){
-  const select = document.getElementById(id);
-  const current = select.value;
-  select.innerHTML = `<option value="">Todos</option>` + values.map(v=>`<option value="${v}">${v}</option>`).join("");
-  select.value = current;
-}
-
-function renderHistory(){
-  const cliente = document.getElementById("filterCliente").value.toLowerCase().trim();
-  const material = document.getElementById("filterMaterial").value;
-  const modo = document.getElementById("filterModo").value;
-  const estado = document.getElementById("filterEstado").value;
-  const fecha = document.getElementById("filterFecha").value;
-
-  const filtered = orders.filter(o=>{
-    const orderDate = o.fecha.slice(0,10);
-    return (!cliente || o.cliente.toLowerCase().includes(cliente)) &&
-           (!material || o.material === material) &&
-           (!modo || o.modo === modo) &&
-           (!estado || o.estado === estado) &&
-           (!fecha || orderDate === fecha);
-  });
-
-  document.getElementById("historyBody").innerHTML = filtered.map(o=>`
-    <tr>
-      <td><span class="order-link" onclick="openDetail('${o.id}')">${o.id}</span></td>
-      <td>${fmtDate(o.fecha)}</td>
-      <td><strong>${o.cliente}</strong></td>
-      <td>${o.archivo}</td>
-      <td>${o.material}</td>
-      <td>${o.m2.toFixed(2)}</td>
-      <td>${o.modo}</td>
-      <td><span class="status ${o.estado}">${o.estado}</span></td>
-      <td>${o.operador}</td>
-      <td><button class="btn-detail" onclick="openDetail('${o.id}')">Ver detalle</button></td>
-    </tr>
-  `).join("");
-}
-
-/* =========================================================
-   MODAL
-   ========================================================= */
-
-function info(label,value){
-  return `
-    <div class="info-box">
-      <small>${label}</small>
-      <strong>${value}</strong>
-    </div>
-  `;
-}
-
-function openDetail(id){
-  const o = orders.find(x=>x.id===id);
-  if(!o) return;
-
-  document.getElementById("modalTitle").textContent = `Ficha técnica · ${o.id}`;
-
-  const tintaRows = Object.entries(o.tinta).map(([key,ml])=>`
-    <tr>
-      <td>
-        <span class="channel">
-          <span class="channel-dot" style="--c:${bottleColor(key)}"></span>
-          ${bottleName(key)}
-        </span>
-      </td>
-      <td>${ml} ml</td>
-      <td>${money(ml * (COST_PER_ML[key] || 0))}</td>
-    </tr>
-  `).join("");
-
-  document.getElementById("modalBody").innerHTML = `
-    <div class="detail-layout">
-      <div class="preview">
-        Screenshot 300x300<br>del trabajo
-      </div>
-
-      <div>
-        <div class="modal-section">
-          <h4>Datos del trabajo</h4>
-          <div class="detail-grid">
-            ${info("Nº orden",o.id)}
-            ${info("Cliente",o.cliente)}
-            ${info("Archivo",o.archivo)}
-            ${info("Fecha inicio",o.inicio)}
-            ${info("Fecha fin",o.fin)}
-            ${info("Duración",o.duracion)}
-            ${info("Operador",o.operador)}
-            ${info("Estado",o.estado)}
-          </div>
-        </div>
-
-        <div class="modal-section">
-          <h4>Datos técnicos</h4>
-          <div class="detail-grid">
-            ${info("Perfil ICC usado",o.icc)}
-            ${info("Resolución",o.resolucion)}
-            ${info("Pass",o.pass)}
-            ${info("Modo impresión",o.modo)}
-            ${info("Pull-back printing",o.pullback)}
-            ${info("Material",o.material)}
-            ${info("Ancho de rollo",o.rollo)}
-            ${info("Largo usado",o.largo)}
-            ${info("m² usados",o.m2.toFixed(2)+" m²")}
-            ${info("Velocidad estimada",o.velocidad)}
-            ${info("Temperatura",o.temperatura)}
-            ${info("Humedad",o.humedad)}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-section">
-      <h4>Consumo de tinta</h4>
-      <section class="table-card">
-        <div class="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Canal</th>
-                <th>Consumo</th>
-                <th>Costo estimado</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${tintaRows}
-              <tr>
-                <td><strong>Total</strong></td>
-                <td><strong>${totalInk(o)} ml</strong></td>
-                <td><strong>${money(orderCost(o))}</strong></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-
-    <div class="modal-section">
-      <h4>Eventos</h4>
-      <div class="detail-grid">
-        ${info("Nozzle check",o.nozzle)}
-        ${info("Limpieza automática",o.limpieza)}
-        ${info("Errores",o.errores)}
-      </div>
-    </div>
-  `;
-
-  document.getElementById("modalBackdrop").classList.add("show");
-}
-
-function closeModal(){
-  document.getElementById("modalBackdrop").classList.remove("show");
-}
-
-/* =========================================================
-   SIMULACIÓN
-   ========================================================= */
-
-function simulateNewPrint(){
-  const clients = ["Tutto Snacks","OWC","BK3","Otra Cossa","Viajea","Toyo Fox"];
-  const materials = ["Vinil blanco mate","Clear brillante","Holográfico","Lona","Microperforado"];
-  const modos = ["Color","White+Color","Color+Clear","White+Color+Clear"];
-  const operadores = ["Roberto","Rubén","Chico","Carlos"];
-
-  const id = getNextOrderId();
-  const m2 = Number((Math.random()*3.8 + 1.2).toFixed(2));
-  const mode = modos[Math.floor(Math.random()*modos.length)];
-  const material = materials[Math.floor(Math.random()*materials.length)];
-  const cliente = clients[Math.floor(Math.random()*clients.length)];
-  const operador = operadores[Math.floor(Math.random()*operadores.length)];
-  const now = new Date();
-
-  const tinta = {
-    C: Math.round(m2 * (7 + Math.random()*4)),
-    M: Math.round(m2 * (6 + Math.random()*4)),
-    Y: Math.round(m2 * (5 + Math.random()*4)),
-    K: Math.round(m2 * (8 + Math.random()*5)),
-    Clear1: mode.includes("Clear") ? Math.round(m2 * (7 + Math.random()*4)) : 0,
-    Clear2: mode.includes("Clear") ? Math.round(m2 * (7 + Math.random()*4)) : 0,
-    White1: mode.includes("White") ? Math.round(m2 * (9 + Math.random()*5)) : 0,
-    White2: mode.includes("White") ? Math.round(m2 * (9 + Math.random()*5)) : 0
-  };
-
-  const order = {
-    id,
-    fecha:now.toISOString(),
-    cliente,
-    archivo:`${cliente.toLowerCase().replaceAll(" ","_")}_${id}.pdf`,
-    material,
-    m2,
-    modo:mode,
-    estado:"Imprimiendo",
-    operador,
-    inicio:now.toLocaleString("es-VE"),
-    fin:"En proceso",
-    duracion:"0 min",
-    icc:`Mimaki_${material.replaceAll(" ","")}_Simulado.icc`,
-    resolucion:"1200 x 1200 dpi",
-    pass: mode.includes("White") ? "16 pass" : "12 pass",
-    pullback: Math.random() > .55 ? "Sí" : "No",
-    rollo:"137 cm",
-    largo:(m2/1.37).toFixed(2) + " m",
-    velocidad:(Math.random()*3 + 5).toFixed(1) + " m²/h",
-    temperatura:"24°C",
-    humedad:"58%",
-    tinta,
-    nozzle:"OK",
-    limpieza:Math.random() > .7 ? "Sí" : "No",
-    errores:"ninguno"
-  };
-
-  orders.unshift(order);
-
-  machine.estado = "Imprimiendo";
-  machine.produccionHoy += m2;
-  machine.trabajosHoy += 1;
-  machine.tiempoActivo += 0.35;
-  machine.consumoTotal += totalInk(order);
-  machine.materialMasUsado = material;
-  machine.materialActivo = material;
-  machine.operadorActivo = operador;
-  machine.trabajoActual = `${id} · ${cliente}`;
-
-  Object.entries(tinta).forEach(([key,ml])=>{
-    const c = consumptions.find(x=>x.key===key);
-    if(c){
-      c.today += ml;
-      c.week += ml;
-      c.month += ml;
-    }
-
-    const b = bottles.find(x=>x.key===key);
-    if(b){
-      b.percent = Math.max(0, Number((b.percent - (ml / TANK_CAPACITY_ML * 100)).toFixed(1)));
-      b.rate = Math.max(1, Math.round(b.rate + Math.random()*4 - 1));
-    }
-  });
-
-  populateFilters();
-  renderAll();
-}
-
-/* =========================================================
-   EVENTOS
-   ========================================================= */
-
-function renderAll(){
-  renderMachineState();
-  renderStrip();
-  renderBottles();
-  renderKPIs();
-  renderAlerts();
-  renderErrors();
-  renderConsumption();
-  renderHistory();
-}
-
-document.getElementById("simulateBtn").addEventListener("click", simulateNewPrint);
-document.getElementById("closeModal").addEventListener("click", closeModal);
-
-document.getElementById("modalBackdrop").addEventListener("click", function(e){
-  if(e.target.id === "modalBackdrop") closeModal();
-});
-
-["filterCliente","filterMaterial","filterModo","filterEstado","filterFecha"].forEach(id=>{
-  document.getElementById(id).addEventListener("input", renderHistory);
-  document.getElementById(id).addEventListener("change", renderHistory);
-});
-
-document.getElementById("clearFilters").addEventListener("click", function(){
-  document.getElementById("filterCliente").value = "";
-  document.getElementById("filterMaterial").value = "";
-  document.getElementById("filterModo").value = "";
-  document.getElementById("filterEstado").value = "";
-  document.getElementById("filterFecha").value = "";
-  renderHistory();
-});
-
-populateFilters();
-renderAll();
 updateClock();
 setInterval(updateClock,1000);
 </script>
 
 </body>
 </html>
-
