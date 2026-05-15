@@ -1,4 +1,6 @@
-html = r'''<!DOCTYPE html>
+
+
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
@@ -8,46 +10,40 @@ html = r'''<!DOCTYPE html>
 
 <style>
 /* =========================================================
-   Dashboard UCJV330 Tuttovinilos
-   Archivo sugerido: Mimaki.html
-   Datos 100% simulados.
-   Sin Supabase. Sin RasterLink.
+   Mimaki.html · Dashboard UCJV330 Tuttovinilos
+   Datos 100% simulados. Sin Supabase. Sin RasterLink.
+   Enfoque: primero tinta, luego estado, producción, errores e historial.
    ========================================================= */
 
 *{box-sizing:border-box;margin:0;padding:0}
 
 :root{
-  --bg:#f4f7fb;
-  --bg2:#eaf1f8;
-  --surface:#ffffff;
-  --surface2:#f8fbff;
-  --ink:#07111f;
+  --bg:#eef3f8;
+  --card:#ffffff;
+  --card2:#f8fbff;
   --navy:#07111f;
   --navy2:#0d1b2f;
-  --navy3:#10233d;
-  --line:#d8e2ec;
-  --muted:#6d7f93;
-  --muted2:#9badbf;
+  --line:#d8e3ee;
+  --text:#122033;
+  --muted:#6e7f92;
+  --muted2:#9aabba;
   --orange:#ff8a1c;
-  --orange2:#ffb15e;
   --blue:#1688ff;
   --green:#20c987;
   --red:#ff4d5e;
   --yellow:#ffd166;
-  --white:#ffffff;
-  --shadow:0 18px 40px rgba(7,17,31,.10);
-  --shadow2:0 8px 20px rgba(7,17,31,.07);
-  --radius:22px;
-  --font:'Arial', 'Helvetica Neue', sans-serif;
-  --mono:'Courier New', monospace;
+  --shadow:0 10px 24px rgba(7,17,31,.08);
+  --radius:18px;
+  --mono:"Courier New", monospace;
+  --font:Arial, Helvetica, sans-serif;
 }
 
 body{
   font-family:var(--font);
   background:
-    radial-gradient(circle at top left, rgba(255,138,28,.16), transparent 30%),
-    linear-gradient(180deg,var(--bg) 0%, var(--bg2) 100%);
-  color:var(--ink);
+    radial-gradient(circle at top left,rgba(255,138,28,.11),transparent 28%),
+    linear-gradient(180deg,#f7faff 0%,var(--bg) 100%);
+  color:var(--text);
   min-height:100vh;
 }
 
@@ -57,268 +53,234 @@ button{border:none;cursor:pointer}
 .app{
   max-width:1380px;
   margin:0 auto;
-  padding:14px;
+  padding:10px;
 }
 
-/* ===========================
-   TOP BAR
-   =========================== */
+/* ===== HEADER COMPACTO ===== */
 
 .topbar{
   position:sticky;
   top:0;
   z-index:50;
-  background:rgba(244,247,251,.92);
-  backdrop-filter:blur(16px);
+  background:rgba(247,250,255,.94);
+  backdrop-filter:blur(14px);
   border-bottom:1px solid var(--line);
 }
 
 .topbar-inner{
   max-width:1380px;
   margin:0 auto;
-  padding:12px 14px;
+  padding:9px 10px;
   display:grid;
   grid-template-columns:1fr auto;
-  gap:12px;
+  gap:8px;
   align-items:center;
 }
 
 .brand{
   display:flex;
   align-items:center;
-  gap:12px;
+  gap:9px;
   min-width:0;
 }
 
-.brand-mark{
-  width:44px;
-  height:44px;
-  border-radius:16px;
-  background:linear-gradient(135deg,var(--navy),var(--navy3));
-  box-shadow:var(--shadow2);
+.logo{
+  width:38px;
+  height:38px;
+  border-radius:14px;
   display:grid;
   place-items:center;
+  background:linear-gradient(135deg,var(--navy),#12375f);
   color:white;
   font-weight:900;
-  letter-spacing:-.04em;
+  box-shadow:var(--shadow);
 }
 
-.brand-text{
-  min-width:0;
-}
-
-.brand-title{
-  font-size:22px;
-  line-height:1;
+.brand h1{
+  font-size:18px;
   color:var(--navy);
-  font-weight:900;
   letter-spacing:-.04em;
+  line-height:1;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 
-.brand-subtitle{
-  margin-top:5px;
+.brand p{
+  margin-top:4px;
+  font-size:11px;
   color:var(--muted);
-  font-size:12px;
   font-weight:800;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
-.top-actions{
+.head-right{
   display:flex;
+  gap:7px;
   align-items:center;
-  gap:10px;
 }
 
-.machine-pill{
-  min-width:142px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
+.pill{
   border:1px solid var(--line);
-  background:var(--surface);
-  color:var(--navy);
+  background:var(--card);
   border-radius:999px;
-  padding:10px 13px;
+  padding:8px 10px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  box-shadow:0 6px 16px rgba(7,17,31,.05);
+  font-size:12px;
   font-weight:900;
-  box-shadow:var(--shadow2);
+  color:var(--navy);
+  white-space:nowrap;
 }
 
-.status-dot{
-  width:10px;
-  height:10px;
-  border-radius:999px;
+.dot{
+  width:9px;
+  height:9px;
+  border-radius:50%;
   background:var(--green);
-  box-shadow:0 0 0 5px rgba(32,201,135,.12);
+  box-shadow:0 0 0 4px rgba(32,201,135,.12);
 }
 
-.machine-pill.printing .status-dot{
+.pill.printing .dot{
   background:var(--orange);
-  box-shadow:0 0 0 5px rgba(255,138,28,.16);
+  box-shadow:0 0 0 4px rgba(255,138,28,.16);
 }
 
-.machine-pill.error .status-dot{
+.pill.error .dot{
   background:var(--red);
-  box-shadow:0 0 0 5px rgba(255,77,94,.16);
+  box-shadow:0 0 0 4px rgba(255,77,94,.15);
 }
 
 .clock{
   border:1px solid var(--line);
-  background:var(--surface);
-  border-radius:16px;
-  padding:10px 12px;
+  background:var(--card);
+  border-radius:14px;
+  padding:8px 9px;
+  font-size:11px;
   color:var(--muted);
-  font-size:12px;
-  font-weight:900;
   font-family:var(--mono);
-  box-shadow:var(--shadow2);
-}
-
-/* ===========================
-   HERO SYSTEM PANEL
-   =========================== */
-
-.hero{
-  margin-top:14px;
-  display:grid;
-  grid-template-columns:1.05fr .95fr;
-  gap:14px;
-  align-items:stretch;
-}
-
-.hero-main{
-  background:
-    linear-gradient(135deg,rgba(7,17,31,.98),rgba(13,35,61,.96)),
-    radial-gradient(circle at bottom right,rgba(255,138,28,.25),transparent 32%);
-  color:white;
-  border-radius:28px;
-  padding:22px;
-  box-shadow:var(--shadow);
-  position:relative;
-  overflow:hidden;
-  min-height:280px;
-}
-
-.hero-main:after{
-  content:"";
-  position:absolute;
-  right:-80px;
-  top:-80px;
-  width:240px;
-  height:240px;
-  border-radius:50%;
-  background:rgba(255,138,28,.14);
-}
-
-.hero-tag{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.14);
-  border-radius:999px;
-  padding:8px 11px;
-  font-size:12px;
   font-weight:900;
-  color:#dce9f6;
+  box-shadow:0 6px 16px rgba(7,17,31,.05);
+  white-space:nowrap;
 }
 
-.hero h1{
-  margin-top:18px;
-  font-size:34px;
-  line-height:1;
-  letter-spacing:-.06em;
-  max-width:560px;
-}
+/* ===== MINI ESTADO ===== */
 
-.hero p{
-  margin-top:12px;
-  max-width:560px;
-  color:#b8c7d8;
-  font-size:14px;
-  line-height:1.45;
-  font-weight:700;
-}
-
-.hero-current{
-  margin-top:22px;
+.machine-strip{
+  margin-top:10px;
+  background:var(--navy);
+  border-radius:20px;
+  padding:10px;
+  color:white;
+  box-shadow:var(--shadow);
   display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  position:relative;
-  z-index:2;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
 }
 
-.mini-dark{
+.strip-item{
   background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.13);
-  border-radius:18px;
-  padding:13px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:15px;
+  padding:9px;
+  min-width:0;
 }
 
-.mini-dark small{
+.strip-item small{
   display:block;
-  color:#95a9bd;
-  font-size:10px;
+  color:#a9b9ca;
+  font-size:9px;
   font-weight:900;
   text-transform:uppercase;
-  letter-spacing:.07em;
+  letter-spacing:.08em;
 }
 
-.mini-dark strong{
+.strip-item strong{
+  margin-top:4px;
   display:block;
-  margin-top:7px;
-  color:white;
-  font-size:18px;
+  font-size:15px;
+  line-height:1.05;
   font-weight:900;
-  letter-spacing:-.03em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
-/* Panel derecho con botellitas */
-.ink-panel{
-  background:var(--surface);
+/* ===== BOTELLAS PRIMERO ===== */
+
+.ink-board{
+  margin-top:10px;
+  background:var(--card);
   border:1px solid var(--line);
-  border-radius:28px;
+  border-radius:22px;
   box-shadow:var(--shadow);
-  padding:16px;
-  min-height:280px;
+  overflow:hidden;
 }
 
-.ink-panel-head{
+.board-head{
+  padding:12px;
   display:flex;
-  align-items:flex-start;
   justify-content:space-between;
+  align-items:flex-start;
   gap:10px;
-  margin-bottom:12px;
+  border-bottom:1px solid var(--line);
 }
 
-.ink-panel-head h2{
-  font-size:18px;
+.board-head h2{
+  font-size:17px;
   color:var(--navy);
   letter-spacing:-.04em;
 }
 
-.ink-panel-head span{
-  display:block;
+.board-head p{
   margin-top:3px;
   color:var(--muted);
-  font-size:12px;
+  font-size:11px;
   font-weight:800;
 }
 
-.ink-mini-total{
-  background:var(--navy);
-  color:white;
-  border-radius:16px;
-  padding:10px 12px;
-  font-size:12px;
+.board-actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.mini-total{
+  background:#eef5ff;
+  color:var(--navy);
+  border:1px solid #d8e7fb;
+  border-radius:999px;
+  padding:7px 9px;
+  font-size:11px;
   font-weight:900;
   white-space:nowrap;
 }
 
+.btn-main{
+  background:linear-gradient(135deg,var(--orange),#ffb35f);
+  color:white;
+  font-weight:900;
+  border-radius:14px;
+  padding:9px 11px;
+  font-size:12px;
+  box-shadow:0 10px 20px rgba(255,138,28,.22);
+}
+
+.btn-secondary{
+  background:#e8f2ff;
+  color:var(--navy);
+  font-weight:900;
+  border-radius:13px;
+  padding:9px 11px;
+  font-size:12px;
+}
+
 .bottle-grid{
+  padding:12px;
   display:grid;
   grid-template-columns:repeat(8,1fr);
   gap:8px;
@@ -327,196 +289,222 @@ button{border:none;cursor:pointer}
 
 .bottle-card{
   text-align:center;
+  background:linear-gradient(180deg,#ffffff,#f7fbff);
+  border:1px solid var(--line);
+  border-radius:17px;
+  padding:8px 5px;
   min-width:0;
+  position:relative;
 }
 
-.bottle-name{
-  font-size:11px;
+.bottle-card.low{
+  border-color:rgba(255,77,94,.45);
+  box-shadow:0 0 0 4px rgba(255,77,94,.06);
+}
+
+.bottle-label{
+  font-size:10px;
   font-weight:900;
   color:var(--navy);
-  margin-bottom:6px;
   white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .bottle{
-  width:100%;
-  max-width:48px;
-  height:142px;
-  margin:0 auto;
+  height:118px;
+  width:38px;
+  margin:6px auto 0;
   position:relative;
 }
 
-.bottle-cap{
-  width:24px;
-  height:12px;
+.cap{
+  width:21px;
+  height:10px;
   margin:0 auto;
-  background:#c9d5e2;
+  border-radius:7px 7px 3px 3px;
   border:2px solid #aebccd;
   border-bottom:none;
-  border-radius:7px 7px 3px 3px;
+  background:#d8e2ec;
 }
 
-.bottle-body{
-  position:relative;
-  height:130px;
-  border:3px solid #c8d5e3;
-  background:linear-gradient(180deg,#f8fbff,#eef4fa);
-  border-radius:16px 16px 20px 20px;
+.body{
+  height:108px;
+  border:3px solid #c6d2df;
+  background:#f5f9fd;
+  border-radius:13px 13px 17px 17px;
   overflow:hidden;
-  box-shadow:inset 0 0 0 2px rgba(255,255,255,.5);
+  position:relative;
 }
 
-.bottle-fill{
+.fill{
   position:absolute;
   left:0;
   right:0;
   bottom:0;
   height:50%;
   background:var(--c);
-  transition:height .35s ease;
+  transition:.3s ease;
 }
 
-.bottle-fill:before{
+.fill:before{
   content:"";
   position:absolute;
-  top:-8px;
   left:-20%;
+  top:-7px;
   width:140%;
-  height:18px;
+  height:15px;
+  background:rgba(255,255,255,.35);
   border-radius:50%;
-  background:rgba(255,255,255,.32);
 }
 
-.bottle-shine{
+.shine{
   position:absolute;
-  top:12px;
-  left:8px;
-  width:8px;
-  height:72px;
-  border-radius:999px;
-  background:rgba(255,255,255,.55);
+  top:10px;
+  left:7px;
+  width:7px;
+  height:60px;
+  border-radius:99px;
+  background:rgba(255,255,255,.5);
 }
 
-.bottle-percent{
-  margin-top:6px;
+.percent{
+  margin-top:5px;
+  font-family:var(--mono);
+  color:var(--navy);
   font-size:12px;
   font-weight:900;
-  color:var(--navy);
-  font-family:var(--mono);
 }
 
-.bottle-ml{
+.ml{
+  margin-top:1px;
   color:var(--muted);
-  font-size:10px;
-  font-weight:900;
-}
-
-.bottle-alert{
-  margin-top:5px;
-  display:inline-block;
-  background:#ffe8ea;
-  color:var(--red);
   font-size:9px;
   font-weight:900;
-  padding:4px 5px;
-  border-radius:999px;
 }
 
-/* ===========================
-   KPI
-   =========================== */
+.rate{
+  margin-top:3px;
+  color:var(--muted2);
+  font-size:9px;
+  font-weight:900;
+}
+
+.badge-low{
+  margin-top:4px;
+  display:inline-block;
+  font-size:8px;
+  font-weight:900;
+  color:var(--red);
+  background:#ffe8ea;
+  border-radius:999px;
+  padding:3px 5px;
+}
+
+/* ===== KPIS ===== */
 
 .kpi-grid{
-  margin-top:14px;
+  margin-top:10px;
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:12px;
+  gap:8px;
 }
 
 .card{
-  background:var(--surface);
+  background:var(--card);
   border:1px solid var(--line);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow2);
-  padding:16px;
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  padding:12px;
 }
 
-.kpi{
-  position:relative;
-  overflow:hidden;
-}
-
-.kpi:before{
-  content:"";
-  position:absolute;
-  right:-45px;
-  top:-45px;
-  width:110px;
-  height:110px;
-  border-radius:50%;
-  background:rgba(255,138,28,.11);
-}
-
-.kpi-label{
-  position:relative;
-  z-index:2;
-  font-size:11px;
+.kpi small{
+  display:block;
   color:var(--muted);
+  font-size:10px;
+  font-weight:900;
   text-transform:uppercase;
   letter-spacing:.06em;
-  font-weight:900;
 }
 
-.kpi-value{
-  position:relative;
-  z-index:2;
-  margin-top:8px;
+.kpi strong{
+  margin-top:5px;
+  display:block;
   color:var(--navy);
-  font-size:26px;
+  font-size:22px;
   line-height:1;
-  letter-spacing:-.05em;
   font-weight:900;
+  letter-spacing:-.05em;
 }
 
-.kpi-note{
-  position:relative;
-  z-index:2;
-  margin-top:6px;
+.kpi span{
+  display:block;
+  margin-top:5px;
+  font-size:11px;
   color:var(--muted);
-  font-size:12px;
   font-weight:800;
 }
 
-/* ===========================
-   ALERTAS
-   =========================== */
+/* ===== ALERTAS / ERRORES ===== */
 
-.alerts{
-  margin-top:14px;
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
+.section-title{
+  margin:16px 0 8px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
   gap:10px;
+}
+
+.section-title h2{
+  color:var(--navy);
+  font-size:17px;
+  letter-spacing:-.04em;
+}
+
+.section-title p{
+  color:var(--muted);
+  font-size:11px;
+  font-weight:800;
+  margin-top:2px;
+}
+
+.ops-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  align-items:start;
+}
+
+.alert-list,
+.error-list{
+  display:grid;
+  gap:8px;
 }
 
 .alert{
-  display:flex;
-  gap:10px;
-  align-items:flex-start;
-  background:var(--surface);
+  background:var(--card);
   border:1px solid var(--line);
-  border-radius:18px;
-  padding:12px;
-  box-shadow:var(--shadow2);
+  border-radius:16px;
+  padding:10px;
+  display:flex;
+  gap:9px;
+  align-items:flex-start;
+  box-shadow:0 7px 18px rgba(7,17,31,.05);
 }
 
 .alert-icon{
-  width:28px;
-  height:28px;
-  border-radius:12px;
+  width:27px;
+  height:27px;
+  border-radius:11px;
   display:grid;
   place-items:center;
   font-weight:900;
+  flex:0 0 auto;
 }
+
+.alert.ok .alert-icon{background:#e8fff6;color:#16875d}
+.alert.warn .alert-icon{background:#fff6d9;color:#9b6a00}
+.alert.danger .alert-icon{background:#ffe8ea;color:#d9273a}
 
 .alert strong{
   display:block;
@@ -527,82 +515,89 @@ button{border:none;cursor:pointer}
 .alert span{
   display:block;
   margin-top:2px;
-  font-size:12px;
   color:var(--muted);
-  line-height:1.3;
-  font-weight:700;
-}
-
-.alert.ok .alert-icon{background:#e8fff6;color:var(--green)}
-.alert.warn .alert-icon{background:#fff6d9;color:#a36d00}
-.alert.danger .alert-icon{background:#ffe8ea;color:var(--red)}
-
-/* ===========================
-   SECCIONES
-   =========================== */
-
-.section-title{
-  margin:22px 0 10px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-}
-
-.section-title h2{
-  font-size:20px;
-  color:var(--navy);
-  letter-spacing:-.04em;
-}
-
-.section-title p{
-  margin-top:3px;
-  color:var(--muted);
-  font-size:12px;
+  font-size:11px;
   font-weight:800;
+  line-height:1.35;
 }
 
-.btn-main{
-  background:linear-gradient(135deg,var(--orange),var(--orange2));
-  color:white;
-  font-weight:900;
-  padding:12px 15px;
-  border-radius:16px;
-  box-shadow:0 14px 26px rgba(255,138,28,.28);
-}
-
-.btn-main:active{transform:translateY(1px)}
-
-.btn-secondary{
-  background:#e8f2ff;
-  color:var(--navy);
-  font-weight:900;
-  padding:11px 13px;
-  border-radius:14px;
-}
-
-/* ===========================
-   CONSUMOS
-   =========================== */
-
-.consumption-grid{
-  display:grid;
-  grid-template-columns:1.35fr .65fr;
-  gap:12px;
-  align-items:start;
-}
-
-.table-wrap{
-  background:var(--surface);
+.error-panel{
+  background:var(--card);
   border:1px solid var(--line);
-  border-radius:22px;
-  box-shadow:var(--shadow2);
+  border-radius:20px;
+  box-shadow:var(--shadow);
   overflow:hidden;
 }
 
-.table-scroll{
-  overflow:auto;
+.error-head{
+  background:var(--navy);
+  color:white;
+  padding:11px 12px;
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:center;
 }
+
+.error-head strong{
+  font-size:13px;
+}
+
+.error-count{
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:999px;
+  padding:5px 8px;
+  font-size:11px;
+  font-weight:900;
+}
+
+.error-row{
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+}
+
+.error-row:last-child{border-bottom:none}
+
+.error-row strong{
+  display:block;
+  font-size:13px;
+  color:var(--navy);
+}
+
+.error-row span{
+  display:block;
+  margin-top:3px;
+  font-size:11px;
+  color:var(--muted);
+  font-weight:800;
+  line-height:1.35;
+}
+
+.sev{
+  display:inline-flex;
+  margin-top:7px;
+  border-radius:999px;
+  padding:4px 7px;
+  font-size:10px;
+  font-weight:900;
+}
+
+.sev.alta{background:#ffe8ea;color:#d9273a}
+.sev.media{background:#fff6d9;color:#9b6a00}
+.sev.baja{background:#e8fff6;color:#16875d}
+
+/* ===== TABLAS ===== */
+
+.table-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+
+.table-scroll{overflow:auto}
 
 table{
   width:100%;
@@ -613,113 +608,54 @@ th{
   background:var(--navy);
   color:white;
   text-align:left;
-  padding:13px 12px;
-  font-size:11px;
+  padding:11px;
+  font-size:10px;
   text-transform:uppercase;
   letter-spacing:.05em;
   white-space:nowrap;
 }
 
 td{
-  padding:12px;
+  padding:11px;
   border-bottom:1px solid var(--line);
-  font-size:13px;
-  color:#17283b;
+  font-size:12px;
+  color:#182a3d;
   vertical-align:middle;
 }
 
 tr:hover td{background:#f8fbff}
 
-.channel-chip{
+.channel{
   display:inline-flex;
-  align-items:center;
   gap:7px;
+  align-items:center;
   font-weight:900;
   color:var(--navy);
 }
 
 .channel-dot{
-  width:12px;
-  height:12px;
-  border-radius:999px;
+  width:11px;
+  height:11px;
+  border-radius:99px;
   background:var(--c);
-  border:1px solid rgba(0,0,0,.14);
+  border:1px solid rgba(0,0,0,.15);
 }
 
-.summary-card{
-  background:
-    linear-gradient(135deg,#ffffff,#f7fbff);
-  border:1px solid var(--line);
-  border-radius:22px;
-  box-shadow:var(--shadow2);
-  padding:16px;
-}
-
-.summary-card .big{
-  margin-top:8px;
-  color:var(--navy);
-  font-size:30px;
-  line-height:1;
-  font-weight:900;
-  letter-spacing:-.06em;
-}
-
-.summary-card p{
-  margin-top:10px;
-  color:var(--muted);
-  font-size:13px;
-  line-height:1.45;
-  font-weight:800;
-}
-
-/* ===========================
-   FILTROS
-   =========================== */
-
-.filters{
-  display:grid;
-  grid-template-columns:1.1fr 1fr 1fr 1fr 1fr auto;
-  gap:10px;
-  background:var(--surface);
-  border:1px solid var(--line);
-  border-radius:22px;
-  box-shadow:var(--shadow2);
-  padding:12px;
-  margin-bottom:12px;
-}
-
-.field label{
-  display:block;
-  color:var(--muted);
+.status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  padding:5px 8px;
   font-size:10px;
   font-weight:900;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  margin-bottom:5px;
+  white-space:nowrap;
 }
 
-.field input,
-.field select{
-  width:100%;
-  border:1px solid var(--line);
-  border-radius:14px;
-  background:var(--surface2);
-  color:var(--ink);
-  outline:none;
-  padding:11px 10px;
-  font-size:13px;
-  font-weight:800;
-}
-
-.field input:focus,
-.field select:focus{
-  border-color:rgba(255,138,28,.65);
-  box-shadow:0 0 0 4px rgba(255,138,28,.12);
-}
-
-/* ===========================
-   HISTORIAL
-   =========================== */
+.status.Listo{background:#e8fff6;color:#16875d}
+.status.Imprimiendo{background:#fff1e3;color:#b35300}
+.status.Error{background:#ffe8ea;color:#d9273a}
+.status.Pausado{background:#fff6d9;color:#9b6a00}
 
 .order-link{
   color:var(--blue);
@@ -728,45 +664,70 @@ tr:hover td{background:#f8fbff}
   cursor:pointer;
 }
 
-.status{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:999px;
-  padding:6px 9px;
+.btn-detail{
+  background:#e8f2ff;
+  color:var(--navy);
+  border-radius:11px;
+  padding:7px 9px;
   font-size:11px;
   font-weight:900;
   white-space:nowrap;
 }
 
-.status.Listo{background:#e8fff6;color:#138b60}
-.status.Imprimiendo{background:#fff1e3;color:#b35300}
-.status.Error{background:#ffe8ea;color:#d9273a}
-.status.Pausado{background:#fff6d9;color:#9b6a00}
+/* ===== FILTROS ===== */
 
-.btn-detail{
-  background:#e8f2ff;
-  color:var(--navy);
-  border-radius:12px;
-  padding:8px 10px;
-  font-size:12px;
-  font-weight:900;
-  white-space:nowrap;
+.filters{
+  display:grid;
+  grid-template-columns:1.1fr 1fr 1fr 1fr 1fr auto;
+  gap:8px;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:10px;
+  box-shadow:var(--shadow);
+  margin-bottom:9px;
 }
 
-/* ===========================
-   MODAL
-   =========================== */
+.field label{
+  display:block;
+  font-size:9px;
+  color:var(--muted);
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  margin-bottom:4px;
+}
+
+.field input,
+.field select{
+  width:100%;
+  border:1px solid var(--line);
+  background:var(--card2);
+  border-radius:12px;
+  padding:9px;
+  outline:none;
+  color:var(--text);
+  font-size:12px;
+  font-weight:800;
+}
+
+.field input:focus,
+.field select:focus{
+  border-color:rgba(255,138,28,.7);
+  box-shadow:0 0 0 4px rgba(255,138,28,.10);
+}
+
+/* ===== MODAL ===== */
 
 .modal-backdrop{
   position:fixed;
   inset:0;
+  z-index:100;
   display:none;
   align-items:center;
   justify-content:center;
-  padding:14px;
+  padding:12px;
   background:rgba(7,17,31,.58);
-  z-index:100;
 }
 
 .modal-backdrop.show{display:flex}
@@ -776,8 +737,7 @@ tr:hover td{background:#f8fbff}
   max-height:92vh;
   overflow:auto;
   background:white;
-  border-radius:28px;
-  border:1px solid var(--line);
+  border-radius:24px;
   box-shadow:0 30px 90px rgba(0,0,0,.32);
 }
 
@@ -785,50 +745,48 @@ tr:hover td{background:#f8fbff}
   position:sticky;
   top:0;
   z-index:5;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px;
   background:white;
   border-bottom:1px solid var(--line);
-  padding:14px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
 }
 
 .modal-head h3{
+  font-size:18px;
   color:var(--navy);
-  font-size:20px;
   letter-spacing:-.04em;
 }
 
 .close{
-  width:40px;
-  height:40px;
-  border-radius:14px;
+  width:38px;
+  height:38px;
+  border-radius:13px;
   background:#eef4fa;
   color:var(--navy);
   font-size:20px;
   font-weight:900;
 }
 
-.modal-body{
-  padding:14px;
-}
+.modal-body{padding:12px}
 
 .detail-layout{
   display:grid;
   grid-template-columns:300px 1fr;
-  gap:14px;
+  gap:12px;
 }
 
 .preview{
   width:300px;
   height:300px;
-  border-radius:24px;
+  border-radius:20px;
   background:
-    radial-gradient(circle at 70% 20%, rgba(255,138,28,.30), transparent 28%),
-    linear-gradient(135deg,rgba(22,136,255,.18),rgba(7,17,31,.08)),
+    radial-gradient(circle at 70% 20%, rgba(255,138,28,.25), transparent 28%),
+    linear-gradient(135deg,rgba(22,136,255,.16),rgba(7,17,31,.08)),
     repeating-linear-gradient(45deg,#f9fbfe 0,#f9fbfe 12px,#eef4fa 12px,#eef4fa 24px);
-  border:2px dashed #c4d1df;
+  border:2px dashed #c3d0de;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -841,20 +799,20 @@ tr:hover td{background:#f8fbff}
 .detail-grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
-  gap:10px;
+  gap:8px;
 }
 
 .info-box{
   background:#f8fbff;
   border:1px solid var(--line);
-  border-radius:16px;
-  padding:11px;
+  border-radius:14px;
+  padding:10px;
 }
 
 .info-box small{
   display:block;
   color:var(--muted);
-  font-size:10px;
+  font-size:9px;
   text-transform:uppercase;
   letter-spacing:.06em;
   font-weight:900;
@@ -863,197 +821,134 @@ tr:hover td{background:#f8fbff}
 
 .info-box strong{
   color:var(--navy);
-  font-size:13px;
+  font-size:12px;
   font-weight:900;
 }
 
-.modal-section{margin-top:14px}
+.modal-section{margin-top:12px}
+.modal-section h4{font-size:14px;color:var(--navy);margin-bottom:8px}
 
-.modal-section h4{
-  color:var(--navy);
-  margin-bottom:8px;
-  font-size:15px;
-}
-
-/* ===========================
-   RESPONSIVE IPHONE SE
-   =========================== */
+/* ===== RESPONSIVE ===== */
 
 @media(max-width:980px){
-  .hero{
-    grid-template-columns:1fr;
-  }
-
-  .bottle-grid{
-    grid-template-columns:repeat(4,1fr);
-  }
-
-  .bottle{
-    max-width:50px;
-    height:128px;
-  }
-
-  .bottle-body{
-    height:116px;
-  }
-
-  .kpi-grid{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .alerts{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .consumption-grid{
-    grid-template-columns:1fr;
-  }
-
-  .filters{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .filters .btn-secondary{
-    grid-column:1 / -1;
-  }
-
-  .table-scroll{
-    overflow:auto;
-  }
-
-  table{
-    min-width:850px;
-  }
-
-  .detail-layout{
-    grid-template-columns:1fr;
-  }
-
-  .preview{
-    width:100%;
-    height:260px;
-  }
+  .machine-strip{grid-template-columns:repeat(2,1fr)}
+  .bottle-grid{grid-template-columns:repeat(4,1fr)}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .ops-grid{grid-template-columns:1fr}
+  .filters{grid-template-columns:repeat(2,1fr)}
+  .filters .btn-secondary{grid-column:1 / -1}
+  table{min-width:850px}
+  .detail-layout{grid-template-columns:1fr}
+  .preview{width:100%;height:240px}
 }
 
 @media(max-width:430px){
-  .app{padding:10px}
+  .app{padding:8px}
 
   .topbar-inner{
     grid-template-columns:1fr;
-    padding:10px;
+    padding:8px;
   }
 
-  .top-actions{
+  .head-right{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:8px;
   }
 
-  .machine-pill,.clock{
-    min-width:0;
+  .pill,.clock{
     width:100%;
-    padding:9px 8px;
+    justify-content:center;
     font-size:11px;
   }
 
-  .brand-mark{
-    width:40px;
-    height:40px;
-    border-radius:14px;
-  }
+  .brand h1{font-size:18px}
+  .brand p{font-size:10px}
 
-  .brand-title{
-    font-size:18px;
-  }
-
-  .brand-subtitle{
-    font-size:11px;
-  }
-
-  .hero-main{
-    border-radius:22px;
-    padding:17px;
-    min-height:auto;
-  }
-
-  .hero h1{
-    font-size:28px;
-  }
-
-  .hero-current{
-    grid-template-columns:1fr;
-  }
-
-  .ink-panel{
-    border-radius:22px;
-    padding:12px;
-  }
-
-  .ink-panel-head{
-    align-items:stretch;
-    flex-direction:column;
-  }
-
-  .ink-mini-total{
-    text-align:center;
-  }
-
-  .bottle-grid{
-    grid-template-columns:repeat(4,1fr);
+  .machine-strip{
+    margin-top:8px;
+    grid-template-columns:repeat(2,1fr);
+    border-radius:17px;
+    padding:8px;
     gap:7px;
   }
 
-  .bottle-name{
-    font-size:10px;
+  .strip-item{
+    padding:8px;
+    border-radius:13px;
+  }
+
+  .strip-item strong{font-size:14px}
+
+  .ink-board{
+    margin-top:8px;
+    border-radius:18px;
+  }
+
+  .board-head{
+    padding:10px;
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .board-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .mini-total,.btn-main{
+    width:100%;
+    text-align:center;
+    justify-content:center;
+  }
+
+  .bottle-grid{
+    padding:9px;
+    gap:6px;
+    grid-template-columns:repeat(4,1fr);
+  }
+
+  .bottle-card{
+    border-radius:14px;
+    padding:7px 3px;
   }
 
   .bottle{
-    max-width:42px;
-    height:118px;
+    height:105px;
+    width:34px;
   }
 
-  .bottle-cap{
-    width:21px;
-    height:10px;
+  .body{
+    height:96px;
+    border-radius:12px 12px 15px 15px;
   }
 
-  .bottle-body{
-    height:108px;
-    border-radius:14px 14px 18px 18px;
-  }
+  .cap{height:9px;width:19px}
 
-  .bottle-percent{
-    font-size:11px;
-  }
-
-  .bottle-ml{
-    font-size:9px;
-  }
+  .percent{font-size:11px}
+  .ml,.rate{font-size:8px}
 
   .kpi-grid{
-    grid-template-columns:1fr;
+    grid-template-columns:repeat(2,1fr);
+    gap:7px;
   }
 
-  .alerts{
-    grid-template-columns:1fr;
+  .card{
+    border-radius:15px;
+    padding:10px;
   }
+
+  .kpi strong{font-size:19px}
+  .kpi span{font-size:10px}
 
   .section-title{
+    margin-top:14px;
+    align-items:flex-start;
     flex-direction:column;
-    align-items:stretch;
   }
 
-  .btn-main{
-    width:100%;
-  }
+  .filters{grid-template-columns:1fr}
 
-  .filters{
-    grid-template-columns:1fr;
-  }
-
-  .detail-grid{
-    grid-template-columns:1fr;
-  }
+  .detail-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -1063,16 +958,16 @@ tr:hover td{background:#f8fbff}
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand">
-      <div class="brand-mark">TV</div>
-      <div class="brand-text">
-        <div class="brand-title">Tuttovinilos · UCJV330</div>
-        <div class="brand-subtitle">Dashboard industrial · producción, tinta y órdenes UV</div>
+      <div class="logo">TV</div>
+      <div>
+        <h1>Tuttovinilos · UCJV330</h1>
+        <p>Panel operativo de tinta, producción, errores y órdenes UV</p>
       </div>
     </div>
 
-    <div class="top-actions">
-      <div id="machineState" class="machine-pill printing">
-        <span class="status-dot"></span>
+    <div class="head-right">
+      <div id="machineState" class="pill printing">
+        <span class="dot"></span>
         <span id="machineStateText">Imprimiendo</span>
       </div>
       <div class="clock" id="clock">--/--/---- --:--</div>
@@ -1082,91 +977,90 @@ tr:hover td{background:#f8fbff}
 
 <main class="app">
 
-  <section class="hero">
-    <div class="hero-main">
-      <div class="hero-tag">
-        <span class="status-dot"></span>
-        SISTEMA SIMULADO UCJV330
+  <section class="machine-strip">
+    <div class="strip-item">
+      <small>Trabajo actual</small>
+      <strong id="stripTrabajo">UV-0003</strong>
+    </div>
+    <div class="strip-item">
+      <small>Operador</small>
+      <strong id="stripOperador">Rubén</strong>
+    </div>
+    <div class="strip-item">
+      <small>Producción hoy</small>
+      <strong id="stripM2">18.60 m²</strong>
+    </div>
+    <div class="strip-item">
+      <small>Material activo</small>
+      <strong id="stripMaterial">Vinil blanco</strong>
+    </div>
+  </section>
+
+  <section class="ink-board">
+    <div class="board-head">
+      <div>
+        <h2>Niveles de tinta</h2>
+        <p>Cian · Magenta · Yellow · Negro · Clear · Clear · White · White</p>
       </div>
-
-      <h1>Control visual de impresión, consumo y estado de máquina.</h1>
-
-      <p>
-        Este panel es una maqueta funcional con datos inventados.
-        La idea es ver cómo se organizaría la información cuando luego se conecte a Supabase,
-        RasterLink o una carga manual desde producción.
-      </p>
-
-      <div class="hero-current">
-        <div class="mini-dark">
-          <small>Trabajo actual</small>
-          <strong id="heroTrabajo">UV-0003</strong>
-        </div>
-        <div class="mini-dark">
-          <small>Operador</small>
-          <strong id="heroOperador">Rubén</strong>
-        </div>
-        <div class="mini-dark">
-          <small>Producción hoy</small>
-          <strong id="heroM2">18.60 m²</strong>
-        </div>
+      <div class="board-actions">
+        <div class="mini-total" id="inkTotalMini">894 ml hoy</div>
+        <button class="btn-main" id="simulateBtn">+ Simular impresión</button>
       </div>
     </div>
 
-    <aside class="ink-panel">
-      <div class="ink-panel-head">
-        <div>
-          <h2>Botellas / tanques de tinta</h2>
-          <span>C · M · Y · K · Clear · Clear · White · White</span>
-        </div>
-        <div class="ink-mini-total" id="inkTotalMini">894 ml hoy</div>
-      </div>
-
-      <div class="bottle-grid" id="bottleGrid"></div>
-    </aside>
+    <div class="bottle-grid" id="bottleGrid"></div>
   </section>
-
-  <section class="alerts" id="alerts"></section>
 
   <section class="kpi-grid" id="kpiGrid"></section>
 
   <div class="section-title">
     <div>
-      <h2>Consumo acumulado del día</h2>
-      <p>Canales separados, incluyendo doble clear y doble white.</p>
+      <h2>Alertas y errores</h2>
+      <p>Estado operativo simulado de la UCJV330.</p>
     </div>
-    <button class="btn-main" id="simulateBtn">+ Simular nueva impresión</button>
   </div>
 
-  <section class="consumption-grid">
-    <div class="table-wrap">
-      <div class="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Canal</th>
-              <th>Consumo hoy</th>
-              <th>Semana</th>
-              <th>Mes</th>
-              <th>Costo estimado</th>
-            </tr>
-          </thead>
-          <tbody id="consumptionBody"></tbody>
-        </table>
-      </div>
-    </div>
+  <section class="ops-grid">
+    <div class="alert-list" id="alerts"></div>
 
-    <div class="summary-card">
-      <div class="kpi-label">Costo de tinta hoy</div>
-      <div class="big" id="operationSummary">$0.00</div>
-      <p id="summaryText"></p>
+    <aside class="error-panel">
+      <div class="error-head">
+        <strong>Registro de errores</strong>
+        <span class="error-count" id="errorCount">0 activos</span>
+      </div>
+      <div id="errorList"></div>
+    </aside>
+  </section>
+
+  <div class="section-title">
+    <div>
+      <h2>Consumo acumulado</h2>
+      <p>Consumo del día, semana, mes y costo estimado por canal.</p>
+    </div>
+  </div>
+
+  <section class="table-card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Canal</th>
+            <th>Hoy</th>
+            <th>Semana</th>
+            <th>Mes</th>
+            <th>Consumo/h</th>
+            <th>Costo hoy</th>
+          </tr>
+        </thead>
+        <tbody id="consumptionBody"></tbody>
+      </table>
     </div>
   </section>
 
   <div class="section-title">
     <div>
       <h2>Historial de impresiones</h2>
-      <p>Órdenes simuladas de la Mimaki UCJV330.</p>
+      <p>Órdenes simuladas con ficha técnica por trabajo.</p>
     </div>
   </div>
 
@@ -1175,37 +1069,26 @@ tr:hover td{background:#f8fbff}
       <label>Cliente</label>
       <input id="filterCliente" type="text" placeholder="Buscar cliente">
     </div>
-
     <div class="field">
       <label>Material</label>
-      <select id="filterMaterial">
-        <option value="">Todos</option>
-      </select>
+      <select id="filterMaterial"><option value="">Todos</option></select>
     </div>
-
     <div class="field">
-      <label>Modo impresión</label>
-      <select id="filterModo">
-        <option value="">Todos</option>
-      </select>
+      <label>Modo</label>
+      <select id="filterModo"><option value="">Todos</option></select>
     </div>
-
     <div class="field">
       <label>Estado</label>
-      <select id="filterEstado">
-        <option value="">Todos</option>
-      </select>
+      <select id="filterEstado"><option value="">Todos</option></select>
     </div>
-
     <div class="field">
       <label>Fecha</label>
       <input id="filterFecha" type="date">
     </div>
-
     <button class="btn-secondary" id="clearFilters">Limpiar</button>
   </section>
 
-  <section class="table-wrap">
+  <section class="table-card">
     <div class="table-scroll">
       <table>
         <thead>
@@ -1266,29 +1149,60 @@ let machine = {
   consumoTotal: 894,
   materialMasUsado: "Vinil blanco mate",
   operadorActivo: "Rubén",
-  trabajoActual: "UV-0003 · Addigrain"
+  trabajoActual: "UV-0003 · Addigrain",
+  materialActivo: "Vinil blanco mate",
+  temperatura: "24°C",
+  humedad: "58%",
+  cola: 4
 };
 
 let bottles = [
-  {key:"C", label:"C", name:"Cian", percent:72, color:"#00a3ff"},
-  {key:"M", label:"M", name:"Magenta", percent:64, color:"#e441a3"},
-  {key:"Y", label:"Y", name:"Yellow", percent:81, color:"#ffd32a"},
-  {key:"K", label:"K", name:"Negro", percent:58, color:"#111827"},
-  {key:"Clear1", label:"Clear", name:"Clear 1", percent:22, color:"#9dd7ff"},
-  {key:"Clear2", label:"Clear", name:"Clear 2", percent:41, color:"#bfe8ff"},
-  {key:"White1", label:"White", name:"White 1", percent:34, color:"#dde6ee"},
-  {key:"White2", label:"White", name:"White 2", percent:18, color:"#f4f7fb"}
+  {key:"C", label:"C", name:"Cian", percent:72, color:"#00a3ff", rate:18},
+  {key:"M", label:"M", name:"Magenta", percent:64, color:"#e441a3", rate:14},
+  {key:"Y", label:"Y", name:"Yellow", percent:81, color:"#ffd32a", rate:12},
+  {key:"K", label:"K", name:"Negro", percent:58, color:"#111827", rate:21},
+  {key:"Clear1", label:"CL1", name:"Clear 1", percent:22, color:"#9dd7ff", rate:27},
+  {key:"Clear2", label:"CL2", name:"Clear 2", percent:41, color:"#bfe8ff", rate:19},
+  {key:"White1", label:"W1", name:"White 1", percent:34, color:"#dde6ee", rate:33},
+  {key:"White2", label:"W2", name:"White 2", percent:18, color:"#f4f7fb", rate:31}
 ];
 
 let consumptions = [
-  {key:"C", label:"C", today:120, week:620, month:2380},
-  {key:"M", label:"M", today:98, week:510, month:2010},
-  {key:"Y", label:"Y", today:86, week:470, month:1860},
-  {key:"K", label:"K", today:140, week:700, month:2660},
+  {key:"C", label:"Cian", today:120, week:620, month:2380},
+  {key:"M", label:"Magenta", today:98, week:510, month:2010},
+  {key:"Y", label:"Yellow", today:86, week:470, month:1860},
+  {key:"K", label:"Negro", today:140, week:700, month:2660},
   {key:"Clear1", label:"Clear 1", today:110, week:440, month:1540},
   {key:"Clear2", label:"Clear 2", today:80, week:340, month:1380},
   {key:"White1", label:"White 1", today:140, week:510, month:1710},
   {key:"White2", label:"White 2", today:120, week:410, month:1690}
+];
+
+let errors = [
+  {
+    tipo:"Media skew",
+    severidad:"alta",
+    hora:"09:58",
+    orden:"UV-0001",
+    descripcion:"Desviación de material detectada durante impresión. Trabajo marcado como error.",
+    accion:"Revisar alineación del rollo y presión de pinch rollers."
+  },
+  {
+    tipo:"White 2 bajo",
+    severidad:"media",
+    hora:"15:31",
+    orden:"Sistema",
+    descripcion:"Botella White 2 por debajo del 20%. Riesgo en trabajos con base blanca.",
+    accion:"Preparar reposición antes de imprimir trabajos largos."
+  },
+  {
+    tipo:"Pausa operador",
+    severidad:"baja",
+    hora:"12:44",
+    orden:"UV-0002",
+    descripcion:"Pausa manual registrada durante revisión de salida.",
+    accion:"Sin acción crítica."
+  }
 ];
 
 let orders = [
@@ -1312,6 +1226,8 @@ let orders = [
     rollo:"137 cm",
     largo:"3.50 m",
     velocidad:"7.6 m²/h",
+    temperatura:"24°C",
+    humedad:"58%",
     tinta:{C:32,M:28,Y:24,K:35,Clear1:31,Clear2:27,White1:44,White2:38},
     nozzle:"OK",
     limpieza:"No",
@@ -1337,6 +1253,8 @@ let orders = [
     rollo:"137 cm",
     largo:"1.98 m",
     velocidad:"5.8 m²/h",
+    temperatura:"25°C",
+    humedad:"57%",
     tinta:{C:22,M:18,Y:16,K:28,Clear1:22,Clear2:22,White1:0,White2:0},
     nozzle:"Fallo corregido",
     limpieza:"Sí",
@@ -1362,6 +1280,8 @@ let orders = [
     rollo:"137 cm",
     largo:"2.62 m",
     velocidad:"4.9 m²/h",
+    temperatura:"24°C",
+    humedad:"60%",
     tinta:{C:38,M:31,Y:29,K:42,Clear1:0,Clear2:0,White1:48,White2:44},
     nozzle:"Fallo leve",
     limpieza:"Sí",
@@ -1370,21 +1290,16 @@ let orders = [
 ];
 
 /* =========================================================
-   UTILIDADES
+   FUNCIONES BASE
    ========================================================= */
 
-function money(value){
-  return "$" + Number(value).toFixed(2);
-}
+function money(v){ return "$" + Number(v).toFixed(2); }
 
 function fmtDate(iso){
   const d = new Date(iso);
   return d.toLocaleString("es-VE", {
-    year:"numeric",
-    month:"2-digit",
-    day:"2-digit",
-    hour:"2-digit",
-    minute:"2-digit"
+    year:"numeric", month:"2-digit", day:"2-digit",
+    hour:"2-digit", minute:"2-digit"
   });
 }
 
@@ -1398,15 +1313,19 @@ function orderCost(order){
   },0);
 }
 
-function getNextOrderId(){
-  const nums = orders.map(o => Number(o.id.replace("UV-","")));
-  const next = Math.max(...nums) + 1;
-  return "UV-" + String(next).padStart(4,"0");
+function bottleColor(key){
+  const b = bottles.find(x=>x.key===key);
+  return b ? b.color : "#ccc";
 }
 
-function bottleColor(key){
-  const b = bottles.find(x => x.key === key);
-  return b ? b.color : "#ccc";
+function bottleName(key){
+  const b = bottles.find(x=>x.key===key);
+  return b ? b.name : key;
+}
+
+function getNextOrderId(){
+  const nums = orders.map(o => Number(o.id.replace("UV-","")));
+  return "UV-" + String(Math.max(...nums) + 1).padStart(4,"0");
 }
 
 /* =========================================================
@@ -1417,9 +1336,8 @@ function updateClock(){
   const now = new Date();
   document.getElementById("clock").textContent = now.toLocaleString("es-VE", {
     weekday:"short",
-    year:"numeric",
-    month:"2-digit",
     day:"2-digit",
+    month:"2-digit",
     hour:"2-digit",
     minute:"2-digit",
     second:"2-digit"
@@ -1431,59 +1349,63 @@ function renderMachineState(){
   const text = document.getElementById("machineStateText");
 
   text.textContent = machine.estado;
-  pill.className = "machine-pill";
+  pill.className = "pill";
 
   if(machine.estado === "Imprimiendo") pill.classList.add("printing");
   if(machine.estado === "Error") pill.classList.add("error");
 }
 
-function renderHero(){
-  document.getElementById("heroTrabajo").textContent = machine.trabajoActual.split(" · ")[0];
-  document.getElementById("heroOperador").textContent = machine.operadorActivo;
-  document.getElementById("heroM2").textContent = machine.produccionHoy.toFixed(2) + " m²";
+function renderStrip(){
+  document.getElementById("stripTrabajo").textContent = machine.trabajoActual.split(" · ")[0];
+  document.getElementById("stripOperador").textContent = machine.operadorActivo;
+  document.getElementById("stripM2").textContent = machine.produccionHoy.toFixed(2) + " m²";
+  document.getElementById("stripMaterial").textContent = machine.materialActivo;
   document.getElementById("inkTotalMini").textContent = machine.consumoTotal.toFixed(0) + " ml hoy";
 }
 
 function renderBottles(){
   document.getElementById("bottleGrid").innerHTML = bottles.map(b=>{
     const ml = Math.round((b.percent/100) * TANK_CAPACITY_ML);
-    const alert = b.percent < 25;
+    const low = b.percent < 25;
 
     return `
-      <article class="bottle-card">
-        <div class="bottle-name">${b.label}</div>
+      <article class="bottle-card ${low ? "low" : ""}">
+        <div class="bottle-label">${b.label}</div>
         <div class="bottle" title="${b.name}">
-          <div class="bottle-cap"></div>
-          <div class="bottle-body">
-            <div class="bottle-fill" style="--c:${b.color};height:${b.percent}%"></div>
-            <div class="bottle-shine"></div>
+          <div class="cap"></div>
+          <div class="body">
+            <div class="fill" style="--c:${b.color};height:${b.percent}%"></div>
+            <div class="shine"></div>
           </div>
         </div>
-        <div class="bottle-percent">${b.percent}%</div>
-        <div class="bottle-ml">${ml} ml</div>
-        ${alert ? `<span class="bottle-alert">BAJA</span>` : ""}
+        <div class="percent">${b.percent}%</div>
+        <div class="ml">${ml} ml</div>
+        <div class="rate">${b.rate} ml/h</div>
+        ${low ? `<span class="badge-low">BAJA</span>` : ""}
       </article>
     `;
   }).join("");
 }
 
 function renderKPIs(){
+  const costToday = consumptions.reduce((acc,c)=>acc + c.today*(COST_PER_ML[c.key] || 0),0);
+
   const kpis = [
-    ["Producción hoy", machine.produccionHoy.toFixed(2) + " m²", "Metros cuadrados impresos"],
-    ["Trabajos impresos", machine.trabajosHoy, "Órdenes procesadas hoy"],
-    ["Tiempo activo", machine.tiempoActivo.toFixed(1) + " h", "Máquina produciendo"],
-    ["Tiempo detenido", machine.tiempoDetenido.toFixed(1) + " h", "Pausas y espera"],
-    ["Consumo total", machine.consumoTotal.toFixed(0) + " ml", "Tinta consumida hoy"],
-    ["Material más usado", machine.materialMasUsado, "Según historial"],
-    ["Operador activo", machine.operadorActivo, "Turno actual"],
-    ["Trabajo actual", machine.trabajoActual, "Orden en proceso"]
+    ["Trabajos hoy", machine.trabajosHoy, "Órdenes procesadas"],
+    ["Tiempo activo", machine.tiempoActivo.toFixed(1)+" h", "Máquina produciendo"],
+    ["Tiempo detenido", machine.tiempoDetenido.toFixed(1)+" h", "Pausas y espera"],
+    ["Costo tinta hoy", money(costToday), "Estimado"],
+    ["Cola pendiente", machine.cola, "Trabajos en espera"],
+    ["Temp. sala", machine.temperatura, "Ambiente"],
+    ["Humedad", machine.humedad, "Ambiente"],
+    ["Material más usado", machine.materialMasUsado, "Según historial"]
   ];
 
   document.getElementById("kpiGrid").innerHTML = kpis.map(k=>`
     <article class="card kpi">
-      <div class="kpi-label">${k[0]}</div>
-      <div class="kpi-value">${k[1]}</div>
-      <div class="kpi-note">${k[2]}</div>
+      <small>${k[0]}</small>
+      <strong>${k[1]}</strong>
+      <span>${k[2]}</span>
     </article>
   `).join("");
 }
@@ -1496,20 +1418,20 @@ function renderAlerts(){
 
   const alerts = [
     lowWhite.length
-      ? ["danger","!","White bajo", lowWhite.map(b=>`${b.name} ${b.percent}%`).join(" · ")]
-      : ["ok","✓","White estable","Las botellas white están en rango."],
+      ? ["danger","!","White bajo", lowWhite.map(b=>`${b.name}: ${b.percent}%`).join(" · ")]
+      : ["ok","✓","White estable","Ambas botellas white están en rango."],
 
     lowClear.length
-      ? ["danger","!","Clear bajo", lowClear.map(b=>`${b.name} ${b.percent}%`).join(" · ")]
-      : ["ok","✓","Clear estable","Las botellas clear están en rango."],
+      ? ["danger","!","Clear bajo", lowClear.map(b=>`${b.name}: ${b.percent}%`).join(" · ")]
+      : ["ok","✓","Clear estable","Ambas botellas clear están en rango."],
 
     hasError
-      ? ["danger","!","Error en trabajo","Existe una orden con error en el historial."]
-      : ["ok","✓","Sin errores","No hay errores activos."],
+      ? ["danger","!","Trabajo con error","Existe una orden marcada con error. Revisar registro."]
+      : ["ok","✓","Sin errores críticos","No hay errores activos en trabajos."],
 
     stoppedLong
-      ? ["warn","!","Tiempo detenido alto",`${machine.tiempoDetenido.toFixed(1)} horas detenido.`]
-      : ["ok","✓","Detención normal",`${machine.tiempoDetenido.toFixed(1)} horas detenido.`]
+      ? ["warn","!","Tiempo detenido alto",`${machine.tiempoDetenido.toFixed(1)} horas detenido hoy.`]
+      : ["ok","✓","Detención normal",`${machine.tiempoDetenido.toFixed(1)} horas detenido hoy.`]
   ];
 
   document.getElementById("alerts").innerHTML = alerts.map(a=>`
@@ -1523,17 +1445,30 @@ function renderAlerts(){
   `).join("");
 }
 
-function renderConsumption(){
-  let totalCostToday = 0;
+function renderErrors(){
+  const active = errors.filter(e=>e.severidad !== "baja").length;
+  document.getElementById("errorCount").textContent = active + " activos";
 
+  document.getElementById("errorList").innerHTML = errors.map(e=>`
+    <div class="error-row">
+      <strong>${e.hora} · ${e.tipo}</strong>
+      <span>${e.orden} · ${e.descripcion}</span>
+      <span><b>Acción:</b> ${e.accion}</span>
+      <em class="sev ${e.severidad}">${e.severidad.toUpperCase()}</em>
+    </div>
+  `).join("");
+}
+
+function renderConsumption(){
   document.getElementById("consumptionBody").innerHTML = consumptions.map(c=>{
+    const b = bottles.find(x=>x.key===c.key);
+    const rate = b ? b.rate : 0;
     const cost = c.today * (COST_PER_ML[c.key] || 0);
-    totalCostToday += cost;
 
     return `
       <tr>
         <td>
-          <span class="channel-chip">
+          <span class="channel">
             <span class="channel-dot" style="--c:${bottleColor(c.key)}"></span>
             ${c.label}
           </span>
@@ -1541,17 +1476,11 @@ function renderConsumption(){
         <td>${c.today.toFixed(0)} ml</td>
         <td>${c.week.toFixed(0)} ml</td>
         <td>${c.month.toFixed(0)} ml</td>
+        <td>${rate} ml/h</td>
         <td><strong>${money(cost)}</strong></td>
       </tr>
     `;
   }).join("");
-
-  document.getElementById("operationSummary").textContent = money(totalCostToday);
-  document.getElementById("summaryText").innerHTML = `
-    <strong>Trabajo actual:</strong> ${machine.trabajoActual}<br>
-    <strong>Estado:</strong> ${machine.estado}<br>
-    <strong>Nota:</strong> todo es simulado. Este formato sirve como base visual antes de conectar base de datos o lectura real.
-  `;
 }
 
 function populateFilters(){
@@ -1603,28 +1532,33 @@ function renderHistory(){
    MODAL
    ========================================================= */
 
+function info(label,value){
+  return `
+    <div class="info-box">
+      <small>${label}</small>
+      <strong>${value}</strong>
+    </div>
+  `;
+}
+
 function openDetail(id){
   const o = orders.find(x=>x.id===id);
   if(!o) return;
 
   document.getElementById("modalTitle").textContent = `Ficha técnica · ${o.id}`;
 
-  const tintaRows = Object.entries(o.tinta).map(([key,ml])=>{
-    const bottle = bottles.find(b=>b.key===key);
-    const label = bottle ? bottle.name : key;
-    return `
-      <tr>
-        <td>
-          <span class="channel-chip">
-            <span class="channel-dot" style="--c:${bottleColor(key)}"></span>
-            ${label}
-          </span>
-        </td>
-        <td>${ml} ml</td>
-        <td>${money(ml * (COST_PER_ML[key] || 0))}</td>
-      </tr>
-    `;
-  }).join("");
+  const tintaRows = Object.entries(o.tinta).map(([key,ml])=>`
+    <tr>
+      <td>
+        <span class="channel">
+          <span class="channel-dot" style="--c:${bottleColor(key)}"></span>
+          ${bottleName(key)}
+        </span>
+      </td>
+      <td>${ml} ml</td>
+      <td>${money(ml * (COST_PER_ML[key] || 0))}</td>
+    </tr>
+  `).join("");
 
   document.getElementById("modalBody").innerHTML = `
     <div class="detail-layout">
@@ -1660,6 +1594,8 @@ function openDetail(id){
             ${info("Largo usado",o.largo)}
             ${info("m² usados",o.m2.toFixed(2)+" m²")}
             ${info("Velocidad estimada",o.velocidad)}
+            ${info("Temperatura",o.temperatura)}
+            ${info("Humedad",o.humedad)}
           </div>
         </div>
       </div>
@@ -1667,7 +1603,7 @@ function openDetail(id){
 
     <div class="modal-section">
       <h4>Consumo de tinta</h4>
-      <div class="table-wrap">
+      <section class="table-card">
         <div class="table-scroll">
           <table>
             <thead>
@@ -1680,14 +1616,14 @@ function openDetail(id){
             <tbody>
               ${tintaRows}
               <tr>
-                <td><strong>Total ml</strong></td>
+                <td><strong>Total</strong></td>
                 <td><strong>${totalInk(o)} ml</strong></td>
                 <td><strong>${money(orderCost(o))}</strong></td>
               </tr>
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
 
     <div class="modal-section">
@@ -1703,21 +1639,12 @@ function openDetail(id){
   document.getElementById("modalBackdrop").classList.add("show");
 }
 
-function info(label,value){
-  return `
-    <div class="info-box">
-      <small>${label}</small>
-      <strong>${value}</strong>
-    </div>
-  `;
-}
-
 function closeModal(){
   document.getElementById("modalBackdrop").classList.remove("show");
 }
 
 /* =========================================================
-   SIMULAR NUEVA IMPRESIÓN
+   SIMULACIÓN
    ========================================================= */
 
 function simulateNewPrint(){
@@ -1731,6 +1658,7 @@ function simulateNewPrint(){
   const mode = modos[Math.floor(Math.random()*modos.length)];
   const material = materials[Math.floor(Math.random()*materials.length)];
   const cliente = clients[Math.floor(Math.random()*clients.length)];
+  const operador = operadores[Math.floor(Math.random()*operadores.length)];
   const now = new Date();
 
   const tinta = {
@@ -1753,7 +1681,7 @@ function simulateNewPrint(){
     m2,
     modo:mode,
     estado:"Imprimiendo",
-    operador:operadores[Math.floor(Math.random()*operadores.length)],
+    operador,
     inicio:now.toLocaleString("es-VE"),
     fin:"En proceso",
     duracion:"0 min",
@@ -1764,6 +1692,8 @@ function simulateNewPrint(){
     rollo:"137 cm",
     largo:(m2/1.37).toFixed(2) + " m",
     velocidad:(Math.random()*3 + 5).toFixed(1) + " m²/h",
+    temperatura:"24°C",
+    humedad:"58%",
     tinta,
     nozzle:"OK",
     limpieza:Math.random() > .7 ? "Sí" : "No",
@@ -1778,7 +1708,8 @@ function simulateNewPrint(){
   machine.tiempoActivo += 0.35;
   machine.consumoTotal += totalInk(order);
   machine.materialMasUsado = material;
-  machine.operadorActivo = order.operador;
+  machine.materialActivo = material;
+  machine.operadorActivo = operador;
   machine.trabajoActual = `${id} · ${cliente}`;
 
   Object.entries(tinta).forEach(([key,ml])=>{
@@ -1792,6 +1723,7 @@ function simulateNewPrint(){
     const b = bottles.find(x=>x.key===key);
     if(b){
       b.percent = Math.max(0, Number((b.percent - (ml / TANK_CAPACITY_ML * 100)).toFixed(1)));
+      b.rate = Math.max(1, Math.round(b.rate + Math.random()*4 - 1));
     }
   });
 
@@ -1805,16 +1737,16 @@ function simulateNewPrint(){
 
 function renderAll(){
   renderMachineState();
-  renderHero();
+  renderStrip();
   renderBottles();
-  renderAlerts();
   renderKPIs();
+  renderAlerts();
+  renderErrors();
   renderConsumption();
   renderHistory();
 }
 
 document.getElementById("simulateBtn").addEventListener("click", simulateNewPrint);
-
 document.getElementById("closeModal").addEventListener("click", closeModal);
 
 document.getElementById("modalBackdrop").addEventListener("click", function(e){
@@ -1835,10 +1767,6 @@ document.getElementById("clearFilters").addEventListener("click", function(){
   renderHistory();
 });
 
-/* =========================================================
-   INICIO
-   ========================================================= */
-
 populateFilters();
 renderAll();
 updateClock();
@@ -1851,4 +1779,4 @@ setInterval(updateClock,1000);
 
 path = Path('/mnt/data/Mimaki.html')
 path.write_text(html, encoding='utf-8')
-print("Archivo actualizado:", path)
+print("Archivo final creado:", path)
