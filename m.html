@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+from pathlib import Path
+
+html = """<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
@@ -11,11 +13,14 @@
 
 :root{
   --bg:#eef3f8;
-  --card:#fff;
+  --card:#ffffff;
+  --card2:#f8fbff;
   --navy:#07111f;
+  --navy2:#0d1b2f;
   --line:#d8e3ee;
   --text:#122033;
   --muted:#6e7f92;
+  --muted2:#9aabba;
   --orange:#ff8a1c;
   --blue:#1688ff;
   --green:#20c987;
@@ -34,6 +39,9 @@ body{
   color:var(--text);
   min-height:100vh;
 }
+
+button,input,select{font:inherit}
+button{border:none;cursor:pointer}
 
 .app{
   max-width:1380px;
@@ -64,6 +72,7 @@ body{
   display:flex;
   align-items:center;
   gap:10px;
+  min-width:0;
 }
 
 .logo{
@@ -82,12 +91,18 @@ body{
   font-size:18px;
   color:var(--navy);
   letter-spacing:-.04em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .brand p{
   font-size:11px;
   color:var(--muted);
   font-weight:800;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .right{
@@ -106,6 +121,7 @@ body{
   gap:8px;
   font-size:12px;
   font-weight:900;
+  white-space:nowrap;
 }
 
 .dot{
@@ -113,6 +129,7 @@ body{
   height:9px;
   border-radius:50%;
   background:var(--orange);
+  box-shadow:0 0 0 4px rgba(255,138,28,.14);
 }
 
 .clock{
@@ -122,6 +139,7 @@ body{
   border:1px solid var(--line);
   border-radius:14px;
   padding:8px 10px;
+  white-space:nowrap;
 }
 
 .machine-strip{
@@ -133,12 +151,15 @@ body{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:8px;
+  box-shadow:var(--shadow);
 }
 
 .strip-item{
   background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.1);
   border-radius:14px;
   padding:10px;
+  min-width:0;
 }
 
 .strip-item small{
@@ -147,12 +168,16 @@ body{
   font-size:10px;
   text-transform:uppercase;
   font-weight:900;
+  letter-spacing:.04em;
 }
 
 .strip-item strong{
   display:block;
   margin-top:4px;
   font-size:16px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .ink-board{
@@ -170,31 +195,28 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
+  gap:10px;
 }
 
 .board-head h2{
   font-size:18px;
+  color:var(--navy);
 }
 
 .board-head p{
   font-size:11px;
   color:var(--muted);
   margin-top:3px;
-}
-
-.board-actions{
-  display:flex;
-  gap:8px;
+  font-weight:800;
 }
 
 .btn-main{
   background:linear-gradient(135deg,var(--orange),#ffb35f);
   color:white;
-  border:none;
   border-radius:14px;
   padding:10px 14px;
   font-weight:900;
-  cursor:pointer;
+  box-shadow:0 10px 20px rgba(255,138,28,.22);
 }
 
 .bottle-grid{
@@ -214,12 +236,19 @@ body{
 
 .bottle-card.low{
   border-color:rgba(255,77,94,.5);
+  box-shadow:0 0 0 4px rgba(255,77,94,.06);
+}
+
+.bottle-label{
+  color:var(--navy);
+  font-size:11px;
+  font-weight:900;
 }
 
 .bottle{
   height:120px;
   width:40px;
-  margin:auto;
+  margin:5px auto 0;
   position:relative;
 }
 
@@ -228,6 +257,8 @@ body{
   height:10px;
   margin:auto;
   background:#d6dee8;
+  border:2px solid #b4c0cd;
+  border-bottom:none;
   border-radius:8px 8px 3px 3px;
 }
 
@@ -249,6 +280,17 @@ body{
   background:var(--c);
 }
 
+.fill:before{
+  content:"";
+  position:absolute;
+  top:-7px;
+  left:-20%;
+  width:140%;
+  height:15px;
+  background:rgba(255,255,255,.35);
+  border-radius:50%;
+}
+
 .percent{
   margin-top:6px;
   font-size:12px;
@@ -259,6 +301,7 @@ body{
 .ml{
   font-size:10px;
   color:var(--muted);
+  font-weight:800;
 }
 
 .badge-low{
@@ -299,6 +342,7 @@ body{
   display:block;
   margin-top:5px;
   font-size:24px;
+  color:var(--navy);
 }
 
 .kpi span{
@@ -306,6 +350,7 @@ body{
   margin-top:5px;
   font-size:11px;
   color:var(--muted);
+  font-weight:800;
 }
 
 .section-title{
@@ -314,13 +359,92 @@ body{
 
 .section-title h2{
   font-size:18px;
+  color:var(--navy);
 }
 
 .section-title p{
   font-size:11px;
   color:var(--muted);
   margin-top:3px;
+  font-weight:800;
 }
+
+.grid-2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.panel{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+
+.panel-head{
+  background:var(--navy);
+  color:white;
+  padding:11px 12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+}
+
+.panel-head strong{
+  font-size:13px;
+}
+
+.count{
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:999px;
+  padding:5px 8px;
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.row{
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+}
+
+.row:last-child{
+  border-bottom:none;
+}
+
+.row strong{
+  display:block;
+  font-size:13px;
+  color:var(--navy);
+}
+
+.row span{
+  display:block;
+  margin-top:3px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:800;
+  line-height:1.35;
+}
+
+.sev{
+  display:inline-flex;
+  margin-top:7px;
+  border-radius:999px;
+  padding:4px 7px;
+  font-size:10px;
+  font-weight:900;
+  font-style:normal;
+}
+
+.sev.alta{background:#ffe8ea;color:#d9273a}
+.sev.media{background:#fff6d9;color:#9b6a00}
+.sev.baja{background:#e8fff6;color:#16875d}
+.sev.auto{background:#e8f2ff;color:#0d5fb3}
 
 .table-card{
   background:#fff;
@@ -346,12 +470,14 @@ th{
   padding:11px;
   font-size:10px;
   text-transform:uppercase;
+  white-space:nowrap;
 }
 
 td{
   padding:11px;
   border-bottom:1px solid var(--line);
   font-size:12px;
+  white-space:nowrap;
 }
 
 .status{
@@ -362,44 +488,57 @@ td{
   font-weight:900;
 }
 
-.status.Listo{
-  background:#e8fff6;
-  color:#16875d;
-}
-
-.status.Imprimiendo{
-  background:#fff1e3;
-  color:#b35300;
-}
-
-.status.Error{
-  background:#ffe8ea;
-  color:#d9273a;
-}
-
-.status.Pausado{
-  background:#fff6d9;
-  color:#9b6a00;
-}
+.status.Listo{background:#e8fff6;color:#16875d}
+.status.Imprimiendo{background:#fff1e3;color:#b35300}
+.status.Error{background:#ffe8ea;color:#d9273a}
+.status.Pausado{background:#fff6d9;color:#9b6a00}
 
 .order-link{
   color:var(--blue);
   font-weight:900;
-  cursor:pointer;
 }
 
 .btn-detail{
   background:#e8f2ff;
   color:var(--navy);
-  border:none;
   border-radius:11px;
   padding:7px 9px;
   font-size:11px;
   font-weight:900;
-  cursor:pointer;
+}
+
+.channel{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  font-weight:900;
+}
+
+.channel-dot{
+  width:11px;
+  height:11px;
+  border-radius:999px;
+  background:var(--c);
+  border:1px solid rgba(0,0,0,.15);
 }
 
 @media(max-width:430px){
+
+  .topbar-inner{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .right{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .pill,.clock{
+    justify-content:center;
+    text-align:center;
+  }
 
   .machine-strip{
     grid-template-columns:repeat(2,1fr);
@@ -413,6 +552,22 @@ td{
     grid-template-columns:repeat(2,1fr);
   }
 
+  .grid-2{
+    grid-template-columns:1fr;
+  }
+
+  .board-head{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .btn-main{
+    width:100%;
+  }
+
+  table{
+    min-width:820px;
+  }
 }
 </style>
 </head>
@@ -424,7 +579,6 @@ td{
 
     <div class="brand">
       <div class="logo">TV</div>
-
       <div>
         <h1>Tuttovinilos · UCJV330</h1>
         <p>Dashboard operativo industrial</p>
@@ -472,16 +626,14 @@ td{
 <section class="ink-board">
 
   <div class="board-head">
-
     <div>
       <h2>Niveles de tinta</h2>
       <p>C · M · Y · K · CL1 · CL2 · W1 · W2</p>
     </div>
 
-    <div class="board-actions">
-      <button class="btn-main">+ Simular impresión</button>
-    </div>
-
+    <button class="btn-main" id="simulateBtn">
+      + Simular impresión
+    </button>
   </div>
 
   <div class="bottle-grid" id="bottleGrid"></div>
@@ -514,6 +666,115 @@ td{
     <span>Limpieza / ciclos</span>
   </article>
 
+  <article class="card kpi">
+    <small>Ciclos automáticos</small>
+    <strong>2</strong>
+    <span>Arranque + circulación</span>
+  </article>
+
+  <article class="card kpi">
+    <small>Limpiezas</small>
+    <strong>1</strong>
+    <span>Automática</span>
+  </article>
+
+  <article class="card kpi">
+    <small>Consumo parada</small>
+    <strong>69 ml</strong>
+    <span>Máquina en espera</span>
+  </article>
+
+  <article class="card kpi">
+    <small>No productivo</small>
+    <strong>12.8%</strong>
+    <span>Del consumo total</span>
+  </article>
+
+</section>
+
+<div class="section-title">
+  <h2>Ciclos, limpiezas y consumo no productivo</h2>
+  <p>Esto simula la tinta que la máquina puede gastar aunque no esté imprimiendo.</p>
+</div>
+
+<section class="grid-2">
+
+  <aside class="panel">
+    <div class="panel-head">
+      <strong>Eventos técnicos del día</strong>
+      <span class="count">4 eventos</span>
+    </div>
+
+    <div id="maintenanceList"></div>
+  </aside>
+
+  <aside class="panel">
+    <div class="panel-head">
+      <strong>Resumen de tinta</strong>
+      <span class="count">219 ml no productivos</span>
+    </div>
+
+    <div class="row">
+      <strong>Tinta productiva</strong>
+      <span>1497 ml usados directamente en los 10 pedidos impresos.</span>
+      <em class="sev baja">87.2%</em>
+    </div>
+
+    <div class="row">
+      <strong>Tinta no productiva</strong>
+      <span>219 ml usados en ciclos, limpieza automática y consumo estando parada.</span>
+      <em class="sev media">12.8%</em>
+    </div>
+
+    <div class="row">
+      <strong>Lectura operativa</strong>
+      <span>Este consumo ocurre por recirculación, limpieza de cabezales, purga, mantenimiento interno y espera entre trabajos.</span>
+    </div>
+
+  </aside>
+
+</section>
+
+<div class="section-title">
+  <h2>Errores y alertas</h2>
+  <p>Registro simulado de fallas, tinta baja y pausas.</p>
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <strong>Registro de errores</strong>
+    <span class="count">3 activos</span>
+  </div>
+
+  <div id="errorList"></div>
+</section>
+
+<div class="section-title">
+  <h2>Consumo de tinta por canal</h2>
+  <p>Separado entre impresión y mantenimiento.</p>
+</div>
+
+<section class="table-card">
+<div class="table-scroll">
+
+<table>
+<thead>
+<tr>
+<th>Canal</th>
+<th>Impresión</th>
+<th>Mantenimiento</th>
+<th>Total hoy</th>
+<th>Semana</th>
+<th>Mes</th>
+<th>Costo hoy</th>
+</tr>
+</thead>
+
+<tbody id="consumptionBody"></tbody>
+
+</table>
+
+</div>
 </section>
 
 <div class="section-title">
@@ -565,6 +826,103 @@ const bottles = [
 
 ];
 
+const consumos = [
+
+  ["Cian","C",190,24,920,3380,0.09,"#00a3ff"],
+  ["Magenta","M",165,21,810,3010,0.09,"#e441a3"],
+  ["Yellow","Y",142,18,740,2860,0.09,"#ffd32a"],
+  ["Negro","K",230,28,1020,3660,0.085,"#111827"],
+  ["Clear 1","CL1",182,35,760,2540,0.13,"#9dd7ff"],
+  ["Clear 2","CL2",151,34,680,2380,0.13,"#bfe8ff"],
+  ["White 1","W1",229,30,910,3310,0.14,"#dde6ee"],
+  ["White 2","W2",208,29,850,3090,0.14,"#f4f7fb"]
+
+];
+
+const mantenimiento = [
+
+  {
+    hora:"08:05",
+    tipo:"Ciclo de arranque",
+    duracion:"4 min",
+    tinta:"46 ml",
+    costo:"$5.47",
+    motivo:"Preparación de cabezales al iniciar la jornada.",
+    nivel:"auto"
+  },
+
+  {
+    hora:"11:40",
+    tipo:"Limpieza automática",
+    duracion:"7 min",
+    tinta:"93 ml",
+    costo:"$11.13",
+    motivo:"Fallo leve de nozzle detectado en White.",
+    nivel:"media"
+  },
+
+  {
+    hora:"14:15",
+    tipo:"Circulación White/Clear",
+    duracion:"5 min",
+    tinta:"48 ml",
+    costo:"$6.48",
+    motivo:"Mantener white y clear en movimiento.",
+    nivel:"auto"
+  },
+
+  {
+    hora:"15:55",
+    tipo:"Consumo en parada",
+    duracion:"28 min",
+    tinta:"69 ml",
+    costo:"$7.01",
+    motivo:"Máquina en espera entre trabajos.",
+    nivel:"baja"
+  }
+
+];
+
+const errores = [
+
+  {
+    hora:"09:58",
+    tipo:"Media skew",
+    orden:"UV-0002",
+    descripcion:"Desviación de material durante impresión.",
+    accion:"Revisar alineación del rollo y presión.",
+    nivel:"alta"
+  },
+
+  {
+    hora:"15:31",
+    tipo:"White 2 bajo",
+    orden:"Sistema",
+    descripcion:"Botella White 2 por debajo del 20%.",
+    accion:"Preparar reposición antes de trabajos largos.",
+    nivel:"media"
+  },
+
+  {
+    hora:"15:35",
+    tipo:"Clear 1 bajo",
+    orden:"Sistema",
+    descripcion:"Clear 1 por debajo de 20%.",
+    accion:"Evitar trabajos largos con barniz hasta reponer.",
+    nivel:"media"
+  },
+
+  {
+    hora:"12:44",
+    tipo:"Pausa operador",
+    orden:"UV-0006",
+    descripcion:"Pausa manual durante revisión de salida.",
+    accion:"Sin acción crítica.",
+    nivel:"baja"
+  }
+
+];
+
 const orders = [
 
   ["UV-0010","OWC","Vinil blanco",3.9,"White+Color+Clear","Imprimiendo","Rubén"],
@@ -580,71 +938,141 @@ const orders = [
 
 ];
 
-document.getElementById("bottleGrid").innerHTML = bottles.map(b => {
+function renderBottles(){
 
-  return `
-    <article class="bottle-card ${b.percent < 25 ? "low" : ""}">
+  document.getElementById("bottleGrid").innerHTML = bottles.map(b => {
 
-      <div>${b.label}</div>
+    return `
+      <article class="bottle-card ${b.percent < 25 ? "low" : ""}">
 
-      <div class="bottle">
+        <div class="bottle-label">${b.label}</div>
 
-        <div class="cap"></div>
+        <div class="bottle">
 
-        <div class="body">
-          <div class="fill"
-            style="
-              --c:${b.color};
-              height:${b.percent}%;
-              background:${b.color};
-            ">
+          <div class="cap"></div>
+
+          <div class="body">
+            <div class="fill"
+              style="
+                --c:${b.color};
+                height:${b.percent}%;
+                background:${b.color};
+              ">
+            </div>
           </div>
+
         </div>
 
+        <div class="percent">${b.percent}%</div>
+        <div class="ml">${Math.round(b.percent * 10)} ml</div>
+
+        ${b.percent < 25 ? '<div class="badge-low">BAJO</div>' : ''}
+
+      </article>
+    `;
+
+  }).join("");
+
+}
+
+function renderMaintenance(){
+
+  document.getElementById("maintenanceList").innerHTML = mantenimiento.map(e => {
+
+    return `
+      <div class="row">
+        <strong>${e.hora} · ${e.tipo}</strong>
+        <span>${e.motivo}</span>
+        <span><b>Duración:</b> ${e.duracion} · <b>Tinta:</b> ${e.tinta} · <b>Costo:</b> ${e.costo}</span>
+        <em class="sev ${e.nivel}">${e.nivel.toUpperCase()}</em>
       </div>
+    `;
 
-      <div class="percent">${b.percent}%</div>
-      <div class="ml">${Math.round(b.percent * 10)} ml</div>
+  }).join("");
 
-      ${b.percent < 25 ? '<div class="badge-low">BAJO</div>' : ''}
+}
 
-    </article>
-  `;
+function renderErrors(){
 
-}).join("");
+  document.getElementById("errorList").innerHTML = errores.map(e => {
 
-document.getElementById("historyBody").innerHTML = orders.map(o => {
+    return `
+      <div class="row">
+        <strong>${e.hora} · ${e.tipo}</strong>
+        <span>${e.orden} · ${e.descripcion}</span>
+        <span><b>Acción:</b> ${e.accion}</span>
+        <em class="sev ${e.nivel}">${e.nivel.toUpperCase()}</em>
+      </div>
+    `;
 
-  return `
-    <tr>
+  }).join("");
 
-      <td>
-        <span class="order-link">${o[0]}</span>
-      </td>
+}
 
-      <td>${o[1]}</td>
-      <td>${o[2]}</td>
-      <td>${o[3]}</td>
-      <td>${o[4]}</td>
+function renderConsumption(){
 
-      <td>
-        <span class="status ${o[5]}">
-          ${o[5]}
-        </span>
-      </td>
+  document.getElementById("consumptionBody").innerHTML = consumos.map(c => {
 
-      <td>${o[6]}</td>
+    const total = c[2] + c[3];
+    const costo = total * c[6];
 
-      <td>
-        <button class="btn-detail">
-          Ver detalle
-        </button>
-      </td>
+    return `
+      <tr>
+        <td>
+          <span class="channel">
+            <span class="channel-dot" style="--c:${c[7]}; background:${c[7]}"></span>
+            ${c[0]}
+          </span>
+        </td>
+        <td>${c[2]} ml</td>
+        <td>${c[3]} ml</td>
+        <td><strong>${total} ml</strong></td>
+        <td>${c[4]} ml</td>
+        <td>${c[5]} ml</td>
+        <td><strong>$${costo.toFixed(2)}</strong></td>
+      </tr>
+    `;
 
-    </tr>
-  `;
+  }).join("");
 
-}).join("");
+}
+
+function renderOrders(){
+
+  document.getElementById("historyBody").innerHTML = orders.map(o => {
+
+    return `
+      <tr>
+
+        <td>
+          <span class="order-link">${o[0]}</span>
+        </td>
+
+        <td>${o[1]}</td>
+        <td>${o[2]}</td>
+        <td>${o[3]}</td>
+        <td>${o[4]}</td>
+
+        <td>
+          <span class="status ${o[5]}">
+            ${o[5]}
+          </span>
+        </td>
+
+        <td>${o[6]}</td>
+
+        <td>
+          <button class="btn-detail">
+            Ver detalle
+          </button>
+        </td>
+
+      </tr>
+    `;
+
+  }).join("");
+
+}
 
 function updateClock(){
 
@@ -659,6 +1087,17 @@ function updateClock(){
 
 }
 
+document.getElementById("simulateBtn").addEventListener("click", function(){
+
+  alert("Simulación visual: aquí luego podemos crear una nueva orden, bajar niveles de tinta y sumar consumo.");
+
+});
+
+renderBottles();
+renderMaintenance();
+renderErrors();
+renderConsumption();
+renderOrders();
 updateClock();
 setInterval(updateClock,1000);
 
@@ -666,3 +1105,8 @@ setInterval(updateClock,1000);
 
 </body>
 </html>
+"""
+
+path = Path("/mnt/data/Mimaki.html")
+path.write_text(html, encoding="utf-8")
+print(path)
