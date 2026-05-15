@@ -1,0 +1,1413 @@
+from pathlib import Path
+
+html = r'''<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Dashboard UCJV330 Tuttovinilos</title>
+
+<style>
+/* =========================================================
+   Dashboard UCJV330 Tuttovinilos
+   Archivo: Mimaki.html
+   Datos 100% simulados. Sin Supabase. Sin RasterLink.
+   ========================================================= */
+
+:root{
+  --azul:#0b2545;
+  --azul-2:#123a66;
+  --azul-3:#e8f2ff;
+  --naranja:#ff8a1c;
+  --naranja-2:#fff1e3;
+  --blanco:#ffffff;
+  --gris:#f3f6fa;
+  --gris-2:#e2e8f0;
+  --gris-3:#64748b;
+  --texto:#102033;
+  --verde:#17a673;
+  --rojo:#e5484d;
+  --amarillo:#f6b73c;
+  --sombra:0 10px 28px rgba(10,32,61,.10);
+  --radio:18px;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:linear-gradient(180deg,#f7faff 0%,#edf3f9 100%);
+  color:var(--texto);
+}
+
+button,input,select{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+  border:none;
+}
+
+.app{
+  max-width:1320px;
+  margin:0 auto;
+  padding:14px;
+}
+
+/* ================= HEADER ================= */
+
+.header{
+  position:sticky;
+  top:0;
+  z-index:20;
+  background:rgba(247,250,255,.92);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--gris-2);
+  padding:12px 0;
+}
+
+.header-inner{
+  max-width:1320px;
+  margin:0 auto;
+  padding:0 14px;
+  display:grid;
+  grid-template-columns:1fr auto auto;
+  gap:12px;
+  align-items:center;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+.logo-box{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  background:linear-gradient(135deg,var(--azul),var(--azul-2));
+  color:white;
+  display:grid;
+  place-items:center;
+  font-weight:900;
+  box-shadow:var(--sombra);
+}
+
+.brand-title{
+  font-size:20px;
+  font-weight:900;
+  color:var(--azul);
+  line-height:1.05;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.brand-subtitle{
+  font-size:12px;
+  color:var(--gris-3);
+  font-weight:700;
+  margin-top:3px;
+}
+
+.machine-state{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:white;
+  border:1px solid var(--gris-2);
+  border-radius:999px;
+  padding:9px 12px;
+  font-weight:800;
+  box-shadow:0 6px 18px rgba(15,35,65,.06);
+}
+
+.dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:var(--verde);
+  box-shadow:0 0 0 4px rgba(23,166,115,.12);
+}
+
+.state-printing .dot{background:var(--naranja);box-shadow:0 0 0 4px rgba(255,138,28,.16)}
+.state-error .dot{background:var(--rojo);box-shadow:0 0 0 4px rgba(229,72,77,.16)}
+.state-paused .dot{background:var(--amarillo);box-shadow:0 0 0 4px rgba(246,183,60,.18)}
+
+.clock{
+  text-align:right;
+  font-size:13px;
+  color:var(--gris-3);
+  font-weight:800;
+  background:white;
+  border:1px solid var(--gris-2);
+  padding:9px 12px;
+  border-radius:12px;
+}
+
+/* ================= ALERTAS ================= */
+
+.alerts{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin:16px 0;
+}
+
+.alert{
+  border-radius:14px;
+  padding:12px;
+  border:1px solid var(--gris-2);
+  background:white;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  box-shadow:0 6px 16px rgba(15,35,65,.05);
+}
+
+.alert strong{
+  display:block;
+  font-size:13px;
+  margin-bottom:2px;
+}
+
+.alert span{
+  font-size:12px;
+  color:var(--gris-3);
+}
+
+.alert-icon{
+  width:26px;
+  height:26px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  font-weight:900;
+}
+
+.alert.warn .alert-icon{background:#fff6d9;color:#996900}
+.alert.danger .alert-icon{background:#ffe6e7;color:var(--rojo)}
+.alert.ok .alert-icon{background:#e6fff5;color:var(--verde)}
+
+/* ================= TARJETAS KPI ================= */
+
+.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+
+.card{
+  background:white;
+  border:1px solid var(--gris-2);
+  border-radius:var(--radio);
+  padding:16px;
+  box-shadow:var(--sombra);
+}
+
+.kpi{
+  position:relative;
+  overflow:hidden;
+}
+
+.kpi:after{
+  content:"";
+  position:absolute;
+  width:90px;
+  height:90px;
+  border-radius:50%;
+  right:-35px;
+  top:-35px;
+  background:rgba(255,138,28,.12);
+}
+
+.kpi-label{
+  font-size:12px;
+  color:var(--gris-3);
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.kpi-value{
+  margin-top:8px;
+  font-size:26px;
+  font-weight:900;
+  color:var(--azul);
+}
+
+.kpi-note{
+  margin-top:4px;
+  font-size:12px;
+  color:var(--gris-3);
+  font-weight:700;
+}
+
+/* ================= SECCIONES ================= */
+
+.section-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:22px 0 10px;
+}
+
+.section-title h2{
+  margin:0;
+  font-size:19px;
+  color:var(--azul);
+}
+
+.section-title p{
+  margin:3px 0 0;
+  color:var(--gris-3);
+  font-size:13px;
+  font-weight:700;
+}
+
+.btn-main{
+  background:linear-gradient(135deg,var(--naranja),#ffad5e);
+  color:white;
+  font-weight:900;
+  border-radius:14px;
+  padding:12px 14px;
+  box-shadow:0 10px 20px rgba(255,138,28,.22);
+}
+
+.btn-main:active{
+  transform:translateY(1px);
+}
+
+/* ================= TANQUES ================= */
+
+.tank-grid{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:12px;
+}
+
+.tank-card{
+  background:white;
+  border:1px solid var(--gris-2);
+  border-radius:18px;
+  padding:12px;
+  box-shadow:var(--sombra);
+  text-align:center;
+}
+
+.tank-name{
+  font-weight:900;
+  color:var(--azul);
+  margin-bottom:8px;
+}
+
+.tank{
+  height:170px;
+  width:66px;
+  margin:0 auto;
+  border:3px solid #d6dee8;
+  border-radius:18px;
+  background:#f7fafc;
+  position:relative;
+  overflow:hidden;
+}
+
+.tank-fill{
+  position:absolute;
+  bottom:0;
+  left:0;
+  width:100%;
+  height:50%;
+  background:var(--channel-color);
+  transition:height .35s ease;
+}
+
+.tank-fill:before{
+  content:"";
+  position:absolute;
+  top:-7px;
+  left:-12px;
+  width:90px;
+  height:16px;
+  border-radius:50%;
+  background:rgba(255,255,255,.35);
+}
+
+.tank-percent{
+  font-size:20px;
+  font-weight:900;
+  margin-top:10px;
+}
+
+.tank-ml{
+  font-size:12px;
+  color:var(--gris-3);
+  font-weight:800;
+  margin-top:2px;
+}
+
+.low{
+  border-color:rgba(229,72,77,.45);
+}
+
+.badge-low{
+  display:inline-block;
+  margin-top:8px;
+  font-size:11px;
+  font-weight:900;
+  color:var(--rojo);
+  background:#ffe6e7;
+  padding:5px 8px;
+  border-radius:999px;
+}
+
+/* ================= FILTROS ================= */
+
+.filters{
+  display:grid;
+  grid-template-columns:repeat(5,1fr) auto;
+  gap:10px;
+  background:white;
+  border:1px solid var(--gris-2);
+  border-radius:18px;
+  padding:12px;
+  box-shadow:var(--sombra);
+  margin-bottom:12px;
+}
+
+.field label{
+  display:block;
+  font-size:11px;
+  font-weight:900;
+  color:var(--gris-3);
+  text-transform:uppercase;
+  margin-bottom:5px;
+}
+
+.field input,
+.field select{
+  width:100%;
+  border:1px solid var(--gris-2);
+  background:#f8fbff;
+  border-radius:12px;
+  padding:10px;
+  color:var(--texto);
+  outline:none;
+}
+
+.btn-clear{
+  align-self:end;
+  background:var(--azul-3);
+  color:var(--azul);
+  font-weight:900;
+  border-radius:12px;
+  padding:11px 12px;
+}
+
+/* ================= TABLAS ================= */
+
+.table-wrap{
+  background:white;
+  border:1px solid var(--gris-2);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:var(--sombra);
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th{
+  background:var(--azul);
+  color:white;
+  text-align:left;
+  padding:12px;
+  font-size:12px;
+  white-space:nowrap;
+}
+
+td{
+  padding:12px;
+  border-bottom:1px solid var(--gris-2);
+  font-size:13px;
+  vertical-align:middle;
+}
+
+tr:hover td{
+  background:#f9fcff;
+}
+
+.order-link{
+  font-weight:900;
+  color:var(--azul);
+  text-decoration:underline;
+  cursor:pointer;
+}
+
+.status{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border-radius:999px;
+  padding:6px 9px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.status.Listo{background:#e7fff5;color:var(--verde)}
+.status.Imprimiendo{background:var(--naranja-2);color:#b85600}
+.status.Error{background:#ffe6e7;color:var(--rojo)}
+.status.Pausado{background:#fff6d9;color:#8a6100}
+
+.btn-detail{
+  background:var(--azul-3);
+  color:var(--azul);
+  border-radius:10px;
+  font-weight:900;
+  padding:8px 10px;
+}
+
+.consumption-grid{
+  display:grid;
+  grid-template-columns:1fr 1.2fr;
+  gap:12px;
+  align-items:start;
+}
+
+/* ================= MODAL ================= */
+
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(11,37,69,.45);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:14px;
+  z-index:99;
+}
+
+.modal-backdrop.show{
+  display:flex;
+}
+
+.modal{
+  width:min(980px,100%);
+  max-height:92vh;
+  overflow:auto;
+  background:white;
+  border-radius:22px;
+  box-shadow:0 30px 80px rgba(0,0,0,.25);
+  border:1px solid var(--gris-2);
+}
+
+.modal-head{
+  position:sticky;
+  top:0;
+  background:white;
+  border-bottom:1px solid var(--gris-2);
+  padding:14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  z-index:2;
+}
+
+.modal-head h3{
+  margin:0;
+  color:var(--azul);
+  font-size:20px;
+}
+
+.close{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  background:#f1f5f9;
+  color:var(--azul);
+  font-weight:900;
+  font-size:18px;
+}
+
+.modal-body{
+  padding:14px;
+}
+
+.detail-layout{
+  display:grid;
+  grid-template-columns:300px 1fr;
+  gap:14px;
+}
+
+.preview{
+  width:300px;
+  height:300px;
+  border-radius:18px;
+  background:
+    linear-gradient(135deg,rgba(255,138,28,.18),rgba(11,37,69,.10)),
+    repeating-linear-gradient(45deg,#f8fafc 0,#f8fafc 12px,#eef4fb 12px,#eef4fb 24px);
+  border:2px dashed #c8d5e3;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:18px;
+  color:var(--azul);
+  font-weight:900;
+}
+
+.detail-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+.info-box{
+  background:#f8fbff;
+  border:1px solid var(--gris-2);
+  border-radius:14px;
+  padding:10px;
+}
+
+.info-box small{
+  display:block;
+  color:var(--gris-3);
+  font-weight:900;
+  text-transform:uppercase;
+  font-size:10px;
+  margin-bottom:4px;
+}
+
+.info-box strong{
+  color:var(--azul);
+  font-size:13px;
+}
+
+.modal-section{
+  margin-top:14px;
+}
+
+.modal-section h4{
+  margin:0 0 8px;
+  color:var(--azul);
+}
+
+/* ================= MOBILE ================= */
+
+@media(max-width:850px){
+  .header-inner{
+    grid-template-columns:1fr;
+  }
+
+  .machine-state,.clock{
+    width:100%;
+    justify-content:center;
+    text-align:center;
+  }
+
+  .alerts{
+    grid-template-columns:1fr;
+  }
+
+  .kpi-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .tank-grid{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .consumption-grid{
+    grid-template-columns:1fr;
+  }
+
+  .filters{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .filters .btn-clear{
+    grid-column:1 / -1;
+  }
+
+  .table-wrap{
+    overflow:auto;
+  }
+
+  table{
+    min-width:760px;
+  }
+
+  .detail-layout{
+    grid-template-columns:1fr;
+  }
+
+  .preview{
+    width:100%;
+    height:260px;
+  }
+
+  .detail-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:390px){
+  .app{
+    padding:10px;
+  }
+
+  .brand-title{
+    font-size:17px;
+  }
+
+  .kpi-grid{
+    grid-template-columns:1fr;
+  }
+
+  .tank-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .tank{
+    height:145px;
+    width:58px;
+  }
+
+  .filters{
+    grid-template-columns:1fr;
+  }
+
+  .section-title{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .btn-main{
+    width:100%;
+  }
+}
+</style>
+</head>
+
+<body>
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="logo-box">TV</div>
+      <div>
+        <div class="brand-title">Tuttovinilos · UCJV330</div>
+        <div class="brand-subtitle">Dashboard UCJV330 Tuttovinilos · Datos simulados</div>
+      </div>
+    </div>
+
+    <div id="machineState" class="machine-state state-printing">
+      <span class="dot"></span>
+      <span id="machineStateText">Imprimiendo</span>
+    </div>
+
+    <div class="clock" id="clock">--/--/---- --:--:--</div>
+  </div>
+</header>
+
+<main class="app">
+
+  <section id="alerts" class="alerts"></section>
+
+  <section class="kpi-grid" id="kpiGrid"></section>
+
+  <div class="section-title">
+    <div>
+      <h2>Tanques de tinta</h2>
+      <p>Niveles simulados por canal de tinta.</p>
+    </div>
+    <button class="btn-main" id="simulateBtn">+ Simular nueva impresión</button>
+  </div>
+
+  <section class="tank-grid" id="tankGrid"></section>
+
+  <div class="section-title">
+    <div>
+      <h2>Consumo acumulado</h2>
+      <p>Consumo estimado del día, semana y mes.</p>
+    </div>
+  </div>
+
+  <section class="consumption-grid">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Canal</th>
+            <th>Hoy</th>
+            <th>Semana</th>
+            <th>Mes</th>
+            <th>Costo estimado</th>
+          </tr>
+        </thead>
+        <tbody id="consumptionBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="kpi-label">Resumen operativo</div>
+      <div class="kpi-value" id="operationSummary">$0.00</div>
+      <div class="kpi-note">Costo estimado de tinta consumida hoy.</div>
+      <hr style="border:none;border-top:1px solid var(--gris-2);margin:14px 0">
+      <div id="summaryText" style="font-size:13px;color:var(--gris-3);font-weight:700;line-height:1.5"></div>
+    </div>
+  </section>
+
+  <div class="section-title">
+    <div>
+      <h2>Historial de impresiones</h2>
+      <p>Órdenes simuladas generadas por la impresora.</p>
+    </div>
+  </div>
+
+  <section class="filters">
+    <div class="field">
+      <label>Cliente</label>
+      <input id="filterCliente" type="text" placeholder="Buscar cliente">
+    </div>
+    <div class="field">
+      <label>Material</label>
+      <select id="filterMaterial">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Modo impresión</label>
+      <select id="filterModo">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Estado</label>
+      <select id="filterEstado">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Fecha</label>
+      <input id="filterFecha" type="date">
+    </div>
+    <button class="btn-clear" id="clearFilters">Limpiar</button>
+  </section>
+
+  <section class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nº orden</th>
+          <th>Fecha/hora</th>
+          <th>Cliente</th>
+          <th>Archivo</th>
+          <th>Material</th>
+          <th>m²</th>
+          <th>Modo</th>
+          <th>Estado</th>
+          <th>Operador</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+  </section>
+</main>
+
+<!-- MODAL DETALLE -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Detalle de orden</h3>
+      <button class="close" id="closeModal">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   DATOS SIMULADOS
+   ========================================================= */
+
+const TANK_CAPACITY_ML = 1000;
+const COST_PER_ML = {
+  C: 0.09,
+  M: 0.09,
+  Y: 0.09,
+  K: 0.085,
+  White: 0.14,
+  Clear: 0.13
+};
+
+let machine = {
+  estado: "Imprimiendo",
+  produccionHoy: 18.6,
+  trabajosHoy: 7,
+  tiempoActivo: 6.4,
+  tiempoDetenido: 1.25,
+  consumoTotal: 894,
+  materialMasUsado: "Vinil blanco mate",
+  operadorActivo: "Rubén",
+  trabajoActual: "UV-0003 · Addigrain"
+};
+
+let tanks = [
+  {canal:"C", percent:72, color:"#00a3ff"},
+  {canal:"M", percent:64, color:"#e441a3"},
+  {canal:"Y", percent:81, color:"#ffd32a"},
+  {canal:"K", percent:58, color:"#111827"},
+  {canal:"White", percent:34, color:"#dbe4ee"},
+  {canal:"Clear", percent:22, color:"#9dd7ff"}
+];
+
+let consumptions = [
+  {canal:"C", today:120, week:620, month:2380},
+  {canal:"M", today:98, week:510, month:2010},
+  {canal:"Y", today:86, week:470, month:1860},
+  {canal:"K", today:140, week:700, month:2660},
+  {canal:"White", today:260, week:920, month:3400},
+  {canal:"Clear", today:190, week:780, month:2920}
+];
+
+let orders = [
+  {
+    id:"UV-0003",
+    fecha:"2026-05-14T15:42:00",
+    cliente:"Addigrain",
+    archivo:"etiquetas_addigrain_50x70.pdf",
+    material:"Vinil blanco mate",
+    m2:4.8,
+    modo:"White+Color+Clear",
+    estado:"Imprimiendo",
+    operador:"Rubén",
+    inicio:"2026-05-14 15:42",
+    fin:"En proceso",
+    duracion:"38 min",
+    icc:"Mimaki_UCJV330_VinilMate_v3.icc",
+    resolucion:"1200 x 1200 dpi",
+    pass:"16 pass",
+    pullback:"Sí",
+    rollo:"137 cm",
+    largo:"3.50 m",
+    velocidad:"7.6 m²/h",
+    tinta:{C:32,M:28,Y:24,K:35,White:82,Clear:58},
+    nozzle:"OK",
+    limpieza:"No",
+    errores:"ninguno"
+  },
+  {
+    id:"UV-0002",
+    fecha:"2026-05-14T12:18:00",
+    cliente:"Framed",
+    archivo:"stickers_framed_holografico.ai",
+    material:"Holográfico",
+    m2:2.7,
+    modo:"Color+Clear",
+    estado:"Listo",
+    operador:"Chico",
+    inicio:"2026-05-14 12:18",
+    fin:"2026-05-14 13:04",
+    duracion:"46 min",
+    icc:"Mimaki_Holografico_Clear_v2.icc",
+    resolucion:"900 x 1200 dpi",
+    pass:"12 pass",
+    pullback:"No",
+    rollo:"137 cm",
+    largo:"1.98 m",
+    velocidad:"5.8 m²/h",
+    tinta:{C:22,M:18,Y:16,K:28,White:0,Clear:44},
+    nozzle:"Fallo corregido",
+    limpieza:"Sí",
+    errores:"pausa operador"
+  },
+  {
+    id:"UV-0001",
+    fecha:"2026-05-14T09:10:00",
+    cliente:"Café Valle Fresco",
+    archivo:"gourmet_cubo_led_3caras.pdf",
+    material:"Clear brillante",
+    m2:3.6,
+    modo:"White+Color",
+    estado:"Error",
+    operador:"Roberto",
+    inicio:"2026-05-14 09:10",
+    fin:"2026-05-14 10:02",
+    duracion:"52 min",
+    icc:"Mimaki_Clear_WhiteBase_v1.icc",
+    resolucion:"1200 x 900 dpi",
+    pass:"16 pass",
+    pullback:"Sí",
+    rollo:"137 cm",
+    largo:"2.62 m",
+    velocidad:"4.9 m²/h",
+    tinta:{C:38,M:31,Y:29,K:42,White:92,Clear:0},
+    nozzle:"Fallo leve",
+    limpieza:"Sí",
+    errores:"media skew"
+  }
+];
+
+/* =========================================================
+   UTILIDADES
+   ========================================================= */
+
+function money(value){
+  return "$" + Number(value).toFixed(2);
+}
+
+function fmtDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleString("es-VE", {
+    year:"numeric", month:"2-digit", day:"2-digit",
+    hour:"2-digit", minute:"2-digit"
+  });
+}
+
+function todayDateInput(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+
+function orderCost(order){
+  return Object.entries(order.tinta).reduce((acc,[canal,ml])=>{
+    return acc + ml * (COST_PER_ML[canal] || 0);
+  },0);
+}
+
+function totalInk(order){
+  return Object.values(order.tinta).reduce((a,b)=>a+b,0);
+}
+
+function getNextOrderId(){
+  const nums = orders.map(o => Number(o.id.replace("UV-","")));
+  const next = Math.max(...nums) + 1;
+  return "UV-" + String(next).padStart(4,"0");
+}
+
+/* =========================================================
+   RENDER GENERAL
+   ========================================================= */
+
+function updateClock(){
+  const now = new Date();
+  document.getElementById("clock").textContent = now.toLocaleString("es-VE", {
+    weekday:"short",
+    year:"numeric",
+    month:"2-digit",
+    day:"2-digit",
+    hour:"2-digit",
+    minute:"2-digit",
+    second:"2-digit"
+  });
+}
+
+function renderMachineState(){
+  const box = document.getElementById("machineState");
+  const text = document.getElementById("machineStateText");
+  text.textContent = machine.estado;
+
+  box.className = "machine-state";
+  if(machine.estado === "Imprimiendo") box.classList.add("state-printing");
+  if(machine.estado === "Error") box.classList.add("state-error");
+  if(machine.estado === "Pausada") box.classList.add("state-paused");
+}
+
+function renderKPIs(){
+  const kpis = [
+    ["Producción hoy", machine.produccionHoy.toFixed(2) + " m²", "Metros cuadrados impresos"],
+    ["Trabajos hoy", machine.trabajosHoy, "Órdenes procesadas"],
+    ["Tiempo activo", machine.tiempoActivo.toFixed(1) + " h", "Máquina produciendo"],
+    ["Tiempo detenido", machine.tiempoDetenido.toFixed(1) + " h", "Pausas y espera"],
+    ["Consumo tinta", machine.consumoTotal.toFixed(0) + " ml", "Total consumido hoy"],
+    ["Material más usado", machine.materialMasUsado, "Según historial del día"],
+    ["Operador activo", machine.operadorActivo, "Turno actual"],
+    ["Trabajo actual", machine.trabajoActual, "Orden en curso"]
+  ];
+
+  document.getElementById("kpiGrid").innerHTML = kpis.map(k => `
+    <article class="card kpi">
+      <div class="kpi-label">${k[0]}</div>
+      <div class="kpi-value">${k[1]}</div>
+      <div class="kpi-note">${k[2]}</div>
+    </article>
+  `).join("");
+}
+
+function renderTanks(){
+  document.getElementById("tankGrid").innerHTML = tanks.map(t => {
+    const ml = Math.round((t.percent/100) * TANK_CAPACITY_ML);
+    const low = t.percent < 20;
+    const warning = t.percent < 25;
+    return `
+      <article class="tank-card ${low ? "low" : ""}">
+        <div class="tank-name">${t.canal}</div>
+        <div class="tank" style="--channel-color:${t.color}">
+          <div class="tank-fill" style="height:${t.percent}%"></div>
+        </div>
+        <div class="tank-percent">${t.percent}%</div>
+        <div class="tank-ml">${ml} ml aprox.</div>
+        ${warning ? `<span class="badge-low">ALERTA BAJA</span>` : ""}
+      </article>
+    `;
+  }).join("");
+}
+
+function renderConsumption(){
+  let totalCostToday = 0;
+
+  document.getElementById("consumptionBody").innerHTML = consumptions.map(c => {
+    const cost = c.today * COST_PER_ML[c.canal];
+    totalCostToday += cost;
+    return `
+      <tr>
+        <td><strong>${c.canal}</strong></td>
+        <td>${c.today.toFixed(0)} ml</td>
+        <td>${c.week.toFixed(0)} ml</td>
+        <td>${c.month.toFixed(0)} ml</td>
+        <td><strong>${money(cost)}</strong></td>
+      </tr>
+    `;
+  }).join("");
+
+  document.getElementById("operationSummary").textContent = money(totalCostToday);
+  document.getElementById("summaryText").innerHTML = `
+    <strong>Trabajo actual:</strong> ${machine.trabajoActual}<br>
+    <strong>Estado:</strong> ${machine.estado}<br>
+    <strong>Nota:</strong> este panel todavía no está conectado a la máquina; solo muestra el flujo visual esperado.
+  `;
+}
+
+function renderAlerts(){
+  const white = tanks.find(t => t.canal === "White");
+  const clear = tanks.find(t => t.canal === "Clear");
+  const hasError = orders.some(o => o.estado === "Error");
+  const stoppedLong = machine.tiempoDetenido > 1;
+
+  const alerts = [];
+
+  alerts.push(white.percent < 25
+    ? ["danger","!","White bajo",`Nivel actual ${white.percent}%. Reponer pronto.`]
+    : ["ok","✓","White estable",`Nivel actual ${white.percent}%.`]);
+
+  alerts.push(clear.percent < 25
+    ? ["danger","!","Clear bajo",`Nivel actual ${clear.percent}%. Reponer pronto.`]
+    : ["ok","✓","Clear estable",`Nivel actual ${clear.percent}%.`]);
+
+  alerts.push(hasError
+    ? ["danger","!","Error detectado","Hay trabajos con error en historial."]
+    : ["ok","✓","Sin errores","No hay errores activos."]);
+
+  alerts.push(stoppedLong
+    ? ["warn","!","Tiempo detenido alto",`${machine.tiempoDetenido.toFixed(1)} horas detenido.`]
+    : ["ok","✓","Detención normal",`${machine.tiempoDetenido.toFixed(1)} horas detenido.`]);
+
+  document.getElementById("alerts").innerHTML = alerts.map(a => `
+    <article class="alert ${a[0]}">
+      <div class="alert-icon">${a[1]}</div>
+      <div>
+        <strong>${a[2]}</strong>
+        <span>${a[3]}</span>
+      </div>
+    </article>
+  `).join("");
+}
+
+function populateFilters(){
+  const materials = [...new Set(orders.map(o=>o.material))];
+  const modos = [...new Set(orders.map(o=>o.modo))];
+  const estados = [...new Set(orders.map(o=>o.estado))];
+
+  fillSelect("filterMaterial", materials);
+  fillSelect("filterModo", modos);
+  fillSelect("filterEstado", estados);
+}
+
+function fillSelect(id, values){
+  const select = document.getElementById(id);
+  const current = select.value;
+  select.innerHTML = `<option value="">Todos</option>` + values.map(v => `<option value="${v}">${v}</option>`).join("");
+  select.value = current;
+}
+
+function renderHistory(){
+  const cliente = document.getElementById("filterCliente").value.toLowerCase().trim();
+  const material = document.getElementById("filterMaterial").value;
+  const modo = document.getElementById("filterModo").value;
+  const estado = document.getElementById("filterEstado").value;
+  const fecha = document.getElementById("filterFecha").value;
+
+  const filtered = orders.filter(o => {
+    const orderDate = o.fecha.slice(0,10);
+    return (!cliente || o.cliente.toLowerCase().includes(cliente)) &&
+           (!material || o.material === material) &&
+           (!modo || o.modo === modo) &&
+           (!estado || o.estado === estado) &&
+           (!fecha || orderDate === fecha);
+  });
+
+  document.getElementById("historyBody").innerHTML = filtered.map(o => `
+    <tr>
+      <td><span class="order-link" onclick="openDetail('${o.id}')">${o.id}</span></td>
+      <td>${fmtDate(o.fecha)}</td>
+      <td><strong>${o.cliente}</strong></td>
+      <td>${o.archivo}</td>
+      <td>${o.material}</td>
+      <td>${o.m2.toFixed(2)}</td>
+      <td>${o.modo}</td>
+      <td><span class="status ${o.estado}">${o.estado}</span></td>
+      <td>${o.operador}</td>
+      <td><button class="btn-detail" onclick="openDetail('${o.id}')">Ver detalle</button></td>
+    </tr>
+  `).join("");
+}
+
+/* =========================================================
+   MODAL
+   ========================================================= */
+
+function openDetail(id){
+  const o = orders.find(x => x.id === id);
+  if(!o) return;
+
+  document.getElementById("modalTitle").textContent = `Ficha técnica · ${o.id}`;
+
+  const tintaRows = Object.entries(o.tinta).map(([canal,ml]) => `
+    <tr>
+      <td><strong>${canal}</strong></td>
+      <td>${ml} ml</td>
+      <td>${money(ml * (COST_PER_ML[canal] || 0))}</td>
+    </tr>
+  `).join("");
+
+  document.getElementById("modalBody").innerHTML = `
+    <div class="detail-layout">
+      <div class="preview">
+        Screenshot 300x300<br>del trabajo
+      </div>
+
+      <div>
+        <div class="modal-section">
+          <h4>Datos del trabajo</h4>
+          <div class="detail-grid">
+            ${info("Nº orden", o.id)}
+            ${info("Cliente", o.cliente)}
+            ${info("Archivo", o.archivo)}
+            ${info("Fecha inicio", o.inicio)}
+            ${info("Fecha fin", o.fin)}
+            ${info("Duración", o.duracion)}
+            ${info("Operador", o.operador)}
+            ${info("Estado", o.estado)}
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <h4>Datos técnicos</h4>
+          <div class="detail-grid">
+            ${info("Perfil ICC usado", o.icc)}
+            ${info("Resolución", o.resolucion)}
+            ${info("Pass", o.pass)}
+            ${info("Modo impresión", o.modo)}
+            ${info("Pull-back printing", o.pullback)}
+            ${info("Material", o.material)}
+            ${info("Ancho de rollo", o.rollo)}
+            ${info("Largo usado", o.largo)}
+            ${info("m² usados", o.m2.toFixed(2) + " m²")}
+            ${info("Velocidad estimada", o.velocidad)}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <h4>Consumo de tinta</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Canal</th>
+              <th>Consumo</th>
+              <th>Costo estimado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tintaRows}
+            <tr>
+              <td><strong>Total ml</strong></td>
+              <td><strong>${totalInk(o)} ml</strong></td>
+              <td><strong>${money(orderCost(o))}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <h4>Eventos</h4>
+      <div class="detail-grid">
+        ${info("Nozzle check", o.nozzle)}
+        ${info("Limpieza automática", o.limpieza)}
+        ${info("Errores", o.errores)}
+      </div>
+    </div>
+  `;
+
+  document.getElementById("modalBackdrop").classList.add("show");
+}
+
+function info(label,value){
+  return `
+    <div class="info-box">
+      <small>${label}</small>
+      <strong>${value}</strong>
+    </div>
+  `;
+}
+
+function closeModal(){
+  document.getElementById("modalBackdrop").classList.remove("show");
+}
+
+/* =========================================================
+   SIMULACIÓN DE NUEVA IMPRESIÓN
+   ========================================================= */
+
+function simulateNewPrint(){
+  const clients = ["Tutto Snacks","OWC","BK3","Otra Cossa","Viajea","Toyo Fox"];
+  const materials = ["Vinil blanco mate","Clear brillante","Holográfico","Lona","Microperforado"];
+  const modos = ["Color","White+Color","Color+Clear","White+Color+Clear"];
+  const operadores = ["Roberto","Rubén","Chico","Carlos"];
+  const id = getNextOrderId();
+
+  const m2 = Number((Math.random()*3.8 + 1.2).toFixed(2));
+  const mode = modos[Math.floor(Math.random()*modos.length)];
+  const material = materials[Math.floor(Math.random()*materials.length)];
+  const cliente = clients[Math.floor(Math.random()*clients.length)];
+
+  const tinta = {
+    C: Math.round(m2 * (7 + Math.random()*4)),
+    M: Math.round(m2 * (6 + Math.random()*4)),
+    Y: Math.round(m2 * (5 + Math.random()*4)),
+    K: Math.round(m2 * (8 + Math.random()*5)),
+    White: mode.includes("White") ? Math.round(m2 * (18 + Math.random()*8)) : 0,
+    Clear: mode.includes("Clear") ? Math.round(m2 * (14 + Math.random()*7)) : 0
+  };
+
+  const now = new Date();
+  const order = {
+    id,
+    fecha:now.toISOString(),
+    cliente,
+    archivo:`${cliente.toLowerCase().replaceAll(" ","_")}_${id}.pdf`,
+    material,
+    m2,
+    modo:mode,
+    estado:"Imprimiendo",
+    operador:operadores[Math.floor(Math.random()*operadores.length)],
+    inicio:now.toLocaleString("es-VE"),
+    fin:"En proceso",
+    duracion:"0 min",
+    icc:`Mimaki_${material.replaceAll(" ","")}_Simulado.icc`,
+    resolucion:"1200 x 1200 dpi",
+    pass: mode.includes("White") ? "16 pass" : "12 pass",
+    pullback: Math.random() > .55 ? "Sí" : "No",
+    rollo:"137 cm",
+    largo:(m2/1.37).toFixed(2) + " m",
+    velocidad:(Math.random()*3 + 5).toFixed(1) + " m²/h",
+    tinta,
+    nozzle:"OK",
+    limpieza:Math.random() > .7 ? "Sí" : "No",
+    errores:"ninguno"
+  };
+
+  orders.unshift(order);
+
+  machine.estado = "Imprimiendo";
+  machine.produccionHoy += m2;
+  machine.trabajosHoy += 1;
+  machine.tiempoActivo += 0.35;
+  machine.consumoTotal += totalInk(order);
+  machine.materialMasUsado = material;
+  machine.operadorActivo = order.operador;
+  machine.trabajoActual = `${id} · ${cliente}`;
+
+  Object.entries(tinta).forEach(([canal,ml]) => {
+    const c = consumptions.find(x => x.canal === canal);
+    if(c){
+      c.today += ml;
+      c.week += ml;
+      c.month += ml;
+    }
+
+    const tank = tanks.find(x => x.canal === canal);
+    if(tank){
+      tank.percent = Math.max(0, Number((tank.percent - (ml / TANK_CAPACITY_ML * 100)).toFixed(1)));
+    }
+  });
+
+  populateFilters();
+  renderAll();
+}
+
+function renderAll(){
+  renderMachineState();
+  renderAlerts();
+  renderKPIs();
+  renderTanks();
+  renderConsumption();
+  renderHistory();
+}
+
+/* =========================================================
+   EVENTOS
+   ========================================================= */
+
+document.getElementById("simulateBtn").addEventListener("click", simulateNewPrint);
+
+document.getElementById("closeModal").addEventListener("click", closeModal);
+
+document.getElementById("modalBackdrop").addEventListener("click", function(e){
+  if(e.target.id === "modalBackdrop") closeModal();
+});
+
+["filterCliente","filterMaterial","filterModo","filterEstado","filterFecha"].forEach(id => {
+  document.getElementById(id).addEventListener("input", renderHistory);
+  document.getElementById(id).addEventListener("change", renderHistory);
+});
+
+document.getElementById("clearFilters").addEventListener("click", function(){
+  document.getElementById("filterCliente").value = "";
+  document.getElementById("filterMaterial").value = "";
+  document.getElementById("filterModo").value = "";
+  document.getElementById("filterEstado").value = "";
+  document.getElementById("filterFecha").value = "";
+  renderHistory();
+});
+
+/* =========================================================
+   INICIO
+   ========================================================= */
+
+populateFilters();
+renderAll();
+updateClock();
+setInterval(updateClock,1000);
+</script>
+</body>
+</html>
+'''
+
+path = Path('/mnt/data/Mimaki.html')
+path.write_text(html, encoding='utf-8')
+print(f"Archivo creado: {path}")
