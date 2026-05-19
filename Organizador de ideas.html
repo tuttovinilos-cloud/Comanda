@@ -1,10 +1,927 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Organizador de Producción · Tuttovinilos</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f2f9;
+  --panel:#ffffff;
+  --panel2:#f8f9ff;
+  --border:#d9deea;
+  --border2:#cbd3e6;
+  --text:#111827;
+  --muted:#6b7280;
+  --muted2:#475569;
+  --accent:#153bff;
+  --accent2:#0b1f7a;
+  --red:#dc2626;
+  --yellow:#f59e0b;
+  --green:#16a34a;
+  --orange:#ff8616;
+  --mono:'Roboto Mono',monospace;
+  --head:'Montserrat',Arial,sans-serif;
+  --body:'Inter',Arial,sans-serif;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  min-height:100vh;
+  -webkit-tap-highlight-color:transparent;
+  padding-bottom:70px;
+}
+button,input,select,textarea{font:inherit}
+button{touch-action:manipulation;cursor:pointer}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#eef1ff}
+::-webkit-scrollbar-thumb{background:#cbd3e6;border-radius:4px}
+
+/* HEADER */
+.header{
+  background:linear-gradient(135deg,#153bff,#0b1f7a);
+  padding:10px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-height:58px;
+  position:sticky;
+  top:0;
+  z-index:300;
+  box-shadow:0 8px 24px rgba(21,59,255,.24);
+  flex-wrap:wrap;
+}
+.logo{
+  font-family:var(--head);
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:2px;
+  color:#fff;
+  text-transform:uppercase;
+  white-space:nowrap;
+  border:2px dashed rgba(255,255,255,.45);
+  border-radius:12px;
+  padding:7px 12px;
+}
+.logo small{
+  color:rgba(255,255,255,.74);
+  font-weight:800;
+  font-size:11px;
+  letter-spacing:.8px;
+  margin-left:6px;
+}
+.header-tabs{
+  display:flex;
+  gap:8px;
+  margin-left:auto;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.tab-btn{
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+  padding:7px 14px;
+  border:1px solid rgba(255,255,255,.24);
+  background:rgba(255,255,255,.08);
+  color:rgba(255,255,255,.88);
+  cursor:pointer;
+  border-radius:999px;
+  transition:all .2s;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+.tab-btn:hover{background:rgba(255,255,255,.18);color:#fff}
+.tab-btn.active{
+  background:#fff;
+  color:#153bff;
+  border-color:#fff;
+  box-shadow:0 8px 20px rgba(0,0,0,.14);
+}
+.noti-btn{
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+  padding:8px 12px;
+  border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.10);
+  color:#fff;
+  border-radius:999px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  min-height:38px;
+  white-space:nowrap;
+}
+.noti-count{
+  min-width:22px;
+  height:22px;
+  padding:0 6px;
+  border-radius:999px;
+  background:var(--red);
+  color:#fff;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-family:var(--mono);
+  font-size:11px;
+}
+.mobile-menu-btn{display:none}
+
+/* TOOLBAR */
+.toolbar{
+  display:flex;
+  gap:8px;
+  padding:12px 16px;
+  flex-wrap:wrap;
+  border-bottom:1px solid var(--border);
+  align-items:center;
+  background:#fff;
+  box-shadow:0 4px 18px rgba(0,0,0,.045);
+  position:sticky;
+  top:58px;
+  z-index:80;
+}
+.search-wrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#fff;
+  border:1px solid var(--border2);
+  border-radius:14px;
+  padding:9px 12px;
+  flex:1;
+  min-width:260px;
+  min-height:40px;
+}
+.search-wrap input{
+  background:none;
+  border:none;
+  outline:none;
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:13px;
+  width:100%;
+}
+.search-wrap input::placeholder{color:#8a94a6}
+.filter-sel{
+  background:#fff;
+  border:1px solid var(--border2);
+  color:#153bff;
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.35px;
+  padding:8px 10px;
+  border-radius:999px;
+  outline:none;
+  cursor:pointer;
+  min-height:40px;
+}
+.btn-add{
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+  padding:9px 14px;
+  background:#153bff;
+  color:#fff;
+  border:1px solid #153bff;
+  border-radius:12px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  white-space:nowrap;
+  transition:all .2s;
+  text-decoration:none;
+  min-height:40px;
+  box-shadow:0 6px 16px rgba(21,59,255,.18);
+}
+.btn-add:hover{filter:brightness(1.08)}
+.btn-add.secondary{
+  background:#fff;
+  color:#153bff;
+  border-color:#cbd3e6;
+  box-shadow:none;
+}
+
+/* CONTENT */
+.main{
+  max-width:1320px;
+  margin:0 auto;
+  padding:16px;
+}
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin-bottom:14px;
+}
+.kpi{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:15px;
+  box-shadow:0 4px 18px rgba(0,0,0,.055);
+  border-top:5px solid var(--accent);
+}
+.kpi.red{border-top-color:var(--red)}
+.kpi.orange{border-top-color:var(--orange)}
+.kpi.green{border-top-color:var(--green)}
+.kpi small{
+  color:var(--muted);
+  font-family:var(--head);
+  font-weight:800;
+  font-size:10px;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+}
+.kpi strong{
+  display:block;
+  font-size:30px;
+  margin-top:4px;
+  color:var(--accent2);
+  font-family:var(--head);
+}
+
+.panel{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:0 4px 18px rgba(0,0,0,.055);
+  overflow:hidden;
+}
+.panel-head{
+  padding:14px 16px;
+  background:#eef1ff;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+.panel-head h1{
+  font-family:var(--head);
+  font-size:18px;
+  color:var(--accent2);
+  letter-spacing:.35px;
+  text-transform:uppercase;
+}
+.panel-head p{
+  color:var(--muted2);
+  font-size:13px;
+  font-weight:600;
+  margin-top:3px;
+}
+
+/* PROJECT */
+.project-list{display:grid;gap:10px;padding:12px}
+.project{
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:#fff;
+  overflow:hidden;
+  transition:.15s;
+}
+.project:hover{box-shadow:0 8px 22px rgba(21,59,255,.10);border-color:#bfc9e4}
+.project-summary{
+  display:grid;
+  grid-template-columns:54px 120px 1fr 110px 110px 120px 42px;
+  gap:10px;
+  align-items:center;
+  padding:12px;
+  cursor:pointer;
+}
+.project-num{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  background:#153bff;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:var(--mono);
+  font-weight:800;
+  font-size:13px;
+}
+.project-img{
+  width:120px;
+  height:56px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#f8f9ff;
+  object-fit:contain;
+}
+.project-title h2{
+  font-family:var(--head);
+  font-size:16px;
+  color:#111827;
+  margin-bottom:4px;
+}
+.project-title p{
+  color:var(--muted2);
+  font-size:12px;
+  line-height:1.25;
+}
+.meta-chip{
+  display:inline-flex;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  min-height:34px;
+  padding:6px 9px;
+  border-radius:999px;
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.35px;
+  border:1px solid var(--border2);
+  color:var(--muted2);
+  background:#f8f9ff;
+}
+.status-solicitud{color:#dc2626;border-color:#fecaca;background:#fee2e2}
+.status-curso{color:#fff;border-color:#111827;background:#111827}
+.status-revisado{color:#92400e;border-color:#fde68a;background:#fef3c7}
+.status-listo{color:#166534;border-color:#86efac;background:#dcfce7}
+.arrow{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  border:1px solid var(--border2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--accent);
+  font-weight:900;
+  background:#fff;
+  transition:.15s;
+}
+.project.open .arrow{transform:rotate(180deg);background:#eef1ff}
+.progress{
+  height:8px;
+  background:#e5e7eb;
+  border-radius:20px;
+  overflow:hidden;
+  margin-top:8px;
+}
+.progress span{display:block;height:100%;background:#153bff;border-radius:20px}
+
+/* EXPANDED */
+.project-detail{
+  display:none;
+  border-top:1px solid var(--border);
+  background:#f8f9ff;
+  padding:14px;
+}
+.project.open .project-detail{display:block}
+.detail-grid{
+  display:grid;
+  grid-template-columns:1fr 1.25fr;
+  gap:14px;
+}
+.detail-card{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:14px;
+}
+.detail-title{
+  font-family:var(--head);
+  color:var(--accent2);
+  font-size:13px;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+  margin-bottom:10px;
+}
+.hero{
+  height:150px;
+  background:#111827;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  margin-bottom:12px;
+}
+.hero img{max-width:100%;max-height:100%;object-fit:contain}
+.info-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+}
+.info-box{
+  background:#f8f9ff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+}
+.info-box small{
+  display:block;
+  color:var(--muted);
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.35px;
+  margin-bottom:4px;
+}
+.info-box strong{
+  color:#111827;
+  font-size:13px;
+  line-height:1.25;
+}
+.tabs{
+  display:flex;
+  gap:8px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:12px;
+  overflow:auto;
+}
+.tabs button{
+  border:0;
+  background:transparent;
+  padding:10px 8px;
+  font-family:var(--head);
+  font-weight:900;
+  font-size:11px;
+  color:var(--muted);
+  cursor:pointer;
+  white-space:nowrap;
+  text-transform:uppercase;
+  letter-spacing:.35px;
+}
+.tabs button.active{
+  color:var(--accent);
+  border-bottom:3px solid var(--accent);
+}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+.accordion{
+  border:1px solid var(--border);
+  border-radius:14px;
+  margin-bottom:9px;
+  background:#fff;
+  overflow:hidden;
+}
+.acc-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:12px;
+  cursor:pointer;
+}
+.acc-head strong{
+  display:block;
+  font-family:var(--head);
+  font-size:13px;
+  color:#111827;
+}
+.acc-head small{
+  display:block;
+  color:var(--muted2);
+  margin-top:3px;
+  font-size:12px;
+}
+.acc-body{
+  display:none;
+  padding:0 12px 12px;
+  color:#30394d;
+  line-height:1.45;
+  font-size:13px;
+}
+.accordion.open .acc-body{display:block}
+.checklist{display:grid;gap:8px}
+.check{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  padding:10px;
+  border-radius:12px;
+  background:#fff;
+  border:1px solid var(--border);
+  font-size:13px;
+}
+.check input{width:18px;height:18px}
+.note{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:8px;
+  line-height:1.4;
+  font-size:13px;
+}
+.actions-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+
+/* MODAL */
+.backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(17,24,39,.35);
+  z-index:500;
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+  backdrop-filter:blur(3px);
+  padding:0;
+}
+.backdrop.open{display:flex}
+.modal{
+  background:#fff;
+  border:1px solid #d9deea;
+  width:100%;
+  max-width:560px;
+  max-height:94vh;
+  overflow-y:auto;
+  border-radius:14px 14px 0 0;
+  box-shadow:0 24px 80px rgba(17,24,39,.22);
+  animation:slideUp .22s ease;
+}
+@keyframes slideUp{
+  from{transform:translateY(50px);opacity:0}
+  to{transform:none;opacity:1}
+}
+.modal-handle{
+  width:36px;height:4px;background:#cbd3e6;border-radius:2px;margin:10px auto 0;
+}
+.modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 20px;
+  border-bottom:1px solid var(--border);
+}
+.modal-title{
+  font-family:var(--head);
+  color:#153bff;
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+}
+.modal-close{
+  width:32px;height:32px;border-radius:7px;border:1px solid var(--border2);
+  background:#fff;color:var(--muted);cursor:pointer;font-size:16px;
+}
+.modal-body{
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.modal-footer{
+  padding:14px 20px;
+  border-top:1px solid var(--border);
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.form-full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.35px;
+  color:var(--muted);
+  text-transform:uppercase;
+}
+.field input,.field select,.field textarea{
+  background:#fff;
+  border:1px solid #d9deea;
+  color:#111827;
+  border-radius:8px;
+  padding:10px 12px;
+  font-family:var(--body);
+  font-size:14px;
+  outline:none;
+  transition:border .2s;
+  width:100%;
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:#153bff;
+  box-shadow:0 0 0 3px rgba(21,59,255,.10);
+}
+.field textarea{resize:vertical;min-height:76px}
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:84px;
+  transform:translateX(-50%);
+  background:#111827;
+  color:#fff;
+  border-radius:10px;
+  padding:10px 16px;
+  z-index:999999;
+  display:none;
+  box-shadow:0 12px 35px #0008;
+  font-family:var(--head);
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+  max-width:90vw;
+  text-align:center;
+}
+
+/* QUICK CHIPS (filtros rápidos) */
+.quick-chips{
+  display:flex;
+  gap:6px;
+  padding:8px 16px 0;
+  flex-wrap:wrap;
+  background:#fff;
+  border-bottom:1px solid var(--border);
+  position:sticky;
+  top:118px;
+  z-index:75;
+}
+.quick-chip{
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+  padding:6px 11px;
+  border:1px solid var(--border2);
+  background:#f8f9ff;
+  color:var(--muted2);
+  border-radius:999px;
+  cursor:pointer;
+  transition:all .15s;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  min-height:30px;
+}
+.quick-chip:hover{border-color:var(--accent);color:var(--accent)}
+.quick-chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.quick-chip .badge{
+  background:rgba(255,255,255,.25);
+  color:inherit;
+  font-family:var(--mono);
+  padding:1px 6px;
+  border-radius:999px;
+  font-size:10px;
+}
+.quick-chip:not(.active) .badge{background:#fff;color:var(--accent)}
+.quick-chip.clear{color:var(--red);border-color:#fecaca;background:#fff}
+
+/* KPI clickeables */
+.kpi{cursor:pointer;transition:transform .15s, box-shadow .15s}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.10)}
+.kpi.active{outline:3px solid var(--accent);outline-offset:-1px}
+
+/* INLINE ADD (agregar tareas/notas sin modal) */
+.inline-add{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+  padding:8px;
+  border:1px dashed var(--border2);
+  border-radius:12px;
+  background:#fff;
+  align-items:center;
+}
+.inline-add input{
+  flex:1;
+  border:0;
+  outline:none;
+  background:transparent;
+  font-family:var(--body);
+  font-size:13px;
+  color:var(--text);
+  padding:6px 8px;
+}
+.inline-add input::placeholder{color:#8a94a6}
+.inline-add button{
+  border:0;
+  background:var(--accent);
+  color:#fff;
+  border-radius:8px;
+  width:32px;
+  height:32px;
+  font-size:18px;
+  font-weight:900;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.inline-add button:hover{filter:brightness(1.1)}
+
+/* CHIP TAREAS en el summary */
+.task-chip{
+  background:#eef1ff;
+  color:var(--accent);
+  border-color:#c7d2fe;
+}
+.task-chip.complete{background:#dcfce7;color:#166534;border-color:#86efac}
+
+/* URGENTE auto */
+.urgent-flag{
+  background:var(--red);
+  color:#fff;
+  border-color:var(--red);
+  animation:pulse 1.8s infinite;
+}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.45)}
+  50%{box-shadow:0 0 0 6px rgba(220,38,38,0)}
+}
+
+/* EMPTY STATE */
+.empty-state{
+  text-align:center;
+  padding:50px 20px;
+  color:var(--muted);
+}
+.empty-state .icon{
+  font-size:48px;
+  margin-bottom:12px;
+  opacity:.5;
+}
+.empty-state h3{
+  font-family:var(--head);
+  color:var(--muted2);
+  font-size:16px;
+  margin-bottom:6px;
+  text-transform:uppercase;
+  letter-spacing:.35px;
+}
+.empty-state p{font-size:13px}
+
+/* FAB (Botón flotante para agregar rápido) */
+.fab-wrap{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:400;
+  display:flex;
+  flex-direction:column-reverse;
+  align-items:flex-end;
+  gap:10px;
+}
+.fab{
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#153bff,#0b1f7a);
+  color:#fff;
+  border:0;
+  font-size:30px;
+  font-weight:300;
+  cursor:pointer;
+  box-shadow:0 12px 28px rgba(21,59,255,.40);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:transform .25s;
+}
+.fab:hover{transform:scale(1.05)}
+.fab.open{transform:rotate(45deg)}
+.fab-menu{
+  display:none;
+  flex-direction:column;
+  gap:8px;
+  align-items:flex-end;
+}
+.fab-menu.open{display:flex;animation:slideUp .22s ease}
+.fab-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:9px 16px 9px 12px;
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+  color:var(--accent2);
+  cursor:pointer;
+  box-shadow:0 8px 22px rgba(0,0,0,.12);
+  white-space:nowrap;
+}
+.fab-item:hover{background:#eef1ff;color:var(--accent)}
+.fab-item .ico{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;
+}
+
+/* Atajos visual hint */
+.kbd{
+  font-family:var(--mono);
+  font-size:10px;
+  background:#eef1ff;
+  border:1px solid var(--border);
+  color:var(--accent);
+  padding:1px 5px;
+  border-radius:4px;
+  margin-left:6px;
+}
+
+/* RESPONSIVE */
+@media(min-width:600px){
+  .backdrop{align-items:center;padding:16px}
+  .modal{border-radius:12px}
+}
+@media(max-width:980px){
+  .header-tabs{width:100%;margin-left:0}
+  .tab-btn{flex:1 1 calc(50% - 6px)}
+  .project-summary{
+    grid-template-columns:44px 90px 1fr 90px 34px;
+  }
+  .project-summary .meta-chip:nth-of-type(2),
+  .project-summary .meta-chip:nth-of-type(3){display:none}
+  .project-img{width:90px;height:52px}
+  .detail-grid{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .header{padding:10px 12px}
+  .logo{font-size:18px}
+  .logo small{display:none}
+  .quick-chips{top:auto;position:relative;padding:8px 10px 4px}
+  .quick-chip{font-size:10px;padding:5px 9px}
+  .fab-wrap{right:12px;bottom:12px}
+  .fab{width:54px;height:54px;font-size:28px}
+  .mobile-menu-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin-left:auto;
+  }
+  .header-tabs{
+    display:none;
+    padding-top:8px;
+    border-top:1px solid rgba(255,255,255,.22);
+  }
+  .header-tabs.open{display:grid;grid-template-columns:1fr;gap:7px}
+  .tab-btn{width:100%;font-size:11px}
+  .toolbar{top:58px;padding:10px;gap:7px}
+  .search-wrap{min-width:100%;flex:1 1 100%}
+  .filter-sel{flex:1 1 calc(33.33% - 7px);font-size:10px;padding:7px 6px}
+  .btn-add{flex:1 1 calc(50% - 7px);font-size:11px}
+  .main{padding:10px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .project-list{padding:8px;gap:8px}
+  .project-summary{
+    grid-template-columns:38px 1fr 34px;
+    gap:8px;
+    padding:10px;
+  }
+  .project-img{display:none}
+  .project-title h2{font-size:14px}
+  .project-title p{font-size:11px}
+  .project-summary .meta-chip{display:none}
+  .info-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+}
+</style>
+
+</head>
+
+<body>
 <header class="header">
   <div class="logo">COMANDA<small>Organizador</small></div>
-
-  <button class="noti-btn mobile-menu-btn" type="button" onclick="toggleMenu()">
-    ☰ Menú
-  </button>
-
+  <button class="noti-btn mobile-menu-btn" type="button" onclick="toggleMenu()">☰ Menú</button>
   <nav class="header-tabs" id="authMenu">
     <a class="tab-btn" href="#">📋 Pedidos</a>
     <a class="tab-btn active" href="#">💡 Organizador</a>
@@ -13,29 +930,16 @@
     <a class="tab-btn" href="#">📊 Estadísticas</a>
     <a class="tab-btn" href="#">⚙️ Configuración</a>
   </nav>
-
-  <button class="noti-btn" type="button">
-    🔔 <span class="noti-count">3</span>
-  </button>
+  <button class="noti-btn" type="button" onclick="toast('Sin notificaciones nuevas')">🔔 <span class="noti-count">3</span></button>
 </header>
 
 <div class="toolbar">
-
   <div class="search-wrap">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" stroke-width="2">
-      <circle cx="11" cy="11" r="8"/>
-      <path d="m21 21-4.35-4.35"/>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
     </svg>
-
-    <input
-      id="searchInput"
-      type="text"
-      placeholder="Buscar proyecto, cliente o descripción..."
-      oninput="filtrar()"
-    />
+    <input id="searchInput" type="text" placeholder="Buscar proyecto, cliente, responsable o descripción..." oninput="filtrar()"/>
   </div>
-
   <select class="filter-sel" id="filterEstado" onchange="filtrar()">
     <option value="">Estado</option>
     <option>Solicitud</option>
@@ -43,7 +947,6 @@
     <option>Revisado</option>
     <option>Listo</option>
   </select>
-
   <select class="filter-sel" id="filterResponsable" onchange="filtrar()">
     <option value="">Responsable</option>
     <option>Carlos</option>
@@ -52,358 +955,743 @@
     <option>Gabriela</option>
     <option>Roberto</option>
   </select>
+  <button class="btn-add" onclick="openModal('project')">+ Añadir proyecto</button>
+  <button class="btn-add secondary" onclick="openModal('task')">+ Añadir tarea</button>
+</div>
 
-  <button class="btn-add" onclick="openModal('project')">
-    + Añadir proyecto
-  </button>
-
-  <button class="btn-add secondary" onclick="openModal('task')">
-    + Añadir tarea
-  </button>
-
+<div class="quick-chips" id="quickChips">
+  <button class="quick-chip active" data-quick="all" onclick="quickFilter(this)">Todos <span class="badge" id="cAll">0</span></button>
+  <button class="quick-chip" data-quick="hoy" onclick="quickFilter(this)">📅 Hoy <span class="badge" id="cHoy">0</span></button>
+  <button class="quick-chip" data-quick="semana" onclick="quickFilter(this)">📆 Esta semana <span class="badge" id="cSemana">0</span></button>
+  <button class="quick-chip" data-quick="urgente" onclick="quickFilter(this)">🔥 Urgentes <span class="badge" id="cUrgente">0</span></button>
+  <button class="quick-chip" data-quick="bloqueado" onclick="quickFilter(this)">⛔ Bloqueados <span class="badge" id="cBloq">0</span></button>
+  <button class="quick-chip" data-quick="listo" onclick="quickFilter(this)">✅ Listos <span class="badge" id="cListo">0</span></button>
+  <button class="quick-chip clear" onclick="clearFilters()">✕ Limpiar</button>
 </div>
 
 <main class="main">
-
   <section class="kpis">
-
-    <div class="kpi">
-      <small>En producción</small>
-      <strong>4</strong>
-    </div>
-
-    <div class="kpi red">
-      <small>Urgentes</small>
-      <strong>2</strong>
-    </div>
-
-    <div class="kpi orange">
-      <small>Bloqueados</small>
-      <strong>1</strong>
-    </div>
-
-    <div class="kpi green">
-      <small>Listos</small>
-      <strong>3</strong>
-    </div>
-
+    <div class="kpi" onclick="quickFilterByKpi('curso')"><small>En producción</small><strong id="kpiProduccion">0</strong></div>
+    <div class="kpi red" onclick="quickFilterByKpi('urgente')"><small>Urgentes</small><strong id="kpiUrgente">0</strong></div>
+    <div class="kpi orange" onclick="quickFilterByKpi('bloqueado')"><small>Bloqueados</small><strong id="kpiBloq">0</strong></div>
+    <div class="kpi green" onclick="quickFilterByKpi('listo')"><small>Listos</small><strong id="kpiListo">0</strong></div>
   </section>
 
   <section class="panel">
-
     <div class="panel-head">
       <div>
         <h1>Centro de Producción</h1>
-        <p>
-          Haz click en un proyecto para desplegar ficha técnica,
-          tareas, notas y seguimiento.
-        </p>
+        <p>Haz click en un proyecto para desplegar ficha técnica, tareas, notas, fotos e historial.</p>
       </div>
-
-      <button class="btn-add secondary" onclick="cerrarTodos()">
-        Cerrar todos
-      </button>
+      <button class="btn-add secondary" onclick="cerrarTodos()">Cerrar todos</button>
     </div>
 
-    <div class="project-list">
+```
+<div class="project-list" id="projectList">
 
-      <!-- PROYECTO -->
-      <article class="project open">
+  <article class="project open" data-search="tecno farma carlos pvc acrilico no lleva luz" data-estado="En curso" data-responsable="Carlos">
+    <div class="project-summary" onclick="toggleProject(this)">
+      <div class="project-num">001</div>
+      <img class="project-img" src="https://dummyimage.com/300x120/111/fff&text=Tecno+Farma" alt="">
+      <div class="project-title">
+        <h2>Tecno Farma</h2>
+        <p>Carlos · Entrega: Viernes 31/05 · PVC 15mm + acrílico</p>
+        <div class="progress"><span style="width:45%"></span></div>
+      </div>
+      <span class="meta-chip status-curso">En curso</span>
+      <span class="meta-chip">45%</span>
+      <span class="meta-chip">31/05</span>
+      <div class="arrow">⌄</div>
+    </div>
 
-        <div class="project-summary" onclick="toggleProject(this)">
+    <div class="project-detail">
+      <div class="detail-grid">
+        <div class="detail-card">
+          <div class="detail-title">Vista rápida</div>
+          <div class="hero"><img src="https://dummyimage.com/900x250/111/fff&text=Tecno+Farma"></div>
+          <div class="info-grid">
+            <div class="info-box"><small>Responsable</small><strong>Carlos</strong></div>
+            <div class="info-box"><small>Entrega</small><strong>Viernes 31/05</strong></div>
+            <div class="info-box"><small>Progreso</small><strong>45%</strong></div>
+            <div class="info-box"><small>Estado</small><strong>En curso</strong></div>
+          </div>
+          <div class="actions-row">
+            <button class="btn-add" onclick="openModal('task')">+ Tarea</button>
+            <button class="btn-add secondary" onclick="openModal('note')">+ Nota</button>
+            <button class="btn-add secondary" onclick="openModal('photo')">📷 Foto</button>
+          </div>
+        </div>
 
-          <div class="project-num">001</div>
+        <div class="detail-card">
+          <div class="tabs">
+            <button class="active" onclick="showTab(event,'tecno-ficha')">Ficha</button>
+            <button onclick="showTab(event,'tecno-tareas')">Tareas</button>
+            <button onclick="showTab(event,'tecno-notas')">Notas</button>
+            <button onclick="showTab(event,'tecno-fotos')">Fotos</button>
+            <button onclick="showTab(event,'tecno-historial')">Historial</button>
+          </div>
 
-          <img
-            class="project-img"
-            src="https://dummyimage.com/300x120/111/fff&text=Tecno+Farma"
-          >
-
-          <div class="project-title">
-            <h2>Tecno Farma</h2>
-
-            <p>
-              Carlos · Entrega: Viernes 31/05 ·
-              PVC 15mm + acrílico
-            </p>
-
-            <div class="progress">
-              <span style="width:45%"></span>
+          <div id="tecno-ficha" class="tab-content active">
+            <div class="accordion open">
+              <div class="acc-head" onclick="toggleAcc(this)"><div><strong>Dimensiones</strong><small>455 x 65 cm</small></div><b>⌄</b></div>
+              <div class="acc-body">Validar escala antes de cortar. Revisar proporción del arte contra el archivo aprobado.</div>
+            </div>
+            <div class="accordion open">
+              <div class="acc-head" onclick="toggleAcc(this)"><div><strong>Materiales</strong><small>PVC 15mm + acrílico gris, blanco y rojo</small></div><b>⌄</b></div>
+              <div class="acc-body">Cortar PVC 15mm. Arriba va acrílico. Verificar colores antes de pegar.</div>
+            </div>
+            <div class="accordion open">
+              <div class="acc-head" onclick="toggleAcc(this)"><div><strong>Iluminación</strong><small>NO LLEVA</small></div><b>⌄</b></div>
+              <div class="acc-body">Este proyecto no lleva luz.</div>
+            </div>
+            <div class="accordion open">
+              <div class="acc-head" onclick="toggleAcc(this)"><div><strong>Instalación</strong><small>Plantilla + cinta doble faz</small></div><b>⌄</b></div>
+              <div class="acc-body">
+                <ul>
+                  <li>Hacer plantilla para pegar con cinta doble faz.</li>
+                  <li>Letras grandes con cinta doble faz verde.</li>
+                  <li>Letras pequeñas con 3M delgada.</li>
+                </ul>
+              </div>
             </div>
           </div>
 
-          <span class="meta-chip status-curso">
-            En curso
-          </span>
-
-          <span class="meta-chip">45%</span>
-
-          <span class="meta-chip">31/05</span>
-
-          <div class="arrow">⌄</div>
-
-        </div>
-
-        <!-- DESPLEGABLE -->
-        <div class="project-detail">
-
-          <div class="detail-grid">
-
-            <!-- IZQUIERDA -->
-            <div class="detail-card">
-
-              <div class="detail-title">
-                Vista rápida
-              </div>
-
-              <div class="hero">
-                <img src="https://dummyimage.com/900x250/111/fff&text=Tecno+Farma">
-              </div>
-
-              <div class="info-grid">
-
-                <div class="info-box">
-                  <small>Responsable</small>
-                  <strong>Carlos</strong>
-                </div>
-
-                <div class="info-box">
-                  <small>Entrega</small>
-                  <strong>Viernes 31/05</strong>
-                </div>
-
-                <div class="info-box">
-                  <small>Progreso</small>
-                  <strong>45%</strong>
-                </div>
-
-                <div class="info-box">
-                  <small>Estado</small>
-                  <strong>En curso</strong>
-                </div>
-
-              </div>
-
-              <div class="actions-row">
-
-                <button class="btn-add">
-                  + Tarea
-                </button>
-
-                <button class="btn-add secondary">
-                  + Nota
-                </button>
-
-                <button class="btn-add secondary">
-                  📷 Foto
-                </button>
-
-              </div>
-
+          <div id="tecno-tareas" class="tab-content">
+            <div class="checklist">
+              <label class="check"><input type="checkbox" checked> Cortar PVC 15mm</label>
+              <label class="check"><input type="checkbox"> Cortar acrílico superior</label>
+              <label class="check"><input type="checkbox"> Pegar letras</label>
+              <label class="check"><input type="checkbox"> Revisar alineación</label>
+              <label class="check"><input type="checkbox"> Tomar foto final</label>
+              <label class="check"><input type="checkbox"> Embalar</label>
             </div>
-
-            <!-- DERECHA -->
-            <div class="detail-card">
-
-              <div class="tabs">
-
-                <button class="active"
-                  onclick="showTab(event,'tecno-ficha')">
-                  Ficha
-                </button>
-
-                <button
-                  onclick="showTab(event,'tecno-tareas')">
-                  Tareas
-                </button>
-
-                <button
-                  onclick="showTab(event,'tecno-notas')">
-                  Notas
-                </button>
-
-                <button
-                  onclick="showTab(event,'tecno-historial')">
-                  Historial
-                </button>
-
-              </div>
-
-              <!-- FICHA -->
-              <div id="tecno-ficha"
-                class="tab-content active">
-
-                <div class="accordion open">
-
-                  <div class="acc-head"
-                    onclick="toggleAcc(this)">
-
-                    <div>
-                      <strong>Dimensiones</strong>
-                      <small>455 x 65 cm</small>
-                    </div>
-
-                    <b>⌄</b>
-
-                  </div>
-
-                  <div class="acc-body">
-                    Validar escala antes de cortar.
-                  </div>
-
-                </div>
-
-                <div class="accordion open">
-
-                  <div class="acc-head"
-                    onclick="toggleAcc(this)">
-
-                    <div>
-                      <strong>Materiales</strong>
-
-                      <small>
-                        PVC 15mm + acrílico gris,
-                        blanco y rojo
-                      </small>
-                    </div>
-
-                    <b>⌄</b>
-
-                  </div>
-
-                  <div class="acc-body">
-                    Cortar PVC 15mm.
-                    Arriba va acrílico.
-                  </div>
-
-                </div>
-
-              </div>
-
-              <!-- TAREAS -->
-              <div id="tecno-tareas"
-                class="tab-content">
-
-                <div class="checklist">
-
-                  <label class="check">
-                    <input type="checkbox" checked>
-                    Cortar PVC 15mm
-                  </label>
-
-                  <label class="check">
-                    <input type="checkbox">
-                    Cortar acrílico superior
-                  </label>
-
-                  <label class="check">
-                    <input type="checkbox">
-                    Pegar letras
-                  </label>
-
-                </div>
-
-              </div>
-
-              <!-- NOTAS -->
-              <div id="tecno-notas"
-                class="tab-content">
-
-                <div class="note">
-                  <b>Roberto:</b>
-                  Verificar cinta doble faz.
-                </div>
-
-                <div class="note">
-                  <b>Carlos:</b>
-                  Revisar plantilla.
-                </div>
-
-              </div>
-
-              <!-- HISTORIAL -->
-              <div id="tecno-historial"
-                class="tab-content">
-
-                <div class="note">
-                  Proyecto creado por Roberto.
-                </div>
-
-                <div class="note">
-                  Carlos marcó “visto”.
-                </div>
-
-              </div>
-
+            <div class="inline-add">
+              <input type="text" placeholder="+ Agregar tarea y pulsar Enter..." onkeydown="addInlineTask(event,this)">
+              <button onclick="addInlineTask({key:'Enter'},this.previousElementSibling)" title="Agregar">+</button>
             </div>
-
           </div>
-
+          <div id="tecno-notas" class="tab-content">
+            <div class="note"><b>Roberto:</b> Verificar cinta doble faz antes de entregar.</div>
+            <div class="note"><b>Carlos:</b> Falta revisar plantilla.</div>
+            <div class="inline-add">
+              <input type="text" placeholder="+ Escribir nota rápida y pulsar Enter..." onkeydown="addInlineNote(event,this)">
+              <button onclick="addInlineNote({key:'Enter'},this.previousElementSibling)" title="Agregar">+</button>
+            </div>
+          </div>
+          <div id="tecno-fotos" class="tab-content"><div class="note">Aquí irían fotos de avance, instalación y entrega.</div></div>
+          <div id="tecno-historial" class="tab-content">
+            <div class="note">Proyecto creado por Roberto.</div>
+            <div class="note">Carlos marcó “visto”.</div>
+            <div class="note">Se actualizó progreso a 45%.</div>
+          </div>
         </div>
-
-      </article>
-
+      </div>
     </div>
+  </article>
+
+  <article class="project" data-search="viajea chico caja de luz canto aluminio clear" data-estado="Solicitud" data-responsable="Chico">
+    <div class="project-summary" onclick="toggleProject(this)">
+      <div class="project-num">002</div>
+      <img class="project-img" src="https://dummyimage.com/300x120/fff/111&text=viajea" alt="">
+      <div class="project-title">
+        <h2>Viajea</h2>
+        <p>Chico · Entrega: Lunes 03/06 · Caja de luz</p>
+        <div class="progress"><span style="width:20%"></span></div>
+      </div>
+      <span class="meta-chip status-solicitud">Solicitud</span>
+      <span class="meta-chip">20%</span>
+      <span class="meta-chip">03/06</span>
+      <div class="arrow">⌄</div>
+    </div>
+    <div class="project-detail">
+      <div class="detail-grid">
+        <div class="detail-card">
+          <div class="detail-title">Vista rápida</div>
+          <div class="hero"><img src="https://dummyimage.com/900x250/fff/111&text=viajea"></div>
+          <div class="info-grid">
+            <div class="info-box"><small>Responsable</small><strong>Chico</strong></div>
+            <div class="info-box"><small>Entrega</small><strong>Lunes 03/06</strong></div>
+            <div class="info-box"><small>Progreso</small><strong>20%</strong></div>
+            <div class="info-box"><small>Estado</small><strong>Solicitud</strong></div>
+          </div>
+        </div>
+        <div class="detail-card">
+          <div class="tabs">
+            <button class="active" onclick="showTab(event,'viajea-ficha')">Ficha</button>
+            <button onclick="showTab(event,'viajea-tareas')">Tareas</button>
+            <button onclick="showTab(event,'viajea-notas')">Notas</button>
+          </div>
+          <div id="viajea-ficha" class="tab-content active">
+            <div class="accordion open"><div class="acc-head" onclick="toggleAcc(this)"><div><strong>Dimensiones</strong><small>130 x 50 cm</small></div><b>⌄</b></div><div class="acc-body">Medida general de la caja.</div></div>
+            <div class="accordion open"><div class="acc-head" onclick="toggleAcc(this)"><div><strong>Materiales</strong><small>Canto aluminio blanco 6cm + acrílico + clear</small></div><b>⌄</b></div><div class="acc-body">Impresión clear sobre acrílico. Revisar acabado antes de cerrar caja.</div></div>
+            <div class="accordion open"><div class="acc-head" onclick="toggleAcc(this)"><div><strong>Iluminación</strong><small>Cinta luz blanca 10K</small></div><b>⌄</b></div><div class="acc-body">Sacar cable por atrás. Probar encendido antes de embalar.</div></div>
+          </div>
+          <div id="viajea-tareas" class="tab-content">
+            <div class="checklist">
+              <label class="check"><input type="checkbox"> Cortar acrílico</label>
+              <label class="check"><input type="checkbox"> Armar caja</label>
+              <label class="check"><input type="checkbox"> Instalar luz</label>
+              <label class="check"><input type="checkbox"> Prueba final</label>
+            </div>
+            <div class="inline-add">
+              <input type="text" placeholder="+ Agregar tarea y pulsar Enter..." onkeydown="addInlineTask(event,this)">
+              <button onclick="addInlineTask({key:'Enter'},this.previousElementSibling)">+</button>
+            </div>
+          </div>
+          <div id="viajea-notas" class="tab-content">
+            <div class="note">Va fijado en fachada interna de aluminio. Colocar 2 ganchos y doble faz abajo.</div>
+            <div class="inline-add">
+              <input type="text" placeholder="+ Escribir nota rápida..." onkeydown="addInlineNote(event,this)">
+              <button onclick="addInlineNote({key:'Enter'},this.previousElementSibling)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="project" data-search="farmacia san rafael ruben pvc vinil laminado" data-estado="Revisado" data-responsable="Rubén">
+    <div class="project-summary" onclick="toggleProject(this)">
+      <div class="project-num">003</div>
+      <img class="project-img" src="https://dummyimage.com/300x120/e9f8ef/177a32&text=Farmacia" alt="">
+      <div class="project-title">
+        <h2>Farmacia San Rafael</h2>
+        <p>Rubén · Entrega: Miércoles 05/06 · PVC 9mm + vinil</p>
+        <div class="progress"><span style="width:60%"></span></div>
+      </div>
+      <span class="meta-chip status-revisado">Revisado</span>
+      <span class="meta-chip">60%</span>
+      <span class="meta-chip">05/06</span>
+      <div class="arrow">⌄</div>
+    </div>
+    <div class="project-detail">
+      <div class="detail-grid">
+        <div class="detail-card">
+          <div class="detail-title">Vista rápida</div>
+          <div class="hero"><img src="https://dummyimage.com/900x250/e9f8ef/177a32&text=Farmacia+San+Rafael"></div>
+          <div class="info-grid">
+            <div class="info-box"><small>Responsable</small><strong>Rubén</strong></div>
+            <div class="info-box"><small>Entrega</small><strong>Miércoles 05/06</strong></div>
+            <div class="info-box"><small>Progreso</small><strong>60%</strong></div>
+            <div class="info-box"><small>Estado</small><strong>Revisado</strong></div>
+          </div>
+        </div>
+        <div class="detail-card">
+          <div class="tabs">
+            <button class="active" onclick="showTab(event,'farmacia-ficha')">Ficha</button>
+            <button onclick="showTab(event,'farmacia-tareas')">Tareas</button>
+          </div>
+          <div id="farmacia-ficha" class="tab-content active">
+            <div class="accordion open"><div class="acc-head" onclick="toggleAcc(this)"><div><strong>Materiales</strong><small>PVC 9mm + vinil laminado</small></div><b>⌄</b></div><div class="acc-body">Revisar bordes antes de entregar. Embalar con cartón y plástico.</div></div>
+          </div>
+          <div id="farmacia-tareas" class="tab-content">
+            <div class="checklist">
+              <label class="check"><input type="checkbox" checked> Impresión lista</label>
+              <label class="check"><input type="checkbox"> Laminar</label>
+              <label class="check"><input type="checkbox"> Pegar sobre PVC</label>
+              <label class="check"><input type="checkbox"> Embalar</label>
+            </div>
+            <div class="inline-add">
+              <input type="text" placeholder="+ Agregar tarea y pulsar Enter..." onkeydown="addInlineTask(event,this)">
+              <button onclick="addInlineTask({key:'Enter'},this.previousElementSibling)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="project" data-search="clinica del este bloqueado falta material acrilico" data-estado="Solicitud" data-responsable="Gabriela">
+    <div class="project-summary" onclick="toggleProject(this)">
+      <div class="project-num">004</div>
+      <img class="project-img" src="https://dummyimage.com/300x120/ef4444/fff&text=Clinica" alt="">
+      <div class="project-title">
+        <h2>Clínica del Este</h2>
+        <p>Gabriela · Bloqueado · Falta material</p>
+        <div class="progress"><span style="width:10%"></span></div>
+      </div>
+      <span class="meta-chip status-solicitud">Bloqueado</span>
+      <span class="meta-chip">10%</span>
+      <span class="meta-chip">—</span>
+      <div class="arrow">⌄</div>
+    </div>
+    <div class="project-detail">
+      <div class="detail-grid">
+        <div class="detail-card">
+          <div class="detail-title">Problema</div>
+          <div class="note"><b>Bloqueado:</b> falta acrílico transparente. No pasar a corte hasta confirmar material.</div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-title">Acciones sugeridas</div>
+          <div class="checklist">
+            <label class="check"><input type="checkbox"> Confirmar material disponible</label>
+            <label class="check"><input type="checkbox"> Avisar al cliente nueva fecha</label>
+            <label class="check"><input type="checkbox"> Reprogramar producción</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <div class="empty-state" id="emptyState" style="display:none">
+    <div class="icon">🔍</div>
+    <h3>No hay proyectos</h3>
+    <p>Probá con otro filtro o agrega uno nuevo con el botón flotante.</p>
+  </div>
+
+</div>
+```
 
   </section>
-
 </main>
 
+<div class="fab-wrap">
+  <div class="fab-menu" id="fabMenu">
+    <button class="fab-item" onclick="fabAction('project')"><span class="ico">📋</span> Proyecto</button>
+    <button class="fab-item" onclick="fabAction('task')"><span class="ico">✓</span> Tarea</button>
+    <button class="fab-item" onclick="fabAction('note')"><span class="ico">📝</span> Nota</button>
+    <button class="fab-item" onclick="fabAction('photo')"><span class="ico">📷</span> Foto</button>
+  </div>
+  <button class="fab" id="fabBtn" onclick="toggleFab()" title="Agregar (N)">+</button>
+</div>
+
+<div class="backdrop" id="modalBackdrop" onclick="bdClick(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Añadir</span>
+      <button class="modal-close" type="button" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn-add secondary" type="button" onclick="closeModal()">Cancelar</button>
+      <button class="btn-add" type="button" onclick="saveFake()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-function toggleMenu(){
-  document.getElementById("authMenu")
-    .classList.toggle("open");
+/* ============================================
+   ORGANIZADOR · TUTTOVINILOS
+   Lógica mejorada: persistencia, auto-progreso,
+   filtros rápidos, FAB, atajos de teclado.
+============================================ */
+
+const LS_KEY = 'tuttovinilos_organizador_v1';
+let currentQuickFilter = 'all';
+
+/* ---------- PERSISTENCIA (localStorage) ---------- */
+function saveState(){
+  const data = {checks:{},notes:{},tasks:{}};
+  document.querySelectorAll('.project').forEach(p=>{
+    const id = p.dataset.id || (p.dataset.id = 'p_'+Math.random().toString(36).slice(2,9));
+    data.checks[id] = [];
+    p.querySelectorAll('.checklist .check').forEach((c,i)=>{
+      data.checks[id].push({
+        text:c.textContent.trim(),
+        done:c.querySelector('input').checked
+      });
+    });
+    data.notes[id] = [];
+    p.querySelectorAll('.tab-content [class="note"], .tab-content .note').forEach(n=>{
+      if(n.closest('.tab-content')?.id?.includes('notas')){
+        data.notes[id].push(n.innerHTML);
+      }
+    });
+  });
+  try{localStorage.setItem(LS_KEY,JSON.stringify(data));}catch(e){}
 }
 
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    // Restauración simple: marcar checkboxes por texto
+    document.querySelectorAll('.project').forEach(p=>{
+      const id = p.dataset.id;
+      if(!data.checks[id]) return;
+      p.querySelectorAll('.checklist .check').forEach(c=>{
+        const txt = c.textContent.trim();
+        const saved = data.checks[id].find(x=>x.text===txt);
+        if(saved) c.querySelector('input').checked = saved.done;
+      });
+    });
+  }catch(e){}
+}
+
+/* ---------- AUTO-PROGRESO ---------- */
+function updateProgress(project){
+  const checks = project.querySelectorAll('.checklist .check input');
+  if(!checks.length) return;
+  const done = Array.from(checks).filter(c=>c.checked).length;
+  const pct = Math.round((done/checks.length)*100);
+
+  // Barra
+  const bar = project.querySelector('.progress span');
+  if(bar) bar.style.width = pct+'%';
+
+  // Chip del summary (segundo meta-chip = %)
+  const chips = project.querySelectorAll('.project-summary .meta-chip');
+  if(chips[1]) chips[1].textContent = pct+'%';
+  const infoBoxes = project.querySelectorAll('.info-box');
+  infoBoxes.forEach(b=>{
+    if(b.querySelector('small')?.textContent==='Progreso')
+      b.querySelector('strong').textContent = pct+'%';
+  });
+
+  // Auto-estado
+  let newEstado = project.dataset.estado;
+  if(pct===100) newEstado = 'Listo';
+  else if(pct>0 && pct<100 && project.dataset.estado==='Solicitud') newEstado = 'En curso';
+
+  if(newEstado !== project.dataset.estado){
+    project.dataset.estado = newEstado;
+    const statusChip = chips[0];
+    if(statusChip){
+      statusChip.textContent = newEstado;
+      statusChip.className = 'meta-chip status-'+newEstado.toLowerCase().replace(' ','');
+      if(newEstado==='En curso') statusChip.classList.add('status-curso');
+      if(newEstado==='Listo') statusChip.classList.add('status-listo');
+    }
+    infoBoxes.forEach(b=>{
+      if(b.querySelector('small')?.textContent==='Estado')
+        b.querySelector('strong').textContent = newEstado;
+    });
+  }
+
+  // Chip de tareas (contador)
+  let taskChip = project.querySelector('.task-chip');
+  if(!taskChip){
+    taskChip = document.createElement('span');
+    taskChip.className = 'meta-chip task-chip';
+    const arrow = project.querySelector('.arrow');
+    arrow.parentNode.insertBefore(taskChip, arrow);
+  }
+  taskChip.textContent = `${done}/${checks.length} ✓`;
+  taskChip.classList.toggle('complete', done===checks.length);
+}
+
+function updateAllProgress(){
+  document.querySelectorAll('.project').forEach(updateProgress);
+  updateKPIs();
+}
+
+/* ---------- KPIs DINÁMICOS ---------- */
+function isUrgent(project){
+  // Urgente si fecha de entrega ≤ 3 días o si ya está marcado
+  const fecha = project.querySelector('.project-summary .meta-chip:nth-of-type(3)')?.textContent;
+  if(!fecha || fecha==='—') return false;
+  const m = fecha.match(/(\d{1,2})\/(\d{1,2})/);
+  if(!m) return false;
+  const hoy = new Date();
+  const entrega = new Date(hoy.getFullYear(), parseInt(m[2])-1, parseInt(m[1]));
+  if(entrega < new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate())) return false;
+  const diff = (entrega - hoy)/(1000*60*60*24);
+  return diff <= 3;
+}
+
+function isThisWeek(project){
+  const fecha = project.querySelector('.project-summary .meta-chip:nth-of-type(3)')?.textContent;
+  if(!fecha || fecha==='—') return false;
+  const m = fecha.match(/(\d{1,2})\/(\d{1,2})/);
+  if(!m) return false;
+  const hoy = new Date();
+  const entrega = new Date(hoy.getFullYear(), parseInt(m[2])-1, parseInt(m[1]));
+  const diff = (entrega - hoy)/(1000*60*60*24);
+  return diff >= 0 && diff <= 7;
+}
+
+function isToday(project){
+  const fecha = project.querySelector('.project-summary .meta-chip:nth-of-type(3)')?.textContent;
+  if(!fecha) return false;
+  const hoy = new Date();
+  const dd = String(hoy.getDate()).padStart(2,'0');
+  const mm = String(hoy.getMonth()+1).padStart(2,'0');
+  return fecha.includes(`${dd}/${mm}`);
+}
+
+function updateKPIs(){
+  const all = document.querySelectorAll('.project');
+  let curso=0, urgente=0, bloq=0, listo=0, hoy=0, semana=0;
+  all.forEach(p=>{
+    const e = p.dataset.estado;
+    if(e==='En curso') curso++;
+    if(e==='Listo') listo++;
+    if(p.dataset.search.includes('bloqueado')) bloq++;
+    if(isUrgent(p) && e!=='Listo'){
+      urgente++;
+      // Marcar visualmente como urgente
+      const chips = p.querySelectorAll('.project-summary .meta-chip');
+      if(chips[2] && !chips[2].classList.contains('urgent-flag') && chips[2].textContent!=='—'){
+        chips[2].classList.add('urgent-flag');
+      }
+    }
+    if(isToday(p)) hoy++;
+    if(isThisWeek(p)) semana++;
+  });
+
+  document.getElementById('kpiProduccion').textContent = curso;
+  document.getElementById('kpiUrgente').textContent = urgente;
+  document.getElementById('kpiBloq').textContent = bloq;
+  document.getElementById('kpiListo').textContent = listo;
+
+  document.getElementById('cAll').textContent = all.length;
+  document.getElementById('cHoy').textContent = hoy;
+  document.getElementById('cSemana').textContent = semana;
+  document.getElementById('cUrgente').textContent = urgente;
+  document.getElementById('cBloq').textContent = bloq;
+  document.getElementById('cListo').textContent = listo;
+}
+
+/* ---------- PROYECTOS ---------- */
 function toggleProject(el){
-  const project = el.closest(".project");
-  project.classList.toggle("open");
+  el.closest('.project').classList.toggle('open');
 }
 
 function cerrarTodos(){
-  document.querySelectorAll(".project")
-    .forEach(p=>p.classList.remove("open"));
+  document.querySelectorAll('.project').forEach(p=>p.classList.remove('open'));
+  toast('Todos los proyectos cerrados');
 }
 
 function toggleAcc(el){
-  el.parentElement.classList.toggle("open");
+  el.parentElement.classList.toggle('open');
 }
 
-function showTab(event,id){
-
+function showTab(event, id){
   event.stopPropagation();
-
-  const card =
-    event.target.closest(".detail-card");
-
-  card.querySelectorAll(".tabs button")
-    .forEach(btn=>btn.classList.remove("active"));
-
-  event.target.classList.add("active");
-
-  card.querySelectorAll(".tab-content")
-    .forEach(tab=>tab.classList.remove("active"));
-
-  document.getElementById(id)
-    .classList.add("active");
+  const card = event.target.closest('.detail-card');
+  card.querySelectorAll('.tabs button').forEach(btn=>btn.classList.remove('active'));
+  event.target.classList.add('active');
+  card.querySelectorAll('.tab-content').forEach(tab=>tab.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
+/* ---------- FILTROS ---------- */
 function filtrar(){
+  const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+  const estado = document.getElementById('filterEstado').value;
+  const responsable = document.getElementById('filterResponsable').value;
+  let visibles = 0;
 
-  const q =
-    document.getElementById("searchInput")
-      .value.toLowerCase();
+  document.querySelectorAll('.project').forEach(p=>{
+    const matchText = !q || p.dataset.search.toLowerCase().includes(q);
+    const matchEstado = !estado || p.dataset.estado === estado;
+    const matchResp = !responsable || p.dataset.responsable === responsable;
 
-  document.querySelectorAll(".project")
-    .forEach(p=>{
+    let matchQuick = true;
+    if(currentQuickFilter==='hoy') matchQuick = isToday(p);
+    else if(currentQuickFilter==='semana') matchQuick = isThisWeek(p);
+    else if(currentQuickFilter==='urgente') matchQuick = isUrgent(p) && p.dataset.estado!=='Listo';
+    else if(currentQuickFilter==='bloqueado') matchQuick = p.dataset.search.includes('bloqueado');
+    else if(currentQuickFilter==='listo') matchQuick = p.dataset.estado==='Listo';
+    else if(currentQuickFilter==='curso') matchQuick = p.dataset.estado==='En curso';
 
-      const text =
-        p.innerText.toLowerCase();
+    const show = matchText && matchEstado && matchResp && matchQuick;
+    p.style.display = show ? '' : 'none';
+    if(show) visibles++;
+  });
 
-      p.style.display =
-        text.includes(q)
-        ? ""
-        : "none";
-    });
+  document.getElementById('emptyState').style.display = visibles===0 ? 'block' : 'none';
 }
+
+function quickFilter(btn){
+  document.querySelectorAll('.quick-chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  currentQuickFilter = btn.dataset.quick;
+  filtrar();
+}
+
+function quickFilterByKpi(type){
+  const chip = document.querySelector(`.quick-chip[data-quick="${type}"]`);
+  if(chip) quickFilter(chip);
+}
+
+function clearFilters(){
+  document.getElementById('searchInput').value='';
+  document.getElementById('filterEstado').value='';
+  document.getElementById('filterResponsable').value='';
+  document.querySelectorAll('.quick-chip').forEach(c=>c.classList.remove('active'));
+  document.querySelector('.quick-chip[data-quick="all"]').classList.add('active');
+  currentQuickFilter='all';
+  filtrar();
+  toast('Filtros limpiados');
+}
+
+/* ---------- INLINE ADD (sin modal) ---------- */
+function addInlineTask(event, input){
+  if(event.key !== 'Enter') return;
+  const text = input.value.trim();
+  if(!text) return;
+  const tabContent = input.closest('.tab-content');
+  const checklist = tabContent.querySelector('.checklist');
+  const label = document.createElement('label');
+  label.className = 'check';
+  label.innerHTML = `<input type="checkbox"> ${text}`;
+  checklist.appendChild(label);
+  label.querySelector('input').addEventListener('change', ()=>{
+    updateProgress(label.closest('.project'));
+    saveState();
+  });
+  input.value = '';
+  updateProgress(label.closest('.project'));
+  saveState();
+  toast('Tarea agregada');
+}
+
+function addInlineNote(event, input){
+  if(event.key !== 'Enter') return;
+  const text = input.value.trim();
+  if(!text) return;
+  const tabContent = input.closest('.tab-content');
+  const note = document.createElement('div');
+  note.className = 'note';
+  note.innerHTML = `<b>Yo:</b> ${text}`;
+  tabContent.insertBefore(note, input.parentElement);
+  input.value = '';
+  saveState();
+  toast('Nota agregada');
+}
+
+/* ---------- MODALES ---------- */
+function openModal(type){
+  const title = document.getElementById('modalTitle');
+  const body = document.getElementById('modalBody');
+
+  if(type === 'project'){
+    title.textContent = 'Añadir proyecto';
+    body.innerHTML = `
+      <div class="form-grid">
+        <div class="field"><label>Nombre del proyecto</label><input id="np_nombre" placeholder="Ej: Tijerazo" autofocus></div>
+        <div class="field"><label>Cliente</label><input id="np_cliente" placeholder="Cliente"></div>
+        <div class="field"><label>Responsable</label><select id="np_resp"><option>Carlos</option><option>Chico</option><option>Rubén</option><option>Gabriela</option><option>Roberto</option></select></div>
+        <div class="field"><label>Entrega (dd/mm)</label><input id="np_fecha" placeholder="Ej: 12/06"></div>
+        <div class="field"><label>Estado</label><select id="np_estado"><option>Solicitud</option><option>En curso</option><option>Revisado</option><option>Listo</option></select></div>
+        <div class="field"><label>Dimensiones</label><input id="np_dim" placeholder="Ej: 120 x 60 cm"></div>
+        <div class="field form-full"><label>Descripción / ficha técnica</label><textarea id="np_desc" placeholder="Materiales, iluminación, instalación, notas importantes..."></textarea></div>
+
+```
+  </div>`;
+```
+
+}
+if(type === ‘task’){
+title.textContent = ‘Añadir tarea’;
+body.innerHTML = ` <div class="form-grid"> <div class="field form-full"><label>Tarea</label><input id="nt_text" placeholder="Ej: Cortar plantilla" autofocus></div> <div class="field"><label>Responsable</label><select><option>Carlos</option><option>Chico</option><option>Rubén</option><option>Gabriela</option><option>Roberto</option></select></div> <div class="field"><label>Estado</label><select><option>Pendiente</option><option>Visto</option><option>En proceso</option><option>Listo</option></select></div> <div class="field form-full"><label>Notas</label><textarea placeholder="Instrucciones específicas"></textarea></div> </div>`;
+}
+if(type === ‘note’){
+title.textContent = ‘Añadir nota’;
+body.innerHTML = `<div class="field"><label>Nota interna</label><textarea autofocus placeholder="Escribe la nota interna del proyecto..."></textarea></div>`;
+}
+if(type === ‘photo’){
+title.textContent = ‘Subir foto’;
+body.innerHTML = `<div class="field"><label>Archivo</label><input type="file" accept="image/*"></div><div class="field"><label>Comentario</label><textarea placeholder="Comentario de la foto"></textarea></div>`;
+}
+
+document.getElementById(‘modalBackdrop’).classList.add(‘open’);
+setTimeout(()=>body.querySelector(’[autofocus]’)?.focus(), 100);
+}
+
+function closeModal(){
+document.getElementById(‘modalBackdrop’).classList.remove(‘open’);
+}
+
+function bdClick(event){
+if(event.target.id === ‘modalBackdrop’) closeModal();
+}
+
+function saveFake(){
+// Si está añadiendo proyecto, agregarlo realmente al DOM
+const nombre = document.getElementById(‘np_nombre’);
+if(nombre && nombre.value.trim()){
+addNewProject({
+nombre:nombre.value.trim(),
+cliente:document.getElementById(‘np_cliente’).value.trim(),
+resp:document.getElementById(‘np_resp’).value,
+fecha:document.getElementById(‘np_fecha’).value.trim() || ‘—’,
+estado:document.getElementById(‘np_estado’).value,
+dim:document.getElementById(‘np_dim’).value.trim(),
+desc:document.getElementById(‘np_desc’).value.trim()
+});
+closeModal();
+toast(‘Proyecto añadido’);
+return;
+}
+closeModal();
+toast(‘Guardado’);
+}
+
+function addNewProject(d){
+const num = String(document.querySelectorAll(’.project’).length+1).padStart(3,‘0’);
+const id = ‘proj_’+Date.now();
+const tabIdF = id+’-ficha’;
+const tabIdT = id+’-tareas’;
+const tabIdN = id+’-notas’;
+const article = document.createElement(‘article’);
+article.className = ‘project’;
+article.dataset.id = id;
+article.dataset.search = `${d.nombre} ${d.cliente} ${d.resp} ${d.desc}`.toLowerCase();
+article.dataset.estado = d.estado;
+article.dataset.responsable = d.resp;
+article.innerHTML = ` <div class="project-summary" onclick="toggleProject(this)"> <div class="project-num">${num}</div> <img class="project-img" src="https://dummyimage.com/300x120/153bff/fff&text=${encodeURIComponent(d.nombre)}" alt=""> <div class="project-title"> <h2>${d.nombre}</h2> <p>${d.resp} · Entrega: ${d.fecha} · ${d.cliente||'Sin cliente'}</p> <div class="progress"><span style="width:0%"></span></div> </div> <span class="meta-chip status-${d.estado.toLowerCase().replace(' ','')}">${d.estado}</span> <span class="meta-chip">0%</span> <span class="meta-chip">${d.fecha}</span> <div class="arrow">⌄</div> </div> <div class="project-detail"> <div class="detail-grid"> <div class="detail-card"> <div class="detail-title">Vista rápida</div> <div class="info-grid"> <div class="info-box"><small>Responsable</small><strong>${d.resp}</strong></div> <div class="info-box"><small>Entrega</small><strong>${d.fecha}</strong></div> <div class="info-box"><small>Progreso</small><strong>0%</strong></div> <div class="info-box"><small>Estado</small><strong>${d.estado}</strong></div> </div> <div class="actions-row"> <button class="btn-add" onclick="openModal('task')">+ Tarea</button> <button class="btn-add secondary" onclick="openModal('note')">+ Nota</button> </div> </div> <div class="detail-card"> <div class="tabs"> <button class="active" onclick="showTab(event,'${tabIdF}')">Ficha</button> <button onclick="showTab(event,'${tabIdT}')">Tareas</button> <button onclick="showTab(event,'${tabIdN}')">Notas</button> </div> <div id="${tabIdF}" class="tab-content active"> ${d.dim?`<div class="accordion open"><div class="acc-head" onclick="toggleAcc(this)"><div><strong>Dimensiones</strong><small>${d.dim}</small></div><b>⌄</b></div><div class="acc-body">${d.desc||’—’}</div></div>`:''} ${d.desc&&!d.dim?`<div class="note">${d.desc}</div>`:''} </div> <div id="${tabIdT}" class="tab-content"> <div class="checklist"></div> <div class="inline-add"> <input type="text" placeholder="+ Agregar tarea y pulsar Enter..." onkeydown="addInlineTask(event,this)"> <button onclick="addInlineTask({key:'Enter'},this.previousElementSibling)">+</button> </div> </div> <div id="${tabIdN}" class="tab-content"> <div class="inline-add"> <input type="text" placeholder="+ Escribir nota rápida..." onkeydown="addInlineNote(event,this)"> <button onclick="addInlineNote({key:'Enter'},this.previousElementSibling)">+</button> </div> </div> </div> </div> </div>`;
+document.getElementById(‘projectList’).insertBefore(article, document.getElementById(‘emptyState’));
+article.classList.add(‘open’);
+updateKPIs();
+saveState();
+}
+
+/* ––––– FAB ––––– */
+function toggleFab(){
+const menu = document.getElementById(‘fabMenu’);
+const btn = document.getElementById(‘fabBtn’);
+menu.classList.toggle(‘open’);
+btn.classList.toggle(‘open’);
+}
+function fabAction(type){
+toggleFab();
+openModal(type);
+}
+
+/* ––––– TOAST y MENU ––––– */
+function toggleMenu(){
+document.getElementById(‘authMenu’).classList.toggle(‘open’);
+}
+function toast(msg){
+const t = document.getElementById(‘toast’);
+t.textContent = msg;
+t.style.display = ‘block’;
+setTimeout(()=> t.style.display = ‘none’, 2200);
+}
+
+/* ––––– ATAJOS DE TECLADO ––––– */
+document.addEventListener(‘keydown’, e=>{
+if(e.target.tagName===‘INPUT’ || e.target.tagName===‘TEXTAREA’ || e.target.tagName===‘SELECT’) return;
+if(e.key===‘n’ || e.key===‘N’){ e.preventDefault(); openModal(‘project’); }
+if(e.key===‘t’ || e.key===‘T’){ e.preventDefault(); openModal(‘task’); }
+if(e.key===’/’ ){ e.preventDefault(); document.getElementById(‘searchInput’).focus(); }
+if(e.key===‘Escape’){ closeModal(); document.getElementById(‘fabMenu’).classList.remove(‘open’); document.getElementById(‘fabBtn’).classList.remove(‘open’); }
+if(e.key===‘c’ || e.key===‘C’){ cerrarTodos(); }
+});
+
+/* ––––– INIT ––––– */
+document.addEventListener(‘DOMContentLoaded’, ()=>{
+// Asignar IDs a proyectos existentes
+document.querySelectorAll(’.project’).forEach((p,i)=>{
+if(!p.dataset.id) p.dataset.id = ‘p_static_’+i;
+});
+// Bind checkboxes para auto-progreso y persistencia
+document.querySelectorAll(’.checklist .check input’).forEach(c=>{
+c.addEventListener(‘change’, e=>{
+updateProgress(e.target.closest(’.project’));
+saveState();
+});
+});
+loadState();
+updateAllProgress();
+});
 </script>
+
+</body>
+</html>
