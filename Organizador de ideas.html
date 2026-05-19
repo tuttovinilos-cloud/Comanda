@@ -1,916 +1,409 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Organizador de Producción · Tuttovinilos</title>
-
-<style>
-:root{
-  --blue:#263c98;
-  --blue2:#1f2f78;
-  --orange:#f47c20;
-  --bg:#f4f6fb;
-  --card:#ffffff;
-  --text:#172033;
-  --muted:#697386;
-  --line:#e2e7f0;
-  --red:#ef4444;
-  --green:#16a34a;
-  --yellow:#facc15;
-  --shadow:0 10px 30px rgba(20,30,60,.10);
-}
-
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:Arial, Helvetica, sans-serif;
-  background:var(--bg);
-  color:var(--text);
-}
-
-.app{
-  display:grid;
-  grid-template-columns:230px 1fr;
-  min-height:100vh;
-}
-
-.sidebar{
-  background:#071426;
-  color:#fff;
-  padding:22px 16px;
-  display:flex;
-  flex-direction:column;
-  gap:22px;
-}
-
-.logo{
-  font-size:23px;
-  font-weight:900;
-  line-height:.9;
-}
-.logo span{color:var(--orange)}
-
-.nav{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-.nav button{
-  border:0;
-  background:transparent;
-  color:#dbeafe;
-  text-align:left;
-  padding:12px;
-  border-radius:12px;
-  font-weight:700;
-  cursor:pointer;
-}
-
-.nav button.active,
-.nav button:hover{
-  background:var(--blue);
-}
-
-.user{
-  margin-top:auto;
-  font-size:13px;
-  color:#cbd5e1;
-}
-
-.main{
-  padding:24px;
-}
-
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:18px;
-}
-
-.topbar h1{
-  margin:0;
-  font-size:28px;
-}
-
-.actions{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
-
-.btn{
-  border:0;
-  border-radius:12px;
-  padding:12px 16px;
-  font-weight:900;
-  cursor:pointer;
-  box-shadow:var(--shadow);
-}
-
-.btn.primary{
-  background:var(--blue);
-  color:#fff;
-}
-
-.btn.orange{
-  background:var(--orange);
-  color:#fff;
-}
-
-.btn.light{
-  background:#fff;
-  color:var(--text);
-  border:1px solid var(--line);
-}
-
-.kpis{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:14px;
-  margin-bottom:22px;
-}
-
-.kpi{
-  background:var(--card);
-  border-radius:18px;
-  padding:18px;
-  box-shadow:var(--shadow);
-  border-top:5px solid var(--blue);
-}
-
-.kpi.red{border-top-color:var(--red)}
-.kpi.orange{border-top-color:var(--orange)}
-.kpi.green{border-top-color:var(--green)}
-
-.kpi small{
-  color:var(--muted);
-  font-weight:800;
-}
-
-.kpi strong{
-  display:block;
-  font-size:36px;
-  margin-top:8px;
-}
-
-.layout{
-  display:grid;
-  grid-template-columns:1fr 1.15fr;
-  gap:22px;
-}
-
-.section{
-  background:var(--card);
-  border-radius:22px;
-  padding:18px;
-  box-shadow:var(--shadow);
-  margin-bottom:18px;
-}
-
-.section-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:12px;
-}
-
-.section-title h2{
-  font-size:18px;
-  margin:0;
-}
-
-.project-card{
-  display:grid;
-  grid-template-columns:95px 1fr auto;
-  gap:14px;
-  align-items:center;
-  padding:14px;
-  border:1px solid var(--line);
-  border-radius:16px;
-  margin-bottom:12px;
-  cursor:pointer;
-  background:#fff;
-}
-
-.project-card:hover{
-  outline:2px solid rgba(38,60,152,.15);
-}
-
-.project-card img{
-  width:95px;
-  height:60px;
-  object-fit:contain;
-  border-radius:10px;
-  background:#f8fafc;
-}
-
-.project-info h3{
-  margin:0 0 4px;
-  font-size:17px;
-}
-
-.project-info p{
-  margin:2px 0;
-  color:var(--muted);
-  font-size:13px;
-}
-
-.progress{
-  height:7px;
-  background:#e5e7eb;
-  border-radius:20px;
-  overflow:hidden;
-  margin-top:8px;
-}
-
-.progress span{
-  display:block;
-  height:100%;
-  background:var(--blue);
-}
-
-.badge{
-  padding:7px 12px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:900;
-  white-space:nowrap;
-}
-
-.badge.yellow{background:#fff1b8;color:#8a6500}
-.badge.red{background:#fee2e2;color:#b91c1c}
-.badge.green{background:#dcfce7;color:#166534}
-.badge.blue{background:#dbeafe;color:#1d4ed8}
-
-.detail{
-  background:var(--card);
-  border-radius:24px;
-  padding:18px;
-  box-shadow:var(--shadow);
-  position:sticky;
-  top:20px;
-}
-
-.hero{
-  background:#111;
-  border-radius:16px;
-  height:112px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  margin-bottom:14px;
-}
-
-.hero img{
-  max-width:100%;
-  max-height:100%;
-  object-fit:contain;
-}
-
-.meta{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px;
-  margin-bottom:16px;
-}
-
-.meta-box{
-  background:#f8fafc;
-  border-radius:14px;
-  padding:12px;
-}
-
-.meta-box small{
-  color:var(--muted);
-  font-weight:800;
-}
-
-.meta-box strong{
-  display:block;
-  margin-top:5px;
-}
-
-.tabs{
-  display:flex;
-  gap:8px;
-  border-bottom:1px solid var(--line);
-  margin-bottom:14px;
-  overflow:auto;
-}
-
-.tabs button{
-  border:0;
-  background:transparent;
-  padding:12px 10px;
-  font-weight:900;
-  color:var(--muted);
-  cursor:pointer;
-  white-space:nowrap;
-}
-
-.tabs button.active{
-  color:var(--blue);
-  border-bottom:3px solid var(--blue);
-}
-
-.accordion{
-  border:1px solid var(--line);
-  border-radius:16px;
-  margin-bottom:10px;
-  overflow:hidden;
-}
-
-.acc-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:14px;
-  cursor:pointer;
-  background:#fff;
-}
-
-.acc-head strong{
-  display:block;
-}
-
-.acc-head small{
-  color:var(--muted);
-}
-
-.acc-body{
-  display:none;
-  padding:0 14px 14px;
-  color:#30394d;
-  line-height:1.45;
-}
-
-.accordion.open .acc-body{
-  display:block;
-}
-
-.checklist{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-.check{
-  display:flex;
-  gap:10px;
-  align-items:flex-start;
-  padding:10px;
-  border-radius:12px;
-  background:#f8fafc;
-}
-
-.check input{
-  width:18px;
-  height:18px;
-}
-
-.bottom-actions{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin-top:16px;
-}
-
-.modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.45);
-  z-index:50;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-}
-
-.modal.open{
-  display:flex;
-}
-
-.modal-card{
-  background:#fff;
-  border-radius:22px;
-  padding:22px;
-  max-width:520px;
-  width:100%;
-  box-shadow:var(--shadow);
-}
-
-.modal-card h2{
-  margin-top:0;
-}
-
-.form{
-  display:grid;
-  gap:12px;
-}
-
-.form input,
-.form textarea,
-.form select{
-  width:100%;
-  padding:13px;
-  border-radius:12px;
-  border:1px solid var(--line);
-  font-size:15px;
-}
-
-.form textarea{
-  min-height:90px;
-}
-
-@media(max-width:900px){
-  .app{
-    grid-template-columns:1fr;
-  }
-
-  .sidebar{
-    position:sticky;
-    top:0;
-    z-index:20;
-    flex-direction:row;
-    align-items:center;
-    overflow:auto;
-    padding:12px;
-  }
-
-  .logo{
-    font-size:18px;
-    min-width:90px;
-  }
-
-  .nav{
-    flex-direction:row;
-  }
-
-  .nav button{
-    white-space:nowrap;
-    font-size:12px;
-    padding:9px 10px;
-  }
-
-  .user{display:none}
-
-  .main{
-    padding:14px;
-  }
-
-  .topbar{
-    align-items:flex-start;
-    gap:12px;
-    flex-direction:column;
-  }
-
-  .kpis{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .layout{
-    grid-template-columns:1fr;
-  }
-
-  .detail{
-    position:relative;
-    top:0;
-  }
-
-  .project-card{
-    grid-template-columns:70px 1fr;
-  }
-
-  .project-card img{
-    width:70px;
-    height:50px;
-  }
-
-  .project-card .badge{
-    grid-column:2;
-    width:max-content;
-  }
-
-  .meta{
-    grid-template-columns:1fr;
-  }
-
-  .bottom-actions{
-    grid-template-columns:1fr;
-  }
-}
-</style>
-</head>
-
-<body>
-
-<div class="app">
-
-  <aside class="sidebar">
-    <div class="logo">TUTTO<br><span>VINILOS</span></div>
-
-    <nav class="nav">
-      <button class="active">Dashboard</button>
-      <button>Proyectos</button>
-      <button>Tareas</button>
-      <button>Producción</button>
-      <button>Entregas</button>
-      <button>Clientes</button>
-      <button>Materiales</button>
-      <button>Configuración</button>
-    </nav>
-
-    <div class="user">
-      Roberto<br>
-      <small>Administrador</small>
+<header class="header">
+  <div class="logo">COMANDA<small>Organizador</small></div>
+
+  <button class="noti-btn mobile-menu-btn" type="button" onclick="toggleMenu()">
+    ☰ Menú
+  </button>
+
+  <nav class="header-tabs" id="authMenu">
+    <a class="tab-btn" href="#">📋 Pedidos</a>
+    <a class="tab-btn active" href="#">💡 Organizador</a>
+    <a class="tab-btn" href="#">👤 Clientes</a>
+    <a class="tab-btn" href="#">💲 Materiales</a>
+    <a class="tab-btn" href="#">📊 Estadísticas</a>
+    <a class="tab-btn" href="#">⚙️ Configuración</a>
+  </nav>
+
+  <button class="noti-btn" type="button">
+    🔔 <span class="noti-count">3</span>
+  </button>
+</header>
+
+<div class="toolbar">
+
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/>
+      <path d="m21 21-4.35-4.35"/>
+    </svg>
+
+    <input
+      id="searchInput"
+      type="text"
+      placeholder="Buscar proyecto, cliente o descripción..."
+      oninput="filtrar()"
+    />
+  </div>
+
+  <select class="filter-sel" id="filterEstado" onchange="filtrar()">
+    <option value="">Estado</option>
+    <option>Solicitud</option>
+    <option>En curso</option>
+    <option>Revisado</option>
+    <option>Listo</option>
+  </select>
+
+  <select class="filter-sel" id="filterResponsable" onchange="filtrar()">
+    <option value="">Responsable</option>
+    <option>Carlos</option>
+    <option>Chico</option>
+    <option>Rubén</option>
+    <option>Gabriela</option>
+    <option>Roberto</option>
+  </select>
+
+  <button class="btn-add" onclick="openModal('project')">
+    + Añadir proyecto
+  </button>
+
+  <button class="btn-add secondary" onclick="openModal('task')">
+    + Añadir tarea
+  </button>
+
+</div>
+
+<main class="main">
+
+  <section class="kpis">
+
+    <div class="kpi">
+      <small>En producción</small>
+      <strong>4</strong>
     </div>
-  </aside>
 
-  <main class="main">
+    <div class="kpi red">
+      <small>Urgentes</small>
+      <strong>2</strong>
+    </div>
 
-    <div class="topbar">
+    <div class="kpi orange">
+      <small>Bloqueados</small>
+      <strong>1</strong>
+    </div>
+
+    <div class="kpi green">
+      <small>Listos</small>
+      <strong>3</strong>
+    </div>
+
+  </section>
+
+  <section class="panel">
+
+    <div class="panel-head">
       <div>
         <h1>Centro de Producción</h1>
-        <p style="margin:5px 0;color:var(--muted);font-weight:700">
-          Fichas técnicas vivas, tareas, responsables y seguimiento.
+        <p>
+          Haz click en un proyecto para desplegar ficha técnica,
+          tareas, notas y seguimiento.
         </p>
       </div>
 
-      <div class="actions">
-        <button class="btn primary" onclick="openModal('project')">+ Añadir proyecto</button>
-        <button class="btn orange" onclick="openModal('task')">+ Añadir tarea</button>
-      </div>
+      <button class="btn-add secondary" onclick="cerrarTodos()">
+        Cerrar todos
+      </button>
     </div>
 
-    <div class="kpis">
-      <div class="kpi">
-        <small>En producción</small>
-        <strong>12</strong>
-      </div>
-      <div class="kpi red">
-        <small>Urgentes</small>
-        <strong>4</strong>
-      </div>
-      <div class="kpi orange">
-        <small>Bloqueados</small>
-        <strong>3</strong>
-      </div>
-      <div class="kpi green">
-        <small>Listos</small>
-        <strong>5</strong>
-      </div>
+    <div class="project-list">
+
+      <!-- PROYECTO -->
+      <article class="project open">
+
+        <div class="project-summary" onclick="toggleProject(this)">
+
+          <div class="project-num">001</div>
+
+          <img
+            class="project-img"
+            src="https://dummyimage.com/300x120/111/fff&text=Tecno+Farma"
+          >
+
+          <div class="project-title">
+            <h2>Tecno Farma</h2>
+
+            <p>
+              Carlos · Entrega: Viernes 31/05 ·
+              PVC 15mm + acrílico
+            </p>
+
+            <div class="progress">
+              <span style="width:45%"></span>
+            </div>
+          </div>
+
+          <span class="meta-chip status-curso">
+            En curso
+          </span>
+
+          <span class="meta-chip">45%</span>
+
+          <span class="meta-chip">31/05</span>
+
+          <div class="arrow">⌄</div>
+
+        </div>
+
+        <!-- DESPLEGABLE -->
+        <div class="project-detail">
+
+          <div class="detail-grid">
+
+            <!-- IZQUIERDA -->
+            <div class="detail-card">
+
+              <div class="detail-title">
+                Vista rápida
+              </div>
+
+              <div class="hero">
+                <img src="https://dummyimage.com/900x250/111/fff&text=Tecno+Farma">
+              </div>
+
+              <div class="info-grid">
+
+                <div class="info-box">
+                  <small>Responsable</small>
+                  <strong>Carlos</strong>
+                </div>
+
+                <div class="info-box">
+                  <small>Entrega</small>
+                  <strong>Viernes 31/05</strong>
+                </div>
+
+                <div class="info-box">
+                  <small>Progreso</small>
+                  <strong>45%</strong>
+                </div>
+
+                <div class="info-box">
+                  <small>Estado</small>
+                  <strong>En curso</strong>
+                </div>
+
+              </div>
+
+              <div class="actions-row">
+
+                <button class="btn-add">
+                  + Tarea
+                </button>
+
+                <button class="btn-add secondary">
+                  + Nota
+                </button>
+
+                <button class="btn-add secondary">
+                  📷 Foto
+                </button>
+
+              </div>
+
+            </div>
+
+            <!-- DERECHA -->
+            <div class="detail-card">
+
+              <div class="tabs">
+
+                <button class="active"
+                  onclick="showTab(event,'tecno-ficha')">
+                  Ficha
+                </button>
+
+                <button
+                  onclick="showTab(event,'tecno-tareas')">
+                  Tareas
+                </button>
+
+                <button
+                  onclick="showTab(event,'tecno-notas')">
+                  Notas
+                </button>
+
+                <button
+                  onclick="showTab(event,'tecno-historial')">
+                  Historial
+                </button>
+
+              </div>
+
+              <!-- FICHA -->
+              <div id="tecno-ficha"
+                class="tab-content active">
+
+                <div class="accordion open">
+
+                  <div class="acc-head"
+                    onclick="toggleAcc(this)">
+
+                    <div>
+                      <strong>Dimensiones</strong>
+                      <small>455 x 65 cm</small>
+                    </div>
+
+                    <b>⌄</b>
+
+                  </div>
+
+                  <div class="acc-body">
+                    Validar escala antes de cortar.
+                  </div>
+
+                </div>
+
+                <div class="accordion open">
+
+                  <div class="acc-head"
+                    onclick="toggleAcc(this)">
+
+                    <div>
+                      <strong>Materiales</strong>
+
+                      <small>
+                        PVC 15mm + acrílico gris,
+                        blanco y rojo
+                      </small>
+                    </div>
+
+                    <b>⌄</b>
+
+                  </div>
+
+                  <div class="acc-body">
+                    Cortar PVC 15mm.
+                    Arriba va acrílico.
+                  </div>
+
+                </div>
+
+              </div>
+
+              <!-- TAREAS -->
+              <div id="tecno-tareas"
+                class="tab-content">
+
+                <div class="checklist">
+
+                  <label class="check">
+                    <input type="checkbox" checked>
+                    Cortar PVC 15mm
+                  </label>
+
+                  <label class="check">
+                    <input type="checkbox">
+                    Cortar acrílico superior
+                  </label>
+
+                  <label class="check">
+                    <input type="checkbox">
+                    Pegar letras
+                  </label>
+
+                </div>
+
+              </div>
+
+              <!-- NOTAS -->
+              <div id="tecno-notas"
+                class="tab-content">
+
+                <div class="note">
+                  <b>Roberto:</b>
+                  Verificar cinta doble faz.
+                </div>
+
+                <div class="note">
+                  <b>Carlos:</b>
+                  Revisar plantilla.
+                </div>
+
+              </div>
+
+              <!-- HISTORIAL -->
+              <div id="tecno-historial"
+                class="tab-content">
+
+                <div class="note">
+                  Proyecto creado por Roberto.
+                </div>
+
+                <div class="note">
+                  Carlos marcó “visto”.
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </article>
+
     </div>
 
-    <div class="layout">
+  </section>
 
-      <div>
-
-        <section class="section">
-          <div class="section-title">
-            <h2>En producción</h2>
-            <span style="color:var(--blue);font-weight:900">Ver todos</span>
-          </div>
-
-          <div class="project-card" onclick="loadProject('tecno')">
-            <img src="https://dummyimage.com/300x120/111/fff&text=Tecno+Farma">
-            <div class="project-info">
-              <h3>Tecno Farma</h3>
-              <p>Carlos · Entrega: Viernes 31/05</p>
-              <div class="progress"><span style="width:45%"></span></div>
-            </div>
-            <span class="badge yellow">En producción</span>
-          </div>
-
-          <div class="project-card" onclick="loadProject('viajea')">
-            <img src="https://dummyimage.com/300x120/fff/111&text=viajea">
-            <div class="project-info">
-              <h3>Viajea</h3>
-              <p>Chico · Entrega: Lunes 03/06</p>
-              <div class="progress"><span style="width:20%"></span></div>
-            </div>
-            <span class="badge yellow">En producción</span>
-          </div>
-
-          <div class="project-card" onclick="loadProject('farmacia')">
-            <img src="https://dummyimage.com/300x120/e9f8ef/177a32&text=Farmacia">
-            <div class="project-info">
-              <h3>Farmacia San Rafael</h3>
-              <p>Rubén · Entrega: Miércoles 05/06</p>
-              <div class="progress"><span style="width:60%"></span></div>
-            </div>
-            <span class="badge yellow">En producción</span>
-          </div>
-        </section>
-
-        <section class="section">
-          <div class="section-title">
-            <h2>Bloqueados</h2>
-            <span style="color:var(--blue);font-weight:900">Ver todos</span>
-          </div>
-
-          <div class="project-card">
-            <img src="https://dummyimage.com/300x120/ef4444/fff&text=Clinica">
-            <div class="project-info">
-              <h3>Clínica del Este</h3>
-              <p>Falta material</p>
-            </div>
-            <span class="badge red">Bloqueado</span>
-          </div>
-        </section>
-
-      </div>
-
-      <aside class="detail">
-
-        <div class="hero">
-          <img id="heroImg" src="https://dummyimage.com/900x250/111/fff&text=Tecno+Farma">
-        </div>
-
-        <span class="badge yellow" id="estado">En producción</span>
-
-        <div class="meta">
-          <div class="meta-box">
-            <small>Responsable</small>
-            <strong id="responsable">Carlos</strong>
-          </div>
-          <div class="meta-box">
-            <small>Entrega</small>
-            <strong id="entrega">Viernes 31/05</strong>
-          </div>
-          <div class="meta-box">
-            <small>Progreso</small>
-            <strong id="progreso">45%</strong>
-          </div>
-        </div>
-
-        <div class="tabs">
-          <button class="active" onclick="showTab('ficha', this)">Ficha técnica</button>
-          <button onclick="showTab('tareas', this)">Tareas</button>
-          <button onclick="showTab('notas', this)">Notas</button>
-          <button onclick="showTab('fotos', this)">Fotos</button>
-          <button onclick="showTab('historial', this)">Historial</button>
-        </div>
-
-        <div id="tab-ficha" class="tab-content">
-
-          <div class="accordion open">
-            <div class="acc-head" onclick="toggleAcc(this)">
-              <div>
-                <strong>Dimensiones</strong>
-                <small id="dimensiones">455x65cm</small>
-              </div>
-              <b>⌄</b>
-            </div>
-            <div class="acc-body">
-              Medida general del proyecto. Validar escala antes de cortar.
-            </div>
-          </div>
-
-          <div class="accordion open">
-            <div class="acc-head" onclick="toggleAcc(this)">
-              <div>
-                <strong>Materiales</strong>
-                <small id="materiales">PVC 15mm + Acrílico colores gris, blanco y rojo</small>
-              </div>
-              <b>⌄</b>
-            </div>
-            <div class="acc-body">
-              Cortar PVC 15mm. Arriba va acrílico. Verificar colores antes de pegar.
-            </div>
-          </div>
-
-          <div class="accordion open">
-            <div class="acc-head" onclick="toggleAcc(this)">
-              <div>
-                <strong>Iluminación</strong>
-                <small id="iluminacion">NO LLEVA</small>
-              </div>
-              <b>⌄</b>
-            </div>
-            <div class="acc-body">
-              Este proyecto no lleva luz.
-            </div>
-          </div>
-
-          <div class="accordion open">
-            <div class="acc-head" onclick="toggleAcc(this)">
-              <div>
-                <strong>Instalación</strong>
-                <small>Instrucciones</small>
-              </div>
-              <b>⌄</b>
-            </div>
-            <div class="acc-body" id="instalacion">
-              <ul>
-                <li>Hacerle una plantilla para que se pueda pegar con cinta doble faz.</li>
-                <li>Letras grandes con cinta doble faz verde y pequeñas con 3M delgada.</li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="accordion">
-            <div class="acc-head" onclick="toggleAcc(this)">
-              <div>
-                <strong>Notas</strong>
-                <small>Notas internas del proyecto</small>
-              </div>
-              <b>⌄</b>
-            </div>
-            <div class="acc-body">
-              Dixon hará el ACM. Solo hay que cortar PVC 15mm y acrílico superior.
-            </div>
-          </div>
-
-        </div>
-
-        <div id="tab-tareas" class="tab-content" style="display:none">
-          <div class="checklist">
-            <label class="check"><input type="checkbox" checked> Cortar PVC 15mm</label>
-            <label class="check"><input type="checkbox"> Cortar acrílico superior</label>
-            <label class="check"><input type="checkbox"> Pegar letras</label>
-            <label class="check"><input type="checkbox"> Revisar alineación</label>
-            <label class="check"><input type="checkbox"> Tomar foto final</label>
-            <label class="check"><input type="checkbox"> Embalar</label>
-          </div>
-        </div>
-
-        <div id="tab-notas" class="tab-content" style="display:none">
-          <p><b>Roberto:</b> Verificar cinta doble faz antes de entregar.</p>
-          <p><b>Carlos:</b> Falta revisar plantilla.</p>
-        </div>
-
-        <div id="tab-fotos" class="tab-content" style="display:none">
-          <p style="color:var(--muted);font-weight:800">Aquí irían fotos de avance, instalación y entrega.</p>
-        </div>
-
-        <div id="tab-historial" class="tab-content" style="display:none">
-          <p>Proyecto creado por Roberto.</p>
-          <p>Carlos marcó “visto”.</p>
-          <p>Se actualizó progreso a 45%.</p>
-        </div>
-
-        <div class="bottom-actions">
-          <button class="btn primary" onclick="openModal('task')">+ Añadir tarea</button>
-          <button class="btn light" onclick="openModal('note')">+ Añadir nota</button>
-          <button class="btn light" onclick="openModal('photo')">📷 Subir foto</button>
-        </div>
-
-      </aside>
-
-    </div>
-
-  </main>
-</div>
-
-<div class="modal" id="modal">
-  <div class="modal-card">
-    <h2 id="modalTitle">Añadir</h2>
-
-    <div class="form" id="modalForm"></div>
-
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
-      <button class="btn light" onclick="closeModal()">Cancelar</button>
-      <button class="btn primary" onclick="closeModal()">Guardar</button>
-    </div>
-  </div>
-</div>
+</main>
 
 <script>
-const projects = {
-  tecno:{
-    img:"https://dummyimage.com/900x250/111/fff&text=Tecno+Farma",
-    responsable:"Carlos",
-    entrega:"Viernes 31/05",
-    progreso:"45%",
-    dimensiones:"455x65cm",
-    materiales:"PVC 15mm + Acrílico colores gris, blanco y rojo",
-    iluminacion:"NO LLEVA",
-    instalacion:[
-      "Hacerle una plantilla para que se pueda pegar con cinta doble faz.",
-      "Letras grandes con cinta doble faz verde y pequeñas con 3M delgada."
-    ]
-  },
-  viajea:{
-    img:"https://dummyimage.com/900x250/fff/111&text=viajea",
-    responsable:"Chico",
-    entrega:"Lunes 03/06",
-    progreso:"20%",
-    dimensiones:"130x50cm",
-    materiales:"Canto aluminio blanco 6cm + acrílico + impresión clear",
-    iluminacion:"Caja de luz, cinta luz blanca 10K",
-    instalacion:[
-      "Sacar cable por atrás.",
-      "Va fijado en fachada interna de aluminio.",
-      "Colocar 2 ganchos y doble faz abajo."
-    ]
-  },
-  farmacia:{
-    img:"https://dummyimage.com/900x250/e9f8ef/177a32&text=Farmacia+San+Rafael",
-    responsable:"Rubén",
-    entrega:"Miércoles 05/06",
-    progreso:"60%",
-    dimensiones:"180x70cm",
-    materiales:"PVC 9mm + vinil laminado",
-    iluminacion:"No lleva",
-    instalacion:[
-      "Revisar bordes antes de entregar.",
-      "Embalar con cartón y plástico."
-    ]
-  }
-};
+function toggleMenu(){
+  document.getElementById("authMenu")
+    .classList.toggle("open");
+}
 
-function loadProject(id){
-  const p = projects[id];
+function toggleProject(el){
+  const project = el.closest(".project");
+  project.classList.toggle("open");
+}
 
-  document.getElementById("heroImg").src = p.img;
-  document.getElementById("responsable").textContent = p.responsable;
-  document.getElementById("entrega").textContent = p.entrega;
-  document.getElementById("progreso").textContent = p.progreso;
-  document.getElementById("dimensiones").textContent = p.dimensiones;
-  document.getElementById("materiales").textContent = p.materiales;
-  document.getElementById("iluminacion").textContent = p.iluminacion;
-
-  document.getElementById("instalacion").innerHTML =
-    "<ul>" + p.instalacion.map(x=>"<li>"+x+"</li>").join("") + "</ul>";
+function cerrarTodos(){
+  document.querySelectorAll(".project")
+    .forEach(p=>p.classList.remove("open"));
 }
 
 function toggleAcc(el){
   el.parentElement.classList.toggle("open");
 }
 
-function showTab(tab, btn){
-  document.querySelectorAll(".tab-content").forEach(x=>x.style.display="none");
-  document.getElementById("tab-"+tab).style.display="block";
+function showTab(event,id){
 
-  document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
-  btn.classList.add("active");
+  event.stopPropagation();
+
+  const card =
+    event.target.closest(".detail-card");
+
+  card.querySelectorAll(".tabs button")
+    .forEach(btn=>btn.classList.remove("active"));
+
+  event.target.classList.add("active");
+
+  card.querySelectorAll(".tab-content")
+    .forEach(tab=>tab.classList.remove("active"));
+
+  document.getElementById(id)
+    .classList.add("active");
 }
 
-function openModal(type){
-  const modal = document.getElementById("modal");
-  const title = document.getElementById("modalTitle");
-  const form = document.getElementById("modalForm");
+function filtrar(){
 
-  if(type === "project"){
-    title.textContent = "Añadir proyecto";
-    form.innerHTML = `
-      <input placeholder="Nombre del proyecto">
-      <input placeholder="Cliente">
-      <input placeholder="Responsable">
-      <input placeholder="Fecha de entrega">
-      <input placeholder="Dimensiones">
-      <textarea placeholder="Descripción / instrucciones técnicas"></textarea>
-    `;
-  }
+  const q =
+    document.getElementById("searchInput")
+      .value.toLowerCase();
 
-  if(type === "task"){
-    title.textContent = "Añadir tarea";
-    form.innerHTML = `
-      <input placeholder="Nombre de la tarea">
-      <select>
-        <option>Carlos</option>
-        <option>Chico</option>
-        <option>Rubén</option>
-        <option>Gabriela</option>
-        <option>Roberto</option>
-      </select>
-      <select>
-        <option>Pendiente</option>
-        <option>Visto</option>
-        <option>En proceso</option>
-        <option>Listo</option>
-      </select>
-      <textarea placeholder="Notas de la tarea"></textarea>
-    `;
-  }
+  document.querySelectorAll(".project")
+    .forEach(p=>{
 
-  if(type === "note"){
-    title.textContent = "Añadir nota";
-    form.innerHTML = `
-      <textarea placeholder="Escribe la nota interna del proyecto"></textarea>
-    `;
-  }
+      const text =
+        p.innerText.toLowerCase();
 
-  if(type === "photo"){
-    title.textContent = "Subir foto";
-    form.innerHTML = `
-      <input type="file" accept="image/*">
-      <textarea placeholder="Comentario de la foto"></textarea>
-    `;
-  }
-
-  modal.classList.add("open");
-}
-
-function closeModal(){
-  document.getElementById("modal").classList.remove("open");
+      p.style.display =
+        text.includes(q)
+        ? ""
+        : "none";
+    });
 }
 </script>
-
-</body>
-</html>
