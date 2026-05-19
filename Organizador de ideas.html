@@ -1,401 +1,506 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>Tuttovinilos · Centro Operativo</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Organizador de Producción · Tuttovinilos</title>
 
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
 :root{
-  --bg:#f0f2f9;
-  --panel:#ffffff;
-  --panel2:#f8f9ff;
-  --border:#d9deea;
-  --border2:#cbd3e6;
-  --text:#111827;
-  --muted:#6b7280;
-  --muted2:#475569;
-  --accent:#153bff;
-  --accent2:#0b1f7a;
-  --red:#dc2626;
-  --yellow:#f59e0b;
+  --blue:#263c98;
+  --blue2:#1f2f78;
+  --orange:#f47c20;
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --text:#172033;
+  --muted:#697386;
+  --line:#e2e7f0;
+  --red:#ef4444;
   --green:#16a34a;
-  --orange:#ff8616;
-  --black:#111827;
-  --purple:#7c3aed;
-  --mono:'Roboto Mono',monospace;
-  --head:'Montserrat',Arial,sans-serif;
-  --body:'Inter',Arial,sans-serif;
+  --yellow:#facc15;
+  --shadow:0 10px 30px rgba(20,30,60,.10);
 }
 
+*{box-sizing:border-box}
+
 body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
   background:var(--bg);
   color:var(--text);
-  font-family:var(--body);
+}
+
+.app{
+  display:grid;
+  grid-template-columns:230px 1fr;
   min-height:100vh;
 }
 
-.header{
-  background:linear-gradient(135deg,#153bff,#0b1f7a);
+.sidebar{
+  background:#071426;
   color:#fff;
-  position:sticky;
-  top:0;
-  z-index:100;
-  padding:12px 16px;
-  box-shadow:0 8px 24px rgba(21,59,255,.24);
-}
-
-.header-main{
+  padding:22px 16px;
   display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  flex-wrap:wrap;
-  max-width:1280px;
-  margin:auto;
+  flex-direction:column;
+  gap:22px;
 }
 
 .logo{
-  font-family:var(--head);
+  font-size:23px;
   font-weight:900;
-  letter-spacing:2px;
-  font-size:21px;
-  border:2px dashed rgba(255,255,255,.45);
-  border-radius:13px;
-  padding:8px 12px;
+  line-height:.9;
 }
+.logo span{color:var(--orange)}
 
-.container{
-  max-width:1280px;
-  margin:auto;
-  padding:16px;
-  display:grid;
-  gap:16px;
-}
-
-.section-title{
-  font-family:var(--head);
-  font-size:22px;
-  font-weight:900;
-  color:var(--accent2);
-}
-
-.dashboard-grid{
-  display:grid;
-  grid-template-columns:repeat(6,1fr);
-  gap:12px;
-}
-
-.metric{
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:15px;
-  min-height:104px;
-  box-shadow:0 4px 18px rgba(0,0,0,.045);
-}
-
-.metric-label{
-  font-size:11px;
-  font-family:var(--head);
-  font-weight:900;
-  color:var(--muted);
-  text-transform:uppercase;
-}
-
-.metric-value{
-  font-family:var(--head);
-  font-weight:900;
-  font-size:32px;
-  color:var(--accent2);
-  margin-top:10px;
-}
-
-.project-list{
-  display:grid;
-  gap:12px;
-}
-
-.project-card{
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:20px;
-  overflow:hidden;
-}
-
-.project-head{
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:14px;
-  padding:15px;
-  cursor:pointer;
-}
-
-.project-name{
-  font-family:var(--head);
-  font-weight:900;
-  font-size:18px;
-  color:var(--accent2);
-}
-
-.project-meta{
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.4;
-  margin-top:5px;
-}
-
-.project-right{
-  text-align:right;
-  min-width:142px;
-}
-
-.progress-wrap{
-  height:9px;
-  background:#eef1ff;
-  border-radius:999px;
-  overflow:hidden;
-  margin-top:10px;
-}
-
-.progress-bar{
-  height:100%;
-  background:var(--accent);
-  border-radius:999px;
-}
-
-.project-body{
-  display:none;
-  border-top:1px solid var(--border);
-  background:#f8f9ff;
-  padding:14px;
-}
-
-.project-card.open .project-body{
-  display:block;
-}
-
-.detail-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(185px,1fr));
-  gap:10px;
-  margin-bottom:12px;
-}
-
-.detail{
-  background:#fff;
-  border:1px solid #e5e7eb;
-  border-radius:14px;
-  padding:11px;
-}
-
-.detail span{
-  display:block;
-  color:var(--muted);
-  font-size:10px;
-  text-transform:uppercase;
-  font-family:var(--head);
-  font-weight:900;
-  margin-bottom:5px;
-}
-
-.block-title{
-  font-family:var(--head);
-  color:var(--accent2);
-  font-size:15px;
-  font-weight:900;
-  margin:14px 0 9px;
-}
-
-.item-list{
-  display:grid;
-  gap:10px;
-}
-
-.item-card{
-  background:#fff;
-  border:1px solid #e5e7eb;
-  border-radius:17px;
-  overflow:hidden;
-}
-
-.item-head{
-  padding:12px;
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:10px;
-  align-items:start;
-  cursor:pointer;
-}
-
-.item-name{
-  font-family:var(--head);
-  font-size:15px;
-  font-weight:900;
-  color:var(--accent2);
-}
-
-.item-body{
-  display:none;
-  border-top:1px solid #e5e7eb;
-  background:#fbfcff;
-  padding:12px;
-}
-
-.item-card.open .item-body{
-  display:block;
-}
-
-.tech-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(155px,1fr));
+.nav{
+  display:flex;
+  flex-direction:column;
   gap:8px;
-  margin-bottom:10px;
 }
 
-.tech{
-  background:#fff;
-  border:1px solid #e5e7eb;
+.nav button{
+  border:0;
+  background:transparent;
+  color:#dbeafe;
+  text-align:left;
+  padding:12px;
   border-radius:12px;
-  padding:9px;
+  font-weight:700;
+  cursor:pointer;
 }
 
-.tech span{
-  display:block;
-  font-size:9.5px;
-  font-family:var(--head);
-  font-weight:900;
-  color:var(--muted);
-  text-transform:uppercase;
-  margin-bottom:4px;
+.nav button.active,
+.nav button:hover{
+  background:var(--blue);
 }
 
-.ops-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
-  margin-top:10px;
+.user{
+  margin-top:auto;
+  font-size:13px;
+  color:#cbd5e1;
 }
 
-.ops{
-  border:1px solid #e5e7eb;
-  border-radius:14px;
-  background:#fff;
-  overflow:hidden;
+.main{
+  padding:24px;
 }
 
-.ops-title{
-  padding:9px 10px;
-  background:#eef1ff;
-  color:var(--accent2);
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:900;
-  text-transform:uppercase;
-}
-
-.task{
-  display:grid;
-  grid-template-columns:24px 1fr auto;
-  gap:8px;
-  padding:9px 10px;
-  border-top:1px solid #eef2f7;
+.topbar{
+  display:flex;
+  justify-content:space-between;
   align-items:center;
+  margin-bottom:18px;
 }
 
-.check{
-  width:20px;
-  height:20px;
-  border:2px solid #cbd5e1;
+.topbar h1{
+  margin:0;
+  font-size:28px;
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.btn{
+  border:0;
+  border-radius:12px;
+  padding:12px 16px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:var(--shadow);
+}
+
+.btn.primary{
+  background:var(--blue);
+  color:#fff;
+}
+
+.btn.orange{
+  background:var(--orange);
+  color:#fff;
+}
+
+.btn.light{
   background:#fff;
-  border-radius:6px;
+  color:var(--text);
+  border:1px solid var(--line);
 }
 
-.task-name{
-  font-size:12.5px;
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+  margin-bottom:22px;
+}
+
+.kpi{
+  background:var(--card);
+  border-radius:18px;
+  padding:18px;
+  box-shadow:var(--shadow);
+  border-top:5px solid var(--blue);
+}
+
+.kpi.red{border-top-color:var(--red)}
+.kpi.orange{border-top-color:var(--orange)}
+.kpi.green{border-top-color:var(--green)}
+
+.kpi small{
+  color:var(--muted);
   font-weight:800;
 }
 
-.task-resp{
-  color:var(--muted);
-  font-size:11.5px;
-  margin-top:2px;
+.kpi strong{
+  display:block;
+  font-size:36px;
+  margin-top:8px;
 }
 
-.status{
-  padding:5px 8px;
+.layout{
+  display:grid;
+  grid-template-columns:1fr 1.15fr;
+  gap:22px;
+}
+
+.section{
+  background:var(--card);
+  border-radius:22px;
+  padding:18px;
+  box-shadow:var(--shadow);
+  margin-bottom:18px;
+}
+
+.section-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+.section-title h2{
+  font-size:18px;
+  margin:0;
+}
+
+.project-card{
+  display:grid;
+  grid-template-columns:95px 1fr auto;
+  gap:14px;
+  align-items:center;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  margin-bottom:12px;
+  cursor:pointer;
+  background:#fff;
+}
+
+.project-card:hover{
+  outline:2px solid rgba(38,60,152,.15);
+}
+
+.project-card img{
+  width:95px;
+  height:60px;
+  object-fit:contain;
+  border-radius:10px;
+  background:#f8fafc;
+}
+
+.project-info h3{
+  margin:0 0 4px;
+  font-size:17px;
+}
+
+.project-info p{
+  margin:2px 0;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.progress{
+  height:7px;
+  background:#e5e7eb;
+  border-radius:20px;
+  overflow:hidden;
+  margin-top:8px;
+}
+
+.progress span{
+  display:block;
+  height:100%;
+  background:var(--blue);
+}
+
+.badge{
+  padding:7px 12px;
   border-radius:999px;
-  font-size:10.3px;
+  font-size:12px;
   font-weight:900;
   white-space:nowrap;
 }
 
-.status.pending{
-  background:#fee2e2;
-  color:#b91c1c;
+.badge.yellow{background:#fff1b8;color:#8a6500}
+.badge.red{background:#fee2e2;color:#b91c1c}
+.badge.green{background:#dcfce7;color:#166534}
+.badge.blue{background:#dbeafe;color:#1d4ed8}
+
+.detail{
+  background:var(--card);
+  border-radius:24px;
+  padding:18px;
+  box-shadow:var(--shadow);
+  position:sticky;
+  top:20px;
 }
 
-.status.progress{
-  background:#fef3c7;
-  color:#92400e;
+.hero{
+  background:#111;
+  border-radius:16px;
+  height:112px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  margin-bottom:14px;
 }
 
-.status.done{
-  background:#dcfce7;
-  color:#166534;
+.hero img{
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
 }
 
-.note{
-  background:#eef1ff;
-  border-left:5px solid var(--accent);
-  border-radius:13px;
-  padding:11px;
-  font-size:12.5px;
-  line-height:1.35;
-  margin-top:10px;
+.meta{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-bottom:16px;
 }
 
-.error{
-  background:#fee2e2;
-  border-left:5px solid var(--red);
-  border-radius:13px;
-  padding:11px;
-  font-size:12.5px;
-  line-height:1.35;
-  margin-top:10px;
+.meta-box{
+  background:#f8fafc;
+  border-radius:14px;
+  padding:12px;
 }
 
-@media(max-width:1100px){
-  .dashboard-grid{
-    grid-template-columns:repeat(3,1fr);
+.meta-box small{
+  color:var(--muted);
+  font-weight:800;
+}
+
+.meta-box strong{
+  display:block;
+  margin-top:5px;
+}
+
+.tabs{
+  display:flex;
+  gap:8px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:14px;
+  overflow:auto;
+}
+
+.tabs button{
+  border:0;
+  background:transparent;
+  padding:12px 10px;
+  font-weight:900;
+  color:var(--muted);
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.tabs button.active{
+  color:var(--blue);
+  border-bottom:3px solid var(--blue);
+}
+
+.accordion{
+  border:1px solid var(--line);
+  border-radius:16px;
+  margin-bottom:10px;
+  overflow:hidden;
+}
+
+.acc-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px;
+  cursor:pointer;
+  background:#fff;
+}
+
+.acc-head strong{
+  display:block;
+}
+
+.acc-head small{
+  color:var(--muted);
+}
+
+.acc-body{
+  display:none;
+  padding:0 14px 14px;
+  color:#30394d;
+  line-height:1.45;
+}
+
+.accordion.open .acc-body{
+  display:block;
+}
+
+.checklist{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.check{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  padding:10px;
+  border-radius:12px;
+  background:#f8fafc;
+}
+
+.check input{
+  width:18px;
+  height:18px;
+}
+
+.bottom-actions{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:16px;
+}
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  z-index:50;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+
+.modal.open{
+  display:flex;
+}
+
+.modal-card{
+  background:#fff;
+  border-radius:22px;
+  padding:22px;
+  max-width:520px;
+  width:100%;
+  box-shadow:var(--shadow);
+}
+
+.modal-card h2{
+  margin-top:0;
+}
+
+.form{
+  display:grid;
+  gap:12px;
+}
+
+.form input,
+.form textarea,
+.form select{
+  width:100%;
+  padding:13px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  font-size:15px;
+}
+
+.form textarea{
+  min-height:90px;
+}
+
+@media(max-width:900px){
+  .app{
+    grid-template-columns:1fr;
   }
-}
 
-@media(max-width:760px){
-  .dashboard-grid{
+  .sidebar{
+    position:sticky;
+    top:0;
+    z-index:20;
+    flex-direction:row;
+    align-items:center;
+    overflow:auto;
+    padding:12px;
+  }
+
+  .logo{
+    font-size:18px;
+    min-width:90px;
+  }
+
+  .nav{
+    flex-direction:row;
+  }
+
+  .nav button{
+    white-space:nowrap;
+    font-size:12px;
+    padding:9px 10px;
+  }
+
+  .user{display:none}
+
+  .main{
+    padding:14px;
+  }
+
+  .topbar{
+    align-items:flex-start;
+    gap:12px;
+    flex-direction:column;
+  }
+
+  .kpis{
     grid-template-columns:repeat(2,1fr);
   }
 
-  .project-head{
+  .layout{
     grid-template-columns:1fr;
   }
 
-  .item-head{
+  .detail{
+    position:relative;
+    top:0;
+  }
+
+  .project-card{
+    grid-template-columns:70px 1fr;
+  }
+
+  .project-card img{
+    width:70px;
+    height:50px;
+  }
+
+  .project-card .badge{
+    grid-column:2;
+    width:max-content;
+  }
+
+  .meta{
     grid-template-columns:1fr;
   }
 
-  .ops-grid{
-    grid-template-columns:1fr;
-  }
-}
-
-@media(max-width:430px){
-  .dashboard-grid{
+  .bottom-actions{
     grid-template-columns:1fr;
   }
 }
@@ -404,249 +509,406 @@ body{
 
 <body>
 
-<header class="header">
-  <div class="header-main">
-    <div class="logo">COMANDA · CENTRO OPERATIVO</div>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="logo">TUTTO<br><span>VINILOS</span></div>
+
+    <nav class="nav">
+      <button class="active">Dashboard</button>
+      <button>Proyectos</button>
+      <button>Tareas</button>
+      <button>Producción</button>
+      <button>Entregas</button>
+      <button>Clientes</button>
+      <button>Materiales</button>
+      <button>Configuración</button>
+    </nav>
+
+    <div class="user">
+      Roberto<br>
+      <small>Administrador</small>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="topbar">
+      <div>
+        <h1>Centro de Producción</h1>
+        <p style="margin:5px 0;color:var(--muted);font-weight:700">
+          Fichas técnicas vivas, tareas, responsables y seguimiento.
+        </p>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" onclick="openModal('project')">+ Añadir proyecto</button>
+        <button class="btn orange" onclick="openModal('task')">+ Añadir tarea</button>
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi">
+        <small>En producción</small>
+        <strong>12</strong>
+      </div>
+      <div class="kpi red">
+        <small>Urgentes</small>
+        <strong>4</strong>
+      </div>
+      <div class="kpi orange">
+        <small>Bloqueados</small>
+        <strong>3</strong>
+      </div>
+      <div class="kpi green">
+        <small>Listos</small>
+        <strong>5</strong>
+      </div>
+    </div>
+
+    <div class="layout">
+
+      <div>
+
+        <section class="section">
+          <div class="section-title">
+            <h2>En producción</h2>
+            <span style="color:var(--blue);font-weight:900">Ver todos</span>
+          </div>
+
+          <div class="project-card" onclick="loadProject('tecno')">
+            <img src="https://dummyimage.com/300x120/111/fff&text=Tecno+Farma">
+            <div class="project-info">
+              <h3>Tecno Farma</h3>
+              <p>Carlos · Entrega: Viernes 31/05</p>
+              <div class="progress"><span style="width:45%"></span></div>
+            </div>
+            <span class="badge yellow">En producción</span>
+          </div>
+
+          <div class="project-card" onclick="loadProject('viajea')">
+            <img src="https://dummyimage.com/300x120/fff/111&text=viajea">
+            <div class="project-info">
+              <h3>Viajea</h3>
+              <p>Chico · Entrega: Lunes 03/06</p>
+              <div class="progress"><span style="width:20%"></span></div>
+            </div>
+            <span class="badge yellow">En producción</span>
+          </div>
+
+          <div class="project-card" onclick="loadProject('farmacia')">
+            <img src="https://dummyimage.com/300x120/e9f8ef/177a32&text=Farmacia">
+            <div class="project-info">
+              <h3>Farmacia San Rafael</h3>
+              <p>Rubén · Entrega: Miércoles 05/06</p>
+              <div class="progress"><span style="width:60%"></span></div>
+            </div>
+            <span class="badge yellow">En producción</span>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-title">
+            <h2>Bloqueados</h2>
+            <span style="color:var(--blue);font-weight:900">Ver todos</span>
+          </div>
+
+          <div class="project-card">
+            <img src="https://dummyimage.com/300x120/ef4444/fff&text=Clinica">
+            <div class="project-info">
+              <h3>Clínica del Este</h3>
+              <p>Falta material</p>
+            </div>
+            <span class="badge red">Bloqueado</span>
+          </div>
+        </section>
+
+      </div>
+
+      <aside class="detail">
+
+        <div class="hero">
+          <img id="heroImg" src="https://dummyimage.com/900x250/111/fff&text=Tecno+Farma">
+        </div>
+
+        <span class="badge yellow" id="estado">En producción</span>
+
+        <div class="meta">
+          <div class="meta-box">
+            <small>Responsable</small>
+            <strong id="responsable">Carlos</strong>
+          </div>
+          <div class="meta-box">
+            <small>Entrega</small>
+            <strong id="entrega">Viernes 31/05</strong>
+          </div>
+          <div class="meta-box">
+            <small>Progreso</small>
+            <strong id="progreso">45%</strong>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <button class="active" onclick="showTab('ficha', this)">Ficha técnica</button>
+          <button onclick="showTab('tareas', this)">Tareas</button>
+          <button onclick="showTab('notas', this)">Notas</button>
+          <button onclick="showTab('fotos', this)">Fotos</button>
+          <button onclick="showTab('historial', this)">Historial</button>
+        </div>
+
+        <div id="tab-ficha" class="tab-content">
+
+          <div class="accordion open">
+            <div class="acc-head" onclick="toggleAcc(this)">
+              <div>
+                <strong>Dimensiones</strong>
+                <small id="dimensiones">455x65cm</small>
+              </div>
+              <b>⌄</b>
+            </div>
+            <div class="acc-body">
+              Medida general del proyecto. Validar escala antes de cortar.
+            </div>
+          </div>
+
+          <div class="accordion open">
+            <div class="acc-head" onclick="toggleAcc(this)">
+              <div>
+                <strong>Materiales</strong>
+                <small id="materiales">PVC 15mm + Acrílico colores gris, blanco y rojo</small>
+              </div>
+              <b>⌄</b>
+            </div>
+            <div class="acc-body">
+              Cortar PVC 15mm. Arriba va acrílico. Verificar colores antes de pegar.
+            </div>
+          </div>
+
+          <div class="accordion open">
+            <div class="acc-head" onclick="toggleAcc(this)">
+              <div>
+                <strong>Iluminación</strong>
+                <small id="iluminacion">NO LLEVA</small>
+              </div>
+              <b>⌄</b>
+            </div>
+            <div class="acc-body">
+              Este proyecto no lleva luz.
+            </div>
+          </div>
+
+          <div class="accordion open">
+            <div class="acc-head" onclick="toggleAcc(this)">
+              <div>
+                <strong>Instalación</strong>
+                <small>Instrucciones</small>
+              </div>
+              <b>⌄</b>
+            </div>
+            <div class="acc-body" id="instalacion">
+              <ul>
+                <li>Hacerle una plantilla para que se pueda pegar con cinta doble faz.</li>
+                <li>Letras grandes con cinta doble faz verde y pequeñas con 3M delgada.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="accordion">
+            <div class="acc-head" onclick="toggleAcc(this)">
+              <div>
+                <strong>Notas</strong>
+                <small>Notas internas del proyecto</small>
+              </div>
+              <b>⌄</b>
+            </div>
+            <div class="acc-body">
+              Dixon hará el ACM. Solo hay que cortar PVC 15mm y acrílico superior.
+            </div>
+          </div>
+
+        </div>
+
+        <div id="tab-tareas" class="tab-content" style="display:none">
+          <div class="checklist">
+            <label class="check"><input type="checkbox" checked> Cortar PVC 15mm</label>
+            <label class="check"><input type="checkbox"> Cortar acrílico superior</label>
+            <label class="check"><input type="checkbox"> Pegar letras</label>
+            <label class="check"><input type="checkbox"> Revisar alineación</label>
+            <label class="check"><input type="checkbox"> Tomar foto final</label>
+            <label class="check"><input type="checkbox"> Embalar</label>
+          </div>
+        </div>
+
+        <div id="tab-notas" class="tab-content" style="display:none">
+          <p><b>Roberto:</b> Verificar cinta doble faz antes de entregar.</p>
+          <p><b>Carlos:</b> Falta revisar plantilla.</p>
+        </div>
+
+        <div id="tab-fotos" class="tab-content" style="display:none">
+          <p style="color:var(--muted);font-weight:800">Aquí irían fotos de avance, instalación y entrega.</p>
+        </div>
+
+        <div id="tab-historial" class="tab-content" style="display:none">
+          <p>Proyecto creado por Roberto.</p>
+          <p>Carlos marcó “visto”.</p>
+          <p>Se actualizó progreso a 45%.</p>
+        </div>
+
+        <div class="bottom-actions">
+          <button class="btn primary" onclick="openModal('task')">+ Añadir tarea</button>
+          <button class="btn light" onclick="openModal('note')">+ Añadir nota</button>
+          <button class="btn light" onclick="openModal('photo')">📷 Subir foto</button>
+        </div>
+
+      </aside>
+
+    </div>
+
+  </main>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <h2 id="modalTitle">Añadir</h2>
+
+    <div class="form" id="modalForm"></div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+      <button class="btn light" onclick="closeModal()">Cancelar</button>
+      <button class="btn primary" onclick="closeModal()">Guardar</button>
+    </div>
   </div>
-</header>
-
-<main class="container">
-
-<section class="dashboard-grid">
-
-<div class="metric">
-<div class="metric-label">Proyectos activos</div>
-<div class="metric-value">5</div>
 </div>
-
-<div class="metric">
-<div class="metric-label">Pedidos rápidos</div>
-<div class="metric-value">2</div>
-</div>
-
-<div class="metric">
-<div class="metric-label">Con iluminación</div>
-<div class="metric-value">3</div>
-</div>
-
-<div class="metric">
-<div class="metric-label">Atrasados</div>
-<div class="metric-value">1</div>
-</div>
-
-<div class="metric">
-<div class="metric-label">Pausados</div>
-<div class="metric-value">1</div>
-</div>
-
-<div class="metric">
-<div class="metric-label">Problemas</div>
-<div class="metric-value">2</div>
-</div>
-
-</section>
-
-<section>
-
-<div class="section-title">Todos los proyectos y pedidos</div>
-
-<div class="project-list">
-
-<div class="project-card">
-
-<div class="project-head" onclick="toggleCard(this)">
-
-<div>
-<div class="project-name">📁 Proyecto · Tijerazo</div>
-
-<div class="project-meta">
-Cliente: <strong>Tijerazo Valencia</strong><br>
-Responsable principal: <strong>Ricardo</strong><br>
-Entrega: <strong>20 Junio</strong>
-</div>
-</div>
-
-<div class="project-right">
-<div>48%</div>
-
-<div class="progress-wrap">
-<div class="progress-bar" style="width:48%"></div>
-</div>
-</div>
-
-</div>
-
-<div class="project-body">
-
-<div class="detail-grid">
-
-<div class="detail">
-<span>Estado</span>
-<strong>En producción</strong>
-</div>
-
-<div class="detail">
-<span>Prioridad</span>
-<strong>Alta</strong>
-</div>
-
-<div class="detail">
-<span>Responsable actual</span>
-<strong>Carlos</strong>
-</div>
-
-<div class="detail">
-<span>Ubicación</span>
-<strong>Valencia</strong>
-</div>
-
-</div>
-
-<div class="note">
-<strong>NOTA GENERAL:</strong><br>
-Proyecto con fachada iluminada, logo de baño y plantilla técnica.
-</div>
-
-<div class="block-title">Items físicos</div>
-
-<div class="item-list">
-
-<div class="item-card">
-
-<div class="item-head" onclick="toggleCard(this)">
-
-<div>
-<div class="item-name">💡 Logo fachada principal</div>
-</div>
-
-<div>Ver ficha</div>
-
-</div>
-
-<div class="item-body">
-
-<div class="tech-grid">
-
-<div class="tech">
-<span>Tipo</span>
-<strong>Frontlit con luz frontal</strong>
-</div>
-
-<div class="tech">
-<span>Material</span>
-<strong>PVC 15mm + Acrílico 3mm</strong>
-</div>
-
-<div class="tech">
-<span>Instalación</span>
-<strong>Chupones</strong>
-</div>
-
-<div class="tech">
-<span>Altura</span>
-<strong>4 metros</strong>
-</div>
-
-<div class="tech">
-<span>Superficie</span>
-<strong>Yeso</strong>
-</div>
-
-<div class="tech">
-<span>Responsable</span>
-<strong>Roberto</strong>
-</div>
-
-</div>
-
-<div class="error">
-<strong>ERROR:</strong><br>
-Faltan 12 módulos LED.
-</div>
-
-<div class="note">
-<strong>NOTA:</strong><br>
-La pared es yeso. Tener cuidado con fijación.
-</div>
-
-<div class="ops-grid">
-
-<div class="ops">
-
-<div class="ops-title">Producción</div>
-
-<div class="task">
-<div class="check"></div>
-<div>
-<div class="task-name">Revisar archivo</div>
-<div class="task-resp">Responsable: Roberto</div>
-</div>
-<div class="status done">Listo</div>
-</div>
-
-<div class="task">
-<div class="check"></div>
-<div>
-<div class="task-name">Cortar PVC 15mm</div>
-<div class="task-resp">Responsable: Chico</div>
-</div>
-<div class="status progress">En curso</div>
-</div>
-
-<div class="task">
-<div class="check"></div>
-<div>
-<div class="task-name">Cablear módulos LED</div>
-<div class="task-resp">Responsable: Carlos</div>
-</div>
-<div class="status pending">Pendiente</div>
-</div>
-
-</div>
-
-<div class="ops">
-
-<div class="ops-title">Instalación</div>
-
-<div class="task">
-<div class="check"></div>
-<div>
-<div class="task-name">Preparar andamio</div>
-<div class="task-resp">Responsable: Alejandro</div>
-</div>
-<div class="status pending">Pendiente</div>
-</div>
-
-<div class="task">
-<div class="check"></div>
-<div>
-<div class="task-name">Instalar logo</div>
-<div class="task-resp">Responsable: Ricardo</div>
-</div>
-<div class="status pending">Pendiente</div>
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-</main>
 
 <script>
-function toggleCard(el){
-  el.closest(".project-card,.item-card").classList.toggle("open");
+const projects = {
+  tecno:{
+    img:"https://dummyimage.com/900x250/111/fff&text=Tecno+Farma",
+    responsable:"Carlos",
+    entrega:"Viernes 31/05",
+    progreso:"45%",
+    dimensiones:"455x65cm",
+    materiales:"PVC 15mm + Acrílico colores gris, blanco y rojo",
+    iluminacion:"NO LLEVA",
+    instalacion:[
+      "Hacerle una plantilla para que se pueda pegar con cinta doble faz.",
+      "Letras grandes con cinta doble faz verde y pequeñas con 3M delgada."
+    ]
+  },
+  viajea:{
+    img:"https://dummyimage.com/900x250/fff/111&text=viajea",
+    responsable:"Chico",
+    entrega:"Lunes 03/06",
+    progreso:"20%",
+    dimensiones:"130x50cm",
+    materiales:"Canto aluminio blanco 6cm + acrílico + impresión clear",
+    iluminacion:"Caja de luz, cinta luz blanca 10K",
+    instalacion:[
+      "Sacar cable por atrás.",
+      "Va fijado en fachada interna de aluminio.",
+      "Colocar 2 ganchos y doble faz abajo."
+    ]
+  },
+  farmacia:{
+    img:"https://dummyimage.com/900x250/e9f8ef/177a32&text=Farmacia+San+Rafael",
+    responsable:"Rubén",
+    entrega:"Miércoles 05/06",
+    progreso:"60%",
+    dimensiones:"180x70cm",
+    materiales:"PVC 9mm + vinil laminado",
+    iluminacion:"No lleva",
+    instalacion:[
+      "Revisar bordes antes de entregar.",
+      "Embalar con cartón y plástico."
+    ]
+  }
+};
+
+function loadProject(id){
+  const p = projects[id];
+
+  document.getElementById("heroImg").src = p.img;
+  document.getElementById("responsable").textContent = p.responsable;
+  document.getElementById("entrega").textContent = p.entrega;
+  document.getElementById("progreso").textContent = p.progreso;
+  document.getElementById("dimensiones").textContent = p.dimensiones;
+  document.getElementById("materiales").textContent = p.materiales;
+  document.getElementById("iluminacion").textContent = p.iluminacion;
+
+  document.getElementById("instalacion").innerHTML =
+    "<ul>" + p.instalacion.map(x=>"<li>"+x+"</li>").join("") + "</ul>";
+}
+
+function toggleAcc(el){
+  el.parentElement.classList.toggle("open");
+}
+
+function showTab(tab, btn){
+  document.querySelectorAll(".tab-content").forEach(x=>x.style.display="none");
+  document.getElementById("tab-"+tab).style.display="block";
+
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+function openModal(type){
+  const modal = document.getElementById("modal");
+  const title = document.getElementById("modalTitle");
+  const form = document.getElementById("modalForm");
+
+  if(type === "project"){
+    title.textContent = "Añadir proyecto";
+    form.innerHTML = `
+      <input placeholder="Nombre del proyecto">
+      <input placeholder="Cliente">
+      <input placeholder="Responsable">
+      <input placeholder="Fecha de entrega">
+      <input placeholder="Dimensiones">
+      <textarea placeholder="Descripción / instrucciones técnicas"></textarea>
+    `;
+  }
+
+  if(type === "task"){
+    title.textContent = "Añadir tarea";
+    form.innerHTML = `
+      <input placeholder="Nombre de la tarea">
+      <select>
+        <option>Carlos</option>
+        <option>Chico</option>
+        <option>Rubén</option>
+        <option>Gabriela</option>
+        <option>Roberto</option>
+      </select>
+      <select>
+        <option>Pendiente</option>
+        <option>Visto</option>
+        <option>En proceso</option>
+        <option>Listo</option>
+      </select>
+      <textarea placeholder="Notas de la tarea"></textarea>
+    `;
+  }
+
+  if(type === "note"){
+    title.textContent = "Añadir nota";
+    form.innerHTML = `
+      <textarea placeholder="Escribe la nota interna del proyecto"></textarea>
+    `;
+  }
+
+  if(type === "photo"){
+    title.textContent = "Subir foto";
+    form.innerHTML = `
+      <input type="file" accept="image/*">
+      <textarea placeholder="Comentario de la foto"></textarea>
+    `;
+  }
+
+  modal.classList.add("open");
+}
+
+function closeModal(){
+  document.getElementById("modal").classList.remove("open");
 }
 </script>
 
