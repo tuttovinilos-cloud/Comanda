@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v44 logo externo");
+console.log("COTIZADOR JS conectado v45 clientes corregidos");
 
 const $ = (id) => document.getElementById(id);
 
@@ -75,6 +75,7 @@ function operadorSesionActual(){
       if(op && op.nombre) return op;
     }
   }catch(e){}
+
   try{
     return JSON.parse(localStorage.getItem("comanda_operador_actual") || "null");
   }catch(e){
@@ -96,6 +97,7 @@ function setResponsableDesdeSesion(){
   if(!select) return;
 
   const existe = [...select.options].some(o => normalizar(o.value) === normalizar(nombre));
+
   if(!existe){
     const opt = document.createElement("option");
     opt.value = nombre;
@@ -106,6 +108,7 @@ function setResponsableDesdeSesion(){
   const option = [...select.options].find(o => normalizar(o.value) === normalizar(nombre));
   select.value = option?.value || nombre;
   data.responsable = select.value;
+
   bloquearResponsableSiNoEsRoberto();
 }
 
@@ -125,6 +128,7 @@ function bloquearResponsableSiNoEsRoberto(){
 function aplicarMenuDesplegable(){
   const btn = $("mobileMenuBtn");
   const menu = $("authMenu");
+
   if(btn && menu){
     btn.addEventListener("click", () => menu.classList.toggle("open"));
   }
@@ -132,30 +136,41 @@ function aplicarMenuDesplegable(){
 
 function showToast(msg, type="ok"){
   const t = $("toast");
-  if(!t){ alert(msg); return; }
+
+  if(!t){
+    alert(msg);
+    return;
+  }
+
   t.textContent = msg;
   t.className = "toast " + type + " show";
-  setTimeout(() => t.className = "toast", 3600);
+
+  setTimeout(() => {
+    t.className = "toast";
+  }, 3600);
 }
 
 async function obtenerSiguienteNumeroDocumento(fechaISO){
   if(!validarSupabase()) return crearNumeroDocumento(1, fechaISO);
 
   const sufijo = formatoFechaNumero(fechaISO);
+
   const { data: rows, error } = await db()
     .from("cotizaciones")
     .select("numero")
     .eq("fecha", fechaISO);
 
   if(error){
-    console.warn(error);
+    console.warn("No se pudo calcular consecutivo:", error);
     return crearNumeroDocumento(1, fechaISO);
   }
 
   let max = 0;
+
   (rows || []).forEach(r => {
     const numero = String(r.numero || "");
     if(!numero.endsWith(sufijo)) return;
+
     const primero = Number(numero.split("-")[0]);
     if(Number.isFinite(primero)) max = Math.max(max, primero);
   });
@@ -169,12 +184,15 @@ async function numeroExiste(numero){
     .select("id")
     .eq("numero", numero)
     .limit(1);
+
   if(error) throw error;
+
   return (rows || []).length > 0;
 }
 
 async function asegurarNumeroDisponible(){
   const form = getForm();
+
   if(!form.numero || await numeroExiste(form.numero)){
     $("numero").value = await obtenerSiguienteNumeroDocumento(form.fecha || todayISO());
   }
@@ -183,12 +201,13 @@ async function asegurarNumeroDisponible(){
 async function initDates(){
   const now = new Date();
   const fecha = todayISO();
+
   $("fecha").value = fecha;
 
   const due = new Date(now);
   due.setDate(due.getDate() + 5);
-  $("vence").value = `${due.getFullYear()}-${pad2(due.getMonth()+1)}-${pad2(due.getDate())}`;
 
+  $("vence").value = `${due.getFullYear()}-${pad2(due.getMonth()+1)}-${pad2(due.getDate())}`;
   $("numero").value = await obtenerSiguienteNumeroDocumento(fecha);
 }
 
@@ -201,13 +220,22 @@ function itemTotal(item){
 }
 
 function calcularTotales(items=data.items, ivaAplicado=$("ivaCheck")?.checked){
-  const subtotal = (items || []).reduce((acc,it) => acc + (it.kind === "item" ? itemTotal(it) : 0), 0);
+  const subtotal = (items || []).reduce((acc,it) => {
+    return acc + (it.kind === "item" ? itemTotal(it) : 0);
+  }, 0);
+
   const iva = ivaAplicado ? subtotal * 0.16 : 0;
-  return { subtotal, iva, total: subtotal + iva };
+
+  return {
+    subtotal,
+    iva,
+    total: subtotal + iva
+  };
 }
 
 function updateTotals(){
   const t = calcularTotales();
+
   $("subtotal").textContent = currency(t.subtotal);
   $("iva").textContent = currency(t.iva);
   $("total").textContent = currency(t.total);
@@ -216,11 +244,15 @@ function updateTotals(){
 function updateItemVisualTotal(index){
   const item = data.items[index];
   if(!item) return;
+
   const total = itemTotal(item);
 
   document.querySelectorAll(`[data-total-index="${index}"]`).forEach(el => {
-    if(el.tagName === "INPUT") el.value = total.toFixed(2);
-    else el.textContent = currency(total);
+    if(el.tagName === "INPUT"){
+      el.value = total.toFixed(2);
+    }else{
+      el.textContent = currency(total);
+    }
   });
 }
 
@@ -240,6 +272,7 @@ function removeItem(index){
   }else{
     data.items.splice(index, 1);
   }
+
   render();
 }
 
@@ -273,7 +306,13 @@ function crearSnapshotActual(){
   const form = getForm();
   const items = JSON.parse(JSON.stringify(data.items || []));
   const totals = calcularTotales(items, form.iva);
-  return { form, items, totals, footer: form.footer };
+
+  return {
+    form,
+    items,
+    totals,
+    footer: form.footer
+  };
 }
 
 function render(){
@@ -285,6 +324,7 @@ function render(){
 
   const tbody = $("tbody");
   const mobile = $("mobileItems");
+
   tbody.innerHTML = "";
   mobile.innerHTML = "";
 
@@ -298,13 +338,18 @@ function render(){
           <td colspan="4">
             <input value="${html(item.desc)}" placeholder="Título de sección" data-index="${index}" data-field="desc" style="text-align:center;font-weight:900;color:var(--azulOsc)">
           </td>
-          <td class="center"><button class="btn btn-red" data-remove="${index}" type="button">✕</button></td>
+          <td class="center">
+            <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
+          </td>
         </tr>
       `);
 
       mobile.insertAdjacentHTML("beforeend", `
         <div class="item-card">
-          <div class="item-head"><span>Separador</span><button class="btn btn-red" data-remove="${index}" type="button">✕</button></div>
+          <div class="item-head">
+            <span>Separador</span>
+            <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
+          </div>
           <div class="item-body">
             <div class="field">
               <label>Título de sección</label>
@@ -313,6 +358,7 @@ function render(){
           </div>
         </div>
       `);
+
       return;
     }
 
@@ -322,32 +368,49 @@ function render(){
     tbody.insertAdjacentHTML("beforeend", `
       <tr>
         <td class="num">${number}</td>
-        <td class="desc"><input value="${html(item.desc)}" placeholder="Descripción" data-index="${index}" data-field="desc"></td>
-        <td class="center"><input type="number" min="0" step="0.01" value="${item.qty}" data-index="${index}" data-field="qty"></td>
-        <td class="center"><input type="number" min="0" step="0.01" value="${item.price}" data-index="${index}" data-field="price"></td>
-        <td class="center total-cell"><input readonly data-total-index="${index}" value="${total.toFixed(2)}"></td>
-        <td class="center"><button class="btn btn-red" data-remove="${index}" type="button">✕</button></td>
+        <td class="desc">
+          <input value="${html(item.desc)}" placeholder="Descripción" data-index="${index}" data-field="desc">
+        </td>
+        <td class="center">
+          <input type="number" min="0" step="0.01" value="${item.qty}" data-index="${index}" data-field="qty">
+        </td>
+        <td class="center">
+          <input type="number" min="0" step="0.01" value="${item.price}" data-index="${index}" data-field="price">
+        </td>
+        <td class="center total-cell">
+          <input readonly data-total-index="${index}" value="${total.toFixed(2)}">
+        </td>
+        <td class="center">
+          <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
+        </td>
       </tr>
     `);
 
     mobile.insertAdjacentHTML("beforeend", `
       <div class="item-card">
-        <div class="item-head"><span>Ítem ${number}</span><button class="btn btn-red" data-remove="${index}" type="button">✕</button></div>
+        <div class="item-head">
+          <span>Ítem ${number}</span>
+          <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
+        </div>
+
         <div class="item-body">
           <div class="field">
             <label>Descripción</label>
             <input value="${html(item.desc)}" placeholder="Descripción del producto o servicio" data-index="${index}" data-field="desc">
           </div>
+
           <div class="item-grid">
             <div class="field">
               <label>Cantidad</label>
               <input type="number" min="0" step="0.01" value="${item.qty}" data-index="${index}" data-field="qty">
             </div>
+
             <div class="field">
               <label>P. Unit ($)</label>
               <input type="number" min="0" step="0.01" value="${item.price}" data-index="${index}" data-field="price">
             </div>
           </div>
+
           <div class="item-total">
             <span>Total ítem</span>
             <b data-total-index="${index}">${currency(total)}</b>
@@ -360,21 +423,33 @@ function render(){
   updateTotals();
 }
 
+/* CLIENTES CORREGIDO */
 async function cargarClientesCotizador(){
   if(!validarSupabase()) return;
 
-  const { data: clientes, error } = await db()
+  let res = await db()
     .from("clientes")
     .select("id,nombre,rif_cedula,telefono,correo,direccion,tipo_cliente,notas,activo")
     .order("nombre", { ascending:true });
 
-  if(error){
-    console.error(error);
+  if(res.error){
+    console.warn("Falló cargando clientes con activo. Intentando sin activo:", res.error);
+
+    res = await db()
+      .from("clientes")
+      .select("id,nombre,rif_cedula,telefono,correo,direccion,tipo_cliente,notas")
+      .order("nombre", { ascending:true });
+  }
+
+  if(res.error){
+    console.error("Error cargando clientes:", res.error);
     showToast("Error cargando clientes", "err");
     return;
   }
 
-  clientesDB = clientes || [];
+  clientesDB = res.data || [];
+  console.log("Clientes cargados:", clientesDB.length, clientesDB);
+
   renderClientesDatalist();
 }
 
@@ -383,14 +458,17 @@ function renderClientesDatalist(){
   if(!lista) return;
 
   lista.innerHTML = clientesDB
-    .filter(c => c.activo !== false)
+    .filter(c => c && c.nombre)
     .map(c => `<option value="${html(c.nombre || "")}"></option>`)
     .join("");
+
+  console.log("Datalist actualizado:", lista.children.length);
 }
 
 function buscarClientePorNombre(nombre){
   const n = normalizar(nombre);
   if(!n) return null;
+
   return clientesDB.find(c => normalizar(c.nombre) === n) || null;
 }
 
@@ -403,7 +481,9 @@ function llenarDatosCliente(cliente){
   $("direccion").value = cliente.direccion || "";
 
   const mini = $("clienteMini");
-  if(mini) mini.innerHTML = `Cliente encontrado: <b>${html(cliente.nombre)}</b>`;
+  if(mini){
+    mini.innerHTML = `Cliente encontrado: <b>${html(cliente.nombre)}</b>`;
+  }
 }
 
 function revisarClienteActual(){
@@ -411,8 +491,9 @@ function revisarClienteActual(){
   const cliente = buscarClientePorNombre(nombre);
   const mini = $("clienteMini");
 
-  if(cliente) llenarDatosCliente(cliente);
-  else if(mini){
+  if(cliente){
+    llenarDatosCliente(cliente);
+  }else if(mini){
     mini.innerHTML = nombre.trim()
       ? "Cliente nuevo: se guardará automáticamente en clientes."
       : "Escribe para buscar o crear cliente nuevo.";
@@ -429,44 +510,72 @@ async function guardarOActualizarClienteDesdeCotizacion(){
 
   const existente = buscarClientePorNombre(nombre);
 
-  const datosCliente = {
+  const datosClienteBase = {
     nombre,
     rif_cedula: form.rif || "",
     telefono: form.telefono || "",
     correo: form.email || "",
     direccion: form.direccion || "",
-    tipo_cliente: existente?.tipo_cliente || "Cliente Básico",
+    tipo_cliente: existente?.tipo_cliente || "Cliente Básico"
+  };
+
+  const datosClienteConActivo = {
+    ...datosClienteBase,
     activo: true
   };
 
   if(existente){
-    const { data: actualizado, error } = await db()
+    let res = await db()
       .from("clientes")
-      .update(datosCliente)
+      .update(datosClienteConActivo)
       .eq("id", existente.id)
       .select()
       .single();
 
-    if(error) throw error;
+    if(res.error){
+      const msg = String(res.error.message || "");
+      if(msg.includes("activo") || msg.includes("schema cache")){
+        res = await db()
+          .from("clientes")
+          .update(datosClienteBase)
+          .eq("id", existente.id)
+          .select()
+          .single();
+      }
+    }
+
+    if(res.error) throw res.error;
 
     const idx = clientesDB.findIndex(c => Number(c.id) === Number(existente.id));
-    if(idx >= 0) clientesDB[idx] = actualizado;
+    if(idx >= 0) clientesDB[idx] = res.data;
 
-    return actualizado;
+    renderClientesDatalist();
+    return res.data;
   }
 
-  const { data: nuevo, error } = await db()
+  let res = await db()
     .from("clientes")
-    .insert([datosCliente])
+    .insert([datosClienteConActivo])
     .select()
     .single();
 
-  if(error) throw error;
+  if(res.error){
+    const msg = String(res.error.message || "");
+    if(msg.includes("activo") || msg.includes("schema cache")){
+      res = await db()
+        .from("clientes")
+        .insert([datosClienteBase])
+        .select()
+        .single();
+    }
+  }
 
-  clientesDB.push(nuevo);
+  if(res.error) throw res.error;
+
+  clientesDB.push(res.data);
   renderClientesDatalist();
 
-  return nuevo;
+  return res.data;
 }
 
 function loadImageDataUrl(src){
@@ -598,6 +707,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   doc.setFontSize(7.8);
   doc.setTextColor(...blue);
   doc.text("DATOS DEL CLIENTE",14,66);
+
   doc.setDrawColor(...line);
   doc.line(14,67.5,W-14,67.5);
 
@@ -608,16 +718,30 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   drawPdfField(doc,84,83,114,10,"Dirección",form.direccion || "",{ valueSize:6.5 });
 
   let count = 1;
+
   const body = items.map(item => {
     if(item.kind === "separator"){
       return [{
         content: item.desc || "SECCIÓN",
         colSpan: 5,
-        styles:{ halign:"center", fontStyle:"bold", fillColor:[232,236,255], textColor:[11,31,122] }
+        styles:{
+          halign:"center",
+          fontStyle:"bold",
+          fillColor:[232,236,255],
+          textColor:[11,31,122]
+        }
       }];
     }
+
     const total = itemTotal(item);
-    return [String(count++), item.desc || "", String(item.qty || 0), "$"+Number(item.price || 0).toFixed(2), "$"+total.toFixed(2)];
+
+    return [
+      String(count++),
+      item.desc || "",
+      String(item.qty || 0),
+      "$"+Number(item.price || 0).toFixed(2),
+      "$"+total.toFixed(2)
+    ];
   });
 
   doc.autoTable({
@@ -626,8 +750,23 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     body,
     theme:"grid",
     margin:{ left:14, right:14, bottom:26 },
-    styles:{ font:"helvetica", fontSize:7.7, cellPadding:2.3, textColor:[17,17,17], lineColor:[217,222,234], lineWidth:.2, overflow:"linebreak", valign:"middle" },
-    headStyles:{ fillColor:[243,245,252], textColor:[17,17,17], fontStyle:"bold", halign:"center", fontSize:7.2 },
+    styles:{
+      font:"helvetica",
+      fontSize:7.7,
+      cellPadding:2.3,
+      textColor:[17,17,17],
+      lineColor:[217,222,234],
+      lineWidth:.2,
+      overflow:"linebreak",
+      valign:"middle"
+    },
+    headStyles:{
+      fillColor:[243,245,252],
+      textColor:[17,17,17],
+      fontStyle:"bold",
+      halign:"center",
+      fontSize:7.2
+    },
     columnStyles:{
       0:{ halign:"center", cellWidth:12, fontStyle:"bold", textColor:[220,38,38] },
       1:{ cellWidth:"auto" },
@@ -677,13 +816,17 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   const drawSummaryRow = (label,value,fill,txtColor,bold=false,size=9.2) => {
     doc.setFillColor(...fill);
     doc.rect(rightX,rowY,rightW,8,"F");
+
     doc.setDrawColor(...line);
     doc.rect(rightX,rowY,rightW,8);
+
     doc.setFont("helvetica",bold ? "bold" : "normal");
     doc.setFontSize(size);
     doc.setTextColor(...txtColor);
+
     doc.text(label,rightX+3,rowY+5.4);
     doc.text(value,rightX+rightW-3,rowY+5.4,{ align:"right" });
+
     rowY += 8;
   };
 
@@ -699,40 +842,59 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   doc.setFont("helvetica","bold");
   doc.setFontSize(12);
   doc.setTextColor(255,255,255);
+
   doc.text("TOTAL",rightX+3,rowY+6.7);
   doc.text(currency(t.total),rightX+rightW-3,rowY+6.7,{ align:"right" });
 
   drawPdfHeaderFooter(doc,footer,form);
+
   return doc;
 }
 
 function nombreArchivoPDF(snapshot){
   const form = snapshot.form || getForm();
-  const clientName = (form.cliente || "cliente").replace(/[^\wáéíóúÁÉÍÓÚñÑ-]+/g,"_").slice(0,60);
+
+  const clientName = (form.cliente || "cliente")
+    .replace(/[^\wáéíóúÁÉÍÓÚñÑ-]+/g,"_")
+    .slice(0,60);
+
   const tipo = (form.tipo || "Cotizacion").replace(/\s+/g,"_");
+
   return `${tipo}_Tuttovinilos_${form.numero || "sin_numero"}_${clientName}.pdf`;
 }
 
 function blobToBase64(blob){
   return new Promise((resolve,reject) => {
     const reader = new FileReader();
-    reader.onloadend = () => resolve(String(reader.result || "").split(",")[1] || "");
+
+    reader.onloadend = () => {
+      resolve(String(reader.result || "").split(",")[1] || "");
+    };
+
     reader.onerror = reject;
     reader.readAsDataURL(blob);
   });
 }
 
 function base64ToBlob(base64,mime="application/pdf"){
-  const clean = String(base64 || "").includes(",") ? String(base64).split(",").pop() : String(base64 || "");
+  const clean = String(base64 || "").includes(",")
+    ? String(base64).split(",").pop()
+    : String(base64 || "");
+
   const binary = atob(clean);
   const bytes = new Uint8Array(binary.length);
-  for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+
+  for(let i=0;i<binary.length;i++){
+    bytes[i] = binary.charCodeAt(i);
+  }
+
   return new Blob([bytes],{ type:mime });
 }
 
 function abrirBlobPdf(blob){
   const url = URL.createObjectURL(blob);
   window.open(url,"_blank");
+
   setTimeout(() => URL.revokeObjectURL(url),60000);
 }
 
@@ -753,7 +915,13 @@ async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null){
     direccion: form.direccion,
     responsable: form.responsable,
     vence: form.vence || null,
-    items:{ version:3, modo:"texto_json_mas_pdf_base64", rows:snapshot.items, footer:snapshot.footer, iva_aplicado:form.iva },
+    items:{
+      version:3,
+      modo:"texto_json_mas_pdf_base64",
+      rows:snapshot.items,
+      footer:snapshot.footer,
+      iva_aplicado:form.iva
+    },
     notas: form.notas,
     subtotal: Number(t.subtotal.toFixed(2)),
     iva: Number(t.iva.toFixed(2)),
@@ -769,17 +937,32 @@ async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null){
     pdf_nombre: pdfInfo?.nombre || ""
   };
 
-  let res = await db().from("cotizaciones").insert([registroConPdf]).select().single();
+  let res = await db()
+    .from("cotizaciones")
+    .insert([registroConPdf])
+    .select()
+    .single();
 
   if(res.error){
     const msg = String(res.error.message || "");
-    const faltaColumnasPdf = msg.includes("pdf_base64") || msg.includes("pdf_mime") || msg.includes("pdf_nombre") || msg.includes("schema cache");
+    const faltaColumnasPdf =
+      msg.includes("pdf_base64") ||
+      msg.includes("pdf_mime") ||
+      msg.includes("pdf_nombre") ||
+      msg.includes("schema cache");
 
     if(!faltaColumnasPdf) throw res.error;
 
     console.warn("Faltan columnas PDF. Guardando solo texto:", res.error);
-    res = await db().from("cotizaciones").insert([registroBase]).select().single();
+
+    res = await db()
+      .from("cotizaciones")
+      .insert([registroBase])
+      .select()
+      .single();
+
     if(res.error) throw res.error;
+
     showToast("Guardó texto. Falta SQL de columnas PDF.", "warn");
   }
 
@@ -818,7 +1001,11 @@ async function createPDF(){
     const pdfNombre = nombreArchivoPDF(snapshot);
     const pdfBase64 = await blobToBase64(pdfBlob);
 
-    await guardarRegistroCotizacionTexto(clienteGuardado,{ base64:pdfBase64, mime:"application/pdf", nombre:pdfNombre });
+    await guardarRegistroCotizacionTexto(clienteGuardado,{
+      base64:pdfBase64,
+      mime:"application/pdf",
+      nombre:pdfNombre
+    });
 
     doc.save(pdfNombre);
     showToast("Cotización guardada", "ok");
@@ -837,15 +1024,20 @@ async function createPDF(){
 
 function normalizarSnapshotDesdeRegistro(reg){
   const raw = reg?.items;
+
   let rows = [];
   let footer = null;
   let ivaAplicado = Number(reg?.iva || 0) > 0;
 
-  if(Array.isArray(raw)) rows = raw;
-  else if(raw && typeof raw === "object"){
+  if(Array.isArray(raw)){
+    rows = raw;
+  }else if(raw && typeof raw === "object"){
     rows = Array.isArray(raw.rows) ? raw.rows : (Array.isArray(raw.items) ? raw.items : []);
     footer = raw.footer || null;
-    if(typeof raw.iva_aplicado === "boolean") ivaAplicado = raw.iva_aplicado;
+
+    if(typeof raw.iva_aplicado === "boolean"){
+      ivaAplicado = raw.iva_aplicado;
+    }
   }
 
   const form = {
@@ -886,7 +1078,10 @@ async function cargarCotizacionesPrevias(){
   if(!validarSupabase()) return;
 
   const body = $("cotizacionesBody");
-  if(body) body.innerHTML = `<tr><td colspan="8" class="empty">Cargando...</td></tr>`;
+
+  if(body){
+    body.innerHTML = `<tr><td colspan="8" class="empty">Cargando...</td></tr>`;
+  }
 
   const selectConAprobacion = `
     id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
@@ -900,23 +1095,39 @@ async function cargarCotizacionesPrevias(){
     pdf_mime,created_at
   `;
 
-  let res = await db().from("cotizaciones").select(selectConAprobacion).order("created_at",{ ascending:false }).limit(150);
+  let res = await db()
+    .from("cotizaciones")
+    .select(selectConAprobacion)
+    .order("created_at",{ ascending:false })
+    .limit(150);
 
   if(res.error){
     const msg = String(res.error.message || "");
     if(msg.includes("aprobado") || msg.includes("schema cache")){
-      res = await db().from("cotizaciones").select(selectBasico).order("created_at",{ ascending:false }).limit(150);
+      res = await db()
+        .from("cotizaciones")
+        .select(selectBasico)
+        .order("created_at",{ ascending:false })
+        .limit(150);
     }
   }
 
   if(res.error){
-    console.error(res.error);
-    if(body) body.innerHTML = `<tr><td colspan="8" class="empty">Error cargando cotizaciones</td></tr>`;
+    console.error("Error cargando cotizaciones:", res.error);
+
+    if(body){
+      body.innerHTML = `<tr><td colspan="8" class="empty">Error cargando cotizaciones</td></tr>`;
+    }
+
     showToast("Error cargando cotizaciones","err");
     return;
   }
 
-  cotizacionesDB = (res.data || []).map(c => ({ ...c, aprobado:c.aprobado === true }));
+  cotizacionesDB = (res.data || []).map(c => ({
+    ...c,
+    aprobado:c.aprobado === true
+  }));
+
   renderCotizacionesPrevias();
 }
 
@@ -930,13 +1141,29 @@ function renderCotizacionesPrevias(){
   let lista = [...cotizacionesDB];
 
   if(q){
-    lista = lista.filter(c => normalizar([
-      c.fecha,c.numero,c.cliente,c.responsable,c.telefono,c.total,c.tipo_documento,c.aprobado ? "aprobada aprobado" : "pendiente"
-    ].join(" ")).includes(q));
+    lista = lista.filter(c => {
+      const texto = [
+        c.fecha,
+        c.numero,
+        c.cliente,
+        c.responsable,
+        c.telefono,
+        c.total,
+        c.tipo_documento,
+        c.aprobado ? "aprobada aprobado" : "pendiente"
+      ].join(" ");
+
+      return normalizar(texto).includes(q);
+    });
   }
 
-  if(filtroAprobado === "aprobadas") lista = lista.filter(c => c.aprobado === true);
-  if(filtroAprobado === "pendientes") lista = lista.filter(c => c.aprobado !== true);
+  if(filtroAprobado === "aprobadas"){
+    lista = lista.filter(c => c.aprobado === true);
+  }
+
+  if(filtroAprobado === "pendientes"){
+    lista = lista.filter(c => c.aprobado !== true);
+  }
 
   if(!lista.length){
     body.innerHTML = `<tr><td colspan="8" class="empty">Sin cotizaciones</td></tr>`;
@@ -956,12 +1183,18 @@ function renderCotizacionesPrevias(){
           </button>
           ${aprobadoMeta}
         </td>
+
         <td>${html(c.fecha || "")}</td>
         <td><b>${html(c.numero || "")}</b></td>
         <td>${html(c.cliente || "")}</td>
-        <td><span class="badge-responsable">${html(c.responsable || "Sin responsable")}</span></td>
+
+        <td>
+          <span class="badge-responsable">${html(c.responsable || "Sin responsable")}</span>
+        </td>
+
         <td>${html(c.telefono || "")}</td>
         <td><b>${currency(c.total || 0)}</b></td>
+
         <td class="center">
           <button class="mini-btn dark" type="button" data-ver-cot="${Number(c.id)}">Abrir</button>
           <button class="mini-btn" type="button" data-pdf-cot="${Number(c.id)}">${c.pdf_nombre ? "Abrir PDF" : "Generar PDF"}</button>
@@ -973,6 +1206,7 @@ function renderCotizacionesPrevias(){
 
 async function toggleAprobadoCotizacion(id){
   const cot = cotizacionesDB.find(c => Number(c.id) === Number(id));
+
   if(!cot){
     showToast("No se encontró la cotización","err");
     return;
@@ -980,13 +1214,17 @@ async function toggleAprobadoCotizacion(id){
 
   const nuevoEstado = !cot.aprobado;
   const op = operadorSesionActual();
+
   const update = {
     aprobado:nuevoEstado,
     aprobado_at:nuevoEstado ? new Date().toISOString() : null,
     aprobado_por:nuevoEstado ? (op?.nombre || "") : null
   };
 
-  const { error } = await db().from("cotizaciones").update(update).eq("id",id);
+  const { error } = await db()
+    .from("cotizaciones")
+    .update(update)
+    .eq("id",id);
 
   if(error){
     console.error(error);
@@ -995,6 +1233,7 @@ async function toggleAprobadoCotizacion(id){
   }
 
   Object.assign(cot, update);
+
   renderCotizacionesPrevias();
   showToast(nuevoEstado ? "Cotización aprobada" : "Cotización marcada como pendiente","ok");
 }
@@ -1006,7 +1245,9 @@ function buscarCotizacionPorId(id){
 async function obtenerCotizacionCompleta(id){
   let reg = buscarCotizacionPorId(id);
 
-  if(reg && Object.prototype.hasOwnProperty.call(reg,"pdf_base64")) return reg;
+  if(reg && Object.prototype.hasOwnProperty.call(reg,"pdf_base64")){
+    return reg;
+  }
 
   const selectCompleto = `
     id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
@@ -1020,19 +1261,31 @@ async function obtenerCotizacionCompleta(id){
     pdf_mime,pdf_nombre,aprobado,aprobado_at,aprobado_por,created_at
   `;
 
-  let res = await db().from("cotizaciones").select(selectCompleto).eq("id",id).single();
+  let res = await db()
+    .from("cotizaciones")
+    .select(selectCompleto)
+    .eq("id",id)
+    .single();
 
   if(res.error){
     const msg = String(res.error.message || "");
+
     if(msg.includes("pdf_base64") || msg.includes("schema cache")){
-      res = await db().from("cotizaciones").select(selectSinPdfBase64).eq("id",id).single();
+      res = await db()
+        .from("cotizaciones")
+        .select(selectSinPdfBase64)
+        .eq("id",id)
+        .single();
     }
   }
 
   if(res.error) throw res.error;
 
   if(res.data){
-    cotizacionesDB = cotizacionesDB.map(c => Number(c.id) === Number(id) ? { ...c, ...res.data } : c);
+    cotizacionesDB = cotizacionesDB.map(c => {
+      return Number(c.id) === Number(id) ? { ...c, ...res.data } : c;
+    });
+
     return res.data;
   }
 
@@ -1041,19 +1294,24 @@ async function obtenerCotizacionCompleta(id){
 
 function abrirDetalleCotizacion(id){
   const reg = buscarCotizacionPorId(id);
+
   if(!reg){
     showToast("No se encontró la cotización","err");
     return;
   }
 
   cotizacionSeleccionada = reg;
+
   const snap = normalizarSnapshotDesdeRegistro(reg);
   const form = snap.form;
 
   $("detalleTitle").textContent = `${form.tipo || "Cotización"} · ${form.numero || ""}`;
 
   const itemsHtml = (snap.items || []).map((it,i) => {
-    if(it.kind === "separator") return `<div class="detail-item"><b>${html(it.desc || "SECCIÓN")}</b></div>`;
+    if(it.kind === "separator"){
+      return `<div class="detail-item"><b>${html(it.desc || "SECCIÓN")}</b></div>`;
+    }
+
     return `
       <div class="detail-item">
         <b>${i+1}. ${html(it.desc || "")}</b><br>
@@ -1070,12 +1328,19 @@ function abrirDetalleCotizacion(id){
         <b>Correo:</b> ${html(form.email || "")}<br>
         <b>Dirección:</b> ${html(form.direccion || "")}
       </div>
+
       <div class="detail-item">
         <b>Fecha:</b> ${html(form.fecha || "")} · <b>Vence:</b> ${html(form.vence || "")}<br>
         <b>Responsable:</b> ${html(form.responsable || "")}
       </div>
+
       ${itemsHtml || `<div class="empty">Sin ítems</div>`}
-      <div class="detail-item"><b>Notas:</b><br>${html(form.notas || "—")}</div>
+
+      <div class="detail-item">
+        <b>Notas:</b><br>
+        ${html(form.notas || "—")}
+      </div>
+
       <div class="detail-item">
         <b>Subtotal:</b> ${currency(snap.totals.subtotal)}<br>
         <b>IVA:</b> ${currency(snap.totals.iva)}<br>
@@ -1095,6 +1360,7 @@ function cerrarDetalle(){
 async function generarPdfDesdeCotizacion(id){
   try{
     const base = id ? buscarCotizacionPorId(id) : cotizacionSeleccionada;
+
     if(!base){
       showToast("No se encontró la cotización","err");
       return;
@@ -1110,6 +1376,7 @@ async function generarPdfDesdeCotizacion(id){
 
     const snap = normalizarSnapshotDesdeRegistro(reg);
     const doc = await crearDocumentoPDF(snap);
+
     doc.save(nombreArchivoPDF(snap));
 
     showToast("Esta cotización no tenía PDF guardado; se generó desde el texto","warn");
@@ -1146,12 +1413,15 @@ function cargarCotizacionEnFormulario(){
   }
 
   data.items = JSON.parse(JSON.stringify(
-    snap.items && snap.items.length ? snap.items : [{ kind:"item", desc:"", qty:1, price:0 }]
+    snap.items && snap.items.length
+      ? snap.items
+      : [{ kind:"item", desc:"", qty:1, price:0 }]
   ));
 
   render();
   cerrarDetalle();
   activarTab("nueva");
+
   showToast("Cotización cargada para editar","ok");
 }
 
@@ -1168,6 +1438,7 @@ async function nuevaCotizacionLimpia(){
   $("clienteMini").textContent = "Escribe para buscar o crear cliente nuevo.";
 
   await initDates();
+
   setResponsableDesdeSesion();
   render();
   activarTab("nueva");
@@ -1178,10 +1449,13 @@ function activarTab(cual){
 
   $("tabNueva").classList.toggle("active", nueva);
   $("tabPrevias").classList.toggle("active", !nueva);
+
   $("panelNueva").classList.toggle("active", nueva);
   $("panelPrevias").classList.toggle("active", !nueva);
 
-  if(!nueva) cargarCotizacionesPrevias();
+  if(!nueva){
+    cargarCotizacionesPrevias();
+  }
 }
 
 function bindEvents(){
@@ -1193,7 +1467,10 @@ function bindEvents(){
 
       if(!data.items[index]) return;
 
-      data.items[index][field] = (field === "qty" || field === "price") ? Number(value || 0) : value;
+      data.items[index][field] =
+        field === "qty" || field === "price"
+          ? Number(value || 0)
+          : value;
 
       updateItemVisualTotal(index);
       updateTotals();
@@ -1201,23 +1478,47 @@ function bindEvents(){
   });
 
   document.addEventListener("change", async e => {
-    if(e.target.id === "tipoDocumento" || e.target.id === "responsable") render();
-    if(e.target.id === "ivaCheck") updateTotals();
-    if(e.target.id === "fecha") await refrescarNumeroPorFecha();
+    if(e.target.id === "tipoDocumento" || e.target.id === "responsable"){
+      render();
+    }
+
+    if(e.target.id === "ivaCheck"){
+      updateTotals();
+    }
+
+    if(e.target.id === "fecha"){
+      await refrescarNumeroPorFecha();
+    }
   });
 
   document.addEventListener("click", e => {
     const remove = e.target.closest("[data-remove]");
-    if(remove){ removeItem(Number(remove.dataset.remove)); return; }
+
+    if(remove){
+      removeItem(Number(remove.dataset.remove));
+      return;
+    }
 
     const aprobar = e.target.closest("[data-aprobar-cot]");
-    if(aprobar){ toggleAprobadoCotizacion(Number(aprobar.dataset.aprobarCot)); return; }
+
+    if(aprobar){
+      toggleAprobadoCotizacion(Number(aprobar.dataset.aprobarCot));
+      return;
+    }
 
     const ver = e.target.closest("[data-ver-cot]");
-    if(ver){ abrirDetalleCotizacion(Number(ver.dataset.verCot)); return; }
+
+    if(ver){
+      abrirDetalleCotizacion(Number(ver.dataset.verCot));
+      return;
+    }
 
     const pdf = e.target.closest("[data-pdf-cot]");
-    if(pdf){ generarPdfDesdeCotizacion(Number(pdf.dataset.pdfCot)); return; }
+
+    if(pdf){
+      generarPdfDesdeCotizacion(Number(pdf.dataset.pdfCot));
+      return;
+    }
   });
 
   $("cliente")?.addEventListener("change", revisarClienteActual);
@@ -1227,8 +1528,9 @@ function bindEvents(){
     const mini = $("clienteMini");
     const cliente = buscarClientePorNombre($("cliente").value);
 
-    if(cliente) mini.innerHTML = `Cliente encontrado: <b>${html(cliente.nombre)}</b>`;
-    else{
+    if(cliente){
+      mini.innerHTML = `Cliente encontrado: <b>${html(cliente.nombre)}</b>`;
+    }else{
       mini.textContent = $("cliente").value.trim()
         ? "Cliente nuevo: se guardará automáticamente en clientes."
         : "Escribe para buscar o crear cliente nuevo.";
@@ -1237,6 +1539,7 @@ function bindEvents(){
 
   $("addItem")?.addEventListener("click", addItem);
   $("addSep")?.addEventListener("click", addSeparator);
+
   $("pdfBtn")?.addEventListener("click", createPDF);
   $("printBtn")?.addEventListener("click", () => window.print());
 
@@ -1253,7 +1556,9 @@ function bindEvents(){
   $("cerrarDetalle")?.addEventListener("click", cerrarDetalle);
 
   $("detalleBackdrop")?.addEventListener("click", e => {
-    if(e.target.id === "detalleBackdrop") cerrarDetalle();
+    if(e.target.id === "detalleBackdrop"){
+      cerrarDetalle();
+    }
   });
 
   $("pdfDetalle")?.addEventListener("click", () => generarPdfDesdeCotizacion());
@@ -1262,6 +1567,7 @@ function bindEvents(){
 
 async function iniciarCotizador(){
   aplicarMenuDesplegable();
+
   setResponsableDesdeSesion();
 
   await initDates();
