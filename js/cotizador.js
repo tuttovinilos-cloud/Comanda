@@ -1,18 +1,4 @@
-console.log("COTIZADOR JS conectado v43 logo embebido completo");
-
-/* =========================================================
-   COTIZADOR TUTTOVINILOS
-   Archivo: js/cotizador.js
-
-   Requiere:
-   - js/supabase.js con window.supabaseClient
-   - jsPDF
-   - jsPDF AutoTable
-
-   Nota importante:
-   - El logo está embebido dentro de este JS.
-   - Ya no depende de que exista el archivo "Logo tutto1.svg" para el PDF.
-========================================================= */
+console.log("COTIZADOR JS conectado v44 logo externo");
 
 const $ = (id) => document.getElementById(id);
 
@@ -20,24 +6,16 @@ let clientesDB = [];
 let cotizacionesDB = [];
 let cotizacionSeleccionada = null;
 
-const TUTTO_LOGO_SRC = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8IS0tIENyZWF0b3I6IENvcmVsRFJBVyAyMDIwICg2NC1CaXQpIC0tPg0KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbDpzcGFjZT0icHJlc2VydmUiIHdpZHRoPSI2MG1tIiBoZWlnaHQ9IjE3LjczOW1tIiB2ZXJzaW9uPSIxLjEiIHN0eWxlPSJzaGFwZS1yZW5kZXJpbmc6Z2VvbWV0cmljUHJlY2lzaW9uOyB0ZXh0LXJlbmRlcmluZzpnZW9tZXRyaWNQcmVjaXNpb247IGltYWdlLXJlbmRlcmluZzpvcHRpbWl6ZVF1YWxpdHk7IGZpbGwtcnVsZTpldmVub2RkOyBjbGlwLXJ1bGU6ZXZlbm9kZCINCnZpZXdCb3g9IjAgMCAwLjY0NiAwLjE5MSINCiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayINCiB4bWxuczp4b2RtPSJodHRwOi8vd3d3LmNvcmVsLmNvbS9jb3JlbGRyYXcvb2RtLzIwMDMiPg0KIDxkZWZzPg0KICA8c3R5bGUgdHlwZT0idGV4dC9jc3MiPg0KICAgPCFbQ0RBVEFbDQogICAgLmZpbDEge2ZpbGw6I0Y5N0E1NDtmaWxsLXJ1bGU6bm9uemVyb30NCiAgICAuZmlsMCB7ZmlsbDp3aGl0ZTtmaWxsLXJ1bGU6bm9uemVyb30NCiAgIF1dPg0KICA8L3N0eWxlPg0KIDwvZGVmcz4NCiA8ZyBpZD0iQ2FwYV94MDAyMF8xIj4NCiAgPG1ldGFkYXRhIGlkPSJDb3JlbENvcnBJRF8wQ29yZWwtTGF5ZXIiLz4NCiAgPGcgaWQ9Il8xNTY0OTUzMzQzNzEyIj4NCiAgIDxwb2x5Z29uIGNsYXNzPSJmaWwwIiBwb2ludHM9IjAuMDU2OSwwLjAyNTMgMC4wNTY5LDAuMTI2OCAwLjAzMDMsMC4xMjY4IDAuMDMwMywwLjAyNTMgLTAsMC4wMjUzIC0wLDAuMDAyOCAwLjA4NzIsMC4wMDI4IDAuMDg3MiwwLjAyNTMgIi8+DQogICA8cGF0aCBjbGFzcz0iZmlsMCIgZD0iTTAuMjE3NCAwLjA1ODFsMCAwLjAxNzdjMCwwLjAxMDIgLTAuMDAyMywwLjAxNzggLTAuMDA2OSwwLjAyMyAtMC4wMDQ2LDAuMDA1MiAtMC4wMTE1LDAuMDA3OCAtMC4wMjA1LDAuMDA3OCAtMC4wMDksMCAtMC4wMTU3LC0wLjAwMjYgLTAuMDIwMiwtMC4wMDc4IC0wLjAwNDUsLTAuMDA1MiAtMC4wMDY4LC0wLjAxMjkgLTAuMDA2OCwtMC4wMjMxbDAgLTAuMDczIC0wLjAyNjMgMCAwIDAuMDc3MWMwLDAuMDE2OCAwLjAwNDQsMC4wMjk0IDAuMDEzMywwLjAzNzcgMC4wMDg5LDAuMDA4MyAwLjAyMjQsMC4wMTI0IDAuMDQwNSwwLjAxMjQgMC4wMTc4LDAgMC4wMzEyLC0wLjAwNDEgMC4wNDAxLC0wLjAxMjQgMC4wMDg5LC0wLjAwODMgMC4wMTMzLC0wLjAyMDkgMC4wMTMzLC0wLjAzNzdsMCAtMC4wMjE4IC0wLjAyNjMgMHoiLz4NCiAgIDxwb2x5Z29uIGNsYXNzPSJmaWwxIiBwb2ludHM9IjAuMjMwNSwwLjAwMjggMC4yMzcxLDAuMDIxOSAwLjI0MzgsMC4wNDExIDAuMjMwNSwwLjA0MTEgMC4yMTcxLDAuMDQxMSAwLjIyMzgsMC4wMjE5ICIvPg0KICAgPHBvbHlnb24gY2xhc3M9ImZpbDAiIHBvaW50cz0iMC40MDM3LDAuMDAyOCAwLjM5MzksMC4wMjUzIDAuMzk3NiwwLjAyNTMgMC40MjIsMC4wMjUzIDAuNDIyLDAuMTI2OCAwLjQ0ODYsMC4xMjY4IDAuNDQ4NiwwLjAyNTMgMC40Nzg5LDAuMDI1MyAwLjQ3ODksMC4wMDI4ICIvPg0KICAgPHBvbHlnb24gY2xhc3M9ImZpbDAiIHBvaW50cz0iMC4zODA0LDAuMDAyOCAwLjM3NDYsMC4wMDI4IDAuMjkzMiwwLjAwMjggMC4yOTMyLDAuMDI1MyAwLjMyMzUsMC4wMjUzIDAuMzIzNSwwLjEyNjggMC4zNTAxLDAuMTI2OCAwLjM1MDEsMC4wMjUzIDAuMzczMSwwLjAyNTMgMC4zODMsMC4wMDI4ICIvPg0KICAgPHBhdGggY2xhc3M9ImZpbDAiIGQ9Ik0wLjYwNzcgMC4wOTQ2Yy0wLjAwNzMsMC4wMDc5IC0wLjAxNjYsMC4wMTE4IC0wLjAyNzgsMC4wMTE4IC0wLjAxMTUsMCAtMC4wMjA4LC0wLjAwMzkgLTAuMDI4MSwtMC4wMTE3IC0wLjAwNzMsLTAuMDA3OCAtMC4wMTA5LC0wLjAxNzcgLTAuMDEwOSwtMC4wMjk3IDAsLTAuMDExOCAwLjAwMzcsLTAuMDIxNyAwLjAxMTEsLTAuMDI5NyAwLjAwNzQsLTAuMDA4IDAuMDE2NywtMC4wMTIgMC4wMjgsLTAuMDEyIDAuMDExMSwwIDAuMDIwMywwLjAwNCAwLjAyNzcsMC4wMTIgMC4wMDc0LDAuMDA4IDAuMDExMSwwLjAxNzkgMC4wMTExLDAuMDI5NiAwLDAuMDExOSAtMC4wMDM2LDAuMDIxNyAtMC4wMTEsMC4wMjk2em0wLjAzMzMgLTAuMDU0N2MtMC4wMDMzLC0wLjAwNzggLTAuMDA4LC0wLjAxNDggLTAuMDE0MywtMC4wMjA5IC0wLjAwNjMsLTAuMDA2IC0wLjAxMzUsLTAuMDEwNyAtMC4wMjE2LC0wLjAxNDEgLTAuMDA4MiwtMC4wMDMzIC0wLjAxNjYsLTAuMDA1IC0wLjAyNTIsLTAuMDA1IC0wLjAwODcsMCAtMC4wMTcyLDAuMDAxNyAtMC4wMjU0LDAuMDA1IC0wLjAwODIsMC4wMDMzIC0wLjAxNTQsMC4wMDggLTAuMDIxNiwwLjAxNDEgLTAuMDAxOSwwLjAwMTkgLTAuMDAzNCwwLjAwMzkgLTAuMDA1MSwwLjAwNTlsLTAuMDA1IDAuMDA3Yy0wLjAwMTYsMC4wMDI2IC0wLjAwMzIsMC4wMDUxIC0wLjAwNDMsMC4wMDc5IC0wLjAwMzMsMC4wMDc4IC0wLjAwNDksMC4wMTYyIC0wLjAwNDksMC4wMjUxIDAsMC4wMDk5IDAuMDAyMSwwLjAxOTIgMC4wMDYyLDAuMDI3OSAwLjAwNDEsMC4wMDg2IDAuMDEwMSwwLjAxNjEgMC4wMTc5LDAuMDIyMyAwLjAwNiwwLjAwNDggMC4wMTI3LDAuMDA4NSAwLjAxOTksMC4wMTExIDAuMDA3MywwLjAwMjYgMC4wMTQ3LDAuMDAzOCAwLjAyMjIsMC4wMDM4IDAuMDA4NiwwIDAuMDE3LC0wLjAwMTYgMC4wMjUxLC0wLjAwNDkgMC4wMDgxLC0wLjAwMzMgMC4wMTUzLC0wLjAwOCAwLjAyMTgsLTAuMDE0MSAwLjAwNjIsLTAuMDA2IDAuMDExLC0wLjAxMjkgMC4wMTQzLC0wLjAyMDggMC4wMDMzLC0wLjAwNzkgMC4wMDUsLTAuMDE2MyAwLjAwNSwtMC4wMjUxIDAsLTAuMDA4OSAtMC4wMDE2LC0wLjAxNzIgLTAuMDA0OSwtMC4wMjUxeiIvPg0KICAgPHBhdGggY2xhc3M9ImZpbDEiIGQ9Ik0wLjA0NDYgMC4xOTFsLTAuMDE0MyAtMC4wMzM0IDAuMDA1NCAwIDAuMDA3MiAwLjAxNzFjMC4wMDA0LDAuMDAxIDAuMDAwOCwwLjAwMTkgMC4wMDExLDAuMDAyOCAwLjAwMDMsMC4wMDA4IDAuMDAwNSwwLjAwMTYgMC4wMDA3LDAuMDAyNCAwLjAwMDIsLTAuMDAwOCAwLjAwMDQsLTAuMDAxNiAwLjAwMDcsLTAuMDAyNSAwLjAwMDMsLTAuMDAwOSAwLjAwMDYsLTAuMDAxNyAwLjAwMSwtMC4wMDI3bDAuMDA3MiAtMC4wMTcxIDAuMDA1NCAwIC0wLjAxNDMgMC4wMzM0eiIvPg0KICAgPHBvbHlnb24gY2xhc3M9ImZpbDEiIHBvaW50cz0iMC4wNzgxLDAuMTU3NiAwLjA4MzMsMC4xNTc2IDAuMDgzMywwLjE4OTcgMC4wNzgxLDAuMTg5NyAiLz4NCiAgIDxwYXRoIGNsYXNzPSJmaWwxIiBkPSJNMC4xMDI0IDAuMTg5N2wwIC0wLjAzMzQgMC4wMjA0IDAuMDE5N2MwLjAwMDYsMC4wMDA2IDAuMDAxMSwwLjAwMTEgMC4wMDE3LDAuMDAxOCAwLjAwMDYsMC4wMDA2IDAuMDAxMiwwLjAwMTMgMC4wMDE4LDAuMDAyMWwwIC0wLjAyMjMgMC4wMDQ4IDAgMCAwLjAzMzQgLTAuMDIwOCAtMC4wMmMtMC4wMDA2LC0wLjAwMDUgLTAuMDAxMSwtMC4wMDExIC0wLjAwMTYsLTAuMDAxNyAtMC4wMDA1LC0wLjAwMDYgLTAuMDAxLC0wLjAwMTIgLTAuMDAxNSwtMC4wMDE5bDAgMC4wMjI0IC0wLjAwNDggMHoiLz4NCiAgIDxwb2x5Z29uIGNsYXNzPSJmaWwxIiBwb2ludHM9IjAuMTUwMywwLjE1NzYgMC4xNTU1LDAuMTU3NiAwLjE1NTUsMC4xODk3IDAuMTUwMywwLjE4OTcgIi8+DQogICA8cG9seWdvbiBjbGFzcz0iZmlsMSIgcG9pbnRzPSIwLjE3NDYsMC4xODk3IDAuMTc0NiwwLjE1NzYgMC4xNzk5LDAuMTU3NiAwLjE3OTksMC4xODUgMC4xOTE1LDAuMTg1IDAuMTkxNSwwLjE4OTcgIi8+DQogICA8cGF0aCBjbGFzcz0iZmlsMSIgZD0iTTAuMjM5NiAwLjE3MzdjMCwtMC4wMDE2IC0wLjAwMDMsLTAuMDAzMiAtMC4wMDA5LC0wLjAwNDYgLTAuMDAwNiwtMC4wMDE1IC0wLjAwMTQsLTAuMDAyOCAtMC4wMDI2LC0wLjAwMzkgLTAuMDAxMSwtMC4wMDExIC0wLjAwMjMsLTAuMDAyIC0wLjAwMzgsLTAuMDAyNiAtMC4wMDE0LC0wLjAwMDYgLTAuMDAyOSwtMC4wMDA5IC0wLjAwNDUsLTAuMDAwOSAtMC4wMDE2LDAgLTAuMDAzMSwwLjAwMDMgLTAuMDA0NSwwLjAwMDkgLTAuMDAxNCwwLjAwMDYgLTAuMDAyNywwLjAwMTUgLTAuMDAzOCwwLjAwMjYgLTAuMDAxMSwwLjAwMTEgLTAuMDAyLDAuMDAyNCAtMC4wMDI1LDAuMDAzOSAtMC4wMDA2LDAuMDAxNSAtMC4wMDA5LDAuMDAzIC0wLjAwMDksMC4wMDQ3IDAsMC4wMDE2IDAuMDAwMywwLjAwMzIgMC4wMDA5LDAuMDA0NiAwLjAwMDYsMC4wMDE1IDAuMDAxNCwwLjAwMjcgMC4wMDI1LDAuMDAzOSAwLjAwMTEsMC4wMDExIDAuMDAyNCwwLjAwMiAwLjAwMzgsMC4wMDI2IDAuMDAxNCwwLjAwMDYgMC4wMDI5LDAuMDAwOSAwLjAwNDUsMC4wMDA5IDAuMDAxNiwwIDAuMDAzMSwtMC4wMDAzIDAuMDA0NSwtMC4wMDA5IDAuMDAxNCwtMC4wMDA2IDAuMDAyNywtMC4wMDE1IDAuMDAzOCwtMC4wMDI2IDAuMDAxMSwtMC4wMDExIDAuMDAyLC0wLjAwMjQgMC4wMDI2LC0wLjAwMzkgMC4wMDA2LC0wLjAwMTUgMC4wMDA5LC0wLjAwMyAwLjAwMDksLTAuMDA0NnptMC4wMDU0IDBjMCwwLjAwMjMgLTAuMDAwNCwwLjAwNDQgLTAuMDAxMywwLjAwNjUgLTAuMDAwOSwwLjAwMiAtMC4wMDIxLDAuMDAzOCAtMC4wMDM3LDAuMDA1NCAtMC4wMDE3LDAuMDAxNiAtMC4wMDM1LDAuMDAyOCAtMC4wMDU2LDAuMDAzNyAtMC4wMDIxLDAuMDAwOCAtMC4wMDQzLDAuMDAxMyAtMC4wMDY1LDAuMDAxMyAtMC4wMDIzLDAgLTAuMDA0NSwtMC4wMDA0IC0wLjAwNjYsLTAuMDAxMyAtMC4wMDIxLC0wLjAwMDkgLTAuMDA0LC0wLjAwMjEgLTAuMDA1NiwtMC4wMDM3IC0wLjAwMTYsLTAuMDAxNiAtMC4wMDI5LC0wLjAwMzQgLTAuMDAzNywtMC4wMDU0IC0wLjAwMDksLTAuMDAyIC0wLjAwMTMsLTAuMDA0MiAtMC4wMDEzLC0wLjAwNjUgMCwtMC4wMDIzIDAuMDAwNCwtMC4wMDQ1IDAuMDAxMywtMC4wMDY1IDAuMDAwOCwtMC4wMDIgMC4wMDIxLC0wLjAwMzkgMC4wMDM3LC0wLjAwNTUgMC4wMDE2LC0wLjAwMTYgMC4wMDM1LC0wLjAwMjggMC4wMDU2LC0wLjAwMzYgMC4wMDIxLC0wLjAwMDggMC4wMDQzLC0wLjAwMTMgMC4wMDY2LC0wLjAwMTMgMC4wMDIzLDAgMC4wMDQ1LDAuMDAwNCAwLjAwNjYsMC4wMDEzIDAuMDAyMSwwLjAwMDggMC4wMDM5LDAuMDAyIDAuMDA1NiwwLjAwMzYgMC4wMDE2LDAuMDAxNiAwLjAwMjksMC4wMDM1IDAuMDAzNywwLjAwNTUgMC4wMDA5LDAuMDAyIDAuMDAxMywwLjAwNDIgMC4wMDEzLDAuMDA2NXoiLz4NCiAgIDxwYXRoIGNsYXNzPSJmaWwxIiBkPSJNMC4yNjQxIDAuMTgzM2wwLjAwNDIgLTAuMDAxOWMwLjAwMDQsMC4wMDE0IDAuMDAxMSwwLjAwMjUgMC4wMDIyLDAuMDAzMyAwLjAwMTEsMC4wMDA3IDAuMDAyNCwwLjAwMTEgMC4wMDQsMC4wMDExIDAuMDAxNiwwIDAuMDAyOCwtMC4wMDA0IDAuMDAzNywtMC4wMDEzIDAuMDAwOSwtMC4wMDA5IDAuMDAxNCwtMC4wMDIgMC4wMDE0LC0wLjAwMzUgMCwtMC4wMDE5IC0wLjAwMTYsLTAuMDAzNiAtMC4wMDQ3LC0wLjAwNTEgLTAuMDAwNCwtMC4wMDAyIC0wLjAwMDgsLTAuMDAwNCAtMC4wMDEsLTAuMDAwNSAtMC4wMDM1LC0wLjAwMTcgLTAuMDA1OSwtMC4wMDMzIC0wLjAwNzEsLTAuMDA0NyAtMC4wMDEyLC0wLjAwMTQgLTAuMDAxOCwtMC4wMDMxIC0wLjAwMTgsLTAuMDA1MSAwLC0wLjAwMjYgMC4wMDA5LC0wLjAwNDcgMC4wMDI3LC0wLjAwNjQgMC4wMDE4LC0wLjAwMTYgMC4wMDQxLC0wLjAwMjQgMC4wMDcsLTAuMDAyNCAwLjAwMjQsMCAwLjAwNDQsMC4wMDA1IDAuMDA2LDAuMDAxNCAwLjAwMTYsMC4wMDA5IDAuMDAyNywwLjAwMjIgMC4wMDMzLDAuMDAzOWwtMC4wMDQxIDAuMDAyMWMtMC4wMDA2LC0wLjAwMSAtMC4wMDEzLC0wLjAwMTcgLTAuMDAyMSwtMC4wMDIyIC0wLjAwMDgsLTAuMDAwNSAtMC4wMDE2LC0wLjAwMDcgLTAuMDAyNiwtMC4wMDA3IC0wLjAwMTQsMCAtMC4wMDI1LDAuMDAwNCAtMC4wMDMzLDAuMDAxMSAtMC4wMDA4LDAuMDAwNyAtMC4wMDEyLDAuMDAxNyAtMC4wMDEyLDAuMDAyOSAwLDAuMDAxOSAwLjAwMTgsMC4wMDM3IDAuMDA1NCwwLjAwNTQgMC4wMDAzLDAuMDAwMSAwLjAwMDUsMC4wMDAyIDAuMDAwNywwLjAwMDMgMC4wMDMyLDAuMDAxNSAwLjAwNTQsMC4wMDI5IDAuMDA2NSwwLjAwNDMgMC4wMDEyLDAuMDAxNCAwLjAwMTgsMC4wMDMxIDAuMDAxOCwwLjAwNTIgMCwwLjAwMyAtMC4wMDEsMC4wMDU1IC0wLjAwMjksMC4wMDczIC0wLjAwMTksMC4wMDE4IC0wLjAwNDUsMC4wMDI3IC0wLjAwNzgsMC4wMDI3IC0wLjAwMjcsMCAtMC4wMDUsLTAuMDAwNiAtMC4wMDY3LC0wLjAwMTkgLTAuMDAxOCwtMC4wMDEzIC0wLjAwMjksLTAuMDAzMSAtMC4wMDM0LC0wLjAwNTR6Ii8+DQogIDwvZz4NCiA8L2c+DQo8L3N2Zz4NCg==";
+const TUTTO_LOGO_SRC = "img/logo-tutto.svg?v=10";
 let tuttoLogoPngPromise = null;
 
 let data = {
   tipo: "Cotización",
   responsable: "Ricardo",
-  items: [
-    { kind: "item", desc: "", qty: 1, price: 0 }
-  ]
+  items: [{ kind: "item", desc: "", qty: 1, price: 0 }]
 };
 
-/* =========================================================
-   SUPABASE
-========================================================= */
-
-function db(){
-  return window.supabaseClient;
-}
+function db(){ return window.supabaseClient; }
 
 function validarSupabase(){
   if(!db()){
@@ -48,21 +26,15 @@ function validarSupabase(){
   return true;
 }
 
-/* =========================================================
-   UTILIDADES
-========================================================= */
-
-function pad2(n){
-  return String(n).padStart(2, "0");
-}
+function pad2(n){ return String(n).padStart(2, "0"); }
 
 function todayISO(){
   const d = new Date();
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
 }
 
 function formatoFechaNumero(fechaISO){
-  const [y, m, d] = String(fechaISO || todayISO()).split("-");
+  const [y,m,d] = String(fechaISO || todayISO()).split("-");
   return `${d}-${m}-${y}`;
 }
 
@@ -70,13 +42,8 @@ function crearNumeroDocumento(consecutivo, fechaISO){
   return `${pad2(consecutivo)}-${formatoFechaNumero(fechaISO)}`;
 }
 
-function currency(n){
-  return "$" + Number(n || 0).toFixed(2);
-}
-
-function cleanText(v){
-  return String(v || "").trim();
-}
+function currency(n){ return "$" + Number(n || 0).toFixed(2); }
+function cleanText(v){ return String(v || "").trim(); }
 
 function normalizar(valor){
   return String(valor || "")
@@ -89,25 +56,17 @@ function normalizar(valor){
 function nombreBonito(valor){
   const limpio = String(valor || "").trim().replace(/\s+/g, " ");
   if(!limpio) return "";
-
-  return limpio
-    .split(" ")
-    .map(p => p ? p.charAt(0).toUpperCase() + p.slice(1).toLowerCase() : "")
-    .join(" ");
+  return limpio.split(" ").map(p => p ? p[0].toUpperCase() + p.slice(1).toLowerCase() : "").join(" ");
 }
 
 function html(v){
   return String(v ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
-
-/* =========================================================
-   SESIÓN / OPERADOR
-========================================================= */
 
 function operadorSesionActual(){
   try{
@@ -115,11 +74,10 @@ function operadorSesionActual(){
       const op = window.getSesionOperador();
       if(op && op.nombre) return op;
     }
-  }catch(error){}
-
+  }catch(e){}
   try{
     return JSON.parse(localStorage.getItem("comanda_operador_actual") || "null");
-  }catch(error){
+  }catch(e){
     return null;
   }
 }
@@ -130,32 +88,25 @@ function esRoberto(){
 }
 
 function setResponsableDesdeSesion(){
-  try{
-    const op = operadorSesionActual();
-    const nombre = op?.nombre || "";
+  const op = operadorSesionActual();
+  const nombre = op?.nombre || "";
+  if(!nombre) return;
 
-    if(!nombre) return;
+  const select = $("responsable");
+  if(!select) return;
 
-    const select = $("responsable");
-    if(!select) return;
-
-    const existe = [...select.options].some(o => normalizar(o.value) === normalizar(nombre));
-
-    if(!existe){
-      const opt = document.createElement("option");
-      opt.value = nombre;
-      opt.textContent = "👤 " + nombre;
-      select.appendChild(opt);
-    }
-
-    const option = [...select.options].find(o => normalizar(o.value) === normalizar(nombre));
-    select.value = option?.value || nombre;
-    data.responsable = select.value;
-
-    bloquearResponsableSiNoEsRoberto();
-  }catch(error){
-    console.warn("No se pudo tomar responsable desde sesión", error);
+  const existe = [...select.options].some(o => normalizar(o.value) === normalizar(nombre));
+  if(!existe){
+    const opt = document.createElement("option");
+    opt.value = nombre;
+    opt.textContent = "👤 " + nombre;
+    select.appendChild(opt);
   }
+
+  const option = [...select.options].find(o => normalizar(o.value) === normalizar(nombre));
+  select.value = option?.value || nombre;
+  data.responsable = select.value;
+  bloquearResponsableSiNoEsRoberto();
 }
 
 function bloquearResponsableSiNoEsRoberto(){
@@ -165,82 +116,48 @@ function bloquearResponsableSiNoEsRoberto(){
   if(esRoberto()){
     select.disabled = false;
     select.classList.remove("operator-locked");
-    select.title = "Roberto puede modificar el responsable";
   }else{
     select.disabled = true;
     select.classList.add("operator-locked");
-    select.title = "Solo Roberto puede modificar el responsable";
   }
 }
-
-/* =========================================================
-   MENÚ MÓVIL
-========================================================= */
 
 function aplicarMenuDesplegable(){
   const btn = $("mobileMenuBtn");
   const menu = $("authMenu");
-
   if(btn && menu){
-    btn.addEventListener("click", () => {
-      menu.classList.toggle("open");
-    });
+    btn.addEventListener("click", () => menu.classList.toggle("open"));
   }
 }
 
-/* =========================================================
-   TOAST
-========================================================= */
-
-function showToast(msg, type = "ok"){
+function showToast(msg, type="ok"){
   const t = $("toast");
-
-  if(!t){
-    alert(msg);
-    return;
-  }
-
+  if(!t){ alert(msg); return; }
   t.textContent = msg;
   t.className = "toast " + type + " show";
-
-  setTimeout(() => {
-    t.className = "toast";
-  }, 3600);
+  setTimeout(() => t.className = "toast", 3600);
 }
 
-/* =========================================================
-   NUMERACIÓN AUTOMÁTICA
-========================================================= */
-
 async function obtenerSiguienteNumeroDocumento(fechaISO){
-  if(!validarSupabase()){
-    return crearNumeroDocumento(1, fechaISO);
-  }
+  if(!validarSupabase()) return crearNumeroDocumento(1, fechaISO);
 
   const sufijo = formatoFechaNumero(fechaISO);
-
   const { data: rows, error } = await db()
     .from("cotizaciones")
     .select("numero")
     .eq("fecha", fechaISO);
 
   if(error){
-    console.warn("No se pudo calcular consecutivo del día:", error);
+    console.warn(error);
     return crearNumeroDocumento(1, fechaISO);
   }
 
   let max = 0;
-
   (rows || []).forEach(r => {
     const numero = String(r.numero || "");
-
     if(!numero.endsWith(sufijo)) return;
-
     const primero = Number(numero.split("-")[0]);
-
-    if(Number.isFinite(primero)){
-      max = Math.max(max, primero);
-    }
+    if(Number.isFinite(primero)) max = Math.max(max, primero);
   });
 
   return crearNumeroDocumento(max + 1, fechaISO);
@@ -252,21 +169,13 @@ async function numeroExiste(numero){
     .select("id")
     .eq("numero", numero)
     .limit(1);
-
   if(error) throw error;
-
   return (rows || []).length > 0;
 }
 
 async function asegurarNumeroDisponible(){
   const form = getForm();
-
-  if(!form.numero){
-    $("numero").value = await obtenerSiguienteNumeroDocumento(form.fecha || todayISO());
-    return;
-  }
-
-  if(await numeroExiste(form.numero)){
+  if(!form.numero || await numeroExiste(form.numero)){
     $("numero").value = await obtenerSiguienteNumeroDocumento(form.fecha || todayISO());
   }
 }
@@ -274,50 +183,31 @@ async function asegurarNumeroDisponible(){
 async function initDates(){
   const now = new Date();
   const fecha = todayISO();
-
   $("fecha").value = fecha;
 
   const due = new Date(now);
   due.setDate(due.getDate() + 5);
+  $("vence").value = `${due.getFullYear()}-${pad2(due.getMonth()+1)}-${pad2(due.getDate())}`;
 
-  $("vence").value = `${due.getFullYear()}-${pad2(due.getMonth() + 1)}-${pad2(due.getDate())}`;
   $("numero").value = await obtenerSiguienteNumeroDocumento(fecha);
 }
 
 async function refrescarNumeroPorFecha(){
-  const fecha = $("fecha").value || todayISO();
-  $("numero").value = await obtenerSiguienteNumeroDocumento(fecha);
+  $("numero").value = await obtenerSiguienteNumeroDocumento($("fecha").value || todayISO());
 }
-
-/* =========================================================
-   ÍTEMS / TOTALES
-========================================================= */
 
 function itemTotal(item){
   return Number(item.qty || 0) * Number(item.price || 0);
 }
 
-function calcularTotales(items = data.items, ivaAplicado = $("ivaCheck")?.checked){
-  const subtotal = (items || []).reduce((acc, it) => {
-    return acc + (it.kind === "item" ? itemTotal(it) : 0);
-  }, 0);
-
+function calcularTotales(items=data.items, ivaAplicado=$("ivaCheck")?.checked){
+  const subtotal = (items || []).reduce((acc,it) => acc + (it.kind === "item" ? itemTotal(it) : 0), 0);
   const iva = ivaAplicado ? subtotal * 0.16 : 0;
-
-  return {
-    subtotal,
-    iva,
-    total: subtotal + iva
-  };
-}
-
-function totals(){
-  return calcularTotales(data.items, $("ivaCheck").checked);
+  return { subtotal, iva, total: subtotal + iva };
 }
 
 function updateTotals(){
-  const t = totals();
-
+  const t = calcularTotales();
   $("subtotal").textContent = currency(t.subtotal);
   $("iva").textContent = currency(t.iva);
   $("total").textContent = currency(t.total);
@@ -325,55 +215,33 @@ function updateTotals(){
 
 function updateItemVisualTotal(index){
   const item = data.items[index];
-
   if(!item) return;
-
   const total = itemTotal(item);
 
   document.querySelectorAll(`[data-total-index="${index}"]`).forEach(el => {
-    if(el.tagName === "INPUT"){
-      el.value = total.toFixed(2);
-    }else{
-      el.textContent = currency(total);
-    }
+    if(el.tagName === "INPUT") el.value = total.toFixed(2);
+    else el.textContent = currency(total);
   });
 }
 
 function addItem(){
-  data.items.push({
-    kind: "item",
-    desc: "",
-    qty: 1,
-    price: 0
-  });
-
+  data.items.push({ kind:"item", desc:"", qty:1, price:0 });
   render();
 }
 
 function addSeparator(){
-  data.items.push({
-    kind: "separator",
-    desc: ""
-  });
-
+  data.items.push({ kind:"separator", desc:"" });
   render();
 }
 
 function removeItem(index){
   if(data.items.length <= 1){
-    data.items = [
-      { kind: "item", desc: "", qty: 1, price: 0 }
-    ];
+    data.items = [{ kind:"item", desc:"", qty:1, price:0 }];
   }else{
     data.items.splice(index, 1);
   }
-
   render();
 }
-
-/* =========================================================
-   FORMULARIO
-========================================================= */
 
 function getFooter(){
   return {
@@ -388,7 +256,7 @@ function getForm(){
     tipo: $("tipoDocumento").value,
     responsable: $("responsable").value,
     fecha: $("fecha").value,
-    numero: cleanText($("numero").value || ""),
+    numero: cleanText($("numero").value),
     vence: $("vence").value,
     cliente: nombreBonito($("cliente").value),
     rif: cleanText($("rif").value),
@@ -404,19 +272,9 @@ function getForm(){
 function crearSnapshotActual(){
   const form = getForm();
   const items = JSON.parse(JSON.stringify(data.items || []));
-  const t = calcularTotales(items, form.iva);
-
-  return {
-    form,
-    items,
-    totals: t,
-    footer: form.footer
-  };
+  const totals = calcularTotales(items, form.iva);
+  return { form, items, totals, footer: form.footer };
 }
-
-/* =========================================================
-   RENDER PRINCIPAL
-========================================================= */
 
 function render(){
   data.tipo = $("tipoDocumento").value;
@@ -427,13 +285,12 @@ function render(){
 
   const tbody = $("tbody");
   const mobile = $("mobileItems");
-
   tbody.innerHTML = "";
   mobile.innerHTML = "";
 
   let visibleNumber = 1;
 
-  data.items.forEach((item, index) => {
+  data.items.forEach((item,index) => {
     if(item.kind === "separator"){
       tbody.insertAdjacentHTML("beforeend", `
         <tr>
@@ -441,18 +298,13 @@ function render(){
           <td colspan="4">
             <input value="${html(item.desc)}" placeholder="Título de sección" data-index="${index}" data-field="desc" style="text-align:center;font-weight:900;color:var(--azulOsc)">
           </td>
-          <td class="center">
-            <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
-          </td>
+          <td class="center"><button class="btn btn-red" data-remove="${index}" type="button">✕</button></td>
         </tr>
       `);
 
       mobile.insertAdjacentHTML("beforeend", `
         <div class="item-card">
-          <div class="item-head">
-            <span>Separador</span>
-            <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
-          </div>
+          <div class="item-head"><span>Separador</span><button class="btn btn-red" data-remove="${index}" type="button">✕</button></div>
           <div class="item-body">
             <div class="field">
               <label>Título de sección</label>
@@ -461,7 +313,6 @@ function render(){
           </div>
         </div>
       `);
-
       return;
     }
 
@@ -471,49 +322,32 @@ function render(){
     tbody.insertAdjacentHTML("beforeend", `
       <tr>
         <td class="num">${number}</td>
-        <td class="desc">
-          <input value="${html(item.desc)}" placeholder="Descripción" data-index="${index}" data-field="desc">
-        </td>
-        <td class="center">
-          <input type="number" min="0" step="0.01" value="${item.qty}" data-index="${index}" data-field="qty">
-        </td>
-        <td class="center">
-          <input type="number" min="0" step="0.01" value="${item.price}" data-index="${index}" data-field="price">
-        </td>
-        <td class="center total-cell">
-          <input readonly data-total-index="${index}" value="${total.toFixed(2)}">
-        </td>
-        <td class="center">
-          <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
-        </td>
+        <td class="desc"><input value="${html(item.desc)}" placeholder="Descripción" data-index="${index}" data-field="desc"></td>
+        <td class="center"><input type="number" min="0" step="0.01" value="${item.qty}" data-index="${index}" data-field="qty"></td>
+        <td class="center"><input type="number" min="0" step="0.01" value="${item.price}" data-index="${index}" data-field="price"></td>
+        <td class="center total-cell"><input readonly data-total-index="${index}" value="${total.toFixed(2)}"></td>
+        <td class="center"><button class="btn btn-red" data-remove="${index}" type="button">✕</button></td>
       </tr>
     `);
 
     mobile.insertAdjacentHTML("beforeend", `
       <div class="item-card">
-        <div class="item-head">
-          <span>Ítem ${number}</span>
-          <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
-        </div>
-
+        <div class="item-head"><span>Ítem ${number}</span><button class="btn btn-red" data-remove="${index}" type="button">✕</button></div>
         <div class="item-body">
           <div class="field">
             <label>Descripción</label>
             <input value="${html(item.desc)}" placeholder="Descripción del producto o servicio" data-index="${index}" data-field="desc">
           </div>
-
           <div class="item-grid">
             <div class="field">
               <label>Cantidad</label>
               <input type="number" min="0" step="0.01" value="${item.qty}" data-index="${index}" data-field="qty">
             </div>
-
             <div class="field">
               <label>P. Unit ($)</label>
               <input type="number" min="0" step="0.01" value="${item.price}" data-index="${index}" data-field="price">
             </div>
           </div>
-
           <div class="item-total">
             <span>Total ítem</span>
             <b data-total-index="${index}">${currency(total)}</b>
@@ -526,20 +360,16 @@ function render(){
   updateTotals();
 }
 
-/* =========================================================
-   CLIENTES
-========================================================= */
-
 async function cargarClientesCotizador(){
   if(!validarSupabase()) return;
 
   const { data: clientes, error } = await db()
     .from("clientes")
     .select("id,nombre,rif_cedula,telefono,correo,direccion,tipo_cliente,notas,activo")
-    .order("nombre", { ascending: true });
+    .order("nombre", { ascending:true });
 
   if(error){
-    console.error("Error cargando clientes:", error);
+    console.error(error);
     showToast("Error cargando clientes", "err");
     return;
   }
@@ -550,7 +380,6 @@ async function cargarClientesCotizador(){
 
 function renderClientesDatalist(){
   const lista = $("clientesList");
-
   if(!lista) return;
 
   lista.innerHTML = clientesDB
@@ -558,11 +387,10 @@ function renderClientesDatalist(){
     .map(c => `<option value="${html(c.nombre || "")}"></option>`)
     .join("");
 }
+
 function buscarClientePorNombre(nombre){
   const n = normalizar(nombre);
-
   if(!n) return null;
-
   return clientesDB.find(c => normalizar(c.nombre) === n) || null;
 }
 
@@ -575,10 +403,7 @@ function llenarDatosCliente(cliente){
   $("direccion").value = cliente.direccion || "";
 
   const mini = $("clienteMini");
-
-  if(mini){
-    mini.innerHTML = `Cliente encontrado: <b>${html(cliente.nombre)}</b>`;
-  }
+  if(mini) mini.innerHTML = `Cliente encontrado: <b>${html(cliente.nombre)}</b>`;
 }
 
 function revisarClienteActual(){
@@ -586,26 +411,21 @@ function revisarClienteActual(){
   const cliente = buscarClientePorNombre(nombre);
   const mini = $("clienteMini");
 
-  if(cliente){
-    llenarDatosCliente(cliente);
-  }else if(mini){
+  if(cliente) llenarDatosCliente(cliente);
+  else if(mini){
     mini.innerHTML = nombre.trim()
-      ? `Cliente nuevo: se guardará automáticamente en clientes.`
-      : `Escribe para buscar o crear cliente nuevo.`;
+      ? "Cliente nuevo: se guardará automáticamente en clientes."
+      : "Escribe para buscar o crear cliente nuevo.";
   }
 }
 
 async function guardarOActualizarClienteDesdeCotizacion(){
-  if(!validarSupabase()){
-    throw new Error("No hay conexión Supabase.");
-  }
+  if(!validarSupabase()) throw new Error("No hay conexión Supabase.");
 
   const form = getForm();
   const nombre = nombreBonito(form.cliente);
 
-  if(!nombre){
-    throw new Error("Coloca el nombre del cliente.");
-  }
+  if(!nombre) throw new Error("Coloca el nombre del cliente.");
 
   const existente = buscarClientePorNombre(nombre);
 
@@ -630,10 +450,7 @@ async function guardarOActualizarClienteDesdeCotizacion(){
     if(error) throw error;
 
     const idx = clientesDB.findIndex(c => Number(c.id) === Number(existente.id));
-
-    if(idx >= 0){
-      clientesDB[idx] = actualizado;
-    }
+    if(idx >= 0) clientesDB[idx] = actualizado;
 
     return actualizado;
   }
@@ -652,17 +469,11 @@ async function guardarOActualizarClienteDesdeCotizacion(){
   return nuevo;
 }
 
-/* =========================================================
-   LOGO PARA PDF
-========================================================= */
-
 function loadImageDataUrl(src){
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve,reject) => {
     const img = new Image();
-
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error("No se pudo cargar el logo"));
-
     img.src = src;
   });
 }
@@ -675,7 +486,6 @@ async function getTuttoLogoPngDataUrl(){
 
     const canvas = document.createElement("canvas");
     const scale = 6;
-
     const realW = img.naturalWidth || img.width || 600;
     const realH = img.naturalHeight || img.height || 180;
 
@@ -683,80 +493,61 @@ async function getTuttoLogoPngDataUrl(){
     canvas.height = Math.max(1, Math.round(realH * scale));
 
     const ctx = canvas.getContext("2d");
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);
 
     return canvas.toDataURL("image/png");
   })().catch(error => {
-    console.warn("No se pudo rasterizar el logo de Tutto:", error);
+    console.warn("No se pudo rasterizar el logo:", error);
     return null;
   });
 
   return tuttoLogoPngPromise;
 }
 
-/* =========================================================
-   CAMPOS PDF
-========================================================= */
+function drawPdfField(doc,x,y,w,h,label,value,opts={}){
+  doc.setDrawColor(...(opts.border || [217,222,234]));
+  doc.setFillColor(...(opts.fill || [255,255,255]));
+  doc.roundedRect(x,y,w,h,opts.radius || 3,opts.radius || 3,"FD");
 
-function drawPdfField(doc, x, y, w, h, label, value, opts = {}){
-  const fill = opts.fill || [255, 255, 255];
-  const border = opts.border || [217, 222, 234];
-  const radius = opts.radius || 3;
-
-  doc.setDrawColor(...border);
-  doc.setFillColor(...fill);
-  doc.roundedRect(x, y, w, h, radius, radius, "FD");
-
-  doc.setFont("helvetica", "bold");
+  doc.setFont("helvetica","bold");
   doc.setFontSize(opts.labelSize || 5.2);
-  doc.setTextColor(107, 114, 128);
-  doc.text(String(label || "").toUpperCase(), x + 3, y + 3.5);
+  doc.setTextColor(107,114,128);
+  doc.text(String(label || "").toUpperCase(), x+3, y+3.5);
 
   doc.setFont("helvetica", opts.valueBold ? "bold" : "normal");
   doc.setFontSize(opts.valueSize || 6.9);
-  doc.setTextColor(17, 24, 39);
+  doc.setTextColor(17,24,39);
 
-  const texto = String(value || "—");
-  const lines = doc.splitTextToSize(texto, w - 6);
-  const maxLines = opts.maxLines || 1;
-
-  doc.text(lines.slice(0, maxLines), x + 3, y + 8.0);
+  const lines = doc.splitTextToSize(String(value || "—"), w - 6);
+  doc.text(lines.slice(0, opts.maxLines || 1), x+3, y+8);
 }
 
-function drawPdfHeaderFooter(doc, footer, form){
+function drawPdfHeaderFooter(doc,footer,form){
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
 
-  doc.setFillColor(247, 248, 252);
-  doc.rect(0, H - 20, W, 20, "F");
+  doc.setFillColor(247,248,252);
+  doc.rect(0,H-20,W,20,"F");
 
-  doc.setDrawColor(225, 228, 236);
-  doc.line(14, H - 20, W - 14, H - 20);
+  doc.setDrawColor(225,228,236);
+  doc.line(14,H-20,W-14,H-20);
 
-  doc.setFont("helvetica", "normal");
+  doc.setFont("helvetica","normal");
   doc.setFontSize(7.5);
-  doc.setTextColor(95, 99, 104);
+  doc.setTextColor(95,99,104);
 
-  const dirLines = doc.splitTextToSize(footer?.direccion || "", W - 28);
-
-  doc.text(dirLines.slice(0, 2), W / 2, H - 13, { align: "center" });
-  doc.text(footer?.contacto || "", W / 2, H - 7.7, { align: "center" });
+  const dirLines = doc.splitTextToSize(footer?.direccion || "", W-28);
+  doc.text(dirLines.slice(0,2), W/2, H-13, { align:"center" });
+  doc.text(footer?.contacto || "", W/2, H-7.7, { align:"center" });
 
   doc.setFontSize(7.2);
-  doc.setTextColor(120, 124, 130);
-  doc.text(`${footer?.preparado_texto || "Documento preparado por:"} ${form?.responsable || ""}`, W / 2, H - 3.1, { align: "center" });
+  doc.setTextColor(120,124,130);
+  doc.text(`${footer?.preparado_texto || "Documento preparado por:"} ${form?.responsable || ""}`, W/2, H-3.1, { align:"center" });
 }
 
-/* =========================================================
-   PDF PRINCIPAL
-========================================================= */
-
-async function crearDocumentoPDF(snapshot = crearSnapshotActual()){
-  if(!window.jspdf || !window.jspdf.jsPDF){
-    throw new Error("No cargó la librería PDF.");
-  }
+async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
+  if(!window.jspdf || !window.jspdf.jsPDF) throw new Error("No cargó la librería PDF.");
 
   const form = snapshot.form;
   const items = snapshot.items || [];
@@ -764,227 +555,95 @@ async function crearDocumentoPDF(snapshot = crearSnapshotActual()){
   const footer = snapshot.footer || form.footer || getFooter();
 
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: "letter"
-  });
+  const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"letter" });
 
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
+  const blue = [21,59,255];
+  const blueDark = [11,31,122];
+  const line = [217,222,234];
 
-  const blue = [21, 59, 255];
-  const blueDark = [11, 31, 122];
-  const line = [217, 222, 234];
-
-  /* HEADER */
   doc.setFillColor(...blue);
-  doc.rect(0, 0, W, 30, "F");
+  doc.rect(0,0,W,30,"F");
 
   const logoDataUrl = await getTuttoLogoPngDataUrl();
 
   if(logoDataUrl){
     try{
-      // Logo directo sobre azul para que se vean las partes blancas del SVG.
       doc.addImage(logoDataUrl, "PNG", 14, 7.2, 54, 16, undefined, "FAST");
     }catch(error){
-      console.warn("No se pudo insertar el logo en el PDF:", error);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.setTextColor(255, 255, 255);
-      doc.text("TUTTO VINILOS", 14, 16);
+      console.warn(error);
     }
-  }else{
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.setTextColor(255, 255, 255);
-    doc.text("TUTTO VINILOS", 14, 16);
   }
 
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
+  doc.setTextColor(255,255,255);
+  doc.setFont("helvetica","bold");
   doc.setFontSize(8.5);
-  doc.text("Tel: +58 414-4961122", W - 14, 10.8, { align: "right" });
-  doc.text("Email: tuttovinilos@gmail.com", W - 14, 15.4, { align: "right" });
-  doc.text("RIF: J-402182503", W - 14, 20, { align: "right" });
+  doc.text("Tel: +58 414-4961122", W-14, 10.8, { align:"right" });
+  doc.text("Email: tuttovinilos@gmail.com", W-14, 15.4, { align:"right" });
+  doc.text("RIF: J-40218250-3", W-14, 20, { align:"right" });
 
-  /* TÍTULO */
   doc.setFillColor(...blueDark);
-  doc.roundedRect(14, 35, W - 28, 11, 4, 4, "F");
+  doc.roundedRect(14,35,W-28,11,4,4,"F");
 
-  doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
-  doc.setTextColor(255, 255, 255);
-  doc.text((form.tipo || "Cotización").toUpperCase(), W / 2, 42.2, { align: "center" });
+  doc.setTextColor(255,255,255);
+  doc.text((form.tipo || "Cotización").toUpperCase(), W/2, 42.2, { align:"center" });
 
-  /* FECHA / DOCUMENTO / VENCE */
-  const topY = 50;
-  const fieldH = 10;
+  drawPdfField(doc,14,50,54,10,"Fecha",form.fecha || "",{ valueBold:true });
+  drawPdfField(doc,71,50,62,10,"N° Documento",form.numero || "",{ valueBold:true });
+  drawPdfField(doc,136,50,62,10,"Válido hasta",form.vence || "",{ valueBold:true });
 
-  drawPdfField(doc, 14, topY, 54, fieldH, "Fecha", form.fecha || "", {
-    labelSize: 5.2,
-    valueSize: 7.2,
-    valueBold: true,
-    radius: 3,
-    maxLines: 1
-  });
-
-  drawPdfField(doc, 71, topY, 62, fieldH, "N° Documento", form.numero || "", {
-    labelSize: 5.2,
-    valueSize: 7.2,
-    valueBold: true,
-    radius: 3,
-    maxLines: 1
-  });
-
-  drawPdfField(doc, 136, topY, 62, fieldH, "Válido hasta", form.vence || "", {
-    labelSize: 5.2,
-    valueSize: 7.2,
-    valueBold: true,
-    radius: 3,
-    maxLines: 1
-  });
-
-  /* DATOS CLIENTE */
-  doc.setFont("helvetica", "bold");
+  doc.setFont("helvetica","bold");
   doc.setFontSize(7.8);
   doc.setTextColor(...blue);
-  doc.text("DATOS DEL CLIENTE", 14, 66);
-
+  doc.text("DATOS DEL CLIENTE",14,66);
   doc.setDrawColor(...line);
-  doc.line(14, 67.5, W - 14, 67.5);
+  doc.line(14,67.5,W-14,67.5);
 
-  drawPdfField(doc, 14, 70, 67, 10, "Cliente", form.cliente || "", {
-    labelSize: 5.0,
-    valueSize: 6.7,
-    valueBold: true,
-    maxLines: 1,
-    radius: 3
-  });
+  drawPdfField(doc,14,70,67,10,"Cliente",form.cliente || "",{ valueBold:true,valueSize:6.7 });
+  drawPdfField(doc,84,70,55,10,"RIF / Cédula",form.rif || "",{ valueSize:6.7 });
+  drawPdfField(doc,142,70,56,10,"Teléfono",form.telefono || "",{ valueSize:6.7 });
+  drawPdfField(doc,14,83,67,10,"Email",form.email || "",{ valueSize:6.5 });
+  drawPdfField(doc,84,83,114,10,"Dirección",form.direccion || "",{ valueSize:6.5 });
 
-  drawPdfField(doc, 84, 70, 55, 10, "RIF / Cédula", form.rif || "", {
-    labelSize: 5.0,
-    valueSize: 6.7,
-    maxLines: 1,
-    radius: 3
-  });
-
-  drawPdfField(doc, 142, 70, 56, 10, "Teléfono", form.telefono || "", {
-    labelSize: 5.0,
-    valueSize: 6.7,
-    maxLines: 1,
-    radius: 3
-  });
-
-  drawPdfField(doc, 14, 83, 67, 10, "Email", form.email || "", {
-    labelSize: 5.0,
-    valueSize: 6.5,
-    maxLines: 1,
-    radius: 3
-  });
-
-  drawPdfField(doc, 84, 83, 114, 10, "Dirección", form.direccion || "", {
-    labelSize: 5.0,
-    valueSize: 6.5,
-    maxLines: 1,
-    radius: 3
-  });
-
-  /* TABLA */
   let count = 1;
-
   const body = items.map(item => {
     if(item.kind === "separator"){
       return [{
         content: item.desc || "SECCIÓN",
         colSpan: 5,
-        styles: {
-          halign: "center",
-          fontStyle: "bold",
-          fillColor: [232, 236, 255],
-          textColor: [11, 31, 122]
-        }
+        styles:{ halign:"center", fontStyle:"bold", fillColor:[232,236,255], textColor:[11,31,122] }
       }];
     }
-
     const total = itemTotal(item);
-
-    return [
-      String(count++),
-      item.desc || "",
-      String(item.qty || 0),
-      "$" + Number(item.price || 0).toFixed(2),
-      "$" + total.toFixed(2)
-    ];
+    return [String(count++), item.desc || "", String(item.qty || 0), "$"+Number(item.price || 0).toFixed(2), "$"+total.toFixed(2)];
   });
 
   doc.autoTable({
-    startY: 101,
-    head: [["#", "DESCRIPCIÓN DEL PRODUCTO / SERVICIO", "CANT.", "P. UNIT ($)", "TOTAL ($)"]],
+    startY:101,
+    head:[["#","DESCRIPCIÓN DEL PRODUCTO / SERVICIO","CANT.","P. UNIT ($)","TOTAL ($)"]],
     body,
-    theme: "grid",
-    margin: {
-      left: 14,
-      right: 14,
-      bottom: 26
+    theme:"grid",
+    margin:{ left:14, right:14, bottom:26 },
+    styles:{ font:"helvetica", fontSize:7.7, cellPadding:2.3, textColor:[17,17,17], lineColor:[217,222,234], lineWidth:.2, overflow:"linebreak", valign:"middle" },
+    headStyles:{ fillColor:[243,245,252], textColor:[17,17,17], fontStyle:"bold", halign:"center", fontSize:7.2 },
+    columnStyles:{
+      0:{ halign:"center", cellWidth:12, fontStyle:"bold", textColor:[220,38,38] },
+      1:{ cellWidth:"auto" },
+      2:{ halign:"center", cellWidth:19 },
+      3:{ halign:"center", cellWidth:28 },
+      4:{ halign:"center", cellWidth:30, fontStyle:"bold", textColor:[21,59,255] }
     },
-    styles: {
-      font: "helvetica",
-      fontSize: 7.7,
-      cellPadding: 2.3,
-      textColor: [17, 17, 17],
-      lineColor: [217, 222, 234],
-      lineWidth: 0.2,
-      overflow: "linebreak",
-      valign: "middle"
-    },
-    headStyles: {
-      fillColor: [243, 245, 252],
-      textColor: [17, 17, 17],
-      fontStyle: "bold",
-      halign: "center",
-      fontSize: 7.2
-    },
-    columnStyles: {
-      0: {
-        halign: "center",
-        cellWidth: 12,
-        fontStyle: "bold",
-        textColor: [220, 38, 38]
-      },
-      1: {
-        cellWidth: "auto"
-      },
-      2: {
-        halign: "center",
-        cellWidth: 19
-      },
-      3: {
-        halign: "center",
-        cellWidth: 28
-      },
-      4: {
-        halign: "center",
-        cellWidth: 30,
-        fontStyle: "bold",
-        textColor: [21, 59, 255]
-      }
-    },
-    alternateRowStyles: {
-      fillColor: [252, 252, 254]
-    },
-    didDrawPage: () => {
-      drawPdfHeaderFooter(doc, footer, form);
-    }
+    alternateRowStyles:{ fillColor:[252,252,254] },
+    didDrawPage:() => drawPdfHeaderFooter(doc,footer,form)
   });
 
-  /* NOTAS Y TOTAL */
   let fy = doc.lastAutoTable.finalY + 6;
-
   const notesH = form.notas ? 33 : 18;
   const rightBoxH = Number(t.iva || 0) > 0 ? 33 : 25;
 
-  if(fy > H - Math.max(notesH, rightBoxH) - 26){
+  if(fy > H - Math.max(notesH,rightBoxH) - 26){
     doc.addPage();
     fy = 20;
   }
@@ -995,126 +654,89 @@ async function crearDocumentoPDF(snapshot = crearSnapshotActual()){
 
   if(form.notas){
     doc.setDrawColor(...line);
-    doc.setFillColor(252, 252, 254);
-    doc.roundedRect(14, fy, leftW, 33, 3, 3, "FD");
+    doc.setFillColor(252,252,254);
+    doc.roundedRect(14,fy,leftW,33,3,3,"FD");
 
-    doc.setFont("helvetica", "bold");
+    doc.setFont("helvetica","bold");
     doc.setFontSize(8);
     doc.setTextColor(...blueDark);
-    doc.text("NOTAS / CONDICIONES", 17, fy + 5.5);
+    doc.text("NOTAS / CONDICIONES",17,fy+5.5);
 
-    doc.setFont("helvetica", "normal");
+    doc.setFont("helvetica","normal");
     doc.setFontSize(8.4);
-    doc.setTextColor(70, 74, 82);
-
-    const lines = doc.splitTextToSize(form.notas, leftW - 6);
-    doc.text(lines.slice(0, 7), 17, fy + 11);
+    doc.setTextColor(70,74,82);
+    doc.text(doc.splitTextToSize(form.notas,leftW-6).slice(0,7),17,fy+11);
   }
 
   doc.setDrawColor(...line);
-  doc.setFillColor(255, 255, 255);
-  doc.roundedRect(rightX, fy, rightW, rightBoxH, 3, 3, "FD");
+  doc.setFillColor(255,255,255);
+  doc.roundedRect(rightX,fy,rightW,rightBoxH,3,3,"FD");
 
   let rowY = fy;
 
-  const drawSummaryRow = (label, value, fill, txtColor, bold = false, size = 9.2) => {
+  const drawSummaryRow = (label,value,fill,txtColor,bold=false,size=9.2) => {
     doc.setFillColor(...fill);
-    doc.rect(rightX, rowY, rightW, 8, "F");
-
+    doc.rect(rightX,rowY,rightW,8,"F");
     doc.setDrawColor(...line);
-    doc.rect(rightX, rowY, rightW, 8);
-
-    doc.setFont("helvetica", bold ? "bold" : "normal");
+    doc.rect(rightX,rowY,rightW,8);
+    doc.setFont("helvetica",bold ? "bold" : "normal");
     doc.setFontSize(size);
     doc.setTextColor(...txtColor);
-
-    doc.text(label, rightX + 3, rowY + 5.4);
-    doc.text(value, rightX + rightW - 3, rowY + 5.4, { align: "right" });
-
+    doc.text(label,rightX+3,rowY+5.4);
+    doc.text(value,rightX+rightW-3,rowY+5.4,{ align:"right" });
     rowY += 8;
   };
 
-  drawSummaryRow("Sub Total", currency(t.subtotal), [255, 255, 255], [17, 24, 39], true);
+  drawSummaryRow("Sub Total",currency(t.subtotal),[255,255,255],[17,24,39],true);
 
   if(Number(t.iva || 0) > 0){
-    drawSummaryRow("IVA 16%", currency(t.iva), [255, 255, 255], [17, 24, 39], true);
+    drawSummaryRow("IVA 16%",currency(t.iva),[255,255,255],[17,24,39],true);
   }
 
   doc.setFillColor(...blue);
-  doc.roundedRect(rightX, rowY, rightW, 10, 0, 0, "F");
+  doc.roundedRect(rightX,rowY,rightW,10,0,0,"F");
 
-  doc.setFont("helvetica", "bold");
+  doc.setFont("helvetica","bold");
   doc.setFontSize(12);
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(255,255,255);
+  doc.text("TOTAL",rightX+3,rowY+6.7);
+  doc.text(currency(t.total),rightX+rightW-3,rowY+6.7,{ align:"right" });
 
-  doc.text("TOTAL", rightX + 3, rowY + 6.7);
-  doc.text(currency(t.total), rightX + rightW - 3, rowY + 6.7, { align: "right" });
-
-  drawPdfHeaderFooter(doc, footer, form);
-
+  drawPdfHeaderFooter(doc,footer,form);
   return doc;
 }
 
 function nombreArchivoPDF(snapshot){
   const form = snapshot.form || getForm();
-
-  const clientName = (form.cliente || "cliente")
-    .replace(/[^\wáéíóúÁÉÍÓÚñÑ-]+/g, "_")
-    .slice(0, 60);
-
-  const tipo = (form.tipo || "Cotizacion").replace(/\s+/g, "_");
-
+  const clientName = (form.cliente || "cliente").replace(/[^\wáéíóúÁÉÍÓÚñÑ-]+/g,"_").slice(0,60);
+  const tipo = (form.tipo || "Cotizacion").replace(/\s+/g,"_");
   return `${tipo}_Tuttovinilos_${form.numero || "sin_numero"}_${clientName}.pdf`;
 }
 
-/* =========================================================
-   PDF BLOB / BASE64
-========================================================= */
-
 function blobToBase64(blob){
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve,reject) => {
     const reader = new FileReader();
-
-    reader.onloadend = () => {
-      const result = String(reader.result || "");
-      resolve(result.split(",")[1] || "");
-    };
-
+    reader.onloadend = () => resolve(String(reader.result || "").split(",")[1] || "");
     reader.onerror = reject;
     reader.readAsDataURL(blob);
   });
 }
 
-function base64ToBlob(base64, mime = "application/pdf"){
-  const clean = String(base64 || "").includes(",")
-    ? String(base64).split(",").pop()
-    : String(base64 || "");
-
+function base64ToBlob(base64,mime="application/pdf"){
+  const clean = String(base64 || "").includes(",") ? String(base64).split(",").pop() : String(base64 || "");
   const binary = atob(clean);
-  const len = binary.length;
-  const bytes = new Uint8Array(len);
-
-  for(let i = 0; i < len; i++){
-    bytes[i] = binary.charCodeAt(i);
-  }
-
-  return new Blob([bytes], { type: mime });
+  const bytes = new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes],{ type:mime });
 }
 
 function abrirBlobPdf(blob){
   const url = URL.createObjectURL(blob);
-  window.open(url, "_blank");
-
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 60000);
+  window.open(url,"_blank");
+  setTimeout(() => URL.revokeObjectURL(url),60000);
 }
 
-/* =========================================================
-   GUARDAR COTIZACIÓN
-========================================================= */
-
-async function guardarRegistroCotizacionTexto(clienteGuardado, pdfInfo = null){
+async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null){
   const snapshot = crearSnapshotActual();
   const form = snapshot.form;
   const t = snapshot.totals;
@@ -1131,19 +753,13 @@ async function guardarRegistroCotizacionTexto(clienteGuardado, pdfInfo = null){
     direccion: form.direccion,
     responsable: form.responsable,
     vence: form.vence || null,
-    items: {
-      version: 3,
-      modo: "texto_json_mas_pdf_base64",
-      rows: snapshot.items,
-      footer: snapshot.footer,
-      iva_aplicado: form.iva
-    },
+    items:{ version:3, modo:"texto_json_mas_pdf_base64", rows:snapshot.items, footer:snapshot.footer, iva_aplicado:form.iva },
     notas: form.notas,
     subtotal: Number(t.subtotal.toFixed(2)),
     iva: Number(t.iva.toFixed(2)),
     total: Number(t.total.toFixed(2)),
-    pdf_path: "",
-    pdf_url: ""
+    pdf_path:"",
+    pdf_url:""
   };
 
   const registroConPdf = {
@@ -1153,35 +769,18 @@ async function guardarRegistroCotizacionTexto(clienteGuardado, pdfInfo = null){
     pdf_nombre: pdfInfo?.nombre || ""
   };
 
-  let res = await db()
-    .from("cotizaciones")
-    .insert([registroConPdf])
-    .select()
-    .single();
+  let res = await db().from("cotizaciones").insert([registroConPdf]).select().single();
 
   if(res.error){
     const msg = String(res.error.message || "");
-    const faltaColumnasPdf =
-      msg.includes("pdf_base64") ||
-      msg.includes("pdf_mime") ||
-      msg.includes("pdf_nombre") ||
-      msg.includes("schema cache");
+    const faltaColumnasPdf = msg.includes("pdf_base64") || msg.includes("pdf_mime") || msg.includes("pdf_nombre") || msg.includes("schema cache");
 
-    if(!faltaColumnasPdf){
-      throw res.error;
-    }
+    if(!faltaColumnasPdf) throw res.error;
 
-    console.warn("Faltan columnas PDF en cotizaciones. Guardando solo texto:", res.error);
-
-    res = await db()
-      .from("cotizaciones")
-      .insert([registroBase])
-      .select()
-      .single();
-
+    console.warn("Faltan columnas PDF. Guardando solo texto:", res.error);
+    res = await db().from("cotizaciones").insert([registroBase]).select().single();
     if(res.error) throw res.error;
-
-    showToast("Guardó texto. Para guardar PDF aplica el SQL de columnas PDF.", "warn");
+    showToast("Guardó texto. Falta SQL de columnas PDF.", "warn");
   }
 
   return res.data;
@@ -1209,11 +808,9 @@ async function createPDF(){
     btn.disabled = true;
 
     await asegurarNumeroDisponible();
-
     form = getForm();
 
     const clienteGuardado = await guardarOActualizarClienteDesdeCotizacion();
-
     const snapshot = crearSnapshotActual();
     const doc = await crearDocumentoPDF(snapshot);
 
@@ -1221,15 +818,10 @@ async function createPDF(){
     const pdfNombre = nombreArchivoPDF(snapshot);
     const pdfBase64 = await blobToBase64(pdfBlob);
 
-    await guardarRegistroCotizacionTexto(clienteGuardado, {
-      base64: pdfBase64,
-      mime: "application/pdf",
-      nombre: pdfNombre
-    });
+    await guardarRegistroCotizacionTexto(clienteGuardado,{ base64:pdfBase64, mime:"application/pdf", nombre:pdfNombre });
 
     doc.save(pdfNombre);
-
-    showToast("Cotización guardada con texto + PDF en Supabase", "ok");
+    showToast("Cotización guardada", "ok");
 
     await cargarCotizacionesPrevias();
     await refrescarNumeroPorFecha();
@@ -1243,26 +835,17 @@ async function createPDF(){
   }
 }
 
-/* =========================================================
-   COTIZACIONES PREVIAS
-========================================================= */
-
 function normalizarSnapshotDesdeRegistro(reg){
   const raw = reg?.items;
-
   let rows = [];
   let footer = null;
   let ivaAplicado = Number(reg?.iva || 0) > 0;
 
-  if(Array.isArray(raw)){
-    rows = raw;
-  }else if(raw && typeof raw === "object"){
+  if(Array.isArray(raw)) rows = raw;
+  else if(raw && typeof raw === "object"){
     rows = Array.isArray(raw.rows) ? raw.rows : (Array.isArray(raw.items) ? raw.items : []);
     footer = raw.footer || null;
-
-    if(typeof raw.iva_aplicado === "boolean"){
-      ivaAplicado = raw.iva_aplicado;
-    }
+    if(typeof raw.iva_aplicado === "boolean") ivaAplicado = raw.iva_aplicado;
   }
 
   const form = {
@@ -1279,24 +862,22 @@ function normalizarSnapshotDesdeRegistro(reg){
     notas: reg?.notas || "",
     iva: ivaAplicado,
     footer: footer || {
-      direccion: "Avenida Universidad, Urbanización La Granja, Edificio Diario El Carabobeño, en el Municipio Naguanagua del estado Carabobo,",
-      contacto: "Tel: +58 414-4961122 | tuttovinilos@gmail.com",
-      preparado_texto: "Documento preparado por:"
+      direccion:"Avenida Universidad, Urbanización La Granja, Edificio Diario El Carabobeño, en el Municipio Naguanagua del estado Carabobo.",
+      contacto:"Tel: +58 414-4961122 | tuttovinilos@gmail.com",
+      preparado_texto:"Documento preparado por:"
     }
   };
 
   const calculado = calcularTotales(rows, ivaAplicado);
 
-  const t = {
-    subtotal: Number(reg?.subtotal || calculado.subtotal),
-    iva: Number(reg?.iva || calculado.iva),
-    total: Number(reg?.total || calculado.total)
-  };
-
   return {
     form,
     items: rows,
-    totals: t,
+    totals:{
+      subtotal:Number(reg?.subtotal || calculado.subtotal),
+      iva:Number(reg?.iva || calculado.iva),
+      total:Number(reg?.total || calculado.total)
+    },
     footer: form.footer
   };
 }
@@ -1305,10 +886,7 @@ async function cargarCotizacionesPrevias(){
   if(!validarSupabase()) return;
 
   const body = $("cotizacionesBody");
-
-  if(body){
-    body.innerHTML = `<tr><td colspan="8" class="empty">Cargando...</td></tr>`;
-  }
+  if(body) body.innerHTML = `<tr><td colspan="8" class="empty">Cargando...</td></tr>`;
 
   const selectConAprobacion = `
     id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
@@ -1322,57 +900,28 @@ async function cargarCotizacionesPrevias(){
     pdf_mime,created_at
   `;
 
-  let res = await db()
-    .from("cotizaciones")
-    .select(selectConAprobacion)
-    .order("created_at", { ascending: false })
-    .limit(150);
+  let res = await db().from("cotizaciones").select(selectConAprobacion).order("created_at",{ ascending:false }).limit(150);
 
   if(res.error){
     const msg = String(res.error.message || "");
-    const faltaColumnasAprobado =
-      msg.includes("aprobado") ||
-      msg.includes("aprobado_at") ||
-      msg.includes("aprobado_por") ||
-      msg.includes("schema cache");
-
-    if(faltaColumnasAprobado){
-      console.warn("Faltan columnas de aprobación. Cargando sin aprobación:", res.error);
-
-      res = await db()
-        .from("cotizaciones")
-        .select(selectBasico)
-        .order("created_at", { ascending: false })
-        .limit(150);
-
-      if(!res.error){
-        showToast("Falta SQL de aprobado. Se cargó la lista sin check.", "warn");
-      }
+    if(msg.includes("aprobado") || msg.includes("schema cache")){
+      res = await db().from("cotizaciones").select(selectBasico).order("created_at",{ ascending:false }).limit(150);
     }
   }
 
   if(res.error){
-    console.error("Error cargando cotizaciones:", res.error);
-
-    if(body){
-      body.innerHTML = `<tr><td colspan="8" class="empty">Error cargando cotizaciones</td></tr>`;
-    }
-
-    showToast("Error cargando cotizaciones", "err");
+    console.error(res.error);
+    if(body) body.innerHTML = `<tr><td colspan="8" class="empty">Error cargando cotizaciones</td></tr>`;
+    showToast("Error cargando cotizaciones","err");
     return;
   }
 
-  cotizacionesDB = (res.data || []).map(c => ({
-    ...c,
-    aprobado: c.aprobado === true
-  }));
-
+  cotizacionesDB = (res.data || []).map(c => ({ ...c, aprobado:c.aprobado === true }));
   renderCotizacionesPrevias();
 }
 
 function renderCotizacionesPrevias(){
   const body = $("cotizacionesBody");
-
   if(!body) return;
 
   const q = normalizar($("buscarCotizaciones")?.value || "");
@@ -1381,29 +930,13 @@ function renderCotizacionesPrevias(){
   let lista = [...cotizacionesDB];
 
   if(q){
-    lista = lista.filter(c => {
-      const texto = [
-        c.fecha,
-        c.numero,
-        c.cliente,
-        c.responsable,
-        c.telefono,
-        c.total,
-        c.tipo_documento,
-        c.aprobado ? "aprobada aprobado" : "pendiente"
-      ].join(" ");
-
-      return normalizar(texto).includes(q);
-    });
+    lista = lista.filter(c => normalizar([
+      c.fecha,c.numero,c.cliente,c.responsable,c.telefono,c.total,c.tipo_documento,c.aprobado ? "aprobada aprobado" : "pendiente"
+    ].join(" ")).includes(q));
   }
 
-  if(filtroAprobado === "aprobadas"){
-    lista = lista.filter(c => c.aprobado === true);
-  }
-
-  if(filtroAprobado === "pendientes"){
-    lista = lista.filter(c => c.aprobado !== true);
-  }
+  if(filtroAprobado === "aprobadas") lista = lista.filter(c => c.aprobado === true);
+  if(filtroAprobado === "pendientes") lista = lista.filter(c => c.aprobado !== true);
 
   if(!lista.length){
     body.innerHTML = `<tr><td colspan="8" class="empty">Sin cotizaciones</td></tr>`;
@@ -1412,7 +945,7 @@ function renderCotizacionesPrevias(){
 
   body.innerHTML = lista.map(c => {
     const aprobadoMeta = c.aprobado
-      ? `<span class="approved-meta">${html(c.aprobado_por || "")} ${c.aprobado_at ? "· " + html(String(c.aprobado_at).slice(0, 10)) : ""}</span>`
+      ? `<span class="approved-meta">${html(c.aprobado_por || "")} ${c.aprobado_at ? "· " + html(String(c.aprobado_at).slice(0,10)) : ""}</span>`
       : "";
 
     return `
@@ -1423,18 +956,12 @@ function renderCotizacionesPrevias(){
           </button>
           ${aprobadoMeta}
         </td>
-
         <td>${html(c.fecha || "")}</td>
         <td><b>${html(c.numero || "")}</b></td>
         <td>${html(c.cliente || "")}</td>
-
-        <td>
-          <span class="badge-responsable">${html(c.responsable || "Sin responsable")}</span>
-        </td>
-
+        <td><span class="badge-responsable">${html(c.responsable || "Sin responsable")}</span></td>
         <td>${html(c.telefono || "")}</td>
         <td><b>${currency(c.total || 0)}</b></td>
-
         <td class="center">
           <button class="mini-btn dark" type="button" data-ver-cot="${Number(c.id)}">Abrir</button>
           <button class="mini-btn" type="button" data-pdf-cot="${Number(c.id)}">${c.pdf_nombre ? "Abrir PDF" : "Generar PDF"}</button>
@@ -1446,54 +973,30 @@ function renderCotizacionesPrevias(){
 
 async function toggleAprobadoCotizacion(id){
   const cot = cotizacionesDB.find(c => Number(c.id) === Number(id));
-
   if(!cot){
-    showToast("No se encontró la cotización", "err");
+    showToast("No se encontró la cotización","err");
     return;
   }
 
   const nuevoEstado = !cot.aprobado;
-
-  let operador = "";
-
-  try{
-    const op = operadorSesionActual();
-    operador = op?.nombre || "";
-  }catch(error){
-    operador = "";
-  }
-
+  const op = operadorSesionActual();
   const update = {
-    aprobado: nuevoEstado,
-    aprobado_at: nuevoEstado ? new Date().toISOString() : null,
-    aprobado_por: nuevoEstado ? operador : null
+    aprobado:nuevoEstado,
+    aprobado_at:nuevoEstado ? new Date().toISOString() : null,
+    aprobado_por:nuevoEstado ? (op?.nombre || "") : null
   };
 
-  const { error } = await db()
-    .from("cotizaciones")
-    .update(update)
-    .eq("id", id);
+  const { error } = await db().from("cotizaciones").update(update).eq("id",id);
 
   if(error){
-    console.error("Error actualizando aprobación:", error);
-
-    const msg = String(error.message || "");
-
-    if(msg.includes("aprobado") || msg.includes("schema cache")){
-      showToast("Falta ejecutar el SQL de aprobado en Supabase", "err");
-    }else{
-      showToast("No se pudo actualizar aprobación", "err");
-    }
-
+    console.error(error);
+    showToast("No se pudo actualizar aprobación","err");
     return;
   }
 
-  cot.aprobado = update.aprobado;
-  cot.aprobado_at = update.aprobado_at;
-  cot.aprobado_por = update.aprobado_por;
-
+  Object.assign(cot, update);
   renderCotizacionesPrevias();
-  showToast(nuevoEstado ? "Cotización aprobada" : "Cotización marcada como pendiente", "ok");
+  showToast(nuevoEstado ? "Cotización aprobada" : "Cotización marcada como pendiente","ok");
 }
 
 function buscarCotizacionPorId(id){
@@ -1503,9 +1006,7 @@ function buscarCotizacionPorId(id){
 async function obtenerCotizacionCompleta(id){
   let reg = buscarCotizacionPorId(id);
 
-  if(reg && Object.prototype.hasOwnProperty.call(reg, "pdf_base64")){
-    return reg;
-  }
+  if(reg && Object.prototype.hasOwnProperty.call(reg,"pdf_base64")) return reg;
 
   const selectCompleto = `
     id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
@@ -1519,66 +1020,43 @@ async function obtenerCotizacionCompleta(id){
     pdf_mime,pdf_nombre,aprobado,aprobado_at,aprobado_por,created_at
   `;
 
-  let res = await db()
-    .from("cotizaciones")
-    .select(selectCompleto)
-    .eq("id", id)
-    .single();
+  let res = await db().from("cotizaciones").select(selectCompleto).eq("id",id).single();
 
   if(res.error){
     const msg = String(res.error.message || "");
-
     if(msg.includes("pdf_base64") || msg.includes("schema cache")){
-      res = await db()
-        .from("cotizaciones")
-        .select(selectSinPdfBase64)
-        .eq("id", id)
-        .single();
+      res = await db().from("cotizaciones").select(selectSinPdfBase64).eq("id",id).single();
     }
   }
 
-  if(res.error){
-    throw res.error;
-  }
+  if(res.error) throw res.error;
 
   if(res.data){
-    cotizacionesDB = cotizacionesDB.map(c => {
-      return Number(c.id) === Number(id) ? { ...c, ...res.data } : c;
-    });
-
+    cotizacionesDB = cotizacionesDB.map(c => Number(c.id) === Number(id) ? { ...c, ...res.data } : c);
     return res.data;
   }
 
   return reg;
 }
 
-/* =========================================================
-   MODAL DETALLE
-========================================================= */
-
 function abrirDetalleCotizacion(id){
   const reg = buscarCotizacionPorId(id);
-
   if(!reg){
-    showToast("No se encontró la cotización", "err");
+    showToast("No se encontró la cotización","err");
     return;
   }
 
   cotizacionSeleccionada = reg;
-
   const snap = normalizarSnapshotDesdeRegistro(reg);
   const form = snap.form;
 
   $("detalleTitle").textContent = `${form.tipo || "Cotización"} · ${form.numero || ""}`;
 
-  const itemsHtml = (snap.items || []).map((it, i) => {
-    if(it.kind === "separator"){
-      return `<div class="detail-item"><b>${html(it.desc || "SECCIÓN")}</b></div>`;
-    }
-
+  const itemsHtml = (snap.items || []).map((it,i) => {
+    if(it.kind === "separator") return `<div class="detail-item"><b>${html(it.desc || "SECCIÓN")}</b></div>`;
     return `
       <div class="detail-item">
-        <b>${i + 1}. ${html(it.desc || "")}</b><br>
+        <b>${i+1}. ${html(it.desc || "")}</b><br>
         Cant: ${html(it.qty || 0)} · P.Unit: ${currency(it.price || 0)} · Total: ${currency(itemTotal(it))}
       </div>
     `;
@@ -1592,19 +1070,12 @@ function abrirDetalleCotizacion(id){
         <b>Correo:</b> ${html(form.email || "")}<br>
         <b>Dirección:</b> ${html(form.direccion || "")}
       </div>
-
       <div class="detail-item">
         <b>Fecha:</b> ${html(form.fecha || "")} · <b>Vence:</b> ${html(form.vence || "")}<br>
         <b>Responsable:</b> ${html(form.responsable || "")}
       </div>
-
       ${itemsHtml || `<div class="empty">Sin ítems</div>`}
-
-      <div class="detail-item">
-        <b>Notas:</b><br>
-        ${html(form.notas || "—")}
-      </div>
-
+      <div class="detail-item"><b>Notas:</b><br>${html(form.notas || "—")}</div>
       <div class="detail-item">
         <b>Subtotal:</b> ${currency(snap.totals.subtotal)}<br>
         <b>IVA:</b> ${currency(snap.totals.iva)}<br>
@@ -1624,31 +1095,28 @@ function cerrarDetalle(){
 async function generarPdfDesdeCotizacion(id){
   try{
     const base = id ? buscarCotizacionPorId(id) : cotizacionSeleccionada;
-
     if(!base){
-      showToast("No se encontró la cotización", "err");
+      showToast("No se encontró la cotización","err");
       return;
     }
 
     const reg = await obtenerCotizacionCompleta(base.id);
 
     if(reg?.pdf_base64){
-      const blob = base64ToBlob(reg.pdf_base64, reg.pdf_mime || "application/pdf");
-      abrirBlobPdf(blob);
-      showToast("PDF guardado abierto", "ok");
+      abrirBlobPdf(base64ToBlob(reg.pdf_base64, reg.pdf_mime || "application/pdf"));
+      showToast("PDF guardado abierto","ok");
       return;
     }
 
     const snap = normalizarSnapshotDesdeRegistro(reg);
     const doc = await crearDocumentoPDF(snap);
-
     doc.save(nombreArchivoPDF(snap));
 
-    showToast("Esta cotización no tenía PDF guardado; se generó desde el texto", "warn");
+    showToast("Esta cotización no tenía PDF guardado; se generó desde el texto","warn");
 
   }catch(error){
     console.error(error);
-    showToast("No se pudo abrir/generar el PDF", "err");
+    showToast("No se pudo abrir/generar el PDF","err");
   }
 }
 
@@ -1678,26 +1146,17 @@ function cargarCotizacionEnFormulario(){
   }
 
   data.items = JSON.parse(JSON.stringify(
-    snap.items && snap.items.length
-      ? snap.items
-      : [{ kind: "item", desc: "", qty: 1, price: 0 }]
+    snap.items && snap.items.length ? snap.items : [{ kind:"item", desc:"", qty:1, price:0 }]
   ));
 
   render();
   cerrarDetalle();
   activarTab("nueva");
-
-  showToast("Cotización cargada para editar", "ok");
+  showToast("Cotización cargada para editar","ok");
 }
 
-/* =========================================================
-   NUEVA / LIMPIAR
-========================================================= */
-
 async function nuevaCotizacionLimpia(){
-  data.items = [
-    { kind: "item", desc: "", qty: 1, price: 0 }
-  ];
+  data.items = [{ kind:"item", desc:"", qty:1, price:0 }];
 
   $("cliente").value = "";
   $("rif").value = "";
@@ -1709,59 +1168,24 @@ async function nuevaCotizacionLimpia(){
   $("clienteMini").textContent = "Escribe para buscar o crear cliente nuevo.";
 
   await initDates();
-
   setResponsableDesdeSesion();
   render();
-  updateTotals();
   activarTab("nueva");
 }
-
-function clearAll(){
-  if(!confirm("¿Seguro que deseas limpiar todo?")) return;
-
-  data.items = [
-    { kind: "item", desc: "", qty: 1, price: 0 }
-  ];
-
-  $("cliente").value = "";
-  $("rif").value = "";
-  $("telefono").value = "";
-  $("email").value = "";
-  $("direccion").value = "";
-  $("notas").value = "";
-  $("ivaCheck").checked = false;
-  $("clienteMini").textContent = "Escribe para buscar o crear cliente nuevo.";
-
-  initDates().then(() => {
-    render();
-    updateTotals();
-  });
-}
-
-/* =========================================================
-   TABS
-========================================================= */
 
 function activarTab(cual){
   const nueva = cual === "nueva";
 
   $("tabNueva").classList.toggle("active", nueva);
   $("tabPrevias").classList.toggle("active", !nueva);
-
   $("panelNueva").classList.toggle("active", nueva);
   $("panelPrevias").classList.toggle("active", !nueva);
 
-  if(!nueva){
-    cargarCotizacionesPrevias();
-  }
+  if(!nueva) cargarCotizacionesPrevias();
 }
 
-/* =========================================================
-   EVENTOS
-========================================================= */
-
 function bindEvents(){
-  document.addEventListener("input", (e) => {
+  document.addEventListener("input", e => {
     if(e.target.matches("[data-index][data-field]")){
       const index = Number(e.target.dataset.index);
       const field = e.target.dataset.field;
@@ -1769,112 +1193,75 @@ function bindEvents(){
 
       if(!data.items[index]) return;
 
-      if(field === "qty" || field === "price"){
-        data.items[index][field] = Number(value || 0);
-      }else{
-        data.items[index][field] = value;
-      }
+      data.items[index][field] = (field === "qty" || field === "price") ? Number(value || 0) : value;
 
       updateItemVisualTotal(index);
       updateTotals();
     }
   });
 
-  document.addEventListener("change", async (e) => {
-    if(e.target.id === "tipoDocumento" || e.target.id === "responsable"){
-      render();
-    }
-
-    if(e.target.id === "ivaCheck"){
-      updateTotals();
-    }
-
-    if(e.target.id === "fecha"){
-      await refrescarNumeroPorFecha();
-    }
+  document.addEventListener("change", async e => {
+    if(e.target.id === "tipoDocumento" || e.target.id === "responsable") render();
+    if(e.target.id === "ivaCheck") updateTotals();
+    if(e.target.id === "fecha") await refrescarNumeroPorFecha();
   });
 
-  document.addEventListener("click", (e) => {
+  document.addEventListener("click", e => {
     const remove = e.target.closest("[data-remove]");
-
-    if(remove){
-      removeItem(Number(remove.dataset.remove));
-      return;
-    }
+    if(remove){ removeItem(Number(remove.dataset.remove)); return; }
 
     const aprobar = e.target.closest("[data-aprobar-cot]");
-
-    if(aprobar){
-      toggleAprobadoCotizacion(Number(aprobar.dataset.aprobarCot));
-      return;
-    }
+    if(aprobar){ toggleAprobadoCotizacion(Number(aprobar.dataset.aprobarCot)); return; }
 
     const ver = e.target.closest("[data-ver-cot]");
-
-    if(ver){
-      abrirDetalleCotizacion(Number(ver.dataset.verCot));
-      return;
-    }
+    if(ver){ abrirDetalleCotizacion(Number(ver.dataset.verCot)); return; }
 
     const pdf = e.target.closest("[data-pdf-cot]");
-
-    if(pdf){
-      generarPdfDesdeCotizacion(Number(pdf.dataset.pdfCot));
-      return;
-    }
+    if(pdf){ generarPdfDesdeCotizacion(Number(pdf.dataset.pdfCot)); return; }
   });
 
-  $("cliente").addEventListener("change", revisarClienteActual);
-  $("cliente").addEventListener("blur", revisarClienteActual);
+  $("cliente")?.addEventListener("change", revisarClienteActual);
+  $("cliente")?.addEventListener("blur", revisarClienteActual);
 
-  $("cliente").addEventListener("input", () => {
+  $("cliente")?.addEventListener("input", () => {
     const mini = $("clienteMini");
     const cliente = buscarClientePorNombre($("cliente").value);
 
-    if(cliente){
-      mini.innerHTML = `Cliente encontrado: <b>${html(cliente.nombre)}</b>`;
-    }else{
+    if(cliente) mini.innerHTML = `Cliente encontrado: <b>${html(cliente.nombre)}</b>`;
+    else{
       mini.textContent = $("cliente").value.trim()
         ? "Cliente nuevo: se guardará automáticamente en clientes."
         : "Escribe para buscar o crear cliente nuevo.";
     }
   });
 
-  $("addItem").addEventListener("click", addItem);
-  $("addSep").addEventListener("click", addSeparator);
-
-  $("pdfBtn").addEventListener("click", createPDF);
-  $("printBtn").addEventListener("click", () => window.print());
+  $("addItem")?.addEventListener("click", addItem);
+  $("addSep")?.addEventListener("click", addSeparator);
+  $("pdfBtn")?.addEventListener("click", createPDF);
+  $("printBtn")?.addEventListener("click", () => window.print());
 
   $("newQuoteBtn")?.addEventListener("click", nuevaCotizacionLimpia);
-  $("clearBtn").addEventListener("click", clearAll);
+  $("clearBtn")?.addEventListener("click", () => {});
 
-  $("tabNueva").addEventListener("click", () => activarTab("nueva"));
-  $("tabPrevias").addEventListener("click", () => activarTab("previas"));
+  $("tabNueva")?.addEventListener("click", () => activarTab("nueva"));
+  $("tabPrevias")?.addEventListener("click", () => activarTab("previas"));
 
-  $("recargarCotizaciones").addEventListener("click", cargarCotizacionesPrevias);
-  $("buscarCotizaciones").addEventListener("input", renderCotizacionesPrevias);
+  $("recargarCotizaciones")?.addEventListener("click", cargarCotizacionesPrevias);
+  $("buscarCotizaciones")?.addEventListener("input", renderCotizacionesPrevias);
   $("filtroAprobado")?.addEventListener("change", renderCotizacionesPrevias);
 
-  $("cerrarDetalle").addEventListener("click", cerrarDetalle);
+  $("cerrarDetalle")?.addEventListener("click", cerrarDetalle);
 
-  $("detalleBackdrop").addEventListener("click", (e) => {
-    if(e.target.id === "detalleBackdrop"){
-      cerrarDetalle();
-    }
+  $("detalleBackdrop")?.addEventListener("click", e => {
+    if(e.target.id === "detalleBackdrop") cerrarDetalle();
   });
 
-  $("pdfDetalle").addEventListener("click", () => generarPdfDesdeCotizacion());
-  $("cargarDetalleForm").addEventListener("click", cargarCotizacionEnFormulario);
+  $("pdfDetalle")?.addEventListener("click", () => generarPdfDesdeCotizacion());
+  $("cargarDetalleForm")?.addEventListener("click", cargarCotizacionEnFormulario);
 }
-
-/* =========================================================
-   INICIO
-========================================================= */
 
 async function iniciarCotizador(){
   aplicarMenuDesplegable();
-
   setResponsableDesdeSesion();
 
   await initDates();
