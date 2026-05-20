@@ -1,472 +1,93 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="loading-menu">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>Estadísticas · Comanda</title>
-<link rel="icon" href="data:,">
+<title>Catálogos · Materiales e Impresión</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800;900&family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800;900&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/menu.css?v=1">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f0f2f9;
-  --panel:#ffffff;
-  --panel2:#f8f9ff;
-  --border:#d9deea;
-  --border2:#cbd3e6;
-  --text:#111827;
-  --muted:#6b7280;
-  --muted2:#475569;
-  --accent:#153bff;
-  --accent2:#0b1f7a;
-  --green:#16a34a;
-  --red:#dc2626;
-  --yellow:#f59e0b;
-  --orange:#ff8616;
-  --mono:'Roboto Mono',monospace;
-  --head:'Montserrat',Arial,sans-serif;
-  --body:'Inter',Arial,sans-serif;
+  --bg:#f0f2f9; --panel:#ffffff; --panel2:#f8f9ff;
+  --border:#d9deea; --border2:#cbd3e6;
+  --text:#111827; --muted:#6b7280; --muted2:#475569;
+  --accent:#153bff; --accent2:#0b1f7a;
+  --green:#16a34a; --red:#dc2626; --yellow:#f59e0b; --orange:#ff8616;
+  --head:'Montserrat',Arial,sans-serif; --body:'Inter',Arial,sans-serif; --mono:'Roboto Mono',monospace;
 }
-html{scroll-behavior:smooth}
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:var(--body);
-  min-height:100vh;
-  padding-bottom:90px;
-  -webkit-tap-highlight-color:transparent;
-}
-button,input,select{font:inherit}
-button{touch-action:manipulation}
-#authTopbar{display:none!important}
-.header{
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  color:#fff;
-  padding:10px 16px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  min-height:58px;
-  position:sticky;
-  top:0;
-  z-index:300;
-  box-shadow:0 8px 24px rgba(21,59,255,.24);
-  flex-wrap:wrap;
-}
-.logo{
-  font-family:var(--head);
-  font-size:20px;
-  font-weight:900;
-  letter-spacing:2.6px;
-  color:#fff;
-  text-transform:uppercase;
-  white-space:nowrap;
-  border:1px dashed rgba(255,255,255,.55);
-  border-radius:10px;
-  padding:8px 12px;
-}
-.logo small{color:rgba(255,255,255,.72);font-weight:700;font-size:10px;letter-spacing:1.4px;margin-left:6px}
-.mobile-menu-btn{
-  display:none;
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  padding:8px 12px;
-  border:1px solid rgba(255,255,255,.22);
-  background:rgba(255,255,255,.09);
-  color:#fff;
-  border-radius:999px;
-  cursor:pointer;
-  margin-left:auto;
-}
-.header-tabs{display:flex;gap:6px;margin-left:auto;align-items:center;flex-wrap:wrap}
-.tab-btn,.menu-status{
-  font-family:var(--head);
-  font-size:11px;
-  font-weight:900;
-  letter-spacing:.7px;
-  text-transform:uppercase;
-  padding:8px 13px;
-  border:1px solid rgba(255,255,255,.22);
-  background:rgba(255,255,255,.08);
-  color:rgba(255,255,255,.84);
-  cursor:pointer;
-  border-radius:999px;
-  transition:all .2s;
-  text-decoration:none;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  min-height:38px;
-}
-.tab-btn:hover{background:rgba(255,255,255,.16);color:#fff}
-.tab-btn.active{background:#fff;color:var(--accent);border-color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.14)}
-.menu-status{cursor:default}
-.status-dot{width:9px;height:9px;border-radius:50%;background:#22c55e;display:inline-block}
-.menu-extra{display:flex;align-items:center;gap:8px}
-.toolbar{
-  display:grid;
-  grid-template-columns:150px 150px minmax(260px,1fr) auto auto;
-  gap:10px;
-  padding:14px 16px;
-  border-bottom:1px solid var(--border);
-  align-items:center;
-  position:sticky;
-  top:58px;
-  z-index:260;
-  background:rgba(255,255,255,.96);
-  backdrop-filter:blur(10px);
-  box-shadow:0 8px 22px rgba(15,23,42,.08);
-}
-.search-wrap{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  background:#fff;
-  border:1.5px solid var(--border);
-  border-radius:999px;
-  padding:9px 13px;
-  min-height:42px;
-}
-.search-wrap input{
-  border:0;
-  outline:0;
-  background:transparent;
-  width:100%;
-  min-height:auto;
-  padding:0;
-  font-family:var(--body);
-  font-size:14px;
-  color:var(--text);
-}
-input,select{
-  background:#fff;
-  border:1.5px solid var(--border);
-  color:var(--text);
-  border-radius:999px;
-  padding:9px 12px;
-  outline:none;
-  font-family:var(--body);
-  font-size:13px;
-  font-weight:700;
-  min-height:42px;
-}
-input:focus,select:focus,.search-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(21,59,255,.10)}
-.btn{
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.6px;
-  text-transform:uppercase;
-  padding:11px 15px;
-  background:var(--accent);
-  color:#fff;
-  border:none;
-  border-radius:999px;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  transition:.2s;
-  white-space:nowrap;
-  min-height:42px;
-}
-.btn:hover{filter:brightness(1.06)}
-.btn.secondary{background:#fff;color:var(--accent);border:1.5px solid var(--border)}
-.btn.danger{background:#fee2e2;color:#dc2626;border:1px solid #fecaca}
-.layout{padding:16px;display:grid;gap:16px}
-.filter-info{
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:12px 14px;
-  color:var(--muted2);
-  font-size:13px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  flex-wrap:wrap;
-}
-.filter-info strong{color:var(--accent2)}
-.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
-.stat-card{
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:16px;
-  box-shadow:0 4px 18px rgba(0,0,0,.055);
-}
-.stat-label{font-family:var(--head);font-size:11px;font-weight:900;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
-.stat-num{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--text)}
-.stat-sub{color:var(--muted2);font-size:12px;margin-top:6px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.card{
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:16px;
-  overflow:hidden;
-  box-shadow:0 4px 18px rgba(0,0,0,.055);
-}
-.card-header{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:#fff}
-.card-title{font-family:var(--head);font-size:18px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;color:var(--accent2)}
-.card-sub{font-size:12px;color:var(--muted2);margin-top:3px}
-.list{padding:12px 16px 16px;display:flex;flex-direction:column;gap:10px}
-.row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
-.row-title{font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row-val{font-family:var(--mono);font-size:13px;color:var(--accent);white-space:nowrap;font-weight:700}
-.row-sub{grid-column:1/-1;color:var(--muted2);font-size:11px;line-height:1.35}
-.bar-wrap{grid-column:1/-1;height:8px;background:#eef1ff;border:1px solid var(--border);border-radius:999px;overflow:hidden}
-.bar{height:100%;background:linear-gradient(90deg,var(--accent),#60a5fa);border-radius:999px;min-width:2px}
-.empty{color:var(--muted);padding:28px;text-align:center;font-family:var(--head);font-weight:900;letter-spacing:.8px;text-transform:uppercase}
-.table-scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:920px}
-th{background:#eef1ff;color:var(--muted);font-family:var(--head);font-size:11px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;text-align:left;padding:11px 10px;border-bottom:1px solid var(--border)}
-td{padding:10px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text)}
-tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font-weight:900;letter-spacing:.7px;padding:5px 9px;border-radius:999px;text-transform:uppercase;display:inline-flex;align-items:center;gap:4px}.pill.green{color:var(--green);border:1px solid #86efac;background:#dcfce7}.pill.red{color:var(--red);border:1px solid #fecaca;background:#fee2e2}.pill.yellow{color:#a16207;border:1px solid #fde68a;background:#fef3c7}.pill.blue{color:var(--accent);border:1px solid #bfdbfe;background:#dbeafe}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 18px;border-radius:10px;box-shadow:0 10px 35px #0004;z-index:1000;font-family:var(--head);font-size:13px;font-weight:900;letter-spacing:.5px;display:none;text-align:center}
-@media(max-width:1200px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}.toolbar{grid-template-columns:150px 150px minmax(220px,1fr) auto}}
-@media(max-width:900px){.grid{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr 1fr}.toolbar .search-wrap{grid-column:1/-1}.toolbar .btn{width:100%}}
-@media(max-width:760px){.header{padding:10px 12px}.logo{font-size:19px}.logo small{display:none}.mobile-menu-btn{display:inline-flex}.header-tabs{display:none;width:100%;margin-left:0;padding-top:14px;border-top:1px solid rgba(255,255,255,.18)}.header-tabs.open{display:grid;grid-template-columns:1fr;gap:8px}.tab-btn,.menu-status{width:100%;justify-content:center;font-size:11px;min-height:42px;padding:9px 8px;border-radius:8px}.menu-extra{display:flex;flex-direction:column;gap:8px}.toolbar{position:relative;top:0;padding:10px;grid-template-columns:1fr}.layout{padding:10px}.cards{grid-template-columns:1fr 1fr}}
-@media(max-width:480px){.cards{grid-template-columns:1fr}input,select{width:100%}}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;padding-bottom:80px}
+button,input,select{font:inherit}button{touch-action:manipulation;cursor:pointer}
+.header{background:linear-gradient(135deg,#153bff,#0b1f7a);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;min-height:58px;position:sticky;top:0;z-index:50;box-shadow:0 8px 24px rgba(21,59,255,.24);flex-wrap:wrap}
+.logo{font-family:var(--head);font-size:20px;font-weight:900;letter-spacing:2px;text-transform:uppercase;border:2px dashed rgba(255,255,255,.35);border-radius:12px;padding:8px 12px;white-space:nowrap}.logo small{font-size:10px;letter-spacing:1px;margin-left:6px;color:rgba(255,255,255,.75)}
+.header-tabs{display:flex;gap:6px;margin-left:auto;align-items:center;flex-wrap:wrap}.tab-btn{font-family:var(--head);font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:8px 13px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:rgba(255,255,255,.86);border-radius:999px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}.tab-btn:hover{background:rgba(255,255,255,.16);color:#fff}.tab-btn.active{background:#fff;color:var(--accent);border-color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.14)}
+.toolbar{display:flex;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:center;background:#fff}.search-wrap{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border2);border-radius:999px;padding:10px 14px;flex:1;min-width:250px}.search-wrap input{background:none;border:none;outline:none;color:var(--text);font-family:var(--body);font-size:14px;width:100%}
+.btn{font-family:var(--head);font-size:11px;font-weight:900;letter-spacing:.35px;text-transform:uppercase;padding:10px 14px;background:var(--accent);color:#fff;border:none;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}.btn:hover{filter:brightness(1.05)}.btn.secondary{background:#fff;color:var(--accent);border:1px solid var(--border2)}.btn.success{background:#16a34a}.btn.danger{background:#dc2626}
+.layout{padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.055)}.card-header{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.card-title{font-family:var(--head);font-size:18px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}.card-sub{font-size:12px;color:var(--muted2);margin-top:2px}.card-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.table-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:720px}th{background:#eef1ff;color:#111827;font-family:var(--head);font-size:10px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;text-align:left;padding:10px;border-bottom:1px solid var(--border2)}td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:13px}tr:hover td{background:#f8f9ff}
+input,select{width:100%;background:#fff;border:1px solid var(--border2);color:var(--text);border-radius:9px;padding:8px 10px;outline:none;font-family:var(--body);font-size:13px}input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(21,59,255,.10)}select option{background:#fff;color:var(--text)}.name-input{min-width:180px}.price-input{max-width:110px}.active-select{max-width:110px}.color-input{width:42px;height:34px;padding:3px;border-radius:999px;cursor:pointer}.color-pair{display:flex;gap:8px;align-items:center}.color-label{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase}.row-actions{display:flex;gap:6px;align-items:center}.mini-btn{border:1px solid var(--border2);background:#fff;color:var(--accent);border-radius:9px;padding:8px 10px;cursor:pointer;font-family:var(--head);font-size:10px;font-weight:900;letter-spacing:.35px;text-transform:uppercase;white-space:nowrap}.mini-btn:hover{border-color:var(--accent);background:#eef1ff}.mini-btn.del{background:#fee2e2;border-color:#fecaca;color:#dc2626}.badge{font-family:var(--head);font-size:10px;font-weight:900;letter-spacing:.35px;text-transform:uppercase;padding:6px 9px;border-radius:999px;border:1px solid var(--border2);color:var(--muted2);white-space:nowrap}.badge.ok{color:#16a34a;border-color:#86efac;background:#dcfce7}.badge.off{color:#dc2626;border-color:#fecaca;background:#fee2e2}.empty{color:var(--muted);padding:30px;text-align:center;font-family:var(--head);letter-spacing:.8px;text-transform:uppercase}.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 10px 35px rgba(0,0,0,.22);z-index:100;font-family:var(--head);font-size:12px;font-weight:800;letter-spacing:.35px;display:none;text-align:center}.pill-preview{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800;line-height:1;min-width:54px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+@media(max-width:950px){.layout{grid-template-columns:1fr}.header{height:auto;min-height:58px;flex-wrap:wrap;padding:10px 12px}.header-tabs{margin-left:0;width:100%}.tab-btn{flex:1 1 calc(50% - 6px);justify-content:center}}
+@media(max-width:600px){.layout{padding:10px}.toolbar{padding:10px}.search-wrap{min-width:100%}.card-header{flex-direction:column;align-items:flex-start}.card-actions,.btn{width:100%}.table-scroll{overflow-x:auto}.logo small{display:none}}
 </style>
 </head>
 <body>
 <header class="header">
-  <div class="logo">COMANDA<small>ESTADÍSTICAS</small></div>
-  <button class="mobile-menu-btn" id="mobileMenuBtn" type="button">☰ Menú</button>
+  <div class="logo">
+    <img src="Logo tutto1.svg" alt="Tutto Vinilos">
+    <small>COMANDA</small>
+  </div>
+
   <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
 </header>
-
-<div class="toolbar">
-  <select id="filterYear" onchange="renderEstadisticas()"><option value="all">Todos los años</option></select>
-  <select id="filterMonth" onchange="renderEstadisticas()">
-    <option value="all">Todo el año</option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
-  </select>
-  <div class="search-wrap" title="Escribe parte del nombre del cliente">
-    🔎 <input id="filterClienteSearch" type="text" list="clientesStatsList" placeholder="Buscar cliente específico..." oninput="renderEstadisticas()" autocomplete="off">
-    <datalist id="clientesStatsList"></datalist>
-  </div>
-  <button class="btn danger" type="button" onclick="limpiarClienteStats()">Limpiar cliente</button>
-  <button class="btn secondary" type="button" onclick="cargarPedidosStats()">⟳ Recargar</button>
-</div>
-
+<div class="toolbar"><div class="search-wrap">🔎<input id="searchCatalogos" type="text" placeholder="Buscar material o tipo de impresión..." oninput="filtrarCatalogos()"/></div><button class="btn secondary" onclick="recargarTodo()">⟳ Recargar</button></div>
 <div class="layout">
-  <div class="filter-info" id="filterInfo">
-    <span>Viendo estadísticas de <strong>todos los clientes</strong>.</span>
-    <span id="filterCount">0 pedidos filtrados</span>
-  </div>
-
-  <section class="cards">
-    <div class="stat-card"><div class="stat-label">Pedidos</div><div class="stat-num" id="kpiPedidos">0</div><div class="stat-sub">Total filtrado</div></div>
-    <div class="stat-card"><div class="stat-label">Metros</div><div class="stat-num" id="kpiMetros">0</div><div class="stat-sub">Cantidad sumada</div></div>
-    <div class="stat-card"><div class="stat-label">Clientes</div><div class="stat-num" id="kpiClientes">0</div><div class="stat-sub">Clientes únicos</div></div>
-    <div class="stat-card"><div class="stat-label">Listos</div><div class="stat-num" id="kpiListos">0</div><div class="stat-sub">Trabajos terminados</div></div>
-    <div class="stat-card"><div class="stat-label">Pagados</div><div class="stat-num" id="kpiPagados">0</div><div class="stat-sub">Pagos cerrados</div></div>
-  </section>
-
-  <section class="grid">
-    <div class="card"><div class="card-header"><div><div class="card-title">Clientes top por metros</div><div class="card-sub">Clientes que más cantidad/metraje han generado.</div></div></div><div class="list" id="topClientes"></div></div>
-    <div class="card"><div class="card-header"><div><div class="card-title">Clientes recurrentes</div><div class="card-sub">Clientes con más pedidos.</div></div></div><div class="list" id="clientesRecurrentes"></div></div>
-    <div class="card"><div class="card-header"><div><div class="card-title">Materiales usados</div><div class="card-sub">Suma de cantidad por material.</div></div></div><div class="list" id="materialesUsados"></div></div>
-    <div class="card"><div class="card-header"><div><div class="card-title">Tipos de impresión</div><div class="card-sub">Suma de cantidad por tipo de impresión.</div></div></div><div class="list" id="impresionesUsadas"></div></div>
-    <div class="card"><div class="card-header"><div><div class="card-title">Operadores</div><div class="card-sub">Pedidos registrados por operador.</div></div></div><div class="list" id="operadoresUsados"></div></div>
-    <div class="card"><div class="card-header"><div><div class="card-title">Producción por mes</div><div class="card-sub">Orden fijo: enero, febrero, marzo, abril...</div></div></div><div class="list" id="metrosPorMes"></div></div>
-  </section>
-
-  <section class="card">
-    <div class="card-header"><div><div class="card-title">Resumen por cliente</div><div class="card-sub">Pedidos, cantidad, listos, pagos y pendientes por cliente.</div></div></div>
-    <div class="table-scroll"><table><thead><tr><th>Cliente</th><th>Pedidos</th><th>Metros</th><th>Primer pedido</th><th>Último pedido</th><th>Listos</th><th>Pagados</th><th>Pendientes</th></tr></thead><tbody id="tablaClientes"><tr><td colspan="8" class="empty">Cargando clientes...</td></tr></tbody></table></div>
-  </section>
+  <section class="card"><div class="card-header"><div><div class="card-title">Materiales</div><div class="card-sub">Asigna color de fondo y letra para verlo rápido en pedidos.</div></div><div class="card-actions"><span class="badge ok" id="materialesCount">0 activos</span><button class="btn" onclick="nuevoMaterial()">+ Añadir</button><button class="btn success" onclick="guardarTodosMateriales()">Guardar cambios</button></div></div><div class="table-scroll"><table><thead><tr><th>Nombre</th><th>Precio base</th><th>Fondo</th><th>Letra</th><th>Vista</th><th>Estado</th><th>Eliminar</th></tr></thead><tbody id="materialesBody"><tr><td colspan="7" class="empty">Cargando materiales...</td></tr></tbody></table></div></section>
+  <section class="card"><div class="card-header"><div><div class="card-title">Tipos de impresión</div><div class="card-sub">Color por tipo para reconocer Normal, Barniz, 5 capas, etc.</div></div><div class="card-actions"><span class="badge ok" id="impresionCount">0 activos</span><button class="btn" onclick="nuevoTipoImpresion()">+ Añadir</button><button class="btn success" onclick="guardarTodosTiposImpresion()">Guardar cambios</button></div></div><div class="table-scroll"><table><thead><tr><th>Nombre</th><th>Precio extra</th><th>Fondo</th><th>Letra</th><th>Vista</th><th>Estado</th><th>Eliminar</th></tr></thead><tbody id="impresionBody"><tr><td colspan="7" class="empty">Cargando tipos...</td></tr></tbody></table></div></section>
 </div>
 <div class="toast" id="toast"></div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=24"></script>
 <script src="js/auth.js?v=24"></script>
 <script src="js/menu.js?v=10"></script>
 <script>
-console.log('ESTADISTICAS conectado vClienteSearch FIX v2 sin precio');
-let pedidosStats = [];
-const $ = id => document.getElementById(id);
-
+console.log('MATERIALES COLOR conectado v10');
+let materialesDB = [];
+let impresionDB = [];
+const DEFAULT_BG = '#e5e7eb';
+const DEFAULT_TXT = '#111827';
 function db(){ return window.supabaseClient; }
-function normalizar(v){ return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim(); }
-function escapeHtml(v){ return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'); }
-function numero(v){
-  if(typeof v === 'number') return Number.isFinite(v) ? v : 0;
-  const m = String(v ?? '').replace(',', '.').match(/-?\d+(\.\d+)?/);
-  return m ? Number(m[0]) : 0;
+function esc(v){return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')}
+function normalizar(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim()}
+function toast(msg){const t=document.getElementById('toast');if(!t){console.log(msg);return}t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2300)}
+function validarSupabase(){if(!db()){alert('No existe conexión Supabase. Revisa js/supabase.js');return false}return true}
+function safeColor(v, def){const s=String(v||'').trim();return /^#[0-9a-fA-F]{6}$/.test(s)?s:def}
+function activoVal(v){return v !== false}
+async function cargarCatalogos(){if(!validarSupabase()) return; await Promise.all([cargarMateriales(), cargarTiposImpresion()]); filtrarCatalogos();}
+async function cargarMateriales(){
+  const {data,error}=await db().from('materiales').select('id,nombre,precio_base,activo,color_fondo,color_texto').order('nombre',{ascending:true});
+  if(error){console.error(error); document.getElementById('materialesBody').innerHTML=`<tr><td colspan="7" class="empty">Error: ${esc(error.message)}<br>¿Ejecutaste el SQL de colores?</td></tr>`; return;}
+  materialesDB=(data||[]).map(x=>({...x,color_fondo:safeColor(x.color_fondo,DEFAULT_BG),color_texto:safeColor(x.color_texto,DEFAULT_TXT)}));
 }
-function fmt(n){
-  const x = Number(n || 0);
-  if(!Number.isFinite(x)) return '0';
-  return x.toLocaleString('es-VE',{maximumFractionDigits:2});
+async function cargarTiposImpresion(){
+  const {data,error}=await db().from('tipos_impresion').select('id,nombre,precio_extra,activo,color_fondo,color_texto').order('nombre',{ascending:true});
+  if(error){console.error(error); document.getElementById('impresionBody').innerHTML=`<tr><td colspan="7" class="empty">Error: ${esc(error.message)}<br>¿Ejecutaste el SQL de colores?</td></tr>`; return;}
+  impresionDB=(data||[]).map(x=>({...x,color_fondo:safeColor(x.color_fondo,DEFAULT_BG),color_texto:safeColor(x.color_texto,DEFAULT_TXT)}));
 }
-function showToast(msg){ const t=$('toast'); if(!t) return; t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2200); }
-
-async function cargarPedidosStats(){
-  if(!db()){ showToast('No existe conexión Supabase'); return; }
-  setEmptyAll('Cargando estadísticas...');
-  let res = await db()
-    .from('pedidos')
-    .select('id,fecha,operador,cliente,descripcion,cantidad,material,tipo_impresion,estatus_trabajo,estatus_pago,fecha_entrega')
-    .order('fecha', { ascending:false });
-
-  // Fallback: si Supabase rechaza alguna columna/orden por caché o esquema, intenta una consulta más simple.
-  if(res.error){
-    console.warn('Consulta principal de estadísticas falló. Probando fallback:', res.error);
-    res = await db()
-      .from('pedidos')
-      .select('*')
-      .order('id', { ascending:false });
-  }
-
-  if(res.error){
-    console.error('Error cargando estadísticas:', res.error);
-    showToast('Error cargando estadísticas: ' + (res.error.message || 'revisa consola'));
-    setEmptyAll('Error cargando datos: ' + (res.error.message || 'revisa consola'));
-    return;
-  }
-  pedidosStats = res.data || [];
-  llenarFiltros();
-  renderEstadisticas();
-}
-
-function llenarFiltros(){
-  const years = [...new Set(pedidosStats.map(p => String(p.fecha || '').slice(0,4)).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
-  const ySel = $('filterYear');
-  const oldY = ySel.value || 'all';
-  ySel.innerHTML = '<option value="all">Todos los años</option>' + years.map(y => `<option value="${escapeHtml(y)}">${escapeHtml(y)}</option>`).join('');
-  ySel.value = years.includes(oldY) ? oldY : 'all';
-
-  const clientes = [...new Set(pedidosStats.map(p => String(p.cliente || '').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-  $('clientesStatsList').innerHTML = clientes.map(c => `<option value="${escapeHtml(c)}"></option>`).join('');
-}
-
-function filtrarPedidos(){
-  const year = $('filterYear').value;
-  const month = $('filterMonth').value;
-  const clienteQ = normalizar($('filterClienteSearch').value);
-
-  return pedidosStats.filter(p => {
-    const fecha = String(p.fecha || '');
-    if(year !== 'all' && fecha.slice(0,4) !== year) return false;
-    if(month !== 'all' && fecha.slice(5,7) !== month) return false;
-    if(clienteQ && !normalizar(p.cliente).includes(clienteQ)) return false;
-    return true;
-  });
-}
-
-function groupBy(rows, keyFn){
-  const map = new Map();
-  rows.forEach(p => {
-    const key = keyFn(p) || 'Sin dato';
-    if(!map.has(key)) map.set(key, { key, pedidos:0, metros:0, listos:0, pagados:0, pendientes:0, primero:null, ultimo:null, items:[] });
-    const g = map.get(key);
-    g.pedidos += 1;
-    g.metros += numero(p.cantidad);
-    if(normalizar(p.estatus_trabajo) === 'listo') g.listos += 1;
-    if(normalizar(p.estatus_pago) === 'pagado') g.pagados += 1;
-    if(normalizar(p.estatus_pago) === 'pendiente') g.pendientes += 1;
-    const f = String(p.fecha || '');
-    if(f){
-      if(!g.primero || f < g.primero) g.primero = f;
-      if(!g.ultimo || f > g.ultimo) g.ultimo = f;
-    }
-    g.items.push(p);
-  });
-  return [...map.values()];
-}
-
-function renderList(id, rows, mode='metros'){
-  const el = $(id);
-  if(!el) return;
-  if(!rows.length){ el.innerHTML = '<div class="empty">Sin datos</div>'; return; }
-  const max = Math.max(...rows.map(r => mode === 'pedidos' ? r.pedidos : r.metros), 1);
-  el.innerHTML = rows.slice(0,10).map(r => {
-    const val = mode === 'pedidos' ? r.pedidos : r.metros;
-    const label = mode === 'pedidos' ? `${r.pedidos} pedidos` : `${fmt(r.metros)} m`;
-    const pct = Math.max(2, (val / max) * 100);
-    return `<div class="row">
-      <div class="row-title" title="${escapeHtml(r.key)}">${escapeHtml(r.key)}</div>
-      <div class="row-val">${escapeHtml(label)}</div>
-      <div class="bar-wrap"><div class="bar" style="width:${pct}%"></div></div>
-      <div class="row-sub">${r.pedidos} pedido${r.pedidos===1?'':'s'} · Listos: ${r.listos} · Pagados: ${r.pagados}</div>
-    </div>`;
-  }).join('');
-}
-
-function renderMeses(rows){
-  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const data = meses.map((nombre, i) => ({ key:nombre, pedidos:0, metros:0, listos:0, pagados:0, pendientes:0 }));
-  rows.forEach(p => {
-    const m = Number(String(p.fecha || '').slice(5,7));
-    if(m >= 1 && m <= 12){ data[m-1].pedidos++; data[m-1].metros += numero(p.cantidad); }
-  });
-  renderList('metrosPorMes', data, 'metros');
-}
-
-function renderTablaClientes(grupos){
-  const tbody = $('tablaClientes');
-  if(!grupos.length){ tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin clientes</td></tr>'; return; }
-  tbody.innerHTML = grupos.map(g => `
-    <tr>
-      <td><b>${escapeHtml(g.key)}</b></td>
-      <td>${g.pedidos}</td>
-      <td><b>${fmt(g.metros)}</b></td>
-      <td>${escapeHtml(g.primero || '—')}</td>
-      <td>${escapeHtml(g.ultimo || '—')}</td>
-      <td><span class="pill green">${g.listos}</span></td>
-      <td><span class="pill blue">${g.pagados}</span></td>
-      <td><span class="pill red">${g.pendientes}</span></td>
-    </tr>`).join('');
-}
-
-function renderEstadisticas(){
-  const rows = filtrarPedidos();
-  const clientes = groupBy(rows, p => String(p.cliente || '').trim()).sort((a,b)=>b.metros-a.metros);
-  const recurrentes = [...clientes].sort((a,b)=>b.pedidos-a.pedidos);
-  const materiales = groupBy(rows, p => String(p.material || '').trim()).sort((a,b)=>b.metros-a.metros);
-  const impresiones = groupBy(rows, p => String(p.tipo_impresion || '').trim()).sort((a,b)=>b.metros-a.metros);
-  const operadores = groupBy(rows, p => String(p.operador || '').trim()).sort((a,b)=>b.pedidos-a.pedidos);
-
-  $('kpiPedidos').textContent = fmt(rows.length);
-  $('kpiMetros').textContent = fmt(rows.reduce((a,p)=>a+numero(p.cantidad),0));
-  $('kpiClientes').textContent = fmt(clientes.length);
-  $('kpiListos').textContent = fmt(rows.filter(p => normalizar(p.estatus_trabajo) === 'listo').length);
-  $('kpiPagados').textContent = fmt(rows.filter(p => normalizar(p.estatus_pago) === 'pagado').length);
-
-  const q = $('filterClienteSearch').value.trim();
-  $('filterInfo').innerHTML = `<span>Viendo estadísticas de <strong>${q ? escapeHtml(q) : 'todos los clientes'}</strong>.</span><span id="filterCount">${rows.length} pedido${rows.length===1?'':'s'} filtrado${rows.length===1?'':'s'}</span>`;
-
-  renderList('topClientes', clientes, 'metros');
-  renderList('clientesRecurrentes', recurrentes, 'pedidos');
-  renderList('materialesUsados', materiales, 'metros');
-  renderList('impresionesUsadas', impresiones, 'metros');
-  renderList('operadoresUsados', operadores, 'pedidos');
-  renderMeses(rows);
-  renderTablaClientes(clientes);
-}
-
-function limpiarClienteStats(){
-  $('filterClienteSearch').value = '';
-  renderEstadisticas();
-}
-
-function setEmptyAll(msg){
-  ['topClientes','clientesRecurrentes','materialesUsados','impresionesUsadas','operadoresUsados','metrosPorMes'].forEach(id => { const el=$(id); if(el) el.innerHTML = `<div class="empty">${escapeHtml(msg)}</div>`; });
-  $('tablaClientes').innerHTML = `<tr><td colspan="8" class="empty">${escapeHtml(msg)}</td></tr>`;
-}
-
-document.addEventListener('DOMContentLoaded', function(){
-  cargarPedidosStats();
-});
+function filtrarCatalogos(){const q=normalizar(document.getElementById('searchCatalogos').value); renderMateriales(materialesDB.filter(x=>!q||normalizar(x.nombre).includes(q))); renderTiposImpresion(impresionDB.filter(x=>!q||normalizar(x.nombre).includes(q)));}
+function renderMateriales(lista){const body=document.getElementById('materialesBody');document.getElementById('materialesCount').textContent=`${lista.filter(x=>activoVal(x.activo)).length} activos`; if(!lista.length){body.innerHTML=`<tr><td colspan="7" class="empty">Sin materiales</td></tr>`;return;} body.innerHTML=lista.map((m)=>rowHTML('mat',m,'precio_base')).join('');}
+function renderTiposImpresion(lista){const body=document.getElementById('impresionBody');document.getElementById('impresionCount').textContent=`${lista.filter(x=>activoVal(x.activo)).length} activos`; if(!lista.length){body.innerHTML=`<tr><td colspan="7" class="empty">Sin tipos</td></tr>`;return;} body.innerHTML=lista.map((m)=>rowHTML('imp',m,'precio_extra')).join('');}
+function rowHTML(tipo,item,precioCampo){const arr=tipo==='mat'?materialesDB:impresionDB; const idx=arr.indexOf(item); const bg=safeColor(item.color_fondo,DEFAULT_BG), txt=safeColor(item.color_texto,DEFAULT_TXT); return `<tr data-type="${tipo}" data-index="${idx}"><td><input class="name-input" value="${esc(item.nombre||'')}" oninput="editarCatalogo('${tipo}',${idx},'nombre',this.value)"></td><td><input class="price-input" type="number" step="0.01" value="${Number(item[precioCampo]||0)}" oninput="editarCatalogo('${tipo}',${idx},'${precioCampo}',this.value)"></td><td><input class="color-input" type="color" value="${esc(bg)}" oninput="editarCatalogo('${tipo}',${idx},'color_fondo',this.value)"></td><td><input class="color-input" type="color" value="${esc(txt)}" oninput="editarCatalogo('${tipo}',${idx},'color_texto',this.value)"></td><td><span class="pill-preview" data-preview="${tipo}-${idx}" style="background:${esc(bg)};color:${esc(txt)}">${esc(item.nombre||'Vista')}</span></td><td><select class="active-select" onchange="editarCatalogo('${tipo}',${idx},'activo',this.value==='true')"><option value="true" ${activoVal(item.activo)?'selected':''}>Activo</option><option value="false" ${!activoVal(item.activo)?'selected':''}>Inactivo</option></select></td><td><button class="mini-btn del" onclick="eliminarCatalogo('${tipo}',${idx})">Eliminar</button></td></tr>`}
+function editarCatalogo(tipo,idx,campo,valor){const arr=tipo==='mat'?materialesDB:impresionDB; if(!arr[idx])return; if(campo==='precio_base'||campo==='precio_extra') valor=Number(valor||0); arr[idx][campo]=valor; const pill=document.querySelector(`[data-preview="${tipo}-${idx}"]`); if(pill){pill.textContent=arr[idx].nombre||'Vista'; pill.style.background=safeColor(arr[idx].color_fondo,DEFAULT_BG); pill.style.color=safeColor(arr[idx].color_texto,DEFAULT_TXT);}}
+function nuevoMaterial(){materialesDB.push({id:null,nombre:'Nuevo material',precio_base:0,activo:true,color_fondo:'#e5e7eb',color_texto:'#111827'}); filtrarCatalogos(); toast('Material añadido. Edita y guarda.');}
+function nuevoTipoImpresion(){impresionDB.push({id:null,nombre:'Nuevo tipo',precio_extra:0,activo:true,color_fondo:'#e5e7eb',color_texto:'#111827'}); filtrarCatalogos(); toast('Tipo añadido. Edita y guarda.');}
+async function guardarTodosMateriales(){await guardarLista('materiales',materialesDB,'precio_base');}
+async function guardarTodosTiposImpresion(){await guardarLista('tipos_impresion',impresionDB,'precio_extra');}
+async function guardarLista(tabla,lista,precioCampo){if(!validarSupabase())return; try{for(const x of lista){const datos={nombre:String(x.nombre||'').trim(), [precioCampo]:Number(x[precioCampo]||0), activo:activoVal(x.activo), color_fondo:safeColor(x.color_fondo,DEFAULT_BG), color_texto:safeColor(x.color_texto,DEFAULT_TXT)}; if(!datos.nombre) continue; if(x.id){const {error}=await db().from(tabla).update(datos).eq('id',x.id); if(error) throw error;}else{const {data,error}=await db().from(tabla).insert([datos]).select().single(); if(error) throw error; x.id=data.id;}} toast('Cambios guardados'); await recargarTodo();}catch(error){console.error(error); alert('Error guardando: '+(error.message||error));}}
+async function eliminarCatalogo(tipo,idx){const arr=tipo==='mat'?materialesDB:impresionDB; const tabla=tipo==='mat'?'materiales':'tipos_impresion'; const item=arr[idx]; if(!item) return; if(!confirm(`¿Eliminar ${item.nombre || 'este registro'}?`)) return; try{if(item.id){const {error}=await db().from(tabla).delete().eq('id',item.id); if(error) throw error;} arr.splice(idx,1); filtrarCatalogos(); toast('Eliminado');}catch(error){console.error(error); alert('Error eliminando: '+(error.message||error));}}
+async function recargarTodo(){await cargarCatalogos(); toast('Catálogos recargados');}
+document.addEventListener('DOMContentLoaded',cargarCatalogos);
 </script>
 </body>
 </html>
