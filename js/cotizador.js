@@ -1,8 +1,9 @@
-console.log("COTIZADOR JS conectado v40 completo");
+console.log("COTIZADOR JS conectado v41 completo");
 
 /* =========================================================
    COTIZADOR TUTTOVINILOS
    Archivo: js/cotizador.js
+
    Requiere:
    - js/supabase.js con window.supabaseClient
    - jsPDF
@@ -15,6 +16,9 @@ const $ = (id) => document.getElementById(id);
 let clientesDB = [];
 let cotizacionesDB = [];
 let cotizacionSeleccionada = null;
+
+const TUTTO_LOGO_SRC = "Logo tutto1.svg";
+let tuttoLogoPngPromise = null;
 
 let data = {
   tipo: "Cotización",
@@ -655,27 +659,27 @@ function loadImageDataUrl(src){
     const img = new Image();
 
     img.onload = () => resolve(img);
-    img.onerror = reject;
+    img.onerror = () => reject(new Error("No se pudo cargar el logo: " + src));
 
     img.crossOrigin = "anonymous";
     img.src = src;
   });
 }
 
-let tuttoLogoPngPromise = null;
-
 async function getTuttoLogoPngDataUrl(){
   if(tuttoLogoPngPromise) return tuttoLogoPngPromise;
 
   tuttoLogoPngPromise = (async () => {
-    const logoPath = "Logo tutto1.svg";
-    const img = await loadImageDataUrl(logoPath);
+    const img = await loadImageDataUrl(TUTTO_LOGO_SRC);
 
     const canvas = document.createElement("canvas");
-    const scale = 4;
+    const scale = 5;
 
-    canvas.width = Math.max(1, Math.round(img.width * scale));
-    canvas.height = Math.max(1, Math.round(img.height * scale));
+    const realW = img.naturalWidth || img.width || 600;
+    const realH = img.naturalHeight || img.height || 180;
+
+    canvas.width = Math.max(1, Math.round(realW * scale));
+    canvas.height = Math.max(1, Math.round(realH * scale));
 
     const ctx = canvas.getContext("2d");
 
@@ -705,17 +709,19 @@ function drawPdfField(doc, x, y, w, h, label, value, opts = {}){
   doc.roundedRect(x, y, w, h, radius, radius, "FD");
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(opts.labelSize || 7.2);
+  doc.setFontSize(opts.labelSize || 5.4);
   doc.setTextColor(107, 114, 128);
-  doc.text(String(label || "").toUpperCase(), x + 3, y + 4.2);
+  doc.text(String(label || "").toUpperCase(), x + 3, y + 3.6);
 
   doc.setFont("helvetica", opts.valueBold ? "bold" : "normal");
-  doc.setFontSize(opts.valueSize || 10);
+  doc.setFontSize(opts.valueSize || 7.2);
   doc.setTextColor(17, 24, 39);
 
-  const lines = doc.splitTextToSize(String(value || "—"), w - 6);
+  const texto = String(value || "—");
+  const lines = doc.splitTextToSize(texto, w - 6);
+  const maxLines = opts.maxLines || 1;
 
-  doc.text(lines.slice(0, opts.maxLines || 2), x + 3, y + 9.8);
+  doc.text(lines.slice(0, maxLines), x + 3, y + 8.1);
 }
 
 function drawPdfHeaderFooter(doc, footer, form){
@@ -775,25 +781,26 @@ async function crearDocumentoPDF(snapshot = crearSnapshotActual()){
   doc.rect(0, 0, W, 30, "F");
 
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(14, 8, 44, 11, 4, 4, "F");
+  doc.roundedRect(14, 7.5, 48, 13, 4, 4, "F");
 
   const logoDataUrl = await getTuttoLogoPngDataUrl();
 
   if(logoDataUrl){
     try{
-      doc.addImage(logoDataUrl, "PNG", 16, 10.2, 39.5, 6.9, undefined, "FAST");
+      doc.addImage(logoDataUrl, "PNG", 16, 9.2, 44, 9.2, undefined, "FAST");
     }catch(error){
       console.warn("No se pudo insertar el logo en el PDF:", error);
+
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.setTextColor(...blue);
-      doc.text("TUTTO VINILOS", 36, 15.2, { align: "center" });
+      doc.setFontSize(12);
+      doc.setTextColor(21, 59, 255);
+      doc.text("TUTTO VINILOS", 38, 15.8, { align: "center" });
     }
   }else{
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.setTextColor(...blue);
-    doc.text("TUTTO VINILOS", 36, 15.2, { align: "center" });
+    doc.setFontSize(12);
+    doc.setTextColor(21, 59, 255);
+    doc.text("TUTTO VINILOS", 38, 15.8, { align: "center" });
   }
 
   doc.setTextColor(255, 255, 255);
@@ -817,24 +824,24 @@ async function crearDocumentoPDF(snapshot = crearSnapshotActual()){
   const fieldH = 10;
 
   drawPdfField(doc, 14, topY, 54, fieldH, "Fecha", form.fecha || "", {
-    labelSize: 5.7,
-    valueSize: 8.2,
+    labelSize: 5.4,
+    valueSize: 7.4,
     valueBold: true,
     radius: 3,
     maxLines: 1
   });
 
   drawPdfField(doc, 71, topY, 62, fieldH, "N° Documento", form.numero || "", {
-    labelSize: 5.7,
-    valueSize: 8.2,
+    labelSize: 5.4,
+    valueSize: 7.4,
     valueBold: true,
     radius: 3,
     maxLines: 1
   });
 
   drawPdfField(doc, 136, topY, 62, fieldH, "Válido hasta", form.vence || "", {
-    labelSize: 5.7,
-    valueSize: 8.2,
+    labelSize: 5.4,
+    valueSize: 7.4,
     valueBold: true,
     radius: 3,
     maxLines: 1
@@ -850,37 +857,37 @@ async function crearDocumentoPDF(snapshot = crearSnapshotActual()){
   doc.line(14, 67.5, W - 14, 67.5);
 
   drawPdfField(doc, 14, 70, 67, 10, "Cliente", form.cliente || "", {
-    labelSize: 5.5,
-    valueSize: 7.3,
+    labelSize: 5.2,
+    valueSize: 7.0,
     valueBold: true,
     maxLines: 1,
     radius: 3
   });
 
   drawPdfField(doc, 84, 70, 55, 10, "RIF / Cédula", form.rif || "", {
-    labelSize: 5.5,
-    valueSize: 7.3,
+    labelSize: 5.2,
+    valueSize: 7.0,
     maxLines: 1,
     radius: 3
   });
 
   drawPdfField(doc, 142, 70, 56, 10, "Teléfono", form.telefono || "", {
-    labelSize: 5.5,
-    valueSize: 7.3,
+    labelSize: 5.2,
+    valueSize: 7.0,
     maxLines: 1,
     radius: 3
   });
 
   drawPdfField(doc, 14, 83, 67, 10, "Email", form.email || "", {
-    labelSize: 5.5,
-    valueSize: 7.1,
+    labelSize: 5.2,
+    valueSize: 6.8,
     maxLines: 1,
     radius: 3
   });
 
   drawPdfField(doc, 84, 83, 114, 10, "Dirección", form.direccion || "", {
-    labelSize: 5.5,
-    valueSize: 7.1,
+    labelSize: 5.2,
+    valueSize: 6.8,
     maxLines: 1,
     radius: 3
   });
