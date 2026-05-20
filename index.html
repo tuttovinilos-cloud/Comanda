@@ -1756,7 +1756,80 @@ table{
   }
 }
 
+
+
+/* =========================================================
+   PAGINACIÓN PEDIDOS · 30 en 30
+========================================================= */
+.pagination-bar{
+  position:sticky;
+  left:0;
+  bottom:0;
+  z-index:120;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+  padding:12px 14px;
+  background:rgba(255,255,255,.96);
+  border-top:1px solid #d9deea;
+  box-shadow:0 -8px 24px rgba(15,23,42,.08);
+  backdrop-filter:blur(8px);
+}
+.page-btn,
+.page-select{
+  min-height:36px;
+  border-radius:999px;
+  border:1px solid #cbd3e6;
+  background:#fff;
+  color:#153bff;
+  font-family:var(--head,Montserrat,Arial,sans-serif);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.45px;
+  text-transform:uppercase;
+  padding:8px 12px;
+  cursor:pointer;
+}
+.page-btn:hover{background:#eef1ff;border-color:#153bff}
+.page-btn:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(1)}
+.page-info{
+  min-height:36px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  background:#eef1ff;
+  color:#0b1f7a;
+  border:1px solid #c7d2fe;
+  font-family:var(--head,Montserrat,Arial,sans-serif);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.35px;
+  padding:8px 12px;
+  white-space:nowrap;
+}
+.page-select{
+  width:auto!important;
+  padding-right:28px;
+}
+@media(max-width:760px){
+  .pagination-bar{
+    position:relative;
+    bottom:auto;
+    padding:10px;
+    gap:6px;
+  }
+  .page-btn,.page-info,.page-select{
+    flex:1 1 calc(50% - 6px);
+    font-size:10px;
+    padding:8px 8px;
+  }
+}
+
 </style>
+<link rel="stylesheet" href="css/menu.css?v=1">
 </head>
 <body>
 <header class="header">
@@ -1879,6 +1952,7 @@ table{
     <tbody id="orderTableBody"></tbody>
   </table>
   <div id="emptyState" class="empty" style="display:none">— SIN PEDIDOS —</div>
+  <div id="paginationBar" class="pagination-bar"></div>
 </div>
 <div class="backdrop" id="orderBackdrop" style="display:none" onclick="bdClick(event,'orderBackdrop')">
   <div class="modal">
@@ -2950,6 +3024,235 @@ html.menu-ready .header-tabs,
     }
   });
   window.refrescarColoresCatalogos = cargarColoresCatalogos;
+})();
+</script>
+
+
+
+<script>
+/* =========================================================
+   PAGINACIÓN PEDIDOS v12 · 30 en 30
+   Reemplaza la carga visual completa por páginas internas.
+   No cambia Supabase ni borra datos.
+========================================================= */
+(function(){
+  let paginaActualPedidos = 1;
+  let pedidosPorPagina = 30;
+  let pedidosFiltradosCache = [];
+
+  function $(id){ return document.getElementById(id); }
+  function normLocal(v){
+    return String(v || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .trim();
+  }
+  function escLocal(v){
+    if(typeof window.escapeHtml === 'function') return window.escapeHtml(v);
+    return String(v ?? '')
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#039;');
+  }
+  function dbLocal(){ return window.supabaseClient; }
+
+  function puedeEditarCantidad(){
+    return typeof window.puedeModificarCantidadLocal === 'function'
+      ? window.puedeModificarCantidadLocal()
+      : true;
+  }
+
+  function claseTrabajoLocal(valor){
+    return typeof window.claseTrabajo === 'function' ? window.claseTrabajo(valor) : '';
+  }
+  function clasePagoLocal(valor){
+    return typeof window.clasePago === 'function' ? window.clasePago(valor) : '';
+  }
+
+  function clienteExtra(p){
+    try{
+      const nombre = normLocal(p.cliente);
+      const lista = Array.isArray(window.clientesDB) ? window.clientesDB : [];
+      const c = lista.find(x => normLocal(x.nombre) === nombre);
+      return [c?.telefono, c?.correo, c?.notas].join(' ');
+    }catch(_){
+      return '';
+    }
+  }
+
+  function cumpleFiltros(p){
+    const texto = normLocal($('searchInput')?.value || '');
+    const estadoFiltro = $('filterStatus')?.value || '';
+    const pagoFiltro = $('filterPago')?.value || '';
+    const operadorFiltro = $('filterOperador')?.value || '';
+    const desde = $('filterFechaDesde')?.value || '';
+    const hasta = $('filterFechaHasta')?.value || '';
+
+    const contenido = normLocal([
+      p.id,
+      p.fecha,
+      p.operador,
+      p.cliente,
+      p.descripcion,
+      p.cantidad,
+      p.material,
+      p.tipo_impresion,
+      p.precio,
+      p.estatus_trabajo,
+      p.estatus_pago,
+      p.fecha_entrega,
+      p.monto_abonado,
+      clienteExtra(p)
+    ].join(' '));
+
+    if(texto && !contenido.includes(texto)) return false;
+    if(estadoFiltro && p.estatus_trabajo !== estadoFiltro) return false;
+    if(pagoFiltro && p.estatus_pago !== pagoFiltro) return false;
+    if(operadorFiltro && p.operador !== operadorFiltro) return false;
+    if(desde && String(p.fecha || '') < desde) return false;
+    if(hasta && String(p.fecha || '') > hasta) return false;
+    return true;
+  }
+
+  function filaPedidoHTML(p){
+    const id = Number(p.id);
+    const archivo = p.archivo_url
+      ? `<a class="file-link-chip" href="${escLocal(p.archivo_url)}" target="_blank" onclick="event.stopPropagation()">📎 ${escLocal(p.archivo_nombre || 'Archivo')}</a>`
+      : '—';
+    const cantidadDisabled = puedeEditarCantidad() ? '' : 'disabled';
+    const st = String(p.estatus_trabajo || 'Solicitud');
+    const pg = String(p.estatus_pago || 'Pendiente');
+
+    return `
+      <tr onclick="openEditOrder(${id})">
+        <td>${escLocal(p.id)}</td>
+        <td>${escLocal(p.fecha)}</td>
+        <td>${escLocal(p.operador)}</td>
+        <td>${escLocal(p.cliente)}</td>
+        <td>${escLocal(p.descripcion)}</td>
+        <td>
+          <input class="cell-edit" value="${escLocal(p.cantidad)}" onchange="actualizarCampoPedido(${id}, 'cantidad', this.value)" onclick="event.stopPropagation()" ${cantidadDisabled}/>
+        </td>
+        <td>${escLocal(p.material)}</td>
+        <td>${escLocal(p.tipo_impresion)}</td>
+        <td>${escLocal(p.precio)}</td>
+        <td>
+          <select class="cell-select ${claseTrabajoLocal(st)}" onchange="actualizarCampoPedido(${id}, 'estatus_trabajo', this.value); this.className='cell-select ' + claseTrabajo(this.value)" onclick="event.stopPropagation()">
+            <option ${st === 'Solicitud' ? 'selected' : ''}>Solicitud</option>
+            <option ${st === 'En curso' ? 'selected' : ''}>En curso</option>
+            <option ${st === 'Revisado' ? 'selected' : ''}>Revisado</option>
+            <option ${st === 'Listo' ? 'selected' : ''}>Listo</option>
+          </select>
+        </td>
+        <td>
+          <select class="cell-select ${clasePagoLocal(pg)}" onchange="actualizarCampoPedido(${id}, 'estatus_pago', this.value); this.className='cell-select ' + clasePago(this.value)" onclick="event.stopPropagation()">
+            <option ${pg === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+            <option ${pg === 'Abonado' ? 'selected' : ''}>Abonado</option>
+            <option ${pg === 'Pagado' ? 'selected' : ''}>Pagado</option>
+          </select>
+        </td>
+        <td>${escLocal(p.fecha_entrega || '—')}</td>
+        <td>${archivo}</td>
+      </tr>`;
+  }
+
+  function renderPaginacion(total, paginas, inicio, fin){
+    const bar = $('paginationBar');
+    if(!bar) return;
+
+    if(!total){
+      bar.innerHTML = `<span class="page-info">0 pedidos</span>`;
+      return;
+    }
+
+    bar.innerHTML = `
+      <button class="page-btn" type="button" onclick="cambiarPaginaPedidos(-1)" ${paginaActualPedidos <= 1 ? 'disabled' : ''}>← Anterior</button>
+      <span class="page-info">${inicio + 1}-${fin} de ${total}</span>
+      <span class="page-info">Página ${paginaActualPedidos} / ${paginas}</span>
+      <button class="page-btn" type="button" onclick="cambiarPaginaPedidos(1)" ${paginaActualPedidos >= paginas ? 'disabled' : ''}>Siguiente →</button>
+      <select class="page-select" onchange="cambiarTamanoPaginaPedidos(this.value)">
+        <option value="30" ${pedidosPorPagina === 30 ? 'selected' : ''}>30 por página</option>
+        <option value="50" ${pedidosPorPagina === 50 ? 'selected' : ''}>50 por página</option>
+        <option value="100" ${pedidosPorPagina === 100 ? 'selected' : ''}>100 por página</option>
+      </select>`;
+  }
+
+  function despuesDeRender(){
+    if(typeof window.aplicarPermisosComanda === 'function') window.aplicarPermisosComanda();
+    if(typeof window.aplicarColoresEstadosYAbonos === 'function') setTimeout(window.aplicarColoresEstadosYAbonos, 30);
+    if(typeof window.refrescarColoresCatalogos === 'function') setTimeout(window.refrescarColoresCatalogos, 80);
+  }
+
+  function renderPedidosPaginados(resetPage){
+    const tabla = $('orderTableBody');
+    const emptyState = $('emptyState');
+    if(!tabla) return;
+
+    pedidosFiltradosCache = (Array.isArray(window.pedidosDB) ? window.pedidosDB : [])
+      .filter(cumpleFiltros)
+      .sort((a,b) => Number(b.id || 0) - Number(a.id || 0));
+
+    const total = pedidosFiltradosCache.length;
+    const paginas = Math.max(1, Math.ceil(total / pedidosPorPagina));
+    if(resetPage) paginaActualPedidos = 1;
+    if(paginaActualPedidos < 1) paginaActualPedidos = 1;
+    if(paginaActualPedidos > paginas) paginaActualPedidos = paginas;
+
+    const inicio = (paginaActualPedidos - 1) * pedidosPorPagina;
+    const fin = Math.min(inicio + pedidosPorPagina, total);
+    const pagina = pedidosFiltradosCache.slice(inicio, fin);
+
+    tabla.innerHTML = pagina.map(filaPedidoHTML).join('');
+
+    if(emptyState) emptyState.style.display = total ? 'none' : 'block';
+    renderPaginacion(total, paginas, inicio, fin);
+    despuesDeRender();
+  }
+
+  window.cambiarPaginaPedidos = function(delta){
+    paginaActualPedidos += Number(delta || 0);
+    renderPedidosPaginados(false);
+    const wrap = document.querySelector('.table-wrap');
+    if(wrap) wrap.scrollTo({left:0, top:0, behavior:'auto'});
+  };
+
+  window.cambiarTamanoPaginaPedidos = function(valor){
+    pedidosPorPagina = Number(valor || 30);
+    paginaActualPedidos = 1;
+    renderPedidosPaginados(false);
+  };
+
+  window.onSearch = function(){
+    renderPedidosPaginados(true);
+  };
+
+  window.cargarPedidos = async function(){
+    if(typeof window.validarSupabase === 'function' && !window.validarSupabase()) return;
+    const supa = dbLocal();
+    if(!supa) return;
+
+    const { data, error } = await supa
+      .from('pedidos')
+      .select('*')
+      .order('id', { ascending:false });
+
+    if(error){
+      console.error('Error cargando pedidos:', error);
+      alert('Error cargando pedidos: ' + error.message);
+      return;
+    }
+
+    window.pedidosDB = data || [];
+    console.log('Pedidos cargados con paginación:', window.pedidosDB.length);
+    renderPedidosPaginados(true);
+
+    if(typeof window.cargarNotificaciones === 'function'){
+      try{ window.cargarNotificaciones(); }catch(e){ console.warn(e); }
+    }
+  };
 })();
 </script>
 
