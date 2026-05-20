@@ -1,13 +1,13 @@
-console.log("MENU GLOBAL conectado v4");
+console.log("MENU GLOBAL conectado v7");
 
 /* =========================================================
-   MENU GLOBAL COMANDA / TUTTOVINILOS v4
-   Adaptado al index actual:
+   MENU GLOBAL COMANDA / TUTTOVINILOS v7
    - Usa #authMenu
    - Usa .header-tabs / .tab-btn
    - Crea botón móvil .mobile-menu-btn
    - Carga operadores en q_operador, f_operador, filterOperador
    - Mueve badge SUPABASE al menú superior
+   - Evita delay visual agregando .menu-ready
 ========================================================= */
 
 (function(){
@@ -44,6 +44,7 @@ console.log("MENU GLOBAL conectado v4");
 
   function firstAllowed(op){
     if(isRoberto(op)) return "index.html";
+
     const item = links.find(l => op && op[l.permission] === true);
     return item ? item.page : "login.html";
   }
@@ -66,7 +67,10 @@ console.log("MENU GLOBAL conectado v4");
     const pill = document.createElement("div");
     pill.className = "storage-pill";
     pill.id = "storageBadgeHeader";
-    pill.innerHTML = '<div class="storage-dot"></div><span id="storageBadgeTextHeader">SUPABASE</span>';
+    pill.innerHTML = `
+      <div class="storage-dot"></div>
+      <span id="storageBadgeTextHeader">SUPABASE</span>
+    `;
     return pill;
   }
 
@@ -79,6 +83,7 @@ console.log("MENU GLOBAL conectado v4");
     }
 
     const menu = document.getElementById("authMenu");
+
     if(!menu){
       console.warn("No existe #authMenu");
       return;
@@ -114,6 +119,7 @@ console.log("MENU GLOBAL conectado v4");
     menu.appendChild(logoutBtn);
 
     menu.appendChild(crearStoragePill());
+
     syncStorageBadge();
 
     if(visibles === 0){
@@ -147,8 +153,12 @@ console.log("MENU GLOBAL conectado v4");
       };
 
       const noti = header.querySelector(".noti-btn");
-      if(noti) header.insertBefore(btn, noti);
-      else header.insertBefore(btn, menu);
+
+      if(noti){
+        header.insertBefore(btn, noti);
+      }else{
+        header.insertBefore(btn, menu);
+      }
     }
   }
 
@@ -159,12 +169,17 @@ console.log("MENU GLOBAL conectado v4");
     const headerBadge = document.getElementById("storageBadgeHeader");
 
     if(headerText){
-      headerText.textContent = window.supabaseClient ? "SUPABASE" : (desktopText?.textContent || "LOCAL");
+      headerText.textContent = window.supabaseClient
+        ? "SUPABASE"
+        : (desktopText?.textContent || "LOCAL");
     }
 
     if(headerBadge){
-      if(window.supabaseClient || desktopBadge?.classList.contains("ok")) headerBadge.classList.add("ok");
-      else headerBadge.classList.remove("ok");
+      if(window.supabaseClient || desktopBadge?.classList.contains("ok")){
+        headerBadge.classList.add("ok");
+      }else{
+        headerBadge.classList.remove("ok");
+      }
     }
   }
 
@@ -256,6 +271,13 @@ console.log("MENU GLOBAL conectado v4");
     document.documentElement.style.setProperty("--sticky-quick-top", `0px`);
   }
 
+  function marcarMenuListo(){
+    const header = document.querySelector(".header");
+    if(header){
+      header.classList.add("menu-ready");
+    }
+  }
+
   window.logout = window.logout || logout;
   window.cargarOperadoresEnComanda = cargarOperadoresEnComanda;
   window.updateStickyOffsets = window.updateStickyOffsets || updateStickyOffsets;
@@ -265,20 +287,13 @@ console.log("MENU GLOBAL conectado v4");
     marcarSupabaseSiListo();
     setupMobileMenu();
     renderMenu();
+    marcarMenuListo();
+
     updateStickyOffsets();
     cargarOperadoresEnComanda();
     syncStorageBadge();
 
     window.addEventListener("resize", updateStickyOffsets);
-    setInterval(syncStorageBadge, 600);
-
-    setTimeout(function(){
-      marcarSupabaseSiListo();
-      setupMobileMenu();
-      renderMenu();
-      updateStickyOffsets();
-      cargarOperadoresEnComanda();
-      syncStorageBadge();
-    }, 700);
+    setInterval(syncStorageBadge, 1000);
   });
 })();
