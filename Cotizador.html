@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tuttovinilos - Cotizador PRO</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/cotizador.css?v=3">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=31"></script>
+<script src="js/auth.js?v=31"></script>
+<script src="js/menu.js?v=10"></script>
+</head>
+
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="logo" aria-label="Tutto Vinilos">
+      <img src="img/logo-tutto.svg?v=10" alt="Tutto Vinilos">
+    </div>
+
+    <div class="top-info">
+      <div><b>Tel:</b> +58 414-4961122</div>
+      <div><b>Email:</b> tuttovinilos@gmail.com</div>
+      <div><b>RIF:</b> J-40218250-3</div>
+    </div>
+
+    <button class="app-menu-btn" id="mobileMenuBtn" type="button">☰ Menú</button>
+    <nav class="app-menu" data-auth-menu id="authMenu"></nav>
+  </div>
+</header>
+
+<section class="controls">
+  <div class="controls-inner">
+    <div class="ctrl">
+      <label>Tipo de documento</label>
+      <select id="tipoDocumento">
+        <option value="Cotización">📋 Cotización</option>
+        <option value="Presupuesto">💰 Presupuesto</option>
+        <option value="Nota de Entrega">📦 Nota de Entrega</option>
+        <option value="Orden de Trabajo">🔧 Orden de Trabajo</option>
+      </select>
+    </div>
+
+    <div class="ctrl">
+      <label>Preparado por</label>
+      <select id="responsable">
+        <option value="Ricardo">👤 Ricardo</option>
+        <option value="Roberto">👤 Roberto</option>
+        <option value="Marie Gabriela">👤 Marie Gabriela</option>
+      </select>
+    </div>
+  </div>
+</section>
+
+<main class="wrap">
+  <div class="tabs">
+    <button class="tab-btn active" id="tabNueva" type="button">Nueva cotización</button>
+    <button class="tab-btn" id="tabPrevias" type="button">Cotizaciones previas</button>
+  </div>
+
+  <section id="panelNueva" class="tab-content active">
+    <section class="card">
+      <div class="section-title">Datos del cliente</div>
+
+      <div class="grid">
+        <div class="field">
+          <label>Fecha</label>
+          <input id="fecha" type="date">
+        </div>
+
+        <div class="field">
+          <label>N° Documento</label>
+          <input id="numero" type="text" placeholder="Automático" readonly>
+        </div>
+
+        <div class="field">
+          <label>Válido hasta</label>
+          <input id="vence" type="date">
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="grid">
+        <div class="field">
+          <label>Cliente</label>
+          <input id="cliente" type="text" list="clientesList" placeholder="Nombre del cliente">
+          <datalist id="clientesList"></datalist>
+          <div class="client-mini" id="clienteMini">Escribe para buscar o crear cliente nuevo.</div>
+        </div>
+
+        <div class="field">
+          <label>RIF / Cédula</label>
+          <input id="rif" type="text" placeholder="J-00000000-0 / V-00000000">
+        </div>
+
+        <div class="field">
+          <label>Teléfono</label>
+          <input id="telefono" type="text" placeholder="+58 414 000 0000">
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="grid two">
+        <div class="field">
+          <label>Email</label>
+          <input id="email" type="text" placeholder="correo@ejemplo.com">
+        </div>
+
+        <div class="field">
+          <label>Dirección</label>
+          <input id="direccion" type="text" placeholder="Dirección del cliente">
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="banner" id="banner">Cotización</div>
+
+      <div class="desktop-table">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Descripción del producto / servicio</th>
+              <th>Cant.</th>
+              <th>P. Unit ($)</th>
+              <th>Total ($)</th>
+              <th>✕</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div id="mobileItems" class="mobile-items"></div>
+
+      <div class="actions">
+        <button class="btn btn-blue" id="addItem" type="button">＋ Añadir ítem</button>
+        <button class="btn btn-gray" id="addSep" type="button">＋ Separador</button>
+      </div>
+
+      <div class="bottom-grid">
+        <div class="field">
+          <label>Notas / condiciones</label>
+          <textarea id="notas" placeholder="Ej: Cotización válida por 5 días hábiles. Tiempo de entrega sujeto a aprobación del diseño."></textarea>
+        </div>
+
+        <div>
+          <label class="iva">
+            <input type="checkbox" id="ivaCheck">
+            Aplicar IVA 16%
+          </label>
+
+          <div class="summary">
+            <div class="summary-row">
+              <span>Sub Total</span>
+              <b id="subtotal">$0.00</b>
+            </div>
+
+            <div class="summary-row">
+              <span>IVA 16%</span>
+              <b id="iva">$0.00</b>
+            </div>
+
+            <div class="summary-row final">
+              <span>TOTAL</span>
+              <span id="total">$0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div id="footerDireccion" contenteditable="true">
+          Avenida Universidad, Urbanización La Granja, Edificio Diario El Carabobeño, en el Municipio Naguanagua del estado Carabobo.
+        </div>
+
+        <div id="footerContacto" contenteditable="true">
+          Tel: +58 414-4961122 | tuttovinilos@gmail.com
+        </div>
+
+        <div>
+          <span id="footerPreparadoTexto" contenteditable="true">Documento preparado por:</span>
+          <b id="creditName">Ricardo</b>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <section id="panelPrevias" class="tab-content">
+    <section class="card">
+      <div class="section-title">Cotizaciones previas guardadas</div>
+
+      <div class="prev-toolbar">
+        <input class="prev-search" id="buscarCotizaciones" type="text" placeholder="Buscar por fecha, cliente, teléfono o número...">
+
+        <select class="prev-search" id="filtroAprobado">
+          <option value="">Todas</option>
+          <option value="aprobadas">Aprobadas</option>
+          <option value="pendientes">Pendientes</option>
+        </select>
+
+        <button class="btn btn-blue" id="recargarCotizaciones" type="button">Recargar</button>
+      </div>
+
+      <div class="desktop-table prev-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Aprob.</th>
+              <th>Fecha</th>
+              <th>N° Documento</th>
+              <th>Cliente</th>
+              <th>Responsable</th>
+              <th>Teléfono</th>
+              <th>Total</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="cotizacionesBody">
+            <tr>
+              <td colspan="8" class="empty">Cargando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+</main>
+
+<nav class="fixed">
+  <div class="fixed-inner">
+    <div class="fixed-left">
+      <button class="btn btn-green" id="pdfBtn" type="button">
+        <span class="spinner"></span>
+        <span class="btn-text">Guardar</span>
+      </button>
+
+      <button class="btn btn-outline" id="printBtn" type="button">🖨 Imprimir</button>
+    </div>
+  </div>
+</nav>
+
+<div class="modal-backdrop" id="detalleBackdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="detalleTitle">Detalle de cotización</div>
+      <button class="mini-btn" id="cerrarDetalle" type="button">Cerrar</button>
+    </div>
+
+    <div class="modal-body" id="detalleBody"></div>
+
+    <div class="modal-foot">
+      <button class="btn btn-outline" id="cargarDetalleForm" type="button">Cargar para editar</button>
+      <button class="btn btn-green" id="pdfDetalle" type="button">Generar PDF</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="js/cotizador.js?v=43"></script>
+</body>
+</html>
