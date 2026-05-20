@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v41 completo");
+console.log("COTIZADOR JS conectado v43 logo embebido completo");
 
 /* =========================================================
    COTIZADOR TUTTOVINILOS
@@ -8,7 +8,10 @@ console.log("COTIZADOR JS conectado v41 completo");
    - js/supabase.js con window.supabaseClient
    - jsPDF
    - jsPDF AutoTable
-   - Logo tutto1.svg en la misma carpeta del HTML
+
+   Nota importante:
+   - El logo está embebido dentro de este JS.
+   - Ya no depende de que exista el archivo "Logo tutto1.svg" para el PDF.
 ========================================================= */
 
 const $ = (id) => document.getElementById(id);
@@ -17,7 +20,7 @@ let clientesDB = [];
 let cotizacionesDB = [];
 let cotizacionSeleccionada = null;
 
-const TUTTO_LOGO_SRC = "Logo tutto1.svg";
+const TUTTO_LOGO_SRC = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8IS0tIENyZWF0b3I6IENvcmVsRFJBVyAyMDIwICg2NC1CaXQpIC0tPg0KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbDpzcGFjZT0icHJlc2VydmUiIHdpZHRoPSI2MG1tIiBoZWlnaHQ9IjE3LjczOW1tIiB2ZXJzaW9uPSIxLjEiIHN0eWxlPSJzaGFwZS1yZW5kZXJpbmc6Z2VvbWV0cmljUHJlY2lzaW9uOyB0ZXh0LXJlbmRlcmluZzpnZW9tZXRyaWNQcmVjaXNpb247IGltYWdlLXJlbmRlcmluZzpvcHRpbWl6ZVF1YWxpdHk7IGZpbGwtcnVsZTpldmVub2RkOyBjbGlwLXJ1bGU6ZXZlbm9kZCINCnZpZXdCb3g9IjAgMCAwLjY0NiAwLjE5MSINCiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayINCiB4bWxuczp4b2RtPSJodHRwOi8vd3d3LmNvcmVsLmNvbS9jb3JlbGRyYXcvb2RtLzIwMDMiPg0KIDxkZWZzPg0KICA8c3R5bGUgdHlwZT0idGV4dC9jc3MiPg0KICAgPCFbQ0RBVEFbDQogICAgLmZpbDEge2ZpbGw6I0Y5N0E1NDtmaWxsLXJ1bGU6bm9uemVyb30NCiAgICAuZmlsMCB7ZmlsbDp3aGl0ZTtmaWxsLXJ1bGU6bm9uemVyb30NCiAgIF1dPg0KICA8L3N0eWxlPg0KIDwvZGVmcz4NCiA8ZyBpZD0iQ2FwYV94MDAyMF8xIj4NCiAgPG1ldGFkYXRhIGlkPSJDb3JlbENvcnBJRF8wQ29yZWwtTGF5ZXIiLz4NCiAgPGcgaWQ9Il8xNTY0OTUzMzQzNzEyIj4NCiAgIDxwb2x5Z29uIGNsYXNzPSJmaWwwIiBwb2ludHM9IjAuMDU2OSwwLjAyNTMgMC4wNTY5LDAuMTI2OCAwLjAzMDMsMC4xMjY4IDAuMDMwMywwLjAyNTMgLTAsMC4wMjUzIC0wLDAuMDAyOCAwLjA4NzIsMC4wMDI4IDAuMDg3MiwwLjAyNTMgIi8+DQogICA8cGF0aCBjbGFzcz0iZmlsMCIgZD0iTTAuMjE3NCAwLjA1ODFsMCAwLjAxNzdjMCwwLjAxMDIgLTAuMDAyMywwLjAxNzggLTAuMDA2OSwwLjAyMyAtMC4wMDQ2LDAuMDA1MiAtMC4wMTE1LDAuMDA3OCAtMC4wMjA1LDAuMDA3OCAtMC4wMDksMCAtMC4wMTU3LC0wLjAwMjYgLTAuMDIwMiwtMC4wMDc4IC0wLjAwNDUsLTAuMDA1MiAtMC4wMDY4LC0wLjAxMjkgLTAuMDA2OCwtMC4wMjMxbDAgLTAuMDczIC0wLjAyNjMgMCAwIDAuMDc3MWMwLDAuMDE2OCAwLjAwNDQsMC4wMjk0IDAuMDEzMywwLjAzNzcgMC4wMDg5LDAuMDA4MyAwLjAyMjQsMC4wMTI0IDAuMDQwNSwwLjAxMjQgMC4wMTc4LDAgMC4wMzEyLC0wLjAwNDEgMC4wNDAxLC0wLjAxMjQgMC4wMDg5LC0wLjAwODMgMC4wMTMzLC0wLjAyMDkgMC4wMTMzLC0wLjAzNzdsMCAtMC4wMjE4IC0wLjAyNjMgMHoiLz4NCiAgIDxwb2x5Z29uIGNsYXNzPSJmaWwxIiBwb2ludHM9IjAuMjMwNSwwLjAwMjggMC4yMzcxLDAuMDIxOSAwLjI0MzgsMC4wNDExIDAuMjMwNSwwLjA0MTEgMC4yMTcxLDAuMDQxMSAwLjIyMzgsMC4wMjE5ICIvPg0KICAgPHBvbHlnb24gY2xhc3M9ImZpbDAiIHBvaW50cz0iMC40MDM3LDAuMDAyOCAwLjM5MzksMC4wMjUzIDAuMzk3NiwwLjAyNTMgMC40MjIsMC4wMjUzIDAuNDIyLDAuMTI2OCAwLjQ0ODYsMC4xMjY4IDAuNDQ4NiwwLjAyNTMgMC40Nzg5LDAuMDI1MyAwLjQ3ODksMC4wMDI4ICIvPg0KICAgPHBvbHlnb24gY2xhc3M9ImZpbDAiIHBvaW50cz0iMC4zODA0LDAuMDAyOCAwLjM3NDYsMC4wMDI4IDAuMjkzMiwwLjAwMjggMC4yOTMyLDAuMDI1MyAwLjMyMzUsMC4wMjUzIDAuMzIzNSwwLjEyNjggMC4zNTAxLDAuMTI2OCAwLjM1MDEsMC4wMjUzIDAuMzczMSwwLjAyNTMgMC4zODMsMC4wMDI4ICIvPg0KICAgPHBhdGggY2xhc3M9ImZpbDAiIGQ9Ik0wLjYwNzcgMC4wOTQ2Yy0wLjAwNzMsMC4wMDc5IC0wLjAxNjYsMC4wMTE4IC0wLjAyNzgsMC4wMTE4IC0wLjAxMTUsMCAtMC4wMjA4LC0wLjAwMzkgLTAuMDI4MSwtMC4wMTE3IC0wLjAwNzMsLTAuMDA3OCAtMC4wMTA5LC0wLjAxNzcgLTAuMDEwOSwtMC4wMjk3IDAsLTAuMDExOCAwLjAwMzcsLTAuMDIxNyAwLjAxMTEsLTAuMDI5NyAwLjAwNzQsLTAuMDA4IDAuMDE2NywtMC4wMTIgMC4wMjgsLTAuMDEyIDAuMDExMSwwIDAuMDIwMywwLjAwNCAwLjAyNzcsMC4wMTIgMC4wMDc0LDAuMDA4IDAuMDExMSwwLjAxNzkgMC4wMTExLDAuMDI5NiAwLDAuMDExOSAtMC4wMDM2LDAuMDIxNyAtMC4wMTEsMC4wMjk2em0wLjAzMzMgLTAuMDU0N2MtMC4wMDMzLC0wLjAwNzggLTAuMDA4LC0wLjAxNDggLTAuMDE0MywtMC4wMjA5IC0wLjAwNjMsLTAuMDA2IC0wLjAxMzUsLTAuMDEwNyAtMC4wMjE2LC0wLjAxNDEgLTAuMDA4MiwtMC4wMDMzIC0wLjAxNjYsLTAuMDA1IC0wLjAyNTIsLTAuMDA1IC0wLjAwODcsMCAtMC4wMTcyLDAuMDAxNyAtMC4wMjU0LDAuMDA1IC0wLjAwODIsMC4wMDMzIC0wLjAxNTQsMC4wMDggLTAuMDIxNiwwLjAxNDEgLTAuMDAxOSwwLjAwMTkgLTAuMDAzNCwwLjAwMzkgLTAuMDA1MSwwLjAwNTlsLTAuMDA1IDAuMDA3Yy0wLjAwMTYsMC4wMDI2IC0wLjAwMzIsMC4wMDUxIC0wLjAwNDMsMC4wMDc5IC0wLjAwMzMsMC4wMDc4IC0wLjAwNDksMC4wMTYyIC0wLjAwNDksMC4wMjUxIDAsMC4wMDk5IDAuMDAyMSwwLjAxOTIgMC4wMDYyLDAuMDI3OSAwLjAwNDEsMC4wMDg2IDAuMDEwMSwwLjAxNjEgMC4wMTc5LDAuMDIyMyAwLjAwNiwwLjAwNDggMC4wMTI3LDAuMDA4NSAwLjAxOTksMC4wMTExIDAuMDA3MywwLjAwMjYgMC4wMTQ3LDAuMDAzOCAwLjAyMjIsMC4wMDM4IDAuMDA4NiwwIDAuMDE3LC0wLjAwMTYgMC4wMjUxLC0wLjAwNDkgMC4wMDgxLC0wLjAwMzMgMC4wMTUzLC0wLjAwOCAwLjAyMTgsLTAuMDE0MSAwLjAwNjIsLTAuMDA2IDAuMDExLC0wLjAxMjkgMC4wMTQzLC0wLjAyMDggMC4wMDMzLC0wLjAwNzkgMC4wMDUsLTAuMDE2MyAwLjAwNSwtMC4wMjUxIDAsLTAuMDA4OSAtMC4wMDE2LC0wLjAxNzIgLTAuMDA0OSwtMC4wMjUxeiIvPg0KICAgPHBhdGggY2xhc3M9ImZpbDEiIGQ9Ik0wLjA0NDYgMC4xOTFsLTAuMDE0MyAtMC4wMzM0IDAuMDA1NCAwIDAuMDA3MiAwLjAxNzFjMC4wMDA0LDAuMDAxIDAuMDAwOCwwLjAwMTkgMC4wMDExLDAuMDAyOCAwLjAwMDMsMC4wMDA4IDAuMDAwNSwwLjAwMTYgMC4wMDA3LDAuMDAyNCAwLjAwMDIsLTAuMDAwOCAwLjAwMDQsLTAuMDAxNiAwLjAwMDcsLTAuMDAyNSAwLjAwMDMsLTAuMDAwOSAwLjAwMDYsLTAuMDAxNyAwLjAwMSwtMC4wMDI3bDAuMDA3MiAtMC4wMTcxIDAuMDA1NCAwIC0wLjAxNDMgMC4wMzM0eiIvPg0KICAgPHBvbHlnb24gY2xhc3M9ImZpbDEiIHBvaW50cz0iMC4wNzgxLDAuMTU3NiAwLjA4MzMsMC4xNTc2IDAuMDgzMywwLjE4OTcgMC4wNzgxLDAuMTg5NyAiLz4NCiAgIDxwYXRoIGNsYXNzPSJmaWwxIiBkPSJNMC4xMDI0IDAuMTg5N2wwIC0wLjAzMzQgMC4wMjA0IDAuMDE5N2MwLjAwMDYsMC4wMDA2IDAuMDAxMSwwLjAwMTEgMC4wMDE3LDAuMDAxOCAwLjAwMDYsMC4wMDA2IDAuMDAxMiwwLjAwMTMgMC4wMDE4LDAuMDAyMWwwIC0wLjAyMjMgMC4wMDQ4IDAgMCAwLjAzMzQgLTAuMDIwOCAtMC4wMmMtMC4wMDA2LC0wLjAwMDUgLTAuMDAxMSwtMC4wMDExIC0wLjAwMTYsLTAuMDAxNyAtMC4wMDA1LC0wLjAwMDYgLTAuMDAxLC0wLjAwMTIgLTAuMDAxNSwtMC4wMDE5bDAgMC4wMjI0IC0wLjAwNDggMHoiLz4NCiAgIDxwb2x5Z29uIGNsYXNzPSJmaWwxIiBwb2ludHM9IjAuMTUwMywwLjE1NzYgMC4xNTU1LDAuMTU3NiAwLjE1NTUsMC4xODk3IDAuMTUwMywwLjE4OTcgIi8+DQogICA8cG9seWdvbiBjbGFzcz0iZmlsMSIgcG9pbnRzPSIwLjE3NDYsMC4xODk3IDAuMTc0NiwwLjE1NzYgMC4xNzk5LDAuMTU3NiAwLjE3OTksMC4xODUgMC4xOTE1LDAuMTg1IDAuMTkxNSwwLjE4OTcgIi8+DQogICA8cGF0aCBjbGFzcz0iZmlsMSIgZD0iTTAuMjM5NiAwLjE3MzdjMCwtMC4wMDE2IC0wLjAwMDMsLTAuMDAzMiAtMC4wMDA5LC0wLjAwNDYgLTAuMDAwNiwtMC4wMDE1IC0wLjAwMTQsLTAuMDAyOCAtMC4wMDI2LC0wLjAwMzkgLTAuMDAxMSwtMC4wMDExIC0wLjAwMjMsLTAuMDAyIC0wLjAwMzgsLTAuMDAyNiAtMC4wMDE0LC0wLjAwMDYgLTAuMDAyOSwtMC4wMDA5IC0wLjAwNDUsLTAuMDAwOSAtMC4wMDE2LDAgLTAuMDAzMSwwLjAwMDMgLTAuMDA0NSwwLjAwMDkgLTAuMDAxNCwwLjAwMDYgLTAuMDAyNywwLjAwMTUgLTAuMDAzOCwwLjAwMjYgLTAuMDAxMSwwLjAwMTEgLTAuMDAyLDAuMDAyNCAtMC4wMDI1LDAuMDAzOSAtMC4wMDA2LDAuMDAxNSAtMC4wMDA5LDAuMDAzIC0wLjAwMDksMC4wMDQ3IDAsMC4wMDE2IDAuMDAwMywwLjAwMzIgMC4wMDA5LDAuMDA0NiAwLjAwMDYsMC4wMDE1IDAuMDAxNCwwLjAwMjcgMC4wMDI1LDAuMDAzOSAwLjAwMTEsMC4wMDExIDAuMDAyNCwwLjAwMiAwLjAwMzgsMC4wMDI2IDAuMDAxNCwwLjAwMDYgMC4wMDI5LDAuMDAwOSAwLjAwNDUsMC4wMDA5IDAuMDAxNiwwIDAuMDAzMSwtMC4wMDAzIDAuMDA0NSwtMC4wMDA5IDAuMDAxNCwtMC4wMDA2IDAuMDAyNywtMC4wMDE1IDAuMDAzOCwtMC4wMDI2IDAuMDAxMSwtMC4wMDExIDAuMDAyLC0wLjAwMjQgMC4wMDI2LC0wLjAwMzkgMC4wMDA2LC0wLjAwMTUgMC4wMDA5LC0wLjAwMyAwLjAwMDksLTAuMDA0NnptMC4wMDU0IDBjMCwwLjAwMjMgLTAuMDAwNCwwLjAwNDQgLTAuMDAxMywwLjAwNjUgLTAuMDAwOSwwLjAwMiAtMC4wMDIxLDAuMDAzOCAtMC4wMDM3LDAuMDA1NCAtMC4wMDE3LDAuMDAxNiAtMC4wMDM1LDAuMDAyOCAtMC4wMDU2LDAuMDAzNyAtMC4wMDIxLDAuMDAwOCAtMC4wMDQzLDAuMDAxMyAtMC4wMDY1LDAuMDAxMyAtMC4wMDIzLDAgLTAuMDA0NSwtMC4wMDA0IC0wLjAwNjYsLTAuMDAxMyAtMC4wMDIxLC0wLjAwMDkgLTAuMDA0LC0wLjAwMjEgLTAuMDA1NiwtMC4wMDM3IC0wLjAwMTYsLTAuMDAxNiAtMC4wMDI5LC0wLjAwMzQgLTAuMDAzNywtMC4wMDU0IC0wLjAwMDksLTAuMDAyIC0wLjAwMTMsLTAuMDA0MiAtMC4wMDEzLC0wLjAwNjUgMCwtMC4wMDIzIDAuMDAwNCwtMC4wMDQ1IDAuMDAxMywtMC4wMDY1IDAuMDAwOCwtMC4wMDIgMC4wMDIxLC0wLjAwMzkgMC4wMDM3LC0wLjAwNTUgMC4wMDE2LC0wLjAwMTYgMC4wMDM1LC0wLjAwMjggMC4wMDU2LC0wLjAwMzYgMC4wMDIxLC0wLjAwMDggMC4wMDQzLC0wLjAwMTMgMC4wMDY2LC0wLjAwMTMgMC4wMDIzLDAgMC4wMDQ1LDAuMDAwNCAwLjAwNjYsMC4wMDEzIDAuMDAyMSwwLjAwMDggMC4wMDM5LDAuMDAyIDAuMDA1NiwwLjAwMzYgMC4wMDE2LDAuMDAxNiAwLjAwMjksMC4wMDM1IDAuMDAzNywwLjAwNTUgMC4wMDA5LDAuMDAyIDAuMDAxMywwLjAwNDIgMC4wMDEzLDAuMDA2NXoiLz4NCiAgIDxwYXRoIGNsYXNzPSJmaWwxIiBkPSJNMC4yNjQxIDAuMTgzM2wwLjAwNDIgLTAuMDAxOWMwLjAwMDQsMC4wMDE0IDAuMDAxMSwwLjAwMjUgMC4wMDIyLDAuMDAzMyAwLjAwMTEsMC4wMDA3IDAuMDAyNCwwLjAwMTEgMC4wMDQsMC4wMDExIDAuMDAxNiwwIDAuMDAyOCwtMC4wMDA0IDAuMDAzNywtMC4wMDEzIDAuMDAwOSwtMC4wMDA5IDAuMDAxNCwtMC4wMDIgMC4wMDE0LC0wLjAwMzUgMCwtMC4wMDE5IC0wLjAwMTYsLTAuMDAzNiAtMC4wMDQ3LC0wLjAwNTEgLTAuMDAwNCwtMC4wMDAyIC0wLjAwMDgsLTAuMDAwNCAtMC4wMDEsLTAuMDAwNSAtMC4wMDM1LC0wLjAwMTcgLTAuMDA1OSwtMC4wMDMzIC0wLjAwNzEsLTAuMDA0NyAtMC4wMDEyLC0wLjAwMTQgLTAuMDAxOCwtMC4wMDMxIC0wLjAwMTgsLTAuMDA1MSAwLC0wLjAwMjYgMC4wMDA5LC0wLjAwNDcgMC4wMDI3LC0wLjAwNjQgMC4wMDE4LC0wLjAwMTYgMC4wMDQxLC0wLjAwMjQgMC4wMDcsLTAuMDAyNCAwLjAwMjQsMCAwLjAwNDQsMC4wMDA1IDAuMDA2LDAuMDAxNCAwLjAwMTYsMC4wMDA5IDAuMDAyNywwLjAwMjIgMC4wMDMzLDAuMDAzOWwtMC4wMDQxIDAuMDAyMWMtMC4wMDA2LC0wLjAwMSAtMC4wMDEzLC0wLjAwMTcgLTAuMDAyMSwtMC4wMDIyIC0wLjAwMDgsLTAuMDAwNSAtMC4wMDE2LC0wLjAwMDcgLTAuMDAyNiwtMC4wMDA3IC0wLjAwMTQsMCAtMC4wMDI1LDAuMDAwNCAtMC4wMDMzLDAuMDAxMSAtMC4wMDA4LDAuMDAwNyAtMC4wMDEyLDAuMDAxNyAtMC4wMDEyLDAuMDAyOSAwLDAuMDAxOSAwLjAwMTgsMC4wMDM3IDAuMDA1NCwwLjAwNTQgMC4wMDAzLDAuMDAwMSAwLjAwMDUsMC4wMDAyIDAuMDAwNywwLjAwMDMgMC4wMDMyLDAuMDAxNSAwLjAwNTQsMC4wMDI5IDAuMDA2NSwwLjAwNDMgMC4wMDEyLDAuMDAxNCAwLjAwMTgsMC4wMDMxIDAuMDAxOCwwLjAwNTIgMCwwLjAwMyAtMC4wMDEsMC4wMDU1IC0wLjAwMjksMC4wMDczIC0wLjAwMTksMC4wMDE4IC0wLjAwNDUsMC4wMDI3IC0wLjAwNzgsMC4wMDI3IC0wLjAwMjcsMCAtMC4wMDUsLTAuMDAwNiAtMC4wMDY3LC0wLjAwMTkgLTAuMDAxOCwtMC4wMDEzIC0wLjAwMjksLTAuMDAzMSAtMC4wMDM0LC0wLjAwNTR6Ii8+DQogIDwvZz4NCiA8L2c+DQo8L3N2Zz4NCg==";
 let tuttoLogoPngPromise = null;
 
 let data = {
@@ -555,7 +558,6 @@ function renderClientesDatalist(){
     .map(c => `<option value="${html(c.nombre || "")}"></option>`)
     .join("");
 }
-
 function buscarClientePorNombre(nombre){
   const n = normalizar(nombre);
 
@@ -659,9 +661,8 @@ function loadImageDataUrl(src){
     const img = new Image();
 
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("No se pudo cargar el logo: " + src));
+    img.onerror = () => reject(new Error("No se pudo cargar el logo"));
 
-    img.crossOrigin = "anonymous";
     img.src = src;
   });
 }
@@ -673,7 +674,7 @@ async function getTuttoLogoPngDataUrl(){
     const img = await loadImageDataUrl(TUTTO_LOGO_SRC);
 
     const canvas = document.createElement("canvas");
-    const scale = 5;
+    const scale = 6;
 
     const realW = img.naturalWidth || img.width || 600;
     const realH = img.naturalHeight || img.height || 180;
@@ -709,19 +710,19 @@ function drawPdfField(doc, x, y, w, h, label, value, opts = {}){
   doc.roundedRect(x, y, w, h, radius, radius, "FD");
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(opts.labelSize || 5.4);
+  doc.setFontSize(opts.labelSize || 5.2);
   doc.setTextColor(107, 114, 128);
-  doc.text(String(label || "").toUpperCase(), x + 3, y + 3.6);
+  doc.text(String(label || "").toUpperCase(), x + 3, y + 3.5);
 
   doc.setFont("helvetica", opts.valueBold ? "bold" : "normal");
-  doc.setFontSize(opts.valueSize || 7.2);
+  doc.setFontSize(opts.valueSize || 6.9);
   doc.setTextColor(17, 24, 39);
 
   const texto = String(value || "—");
   const lines = doc.splitTextToSize(texto, w - 6);
   const maxLines = opts.maxLines || 1;
 
-  doc.text(lines.slice(0, maxLines), x + 3, y + 8.1);
+  doc.text(lines.slice(0, maxLines), x + 3, y + 8.0);
 }
 
 function drawPdfHeaderFooter(doc, footer, form){
@@ -780,27 +781,24 @@ async function crearDocumentoPDF(snapshot = crearSnapshotActual()){
   doc.setFillColor(...blue);
   doc.rect(0, 0, W, 30, "F");
 
-  doc.setFillColor(255, 255, 255);
-  doc.roundedRect(14, 7.5, 48, 13, 4, 4, "F");
-
   const logoDataUrl = await getTuttoLogoPngDataUrl();
 
   if(logoDataUrl){
     try{
-      doc.addImage(logoDataUrl, "PNG", 16, 9.2, 44, 9.2, undefined, "FAST");
+      // Logo directo sobre azul para que se vean las partes blancas del SVG.
+      doc.addImage(logoDataUrl, "PNG", 14, 7.2, 54, 16, undefined, "FAST");
     }catch(error){
       console.warn("No se pudo insertar el logo en el PDF:", error);
-
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.setTextColor(21, 59, 255);
-      doc.text("TUTTO VINILOS", 38, 15.8, { align: "center" });
+      doc.setFontSize(13);
+      doc.setTextColor(255, 255, 255);
+      doc.text("TUTTO VINILOS", 14, 16);
     }
   }else{
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(21, 59, 255);
-    doc.text("TUTTO VINILOS", 38, 15.8, { align: "center" });
+    doc.setFontSize(13);
+    doc.setTextColor(255, 255, 255);
+    doc.text("TUTTO VINILOS", 14, 16);
   }
 
   doc.setTextColor(255, 255, 255);
@@ -824,24 +822,24 @@ async function crearDocumentoPDF(snapshot = crearSnapshotActual()){
   const fieldH = 10;
 
   drawPdfField(doc, 14, topY, 54, fieldH, "Fecha", form.fecha || "", {
-    labelSize: 5.4,
-    valueSize: 7.4,
+    labelSize: 5.2,
+    valueSize: 7.2,
     valueBold: true,
     radius: 3,
     maxLines: 1
   });
 
   drawPdfField(doc, 71, topY, 62, fieldH, "N° Documento", form.numero || "", {
-    labelSize: 5.4,
-    valueSize: 7.4,
+    labelSize: 5.2,
+    valueSize: 7.2,
     valueBold: true,
     radius: 3,
     maxLines: 1
   });
 
   drawPdfField(doc, 136, topY, 62, fieldH, "Válido hasta", form.vence || "", {
-    labelSize: 5.4,
-    valueSize: 7.4,
+    labelSize: 5.2,
+    valueSize: 7.2,
     valueBold: true,
     radius: 3,
     maxLines: 1
@@ -857,37 +855,37 @@ async function crearDocumentoPDF(snapshot = crearSnapshotActual()){
   doc.line(14, 67.5, W - 14, 67.5);
 
   drawPdfField(doc, 14, 70, 67, 10, "Cliente", form.cliente || "", {
-    labelSize: 5.2,
-    valueSize: 7.0,
+    labelSize: 5.0,
+    valueSize: 6.7,
     valueBold: true,
     maxLines: 1,
     radius: 3
   });
 
   drawPdfField(doc, 84, 70, 55, 10, "RIF / Cédula", form.rif || "", {
-    labelSize: 5.2,
-    valueSize: 7.0,
+    labelSize: 5.0,
+    valueSize: 6.7,
     maxLines: 1,
     radius: 3
   });
 
   drawPdfField(doc, 142, 70, 56, 10, "Teléfono", form.telefono || "", {
-    labelSize: 5.2,
-    valueSize: 7.0,
+    labelSize: 5.0,
+    valueSize: 6.7,
     maxLines: 1,
     radius: 3
   });
 
   drawPdfField(doc, 14, 83, 67, 10, "Email", form.email || "", {
-    labelSize: 5.2,
-    valueSize: 6.8,
+    labelSize: 5.0,
+    valueSize: 6.5,
     maxLines: 1,
     radius: 3
   });
 
   drawPdfField(doc, 84, 83, 114, 10, "Dirección", form.direccion || "", {
-    labelSize: 5.2,
-    valueSize: 6.8,
+    labelSize: 5.0,
+    valueSize: 6.5,
     maxLines: 1,
     radius: 3
   });
