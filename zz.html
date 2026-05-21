@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cámara Tuttovinilos</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+body{
+  margin:0;
+  background:#0f172a;
+  font-family:Arial, sans-serif;
+  color:white;
+}
+header{
+  padding:14px;
+  background:#111827;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+}
+.info{
+  display:flex;
+  justify-content:space-between;
+  padding:12px 16px;
+  background:#1e293b;
+  font-size:15px;
+}
+.video-box{
+  padding:10px;
+}
+video{
+  width:100%;
+  background:black;
+  border-radius:14px;
+}
+.buttons{
+  display:flex;
+  gap:10px;
+  padding:12px;
+}
+button{
+  flex:1;
+  padding:14px;
+  border:0;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:bold;
+}
+.foto{background:#22c55e;color:white;}
+.recargar{background:#38bdf8;color:#0f172a;}
+canvas{display:none;}
+</style>
+</head>
+
+<body>
+
+<header>📷 Cámara Tuttovinilos</header>
+
+<div class="info">
+  <div id="fecha"></div>
+  <div id="hora"></div>
+</div>
+
+<div class="video-box">
+  <video id="video" controls autoplay muted playsinline></video>
+</div>
+
+<div class="buttons">
+  <button class="foto" onclick="tomarFoto()">Tomar foto</button>
+  <button class="recargar" onclick="location.reload()">Recargar</button>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const video = document.getElementById("video");
+
+// URL HLS generada por FFmpeg
+const hlsUrl = "http://TU_PC_O_SERVIDOR:8080/live/camera.m3u8";
+
+function iniciarCamara(){
+  if(Hls.isSupported()){
+    const hls = new Hls();
+    hls.loadSource(hlsUrl);
+    hls.attachMedia(video);
+  }else if(video.canPlayType("application/vnd.apple.mpegurl")){
+    video.src = hlsUrl;
+  }else{
+    alert("Este navegador no soporta HLS.");
+  }
+}
+
+function actualizarFechaHora(){
+  const ahora = new Date();
+  document.getElementById("fecha").textContent =
+    ahora.toLocaleDateString("es-VE");
+  document.getElementById("hora").textContent =
+    ahora.toLocaleTimeString("es-VE");
+}
+
+function tomarFoto(){
+  const canvas = document.getElementById("canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  const link = document.createElement("a");
+  link.download = "foto-camara-" + Date.now() + ".png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
+setInterval(actualizarFechaHora, 1000);
+actualizarFechaHora();
+iniciarCamara();
+</script>
+
+</body>
+</html>
