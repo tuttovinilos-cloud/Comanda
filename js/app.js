@@ -472,7 +472,7 @@ function clasePago(valor) {
 // NOTIFICACIONES
 // ===========================
 // La lógica de notificaciones vive en js/notificaciones.js.
-// app.js NO debe tocar #notiCount ni crear notificaciones manualmente.
+// app.js no controla la campana ni crea notificaciones manualmente.
 // Supabase trigger crea los avisos cuando un pedido entra a Listo.
 // ===========================
 
@@ -881,14 +881,33 @@ async function actualizarCampoPedido(id, campo, valor) {
 
   if (campo === "cantidad" && !puedeModificarCantidadLocal()) {
     alert("No tienes permiso para modificar cantidad.");
-    await cargarPedidos();
+    await cargarPedidos(false);
     return;
   }
 
   if (campo === "operador" && !puedeModificarOperadorLocal()) {
     alert("No tienes permiso para modificar operador.");
-    await cargarPedidos();
+    await cargarPedidos(false);
     return;
+  }
+
+  /*
+    FIX v33:
+    Cuando esta misma pantalla cambia un campo, Supabase Realtime devuelve
+    el UPDATE casi inmediatamente. Si en ese momento hacemos cargarPedidos(),
+    se repinta toda la tabla y se ve el flash/refrescamiento.
+    Marcamos una ventana corta para que js/notificaciones.js ignore SOLO
+    el refresh completo de pedidos en esta pestaña.
+    Las otras pantallas sí se actualizan por Realtime.
+  */
+  window.__COMANDA_SUPRIMIR_REFRESH_PEDIDOS_HASTA = Date.now() + 2500;
+
+  // Actualización optimista local: el cambio se ve limpio sin recargar toda la tabla.
+  const pedidoLocal = pedidosDB.find(p => Number(p.id) === Number(id));
+  const valorAnteriorLocal = pedidoLocal ? pedidoLocal[campo] : undefined;
+
+  if(pedidoLocal){
+    pedidoLocal[campo] = valor;
   }
 
   const { error } = await db()
@@ -898,19 +917,17 @@ async function actualizarCampoPedido(id, campo, valor) {
 
   if (error) {
     console.error("Error actualizando campo:", error);
+
+    // Revertir local si falló.
+    if(pedidoLocal){
+      pedidoLocal[campo] = valorAnteriorLocal;
+    }
+
     alert("Error actualizando: " + error.message);
     return;
   }
 
-  // Notificación de pedido listo: la maneja Supabase con trigger SQL.
-
-
-  const pedidoLocal = pedidosDB.find(p => Number(p.id) === Number(id));
-  if(pedidoLocal){
-    pedidoLocal[campo] = valor;
-  }
-
-  console.log(`Pedido ${id} actualizado: ${campo} = ${valor}`);
+  console.log(`Pedido ${id} actualizado limpio: ${campo} = ${valor}`);
 }
 
 // ===========================

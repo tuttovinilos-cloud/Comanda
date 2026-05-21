@@ -1,7 +1,7 @@
-console.log("NOTIFICACIONES conectado v32");
+console.log("NOTIFICACIONES conectado v33");
 
 /* =========================================================
-   NOTIFICACIONES · TUTTOVINILOS v32
+   NOTIFICACIONES · TUTTOVINILOS v33
    Sistema único de campana:
    - Lee SOLO la tabla public.notificaciones.
    - Solicitud -> notificación persistente para Ruben.
@@ -404,8 +404,23 @@ console.log("NOTIFICACIONES conectado v32");
   function refrescarPorRealtime(origen){
     console.log("Realtime notificación:", origen);
 
-    if(typeof window.cargarPedidos === "function"){
-      try{ window.cargarPedidos(false); }catch(e){ console.warn("No se pudo refrescar pedidos:", e); }
+    const ahora = Date.now();
+    const suprimirPedidosHasta = Number(window.__COMANDA_SUPRIMIR_REFRESH_PEDIDOS_HASTA || 0);
+    const debeSuprimirRefreshPedidos = ahora < suprimirPedidosHasta;
+
+    /*
+      FIX v33:
+      Si esta misma pestaña acaba de cambiar status/pago/cantidad,
+      NO repintamos toda la tabla al recibir el eco de Realtime.
+      Eso elimina el flash visual.
+      En otras pantallas este flag no existe, por eso sí se actualizan.
+    */
+    if(!debeSuprimirRefreshPedidos && typeof window.cargarPedidos === "function"){
+      try{
+        window.cargarPedidos(false);
+      }catch(e){
+        console.warn("No se pudo refrescar pedidos:", e);
+      }
     }
 
     leerNotificaciones(true);
@@ -427,7 +442,7 @@ console.log("NOTIFICACIONES conectado v32");
     }
 
     const canal = db()
-      .channel("comanda_realtime_notificaciones_v32")
+      .channel("comanda_realtime_notificaciones_v33")
       .on("postgres_changes", { event:"*", schema:"public", table:"pedidos" }, payload => {
         refrescarPorRealtime({ tabla:"pedidos", evento:payload.eventType, id:payload.new?.id || payload.old?.id });
       })
