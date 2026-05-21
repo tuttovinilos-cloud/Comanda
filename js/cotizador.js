@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v45 clientes corregidos");
+console.log("COTIZADOR JS conectado v46 menu global corregido");
 
 const $ = (id) => document.getElementById(id);
 
@@ -188,13 +188,10 @@ function bloquearResponsableSiNoEsRoberto(){
 }
 
 function aplicarMenuDesplegable(){
-  const btn = $("mobileMenuBtn");
-  const menu = $("authMenu");
-
-  if(btn && menu){
-    btn.addEventListener("click", () => menu.classList.toggle("open"));
-  }
+  // El menú móvil/global lo maneja js/menu.js.
+  // Se deja esta función para no romper iniciarCotizador().
 }
+
 
 function showToast(msg, type="ok"){
   const t = $("toast");
@@ -1140,7 +1137,7 @@ function normalizarSnapshotDesdeRegistro(reg){
   };
 }
 
-async async function cargarCotizacionesPrevias(){
+async function cargarCotizacionesPrevias(){
   if(!validarSupabase()) return;
 
   const body = $("cotizacionesBody");
@@ -1636,20 +1633,27 @@ function bindEvents(){
 }
 
 async function iniciarCotizador(){
-  aplicarMenuDesplegable();
+  try{
+    aplicarMenuDesplegable();
 
-  setResponsableDesdeSesion();
+    setResponsableDesdeSesion();
 
-  await initDates();
+    await initDates();
 
-  setResponsableDesdeSesion();
-  bloquearResponsableSiNoEsRoberto();
+    setResponsableDesdeSesion();
+    bloquearResponsableSiNoEsRoberto();
 
-  render();
-  bindEvents();
+    render();
+    bindEvents();
 
-  await cargarClientesCotizador();
-  await cargarCotizacionesPrevias();
+    await cargarClientesCotizador();
+    await cargarCotizacionesPrevias();
+  }catch(error){
+    console.error("Error iniciando cotizador:", error);
+    showToast("Error iniciando cotizador: " + (error.message || error), "err");
+  }
 }
+
+
 
 document.addEventListener("DOMContentLoaded", iniciarCotizador);
