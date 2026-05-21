@@ -1757,7 +1757,103 @@ table{
 }
 
 </style>
-<link rel="stylesheet" href="css/menu.css?v=29">
+<link rel="stylesheet" href="css/menu.css?v=32">
+
+<style>
+/* =========================================================
+   PAGINACIÓN v30 · 1-20 / 1-40 / 1-100
+   + Estabilidad visual básica
+========================================================= */
+.pagination-bar{
+  position:sticky;
+  left:0;
+  bottom:0;
+  z-index:120;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+  padding:12px 14px;
+  background:rgba(255,255,255,.96);
+  border-top:1px solid #d9deea;
+  box-shadow:0 -8px 24px rgba(15,23,42,.08);
+  backdrop-filter:blur(8px);
+}
+
+.page-btn,
+.page-select,
+.page-info{
+  min-height:36px;
+  border-radius:999px;
+  border:1px solid #cbd3e6;
+  background:#fff;
+  color:#153bff;
+  font-family:var(--head,Montserrat,Arial,sans-serif);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.45px;
+  text-transform:uppercase;
+  padding:8px 12px;
+  white-space:nowrap;
+}
+
+.page-btn,
+.page-select{
+  cursor:pointer;
+}
+
+.page-btn:hover{
+  background:#eef1ff;
+  border-color:#153bff;
+}
+
+.page-btn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+  filter:grayscale(1);
+}
+
+.page-info{
+  background:#eef1ff;
+  color:#0b1f7a;
+  border-color:#c7d2fe;
+}
+
+/* Menos sensación de movimiento mientras probamos */
+tbody tr,
+td,
+th,
+.cell-edit,
+.cell-select,
+.quick-input,
+.quick-select,
+.tab-btn,
+.btn-add,
+.page-btn,
+.page-select{
+  transition:none!important;
+  animation:none!important;
+}
+
+@media(max-width:760px){
+  .pagination-bar{
+    position:relative;
+    bottom:auto;
+    padding:10px;
+    gap:6px;
+  }
+
+  .page-btn,
+  .page-info,
+  .page-select{
+    flex:1 1 calc(50% - 6px);
+    font-size:10px;
+    padding:8px 8px;
+  }
+}
+</style>
+
 </head>
 <body>
 <header class="header">
@@ -1995,7 +2091,7 @@ table{
 <script src="js/supabase.js?v=24"></script>
 <script src="js/auth.js?v=24"></script>
 <script src="js/menu.js?v=11"></script>
-<script src="js/app.js?v=29"></script>
+<script src="js/app.js?v=30"></script>
 <script src="js/notificaciones.js?v=29"></script>
 
 <script>
@@ -2874,6 +2970,203 @@ table{
     }
   });
   window.refrescarColoresCatalogos = cargarColoresCatalogos;
+})();
+</script>
+
+
+<script>
+/* =========================================================
+   PAGINACIÓN PEDIDOS v30 · 1-20 / 1-40 / 1-100
+   Visual ligero para no cargar demasiadas filas.
+========================================================= */
+(function(){
+  let paginaActualPedidos = 1;
+  let pedidosPorPagina = 20;
+
+  function $(id){ return document.getElementById(id); }
+
+  function normLocal(v){
+    return String(v || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .trim();
+  }
+
+  function escLocal(v){
+    if(typeof window.escapeHtml === 'function') return window.escapeHtml(v);
+    return String(v ?? '')
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#039;');
+  }
+
+  function clienteExtra(p){
+    try{
+      const nombre = normLocal(p.cliente);
+      const lista = Array.isArray(window.clientesDB) ? window.clientesDB : [];
+      const c = lista.find(x => normLocal(x.nombre) === nombre);
+      return [c?.telefono, c?.correo, c?.notas].join(' ');
+    }catch(_){
+      return '';
+    }
+  }
+
+  function cumpleFiltros(p){
+    const texto = normLocal($('searchInput')?.value || '');
+    const estadoFiltro = $('filterStatus')?.value || '';
+    const pagoFiltro = $('filterPago')?.value || '';
+    const operadorFiltro = $('filterOperador')?.value || '';
+    const desde = $('filterFechaDesde')?.value || '';
+    const hasta = $('filterFechaHasta')?.value || '';
+
+    const contenido = normLocal([
+      p.id, p.fecha, p.operador, p.cliente, p.descripcion, p.cantidad,
+      p.material, p.tipo_impresion, p.precio, p.estatus_trabajo,
+      p.estatus_pago, p.fecha_entrega, p.monto_abonado, clienteExtra(p)
+    ].join(' '));
+
+    if(texto && !contenido.includes(texto)) return false;
+    if(estadoFiltro && p.estatus_trabajo !== estadoFiltro) return false;
+    if(pagoFiltro && p.estatus_pago !== pagoFiltro) return false;
+    if(operadorFiltro && p.operador !== operadorFiltro) return false;
+    if(desde && String(p.fecha || '') < desde) return false;
+    if(hasta && String(p.fecha || '') > hasta) return false;
+
+    return true;
+  }
+
+  function claseTrabajoLocal(valor){
+    return typeof window.claseTrabajo === 'function' ? window.claseTrabajo(valor) : '';
+  }
+
+  function clasePagoLocal(valor){
+    return typeof window.clasePago === 'function' ? window.clasePago(valor) : '';
+  }
+
+  function filaPedidoHTML(p){
+    const id = Number(p.id);
+    const archivo = p.archivo_url
+      ? `<a class="file-link-chip" href="${escLocal(p.archivo_url)}" target="_blank" onclick="event.stopPropagation()">📎 ${escLocal(p.archivo_nombre || 'Archivo')}</a>`
+      : '—';
+
+    const st = String(p.estatus_trabajo || 'Solicitud');
+    const pg = String(p.estatus_pago || 'Pendiente');
+
+    return `
+      <tr onclick="openEditOrder(${id})">
+        <td>${escLocal(p.id)}</td>
+        <td>${escLocal(p.fecha)}</td>
+        <td>${escLocal(p.operador)}</td>
+        <td>${escLocal(p.cliente)}</td>
+        <td>${escLocal(p.descripcion)}</td>
+        <td>
+          <input class="cell-edit" value="${escLocal(p.cantidad)}" onchange="actualizarCampoPedido(${id}, 'cantidad', this.value)" onclick="event.stopPropagation()"/>
+        </td>
+        <td>${escLocal(p.material)}</td>
+        <td>${escLocal(p.tipo_impresion)}</td>
+        <td>${escLocal(p.precio)}</td>
+        <td>
+          <select class="cell-select ${claseTrabajoLocal(st)}" onchange="actualizarCampoPedido(${id}, 'estatus_trabajo', this.value); this.className='cell-select ' + claseTrabajo(this.value)" onclick="event.stopPropagation()">
+            <option ${st === 'Solicitud' ? 'selected' : ''}>Solicitud</option>
+            <option ${st === 'En curso' ? 'selected' : ''}>En curso</option>
+            <option ${st === 'Revisado' ? 'selected' : ''}>Revisado</option>
+            <option ${st === 'Listo' ? 'selected' : ''}>Listo</option>
+          </select>
+        </td>
+        <td>
+          <select class="cell-select ${clasePagoLocal(pg)}" onchange="actualizarCampoPedido(${id}, 'estatus_pago', this.value); this.className='cell-select ' + clasePago(this.value)" onclick="event.stopPropagation()">
+            <option ${pg === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+            <option ${pg === 'Abonado' ? 'selected' : ''}>Abonado</option>
+            <option ${pg === 'Pagado' ? 'selected' : ''}>Pagado</option>
+          </select>
+        </td>
+        <td>${escLocal(p.fecha_entrega || '—')}</td>
+        <td>${archivo}</td>
+      </tr>`;
+  }
+
+  function renderPaginacion(total, paginas, inicio, fin){
+    const bar = $('paginationBar');
+    if(!bar) return;
+
+    if(!total){
+      bar.innerHTML = `<span class="page-info">0 pedidos</span>`;
+      return;
+    }
+
+    bar.innerHTML = `
+      <button class="page-btn" type="button" onclick="cambiarPaginaPedidos(-1)" ${paginaActualPedidos <= 1 ? 'disabled' : ''}>← Anterior</button>
+      <span class="page-info">${inicio + 1}-${fin} de ${total}</span>
+      <span class="page-info">Página ${paginaActualPedidos} / ${paginas}</span>
+      <button class="page-btn" type="button" onclick="cambiarPaginaPedidos(1)" ${paginaActualPedidos >= paginas ? 'disabled' : ''}>Siguiente →</button>
+      <select class="page-select" onchange="cambiarTamanoPaginaPedidos(this.value)">
+        <option value="20" ${pedidosPorPagina === 20 ? 'selected' : ''}>1-20 por página</option>
+        <option value="40" ${pedidosPorPagina === 40 ? 'selected' : ''}>1-40 por página</option>
+        <option value="100" ${pedidosPorPagina === 100 ? 'selected' : ''}>1-100 por página</option>
+      </select>`;
+  }
+
+  function despuesDeRender(){
+    if(typeof window.aplicarPermisosComanda === 'function') window.aplicarPermisosComanda();
+    if(typeof window.aplicarColoresEstadosYAbonos === 'function') setTimeout(window.aplicarColoresEstadosYAbonos, 30);
+    if(typeof window.refrescarColoresCatalogos === 'function') setTimeout(window.refrescarColoresCatalogos, 80);
+  }
+
+  function renderPedidosPaginados(resetPage){
+    const tabla = $('orderTableBody');
+    const emptyState = $('emptyState');
+    if(!tabla) return;
+
+    const lista = (Array.isArray(window.pedidosDB) ? window.pedidosDB : [])
+      .filter(cumpleFiltros)
+      .sort((a,b) => Number(b.id || 0) - Number(a.id || 0));
+
+    const total = lista.length;
+    const paginas = Math.max(1, Math.ceil(total / pedidosPorPagina));
+
+    if(resetPage) paginaActualPedidos = 1;
+    if(paginaActualPedidos < 1) paginaActualPedidos = 1;
+    if(paginaActualPedidos > paginas) paginaActualPedidos = paginas;
+
+    const inicio = (paginaActualPedidos - 1) * pedidosPorPagina;
+    const fin = Math.min(inicio + pedidosPorPagina, total);
+    const pagina = lista.slice(inicio, fin);
+
+    tabla.innerHTML = pagina.map(filaPedidoHTML).join('');
+
+    if(emptyState) emptyState.style.display = total ? 'none' : 'block';
+
+    renderPaginacion(total, paginas, inicio, fin);
+    despuesDeRender();
+  }
+
+  window.cambiarPaginaPedidos = function(delta){
+    paginaActualPedidos += Number(delta || 0);
+    renderPedidosPaginados(false);
+  };
+
+  window.cambiarTamanoPaginaPedidos = function(valor){
+    pedidosPorPagina = Number(valor || 20);
+    paginaActualPedidos = 1;
+    renderPedidosPaginados(false);
+  };
+
+  window.onSearch = function(){
+    renderPedidosPaginados(true);
+  };
+
+  const cargarPedidosOriginal = window.cargarPedidos;
+  window.cargarPedidos = async function(){
+    if(typeof cargarPedidosOriginal === 'function'){
+      await cargarPedidosOriginal.apply(this, arguments);
+    }
+    renderPedidosPaginados(true);
+  };
+
+  window.renderPedidosPaginados = renderPedidosPaginados;
 })();
 </script>
 
