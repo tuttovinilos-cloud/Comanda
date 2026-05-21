@@ -1,0 +1,211 @@
+-- =========================================================
+-- NOTIFICACIONES DEFINITIVAS · TUTTOVINILOS v32
+-- Reglas:
+-- 1) Pedido creado/montado en Solicitud -> notificación persistente para Ruben.
+-- 2) Pedido entra a Listo desde cualquier estado distinto de Listo -> notificación persistente para el operador creador.
+-- 3) La notificación NO desaparece por cambiar el estado del pedido.
+-- 4) Solo desaparece de la campana cuando se marca leida = true.
+-- =========================================================
+
+-- 1) Tabla
+create table if not exists public.notificaciones (
+  id bigserial primary key,
+  pedido_id bigint,
+  tipo text,
+  para_operador text,
+  destinatario text,
+  titulo text,
+  mensaje text,
+  leida boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+-- 2) Asegurar columnas si la tabla ya existía vieja
+alter table public.notificaciones add column if not exists pedido_id bigint;
+alter table public.notificaciones add column if not exists tipo text;
+alter table public.notificaciones add column if not exists para_operador text;
+alter table public.notificaciones add column if not exists destinatario text;
+alter table public.notificaciones add column if not exists titulo text;
+alter table public.notificaciones add column if not exists mensaje text;
+alter table public.notificaciones add column if not exists leida boolean not null default false;
+alter table public.notificaciones add column if not exists created_at timestamptz not null default now();
+
+-- 3) Quitar NOT NULL viejos que puedan romper inserts
+alter table public.notificaciones alter column tipo drop not null;
+alter table public.notificaciones alter column para_operador drop not null;
+alter table public.notificaciones alter column destinatario drop not null;
+alter table public.notificaciones alter column titulo drop not null;
+alter table public.notificaciones alter column mensaje drop not null;
+
+-- 4) Reparar filas viejas
+update public.notificaciones
+set para_operador = coalesce(para_operador, destinatario, 'Ruben');
+
+update public.notificaciones
+set destinatario = coalesce(destinatario, para_operador, 'Ruben');
+
+update public.notificaciones
+set tipo = coalesce(tipo, 'general');
+
+update public.notificaciones
+set titulo = coalesce(titulo, 'Notificación');
+
+update public.notificaciones
+set mensaje = coalesce(mensaje, '');
+
+update public.notificaciones
+set leida = coalesce(leida, false);
+
+-- 5) Índices
+create index if not exists idx_notificaciones_para_leida_created
+on public.notificaciones (para_operador, leida, created_at desc);
+
+create index if not exists idx_notificaciones_dest_leida_created
+on public.notificaciones (destinatario, leida, created_at desc);
+
+create index if not exists idx_notificaciones_pedido_tipo_created
+on public.notificaciones (pedido_id, tipo, created_at desc);
+
+-- 6) Trigger limpio
+drop trigger if exists trg_notificacion_pedido on public.pedidos;
+drop function if exists public.crear_notificacion_pedido();
+
+create or replace function public.crear_notificacion_pedido()
+returns trigger
+language plpgsql
+as $$
+declare
+  estado_anterior text := '';
+  estado_nuevo text := '';
+  operador_creador text := '';
+  cliente_txt text := '';
+  descripcion_txt text := '';
+begin
+  if tg_op = 'UPDATE' then
+    estado_anterior := lower(trim(coalesce(old.estatus_trabajo, '')));
+  end if;
+
+  estado_nuevo := lower(trim(coalesce(new.estatus_trabajo, '')));
+  operador_creador := coalesce(new.operador, '');
+  cliente_txt := coalesce(new.cliente, 'Sin cliente');
+  descripcion_txt := coalesce(new.descripcion, 'Sin descripción');
+
+  -- A) Solicitud nueva o pedido que entra a Solicitud.
+  -- Esto le avisa a Ruben aunque no tenga la página abierta.
+  if (
+    (tg_op = 'INSERT' and estado_nuevo = 'solicitud')
+    or
+    (tg_op = 'UPDATE' and estado_nuevo = 'solicitud' and estado_anterior <> 'solicitud')
+  ) then
+    insert into public.notificaciones (
+      pedido_id,
+      tipo,
+      para_operador,
+      destinatario,
+      titulo,
+      mensaje,
+      leida
+    )
+    values (
+      new.id,
+      'pedido_solicitud',
+      'Ruben',
+      'Ruben',
+      'Nueva solicitud',
+      cliente_txt || ' · ' || descripcion_txt ||
+      case when trim(operador_creador) <> '' then ' · Creado por ' || operador_creador else '' end,
+      false
+    );
+
+    return new;
+  end if;
+
+  -- B) Pedido entra a Listo desde cualquier otro estado.
+  -- Esto le avisa al operador que montó/creó el pedido.
+  if tg_op = 'UPDATE'
+     and estado_nuevo = 'listo'
+     and estado_anterior <> 'listo' then
+
+    if trim(operador_creador) <> '' then
+      insert into public.notificaciones (
+        pedido_id,
+        tipo,
+        para_operador,
+        destinatario,
+        titulo,
+        mensaje,
+        leida
+      )
+      values (
+        new.id,
+        'pedido_listo',
+        operador_creador,
+        operador_creador,
+        'Pedido listo',
+        cliente_txt || ' · ' || descripcion_txt,
+        false
+      );
+    end if;
+
+    return new;
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger trg_notificacion_pedido
+after insert or update of estatus_trabajo on public.pedidos
+for each row
+execute function public.crear_notificacion_pedido();
+
+-- 7) Permisos
+grant select, insert, update on public.notificaciones to anon;
+grant usage, select on sequence public.notificaciones_id_seq to anon;
+
+alter table public.notificaciones enable row level security;
+
+drop policy if exists "anon puede leer notificaciones" on public.notificaciones;
+create policy "anon puede leer notificaciones"
+on public.notificaciones
+for select
+to anon
+using (true);
+
+drop policy if exists "anon puede actualizar notificaciones" on public.notificaciones;
+create policy "anon puede actualizar notificaciones"
+on public.notificaciones
+for update
+to anon
+using (true)
+with check (true);
+
+drop policy if exists "anon puede insertar notificaciones" on public.notificaciones;
+create policy "anon puede insertar notificaciones"
+on public.notificaciones
+for insert
+to anon
+with check (true);
+
+-- 8) Activar realtime si no estaba añadido.
+-- Si ya lo habías agregado, puede dar aviso de duplicado; no es grave.
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table public.pedidos;
+  exception when duplicate_object then
+    null;
+  end;
+
+  begin
+    alter publication supabase_realtime add table public.notificaciones;
+  exception when duplicate_object then
+    null;
+  end;
+end $$;
+
+-- Verificación:
+-- select id, pedido_id, tipo, para_operador, destinatario, titulo, mensaje, leida, created_at
+-- from public.notificaciones
+-- order by created_at desc
+-- limit 20;

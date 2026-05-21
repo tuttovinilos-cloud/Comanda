@@ -3,12 +3,13 @@ console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
 let pedidosDB = [];
+let paginaActualPedidos = 1;
+let pedidosPorPagina = 20;
 let archivoSeleccionado = null;
 let materialesDB = [];
 let tiposImpresionDB = [];
 let clientesBusquedaDB = [];
 let clientesCatalogoDB = [];
-let notificacionesDB = [];
 
 // ===========================
 // SUPABASE SEGURO
@@ -478,7 +479,7 @@ function clasePago(valor) {
 // ===========================
 // CARGAR PEDIDOS
 // ===========================
-async function cargarPedidos() {
+async function cargarPedidos(resetPage = true) {
   if (!validarSupabase()) return;
 
   const { data, error } = await db()
@@ -493,92 +494,221 @@ async function cargarPedidos() {
   }
 
   pedidosDB = data || [];
+  console.log("Pedidos cargados:", pedidosDB.length);
 
-  console.log("Pedidos cargados:", pedidosDB);
-
-  const tabla = document.getElementById("orderTableBody");
-  const emptyState = document.getElementById("emptyState");
-
-  if (!tabla) return;
-
-  tabla.innerHTML = "";
-
-  if (!pedidosDB.length) {
-    if (emptyState) emptyState.style.display = "block";
-    return;
-  }
-
-  if (emptyState) emptyState.style.display = "none";
-
-  pedidosDB.forEach(p => {
-    const id = Number(p.id);
-
-    const archivo = p.archivo_url
-      ? `<a class="file-link-chip" href="${escapeHtml(p.archivo_url)}" target="_blank" onclick="event.stopPropagation()">📎 ${escapeHtml(p.archivo_nombre || "Archivo")}</a>`
-      : "—";
-
-    const cantidadDisabled = puedeModificarCantidadLocal() ? "" : "disabled";
-
-    const fila = `
-      <tr onclick="openEditOrder(${id})">
-        <td>${escapeHtml(p.id)}</td>
-        <td>${escapeHtml(p.fecha)}</td>
-        <td>${escapeHtml(p.operador)}</td>
-        <td>${escapeHtml(p.cliente)}</td>
-        <td>${escapeHtml(p.descripcion)}</td>
-
-        <td>
-          <input 
-            class="cell-edit"
-            value="${escapeHtml(p.cantidad)}" 
-            onchange="actualizarCampoPedido(${id}, 'cantidad', this.value)"
-            onclick="event.stopPropagation()"
-            ${cantidadDisabled}
-          />
-        </td>
-
-        <td>${escapeHtml(p.material)}</td>
-        <td>${escapeHtml(p.tipo_impresion)}</td>
-        <td>${escapeHtml(p.precio)}</td>
-
-        <td>
-          <select 
-            class="cell-select ${claseTrabajo(p.estatus_trabajo)}"
-            onchange="actualizarCampoPedido(${id}, 'estatus_trabajo', this.value); this.className='cell-select ' + claseTrabajo(this.value)"
-            onclick="event.stopPropagation()"
-          >
-            <option ${p.estatus_trabajo === "Solicitud" ? "selected" : ""}>Solicitud</option>
-            <option ${p.estatus_trabajo === "Revisado" ? "selected" : ""}>Revisado</option>
-            <option ${p.estatus_trabajo === "Listo" ? "selected" : ""}>Listo</option>
-          </select>
-        </td>
-
-        <td>
-          <select 
-            class="cell-select ${clasePago(p.estatus_pago)}"
-            onchange="actualizarCampoPedido(${id}, 'estatus_pago', this.value); this.className='cell-select ' + clasePago(this.value)"
-            onclick="event.stopPropagation()"
-          >
-            <option ${p.estatus_pago === "Pendiente" ? "selected" : ""}>Pendiente</option>
-            <option ${p.estatus_pago === "Abonado" ? "selected" : ""}>Abonado</option>
-            <option ${p.estatus_pago === "Pagado" ? "selected" : ""}>Pagado</option>
-          </select>
-        </td>
-
-        <td>${escapeHtml(p.fecha_entrega || "—")}</td>
-        <td>${archivo}</td>
-      </tr>
-    `;
-
-    tabla.insertAdjacentHTML("beforeend", fila);
-  });
-
-  onSearch();
+  renderPedidosPaginados(resetPage);
 
   if (typeof aplicarPermisosComanda === "function") {
     aplicarPermisosComanda();
   }
 }
+
+function getClienteExtraBusqueda(nombreCliente){
+  try{
+    const clienteNorm = normalizarBusqueda(nombreCliente);
+    const clienteRelacionado = clientesBusquedaDB.find(c => normalizarBusqueda(c.nombre) === clienteNorm);
+
+    return clienteRelacionado
+      ? [clienteRelacionado.telefono, clienteRelacionado.correo, clienteRelacionado.notas].join(" ")
+      : "";
+  }catch(e){
+    return "";
+  }
+}
+
+function pedidoCumpleFiltros(p){
+  const texto = normalizarBusqueda(document.getElementById("searchInput")?.value || "");
+  const estadoFiltro = document.getElementById("filterStatus")?.value || "";
+  const pagoFiltro = document.getElementById("filterPago")?.value || "";
+  const desde = document.getElementById("filterFechaDesde")?.value || "";
+  const hasta = document.getElementById("filterFechaHasta")?.value || "";
+  const operadorFiltro = document.getElementById("filterOperador")?.value || "";
+
+  const fecha = String(p.fecha || "");
+  const operador = String(p.operador || "");
+  const estatus = String(p.estatus_trabajo || "");
+  const pago = String(p.estatus_pago || "");
+
+  const contenido = normalizarBusqueda([
+    p.id,
+    p.fecha,
+    p.cliente,
+    p.descripcion,
+    p.cantidad,
+    p.material,
+    p.tipo_impresion,
+    p.precio,
+    p.estatus_trabajo,
+    p.estatus_pago,
+    p.fecha_entrega,
+    p.archivo_nombre,
+    getClienteExtraBusqueda(p.cliente)
+  ].join(" "));
+
+  if (texto && !contenido.includes(texto)) return false;
+  if (estadoFiltro && estatus !== estadoFiltro) return false;
+  if (pagoFiltro && pago !== pagoFiltro) return false;
+  if (operadorFiltro && operador !== operadorFiltro) return false;
+  if (desde && fecha < desde) return false;
+  if (hasta && fecha > hasta) return false;
+
+  return true;
+}
+
+function pedidoFilaHTML(p){
+  const id = Number(p.id);
+
+  const archivo = p.archivo_url
+    ? `<a class="file-link-chip" href="${escapeHtml(p.archivo_url)}" target="_blank" onclick="event.stopPropagation()">📎 ${escapeHtml(p.archivo_nombre || "Archivo")}</a>`
+    : "—";
+
+  const cantidadDisabled = puedeModificarCantidadLocal() ? "" : "disabled";
+  const st = String(p.estatus_trabajo || "Solicitud");
+  const pg = String(p.estatus_pago || "Pendiente");
+
+  return `
+    <tr onclick="openEditOrder(${id})">
+      <td>${escapeHtml(p.id)}</td>
+      <td>${escapeHtml(p.fecha)}</td>
+      <td>${escapeHtml(p.operador)}</td>
+      <td>${escapeHtml(p.cliente)}</td>
+      <td>${escapeHtml(p.descripcion)}</td>
+
+      <td>
+        <input 
+          class="cell-edit"
+          value="${escapeHtml(p.cantidad)}" 
+          onchange="actualizarCampoPedido(${id}, 'cantidad', this.value)"
+          onclick="event.stopPropagation()"
+          ${cantidadDisabled}
+        />
+      </td>
+
+      <td>${escapeHtml(p.material)}</td>
+      <td>${escapeHtml(p.tipo_impresion)}</td>
+      <td>${escapeHtml(p.precio)}</td>
+
+      <td>
+        <select 
+          class="cell-select ${claseTrabajo(st)}"
+          onchange="actualizarCampoPedido(${id}, 'estatus_trabajo', this.value); this.className='cell-select ' + claseTrabajo(this.value)"
+          onclick="event.stopPropagation()"
+        >
+          <option ${st === "Solicitud" ? "selected" : ""}>Solicitud</option>
+          <option ${st === "En curso" ? "selected" : ""}>En curso</option>
+          <option ${st === "Revisado" ? "selected" : ""}>Revisado</option>
+          <option ${st === "Listo" ? "selected" : ""}>Listo</option>
+        </select>
+      </td>
+
+      <td>
+        <select 
+          class="cell-select ${clasePago(pg)}"
+          onchange="actualizarCampoPedido(${id}, 'estatus_pago', this.value); this.className='cell-select ' + clasePago(this.value)"
+          onclick="event.stopPropagation()"
+        >
+          <option ${pg === "Pendiente" ? "selected" : ""}>Pendiente</option>
+          <option ${pg === "Abonado" ? "selected" : ""}>Abonado</option>
+          <option ${pg === "Pagado" ? "selected" : ""}>Pagado</option>
+        </select>
+      </td>
+
+      <td>${escapeHtml(p.fecha_entrega || "—")}</td>
+      <td>${archivo}</td>
+    </tr>
+  `;
+}
+
+function renderPaginacionPedidos(total, paginas, inicio, fin){
+  const bar = document.getElementById("paginationBar");
+  if(!bar) return;
+
+  if(!total){
+    bar.innerHTML = `<span class="page-info">0 pedidos</span>`;
+    return;
+  }
+
+  bar.innerHTML = `
+    <button class="page-btn" type="button" onclick="cambiarPaginaPedidos(-1)" ${paginaActualPedidos <= 1 ? "disabled" : ""}>← Anterior</button>
+    <span class="page-info">${inicio + 1}-${fin} de ${total}</span>
+    <span class="page-info">Página ${paginaActualPedidos} / ${paginas}</span>
+    <button class="page-btn" type="button" onclick="cambiarPaginaPedidos(1)" ${paginaActualPedidos >= paginas ? "disabled" : ""}>Siguiente →</button>
+    <select class="page-select" onchange="cambiarTamanoPaginaPedidos(this.value)">
+      <option value="20" ${pedidosPorPagina === 20 ? "selected" : ""}>1-20 por página</option>
+      <option value="40" ${pedidosPorPagina === 40 ? "selected" : ""}>1-40 por página</option>
+      <option value="100" ${pedidosPorPagina === 100 ? "selected" : ""}>1-100 por página</option>
+    </select>
+  `;
+}
+
+function renderPedidosPaginados(resetPage = false){
+  const tabla = document.getElementById("orderTableBody");
+  const emptyState = document.getElementById("emptyState");
+
+  if (!tabla) return;
+
+  const filtrados = pedidosDB
+    .filter(pedidoCumpleFiltros)
+    .sort((a,b) => Number(b.id || 0) - Number(a.id || 0));
+
+  const total = filtrados.length;
+  const paginas = Math.max(1, Math.ceil(total / pedidosPorPagina));
+
+  if(resetPage) paginaActualPedidos = 1;
+  if(paginaActualPedidos < 1) paginaActualPedidos = 1;
+  if(paginaActualPedidos > paginas) paginaActualPedidos = paginas;
+
+  const inicio = (paginaActualPedidos - 1) * pedidosPorPagina;
+  const fin = Math.min(inicio + pedidosPorPagina, total);
+  const pagina = filtrados.slice(inicio, fin);
+
+  tabla.innerHTML = "";
+
+  if (!total) {
+    if (emptyState) {
+      emptyState.style.display = "block";
+      emptyState.textContent = "— SIN PEDIDOS EN ESTE FILTRO —";
+    }
+    renderPaginacionPedidos(0, 1, 0, 0);
+    return;
+  }
+
+  if (emptyState) {
+    emptyState.style.display = "none";
+    emptyState.textContent = "— SIN PEDIDOS —";
+  }
+
+  tabla.innerHTML = pagina.map(pedidoFilaHTML).join("");
+
+  renderPaginacionPedidos(total, paginas, inicio, fin);
+
+  if (typeof aplicarPermisosComanda === "function") {
+    aplicarPermisosComanda();
+  }
+
+  if (typeof aplicarColoresEstadosYAbonos === "function") {
+    setTimeout(aplicarColoresEstadosYAbonos, 30);
+  }
+
+  if (typeof refrescarColoresCatalogos === "function") {
+    setTimeout(refrescarColoresCatalogos, 80);
+  }
+}
+
+function cambiarPaginaPedidos(delta){
+  paginaActualPedidos += Number(delta || 0);
+  renderPedidosPaginados(false);
+}
+
+function cambiarTamanoPaginaPedidos(valor){
+  pedidosPorPagina = Number(valor || 20);
+  paginaActualPedidos = 1;
+  renderPedidosPaginados(false);
+}
+
+window.cambiarPaginaPedidos = cambiarPaginaPedidos;
+window.cambiarTamanoPaginaPedidos = cambiarTamanoPaginaPedidos;
+window.renderPedidosPaginados = renderPedidosPaginados;
 
 // ===========================
 // GUARDAR FILA RÁPIDA
@@ -1054,71 +1184,7 @@ async function subirArchivoPedido() {
 // BUSCAR / FILTRAR
 // ===========================
 function onSearch() {
-  const texto = normalizarBusqueda(document.getElementById("searchInput")?.value || "");
-  const estadoFiltro = document.getElementById("filterStatus")?.value || "";
-  const pagoFiltro = document.getElementById("filterPago")?.value || "";
-  const desde = document.getElementById("filterFechaDesde")?.value || "";
-  const hasta = document.getElementById("filterFechaHasta")?.value || "";
-  const operadorFiltro = document.getElementById("filterOperador")?.value || "";
-
-  const filas = document.querySelectorAll("#orderTableBody tr");
-
-  filas.forEach(fila => {
-    const celdas = fila.querySelectorAll("td");
-
-    if (!celdas.length) return;
-
-    const fecha = celdas[1]?.textContent.trim() || "";
-    const operador = celdas[2]?.textContent.trim() || "";
-    const cliente = celdas[3]?.textContent.trim() || "";
-    const descripcion = celdas[4]?.textContent.trim() || "";
-    const cantidad = celdas[5]?.querySelector("input")?.value || celdas[5]?.textContent.trim() || "";
-    const material = celdas[6]?.textContent.trim() || "";
-    const impresion = celdas[7]?.textContent.trim() || "";
-    const precio = celdas[8]?.textContent.trim() || "";
-    const estatus = celdas[9]?.querySelector("select")?.value || celdas[9]?.textContent.trim() || "";
-    const pago = celdas[10]?.querySelector("select")?.value || celdas[10]?.textContent.trim() || "";
-    const entrega = celdas[11]?.textContent.trim() || "";
-    const archivo = celdas[12]?.textContent.trim() || "";
-
-    const clienteNorm = normalizarBusqueda(cliente);
-
-    const clienteRelacionado = clientesBusquedaDB.find(c => {
-      return normalizarBusqueda(c.nombre) === clienteNorm;
-    });
-
-    const telefonoCliente = clienteRelacionado ? clienteRelacionado.telefono || "" : "";
-    const correoCliente = clienteRelacionado ? clienteRelacionado.correo || "" : "";
-    const notasCliente = clienteRelacionado ? clienteRelacionado.notas || "" : "";
-
-    const contenido = normalizarBusqueda([
-      fecha,
-      cliente,
-      descripcion,
-      cantidad,
-      material,
-      impresion,
-      precio,
-      estatus,
-      pago,
-      entrega,
-      archivo,
-      telefonoCliente,
-      correoCliente,
-      notasCliente
-    ].join(" "));
-
-    let mostrar = true;
-
-    if (texto && !contenido.includes(texto)) mostrar = false;
-    if (estadoFiltro && estatus !== estadoFiltro) mostrar = false;
-    if (pagoFiltro && pago !== pagoFiltro) mostrar = false;
-    if (operadorFiltro && operador !== operadorFiltro) mostrar = false;
-    if (desde && fecha < desde) mostrar = false;
-    if (hasta && fecha > hasta) mostrar = false;
-
-    fila.style.display = mostrar ? "" : "none";
-  });
+  renderPedidosPaginados(true);
 }
 
 // ===========================

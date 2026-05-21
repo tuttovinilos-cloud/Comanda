@@ -1,21 +1,21 @@
-console.log("NOTIFICACIONES conectado v29");
+console.log("NOTIFICACIONES conectado v32");
 
 /* =========================================================
-   NOTIFICACIONES · TUTTOVINILOS v29
+   NOTIFICACIONES · TUTTOVINILOS v32
    Sistema único de campana:
-   - Rubén: ve pedidos ACTIVOS en estatus Solicitud.
-   - Operador creador: ve avisos de pedido Listo desde tabla notificaciones.
-   - Realtime: escucha cambios en pedidos y notificaciones.
-   - app.js NO debe tocar notificaciones.
+   - Lee SOLO la tabla public.notificaciones.
+   - Solicitud -> notificación persistente para Ruben.
+   - Listo -> notificación persistente para operador creador.
+   - La notificación solo desaparece si leida = true.
+   - Sonido cuando llega una nueva.
+   - Realtime + respaldo cada 30s.
 ========================================================= */
 
 (function(){
   let leyendo = false;
   let audioCtx = null;
   let audioHabilitado = false;
-  let solicitudesRuben = [];
-  let listosOperador = [];
-  let itemsActuales = [];
+  let notificaciones = [];
   let ultimoIds = new Set();
   let primeraLecturaOk = false;
 
@@ -82,11 +82,6 @@ console.log("NOTIFICACIONES conectado v29");
       .replaceAll("'","&#039;");
   }
 
-  function esRuben(nombre){
-    const n = normalizar(nombre);
-    return n === "ruben" || n === "rubén" || n.includes("ruben") || n.includes("rubén");
-  }
-
   function perteneceAlOperador(noti, operadorActual){
     const op = normalizar(operadorActual);
     const op1 = primerNombre(operadorActual);
@@ -106,48 +101,6 @@ console.log("NOTIFICACIONES conectado v29");
     );
   }
 
-  function habilitarAudio(){
-    if(audioHabilitado) return;
-
-    try{
-      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      if(audioCtx.state === "suspended") audioCtx.resume();
-      audioHabilitado = true;
-    }catch(e){
-      console.warn("Audio bloqueado:", e);
-    }
-  }
-
-  function sonarCampana(){
-    try{
-      habilitarAudio();
-      if(!audioCtx) return;
-
-      const now = audioCtx.currentTime;
-      const gain = audioCtx.createGain();
-
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.28, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
-      gain.connect(audioCtx.destination);
-
-      [
-        { f:1046, t:0.00, d:0.12 },
-        { f:1318, t:0.16, d:0.13 },
-        { f:1568, t:0.33, d:0.18 }
-      ].forEach(tn => {
-        const osc = audioCtx.createOscillator();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(tn.f, now + tn.t);
-        osc.connect(gain);
-        osc.start(now + tn.t);
-        osc.stop(now + tn.t + tn.d);
-      });
-    }catch(e){
-      console.warn("No sonó campana:", e);
-    }
-  }
-
   function toast(msg){
     const t = document.getElementById("toast");
     if(!t){
@@ -157,7 +110,67 @@ console.log("NOTIFICACIONES conectado v29");
 
     t.textContent = msg;
     t.style.display = "block";
-    setTimeout(() => t.style.display = "none", 2600);
+
+    setTimeout(() => {
+      t.style.display = "none";
+    }, 2600);
+  }
+
+  function habilitarAudio(){
+    if(audioHabilitado && audioCtx) return true;
+
+    try{
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+
+      if(audioCtx.state === "suspended"){
+        audioCtx.resume();
+      }
+
+      audioHabilitado = true;
+      return true;
+    }catch(e){
+      console.warn("Audio bloqueado:", e);
+      return false;
+    }
+  }
+
+  function sonarCampana(){
+    try{
+      if(!habilitarAudio() || !audioCtx) return;
+
+      const now = audioCtx.currentTime;
+
+      const master = audioCtx.createGain();
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.exponentialRampToValueAtTime(0.32, now + 0.018);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 1.05);
+      master.connect(audioCtx.destination);
+
+      [
+        { f:880,  t:0.00, d:0.12 },
+        { f:1175, t:0.14, d:0.13 },
+        { f:1568, t:0.31, d:0.19 },
+        { f:1175, t:0.55, d:0.14 }
+      ].forEach(tn => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(tn.f, now + tn.t);
+
+        gain.gain.setValueAtTime(0.0001, now + tn.t);
+        gain.gain.exponentialRampToValueAtTime(1, now + tn.t + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + tn.t + tn.d);
+
+        osc.connect(gain);
+        gain.connect(master);
+
+        osc.start(now + tn.t);
+        osc.stop(now + tn.t + tn.d + 0.05);
+      });
+    }catch(e){
+      console.warn("No sonó campana:", e);
+    }
   }
 
   function asegurarCampana(){
@@ -180,6 +193,7 @@ console.log("NOTIFICACIONES conectado v29");
     }
 
     btn.id = "notiBtnGlobal";
+    btn.type = "button";
     btn.onclick = abrirNotificaciones;
     btn.style.setProperty("display", "inline-flex", "important");
     btn.style.setProperty("visibility", "visible", "important");
@@ -201,35 +215,24 @@ console.log("NOTIFICACIONES conectado v29");
     }
   }
 
-  function recalcularItems(){
-    itemsActuales = [
-      ...solicitudesRuben.map(p => ({
-        id:`solicitud_${p.id}`,
-        tipo:"solicitud",
-        pedido_id:p.id,
-        titulo:"Nueva solicitud",
-        mensaje:`${p.cliente || "Sin cliente"} · ${p.descripcion || "Sin descripción"}`,
-        meta:`Pedido #${p.id} · Creado por ${p.operador || "sin operador"}`
-      })),
-      ...listosOperador.map(n => ({
-        id:`noti_${n.id}`,
-        notificacion_id:n.id,
-        tipo:"pedido_listo",
-        pedido_id:n.pedido_id,
-        titulo:n.titulo || "Pedido listo",
-        mensaje:n.mensaje || "",
-        meta:`Pedido #${n.pedido_id || ""} · Para: ${n.para_operador || n.destinatario || ""}`
-      }))
-    ];
+  function tipoTitulo(n){
+    if(n.tipo === "pedido_solicitud") return n.titulo || "Nueva solicitud";
+    if(n.tipo === "pedido_listo") return n.titulo || "Pedido listo";
+    return n.titulo || "Notificación";
+  }
+
+  function tipoMeta(n){
+    if(n.tipo === "pedido_solicitud") return `Pedido #${n.pedido_id || ""} · Para Rubén`;
+    if(n.tipo === "pedido_listo") return `Pedido #${n.pedido_id || ""} · Para ${n.para_operador || n.destinatario || ""}`;
+    return `Pedido #${n.pedido_id || ""}`;
   }
 
   function actualizarContador(sonar){
-    recalcularItems();
+    const total = notificaciones.length;
 
-    const total = itemsActuales.length;
     pintarContador(total);
 
-    const idsActuales = new Set(itemsActuales.map(x => String(x.id)));
+    const idsActuales = new Set(notificaciones.map(n => String(n.id)));
     let hayNueva = false;
 
     idsActuales.forEach(id => {
@@ -245,73 +248,45 @@ console.log("NOTIFICACIONES conectado v29");
     primeraLecturaOk = true;
   }
 
-  async function leerSolicitudesRuben(operador){
-    if(!esRuben(operador)) return [];
-
-    const { data, error } = await db()
-      .from("pedidos")
-      .select("id, fecha, operador, cliente, descripcion, estatus_trabajo")
-      .eq("estatus_trabajo", "Solicitud")
-      .order("id", { ascending:false })
-      .limit(200);
-
-    if(error){
-      console.error("Error leyendo solicitudes para Rubén:", error);
-      return solicitudesRuben;
-    }
-
-    return data || [];
-  }
-
-  async function leerListosOperador(operador){
-    const { data, error } = await db()
-      .from("notificaciones")
-      .select("id, pedido_id, tipo, para_operador, destinatario, titulo, mensaje, leida, created_at")
-      .eq("leida", false)
-      .eq("tipo", "pedido_listo")
-      .order("created_at", { ascending:false })
-      .limit(200);
-
-    if(error){
-      console.error("Error leyendo pedidos listos:", error);
-      return listosOperador;
-    }
-
-    return (data || []).filter(n => perteneceAlOperador(n, operador));
-  }
-
   async function leerNotificaciones(sonar = false){
     asegurarCampana();
 
-    if(leyendo) return itemsActuales;
+    if(leyendo) return notificaciones;
 
     const operador = getOperador();
 
     if(!operador){
       console.warn("Notificaciones: operador no detectado");
-      pintarContador(itemsActuales.length);
-      return itemsActuales;
+      pintarContador(notificaciones.length);
+      return notificaciones;
     }
 
     if(!db()){
       console.warn("Notificaciones: Supabase no disponible");
-      pintarContador(itemsActuales.length);
-      return itemsActuales;
+      pintarContador(notificaciones.length);
+      return notificaciones;
     }
 
     leyendo = true;
 
     try{
-      const [solicitudes, listos] = await Promise.all([
-        leerSolicitudesRuben(operador),
-        leerListosOperador(operador)
-      ]);
+      const { data, error } = await db()
+        .from("notificaciones")
+        .select("id, pedido_id, tipo, para_operador, destinatario, titulo, mensaje, leida, created_at")
+        .eq("leida", false)
+        .order("created_at", { ascending:false })
+        .limit(200);
 
-      solicitudesRuben = solicitudes;
-      listosOperador = listos;
+      if(error){
+        console.error("Error leyendo notificaciones:", error);
+        toast("Error leyendo notificaciones");
+        return notificaciones;
+      }
 
+      notificaciones = (data || []).filter(n => perteneceAlOperador(n, operador));
       actualizarContador(sonar);
-      return itemsActuales;
+
+      return notificaciones;
     }finally{
       leyendo = false;
     }
@@ -321,14 +296,11 @@ console.log("NOTIFICACIONES conectado v29");
     const box = document.getElementById("notiList");
     if(!box) return;
 
-    recalcularItems();
-
-    if(!itemsActuales.length){
+    if(!notificaciones.length){
       box.innerHTML = `
         <div class="empty">Sin notificaciones pendientes</div>
         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn-add noti-read-all-btn" type="button" onclick="marcarTodasNotificacionesLeidas()">Marcar todos leídos</button>
-          <button class="btn-add secondary" type="button" onclick="debugNotificaciones()">Debug</button>
+          <button class="btn-add secondary" type="button" onclick="activarSonidoNotificaciones()">Activar sonido</button>
         </div>
       `;
       return;
@@ -336,19 +308,18 @@ console.log("NOTIFICACIONES conectado v29");
 
     box.innerHTML = `
       <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn-add noti-read-all-btn" type="button" onclick="marcarTodasNotificacionesLeidas()">Marcar todos leídos</button>
-        <button class="btn-add secondary" type="button" onclick="debugNotificaciones()">Debug</button>
+        <button class="btn-add noti-read-all-btn" type="button" onclick="marcarTodasNotificacionesLeidas()">Marcar todas como vistas</button>
+        <button class="btn-add secondary" type="button" onclick="activarSonidoNotificaciones()">Activar sonido</button>
       </div>
-      ${itemsActuales.map(n => `
+      ${notificaciones.map(n => `
         <div class="noti-item">
-          <div class="noti-item-title">🔔 ${esc(n.titulo || "Notificación")}</div>
+          <div class="noti-item-title">🔔 ${esc(tipoTitulo(n))}</div>
           <div class="noti-item-msg">${esc(n.mensaje || "")}</div>
-          <div class="noti-item-meta">${esc(n.meta || "")}</div>
+          <div class="noti-item-meta">${esc(tipoMeta(n))}</div>
           <div class="noti-actions">
-            ${n.tipo === "pedido_listo"
-              ? `<button class="noti-seen-btn" type="button" onclick="marcarNotificacionLeida(${Number(n.notificacion_id)})">Marcar como visto</button>`
-              : `<span class="noti-status-chip">Activa mientras el pedido esté en Solicitud</span>`
-            }
+            <button class="noti-seen-btn" type="button" onclick="marcarNotificacionLeida(${Number(n.id)})">
+              Marcar como visto
+            </button>
           </div>
         </div>
       `).join("")}
@@ -362,6 +333,12 @@ console.log("NOTIFICACIONES conectado v29");
 
     const bd = document.getElementById("notiBackdrop");
     if(bd) bd.style.display = "flex";
+  };
+
+  window.activarSonidoNotificaciones = function(){
+    habilitarAudio();
+    sonarCampana();
+    toast("Sonido de campana activado");
   };
 
   window.marcarNotificacionLeida = async function(id){
@@ -378,18 +355,19 @@ console.log("NOTIFICACIONES conectado v29");
       return;
     }
 
-    listosOperador = listosOperador.filter(n => Number(n.id) !== Number(id));
+    notificaciones = notificaciones.filter(n => Number(n.id) !== Number(id));
     actualizarContador(false);
     renderNotificaciones();
+    toast("Notificación marcada como vista");
   };
 
   window.marcarTodasNotificacionesLeidas = async function(){
     if(!db()) return;
 
-    const ids = listosOperador.map(n => n.id);
+    const ids = notificaciones.map(n => n.id);
 
     if(!ids.length){
-      toast("No hay pedidos listos pendientes por marcar");
+      toast("No hay notificaciones pendientes");
       return;
     }
 
@@ -404,38 +382,33 @@ console.log("NOTIFICACIONES conectado v29");
       return;
     }
 
-    listosOperador = [];
+    notificaciones = [];
     actualizarContador(false);
     renderNotificaciones();
-    toast("Pedidos listos marcados como vistos");
+    toast("Notificaciones marcadas como vistas");
   };
 
   window.debugNotificaciones = async function(){
     const operador = getOperador();
-
     await leerNotificaciones(false);
 
     console.log("OPERADOR:", operador);
-    console.log("SOLICITUDES RUBEN:", solicitudesRuben);
-    console.log("LISTOS OPERADOR:", listosOperador);
-    console.log("ITEMS ACTUALES:", itemsActuales);
+    console.log("NOTIFICACIONES:", notificaciones);
 
     alert(
       "Operador: " + (operador || "NO DETECTADO") +
-      "\nSolicitudes activas Rubén: " + solicitudesRuben.length +
-      "\nPedidos listos para este operador: " + listosOperador.length +
-      "\nTotal campana: " + itemsActuales.length
+      "\nNotificaciones pendientes: " + notificaciones.length
     );
   };
 
   function refrescarPorRealtime(origen){
-    console.log("Realtime cambio:", origen);
+    console.log("Realtime notificación:", origen);
 
     if(typeof window.cargarPedidos === "function"){
-      try{ window.cargarPedidos(); }catch(e){ console.warn("No se pudo refrescar pedidos:", e); }
+      try{ window.cargarPedidos(false); }catch(e){ console.warn("No se pudo refrescar pedidos:", e); }
     }
 
-    leerNotificaciones(false);
+    leerNotificaciones(true);
   }
 
   function iniciarRealtime(){
@@ -454,7 +427,7 @@ console.log("NOTIFICACIONES conectado v29");
     }
 
     const canal = db()
-      .channel("comanda_realtime_v29")
+      .channel("comanda_realtime_notificaciones_v32")
       .on("postgres_changes", { event:"*", schema:"public", table:"pedidos" }, payload => {
         refrescarPorRealtime({ tabla:"pedidos", evento:payload.eventType, id:payload.new?.id || payload.old?.id });
       })
@@ -462,7 +435,7 @@ console.log("NOTIFICACIONES conectado v29");
         refrescarPorRealtime({ tabla:"notificaciones", evento:payload.eventType, id:payload.new?.id || payload.old?.id });
       })
       .subscribe(status => {
-        console.log("Realtime status:", status);
+        console.log("Realtime notificaciones status:", status);
         const badge = document.getElementById("storageBadgeTextHeader") || document.getElementById("storageBadgeText");
         if(badge && status === "SUBSCRIBED"){
           badge.textContent = "SUPABASE";
