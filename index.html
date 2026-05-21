@@ -2140,16 +2140,16 @@ table{
 
 <script>
 /* =========================================================
-   NOTIFICACIONES v12 · Solicitudes para Rubén + Listo al operador
-   - Todo pedido en "Solicitud" le aparece a Rubén
-   - Roberto también lo ve para supervisar
-   - Si un pedido pasa a "Listo", le avisa al operador que lo creó
+   NOTIFICACIONES v13 · Rubén solo Rubén + Listo solo creador + sonido
+   - Todo pedido en "Solicitud" le aparece SOLO a Rubén
+   - Si un pedido pasa a "Listo", le avisa SOLO al operador que lo creó
    - Revisa cada 8 segundos
+   - Sonido de campanita después del primer toque/click en la página
 ========================================================= */
 (function(){
   const AUTH_KEY = "comanda_operador_actual";
-  const NOTI_READ_KEY = "tutto_notificaciones_leidas_v12";
-  const NOTI_LAST_COUNT_KEY = "tutto_notificaciones_count_v12";
+  const NOTI_READ_KEY = "tutto_notificaciones_leidas_v13";
+  const NOTI_LAST_COUNT_KEY = "tutto_notificaciones_count_v13";
 
   let notiTimer = null;
   let audioCtx = null;
@@ -2190,10 +2190,6 @@ table{
     return n === "ruben" || n === "rubén";
   }
 
-  function esRoberto(op){
-    return normalizar(op && op.nombre) === "roberto";
-  }
-
   function leerLeidas(){
     try{
       return JSON.parse(localStorage.getItem(NOTI_READ_KEY) || "[]");
@@ -2207,7 +2203,7 @@ table{
   }
 
   function notiId(tipo, pedido){
-    return `${tipo}_${pedido.id}`;
+    return `${tipo}_${pedido.id}_${normalizar(pedido.estatus_trabajo)}`;
   }
 
   function habilitarAudio(){
@@ -2227,30 +2223,33 @@ table{
     }
   }
 
-  function beep(){
+  function campanita(){
     try{
       habilitarAudio();
-
       if(!audioCtx) return;
 
       const now = audioCtx.currentTime;
 
-      const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.setValueAtTime(660, now + 0.10);
-
       gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.25, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
-
-      osc.connect(gain);
+      gain.gain.exponentialRampToValueAtTime(0.24, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.82);
       gain.connect(audioCtx.destination);
 
-      osc.start(now);
-      osc.stop(now + 0.34);
+      const tonos = [
+        { f:1046, t:0.00, d:0.12 },
+        { f:1318, t:0.16, d:0.13 },
+        { f:1568, t:0.33, d:0.18 }
+      ];
+
+      tonos.forEach(tn => {
+        const osc = audioCtx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(tn.f, now + tn.t);
+        osc.connect(gain);
+        osc.start(now + tn.t);
+        osc.stop(now + tn.t + tn.d);
+      });
     }catch(e){
       console.warn("No sonó la notificación:", e);
     }
@@ -2305,10 +2304,10 @@ table{
 
       /*
         REGLA 1:
-        Todo pedido en Solicitud le aparece a Rubén.
-        Roberto también lo ve para supervisar.
+        Todo pedido en Solicitud le aparece SOLO a Rubén.
+        Ya no le aparece a Roberto ni a otro operador.
       */
-      if((esRuben(op) || esRoberto(op)) && estado === "solicitud"){
+      if(esRuben(op) && estado === "solicitud"){
         const id = notiId("solicitud_ruben", p);
 
         if(!leidas.has(id)){
@@ -2325,8 +2324,8 @@ table{
 
       /*
         REGLA 2:
-        Si un operador creó un pedido y ese pedido pasa a Listo,
-        le aparece campanita a ese operador.
+        Si un pedido pasa a Listo, le aparece SOLO al operador que creó ese pedido.
+        Ejemplo: si Ricardo creó el pedido, solo Ricardo ve esa notificación.
       */
       if(creador === nombreOp && estado === "listo"){
         const id = notiId("listo_operador", p);
@@ -2364,7 +2363,7 @@ table{
     }
 
     if(sonar && total > anterior){
-      beep();
+      campanita();
       toast(`🔔 ${total} notificación${total === 1 ? "" : "es"} pendiente${total === 1 ? "" : "s"}`);
     }
 
@@ -2448,6 +2447,10 @@ table{
 
   window.cargarNotificaciones = function(){
     return refrescarNotificaciones(false);
+  };
+
+  window.notificarCambioPedidoListo = async function(){
+    return refrescarNotificaciones(true);
   };
 
   function iniciarNotificaciones(){
