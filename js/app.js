@@ -468,131 +468,12 @@ function clasePago(valor) {
 }
 
 // ===========================
-// NOTIFICACIONES BÁSICAS
+// NOTIFICACIONES
 // ===========================
-function nombreOperadorActualNoti(){
-  const op = getOperadorSesionLocal();
-  return String(op && op.nombre ? op.nombre : "").trim();
-}
-
-async function crearNotificacionPedidoListo(pedidoOriginal){
-  if(!validarSupabase()) return;
-  if(!pedidoOriginal || !pedidoOriginal.id) return;
-
-  const destinatario = String(pedidoOriginal.operador || "").trim();
-
-  if(!destinatario){
-    console.warn("Pedido sin operador. No se creó notificación.", pedidoOriginal);
-    return;
-  }
-
-  const mensaje = `El pedido de ${pedidoOriginal.cliente || "Cliente"} ya está listo.`;
-
-  const { error } = await db()
-    .from("notificaciones")
-    .insert([{
-      pedido_id: pedidoOriginal.id,
-      destinatario,
-      cliente: pedidoOriginal.cliente || "",
-      descripcion: pedidoOriginal.descripcion || "",
-      mensaje,
-      visto:false
-    }]);
-
-  if(error){
-    console.error("Error creando notificación:", error);
-    return;
-  }
-
-  console.log("Notificación creada para:", destinatario);
-}
-
-async function cargarNotificaciones(){
-  if(!validarSupabase()) return;
-
-  const destinatario = nombreOperadorActualNoti();
-  const count = document.getElementById("notiCount");
-  const list = document.getElementById("notiList");
-
-  if(!destinatario){
-    if(count){
-      count.textContent = "0";
-      count.classList.add("empty");
-    }
-    if(list){
-      list.innerHTML = `<div class="empty">Sin operador activo</div>`;
-    }
-    return;
-  }
-
-  const { data, error } = await db()
-    .from("notificaciones")
-    .select("*")
-    .eq("destinatario", destinatario)
-    .eq("visto", false)
-    .order("created_at", { ascending:false });
-
-  if(error){
-    console.error("Error cargando notificaciones:", error);
-    if(list) list.innerHTML = `<div class="empty">Error cargando notificaciones</div>`;
-    return;
-  }
-
-  notificacionesDB = data || [];
-
-  if(count){
-    count.textContent = String(notificacionesDB.length);
-    count.classList.toggle("empty", notificacionesDB.length === 0);
-  }
-
-  renderNotificaciones();
-}
-
-function abrirNotificaciones(){
-  cargarNotificaciones();
-  const modal = document.getElementById("notiBackdrop");
-  if(modal) modal.style.display = "flex";
-}
-
-function renderNotificaciones(){
-  const list = document.getElementById("notiList");
-  if(!list) return;
-
-  if(!notificacionesDB.length){
-    list.innerHTML = `<div class="empty">No tienes notificaciones pendientes</div>`;
-    return;
-  }
-
-  list.innerHTML = notificacionesDB.map(n => `
-    <div class="noti-item">
-      <div class="noti-item-title">🔔 ${escapeHtml(n.cliente || "Pedido listo")}</div>
-      <div class="noti-item-msg">${escapeHtml(n.mensaje || "Pedido listo")}</div>
-      <div class="noti-item-msg">${escapeHtml(n.descripcion || "")}</div>
-      <div class="noti-item-meta">Pedido #${escapeHtml(n.pedido_id || "")} · ${escapeHtml(String(n.created_at || "").slice(0,19).replace("T"," "))}</div>
-      <div class="noti-actions">
-        <button class="mini-action" type="button" onclick="marcarNotificacionVista(${Number(n.id)})">Marcar como visto</button>
-      </div>
-    </div>
-  `).join("");
-}
-
-async function marcarNotificacionVista(id){
-  if(!validarSupabase()) return;
-
-  const { error } = await db()
-    .from("notificaciones")
-    .update({ visto:true })
-    .eq("id", id);
-
-  if(error){
-    console.error("Error marcando notificación:", error);
-    alert("No se pudo marcar como visto: " + error.message);
-    return;
-  }
-
-  await cargarNotificaciones();
-  mostrarToast("Notificación marcada como vista");
-}
+// La lógica de notificaciones vive en js/notificaciones.js.
+// app.js NO debe tocar #notiCount ni crear notificaciones manualmente.
+// Supabase trigger crea los avisos cuando un pedido entra a Listo.
+// ===========================
 
 // ===========================
 // CARGAR PEDIDOS
@@ -696,10 +577,6 @@ async function cargarPedidos() {
 
   if (typeof aplicarPermisosComanda === "function") {
     aplicarPermisosComanda();
-  }
-
-  if (typeof cargarNotificaciones === "function") {
-    cargarNotificaciones();
   }
 }
 
@@ -895,16 +772,8 @@ async function actualizarCampoPedido(id, campo, valor) {
     return;
   }
 
-  if(
-    campo === "estatus_trabajo" &&
-    pedidoOriginal &&
-    pedidoOriginal.estatus_trabajo !== "Listo" &&
-    valor === "Listo"
-  ){
-    await crearNotificacionPedidoListo(pedidoOriginal);
-    await cargarNotificaciones();
-    mostrarToast("Pedido listo. Notificación enviada a " + (pedidoOriginal.operador || "su creador"));
-  }
+  // Notificación de pedido listo: la maneja Supabase con trigger SQL.
+
 
   const pedidoLocal = pedidosDB.find(p => Number(p.id) === Number(id));
   if(pedidoLocal){

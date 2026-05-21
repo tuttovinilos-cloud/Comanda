@@ -1,13 +1,14 @@
-console.log("MENU GLOBAL conectado v7");
+console.log("MENU GLOBAL conectado v11");
 
 /* =========================================================
-   MENU GLOBAL COMANDA / TUTTOVINILOS v7
+   MENU GLOBAL COMANDA / TUTTOVINILOS v11
    - Usa #authMenu
    - Usa .header-tabs / .tab-btn
    - Crea botón móvil .mobile-menu-btn
    - Carga operadores en q_operador, f_operador, filterOperador
    - Mueve badge SUPABASE al menú superior
    - Evita delay visual agregando .menu-ready
+   - NO toca notificaciones ni #notiCount
 ========================================================= */
 
 (function(){
@@ -32,8 +33,16 @@ console.log("MENU GLOBAL conectado v7");
     }
   }
 
+  function norm(v){
+    return String(v || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g,"")
+      .trim();
+  }
+
   function isRoberto(op){
-    return String(op && op.nombre || "").trim().toLowerCase() === "roberto";
+    return norm(op && op.nombre) === "roberto";
   }
 
   function hasPermission(op, perm){
@@ -59,16 +68,16 @@ console.log("MENU GLOBAL conectado v7");
   }
 
   function logout(){
-    localStorage.removeItem("comanda_operador_actual");
+    localStorage.removeItem(AUTH_KEY);
     location.href = "login.html?logout=1";
   }
 
   function crearStoragePill(){
     const pill = document.createElement("div");
-    pill.className = "storage-pill";
+    pill.className = "menu-status storage-pill";
     pill.id = "storageBadgeHeader";
     pill.innerHTML = `
-      <div class="storage-dot"></div>
+      <span class="status-dot storage-dot"></span>
       <span id="storageBadgeTextHeader">SUPABASE</span>
     `;
     return pill;
@@ -86,6 +95,7 @@ console.log("MENU GLOBAL conectado v7");
 
     if(!menu){
       console.warn("No existe #authMenu");
+      marcarMenuListo();
       return;
     }
 
@@ -132,34 +142,35 @@ console.log("MENU GLOBAL conectado v7");
   }
 
   function setupMobileMenu(){
-    const header = document.querySelector(".header");
+    const header = document.querySelector(".header, .top, .top-inner");
     const menu = document.getElementById("authMenu");
 
     if(!header || !menu) return;
 
-    if(!document.getElementById("mobileMenuBtn")){
-      const btn = document.createElement("button");
+    let btn = document.getElementById("mobileMenuBtn");
+
+    if(!btn){
+      btn = document.createElement("button");
       btn.id = "mobileMenuBtn";
       btn.className = "mobile-menu-btn";
       btn.type = "button";
       btn.textContent = "☰ Menú";
 
-      btn.onclick = function(){
-        menu.classList.toggle("open");
-
-        if(typeof window.updateStickyOffsets === "function"){
-          window.updateStickyOffsets();
-        }
-      };
-
-      const noti = header.querySelector(".noti-btn");
-
-      if(noti){
-        header.insertBefore(btn, noti);
-      }else{
-        header.insertBefore(btn, menu);
-      }
+      /*
+        IMPORTANTE:
+        El botón móvil debe ir antes del menú, pero después del logo/campana si existe.
+        No debe insertarse antes de la campana porque desordena el header.
+      */
+      header.insertBefore(btn, menu);
     }
+
+    btn.onclick = function(){
+      menu.classList.toggle("open");
+
+      if(typeof window.updateStickyOffsets === "function"){
+        window.updateStickyOffsets();
+      }
+    };
   }
 
   function syncStorageBadge(){
@@ -168,14 +179,16 @@ console.log("MENU GLOBAL conectado v7");
     const desktopBadge = document.getElementById("storageBadge");
     const headerBadge = document.getElementById("storageBadgeHeader");
 
+    const isSupa = !!window.supabaseClient || desktopBadge?.classList.contains("ok");
+
     if(headerText){
-      headerText.textContent = window.supabaseClient
+      headerText.textContent = isSupa
         ? "SUPABASE"
         : (desktopText?.textContent || "LOCAL");
     }
 
     if(headerBadge){
-      if(window.supabaseClient || desktopBadge?.classList.contains("ok")){
+      if(isSupa){
         headerBadge.classList.add("ok");
       }else{
         headerBadge.classList.remove("ok");
@@ -267,12 +280,16 @@ console.log("MENU GLOBAL conectado v7");
   }
 
   function updateStickyOffsets(){
-    document.documentElement.style.setProperty("--sticky-head-top", `0px`);
-    document.documentElement.style.setProperty("--sticky-quick-top", `0px`);
+    document.documentElement.style.setProperty("--sticky-head-top", "0px");
+    document.documentElement.style.setProperty("--sticky-quick-top", "0px");
   }
 
   function marcarMenuListo(){
-    const header = document.querySelector(".header");
+    const header = document.querySelector(".header, .top");
+
+    document.documentElement.classList.remove("loading-menu");
+    document.documentElement.classList.add("menu-ready");
+
     if(header){
       header.classList.add("menu-ready");
     }
@@ -285,8 +302,8 @@ console.log("MENU GLOBAL conectado v7");
 
   document.addEventListener("DOMContentLoaded", function(){
     marcarSupabaseSiListo();
-    setupMobileMenu();
     renderMenu();
+    setupMobileMenu();
     marcarMenuListo();
 
     updateStickyOffsets();
@@ -294,6 +311,11 @@ console.log("MENU GLOBAL conectado v7");
     syncStorageBadge();
 
     window.addEventListener("resize", updateStickyOffsets);
-    setInterval(syncStorageBadge, 1000);
+
+    if(window.__MENU_STORAGE_TIMER__){
+      clearInterval(window.__MENU_STORAGE_TIMER__);
+    }
+
+    window.__MENU_STORAGE_TIMER__ = setInterval(syncStorageBadge, 1500);
   });
 })();
