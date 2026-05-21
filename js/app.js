@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente");
+﻿console.log("APP JS conectado correctamente");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -7,6 +7,8 @@ let archivoSeleccionado = null;
 let materialesDB = [];
 let tiposImpresionDB = [];
 let clientesBusquedaDB = [];
+let clientesCatalogoDB = [];
+let notificacionesDB = [];
 
 // ===========================
 // SUPABASE SEGURO
@@ -18,7 +20,7 @@ function db() {
 function validarSupabase() {
   if (!db()) {
     console.error("No existe window.supabaseClient. Revisa /js/supabase.js");
-    alert("No existe conexión Supabase. Revisa /js/supabase.js");
+    alert("No existe conexiÃ³n Supabase. Revisa /js/supabase.js");
     return false;
   }
 
@@ -53,6 +55,16 @@ function normalizarBusqueda(valor) {
     .trim();
 }
 
+function nombreBonito(valor) {
+  const limpio = String(valor || "").trim().replace(/\s+/g, " ");
+  if (!limpio) return "";
+
+  return limpio
+    .split(" ")
+    .map(p => p ? (p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()) : "")
+    .join(" ");
+}
+
 function escapeHtml(valor) {
   return String(valor ?? "")
     .replaceAll("&", "&amp;")
@@ -79,7 +91,7 @@ function mostrarToast(mensaje) {
 }
 
 // ===========================
-// SESIÓN / PERMISOS
+// SESIÃ“N / PERMISOS
 // ===========================
 function getOperadorSesionLocal() {
   try {
@@ -118,7 +130,7 @@ function puedeModificarCantidadLocal() {
 // ===========================
 async function asegurarClienteExiste(nombreCliente) {
   const nombre = String(nombreCliente || "").trim();
-  if (!nombre) return;
+  if (!nombre) return "";
 
   const nombreNormalizado = normalizarBusqueda(nombre);
 
@@ -129,19 +141,23 @@ async function asegurarClienteExiste(nombreCliente) {
 
   if (error) {
     console.warn("No se pudo verificar cliente:", error);
-    return;
+    return nombreBonito(nombre);
   }
 
-  const existe = (data || []).some(c => {
+  const clienteExistente = (data || []).find(c => {
     return normalizarBusqueda(c.nombre) === nombreNormalizado;
   });
 
-  if (existe) return;
+  if (clienteExistente) {
+    return String(clienteExistente.nombre || nombreBonito(nombre)).trim();
+  }
+
+  const nombreFinal = nombreBonito(nombre);
 
   const { error: insertError } = await db()
     .from("clientes")
     .insert([{
-      nombre: nombre,
+      nombre: nombreFinal,
       tipo_cliente: "Cliente Standar",
       telefono: "",
       correo: "",
@@ -150,26 +166,126 @@ async function asegurarClienteExiste(nombreCliente) {
     }]);
 
   if (insertError) {
-    console.warn("No se pudo crear cliente automáticamente:", insertError);
-    return;
+    console.warn("No se pudo crear cliente automÃ¡ticamente:", insertError);
+    return nombreFinal;
   }
 
-  console.log("Cliente creado automáticamente:", nombre);
+  console.log("Cliente creado automÃ¡ticamente:", nombreFinal);
+  return nombreFinal;
 }
 
 async function cargarClientesBusqueda() {
   const { data, error } = await db()
     .from("clientes")
-    .select("nombre, telefono, correo, notas");
+    .select("id, nombre, telefono, correo, notas, activo")
+    .eq("activo", true)
+    .order("nombre", { ascending: true });
 
   if (error) {
-    console.warn("No se pudieron cargar clientes para búsqueda:", error);
+    console.warn("No se pudieron cargar clientes para bÃºsqueda:", error);
     clientesBusquedaDB = [];
+    clientesCatalogoDB = [];
     return;
   }
 
   clientesBusquedaDB = data || [];
-  console.log("Clientes para búsqueda cargados:", clientesBusquedaDB);
+  clientesCatalogoDB = [...clientesBusquedaDB];
+
+  renderClienteDatalist();
+
+  console.log("Clientes para bÃºsqueda cargados:", clientesBusquedaDB);
+}
+
+function renderClienteDatalist() {
+  const datalist = document.getElementById("clientesDatalist");
+  if (!datalist) return;
+
+  datalist.innerHTML = "";
+
+  const usados = new Set();
+
+  clientesCatalogoDB.forEach(c => {
+    const nombre = String(c.nombre || "").trim();
+    if (!nombre) return;
+
+    const key = normalizarBusqueda(nombre);
+    if (!key || usados.has(key)) return;
+
+    usados.add(key);
+
+    const opt = document.createElement("option");
+    opt.value = nombre;
+    datalist.appendChild(opt);
+  });
+}
+
+function buscarClienteExactoNormalizado(nombre) {
+  const norm = normalizarBusqueda(nombre);
+  if (!norm) return null;
+
+  return clientesCatalogoDB.find(c => normalizarBusqueda(c.nombre) === norm) || null;
+}
+
+function puntajeParecidoCliente(a, b) {
+  const na = normalizarBusqueda(a);
+  const nb = normalizarBusqueda(b);
+
+  if (!na || !nb) return 0;
+  if (na === nb) return 1;
+  if (na.includes(nb) || nb.includes(na)) return 0.92;
+
+  const ta = na.split(" ").filter(Boolean);
+  const tb = nb.split(" ").filter(Boolean);
+
+  if (!ta.length || !tb.length) return 0;
+
+  const sb = new Set(tb);
+
+  let match = 0;
+
+  ta.forEach(t => {
+    if (sb.has(t)) match++;
+  });
+
+  return match / Math.max(ta.length, tb.length);
+}
+
+function buscarClienteParecido(nombre) {
+  let mejor = null;
+  let score = 0;
+
+  clientesCatalogoDB.forEach(c => {
+    const s = puntajeParecidoCliente(nombre, c.nombre);
+
+    if (s > score) {
+      score = s;
+      mejor = c;
+    }
+  });
+
+  return score >= 0.6 ? mejor : null;
+}
+
+async function resolverNombreClienteAntesDeGuardar(nombreIngresado) {
+  const nombre = String(nombreIngresado || "").trim();
+
+  if (!nombre) {
+    return { ok: true, nombreFinal: "" };
+  }
+
+  const exacto = buscarClienteExactoNormalizado(nombre);
+
+  if (exacto) {
+    return {
+      ok: true,
+      nombreFinal: String(exacto.nombre || "").trim()
+    };
+  }
+
+  return {
+    ok: true,
+    nombreFinal: nombreBonito(nombre)
+  };
 }
 
 // ===========================
@@ -204,7 +320,7 @@ async function cargarOperadoresComandaDesdeSupabase() {
   }
 
   llenarSelectOperadores(document.getElementById("q_operador"), operadores, "Operador");
-  llenarSelectOperadores(document.getElementById("f_operador"), operadores, "Seleccionar…");
+  llenarSelectOperadores(document.getElementById("f_operador"), operadores, "Seleccionarâ€¦");
   llenarSelectOperadores(document.getElementById("filterOperador"), operadores, "Operador");
 
   aplicarOperadorSesion();
@@ -229,12 +345,14 @@ function llenarSelectOperadores(select, operadores, placeholder) {
 
 function aplicarOperadorSesion() {
   const op = getOperadorSesionLocal();
+
   if (!op || !op.nombre) return;
 
   const puedeCambiar = puedeModificarOperadorLocal();
 
   ["q_operador", "f_operador"].forEach(id => {
     const el = document.getElementById(id);
+
     if (!el) return;
 
     el.value = op.nombre;
@@ -285,7 +403,7 @@ async function cargarMateriales() {
 }
 
 // ===========================
-// TIPOS DE IMPRESIÓN
+// TIPOS DE IMPRESIÃ“N
 // ===========================
 async function cargarTiposImpresion() {
   const { data, error } = await db()
@@ -295,7 +413,7 @@ async function cargarTiposImpresion() {
     .order("nombre", { ascending: true });
 
   if (error) {
-    console.error("Error cargando tipos de impresión:", error);
+    console.error("Error cargando tipos de impresiÃ³n:", error);
     return;
   }
 
@@ -311,7 +429,7 @@ async function cargarTiposImpresion() {
 
     const valorActual = select.value;
 
-    select.innerHTML = `<option value="">Impresión</option>`;
+    select.innerHTML = `<option value="">ImpresiÃ³n</option>`;
 
     tiposImpresionDB.forEach(t => {
       const opt = document.createElement("option");
@@ -323,7 +441,7 @@ async function cargarTiposImpresion() {
     if (valorActual) select.value = valorActual;
   });
 
-  console.log("Tipos de impresión cargados:", tiposImpresionDB);
+  console.log("Tipos de impresiÃ³n cargados:", tiposImpresionDB);
 }
 
 // ===========================
@@ -350,6 +468,17 @@ function clasePago(valor) {
 }
 
 // ===========================
+// NOTIFICACIONES
+// ===========================
+// IMPORTANTE:
+// La lÃ³gica de notificaciones NO vive aquÃ­.
+// Vive en index.html v26 y lee:
+// - pedidos en Solicitud para RubÃ©n
+// - notificaciones tipo pedido_listo para el operador creador
+// Esto evita que dos intervalos distintos modifiquen la misma campana.
+// ===========================
+
+// ===========================
 // CARGAR PEDIDOS
 // ===========================
 async function cargarPedidos() {
@@ -367,6 +496,7 @@ async function cargarPedidos() {
   }
 
   pedidosDB = data || [];
+
   console.log("Pedidos cargados:", pedidosDB);
 
   const tabla = document.getElementById("orderTableBody");
@@ -387,8 +517,8 @@ async function cargarPedidos() {
     const id = Number(p.id);
 
     const archivo = p.archivo_url
-      ? `<a class="file-link-chip" href="${escapeHtml(p.archivo_url)}" target="_blank" onclick="event.stopPropagation()">📎 ${escapeHtml(p.archivo_nombre || "Archivo")}</a>`
-      : "—";
+      ? `<a class="file-link-chip" href="${escapeHtml(p.archivo_url)}" target="_blank" onclick="event.stopPropagation()">ðŸ“Ž ${escapeHtml(p.archivo_nombre || "Archivo")}</a>`
+      : "â€”";
 
     const cantidadDisabled = puedeModificarCantidadLocal() ? "" : "disabled";
 
@@ -438,7 +568,7 @@ async function cargarPedidos() {
           </select>
         </td>
 
-        <td>${escapeHtml(p.fecha_entrega || "—")}</td>
+        <td>${escapeHtml(p.fecha_entrega || "â€”")}</td>
         <td>${archivo}</td>
       </tr>
     `;
@@ -454,14 +584,14 @@ async function cargarPedidos() {
 }
 
 // ===========================
-// GUARDAR FILA RÁPIDA
+// GUARDAR FILA RÃPIDA
 // ===========================
 async function saveQuickOrder() {
   if (!validarSupabase()) return;
 
   let fecha = document.getElementById("q_fecha")?.value || "";
   let operador = document.getElementById("q_operador")?.value || "";
-  const cliente = document.getElementById("q_cliente")?.value || "";
+  let cliente = document.getElementById("q_cliente")?.value || "";
   const descripcion = document.getElementById("q_descripcion")?.value || "";
   const cantidad = document.getElementById("q_cantidad")?.value || "";
   const material = document.getElementById("q_material")?.value || "";
@@ -481,13 +611,18 @@ async function saveQuickOrder() {
   }
 
   if (!cliente && !descripcion) {
-    alert("Coloca al menos cliente o descripción.");
+    alert("Coloca al menos cliente o descripciÃ³n.");
     return;
   }
 
   const archivoData = await subirArchivoPedido();
 
-  await asegurarClienteExiste(cliente);
+  const decisionCliente = await resolverNombreClienteAntesDeGuardar(cliente);
+  if (!decisionCliente.ok) return;
+
+  cliente = await asegurarClienteExiste(decisionCliente.nombreFinal || cliente) || cliente;
+  const clienteMatch = buscarClienteExactoNormalizado(cliente);
+  const clienteId = clienteMatch ? Number(clienteMatch.id) : null;
 
   const { error } = await db()
     .from("pedidos")
@@ -495,6 +630,7 @@ async function saveQuickOrder() {
       fecha,
       operador,
       cliente,
+      cliente_id: clienteId,
       descripcion,
       cantidad,
       material,
@@ -507,7 +643,7 @@ async function saveQuickOrder() {
     }]);
 
   if (error) {
-    console.error("Error guardando pedido rápido:", error);
+    console.error("Error guardando pedido rÃ¡pido:", error);
     alert("Error guardando pedido: " + error.message);
     return;
   }
@@ -531,7 +667,7 @@ async function saveOrder() {
 
   let fecha = document.getElementById("f_fecha")?.value || "";
   let operador = document.getElementById("f_operador")?.value || "";
-  const cliente = document.getElementById("f_cliente")?.value || "";
+  let cliente = document.getElementById("f_cliente")?.value || "";
   const descripcion = document.getElementById("f_descripcion")?.value || "";
   const cantidad = document.getElementById("f_cantidad")?.value || "";
   const material = document.getElementById("f_material")?.value || "";
@@ -548,7 +684,12 @@ async function saveOrder() {
     fecha = new Date().toISOString().split("T")[0];
   }
 
-  await asegurarClienteExiste(cliente);
+  const decisionCliente = await resolverNombreClienteAntesDeGuardar(cliente);
+  if (!decisionCliente.ok) return;
+
+  cliente = await asegurarClienteExiste(decisionCliente.nombreFinal || cliente) || cliente;
+  const clienteMatch = buscarClienteExactoNormalizado(cliente);
+  const clienteId = clienteMatch ? Number(clienteMatch.id) : null;
 
   const archivoData = await subirArchivoPedido();
 
@@ -556,6 +697,7 @@ async function saveOrder() {
     fecha,
     operador,
     cliente,
+    cliente_id: clienteId,
     descripcion,
     material,
     tipo_impresion,
@@ -609,10 +751,12 @@ async function saveOrder() {
 }
 
 // ===========================
-// ACTUALIZAR CAMPO RÁPIDO
+// ACTUALIZAR CAMPO RÃPIDO
 // ===========================
 async function actualizarCampoPedido(id, campo, valor) {
   if (!validarSupabase()) return;
+
+  const pedidoOriginal = pedidosDB.find(p => Number(p.id) === Number(id));
 
   if (campo === "cantidad" && !puedeModificarCantidadLocal()) {
     alert("No tienes permiso para modificar cantidad.");
@@ -637,6 +781,14 @@ async function actualizarCampoPedido(id, campo, valor) {
     return;
   }
 
+  // NotificaciÃ³n de Listo: la maneja Supabase con trigger SQL.
+
+
+  const pedidoLocal = pedidosDB.find(p => Number(p.id) === Number(id));
+  if(pedidoLocal){
+    pedidoLocal[campo] = valor;
+  }
+
   console.log(`Pedido ${id} actualizado: ${campo} = ${valor}`);
 }
 
@@ -647,7 +799,7 @@ function openEditOrder(id) {
   const pedido = pedidosDB.find(p => Number(p.id) === Number(id));
 
   if (!pedido) {
-    alert("No se encontró el pedido.");
+    alert("No se encontrÃ³ el pedido.");
     return;
   }
 
@@ -682,7 +834,7 @@ function openEditOrder(id) {
     if (fileEmpty) fileEmpty.style.display = "none";
     if (filePreview) filePreview.style.display = "flex";
     if (fileGeneric) fileGeneric.style.display = "block";
-    if (fileIconBig) fileIconBig.textContent = "📎";
+    if (fileIconBig) fileIconBig.textContent = "ðŸ“Ž";
     if (fileName) fileName.textContent = pedido.archivo_nombre || "Archivo adjunto";
   } else {
     if (fileEmpty) fileEmpty.style.display = "flex";
@@ -778,7 +930,7 @@ function ponerFechaHoy() {
 }
 
 // ===========================
-// LIMPIAR FILA RÁPIDA
+// LIMPIAR FILA RÃPIDA
 // ===========================
 function limpiarFilaRapida() {
   const campos = [
@@ -830,7 +982,7 @@ function handleFileSelect(event) {
   if (fileEmpty) fileEmpty.style.display = "none";
   if (filePreview) filePreview.style.display = "flex";
   if (fileGeneric) fileGeneric.style.display = "block";
-  if (fileIconBig) fileIconBig.textContent = "📎";
+  if (fileIconBig) fileIconBig.textContent = "ðŸ“Ž";
   if (fileName) fileName.textContent = archivoSeleccionado.name;
 }
 
@@ -922,6 +1074,7 @@ function onSearch() {
 
   filas.forEach(fila => {
     const celdas = fila.querySelectorAll("td");
+
     if (!celdas.length) return;
 
     const fecha = celdas[1]?.textContent.trim() || "";
@@ -947,14 +1100,11 @@ function onSearch() {
     const correoCliente = clienteRelacionado ? clienteRelacionado.correo || "" : "";
     const notasCliente = clienteRelacionado ? clienteRelacionado.notas || "" : "";
 
-    /*
-      OPERADOR NO VA AQUÍ.
-      Para operador se usa solamente el filtro Operador.
-    */
     const contenido = normalizarBusqueda([
       fecha,
       cliente,
-      descripcion,
+    cliente_id: clienteId,
+    descripcion,
       cantidad,
       material,
       impresion,
@@ -990,20 +1140,55 @@ window.addEventListener("DOMContentLoaded", async () => {
   marcarSupabaseActivo();
   ponerFechaHoy();
 
-  await cargarOperadoresComandaDesdeSupabase();
-
-  if (typeof cargarOperadoresEnComanda === "function") {
-    await cargarOperadoresEnComanda();
+  try {
+    await cargarClientesBusqueda();
+  } catch (e) {
+    console.error("Error cargando clientes para bÃºsqueda:", e);
   }
 
-  await cargarClientesBusqueda();
-  await cargarMateriales();
-  await cargarTiposImpresion();
-  await cargarPedidos();
+  try {
+    await cargarPedidos();
+  } catch (e) {
+    console.error("Error cargando pedidos al iniciar:", e);
+  }
+
+  try {
+    await cargarOperadoresComandaDesdeSupabase();
+  } catch (e) {
+    console.error("Error cargando operadores:", e);
+  }
+
+  try {
+    if (typeof cargarOperadoresEnComanda === "function") {
+      await cargarOperadoresEnComanda();
+    }
+  } catch (e) {
+    console.error("Error cargando operadores fallback:", e);
+  }
+
+  try {
+    await cargarMateriales();
+  } catch (e) {
+    console.error("Error cargando materiales:", e);
+  }
+
+  try {
+    await cargarTiposImpresion();
+  } catch (e) {
+    console.error("Error cargando tipos de impresiÃ³n:", e);
+  }
 
   aplicarOperadorSesion();
 
   if (typeof aplicarPermisosComanda === "function") {
     aplicarPermisosComanda();
   }
+
+  try {
+  } catch (e) {
+    console.error("Error iniciando notificaciones:", e);
+  }
 });
+
+
+

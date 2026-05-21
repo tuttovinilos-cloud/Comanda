@@ -1,517 +1,587 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>COMANDA · Login</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="icon" href="data:,">
-
-  <style>
-    *,*::before,*::after{
-      box-sizing:border-box;
-      margin:0;
-      padding:0;
-    }
-
-    :root{
-      --bg:#0d0f14;
-      --panel:#13161d;
-      --panel2:#181c26;
-      --border:#1e2330;
-      --border2:#2a3048;
-      --text:#e2e8f0;
-      --muted:#64748b;
-      --muted2:#94a3b8;
-      --accent:#3b82f6;
-      --accent2:#60a5fa;
-      --green:#30D158;
-      --red:#FF3B30;
-      --yellow:#FFD60A;
-      --head:'Barlow Condensed',Arial,sans-serif;
-      --body:'Barlow',Arial,sans-serif;
-      --mono:'Share Tech Mono',monospace;
-    }
-
-    body{
-      min-height:100vh;
-      min-height:100dvh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:
-        radial-gradient(circle at top left, #1e3a8a55, transparent 34%),
-        radial-gradient(circle at bottom right, #3b82f633, transparent 32%),
-        var(--bg);
-      color:var(--text);
-      font-family:var(--body);
-      padding:18px;
-      padding-top:calc(18px + env(safe-area-inset-top));
-      padding-bottom:calc(18px + env(safe-area-inset-bottom));
-    }
-
-    .login-wrap{
-      width:100%;
-      max-width:430px;
-    }
-
-    .brand{
-      text-align:center;
-      margin-bottom:16px;
-    }
-
-    .brand-title{
-      font-family:var(--head);
-      font-size:34px;
-      font-weight:900;
-      letter-spacing:3px;
-      line-height:1;
-      color:var(--accent2);
-      text-transform:uppercase;
-      text-shadow:0 0 24px #3b82f666;
-    }
-
-    .brand-sub{
-      margin-top:6px;
-      font-size:12px;
-      color:var(--muted2);
-      letter-spacing:1px;
-      text-transform:uppercase;
-    }
-
-    .card{
-      width:100%;
-      background:linear-gradient(180deg,#151923,#10131b);
-      border:1px solid var(--border2);
-      border-radius:18px;
-      box-shadow:0 24px 80px #000c;
-      overflow:hidden;
-    }
-
-    .head{
-      padding:20px;
-      border-bottom:1px solid var(--border);
-    }
-
-    .title{
-      font-family:var(--head);
-      font-size:23px;
-      font-weight:900;
-      letter-spacing:2px;
-      text-transform:uppercase;
-      color:var(--text);
-    }
-
-    .sub{
-      margin-top:5px;
-      font-size:13px;
-      color:var(--muted2);
-      line-height:1.4;
-    }
-
-    .body{
-      padding:20px;
-      display:flex;
-      flex-direction:column;
-      gap:13px;
-    }
-
-    .field{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-
-    .field label{
-      font-family:var(--head);
-      font-size:11px;
-      font-weight:800;
-      letter-spacing:1.7px;
-      text-transform:uppercase;
-      color:var(--muted);
-    }
-
-    .field input,
-    .field select{
-      width:100%;
-      min-height:44px;
-      background:#0d0f14;
-      color:var(--text);
-      border:1px solid var(--border2);
-      border-radius:10px;
-      padding:11px 12px;
-      outline:none;
-      font-family:var(--body);
-      font-size:15px;
-    }
-
-    .field input:focus,
-    .field select:focus{
-      border-color:var(--accent);
-      box-shadow:0 0 0 2px #3b82f622;
-    }
-
-    select option{
-      background:var(--panel);
-      color:var(--text);
-    }
-
-    .btn{
-      min-height:44px;
-      margin-top:4px;
-      background:var(--accent);
-      color:white;
-      border:none;
-      border-radius:10px;
-      padding:12px 14px;
-      cursor:pointer;
-      font-family:var(--head);
-      font-size:14px;
-      font-weight:900;
-      letter-spacing:1.8px;
-      text-transform:uppercase;
-      transition:.2s;
-    }
-
-    .btn:hover{
-      filter:brightness(1.08);
-      box-shadow:0 0 20px #3b82f655;
-    }
-
-    .btn:active{
-      transform:scale(.98);
-    }
-
-    .btn:disabled{
-      opacity:.55;
-      cursor:not-allowed;
-      box-shadow:none;
-    }
-
-    .error{
-      display:none;
-      background:#FF3B3011;
-      border:1px solid #FF3B3044;
-      color:#ff867f;
-      border-radius:10px;
-      padding:11px 12px;
-      font-size:13px;
-      line-height:1.35;
-    }
-
-    .ok{
-      display:none;
-      background:#30D15811;
-      border:1px solid #30D15844;
-      color:#7af59a;
-      border-radius:10px;
-      padding:11px 12px;
-      font-size:13px;
-      line-height:1.35;
-    }
-
-    .foot{
-      padding:14px 20px;
-      border-top:1px solid var(--border);
-      color:var(--muted);
-      font-size:11px;
-      line-height:1.45;
-      text-align:center;
-    }
-
-    .loading-row{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      color:var(--muted2);
-      font-size:12px;
-      font-family:var(--mono);
-    }
-
-    .spinner{
-      width:14px;
-      height:14px;
-      border:2px solid #ffffff22;
-      border-top-color:var(--accent2);
-      border-radius:50%;
-      animation:spin .75s linear infinite;
-    }
-
-    @keyframes spin{
-      to{transform:rotate(360deg)}
-    }
-
-    @media(max-width:420px){
-      body{
-        align-items:flex-start;
-        padding-top:46px;
-      }
-
-      .brand-title{
-        font-size:29px;
-      }
-
-      .card{
-        border-radius:16px;
-      }
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Login Â· Comanda Tuttovinilos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;800;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f2f9;
+  --panel:#ffffff;
+  --panel2:#f8f9ff;
+  --line:#d9deea;
+  --line2:#cbd3e6;
+  --text:#111827;
+  --muted:#6b7280;
+  --muted2:#475569;
+  --blue:#153bff;
+  --blue2:#0b1f7a;
+  --green:#16a34a;
+  --red:#dc2626;
+  --yellow:#f59e0b;
+  --head:'Montserrat',Arial,sans-serif;
+  --body:'Inter',Arial,sans-serif;
+  --mono:'Roboto Mono',monospace;
+}
+html{-webkit-text-size-adjust:100%}
+body{
+  min-height:100vh;
+  font-family:var(--body);
+  color:var(--text);
+  background:
+    radial-gradient(circle at 18% 18%, rgba(21,59,255,.13), transparent 28%),
+    radial-gradient(circle at 86% 12%, rgba(11,31,122,.12), transparent 26%),
+    linear-gradient(180deg,#f7f8ff 0%,var(--bg) 100%);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  padding-top:calc(18px + env(safe-area-inset-top));
+  padding-bottom:calc(18px + env(safe-area-inset-bottom));
+}
+button,input,select{font:inherit}
+button{cursor:pointer;touch-action:manipulation;border:0}
+.login-shell{
+  width:100%;
+  max-width:430px;
+  display:block;
+}
+.hero{
+  display:none;
+  position:relative;
+  overflow:hidden;
+  border-radius:24px;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  min-height:560px;
+  padding:30px;
+  color:white;
+  box-shadow:0 18px 50px rgba(21,59,255,.24);
+}
+.hero::before{
+  content:"";
+  position:absolute;
+  width:480px;
+  height:480px;
+  border-radius:50%;
+  background:rgba(255,255,255,.08);
+  right:-180px;
+  top:-140px;
+}
+.hero::after{
+  content:"";
+  position:absolute;
+  inset:auto -70px -160px auto;
+  width:360px;
+  height:360px;
+  border-radius:50%;
+  background:rgba(255,255,255,.07);
+}
+.brand{
+  position:relative;
+  z-index:1;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  border:2px dashed rgba(255,255,255,.52);
+  border-radius:13px;
+  padding:11px 15px;
+  font-family:var(--head);
+  font-weight:900;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  background:rgba(255,255,255,.06);
+}
+.hero-content{
+  position:relative;
+  z-index:1;
+  margin-top:92px;
+  max-width:560px;
+}
+.hero h1{
+  font-family:var(--head);
+  font-size:46px;
+  line-height:.96;
+  letter-spacing:-1.4px;
+  margin-bottom:16px;
+}
+.hero p{
+  font-size:16px;
+  line-height:1.55;
+  color:rgba(255,255,255,.82);
+  max-width:480px;
+}
+.hero-grid{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:34px;
+}
+.hero-chip{
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.10);
+  border-radius:16px;
+  padding:14px;
+  min-height:86px;
+}
+.hero-chip b{
+  display:block;
+  font-family:var(--head);
+  font-size:20px;
+  margin-bottom:5px;
+}
+.hero-chip span{
+  display:block;
+  font-size:12px;
+  color:rgba(255,255,255,.74);
+  line-height:1.28;
+}
+.login-card{
+  background:rgba(255,255,255,.96);
+  border:1px solid var(--line);
+  border-radius:24px;
+  box-shadow:0 12px 38px rgba(0,0,0,.08);
+  padding:22px;
+  min-height:auto;
+  display:flex;
+  flex-direction:column;
+}
+.card-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  padding:4px 2px 18px;
+}
+.card-title{
+  font-family:var(--head);
+  font-size:24px;
+  font-weight:900;
+  color:var(--blue);
+  letter-spacing:-.4px;
+}
+.card-sub{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.35;
+}
+.status-pill{
+  display:none;
+  align-items:center;
+  gap:7px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:8px 10px;
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:800;
+  color:var(--muted2);
+  white-space:nowrap;
+  background:#fff;
+}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--yellow)}
+.status-pill.ok .status-dot{background:var(--green)}
+.field{margin-bottom:13px}
+.field label{
+  display:block;
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.7px;
+  color:var(--muted);
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+.input-wrap{position:relative}
+select,input{
+  width:100%;
+  min-height:46px;
+  background:#fff;
+  color:var(--text);
+  border:1.6px solid var(--line);
+  border-radius:14px;
+  padding:11px 13px;
+  outline:none;
+  font-size:15px;
+}
+select:focus,input:focus{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(21,59,255,.10);
+}
+select{
+  appearance:none;
+  -webkit-appearance:none;
+  padding-right:40px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 14px center;
+}
+.password-row{display:flex;gap:8px}
+.password-row input{flex:1}
+.icon-btn{
+  min-width:48px;
+  border:1.6px solid var(--line);
+  background:#fff;
+  color:var(--blue);
+  border-radius:14px;
+  font-weight:900;
+}
+.operator-preview{
+  background:var(--panel2);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:14px;
+  margin:7px 0 14px;
+  min-height:95px;
+}
+.op-name{
+  font-family:var(--head);
+  font-size:20px;
+  font-weight:900;
+  color:var(--blue2);
+  text-transform:uppercase;
+}
+.op-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:9px;
+}
+.op-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  border:1px solid #dbe2f2;
+  background:#fff;
+  color:var(--muted2);
+  border-radius:999px;
+  padding:5px 8px;
+  font-size:11px;
+  font-weight:700;
+}
+.op-badge.ok{color:#166534;background:#dcfce7;border-color:#bbf7d0}
+.login-btn{
+  width:100%;
+  min-height:50px;
+  border-radius:15px;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  color:white;
+  font-family:var(--head);
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.7px;
+  box-shadow:0 10px 20px rgba(21,59,255,.20);
+}
+.login-btn:hover{filter:brightness(1.05)}
+.login-btn:disabled{opacity:.65;cursor:not-allowed;filter:none}
+.secondary-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:10px;
+}
+.small-btn{
+  min-height:42px;
+  border-radius:13px;
+  background:#fff;
+  color:var(--blue);
+  border:1.5px solid var(--line);
+  font-family:var(--head);
+  font-weight:900;
+  font-size:12px;
+  text-transform:uppercase;
+}
+.note{
+  display:none;
+  margin-top:auto;
+  padding-top:18px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  text-align:center;
+}
+.toast{
+  position:fixed;
+  left:14px;
+  right:14px;
+  bottom:18px;
+  z-index:999;
+  transform:translateY(20px);
+  opacity:0;
+  transition:.22s;
+  background:#111827;
+  color:#fff;
+  border-radius:14px;
+  padding:13px 15px;
+  font-family:var(--head);
+  font-size:13px;
+  font-weight:800;
+  text-align:center;
+  pointer-events:none;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{background:var(--green)}
+.toast.err{background:var(--red)}
+.toast.warn{background:#b45309}
+@media(max-width:860px){
+  .login-shell{grid-template-columns:1fr;max-width:500px}
+  .hero{min-height:auto;padding:24px;border-radius:22px}
+  .hero-content{margin-top:46px}
+  .hero h1{font-size:34px}
+  .hero-grid{grid-template-columns:1fr 1fr;margin-top:22px}
+  .login-card{min-height:auto}
+}
+@media(max-width:430px){
+  body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top))}
+  .hero{padding:18px;border-radius:18px}
+  .brand{font-size:13px;padding:9px 12px}
+  .hero-content{margin-top:34px}
+  .hero h1{font-size:30px}
+  .hero p{font-size:14px}
+  .hero-grid{grid-template-columns:1fr}
+  .login-card{padding:16px;border-radius:18px}
+  .card-top{flex-direction:column}
+  .status-pill{width:100%;justify-content:center}
+}
+</style>
 </head>
-
 <body>
-  <div class="login-wrap">
-    <div class="brand">
-      <div class="brand-title">COMANDA</div>
-      <div class="brand-sub">Tuttovinilos · Acceso interno</div>
-    </div>
 
-    <div class="card">
-      <div class="head">
-        <div class="title">Iniciar sesión</div>
-        <div class="sub">Selecciona tu operador e introduce tu clave para entrar al módulo permitido.</div>
-      </div>
-
-      <div class="body">
-        <div class="error" id="loginError"></div>
-        <div class="ok" id="loginOk"></div>
-
-        <div class="loading-row" id="loadingBox">
-          <span class="spinner"></span>
-          <span>Cargando operadores...</span>
-        </div>
-
-        <div class="field" id="userField" style="display:none">
-          <label>Operador</label>
-          <select id="loginUser"></select>
-        </div>
-
-        <div class="field" id="passField" style="display:none">
-          <label>Clave</label>
-          <input id="loginPass" type="password" placeholder="Clave" autocomplete="current-password"/>
-        </div>
-
-        <button class="btn" id="loginBtn" type="button" style="display:none">Entrar</button>
-      </div>
-
-      <div class="foot">
-        Si un operador no aparece aquí, revisa que esté creado y activo en Configuración.
+<main class="login-shell">
+  <section class="hero">
+    <div class="brand">TUTTO VINILOS</div>
+    <div class="hero-content">
+      <h1>Comanda de producciÃ³n</h1>
+      <p>Acceso interno para pedidos, clientes, materiales, cotizador, estadÃ­sticas y organizaciÃ³n del flujo de trabajo.</p>
+      <div class="hero-grid">
+        <div class="hero-chip"><b>01</b><span>Selecciona operador</span></div>
+        <div class="hero-chip"><b>02</b><span>Valida acceso</span></div>
+        <div class="hero-chip"><b>03</b><span>Entra a tu mÃ³dulo</span></div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase.js"></script>
+  <section class="login-card">
+    <div class="card-top">
+      <div>
+        <div class="card-title">Iniciar sesiÃ³n</div>
+        <div class="card-sub">Selecciona tu operador para entrar.</div>
+      </div>
 
-  <script>
-    // =====================================================
-    // LOGIN · COMANDA TUTTOVINILOS
-    // Este login trabaja con la misma sesión que auth.js:
-    // localStorage["comanda_operador_actual"]
-    // =====================================================
+    </div>
 
-    const AUTH_STORAGE_KEY = "comanda_operador_actual";
+    <div class="field">
+      <label>Operador</label>
+      <select id="operadorSelect">
+        <option value="">Cargando operadores...</option>
+      </select>
+    </div>
 
-    const PAGE_LINKS = [
-      { page: "index.html", permission: "puede_pedidos" },
-      { page: "clientes.html", permission: "puede_clientes" },
-      { page: "materiales.html", permission: "puede_materiales" },
-      { page: "estadisticas.html", permission: "puede_estadisticas" },
-      { page: "marketing.html", permission: "puede_marketing" },
-      { page: "Cotizador.html", permission: "puede_cotizador" },
-      { page: "Organizador de ideas.html", permission: "puede_organizador" },
-      { page: "configuracion.html", permission: "puede_configuracion" }
-    ];
+    <div class="field">
+      <label>Clave / PIN</label>
+      <div class="password-row">
+        <input id="passInput" type="password" placeholder="Clave" autocomplete="current-password"/>
+        <button class="icon-btn" type="button" id="togglePass" title="Mostrar clave">ðŸ‘</button>
+      </div>
+    </div>
 
-    let operadoresLogin = [];
+    <div class="operator-preview" id="operatorPreview">
+      <div class="op-name">Sin operador</div>
+      <div class="op-meta">
+        <span class="op-badge">Selecciona un usuario</span>
+      </div>
+    </div>
 
-    function esRoberto(op) {
-      return String(op?.nombre || "").trim().toLowerCase() === "roberto";
-    }
+    <button class="login-btn" id="loginBtn" type="button">Entrar</button>
 
-    function operadorActivo(op) {
-      return op && op.activo !== false;
-    }
+    <div class="secondary-actions">
+      <button class="small-btn" type="button" id="reloadBtn">âŸ³ Recargar</button>
+      <button class="small-btn" type="button" id="clearBtn">Salir / limpiar</button>
+    </div>
 
-    function getSesionOperador() {
-      try {
-        return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || "null");
-      } catch {
-        return null;
-      }
-    }
 
-    function setSesionOperador(op) {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(op));
-    }
+  </section>
+</main>
 
-    function clearSesionOperador() {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    }
+<div class="toast" id="toast"></div>
 
-    function getLandingPage(op) {
-      if (!operadorActivo(op)) return null;
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js?v=1"></script>
+<script src="js/supabase.js?v=25"></script>
+<script>
+const AUTH_KEY = "comanda_operador_actual";
+const $ = (id) => document.getElementById(id);
 
-      // Roberto siempre entra a pedidos.
-      if (esRoberto(op)) return "index.html";
+const FALLBACK_OPERADORES = [
+  { nombre:"Roberto", activo:true, puede_pedidos:true, puede_clientes:true, puede_materiales:true, puede_estadisticas:true, puede_marketing:true, puede_cotizador:true, puede_organizador:true, puede_configuracion:true },
+  { nombre:"Ricardo", activo:true, puede_pedidos:true, puede_clientes:true, puede_materiales:true, puede_estadisticas:true, puede_marketing:true, puede_cotizador:true, puede_organizador:true, puede_configuracion:true },
+  { nombre:"Ruben", activo:true, puede_pedidos:true },
+  { nombre:"Chico", activo:true, puede_pedidos:true },
+  { nombre:"Carlos", activo:true, puede_pedidos:true },
+  { nombre:"Ana", activo:true, puede_marketing:true },
+  { nombre:"Miguel", activo:true, puede_pedidos:true }
+];
 
-      const first = PAGE_LINKS.find(item => op[item.permission] === true);
-      return first ? first.page : null;
-    }
+let operadoresDB = [];
+let usandoSupabase = false;
 
-    function showError(msg) {
-      const errorBox = document.getElementById("loginError");
-      const okBox = document.getElementById("loginOk");
+function normalizar(v){
+  return String(v || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+}
+function showToast(msg,type="ok"){
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "toast " + type + " show";
+  setTimeout(()=>{ t.className = "toast"; }, 2600);
+}
+function setStatus(text, ok=false){
+  const statusText = $("statusText");
+  const statusPill = $("statusPill");
+  if(statusText) statusText.textContent = text;
+  if(statusPill) statusPill.classList.toggle("ok", ok);
+}
+function db(){ return window.supabaseClient; }
+function isRoberto(op){ return normalizar(op?.nombre) === "roberto"; }
+function permiso(op, key){ return isRoberto(op) || op?.[key] === true; }
+function firstAllowedPage(op){
+  if(isRoberto(op)) return "index.html";
+  const pages = [
+    ["puede_pedidos","index.html"],
+    ["puede_clientes","clientes.html"],
+    ["puede_materiales","materiales.html"],
+    ["puede_estadisticas","estadisticas.html"],
+    ["puede_marketing","marketing.html"],
+    ["puede_cotizador","Cotizador.html"],
+    ["puede_organizador","Organizador de ideas.html"],
+    ["puede_configuracion","configuracion.html"]
+  ];
+  const found = pages.find(([key]) => op?.[key] === true);
+  return found ? found[1] : "index.html";
+}
+function safeOperatorForStorage(op){
+  const copy = {...op};
+  delete copy.clave;
+  delete copy.password;
+  delete copy.pass;
+  delete copy.pin;
+  return copy;
+}
+function operatorSecret(op){
+  return String(op?.clave ?? op?.password ?? op?.pass ?? op?.pin ?? "");
+}
+function validatePassword(op, pass){
+  const secret = operatorSecret(op);
+  if(secret) return String(pass || "") === secret;
+  // Compatibilidad con login viejo: si no hay clave en Supabase, permite vacÃ­o o 1234.
+  return !String(pass || "").trim() || String(pass || "") === "1234";
+}
+function permissionBadges(op){
+  if(!op) return [`<span class="op-badge">Selecciona un usuario</span>`];
+  return [`<span class="op-badge ok">Operador seleccionado</span>`];
+}
+function renderSelect(){
+  const sel = $("operadorSelect");
+  const activos = operadoresDB.filter(o => o.activo !== false && o.nombre);
+  sel.innerHTML = `<option value="">Seleccionar operador</option>` + activos.map(op => {
+    const nombre = String(op.nombre || "");
+    return `<option value="${nombre.replaceAll('"','&quot;')}">${nombre}</option>`;
+  }).join("");
 
-      if (okBox) okBox.style.display = "none";
-
-      errorBox.textContent = msg;
-      errorBox.style.display = "block";
-    }
-
-    function showOk(msg) {
-      const errorBox = document.getElementById("loginError");
-      const okBox = document.getElementById("loginOk");
-
-      if (errorBox) errorBox.style.display = "none";
-
-      okBox.textContent = msg;
-      okBox.style.display = "block";
-    }
-
-    function setLoading(isLoading) {
-      const loadingBox = document.getElementById("loadingBox");
-      const userField = document.getElementById("userField");
-      const passField = document.getElementById("passField");
-      const loginBtn = document.getElementById("loginBtn");
-
-      loadingBox.style.display = isLoading ? "flex" : "none";
-      userField.style.display = isLoading ? "none" : "flex";
-      passField.style.display = isLoading ? "none" : "flex";
-      loginBtn.style.display = isLoading ? "none" : "block";
-      loginBtn.disabled = isLoading;
-    }
-
-    async function obtenerOperadoresActivos() {
-      if (!window.supabaseClient) {
-        showError("Supabase no está conectado. Revisa js/supabase.js");
-        return [];
-      }
-
-      const { data, error } = await supabaseClient
-        .from("operadores")
-        .select("*")
-        .eq("activo", true)
-        .order("nombre", { ascending: true });
-
-      if (error) {
-        console.error("Error cargando operadores:", error);
-        showError("No se pudieron cargar operadores desde Supabase.");
-        return [];
-      }
-
-      return data || [];
-    }
-
-    function llenarSelectOperadores(operadores) {
-      const select = document.getElementById("loginUser");
-
-      if (!operadores.length) {
-        select.innerHTML = "";
-        showError("No hay operadores activos.");
-        return;
-      }
-
-      select.innerHTML = operadores.map(op => {
-        return `<option value="${op.id}">${op.nombre}</option>`;
-      }).join("");
-    }
-
-    async function doLogin() {
-      const select = document.getElementById("loginUser");
-      const pass = document.getElementById("loginPass");
-      const btn = document.getElementById("loginBtn");
-
-      const userId = select.value;
-      const clave = String(pass.value || "");
-
-      const op = operadoresLogin.find(o => String(o.id) === String(userId));
-
-      if (!op) {
-        showError("Usuario no encontrado.");
-        return;
-      }
-
-      if (op.activo === false) {
-        showError("Este operador está inactivo.");
-        return;
-      }
-
-      if (String(op.clave || "") !== clave) {
-        showError("Clave incorrecta.");
-        pass.focus();
-        pass.select();
-        return;
-      }
-
-      const destino = getLandingPage(op);
-
-      if (!destino) {
-        showError("Este usuario no tiene ningún módulo habilitado.");
-        return;
-      }
-
-      btn.disabled = true;
-      showOk("Acceso correcto. Entrando...");
-
-      setSesionOperador(op);
-
-      setTimeout(() => {
-        location.href = destino;
-      }, 350);
-    }
-
-    async function initLogin() {
-      // Si viene de logout, limpiamos sesión.
-      const params = new URLSearchParams(location.search);
-      if (params.has("logout")) {
-        clearSesionOperador();
-      }
-
-      // Si ya hay sesión válida y NO viene de logout, redirige al módulo permitido.
-      const sesion = getSesionOperador();
-      if (sesion && operadorActivo(sesion) && !params.has("logout")) {
-        const destino = getLandingPage(sesion);
-        if (destino) {
-          location.href = destino;
-          return;
-        }
-      }
-
-      setLoading(true);
-
-      operadoresLogin = await obtenerOperadoresActivos();
-
-      llenarSelectOperadores(operadoresLogin);
-
-      setLoading(false);
-
-      const pass = document.getElementById("loginPass");
-      const btn = document.getElementById("loginBtn");
-
-      btn.addEventListener("click", doLogin);
-
-      pass.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") doLogin();
-      });
-
-      setTimeout(() => {
-        pass.focus();
-      }, 100);
-    }
-
-    window.addEventListener("DOMContentLoaded", initLogin);
-  </script>
+  const previo = (()=>{
+    try{return JSON.parse(localStorage.getItem(AUTH_KEY) || "null");}catch(e){return null;}
+  })();
+  if(previo?.nombre && activos.some(o => normalizar(o.nombre) === normalizar(previo.nombre))){
+    sel.value = activos.find(o => normalizar(o.nombre) === normalizar(previo.nombre)).nombre;
+  }
+  updatePreview();
+}
+function selectedOperator(){
+  const nombre = $("operadorSelect").value;
+  return operadoresDB.find(o => normalizar(o.nombre) === normalizar(nombre)) || null;
+}
+function updatePreview(){
+  const op = selectedOperator();
+  const preview = $("operatorPreview");
+  if(!op){
+    preview.innerHTML = `<div class="op-name">Sin operador</div><div class="op-meta"><span class="op-badge">Selecciona un usuario</span></div>`;
+    return;
+  }
+  preview.innerHTML = `
+    <div class="op-name">${String(op.nombre || "Operador")}</div>
+    <div class="op-meta">${permissionBadges(op).join("")}</div>
+  `;
+}
+async function cargarOperadores(){
+  setStatus("Cargando", false);
+  usandoSupabase = false;
+  try{
+    if(!db()) throw new Error("Sin cliente Supabase");
+    const { data, error } = await db()
+      .from("operadores")
+      .select("*")
+      .eq("activo", true)
+      .order("nombre", { ascending:true });
+    if(error) throw error;
+    if(!Array.isArray(data) || !data.length) throw new Error("Sin operadores activos");
+    operadoresDB = data;
+    usandoSupabase = true;
+    setStatus("Supabase", true);
+  }catch(error){
+    console.warn("Usando operadores locales:", error);
+    operadoresDB = FALLBACK_OPERADORES;
+    setStatus("Local", false);
+    showToast("No se cargaron operadores. Usando lista local.", "warn");
+  }
+  renderSelect();
+}
+function legacyRole(op){
+  if(isRoberto(op) || normalizar(op?.nombre) === "ricardo") return "total";
+  if(op?.puede_materiales || op?.puede_clientes || op?.puede_estadisticas) return "medio";
+  return "impresion";
+}
+function login(){
+  const op = selectedOperator();
+  if(!op){ showToast("Selecciona un operador", "err"); return; }
+  if(op.activo === false){ showToast("Operador inactivo", "err"); return; }
+  if(!validatePassword(op, $("passInput").value)){
+    showToast("Clave incorrecta", "err");
+    return;
+  }
+  const clean = safeOperatorForStorage(op);
+  localStorage.setItem(AUTH_KEY, JSON.stringify(clean));
+  // compatibilidad con archivos viejos
+  localStorage.setItem("user", normalizar(clean.nombre));
+  localStorage.setItem("role", legacyRole(clean));
+  showToast("Acceso correcto", "ok");
+  setTimeout(()=>{ location.href = firstAllowedPage(clean); }, 250);
+}
+function limpiarSesion(){
+  localStorage.removeItem(AUTH_KEY);
+  localStorage.removeItem("user");
+  localStorage.removeItem("role");
+  $("passInput").value = "";
+  showToast("SesiÃ³n limpiada", "ok");
+}
+document.addEventListener("DOMContentLoaded", ()=>{
+  if(new URLSearchParams(location.search).has("logout")) limpiarSesion();
+  $("operadorSelect").addEventListener("change", updatePreview);
+  $("loginBtn").addEventListener("click", login);
+  $("reloadBtn").addEventListener("click", cargarOperadores);
+  $("clearBtn").addEventListener("click", limpiarSesion);
+  $("passInput").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
+  $("togglePass").addEventListener("click", ()=>{
+    const p = $("passInput");
+    p.type = p.type === "password" ? "text" : "password";
+  });
+  cargarOperadores();
+});
+</script>
 </body>
 </html>
+
+
