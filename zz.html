@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cámara Tuttovinilos</title>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:#0b1120;
+  color:white;
+  font-family:Arial,sans-serif;
+}
+header{
+  background:#111827;
+  padding:18px;
+  text-align:center;
+  font-size:24px;
+  font-weight:bold;
+}
+.info{
+  display:flex;
+  justify-content:space-between;
+  padding:12px 16px;
+  background:#1e293b;
+  font-weight:bold;
+}
+.card{
+  margin:14px;
+  padding:14px;
+  background:#111827;
+  border-radius:18px;
+}
+video{
+  width:100%;
+  background:black;
+  border-radius:16px;
+}
+.buttons{
+  display:flex;
+  gap:10px;
+  margin-top:14px;
+}
+button{
+  flex:1;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  font-size:16px;
+  font-weight:bold;
+}
+.foto{background:#22c55e;color:white}
+.full{background:#f59e0b;color:white}
+.reload{background:#38bdf8;color:#0f172a}
+.status{
+  margin-top:12px;
+  padding:10px;
+  background:#0f172a;
+  border-radius:12px;
+  text-align:center;
+}
+canvas{display:none}
+</style>
+</head>
+
+<body>
+
+<header>📷 Cámara Tuttovinilos</header>
+
+<div class="info">
+  <div id="fecha">--/--/----</div>
+  <div id="hora">--:--:--</div>
+</div>
+
+<div class="card">
+
+  <video id="video" controls autoplay muted playsinline></video>
+
+  <div class="buttons">
+    <button class="foto" onclick="tomarFoto()">📸 Foto</button>
+    <button class="full" onclick="pantallaCompleta()">⛶ Full</button>
+    <button class="reload" onclick="location.reload()">🔄 Recargar</button>
+  </div>
+
+  <div class="status" id="estado">Conectando cámara...</div>
+
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const video = document.getElementById("video");
+const estado = document.getElementById("estado");
+
+/*
+IMPORTANTE:
+Este HTML NO abre RTSP directo.
+Debe leer el archivo HLS generado por FFmpeg.
+
+Si abres el HTML desde la misma PC donde corre FFmpeg:
+*/
+const hlsUrl = "http://localhost:8080/live/camera.m3u8";
+
+/*
+Si lo abres desde un teléfono, cambia localhost por la IP de la PC.
+Ejemplo:
+const hlsUrl = "http://192.168.68.55:8080/live/camera.m3u8";
+*/
+
+function iniciarCamara(){
+  if(Hls.isSupported()){
+    const hls = new Hls({
+      liveSyncDurationCount:1
+    });
+
+    hls.loadSource(hlsUrl);
+    hls.attachMedia(video);
+
+    hls.on(Hls.Events.MANIFEST_PARSED, function(){
+      estado.innerHTML = "🟢 Cámara conectada";
+      video.play();
+    });
+
+    hls.on(Hls.Events.ERROR, function(event, data){
+      estado.innerHTML = "🔴 Error: no se encuentra el video HLS";
+      console.log(data);
+    });
+
+  }else if(video.canPlayType("application/vnd.apple.mpegurl")){
+    video.src = hlsUrl;
+    estado.innerHTML = "🟢 Cámara conectada";
+  }else{
+    estado.innerHTML = "⚠️ Navegador no compatible";
+  }
+}
+
+function actualizarFechaHora(){
+  const ahora = new Date();
+  document.getElementById("fecha").innerHTML = ahora.toLocaleDateString("es-VE");
+  document.getElementById("hora").innerHTML = ahora.toLocaleTimeString("es-VE");
+}
+
+function tomarFoto(){
+  const canvas = document.getElementById("canvas");
+
+  if(!video.videoWidth){
+    alert("La cámara todavía no ha cargado.");
+    return;
+  }
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+
+  const link = document.createElement("a");
+  link.download = "foto-camara-" + Date.now() + ".png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
+function pantallaCompleta(){
+  if(video.requestFullscreen){
+    video.requestFullscreen();
+  }else if(video.webkitRequestFullscreen){
+    video.webkitRequestFullscreen();
+  }
+}
+
+setInterval(actualizarFechaHora,1000);
+actualizarFechaHora();
+iniciarCamara();
+</script>
+
+</body>
+</html>

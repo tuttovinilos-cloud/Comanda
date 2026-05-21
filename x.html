@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vectorizador SVG Limpio</title>
+
+<script src="https://cdn.jsdelivr.net/gh/jankovicsandras/imagetracerjs/imagetracer_v1.2.6.js"></script>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  background:#0f1218;
+  color:#e5e7eb;
+  font-family:Arial, sans-serif;
+}
+
+header{
+  padding:14px 18px;
+  background:#151a23;
+  border-bottom:2px solid #2563eb;
+}
+
+header h1{
+  margin:0;
+  font-size:20px;
+}
+
+.app{
+  display:grid;
+  grid-template-columns:330px 1fr;
+  gap:16px;
+  padding:16px;
+}
+
+.panel{
+  background:#151a23;
+  border:1px solid #293241;
+  border-radius:14px;
+  padding:16px;
+}
+
+.panel h2{
+  margin:0 0 14px;
+  font-size:18px;
+}
+
+.campo{
+  margin-bottom:14px;
+}
+
+label{
+  display:block;
+  margin-bottom:6px;
+  font-size:12px;
+  color:#94a3b8;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+
+input,
+select,
+button{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #293241;
+  background:#0b0e14;
+  color:#e5e7eb;
+}
+
+input[type="range"]{
+  padding:0;
+}
+
+.valor{
+  font-size:12px;
+  color:#60a5fa;
+  text-align:right;
+  margin-top:4px;
+}
+
+button{
+  border:none;
+  background:#2563eb;
+  font-weight:bold;
+  cursor:pointer;
+  margin-top:8px;
+}
+
+button:hover{
+  filter:brightness(1.12);
+}
+
+button.verde{
+  background:#16a34a;
+}
+
+button.gris{
+  background:#374151;
+}
+
+.vistas{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+
+.box{
+  background:#151a23;
+  border:1px solid #293241;
+  border-radius:14px;
+  overflow:hidden;
+  min-height:360px;
+}
+
+.box h3{
+  margin:0;
+  padding:10px 12px;
+  font-size:14px;
+  background:#10141c;
+  border-bottom:1px solid #293241;
+}
+
+.preview{
+  min-height:330px;
+  padding:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  overflow:auto;
+  background:
+    linear-gradient(45deg,#1f2937 25%,transparent 25%),
+    linear-gradient(-45deg,#1f2937 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#1f2937 75%),
+    linear-gradient(-45deg,transparent 75%,#1f2937 75%);
+  background-size:22px 22px;
+  background-position:0 0,0 11px,11px -11px,-11px 0;
+}
+
+.preview img,
+.preview canvas,
+.preview svg{
+  max-width:100%;
+  max-height:70vh;
+}
+
+textarea{
+  width:100%;
+  height:320px;
+  background:#07090d;
+  color:#a1a1aa;
+  border:1px solid #293241;
+  border-radius:8px;
+  padding:10px;
+  font-size:11px;
+  resize:vertical;
+}
+
+.info{
+  margin-top:14px;
+  font-size:12px;
+  line-height:1.5;
+  color:#94a3b8;
+}
+
+.info strong{
+  color:#60a5fa;
+}
+
+.nota{
+  margin-top:14px;
+  padding:10px;
+  border:1px solid #2563eb55;
+  background:#2563eb11;
+  border-radius:10px;
+  color:#cbd5e1;
+  font-size:13px;
+  line-height:1.4;
+}
+
+@media(max-width:900px){
+  .app{
+    grid-template-columns:1fr;
+  }
+
+  .vistas{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Vectorizador SVG Limpio</h1>
+</header>
+
+<main class="app">
+
+  <section class="panel">
+    <h2>Controles</h2>
+
+    <div class="campo">
+      <label>Imagen PNG / JPG</label>
+      <input type="file" id="fileInput" accept="image/png,image/jpeg,image/jpg">
+    </div>
+
+    <div class="campo">
+      <label>Modo de vectorizado</label>
+      <select id="modo">
+        <option value="color" selected>Color sólido</option>
+        <option value="bw">Blanco y negro</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label>Quitar fondo</label>
+      <select id="fondo">
+        <option value="auto" selected>Automático por esquinas</option>
+        <option value="white">Quitar fondo blanco</option>
+        <option value="manual">Quitar color manual</option>
+        <option value="no">No quitar fondo</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label>Color manual de fondo</label>
+      <input type="color" id="colorFondo" value="#ffffff">
+    </div>
+
+    <div class="campo">
+      <label>Tolerancia fondo</label>
+      <input type="range" id="tolFondo" min="0" max="200" value="55">
+      <div class="valor" id="tolFondoVal">55</div>
+    </div>
+
+    <div class="campo">
+      <label>Colores sólidos</label>
+      <input type="range" id="colores" min="2" max="16" value="5">
+      <div class="valor" id="coloresVal">5</div>
+    </div>
+
+    <div class="campo">
+      <label>Umbral B/N</label>
+      <input type="range" id="umbral" min="0" max="255" value="150">
+      <div class="valor" id="umbralVal">150</div>
+    </div>
+
+    <div class="campo">
+      <label>Eliminar ruido</label>
+      <input type="range" id="ruido" min="0" max="100" value="12">
+      <div class="valor" id="ruidoVal">12</div>
+    </div>
+
+    <div class="campo">
+      <label>Suavizado línea</label>
+      <input type="range" id="suavizado" min="1" max="60" value="12">
+      <div class="valor" id="suavizadoVal">12</div>
+    </div>
+
+    <div class="campo">
+      <label>Reducción de nodos</label>
+      <input type="range" id="nodos" min="1" max="60" value="12">
+      <div class="valor" id="nodosVal">12</div>
+    </div>
+
+    <div class="campo">
+      <label>Margen final SVG</label>
+      <input type="range" id="margen" min="0" max="100" value="0">
+      <div class="valor" id="margenVal">0</div>
+    </div>
+
+    <button onclick="vectorizar()">Vectorizar</button>
+    <button class="verde" onclick="descargarSVG()">Descargar SVG limpio</button>
+    <button class="gris" onclick="copiarSVG()">Copiar SVG</button>
+
+    <div class="nota">
+      El SVG final se exporta sin fondo, sin rectángulo invisible y sin lienzo sobrante.
+    </div>
+
+    <div class="info" id="info">
+      <div><strong>Archivo:</strong> —</div>
+      <div><strong>Original:</strong> —</div>
+      <div><strong>Imagen recortada:</strong> —</div>
+      <div><strong>SVG final:</strong> —</div>
+      <div><strong>ViewBox:</strong> —</div>
+    </div>
+  </section>
+
+  <section class="vistas">
+
+    <div class="box">
+      <h3>Original</h3>
+      <div class="preview">
+        <img id="previewOriginal">
+      </div>
+    </div>
+
+    <div class="box">
+      <h3>Imagen limpia y recortada</h3>
+      <div class="preview">
+        <canvas id="canvasProcesado"></canvas>
+      </div>
+    </div>
+
+    <div class="box">
+      <h3>SVG final</h3>
+      <div class="preview" id="svgPreview">
+        Sube una imagen y presiona vectorizar.
+      </div>
+    </div>
+
+    <div class="box">
+      <h3>Código SVG</h3>
+      <div style="padding:12px;">
+        <textarea id="codigoSVG" readonly></textarea>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<script>
+let archivoActual = null;
+let imagenDataURL = "";
+let svgFinal = "";
+
+let anchoOriginal = 0;
+let altoOriginal = 0;
+let anchoRecortado = 0;
+let altoRecortado = 0;
+
+const $ = id => document.getElementById(id);
+
+[
+  "tolFondo",
+  "colores",
+  "umbral",
+  "ruido",
+  "suavizado",
+  "nodos",
+  "margen"
+].forEach(id=>{
+  $(id).addEventListener("input",()=>{
+    $(id+"Val").textContent = $(id).value;
+  });
+});
+
+$("fileInput").addEventListener("change", cargarImagen);
+
+function cargarImagen(e){
+  const file = e.target.files[0];
+  if(!file) return;
+
+  archivoActual = file;
+  svgFinal = "";
+
+  const reader = new FileReader();
+
+  reader.onload = ev=>{
+    imagenDataURL = ev.target.result;
+    $("previewOriginal").src = imagenDataURL;
+    $("svgPreview").innerHTML = "Imagen cargada. Presiona vectorizar.";
+    $("codigoSVG").value = "";
+
+    const img = new Image();
+
+    img.onload = ()=>{
+      anchoOriginal = img.width;
+      altoOriginal = img.height;
+      actualizarInfo();
+    };
+
+    img.src = imagenDataURL;
+  };
+
+  reader.readAsDataURL(file);
+}
+
+async function vectorizar(){
+  if(!imagenDataURL){
+    alert("Primero sube una imagen.");
+    return;
+  }
+
+  if(typeof ImageTracer === "undefined"){
+    alert("No cargó ImageTracer. Revisa la conexión a internet.");
+    return;
+  }
+
+  const dataProcesada = await procesarImagen(imagenDataURL);
+
+  ImageTracer.imageToSVG(dataProcesada, function(svg){
+    svg = limpiarSVG(svg);
+    svg = eliminarFondosYElementosInvisibles(svg);
+    svg = ajustarSVGAlContenidoReal(svg, Number($("margen").value));
+
+    svgFinal = svg;
+
+    $("svgPreview").innerHTML = svgFinal;
+    $("codigoSVG").value = svgFinal;
+
+    actualizarInfo();
+  }, opcionesTracer());
+}
+
+function opcionesTracer(){
+  const modo = $("modo").value;
+
+  return {
+    ltres: Number($("suavizado").value) / 10,
+    qtres: Number($("nodos").value) / 10,
+    pathomit: Number($("ruido").value),
+    colorsampling: 2,
+    numberofcolors: modo === "bw" ? 2 : Number($("colores").value),
+    mincolorratio: 0.01,
+    colorquantcycles: 3,
+    scale: 1,
+    strokewidth: 0,
+    linefilter: true,
+    roundcoords: 1,
+    viewbox: true,
+    desc: false,
+    lcpr: 0,
+    qcpr: 0
+  };
+}
+
+function procesarImagen(dataURL){
+  return new Promise(resolve=>{
+    const img = new Image();
+
+    img.onload = ()=>{
+      const canvas = $("canvasProcesado");
+      const ctx = canvas.getContext("2d", {willReadFrequently:true});
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img,0,0);
+
+      let imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+
+      imageData = quitarFondo(imageData, canvas.width, canvas.height);
+
+      if($("modo").value === "bw"){
+        imageData = convertirABlancoNegro(imageData);
+      }else{
+        imageData = convertirAColoresSolidos(imageData);
+      }
+
+      ctx.putImageData(imageData,0,0);
+
+      const recorte = recortarCanvasPorAlpha(canvas);
+
+      canvas.width = recorte.width;
+      canvas.height = recorte.height;
+
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(recorte.canvas,0,0);
+
+      anchoRecortado = recorte.width;
+      altoRecortado = recorte.height;
+
+      actualizarInfo();
+
+      resolve(canvas.toDataURL("image/png"));
+    };
+
+    img.src = dataURL;
+  });
+}
+
+function quitarFondo(imageData,w,h){
+  const modo = $("fondo").value;
+
+  if(modo === "no") return imageData;
+
+  const d = imageData.data;
+  const tolerancia = Number($("tolFondo").value);
+
+  let fondo = {r:255,g:255,b:255};
+
+  if(modo === "auto"){
+    fondo = detectarFondoPorEsquinas(imageData,w,h);
+  }
+
+  if(modo === "white"){
+    fondo = {r:255,g:255,b:255};
+  }
+
+  if(modo === "manual"){
+    fondo = hexToRgb($("colorFondo").value);
+  }
+
+  for(let i=0;i<d.length;i+=4){
+    const pixel = {r:d[i], g:d[i+1], b:d[i+2]};
+    const dist = distanciaColor(pixel, fondo);
+
+    if(dist <= tolerancia){
+      d[i+3] = 0;
+    }
+  }
+
+  return imageData;
+}
+
+function detectarFondoPorEsquinas(imageData,w,h){
+  const d = imageData.data;
+
+  const puntos = [
+    [0,0],
+    [w-1,0],
+    [0,h-1],
+    [w-1,h-1],
+    [Math.floor(w/2),0],
+    [Math.floor(w/2),h-1],
+    [0,Math.floor(h/2)],
+    [w-1,Math.floor(h/2)]
+  ];
+
+  let r=0,g=0,b=0,total=0;
+
+  puntos.forEach(([x,y])=>{
+    const i = (y*w+x)*4;
+    r += d[i];
+    g += d[i+1];
+    b += d[i+2];
+    total++;
+  });
+
+  return {
+    r:Math.round(r/total),
+    g:Math.round(g/total),
+    b:Math.round(b/total)
+  };
+}
+
+function convertirABlancoNegro(imageData){
+  const d = imageData.data;
+  const umbral = Number($("umbral").value);
+
+  for(let i=0;i<d.length;i+=4){
+    if(d[i+3] < 20){
+      d[i] = d[i+1] = d[i+2] = 255;
+      d[i+3] = 0;
+      continue;
+    }
+
+    const gris = d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114;
+    const v = gris < umbral ? 0 : 255;
+
+    d[i] = d[i+1] = d[i+2] = v;
+    d[i+3] = v === 255 ? 0 : 255;
+  }
+
+  return imageData;
+}
+
+function convertirAColoresSolidos(imageData){
+  const d = imageData.data;
+  const cantidad = Number($("colores").value);
+  const paleta = crearPaleta(imageData, cantidad);
+
+  for(let i=0;i<d.length;i+=4){
+    if(d[i+3] < 20){
+      d[i] = d[i+1] = d[i+2] = 255;
+      d[i+3] = 0;
+      continue;
+    }
+
+    const pixel = {r:d[i], g:d[i+1], b:d[i+2]};
+    const cercano = colorMasCercano(pixel, paleta);
+
+    d[i] = cercano.r;
+    d[i+1] = cercano.g;
+    d[i+2] = cercano.b;
+    d[i+3] = 255;
+  }
+
+  return imageData;
+}
+
+function crearPaleta(imageData,cantidad){
+  const d = imageData.data;
+  const buckets = new Map();
+
+  const totalPixeles = d.length / 4;
+  const salto = Math.max(1, Math.floor(totalPixeles / 90000));
+
+  for(let p=0;p<totalPixeles;p+=salto){
+    const i = p * 4;
+
+    if(d[i+3] < 30) continue;
+
+    const r = Math.round(d[i] / 32) * 32;
+    const g = Math.round(d[i+1] / 32) * 32;
+    const b = Math.round(d[i+2] / 32) * 32;
+
+    const key = `${r},${g},${b}`;
+
+    if(!buckets.has(key)){
+      buckets.set(key,{r,g,b,count:0});
+    }
+
+    buckets.get(key).count++;
+  }
+
+  const paleta = Array.from(buckets.values())
+    .sort((a,b)=>b.count-a.count)
+    .slice(0,cantidad)
+    .map(c=>({
+      r:limitarColor(c.r),
+      g:limitarColor(c.g),
+      b:limitarColor(c.b)
+    }));
+
+  return paleta.length ? paleta : [{r:0,g:0,b:0}];
+}
+
+function recortarCanvasPorAlpha(canvas){
+  const ctx = canvas.getContext("2d", {willReadFrequently:true});
+  const w = canvas.width;
+  const h = canvas.height;
+  const data = ctx.getImageData(0,0,w,h).data;
+
+  let minX = w;
+  let minY = h;
+  let maxX = -1;
+  let maxY = -1;
+
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      const i = (y*w+x)*4;
+
+      if(data[i+3] > 20){
+        if(x < minX) minX = x;
+        if(y < minY) minY = y;
+        if(x > maxX) maxX = x;
+        if(y > maxY) maxY = y;
+      }
+    }
+  }
+
+  if(maxX < minX || maxY < minY){
+    return {
+      canvas,
+      width:w,
+      height:h
+    };
+  }
+
+  const cropW = maxX - minX + 1;
+  const cropH = maxY - minY + 1;
+
+  const nuevo = document.createElement("canvas");
+  nuevo.width = cropW;
+  nuevo.height = cropH;
+
+  const nctx = nuevo.getContext("2d");
+  nctx.drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+
+  return {
+    canvas:nuevo,
+    width:cropW,
+    height:cropH
+  };
+}
+
+function limpiarSVG(svg){
+  let limpio = String(svg || "")
+    .replace(/<desc>[\s\S]*?<\/desc>/gi,"")
+    .replace(/<!--[\s\S]*?-->/g,"")
+    .replace(/\s{2,}/g," ")
+    .trim();
+
+  if(!limpio.includes('xmlns="http://www.w3.org/2000/svg"')){
+    limpio = limpio.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+  }
+
+  return limpio;
+}
+
+function eliminarFondosYElementosInvisibles(svg){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svg, "image/svg+xml");
+  const svgEl = doc.querySelector("svg");
+
+  if(!svgEl || doc.querySelector("parsererror")){
+    return svg;
+  }
+
+  const elementos = Array.from(svgEl.querySelectorAll("path,rect,polygon,polyline,circle,ellipse,line"));
+
+  elementos.forEach(el=>{
+    const op = parseFloat(el.getAttribute("opacity"));
+    const fop = parseFloat(el.getAttribute("fill-opacity"));
+
+    const fill = (el.getAttribute("fill") || "").toLowerCase().trim();
+    const stroke = (el.getAttribute("stroke") || "").toLowerCase().trim();
+    const style = (el.getAttribute("style") || "").toLowerCase();
+
+    if(!isNaN(op) && op <= 0.01){
+      el.remove();
+      return;
+    }
+
+    if(!isNaN(fop) && fop <= 0.01){
+      el.remove();
+      return;
+    }
+
+    if(style.includes("opacity:0")){
+      el.remove();
+      return;
+    }
+
+    if((fill === "none" || fill === "transparent") && (!stroke || stroke === "none" || stroke === "transparent")){
+      el.remove();
+      return;
+    }
+
+    /*
+      Esta parte elimina fondos blancos sólidos que ImageTracer puede crear.
+      Si el fondo fue bien eliminado antes, normalmente no debería aparecer.
+    */
+    if(esRellenoBlanco(fill) && (!stroke || stroke === "none")){
+      const bbox = obtenerBBoxTemporal(el, svgEl);
+      const svgBox = leerViewBox(svgEl);
+
+      if(bbox && svgBox){
+        const ocupaMucho =
+          bbox.width >= svgBox.width * 0.85 &&
+          bbox.height >= svgBox.height * 0.85;
+
+        if(ocupaMucho){
+          el.remove();
+        }
+      }
+    }
+  });
+
+  return new XMLSerializer()
+    .serializeToString(svgEl)
+    .replace(/>\s+</g,"><")
+    .trim();
+}
+
+function ajustarSVGAlContenidoReal(svg, margen = 0){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svg, "image/svg+xml");
+  const svgEl = doc.querySelector("svg");
+
+  if(!svgEl || doc.querySelector("parsererror")){
+    return svg;
+  }
+
+  const temp = document.createElement("div");
+  temp.style.position = "absolute";
+  temp.style.left = "-99999px";
+  temp.style.top = "-99999px";
+  temp.style.visibility = "hidden";
+  temp.style.pointerEvents = "none";
+
+  const clon = svgEl.cloneNode(true);
+  temp.appendChild(clon);
+  document.body.appendChild(temp);
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  const elementos = Array.from(clon.querySelectorAll("path,rect,polygon,polyline,circle,ellipse,line"));
+
+  elementos.forEach(el=>{
+    try{
+      const bb = el.getBBox();
+
+      if(!isFinite(bb.x) || !isFinite(bb.y)) return;
+      if(bb.width === 0 && bb.height === 0) return;
+
+      minX = Math.min(minX, bb.x);
+      minY = Math.min(minY, bb.y);
+      maxX = Math.max(maxX, bb.x + bb.width);
+      maxY = Math.max(maxY, bb.y + bb.height);
+    }catch(e){}
+  });
+
+  document.body.removeChild(temp);
+
+  if(!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)){
+    return svg;
+  }
+
+  minX -= margen;
+  minY -= margen;
+  maxX += margen;
+  maxY += margen;
+
+  const w = Math.max(1, maxX - minX);
+  const h = Math.max(1, maxY - minY);
+
+  svgEl.setAttribute("viewBox", `${r(minX)} ${r(minY)} ${r(w)} ${r(h)}`);
+  svgEl.setAttribute("width", r(w));
+  svgEl.setAttribute("height", r(h));
+  svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+  if(!svgEl.getAttribute("xmlns")){
+    svgEl.setAttribute("xmlns","http://www.w3.org/2000/svg");
+  }
+
+  return new XMLSerializer()
+    .serializeToString(svgEl)
+    .replace(/>\s+</g,"><")
+    .trim();
+}
+
+function obtenerBBoxTemporal(elOriginal, svgOriginal){
+  try{
+    const temp = document.createElement("div");
+    temp.style.position = "absolute";
+    temp.style.left = "-99999px";
+    temp.style.top = "-99999px";
+    temp.style.visibility = "hidden";
+
+    const svgTemp = svgOriginal.cloneNode(true);
+    document.body.appendChild(temp);
+    temp.appendChild(svgTemp);
+
+    const elementosTemp = svgTemp.querySelectorAll("path,rect,polygon,polyline,circle,ellipse,line");
+    const index = Array.from(svgOriginal.querySelectorAll("path,rect,polygon,polyline,circle,ellipse,line")).indexOf(elOriginal);
+
+    if(index < 0 || !elementosTemp[index]){
+      document.body.removeChild(temp);
+      return null;
+    }
+
+    const bb = elementosTemp[index].getBBox();
+    document.body.removeChild(temp);
+
+    return bb;
+  }catch(e){
+    return null;
+  }
+}
+
+function leerViewBox(svgEl){
+  const vb = svgEl.getAttribute("viewBox");
+
+  if(!vb) return null;
+
+  const p = vb.split(/\s+/).map(Number);
+
+  if(p.length !== 4 || p.some(n=>!isFinite(n))) return null;
+
+  return {
+    x:p[0],
+    y:p[1],
+    width:p[2],
+    height:p[3]
+  };
+}
+
+function descargarSVG(){
+  if(!svgFinal){
+    alert("Primero vectoriza una imagen.");
+    return;
+  }
+
+  const blob = new Blob([svgFinal], {type:"image/svg+xml"});
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  const nombre = archivoActual
+    ? archivoActual.name.replace(/\.[^.]+$/,"")
+    : "vector";
+
+  a.href = url;
+  a.download = nombre + "_limpio_sin_lienzo.svg";
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+}
+
+async function copiarSVG(){
+  if(!svgFinal){
+    alert("Primero vectoriza una imagen.");
+    return;
+  }
+
+  try{
+    await navigator.clipboard.writeText(svgFinal);
+    alert("SVG copiado.");
+  }catch(e){
+    $("codigoSVG").select();
+    document.execCommand("copy");
+    alert("SVG copiado.");
+  }
+}
+
+function actualizarInfo(){
+  let dimsSVG = "—";
+  let viewBox = "—";
+
+  if(svgFinal){
+    const w = svgFinal.match(/\bwidth="([^"]+)"/);
+    const h = svgFinal.match(/\bheight="([^"]+)"/);
+    const vb = svgFinal.match(/viewBox="([^"]+)"/);
+
+    if(w && h) dimsSVG = `${w[1]} × ${h[1]}`;
+    if(vb) viewBox = vb[1];
+  }
+
+  $("info").innerHTML = `
+    <div><strong>Archivo:</strong> ${archivoActual ? archivoActual.name : "—"}</div>
+    <div><strong>Original:</strong> ${anchoOriginal && altoOriginal ? anchoOriginal + " × " + altoOriginal + " px" : "—"}</div>
+    <div><strong>Imagen recortada:</strong> ${anchoRecortado && altoRecortado ? anchoRecortado + " × " + altoRecortado + " px" : "—"}</div>
+    <div><strong>SVG final:</strong> ${dimsSVG}</div>
+    <div><strong>ViewBox:</strong> ${viewBox}</div>
+  `;
+}
+
+function esRellenoBlanco(fill){
+  if(!fill) return false;
+
+  fill = fill.toLowerCase().trim();
+
+  return (
+    fill === "#fff" ||
+    fill === "#ffffff" ||
+    fill === "white" ||
+    fill === "rgb(255,255,255)" ||
+    fill === "rgb(255, 255, 255)"
+  );
+}
+
+function colorMasCercano(color,paleta){
+  let mejor = paleta[0];
+  let mejorDist = Infinity;
+
+  paleta.forEach(c=>{
+    const dist = distanciaColor(color,c);
+
+    if(dist < mejorDist){
+      mejorDist = dist;
+      mejor = c;
+    }
+  });
+
+  return mejor;
+}
+
+function distanciaColor(a,b){
+  return Math.sqrt(
+    Math.pow(a.r - b.r, 2) +
+    Math.pow(a.g - b.g, 2) +
+    Math.pow(a.b - b.b, 2)
+  );
+}
+
+function hexToRgb(hex){
+  hex = String(hex || "#ffffff").replace("#","");
+
+  if(hex.length === 3){
+    hex = hex.split("").map(v=>v+v).join("");
+  }
+
+  return {
+    r:parseInt(hex.substring(0,2),16),
+    g:parseInt(hex.substring(2,4),16),
+    b:parseInt(hex.substring(4,6),16)
+  };
+}
+
+function limitarColor(v){
+  return Math.max(0, Math.min(255, Math.round(v)));
+}
+
+function r(n){
+  return Math.round(n * 1000) / 1000;
+}
+</script>
+
+</body>
+</html>

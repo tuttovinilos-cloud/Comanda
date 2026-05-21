@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#07111f"/>
+<title>Dashboard UCJV330 Tuttovinilos</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#eef3f8;--card:#fff;--card2:#f8fbff;--navy:#07111f;--line:#d8e3ee;
+  --text:#122033;--muted:#6e7f92;--muted2:#9aabba;--orange:#ff8a1c;
+  --blue:#1688ff;--green:#20c987;--red:#ff4d5e;--yellow:#ffd166;
+  --shadow:0 10px 24px rgba(7,17,31,.08);--mono:"Courier New",monospace;--font:Arial,Helvetica,sans-serif;
+}
+body{font-family:var(--font);background:radial-gradient(circle at top left,rgba(255,138,28,.11),transparent 28%),linear-gradient(180deg,#f7faff 0%,var(--bg) 100%);color:var(--text);min-height:100vh}
+button,input,select{font:inherit}button{border:none;cursor:pointer}.app{max-width:1380px;margin:auto;padding:10px}
+.topbar{position:sticky;top:0;z-index:50;background:rgba(247,250,255,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.topbar-inner{max-width:1380px;margin:auto;padding:9px 10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}.logo{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--navy),#12375f);color:white;font-weight:900;box-shadow:var(--shadow)}
+.brand h1{font-size:18px;color:var(--navy);letter-spacing:-.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand p{font-size:11px;color:var(--muted);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.right{display:flex;align-items:center;gap:8px}.pill{background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:900;white-space:nowrap}.dot{width:9px;height:9px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 4px rgba(255,138,28,.14)}
+.clock{font-family:var(--mono);font-size:11px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 10px;white-space:nowrap}
+.machine-strip{margin-top:10px;background:var(--navy);color:white;border-radius:20px;padding:10px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;box-shadow:var(--shadow)}
+.strip-item{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px;min-width:0}.strip-item small{display:block;color:#b8c6d5;font-size:10px;text-transform:uppercase;font-weight:900;letter-spacing:.04em}.strip-item strong{display:block;margin-top:4px;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ink-board{margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:var(--shadow)}.board-head{padding:12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}.board-head h2{font-size:18px;color:var(--navy)}.board-head p{font-size:11px;color:var(--muted);margin-top:3px;font-weight:800}
+.btn-main{background:linear-gradient(135deg,var(--orange),#ffb35f);color:white;border-radius:14px;padding:10px 14px;font-weight:900;box-shadow:0 10px 20px rgba(255,138,28,.22)}
+.bottle-grid{padding:12px;display:grid;grid-template-columns:repeat(8,1fr);gap:8px}.bottle-card{background:#f9fbff;border:1px solid var(--line);border-radius:18px;text-align:center;padding:8px}.bottle-card.low{border-color:rgba(255,77,94,.5);box-shadow:0 0 0 4px rgba(255,77,94,.06)}
+.bottle-label{color:var(--navy);font-size:11px;font-weight:900}.bottle{height:120px;width:40px;margin:5px auto 0;position:relative}.cap{width:22px;height:10px;margin:auto;background:#d6dee8;border:2px solid #b4c0cd;border-bottom:none;border-radius:8px 8px 3px 3px}.body{margin-top:2px;height:105px;border-radius:14px;overflow:hidden;position:relative;border:3px solid #c8d3df;background:#f5f9fd}.fill{position:absolute;left:0;right:0;bottom:0;background:var(--c)}.fill:before{content:"";position:absolute;top:-7px;left:-20%;width:140%;height:15px;background:rgba(255,255,255,.35);border-radius:50%}
+.percent{margin-top:6px;font-size:12px;font-weight:900;font-family:var(--mono)}.ml{font-size:10px;color:var(--muted);font-weight:800}.badge-low{margin-top:4px;display:inline-block;background:#ffe8ea;color:var(--red);font-size:9px;padding:3px 5px;border-radius:999px;font-weight:900}
+.kpi-grid{margin-top:10px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px;box-shadow:var(--shadow)}.kpi small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;font-weight:900}.kpi strong{display:block;margin-top:5px;font-size:24px;color:var(--navy)}.kpi span{display:block;margin-top:5px;font-size:11px;color:var(--muted);font-weight:800}
+.section-title{margin:16px 0 8px}.section-title h2{font-size:18px;color:var(--navy)}.section-title p{font-size:11px;color:var(--muted);margin-top:3px;font-weight:800}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}.panel-head{background:var(--navy);color:white;padding:11px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px}.panel-head strong{font-size:13px}.count{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:5px 8px;font-size:11px;font-weight:900;white-space:nowrap}
+.row{padding:10px 12px;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:none}.row strong{display:block;font-size:13px;color:var(--navy)}.row span{display:block;margin-top:3px;color:var(--muted);font-size:11px;font-weight:800;line-height:1.35}
+.sev{display:inline-flex;margin-top:7px;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:900;font-style:normal}.sev.alta{background:#ffe8ea;color:#d9273a}.sev.media{background:#fff6d9;color:#9b6a00}.sev.baja{background:#e8fff6;color:#16875d}.sev.auto{background:#e8f2ff;color:#0d5fb3}
+.table-card{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--shadow)}.table-scroll{overflow:auto}table{width:100%;border-collapse:collapse}th{background:var(--navy);color:white;text-align:left;padding:11px;font-size:10px;text-transform:uppercase;white-space:nowrap}td{padding:11px;border-bottom:1px solid var(--line);font-size:12px;white-space:nowrap}
+.status{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900}.status.Listo{background:#e8fff6;color:#16875d}.status.Imprimiendo{background:#fff1e3;color:#b35300}.status.Error{background:#ffe8ea;color:#d9273a}.status.Pausado{background:#fff6d9;color:#9b6a00}
+.order-link{color:var(--blue);font-weight:900;text-decoration:underline}.btn-detail{background:#e8f2ff;color:var(--navy);border-radius:11px;padding:7px 9px;font-size:11px;font-weight:900}.channel{display:inline-flex;align-items:center;gap:7px;font-weight:900}.channel-dot{width:11px;height:11px;border-radius:999px;background:var(--c);border:1px solid rgba(0,0,0,.15)}
+.modal-backdrop{position:fixed;inset:0;z-index:100;display:none;background:rgba(7,17,31,.58);padding:12px;align-items:center;justify-content:center}.modal-backdrop.show{display:flex}.modal{width:min(980px,100%);max-height:92vh;background:#fff;border-radius:24px;box-shadow:0 30px 90px rgba(0,0,0,.35);overflow:auto}.modal-head{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:2}.modal-head h3{font-size:18px;color:var(--navy)}.close{width:38px;height:38px;border-radius:13px;background:#eef4fa;color:var(--navy);font-size:20px;font-weight:900}.modal-body{padding:12px}
+.detail-layout{display:grid;grid-template-columns:260px 1fr;gap:12px}.preview{width:260px;height:260px;border-radius:20px;background:radial-gradient(circle at 70% 20%,rgba(255,138,28,.25),transparent 28%),linear-gradient(135deg,rgba(22,136,255,.16),rgba(7,17,31,.08)),repeating-linear-gradient(45deg,#f9fbfe 0,#f9fbfe 12px,#eef4fa 12px,#eef4fa 24px);border:2px dashed #c3d0de;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;color:var(--navy);font-weight:900}.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.info-box{background:#f8fbff;border:1px solid var(--line);border-radius:14px;padding:10px}.info-box small{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;font-weight:900;margin-bottom:4px}.info-box strong{color:var(--navy);font-size:12px}.modal-section{margin-top:12px}.modal-section h4{font-size:14px;color:var(--navy);margin-bottom:8px}
+@media(max-width:430px){.topbar-inner{align-items:flex-start;flex-direction:column}.right{width:100%;display:grid;grid-template-columns:1fr 1fr}.pill,.clock{justify-content:center;text-align:center}.machine-strip{grid-template-columns:repeat(2,1fr)}.bottle-grid{grid-template-columns:repeat(4,1fr)}.kpi-grid{grid-template-columns:repeat(2,1fr)}.grid-2,.grid-4{grid-template-columns:1fr}.board-head{align-items:flex-start;flex-direction:column}.btn-main{width:100%}table{min-width:820px}.detail-layout{grid-template-columns:1fr}.preview{width:100%;height:220px}.detail-grid{grid-template-columns:1fr}}
+</style>
+</head>
+
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="logo">TV</div>
+      <div>
+        <h1>Tuttovinilos · UCJV330</h1>
+        <p>Dashboard operativo industrial</p>
+      </div>
+    </div>
+    <div class="right">
+      <div class="pill"><span class="dot"></span>Imprimiendo</div>
+      <div class="clock" id="clock"></div>
+    </div>
+  </div>
+</header>
+
+<main class="app">
+<section class="machine-strip">
+  <div class="strip-item"><small>Trabajo actual</small><strong>UV-0010</strong></div>
+  <div class="strip-item"><small>Operador</small><strong>Rubén</strong></div>
+  <div class="strip-item"><small>Producción hoy</small><strong id="prodM2">29.8 m²</strong></div>
+  <div class="strip-item"><small>Costo tinta</small><strong>$0.19/cc</strong></div>
+</section>
+
+<section class="ink-board">
+  <div class="board-head">
+    <div><h2>Niveles de tinta</h2><p>C · M · Y · K · CL1 · CL2 · W1 · W2</p></div>
+    <button class="btn-main" id="simulateBtn">+ Simular impresión</button>
+  </div>
+  <div class="bottle-grid" id="bottleGrid"></div>
+</section>
+
+<section class="kpi-grid" id="kpiGrid"></section>
+
+<div class="section-title"><h2>Ciclos, limpiezas y consumo no productivo</h2><p>Tinta gastada aunque la máquina no esté imprimiendo.</p></div>
+<section class="grid-2">
+  <aside class="panel">
+    <div class="panel-head"><strong>Eventos técnicos del día</strong><span class="count">4 eventos</span></div>
+    <div id="maintenanceList"></div>
+  </aside>
+  <aside class="panel">
+    <div class="panel-head"><strong>Resumen de tinta</strong><span class="count" id="nonProductiveBadge">--</span></div>
+    <div id="inkSummary"></div>
+  </aside>
+</section>
+
+<div class="section-title"><h2>Errores y alertas</h2><p>Registro simulado de fallas, tinta baja y pausas.</p></div>
+<section class="panel">
+  <div class="panel-head"><strong>Registro de errores</strong><span class="count">3 activos</span></div>
+  <div id="errorList"></div>
+</section>
+
+<div class="section-title"><h2>Consumo de tinta por canal</h2><p>Costo calculado a $0.19 por cc.</p></div>
+<section class="table-card"><div class="table-scroll"><table>
+<thead><tr><th>Canal</th><th>Impresión</th><th>Mantenimiento</th><th>Total hoy</th><th>Semana</th><th>Mes</th><th>Costo hoy</th></tr></thead>
+<tbody id="consumptionBody"></tbody>
+</table></div></section>
+
+<div class="section-title"><h2>Estadísticas finales</h2><p>Resumen para entender rendimiento, consumo y formatos.</p></div>
+<section class="grid-4" id="statsCards"></section>
+
+<section class="table-card" style="margin-top:10px"><div class="table-scroll"><table>
+<thead><tr><th>Pases</th><th>m² impresos</th><th>cc consumidos</th><th>cc/m² aprox</th><th>Costo/m² aprox</th><th>Lectura</th></tr></thead>
+<tbody id="passesStatsBody"></tbody>
+</table></div></section>
+
+<div class="section-title"><h2>Historial de impresiones</h2><p>10 pedidos simulados · Rubén imprime todos los trabajos</p></div>
+<section class="table-card"><div class="table-scroll"><table>
+<thead><tr><th>Nº orden</th><th>Cliente</th><th>Formato</th><th>m²</th><th>Modo</th><th>Pass</th><th>Estado</th><th>Operador</th><th>Acción</th></tr></thead>
+<tbody id="historyBody"></tbody>
+</table></div></section>
+</main>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Detalle de orden</h3>
+      <button class="close" id="closeModal">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const INK_COST_PER_CC = 0.19;
+
+const bottles=[
+  {label:"C",percent:68,color:"#00a3ff"},
+  {label:"M",percent:59,color:"#e441a3"},
+  {label:"Y",percent:76,color:"#ffd32a"},
+  {label:"K",percent:52,color:"#111827"},
+  {label:"CL1",percent:19,color:"#9dd7ff"},
+  {label:"CL2",percent:36,color:"#bfe8ff"},
+  {label:"W1",percent:29,color:"#dde6ee"},
+  {label:"W2",percent:16,color:"#f4f7fb"}
+];
+
+const consumos=[
+  ["Cian","C",190,24,920,3380,"#00a3ff"],
+  ["Magenta","M",165,21,810,3010,"#e441a3"],
+  ["Yellow","Y",142,18,740,2860,"#ffd32a"],
+  ["Negro","K",230,28,1020,3660,"#111827"],
+  ["Clear 1","CL1",182,35,760,2540,"#9dd7ff"],
+  ["Clear 2","CL2",151,34,680,2380,"#bfe8ff"],
+  ["White 1","W1",229,30,910,3310,"#dde6ee"],
+  ["White 2","W2",208,29,850,3090,"#f4f7fb"]
+];
+
+const mantenimiento=[
+  {hora:"08:05",tipo:"Ciclo de arranque",duracion:"4 min",tinta:46,motivo:"Preparación de cabezales al iniciar la jornada.",nivel:"auto"},
+  {hora:"11:40",tipo:"Limpieza automática",duracion:"7 min",tinta:93,motivo:"Fallo leve de nozzle detectado en White.",nivel:"media"},
+  {hora:"14:15",tipo:"Circulación White/Clear",duracion:"5 min",tinta:48,motivo:"Mantener white y clear en movimiento.",nivel:"auto"},
+  {hora:"15:55",tipo:"Consumo en parada",duracion:"28 min",tinta:69,motivo:"Máquina en espera entre trabajos.",nivel:"baja"}
+];
+
+const errores=[
+  {hora:"09:58",tipo:"Media skew",orden:"UV-0002",descripcion:"Desviación de material durante impresión.",accion:"Revisar alineación del rollo y presión.",nivel:"alta"},
+  {hora:"15:31",tipo:"White 2 bajo",orden:"Sistema",descripcion:"Botella White 2 por debajo del 20%.",accion:"Preparar reposición antes de trabajos largos.",nivel:"media"},
+  {hora:"15:35",tipo:"Clear 1 bajo",orden:"Sistema",descripcion:"Clear 1 por debajo de 20%.",accion:"Evitar trabajos largos con barniz hasta reponer.",nivel:"media"},
+  {hora:"12:44",tipo:"Pausa operador",orden:"UV-0006",descripcion:"Pausa manual durante revisión de salida.",accion:"Sin acción crítica.",nivel:"baja"}
+];
+
+const orders=[
+  {id:"UV-0010",cliente:"OWC",archivo:"owc_panel_frontal.pdf",formato:"Vinil blanco",m2:3.9,modo:"White+Color+Clear",pass:16,estado:"Imprimiendo",operador:"Rubén",inicio:"16:30",fin:"En proceso",duracion:"38 min",icc:"Mimaki_VinilMate_v3.icc",resolucion:"1200x1200 dpi",tintas:{C:30,M:26,Y:22,K:36,CL1:28,CL2:25,W1:41,W2:38}},
+  {id:"UV-0009",cliente:"Toyo Fox",archivo:"toyofox_stickers.ai",formato:"Holográfico",m2:2.4,modo:"Color+Clear",pass:12,estado:"Listo",operador:"Rubén",inicio:"15:22",fin:"16:02",duracion:"40 min",icc:"Mimaki_Holografico_v2.icc",resolucion:"900x1200 dpi",tintas:{C:18,M:17,Y:15,K:22,CL1:21,CL2:20,W1:0,W2:0}},
+  {id:"UV-0008",cliente:"BK3",archivo:"bk3_etiquetas_clear.pdf",formato:"Clear brillante",m2:3.2,modo:"White+Color",pass:16,estado:"Listo",operador:"Rubén",inicio:"14:05",fin:"14:55",duracion:"50 min",icc:"Mimaki_ClearWhite_v1.icc",resolucion:"1200x1200 dpi",tintas:{C:28,M:24,Y:21,K:32,CL1:0,CL2:0,W1:39,W2:35}},
+  {id:"UV-0007",cliente:"Otra Cossa",archivo:"otra_cossa_foodtruck.pdf",formato:"Vinil blanco",m2:5.1,modo:"Color",pass:8,estado:"Listo",operador:"Rubén",inicio:"13:10",fin:"13:52",duracion:"42 min",icc:"Mimaki_VinilColor.icc",resolucion:"900x1200 dpi",tintas:{C:43,M:36,Y:33,K:50,CL1:0,CL2:0,W1:0,W2:0}},
+  {id:"UV-0006",cliente:"Framed",archivo:"stickers_framed_holografico.ai",formato:"Holográfico",m2:2.7,modo:"Color+Clear",pass:12,estado:"Listo",operador:"Rubén",inicio:"12:18",fin:"13:04",duracion:"46 min",icc:"Mimaki_Holografico_Clear_v2.icc",resolucion:"900x1200 dpi",tintas:{C:22,M:18,Y:16,K:28,CL1:22,CL2:22,W1:0,W2:0}},
+  {id:"UV-0005",cliente:"Viajea",archivo:"viajea_labels.pdf",formato:"Vinil blanco",m2:2.1,modo:"White+Color",pass:16,estado:"Listo",operador:"Rubén",inicio:"11:25",fin:"11:59",duracion:"34 min",icc:"Mimaki_VinilWhite.icc",resolucion:"1200x1200 dpi",tintas:{C:17,M:15,Y:14,K:20,CL1:0,CL2:0,W1:26,W2:24}},
+  {id:"UV-0004",cliente:"Tutto Snacks",archivo:"snacks_empaque_clear.pdf",formato:"Clear brillante",m2:1.8,modo:"White+Color+Clear",pass:24,estado:"Listo",operador:"Rubén",inicio:"10:40",fin:"11:15",duracion:"35 min",icc:"Mimaki_ClearMulti.icc",resolucion:"1200x1200 dpi",tintas:{C:15,M:13,Y:11,K:16,CL1:16,CL2:14,W1:23,W2:21}},
+  {id:"UV-0003",cliente:"Addigrain",archivo:"etiquetas_addigrain_50x70.pdf",formato:"Vinil blanco",m2:4.8,modo:"White+Color+Clear",pass:24,estado:"Listo",operador:"Rubén",inicio:"10:05",fin:"10:51",duracion:"46 min",icc:"Mimaki_UCJV330_VinilMate_v3.icc",resolucion:"1200x1200 dpi",tintas:{C:32,M:28,Y:24,K:35,CL1:31,CL2:27,W1:44,W2:38}},
+  {id:"UV-0002",cliente:"Café Valle Fresco",archivo:"gourmet_3caras.pdf",formato:"Clear brillante",m2:3.6,modo:"White+Color",pass:16,estado:"Error",operador:"Rubén",inicio:"09:35",fin:"10:02",duracion:"27 min",icc:"Mimaki_Clear_WhiteBase_v1.icc",resolucion:"1200x900 dpi",tintas:{C:38,M:31,Y:29,K:42,CL1:0,CL2:0,W1:48,W2:44}},
+  {id:"UV-0001",cliente:"La Terraza",archivo:"terraza_menu_lona.pdf",formato:"Lona",m2:0.2,modo:"Color",pass:8,estado:"Pausado",operador:"Rubén",inicio:"08:20",fin:"Pausado",duracion:"En pausa",icc:"Mimaki_Lona_Color.icc",resolucion:"900x900 dpi",tintas:{C:7,M:6,Y:5,K:9,CL1:0,CL2:0,W1:0,W2:0}}
+];
+
+function inkTotal(o){return Object.values(o.tintas).reduce((a,b)=>a+b,0);}
+function money(n){return "$"+Number(n).toFixed(2);}
+function sum(arr){return arr.reduce((a,b)=>a+b,0);}
+
+function renderBottles(){
+  document.getElementById("bottleGrid").innerHTML=bottles.map(b=>`
+    <article class="bottle-card ${b.percent<25?"low":""}">
+      <div class="bottle-label">${b.label}</div>
+      <div class="bottle"><div class="cap"></div><div class="body"><div class="fill" style="--c:${b.color};height:${b.percent}%;background:${b.color};"></div></div></div>
+      <div class="percent">${b.percent}%</div>
+      <div class="ml">${Math.round(b.percent*10)} cc</div>
+      ${b.percent<25?'<div class="badge-low">BAJO</div>':''}
+    </article>
+  `).join("");
+}
+
+function renderKPIs(){
+  const totalM2=sum(orders.map(o=>o.m2));
+  const printCc=sum(orders.map(o=>inkTotal(o)));
+  const maintCc=sum(mantenimiento.map(e=>e.tinta));
+  const totalCc=printCc+maintCc;
+  const ccM2=printCc/totalM2;
+  document.getElementById("kpiGrid").innerHTML=`
+    <article class="card kpi"><small>Trabajos hoy</small><strong>${orders.length}</strong><span>Pedidos procesados</span></article>
+    <article class="card kpi"><small>Producción hoy</small><strong>${totalM2.toFixed(1)} m²</strong><span>Área simulada</span></article>
+    <article class="card kpi"><small>Tinta productiva</small><strong>${printCc} cc</strong><span>${ccM2.toFixed(1)} cc/m²</span></article>
+    <article class="card kpi"><small>Costo productivo</small><strong>${money(printCc*INK_COST_PER_CC)}</strong><span>$0.19 por cc</span></article>
+    <article class="card kpi"><small>Tinta mantenimiento</small><strong>${maintCc} cc</strong><span>Ciclos / limpieza / parada</span></article>
+    <article class="card kpi"><small>Costo mantenimiento</small><strong>${money(maintCc*INK_COST_PER_CC)}</strong><span>No productivo</span></article>
+    <article class="card kpi"><small>Total tinta hoy</small><strong>${totalCc} cc</strong><span>Producción + mantenimiento</span></article>
+    <article class="card kpi"><small>Costo total hoy</small><strong>${money(totalCc*INK_COST_PER_CC)}</strong><span>Estimado</span></article>
+  `;
+}
+
+function renderMaintenance(){
+  document.getElementById("maintenanceList").innerHTML=mantenimiento.map(e=>`
+    <div class="row">
+      <strong>${e.hora} · ${e.tipo}</strong>
+      <span>${e.motivo}</span>
+      <span><b>Duración:</b> ${e.duracion} · <b>Tinta:</b> ${e.tinta} cc · <b>Costo:</b> ${money(e.tinta*INK_COST_PER_CC)}</span>
+      <em class="sev ${e.nivel}">${e.nivel.toUpperCase()}</em>
+    </div>
+  `).join("");
+}
+
+function renderInkSummary(){
+  const printCc=sum(orders.map(o=>inkTotal(o)));
+  const maintCc=sum(mantenimiento.map(e=>e.tinta));
+  const total=printCc+maintCc;
+  const printPct=(printCc/total*100).toFixed(1);
+  const maintPct=(maintCc/total*100).toFixed(1);
+  document.getElementById("nonProductiveBadge").textContent=maintPct+"%";
+  document.getElementById("inkSummary").innerHTML=`
+    <div class="row"><strong>Tinta productiva</strong><span>${printCc} cc usados directamente en los ${orders.length} pedidos impresos.</span><em class="sev baja">${printPct}%</em></div>
+    <div class="row"><strong>Tinta no productiva</strong><span>${maintCc} cc usados en ciclos, limpieza automática y consumo estando parada.</span><em class="sev media">${maintPct}%</em></div>
+    <div class="row"><strong>Lectura operativa</strong><span>Este consumo ocurre por recirculación, limpieza de cabezales, purga, mantenimiento interno y espera entre trabajos.</span></div>
+  `;
+}
+
+function renderErrors(){
+  document.getElementById("errorList").innerHTML=errores.map(e=>`
+    <div class="row">
+      <strong>${e.hora} · ${e.tipo}</strong>
+      <span>${e.orden} · ${e.descripcion}</span>
+      <span><b>Acción:</b> ${e.accion}</span>
+      <em class="sev ${e.nivel}">${e.nivel.toUpperCase()}</em>
+    </div>
+  `).join("");
+}
+
+function renderConsumption(){
+  document.getElementById("consumptionBody").innerHTML=consumos.map(c=>{
+    const total=c[2]+c[3], costo=total*INK_COST_PER_CC;
+    return `
+      <tr>
+        <td><span class="channel"><span class="channel-dot" style="--c:${c[6]};background:${c[6]}"></span>${c[0]}</span></td>
+        <td>${c[2]} cc</td><td>${c[3]} cc</td><td><strong>${total} cc</strong></td><td>${c[4]} cc</td><td>${c[5]} cc</td><td><strong>${money(costo)}</strong></td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function getMostUsedInk(){
+  const totals={C:0,M:0,Y:0,K:0,CL1:0,CL2:0,W1:0,W2:0};
+  orders.forEach(o=>Object.keys(totals).forEach(k=>totals[k]+=o.tintas[k]||0));
+  consumos.forEach(c=>totals[c[1]]+=c[3]);
+  const names={C:"Cian",M:"Magenta",Y:"Yellow",K:"Negro",CL1:"Clear 1",CL2:"Clear 2",W1:"White 1",W2:"White 2"};
+  const top=Object.entries(totals).sort((a,b)=>b[1]-a[1])[0];
+  return {key:top[0],name:names[top[0]],value:top[1]};
+}
+
+function getMostUsedFormat(){
+  const map={};
+  orders.forEach(o=>map[o.formato]=(map[o.formato]||0)+o.m2);
+  const top=Object.entries(map).sort((a,b)=>b[1]-a[1])[0];
+  return {name:top[0],m2:top[1]};
+}
+
+function passStats(){
+  const passes=[8,12,16,24];
+  return passes.map(p=>{
+    const arr=orders.filter(o=>o.pass===p);
+    const m2=sum(arr.map(o=>o.m2));
+    const cc=sum(arr.map(o=>inkTotal(o)));
+    const ccM2=m2?cc/m2:0;
+    return {pass:p,m2,cc,ccM2};
+  });
+}
+
+function renderStats(){
+  const totalM2=sum(orders.map(o=>o.m2));
+  const printCc=sum(orders.map(o=>inkTotal(o)));
+  const general=printCc/totalM2;
+  const mostInk=getMostUsedInk();
+  const mostFormat=getMostUsedFormat();
+
+  document.getElementById("statsCards").innerHTML=`
+    <article class="card kpi"><small>Color más usado</small><strong>${mostInk.name}</strong><span>${mostInk.value} cc aprox.</span></article>
+    <article class="card kpi"><small>Formato más usado</small><strong>${mostFormat.name}</strong><span>${mostFormat.m2.toFixed(1)} m² impresos</span></article>
+    <article class="card kpi"><small>cc/m² general</small><strong>${general.toFixed(1)}</strong><span>Solo tinta productiva</span></article>
+    <article class="card kpi"><small>Costo/m² general</small><strong>${money(general*INK_COST_PER_CC)}</strong><span>A $0.19 por cc</span></article>
+  `;
+
+  document.getElementById("passesStatsBody").innerHTML=passStats().map(s=>{
+    const lectura=s.pass===8?"Modo rápido / color simple":s.pass===12?"Calidad estándar":s.pass===16?"Alta calidad / white":s.pass===24?"Capas múltiples / white + clear":"";
+    return `
+      <tr>
+        <td><strong>${s.pass} pass</strong></td>
+        <td>${s.m2.toFixed(2)} m²</td>
+        <td>${s.cc} cc</td>
+        <td><strong>${s.ccM2.toFixed(1)} cc/m²</strong></td>
+        <td><strong>${money(s.ccM2*INK_COST_PER_CC)}</strong></td>
+        <td>${lectura}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderOrders(){
+  document.getElementById("historyBody").innerHTML=orders.map(o=>`
+    <tr>
+      <td><span class="order-link" onclick="openDetail('${o.id}')">${o.id}</span></td>
+      <td>${o.cliente}</td>
+      <td>${o.formato}</td>
+      <td>${o.m2}</td>
+      <td>${o.modo}</td>
+      <td>${o.pass}</td>
+      <td><span class="status ${o.estado}">${o.estado}</span></td>
+      <td>${o.operador}</td>
+      <td><button class="btn-detail" onclick="openDetail('${o.id}')">Ver detalle</button></td>
+    </tr>
+  `).join("");
+}
+
+function info(label,value){
+  return `<div class="info-box"><small>${label}</small><strong>${value}</strong></div>`;
+}
+
+function openDetail(id){
+  const o=orders.find(x=>x.id===id);
+  if(!o)return;
+  const cc=inkTotal(o);
+  document.getElementById("modalTitle").textContent="Ficha técnica · "+o.id;
+  document.getElementById("modalBody").innerHTML=`
+    <div class="detail-layout">
+      <div class="preview">Screenshot 300x300<br>del trabajo</div>
+      <div>
+        <div class="modal-section">
+          <h4>Datos del trabajo</h4>
+          <div class="detail-grid">
+            ${info("Nº orden",o.id)}${info("Cliente",o.cliente)}${info("Archivo",o.archivo)}${info("Operador",o.operador)}
+            ${info("Inicio",o.inicio)}${info("Fin",o.fin)}${info("Duración",o.duracion)}${info("Estado",o.estado)}
+          </div>
+        </div>
+        <div class="modal-section">
+          <h4>Datos técnicos</h4>
+          <div class="detail-grid">
+            ${info("Formato",o.formato)}${info("m² usados",o.m2+" m²")}${info("Modo impresión",o.modo)}${info("Pass",o.pass)}
+            ${info("Perfil ICC",o.icc)}${info("Resolución",o.resolucion)}${info("cc/m²", (cc/o.m2).toFixed(1)+" cc/m²")}${info("Costo tinta", money(cc*INK_COST_PER_CC))}
+          </div>
+        </div>
+        <div class="modal-section">
+          <h4>Consumo del trabajo</h4>
+          <div class="row">
+            <strong>${cc} cc totales · ${money(cc*INK_COST_PER_CC)}</strong>
+            <span>C: ${o.tintas.C} · M: ${o.tintas.M} · Y: ${o.tintas.Y} · K: ${o.tintas.K} · CL1: ${o.tintas.CL1} · CL2: ${o.tintas.CL2} · W1: ${o.tintas.W1} · W2: ${o.tintas.W2}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("modalBackdrop").classList.add("show");
+}
+
+function closeModal(){document.getElementById("modalBackdrop").classList.remove("show");}
+function updateClock(){document.getElementById("clock").textContent=new Date().toLocaleString("es-VE",{hour:"2-digit",minute:"2-digit",second:"2-digit"});}
+
+document.getElementById("closeModal").addEventListener("click",closeModal);
+document.getElementById("modalBackdrop").addEventListener("click",e=>{if(e.target.id==="modalBackdrop")closeModal();});
+document.getElementById("simulateBtn").addEventListener("click",()=>alert("Simulación visual: aquí luego podemos crear nueva orden, bajar tinta y recalcular estadísticas."));
+
+renderBottles();
+renderKPIs();
+renderMaintenance();
+renderInkSummary();
+renderErrors();
+renderConsumption();
+renderStats();
+renderOrders();
+updateClock();
+setInterval(updateClock,1000);
+</script>
+</body>
+</html>

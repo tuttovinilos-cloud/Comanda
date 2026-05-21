@@ -31,9 +31,11 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;borde
     <button id="btnTabAnalyzer" class="tabBtn active" onclick="switchTab('analyzer')">Analizador / Cotizador</button>
     <button id="btnTabMaterials" class="tabBtn" onclick="switchTab('materials')">Materiales / Compuestos</button>
   </div>
+
   <section id="tabAnalyzer">
   <div class="card">
     <h2>1) Importar SVG</h2>
+
     <div class="grid2">
       <div>
         <label>Archivo SVG</label>
@@ -45,11 +47,13 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;borde
         <p class="tiny">Siempre analiza en calidad extrema. En SVG muy pesados puede tardar unos segundos.</p>
       </div>
     </div>
-    <div class="grid2">
+
+    <div class="grid">
       <div>
         <label>Si el SVG NO trae medidas reales, usar ancho manual</label>
         <input id="fallbackWidth" type="number" value="60" step="0.01" placeholder="Ej: 60">
       </div>
+
       <div>
         <label>Unidad del ancho manual</label>
         <select id="fallbackUnit">
@@ -59,15 +63,28 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;borde
           <option value="in">in</option>
         </select>
       </div>
+
+      <div>
+        <label>Aplicar medida al archivo</label>
+        <button class="orange" onclick="aplicarAnchoManualAlSVG()">Escalar SVG</button>
+      </div>
+
+      <div>
+        <label>Descargar SVG escalado</label>
+        <button class="gray" onclick="descargarSVGActual()">Descargar SVG</button>
+      </div>
     </div>
+
     <div class="grid2">
       <button onclick="analizarSVG()">Analizar con medidas reales</button>
     </div>
+
     <div class="row" style="margin-top:6px">
       <input type="checkbox" id="ignoreWhite" checked>
       <label for="ignoreWhite" style="margin:0">Ignorar blanco como hueco / vacío</label>
     </div>
-    <p class="hint">El sistema lee primero <b>width</b>, <b>height</b> y <b>viewBox</b> del SVG. Si el archivo viene de Corel con medidas reales, no necesitas escribir ancho manual.</p>
+
+    <p class="hint">El sistema lee primero <b>width</b>, <b>height</b> y <b>viewBox</b> del SVG. Si el archivo viene de Corel con medidas reales, no necesitas escribir ancho manual. Si no viene con medidas reales, coloca el ancho y presiona <b>Escalar SVG</b>.</p>
     <div class="progress"><div class="bar" id="bar"></div></div>
     <p class="hint mono" id="status">Listo.</p>
   </div>
@@ -155,7 +172,6 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;borde
       </div>
     </div>
   </div>
-
   </section>
 
   <section id="tabMaterials" class="hidden">
@@ -187,7 +203,6 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;borde
       <button class="orange" onclick="resetMaterialDefaults()">Restaurar materiales y grupos base</button>
     </div>
   </section>
-
 </div>
 
 <script>
@@ -230,8 +245,6 @@ const PRICES = {
   "Pernos 19×25":2,
   "Teipe negro":15
 };
-
-
 
 let COMPOSITES = {};
 const DEFAULT_PRICES = JSON.parse(JSON.stringify(PRICES));
@@ -407,7 +420,7 @@ $("fileInput").addEventListener("change", async e=>{
   currentFileName = file.name;
   svgText = await file.text();
   cargarSVGEnPreview(svgText);
-  setStatus("SVG cargado. Presiona analizar.",0);
+  setStatus("SVG cargado. Puedes analizarlo o aplicar ancho manual.",0);
 });
 
 function cargarSVGEnPreview(text){
@@ -471,12 +484,106 @@ function detectRealSize(svg){
   }else{
     const fw = Number($("fallbackWidth").value || 0);
     const fu = $("fallbackUnit").value;
-    if(!fw || fw<=0) throw new Error("El SVG no trae medidas reales. Coloca ancho manual de respaldo.");
+    if(!fw || fw<=0) throw new Error("El SVG no trae medidas reales. Coloca ancho manual de respaldo o presiona Escalar SVG.");
     realWm = fw * UNITS[fu];
     realHm = realWm * (vb.height / vb.width);
     method = `El SVG no traía medidas reales. Se usó ancho manual: ${fw} ${fu}`;
   }
   return {vb,realWm,realHm,method,scaleX:realWm/vb.width,scaleY:realHm/vb.height};
+}
+
+function aplicarAnchoManualAlSVG(){
+  try{
+    if(!svgText || !svgDoc){
+      alert("Primero sube un SVG.");
+      return;
+    }
+
+    const fw = Number($("fallbackWidth").value || 0);
+    const fu = $("fallbackUnit").value;
+
+    if(!fw || fw <= 0){
+      alert("Coloca un ancho manual válido.");
+      return;
+    }
+
+    const vb = getViewBox(svgDoc);
+
+    if(!vb || !vb.width || !vb.height){
+      alert("No se pudo leer el viewBox del SVG.");
+      return;
+    }
+
+    const altoProporcional = fw * (vb.height / vb.width);
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgText, "image/svg+xml");
+    const svg = doc.querySelector("svg");
+
+    if(!svg){
+      alert("No se encontró etiqueta SVG.");
+      return;
+    }
+
+    svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.width} ${vb.height}`);
+    svg.setAttribute("width", formatSVGLength(fw, fu));
+    svg.setAttribute("height", formatSVGLength(altoProporcional, fu));
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+    const serializer = new XMLSerializer();
+    svgText = serializer.serializeToString(svg);
+
+    cargarSVGEnPreview(svgText);
+
+    const realWm = fw * UNITS[fu];
+    const realHm = realWm * (vb.height / vb.width);
+
+    $("kAncho").innerText = fmtCm(realWm);
+    $("kAlto").innerText = fmtCm(realHm);
+    $("kEscala").innerText = `${(realWm / vb.width * 100).toFixed(4)} cm/u`;
+
+    setStatus(
+      `SVG escalado proporcionalmente a ${fw} ${fu} de ancho × ${altoProporcional.toFixed(2)} ${fu} de alto.`,
+      20
+    );
+
+    $("method").innerHTML = `<span class="ok">SVG escalado manualmente:</span> ancho ${fw} ${fu}, alto proporcional ${altoProporcional.toFixed(2)} ${fu}. Ahora puedes analizar con medidas reales.`;
+
+  }catch(err){
+    console.error(err);
+    alert("Error aplicando escala: " + err.message);
+  }
+}
+
+function formatSVGLength(value, unit){
+  value = Number(value) || 0;
+
+  if(unit === "m"){
+    return (value * 100).toFixed(4) + "cm";
+  }
+
+  return value.toFixed(4) + unit;
+}
+
+function descargarSVGActual(){
+  if(!svgText){
+    alert("Primero sube o escala un SVG.");
+    return;
+  }
+
+  const blob = new Blob([svgText], {type:"image/svg+xml"});
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  const base = (currentFileName || "svg_escalado").replace(/\.[^.]+$/, "");
+  a.href = url;
+  a.download = base + "_escalado.svg";
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
 }
 
 async function analizarSVG(){
@@ -716,22 +823,6 @@ function getCalcRows(product, c){
       if(item.round) q = Math.ceil(q);
       return [item.name, item.unit || "und", q, item.name, `${item.base} × ${item.factor} + ${item.offset}`];
     });
-  }
-
-  if(false && product === "Front Lit"){
-    return [
-      ["Pvc 9mm", "m²", K46, "Pvc 9mm", "K46 área marco"],
-      ["Acrilico 3mm color", "m²", K46, "Acrilico 3mm color", "K46 área marco"],
-      ["Módulos cálidos", "und", Math.ceil(K45 * 220), "Módulos cálidos", "ROUNDUP(K45×220)"],
-      ["Cable 18", "m", Math.ceil((Math.sqrt(K46) * 2) + (piezas * 0.4) + 2), "Cable 18", "ROUNDUP((√K46×2)+(K43×0.4)+2)"],
-      ["Chupones L", "und", piezas * 4, "Chupones L", "K43×4"],
-      ["Estaño", "und", K45 / 20, "Estaño", "K45/20"],
-      ["Pega acrílico", "und", K44 / 15, "Pega acrílico", "K44/15"],
-      ["Pega acrílico soldadura", "und", K44 / 20, "Pega acrílico soldadura", "K44/20"],
-      ["Pernos 19×25", "und", K45 / 1000, "Pernos 19×25", "K45/1000"],
-      ["Teipe negro", "und", K44 / 30, "Teipe negro", "K44/30"],
-      ["Banda aluminio", "ml", K44 + (piezas * 0.1), "Banda aluminio", "K44+(K43×0.1)"]
-    ];
   }
 
   if(product === "Banda aluminio") return [["Banda aluminio", "ml", K44 + (piezas * 0.1), "Banda aluminio", "K44+(K43×0.1)"]];

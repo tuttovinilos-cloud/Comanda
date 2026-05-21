@@ -288,6 +288,98 @@ async function resolverNombreClienteAntesDeGuardar(nombreIngresado) {
   };
 }
 
+function renderClienteDatalist() {
+  const datalist = document.getElementById("clientesDatalist");
+  if (!datalist) return;
+
+  datalist.innerHTML = "";
+
+  const usados = new Set();
+
+  clientesCatalogoDB.forEach(c => {
+    const nombre = String(c.nombre || "").trim();
+    if (!nombre) return;
+
+    const key = normalizarBusqueda(nombre);
+    if (!key || usados.has(key)) return;
+
+    usados.add(key);
+
+    const opt = document.createElement("option");
+    opt.value = nombre;
+    datalist.appendChild(opt);
+  });
+}
+
+function buscarClienteExactoNormalizado(nombre) {
+  const norm = normalizarBusqueda(nombre);
+  if (!norm) return null;
+
+  return clientesCatalogoDB.find(c => normalizarBusqueda(c.nombre) === norm) || null;
+}
+
+function puntajeParecidoCliente(a, b) {
+  const na = normalizarBusqueda(a);
+  const nb = normalizarBusqueda(b);
+
+  if (!na || !nb) return 0;
+  if (na === nb) return 1;
+  if (na.includes(nb) || nb.includes(na)) return 0.92;
+
+  const ta = na.split(" ").filter(Boolean);
+  const tb = nb.split(" ").filter(Boolean);
+
+  if (!ta.length || !tb.length) return 0;
+
+  const sb = new Set(tb);
+
+  let match = 0;
+
+  ta.forEach(t => {
+    if (sb.has(t)) match++;
+  });
+
+  return match / Math.max(ta.length, tb.length);
+}
+
+function buscarClienteParecido(nombre) {
+  let mejor = null;
+  let score = 0;
+
+  clientesCatalogoDB.forEach(c => {
+    const s = puntajeParecidoCliente(nombre, c.nombre);
+
+    if (s > score) {
+      score = s;
+      mejor = c;
+    }
+  });
+
+  return score >= 0.6 ? mejor : null;
+}
+
+async function resolverNombreClienteAntesDeGuardar(nombreIngresado) {
+  const nombre = String(nombreIngresado || "").trim();
+
+  if (!nombre) {
+    return { ok: true, nombreFinal: "" };
+  }
+
+  const exacto = buscarClienteExactoNormalizado(nombre);
+
+  if (exacto) {
+    return {
+      ok: true,
+      nombreFinal: String(exacto.nombre || "").trim()
+    };
+  }
+
+  return {
+    ok: true,
+    nombreFinal: nombreBonito(nombre)
+  };
+}
+
 // ===========================
 // OPERADORES
 // ===========================
