@@ -2168,12 +2168,12 @@ table{
 
 <script>
 /* =========================================================
-   NOTIFICACIONES v20 · LECTOR REAL DESDE SUPABASE
-   IMPORTANTE:
-   - El cambio Solicitud -> Listo lo detecta el trigger SQL.
-   - Este JS SOLO lee la tabla public.notificaciones.
-   - Soporta columnas: para_operador y destinatario.
-   - Si Ricardo / Ricardo Ortiz no coinciden exacto, compara por primer nombre.
+   NOTIFICACIONES v23 · contador estable
+   Corrige bug:
+   - El contador aparecía 1 y luego se quitaba.
+   - Ahora NO se borra el contador si Supabase tarda, falla o el operador aún no cargó.
+   - Lee notificaciones reales desde public.notificaciones.
+   - Soporta para_operador y destinatario.
 ========================================================= */
 (function(){
   const CHECK_MS = 5000;
@@ -2183,6 +2183,7 @@ table{
   let audioHabilitado = false;
   let cacheNotificaciones = [];
   let ultimoIds = new Set();
+  let operadorDetectado = "";
 
   function db(){
     return window.supabaseClient || null;
@@ -2344,7 +2345,7 @@ table{
     btn.style.setProperty("opacity", "1", "important");
   }
 
-  function actualizarContador(total, sonar){
+  function pintarContador(total){
     asegurarCampana();
 
     const count = document.getElementById("notiCount");
@@ -2357,6 +2358,12 @@ table{
     }else{
       count.classList.add("empty");
     }
+  }
+
+  function actualizarContador(sonar){
+    const total = cacheNotificaciones.length;
+
+    pintarContador(total);
 
     const idsActuales = new Set(cacheNotificaciones.map(n => String(n.id)));
     let hayNueva = false;
@@ -2376,26 +2383,27 @@ table{
   async function leerNotificaciones(sonar = false){
     asegurarCampana();
 
-    if(!db()){
-      console.warn("No hay Supabase para notificaciones");
-      return [];
-    }
-
     const operador = getOperador();
 
+    /*
+      Corrección importante:
+      Si el operador todavía no cargó, NO borramos el contador.
+      Así evitamos el bug de 1 -> 0 sin hacer nada.
+    */
     if(!operador){
-      console.warn("No hay operador actual en localStorage");
-      actualizarContador(0, false);
-      return [];
+      console.warn("Notificaciones: operador aún no detectado. Mantengo contador actual.");
+      pintarContador(cacheNotificaciones.length);
+      return cacheNotificaciones;
     }
 
-    /*
-      No filtramos en Supabase por operador para evitar errores por:
-      - Ricardo vs Ricardo Ortiz
-      - Ruben vs Rubén
-      - columna vieja destinatario
-      Primero leemos las pendientes y luego filtramos en JS.
-    */
+    operadorDetectado = operador;
+
+    if(!db()){
+      console.warn("Notificaciones: Supabase aún no disponible. Mantengo contador actual.");
+      pintarContador(cacheNotificaciones.length);
+      return cacheNotificaciones;
+    }
+
     const { data, error } = await db()
       .from("notificaciones")
       .select("id, pedido_id, tipo, para_operador, destinatario, titulo, mensaje, leida, created_at")
@@ -2406,12 +2414,13 @@ table{
     if(error){
       console.error("Error leyendo notificaciones:", error);
       toast("Error leyendo notificaciones");
-      return [];
+      pintarContador(cacheNotificaciones.length);
+      return cacheNotificaciones;
     }
 
     cacheNotificaciones = (data || []).filter(n => perteneceAlOperador(n, operador));
 
-    actualizarContador(cacheNotificaciones.length, sonar);
+    actualizarContador(sonar);
 
     return cacheNotificaciones;
   }
@@ -2438,7 +2447,7 @@ table{
       </div>
       ${cacheNotificaciones.map(n => `
         <div class="noti-item">
-          <div class="noti-item-title">${esc(n.titulo || "Notificación")}</div>
+          <div class="noti-item-title">🔔 ${esc(n.titulo || "Notificación")}</div>
           <div class="noti-item-msg">${esc(n.mensaje || "")}</div>
           <div class="noti-item-meta">
             Pedido #${esc(n.pedido_id || "")} · ${esc(n.tipo || "")} · Para: ${esc(n.para_operador || n.destinatario || "")}
@@ -2472,14 +2481,14 @@ table{
 
     if(error){
       console.error(error);
-      toast("No se pudo marcar leída");
+      toast("No se pudo marcar visto");
       return;
     }
 
-    await leerNotificaciones(false);
+    cacheNotificaciones = cacheNotificaciones.filter(n => Number(n.id) !== Number(id));
+    actualizarContador(false);
     renderNotificaciones();
   };
-
 
   window.marcarTodasNotificacionesLeidas = async function(){
     if(!db()) return;
@@ -2503,7 +2512,7 @@ table{
     }
 
     cacheNotificaciones = [];
-    actualizarContador(0, false);
+    actualizarContador(false);
     renderNotificaciones();
     toast("Notificaciones marcadas como vistas");
   };
@@ -2537,6 +2546,7 @@ table{
     await leerNotificaciones(false);
 
     console.log("OPERADOR ACTUAL:", operador);
+    console.log("OPERADOR DETECTADO:", operadorDetectado);
     console.log("TODAS LAS ÚLTIMAS NOTIFICACIONES:", todas);
     console.log("NOTIFICACIONES FILTRADAS PARA ESTE OPERADOR:", cacheNotificaciones);
 
@@ -2549,11 +2559,14 @@ table{
 
   function iniciar(){
     asegurarCampana();
+    pintarContador(cacheNotificaciones.length);
 
     document.addEventListener("click", habilitarAudio, { once:true });
     document.addEventListener("touchstart", habilitarAudio, { once:true });
 
-    leerNotificaciones(false);
+    setTimeout(() => leerNotificaciones(false), 500);
+    setTimeout(() => leerNotificaciones(false), 1500);
+    setTimeout(() => leerNotificaciones(false), 3000);
 
     if(timer) clearInterval(timer);
 
