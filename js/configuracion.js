@@ -3,10 +3,28 @@ console.log("Configuración JS conectado");
 let operadoresDB = [];
 
 // ---------------------------
+// Supabase seguro
+// ---------------------------
+function db() {
+  return window.supabaseClient || window.supabase;
+}
+
+function validarSupabaseConfig() {
+  if (!db()) {
+    console.error("No existe conexión Supabase. Revisa js/supabase.js");
+    toast("No existe conexión Supabase");
+    return false;
+  }
+
+  return true;
+}
+
+// ---------------------------
 // Toast
 // ---------------------------
 function toast(msg) {
   const el = document.getElementById("toast");
+
   if (!el) {
     alert(msg);
     return;
@@ -28,14 +46,17 @@ function escapeHtml(value) {
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 // ---------------------------
 // Cargar operadores
 // ---------------------------
 async function cargarOperadoresAdmin() {
-  const { data, error } = await supabaseClient
+  if (!validarSupabaseConfig()) return;
+
+  const { data, error } = await db()
     .from("operadores")
     .select("*")
     .order("nombre", { ascending: true });
@@ -60,11 +81,10 @@ function renderOperadores() {
 
   if (!tbody) return;
 
-  let lista = operadoresDB.filter(op => {
+  const lista = operadoresDB.filter(op => {
     const texto = [
       op.nombre,
       op.clave,
-      op.rol,
       op.activo ? "activo" : "inactivo"
     ].join(" ").toLowerCase();
 
@@ -79,7 +99,7 @@ function renderOperadores() {
   }
 
   if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="13" class="empty">Sin operadores</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="14" class="empty">Sin operadores</td></tr>`;
     return;
   }
 
@@ -87,24 +107,16 @@ function renderOperadores() {
 
   lista.forEach(op => {
     const activo = op.activo !== false;
+    const esRoberto = String(op.nombre || "").trim().toLowerCase() === "roberto";
 
     const fila = `
       <tr data-id="${op.id}">
         <td>
-          <input class="name-input op-nombre" data-id="${op.id}" value="${escapeHtml(op.nombre || "")}" placeholder="Nombre">
+          <input class="name-input op-nombre" data-id="${op.id}" value="${escapeHtml(op.nombre || "")}" placeholder="Nombre" ${esRoberto ? "readonly" : ""}>
         </td>
 
         <td>
           <input class="clave-input op-clave" data-id="${op.id}" value="${escapeHtml(op.clave || "")}" placeholder="Clave">
-        </td>
-
-        <td>
-          <select class="role-select op-rol" data-id="${op.id}" onchange="aplicarRol(${op.id})">
-            <option ${op.rol === "Administrador" ? "selected" : ""}>Administrador</option>
-            <option ${op.rol === "Supervisor" ? "selected" : ""}>Supervisor</option>
-            <option ${op.rol === "Operador" ? "selected" : ""}>Operador</option>
-            <option ${op.rol === "Solo lectura" ? "selected" : ""}>Solo lectura</option>
-          </select>
         </td>
 
         <td class="check-cell">
@@ -132,6 +144,14 @@ function renderOperadores() {
         </td>
 
         <td class="check-cell">
+          <input type="checkbox" class="op-cotizador" data-id="${op.id}" ${op.puede_cotizador ? "checked" : ""}>
+        </td>
+
+        <td class="check-cell">
+          <input type="checkbox" class="op-organizador" data-id="${op.id}" ${op.puede_organizador ? "checked" : ""}>
+        </td>
+
+        <td class="check-cell">
           <input type="checkbox" class="op-mod-operador" data-id="${op.id}" ${op.puede_modificar_operador !== false ? "checked" : ""}>
         </td>
 
@@ -140,14 +160,16 @@ function renderOperadores() {
         </td>
 
         <td>
-          <select class="active-select op-activo" data-id="${op.id}">
+          <select class="active-select op-activo" data-id="${op.id}" ${esRoberto ? "disabled" : ""}>
             <option value="true" ${activo ? "selected" : ""}>Activo</option>
             <option value="false" ${!activo ? "selected" : ""}>Inactivo</option>
           </select>
         </td>
 
         <td>
-          <button class="mini-btn del" onclick="eliminarOperador(${op.id})">Eliminar</button>
+          ${esRoberto
+            ? `<button class="mini-btn" type="button" disabled title="Roberto no se puede eliminar">Protegido</button>`
+            : `<button class="mini-btn del" type="button" onclick="eliminarOperador(${op.id})">Eliminar</button>`}
         </td>
       </tr>
     `;
@@ -164,83 +186,26 @@ function filtrarOperadores() {
 }
 
 // ---------------------------
-// Aplicar permisos según rol
-// ---------------------------
-function aplicarRol(id) {
-  const rol = document.querySelector(`.op-rol[data-id="${id}"]`)?.value || "Operador";
-
-  const pedidos = document.querySelector(`.op-pedidos[data-id="${id}"]`);
-  const clientes = document.querySelector(`.op-clientes[data-id="${id}"]`);
-  const materiales = document.querySelector(`.op-materiales[data-id="${id}"]`);
-  const estadisticas = document.querySelector(`.op-estadisticas[data-id="${id}"]`);
-  const configuracion = document.querySelector(`.op-configuracion[data-id="${id}"]`);
-  const marketing = document.querySelector(`.op-marketing[data-id="${id}"]`);
-  const modOperador = document.querySelector(`.op-mod-operador[data-id="${id}"]`);
-  const modCantidad = document.querySelector(`.op-mod-cantidad[data-id="${id}"]`);
-
-  if (rol === "Administrador") {
-    if (pedidos) pedidos.checked = true;
-    if (clientes) clientes.checked = true;
-    if (materiales) materiales.checked = true;
-    if (estadisticas) estadisticas.checked = true;
-    if (configuracion) configuracion.checked = true;
-    if (marketing) marketing.checked = true;
-    if (modOperador) modOperador.checked = true;
-    if (modCantidad) modCantidad.checked = true;
-  }
-
-  if (rol === "Supervisor") {
-    if (pedidos) pedidos.checked = true;
-    if (clientes) clientes.checked = true;
-    if (materiales) materiales.checked = true;
-    if (estadisticas) estadisticas.checked = true;
-    if (configuracion) configuracion.checked = false;
-    if (marketing) marketing.checked = true;
-    if (modOperador) modOperador.checked = true;
-    if (modCantidad) modCantidad.checked = true;
-  }
-
-  if (rol === "Operador") {
-    if (pedidos) pedidos.checked = true;
-    if (clientes) clientes.checked = true;
-    if (materiales) materiales.checked = false;
-    if (estadisticas) estadisticas.checked = false;
-    if (configuracion) configuracion.checked = false;
-    if (marketing) marketing.checked = false;
-    if (modOperador) modOperador.checked = false;
-    if (modCantidad) modCantidad.checked = false;
-  }
-
-  if (rol === "Solo lectura") {
-    if (pedidos) pedidos.checked = true;
-    if (clientes) clientes.checked = false;
-    if (materiales) materiales.checked = false;
-    if (estadisticas) estadisticas.checked = false;
-    if (configuracion) configuracion.checked = false;
-    if (marketing) marketing.checked = false;
-    if (modOperador) modOperador.checked = false;
-    if (modCantidad) modCantidad.checked = false;
-  }
-}
-
-// ---------------------------
 // Nuevo operador
 // ---------------------------
 async function nuevoOperador() {
+  if (!validarSupabaseConfig()) return;
+
   const nombreUnico = "Nuevo operador " + Date.now();
 
-  const { error } = await supabaseClient
+  const { error } = await db()
     .from("operadores")
     .insert([{
       nombre: nombreUnico,
       clave: "0000",
-      rol: "Operador",
       puede_pedidos: true,
       puede_clientes: true,
       puede_materiales: false,
       puede_estadisticas: false,
       puede_configuracion: false,
       puede_marketing: false,
+      puede_cotizador: false,
+      puede_organizador: false,
       puede_modificar_operador: false,
       puede_modificar_cantidad: false,
       activo: true
@@ -260,12 +225,14 @@ async function nuevoOperador() {
 // Guardar todos
 // ---------------------------
 async function guardarTodosOperadores() {
+  if (!validarSupabaseConfig()) return;
+
   const updates = operadoresDB.map(op => {
     const id = op.id;
+    const esRoberto = String(op.nombre || "").trim().toLowerCase() === "roberto";
 
     const nombre = document.querySelector(`.op-nombre[data-id="${id}"]`)?.value.trim() || "";
     const clave = document.querySelector(`.op-clave[data-id="${id}"]`)?.value.trim() || "";
-    const rol = document.querySelector(`.op-rol[data-id="${id}"]`)?.value || "Operador";
 
     const puede_pedidos = document.querySelector(`.op-pedidos[data-id="${id}"]`)?.checked || false;
     const puede_clientes = document.querySelector(`.op-clientes[data-id="${id}"]`)?.checked || false;
@@ -273,6 +240,8 @@ async function guardarTodosOperadores() {
     const puede_estadisticas = document.querySelector(`.op-estadisticas[data-id="${id}"]`)?.checked || false;
     const puede_configuracion = document.querySelector(`.op-configuracion[data-id="${id}"]`)?.checked || false;
     const puede_marketing = document.querySelector(`.op-marketing[data-id="${id}"]`)?.checked || false;
+    const puede_cotizador = document.querySelector(`.op-cotizador[data-id="${id}"]`)?.checked || false;
+    const puede_organizador = document.querySelector(`.op-organizador[data-id="${id}"]`)?.checked || false;
     const puede_modificar_operador = document.querySelector(`.op-mod-operador[data-id="${id}"]`)?.checked || false;
     const puede_modificar_cantidad = document.querySelector(`.op-mod-cantidad[data-id="${id}"]`)?.checked || false;
 
@@ -280,22 +249,38 @@ async function guardarTodosOperadores() {
 
     if (!nombre) return null;
 
-    return supabaseClient
+    const datos = {
+      nombre: esRoberto ? "Roberto" : nombre,
+      clave,
+      puede_pedidos,
+      puede_clientes,
+      puede_materiales,
+      puede_estadisticas,
+      puede_configuracion,
+      puede_marketing,
+      puede_cotizador,
+      puede_organizador,
+      puede_modificar_operador,
+      puede_modificar_cantidad,
+      activo: esRoberto ? true : activo
+    };
+
+    if (esRoberto) {
+      datos.puede_pedidos = true;
+      datos.puede_clientes = true;
+      datos.puede_materiales = true;
+      datos.puede_estadisticas = true;
+      datos.puede_configuracion = true;
+      datos.puede_marketing = true;
+      datos.puede_cotizador = true;
+      datos.puede_organizador = true;
+      datos.puede_modificar_operador = true;
+      datos.puede_modificar_cantidad = true;
+    }
+
+    return db()
       .from("operadores")
-      .update({
-        nombre,
-        clave,
-        rol,
-        puede_pedidos,
-        puede_clientes,
-        puede_materiales,
-        puede_estadisticas,
-        puede_configuracion,
-        puede_marketing,
-        puede_modificar_operador,
-        puede_modificar_cantidad,
-        activo
-      })
+      .update(datos)
       .eq("id", id);
   }).filter(Boolean);
 
@@ -318,25 +303,36 @@ async function guardarTodosOperadores() {
 }
 
 // ---------------------------
-// Eliminar operador
-// NOTA: lo desactiva, no borra.
+// Eliminar operador definitivo
 // ---------------------------
 async function eliminarOperador(id) {
-  const confirmar = confirm("¿Eliminar/desactivar este operador?");
+  if (!validarSupabaseConfig()) return;
+
+  const operador = operadoresDB.find(op => Number(op.id) === Number(id));
+  const esRoberto = String(operador?.nombre || "").trim().toLowerCase() === "roberto";
+
+  if (esRoberto) {
+    toast("Roberto no se puede eliminar");
+    return;
+  }
+
+  const nombre = operador?.nombre || "este operador";
+  const confirmar = confirm(`¿Eliminar definitivamente a ${nombre}?`);
+
   if (!confirmar) return;
 
-  const { error } = await supabaseClient
+  const { error } = await db()
     .from("operadores")
-    .update({ activo: false })
+    .delete()
     .eq("id", id);
 
   if (error) {
     console.error("Error eliminando operador:", error);
-    toast("Error eliminando operador");
+    toast("No se pudo eliminar: " + (error.message || "sin detalle"));
     return;
   }
 
-  toast("Operador desactivado");
+  toast("Operador eliminado");
   await cargarOperadoresAdmin();
 }
 

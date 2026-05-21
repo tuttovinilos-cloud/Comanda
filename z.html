@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#153bff"/>
+<title>Tuttovinilos · Optimizer</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet"/>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#f0f2f9;
+  --surface:#ffffff;
+  --surface2:#f8f9ff;
+  --border:#d9deea;
+  --border2:#cbd3e6;
+  --text:#111827;
+  --muted:#64748b;
+  --muted2:#94a3b8;
+  --orange:#ff8616;
+  --blue:#153bff;
+  --blue2:#0b1f7a;
+  --green:#16a34a;
+  --red:#dc2626;
+  --font-display:'Bricolage Grotesque',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --font-serif:'Instrument Serif',serif;
+}
+
+html,body{
+  width:100%;
+  overflow-x:hidden;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-display);
+}
+
+body{
+  min-height:100vh;
+  max-width:560px;
+  margin:auto;
+  padding:14px 10px calc(40px + env(safe-area-inset-bottom));
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(21,59,255,.12), transparent 38%),
+    radial-gradient(circle at 100% 100%, rgba(255,134,22,.10), transparent 46%);
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  padding:6px 2px 16px;
+  border-bottom:1px dashed var(--border2);
+  margin-bottom:18px;
+}
+
+.brand-mark{
+  display:block;
+  font-weight:800;
+  font-size:22px;
+  letter-spacing:-.03em;
+  white-space:nowrap;
+  color:var(--blue2);
+}
+
+.brand-mark::after{
+  content:"";
+  display:inline-block;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--orange);
+  margin-left:5px;
+  vertical-align:3px;
+  box-shadow:0 0 16px rgba(255,134,22,.5);
+}
+
+.brand-sub{
+  display:block;
+  font-family:var(--font-mono);
+  font-size:9px;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:var(--muted);
+  white-space:nowrap;
+}
+
+.version{
+  flex-shrink:0;
+  font-family:var(--font-mono);
+  font-size:9px;
+  color:var(--muted2);
+}
+
+section{margin-bottom:18px}
+
+.section-label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+  font-family:var(--font-mono);
+  font-size:10px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.section-label::before{
+  content:"";
+  width:15px;
+  height:1px;
+  background:var(--muted2);
+  flex-shrink:0;
+}
+
+.num{color:var(--orange)}
+
+.formats{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:7px;
+}
+
+.format-btn{
+  background:var(--surface);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:14px;
+  min-height:72px;
+  padding:12px 4px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:5px;
+  text-align:center;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,.04);
+}
+
+.format-btn .dim{
+  font-family:var(--font-mono);
+  font-size:9px;
+  color:var(--muted);
+}
+
+.format-btn[aria-pressed="true"]{
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  color:#fff;
+  border-color:var(--blue);
+  box-shadow:0 8px 24px rgba(21,59,255,.22);
+}
+
+.format-btn[aria-pressed="true"] .dim{
+  color:rgba(255,255,255,.78);
+}
+
+.input-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  width:100%;
+}
+
+.input-field{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  min-width:0;
+  overflow:hidden;
+  box-shadow:0 4px 14px rgba(0,0,0,.035);
+}
+
+.input-field:focus-within{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(21,59,255,.10);
+}
+
+.input-field label{
+  display:block;
+  font-family:var(--font-mono);
+  font-size:10px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.control{
+  display:flex;
+  align-items:flex-end;
+  gap:5px;
+  margin-top:8px;
+  width:100%;
+  min-width:0;
+}
+
+.input-field input{
+  flex:1 1 auto;
+  min-width:0;
+  width:0;
+  background:transparent;
+  border:none;
+  outline:none;
+  color:var(--text);
+  font-family:var(--font-mono);
+  font-size:26px;
+  line-height:1;
+}
+
+.unit{
+  flex:0 0 auto;
+  font-family:var(--font-mono);
+  font-size:11px;
+  color:var(--muted);
+  white-space:nowrap;
+}
+
+.hero{
+  background:linear-gradient(135deg,#ffffff,#f8f9ff);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:16px;
+  overflow:hidden;
+  box-shadow:0 6px 22px rgba(0,0,0,.05);
+}
+
+.hero-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.lbl{
+  font-family:var(--font-mono);
+  font-size:10px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.badge{
+  flex-shrink:0;
+  font-family:var(--font-mono);
+  font-size:9px;
+  padding:6px 9px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.badge.normal{
+  background:rgba(255,134,22,.12);
+  color:var(--orange);
+  border-color:rgba(255,134,22,.35);
+}
+
+.badge.rotated{
+  background:rgba(21,59,255,.10);
+  color:var(--blue);
+  border-color:rgba(21,59,255,.30);
+}
+
+.dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:currentColor;
+}
+
+.hero-total{
+  display:flex;
+  align-items:flex-end;
+  gap:10px;
+}
+
+.total-num{
+  font-weight:800;
+  font-size:clamp(54px,17vw,78px);
+  line-height:.9;
+  letter-spacing:-.05em;
+  color:var(--blue2);
+}
+
+.total-label{
+  font-family:var(--font-serif);
+  font-style:italic;
+  font-size:18px;
+  color:var(--muted);
+  line-height:1.05;
+  padding-bottom:4px;
+}
+
+.grid-info{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px dashed var(--border);
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+  font-family:var(--font-mono);
+  font-size:12px;
+  color:var(--muted);
+}
+
+.grid-info b{color:var(--text)}
+
+#orientNote{
+  margin-left:auto;
+  font-size:10px;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+  margin-top:12px;
+}
+
+.stat{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:10px 7px;
+  min-width:0;
+  overflow:hidden;
+  box-shadow:0 4px 14px rgba(0,0,0,.035);
+}
+
+.stat-lbl{
+  font-family:var(--font-mono);
+  font-size:8px;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.stat-val{
+  margin-top:6px;
+  font-family:var(--font-mono);
+  font-size:15px;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+.stat-unit{
+  margin-left:2px;
+  font-size:10px;
+  color:var(--muted);
+}
+
+.utilization .stat-val{color:var(--blue)}
+.waste .stat-val{color:var(--orange)}
+
+.util-bar{
+  margin-top:8px;
+  height:5px;
+  background:#e5e7eb;
+  border-radius:999px;
+  overflow:hidden;
+}
+
+.util-bar span{
+  display:block;
+  height:100%;
+  background:linear-gradient(90deg,var(--blue),var(--orange));
+}
+
+.preview-wrap{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:12px;
+  box-shadow:0 4px 14px rgba(0,0,0,.035);
+}
+
+.preview-canvas{
+  width:100%;
+  border-radius:12px;
+  border:1px solid var(--border);
+  overflow:hidden;
+  background:#f8f9ff;
+}
+
+.preview-meta{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  margin-top:8px;
+  font-family:var(--font-mono);
+  font-size:10px;
+  color:var(--muted);
+}
+
+.suggestions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.suggestion{
+  background:linear-gradient(135deg, rgba(255,134,22,.10), rgba(21,59,255,.05));
+  border:1px solid rgba(255,134,22,.28);
+  border-radius:16px;
+  padding:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+}
+
+.title{
+  font-size:13px;
+  font-weight:700;
+  line-height:1.3;
+}
+
+.title b{
+  color:var(--orange);
+  font-family:var(--font-mono);
+}
+
+.meta{
+  margin-top:4px;
+  font-family:var(--font-mono);
+  font-size:9px;
+  line-height:1.35;
+  color:var(--muted);
+}
+
+.arrow{
+  flex-shrink:0;
+  font-size:24px;
+  color:var(--orange);
+}
+
+.suggestion-empty{
+  background:var(--surface);
+  border:1px dashed var(--border);
+  border-radius:14px;
+  padding:14px;
+  text-align:center;
+  font-family:var(--font-mono);
+  font-size:11px;
+  color:var(--muted);
+}
+
+footer{
+  margin-top:22px;
+  text-align:center;
+  font-family:var(--font-mono);
+  font-size:9px;
+  letter-spacing:.16em;
+  color:var(--muted2);
+}
+
+footer span{color:var(--orange)}
+
+.empty-hint{
+  color:var(--muted2);
+  font-family:var(--font-serif);
+  font-style:italic;
+}
+
+.custom-box{
+  display:none;
+  margin-top:10px;
+}
+
+.custom-box.active{
+  display:block;
+}
+
+@media(max-width:340px){
+  body{padding-left:8px;padding-right:8px}
+  .brand-mark{font-size:19px}
+  .brand-sub{font-size:8px}
+  .version{font-size:8px}
+  .format-btn{font-size:12px;min-height:68px;padding:10px 3px}
+  .format-btn .dim{font-size:8px}
+  .input-grid{gap:6px}
+  .input-field{padding:10px 9px}
+  .input-field label{font-size:9px;letter-spacing:.09em}
+  .input-field input{font-size:24px}
+  .unit{font-size:10px}
+  .hero{padding:14px}
+  .total-label{font-size:16px}
+  .stat{padding:9px 5px}
+  .stat-val{font-size:13px}
+  .stat-lbl{font-size:7.5px}
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">tuttovinilos</span>
+    <span class="brand-sub">label optimizer</span>
+  </div>
+  <span class="version">v0.8</span>
+</header>
+
+<section>
+  <div class="section-label"><span class="num">01</span> Formato del material</div>
+
+  <div class="formats">
+    <button class="format-btn" data-format="rollo127" aria-pressed="true">
+      Rollo 127
+      <span class="dim">1270×780 mm</span>
+    </button>
+
+    <button class="format-btn" data-format="rollo137" aria-pressed="false">
+      Rollo 137
+      <span class="dim">1370×740 mm</span>
+    </button>
+
+    <button class="format-btn" data-format="pliego" aria-pressed="false">
+      Pliego
+      <span class="dim">700×820 mm</span>
+    </button>
+
+    <button class="format-btn" data-format="formato3767" aria-pressed="false">
+      Formato 37×67
+      <span class="dim">370×670 mm</span>
+    </button>
+
+    <button class="format-btn" data-format="custom" aria-pressed="false" style="grid-column:1/-1">
+      Personalizado
+      <span class="dim">define ancho, alto y separación</span>
+    </button>
+  </div>
+
+  <div class="custom-box" id="customBox">
+    <div class="input-grid">
+      <div class="input-field">
+        <label>Ancho material</label>
+        <div class="control">
+          <input id="materialW" type="number" inputmode="decimal" value="1270" step="0.1"/>
+          <span class="unit">mm</span>
+        </div>
+      </div>
+
+      <div class="input-field">
+        <label>Alto material</label>
+        <div class="control">
+          <input id="materialH" type="number" inputmode="decimal" value="780" step="0.1"/>
+          <span class="unit">mm</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-label"><span class="num">02</span> Medidas de la etiqueta</div>
+
+  <div class="input-grid">
+    <div class="input-field">
+      <label>Ancho</label>
+      <div class="control">
+        <input id="labelW" type="number" inputmode="decimal" value="100" step="0.1"/>
+        <span class="unit">mm</span>
+      </div>
+    </div>
+
+    <div class="input-field">
+      <label>Alto</label>
+      <div class="control">
+        <input id="labelH" type="number" inputmode="decimal" value="50" step="0.1"/>
+        <span class="unit">mm</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-label"><span class="num">03</span> Separación</div>
+
+  <div class="input-field">
+    <label>Separación entre etiquetas</label>
+    <div class="control">
+      <input id="spacingInput" type="number" inputmode="decimal" value="3" step="0.1"/>
+      <span class="unit">mm</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-label"><span class="num">04</span> Resultado óptimo</div>
+
+  <div class="hero">
+    <div class="hero-head">
+      <span class="lbl">Mejor acomodo</span>
+      <span class="badge normal" id="orientBadge"><span class="dot"></span> NORMAL</span>
+    </div>
+
+    <div class="hero-total">
+      <div class="total-num" id="totalNum">0</div>
+      <div class="total-label">etiquetas<br/>por material</div>
+    </div>
+
+    <div class="grid-info">
+      <span><b id="colsVal">0</b> col</span>
+      <span style="color:var(--muted2)">×</span>
+      <span><b id="rowsVal">0</b> filas</span>
+      <span id="orientNote">—</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-lbl">Área usada</div>
+      <div class="stat-val"><span id="usedArea">0.00</span><span class="stat-unit">m²</span></div>
+    </div>
+
+    <div class="stat waste">
+      <div class="stat-lbl">Desperd.</div>
+      <div class="stat-val"><span id="wasteArea">0.00</span><span class="stat-unit">m²</span></div>
+    </div>
+
+    <div class="stat utilization">
+      <div class="stat-lbl">Aprov.</div>
+      <div class="stat-val"><span id="utilVal">0</span><span class="stat-unit">%</span></div>
+    </div>
+  </div>
+
+  <div class="util-bar"><span id="utilBar" style="width:0%"></span></div>
+</section>
+
+<section>
+  <div class="section-label"><span class="num">05</span> Vista del acomodo</div>
+
+  <div class="preview-wrap">
+    <div id="previewBox" class="preview-canvas" style="aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;">
+      <span class="empty-hint">esperando datos…</span>
+    </div>
+
+    <div class="preview-meta">
+      <span id="materialMeta">—</span>
+      <span id="labelMeta">—</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-label"><span class="num">06</span> Optimización proporcional</div>
+  <div class="suggestions" id="suggestionsList">
+    <div class="suggestion-empty">Calculando variaciones…</div>
+  </div>
+</section>
+
+<footer>
+  TUTTOVINILOS <span>·</span> OPTIMIZE THE CUT
+</footer>
+
+<script>
+const MARGIN_MM = 10;
+
+const FORMATS = {
+  rollo127:{ w:1270, h:780 },
+  rollo137:{ w:1370, h:740 },
+  pliego:{ w:700, h:820 },
+  formato3767:{ w:370, h:670 }
+};
+
+let state = {
+  format:'rollo127',
+  labelW:100,
+  labelH:50,
+  materialW:1270,
+  materialH:780,
+  spacing:3
+};
+
+const $ = id => document.getElementById(id);
+
+function getMaterial(){
+  if(state.format === 'custom'){
+    return {
+      w:state.materialW,
+      h:state.materialH
+    };
+  }
+
+  return FORMATS[state.format];
+}
+
+function layout(workW, workH, lw, lh){
+  const sp = state.spacing;
+
+  const cols = Math.max(0, Math.floor((workW + sp) / (lw + sp)));
+  const rows = Math.max(0, Math.floor((workH + sp) / (lh + sp)));
+
+  return {
+    cols,
+    rows,
+    total:cols * rows
+  };
+}
+
+function bestLayout(materialW, materialH, labelW, labelH){
+  const workW = materialW - MARGIN_MM * 2;
+  const workH = materialH - MARGIN_MM * 2;
+
+  const normal = layout(workW, workH, labelW, labelH);
+  const rotated = layout(workW, workH, labelH, labelW);
+
+  const useRotated = rotated.total > normal.total;
+  const chosen = useRotated ? rotated : normal;
+
+  const placedW = useRotated ? labelH : labelW;
+  const placedH = useRotated ? labelW : labelH;
+
+  const materialArea = materialW * materialH;
+  const usedArea = chosen.total * labelW * labelH;
+
+  return {
+    materialW,
+    materialH,
+    labelW,
+    labelH,
+    placedW,
+    placedH,
+    rotation:useRotated ? 'rotated':'normal',
+    cols:chosen.cols,
+    rows:chosen.rows,
+    total:chosen.total,
+    usedArea_m2:usedArea / 1000000,
+    wasteArea_m2:(materialArea - usedArea) / 1000000,
+    utilization:(usedArea / materialArea) * 100
+  };
+}
+
+function proportionalSize(w, h, reduceMM){
+  const maxSide = Math.max(w, h);
+  const newMax = maxSide - reduceMM;
+
+  if(newMax <= 0) return null;
+
+  const factor = newMax / maxSide;
+
+  return {
+    w: +(w * factor).toFixed(2),
+    h: +(h * factor).toFixed(2),
+    factor
+  };
+}
+
+function fmt2(n){
+  return (Math.round(n * 100) / 100).toFixed(2);
+}
+
+function smartNumber(n){
+  return Number.isInteger(n) ? n : Number(n).toFixed(1);
+}
+
+function recompute(){
+  const material = getMaterial();
+  const r = bestLayout(material.w, material.h, state.labelW, state.labelH);
+
+  renderResults(r);
+  renderPreview(r);
+  renderSuggestions(r);
+}
+
+function renderResults(r){
+  $('totalNum').textContent = r.total;
+  $('colsVal').textContent = r.cols;
+  $('rowsVal').textContent = r.rows;
+
+  const badge = $('orientBadge');
+
+  if(r.rotation === 'rotated'){
+    badge.className = 'badge rotated';
+    badge.innerHTML = '<span class="dot"></span> ROTADA';
+  }else{
+    badge.className = 'badge normal';
+    badge.innerHTML = '<span class="dot"></span> NORMAL';
+  }
+
+  $('orientNote').textContent = `${smartNumber(r.placedW)}×${smartNumber(r.placedH)} mm`;
+  $('usedArea').textContent = fmt2(r.usedArea_m2);
+  $('wasteArea').textContent = fmt2(Math.max(0, r.wasteArea_m2));
+  $('utilVal').textContent = fmt2(r.utilization);
+  $('utilBar').style.width = Math.min(100, Math.max(0, r.utilization)) + '%';
+
+  $('materialMeta').textContent = `Material ${r.materialW}×${r.materialH} mm`;
+  $('labelMeta').textContent = `Etiqueta ${smartNumber(r.labelW)}×${smartNumber(r.labelH)} mm · sep ${smartNumber(state.spacing)}mm · marco 10mm`;
+}
+
+function renderPreview(r){
+  const box = $('previewBox');
+
+  const W = r.materialW;
+  const H = r.materialH;
+  const pad = MARGIN_MM;
+  const sp = state.spacing;
+  const lw = r.placedW;
+  const lh = r.placedH;
+
+  let labels = '';
+
+  for(let row = 0; row < r.rows; row++){
+    for(let col = 0; col < r.cols; col++){
+      const x = pad + col * (lw + sp);
+      const y = pad + row * (lh + sp);
+
+      labels += `<rect x="${x}" y="${y}" width="${lw}" height="${lh}" rx="2" fill="#153bff" opacity=".92"/>`;
+    }
+  }
+
+  box.style.aspectRatio = `${W}/${H}`;
+
+  box.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+      <defs>
+        <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+          <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(17,24,39,.06)" stroke-width="1"/>
+        </pattern>
+      </defs>
+
+      <rect width="${W}" height="${H}" fill="#f8f9ff"/>
+      <rect width="${W}" height="${H}" fill="url(#grid)"/>
+
+      <rect x="0" y="0" width="${W}" height="${H}" fill="none" stroke="#ff8616" stroke-width="4" stroke-dasharray="24 12"/>
+
+      <rect x="${pad}" y="${pad}" width="${W - pad*2}" height="${H - pad*2}" fill="none" stroke="#153bff" stroke-width="2" opacity=".7" stroke-dasharray="12 8"/>
+
+      ${labels}
+    </svg>
+  `;
+}
+
+function renderSuggestions(base){
+  const list = $('suggestionsList');
+  const material = getMaterial();
+  let items = [];
+
+  for(const reduction of [1,2,3,4,5]){
+    const newSize = proportionalSize(state.labelW, state.labelH, reduction);
+
+    if(!newSize) continue;
+
+    const r = bestLayout(material.w, material.h, newSize.w, newSize.h);
+    const gain = r.total - base.total;
+
+    if(gain > 0){
+      items.push({
+        reduction,
+        gain,
+        newTotal:r.total,
+        newW:newSize.w,
+        newH:newSize.h,
+        util:r.utilization
+      });
+    }
+  }
+
+  if(items.length === 0){
+    list.innerHTML = `<div class="suggestion-empty">no hay mejora reduciendo proporcionalmente 1–5 mm</div>`;
+    return;
+  }
+
+  items.sort((a,b) => b.gain - a.gain);
+
+  list.innerHTML = items.map(it => `
+    <div class="suggestion" data-w="${it.newW}" data-h="${it.newH}">
+      <div>
+        <div class="title">Bajando <b>${it.reduction} mm</b> proporcional ganas <b>+${it.gain}</b> etiquetas</div>
+        <div class="meta">${smartNumber(it.newW)}×${smartNumber(it.newH)} mm · total ${it.newTotal} · aprov ${fmt2(it.util)}%</div>
+      </div>
+      <span class="arrow">›</span>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.suggestion').forEach(el => {
+    el.addEventListener('click', () => {
+      state.labelW = parseFloat(el.dataset.w);
+      state.labelH = parseFloat(el.dataset.h);
+
+      $('labelW').value = state.labelW;
+      $('labelH').value = state.labelH;
+
+      recompute();
+    });
+  });
+}
+
+document.querySelectorAll('.format-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.format-btn').forEach(b => b.setAttribute('aria-pressed','false'));
+    btn.setAttribute('aria-pressed','true');
+
+    state.format = btn.dataset.format;
+
+    const customBox = $('customBox');
+
+    if(state.format === 'custom'){
+      customBox.classList.add('active');
+      state.materialW = parseFloat($('materialW').value) || 1270;
+      state.materialH = parseFloat($('materialH').value) || 780;
+    }else{
+      customBox.classList.remove('active');
+    }
+
+    recompute();
+  });
+});
+
+$('labelW').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  if(!isNaN(v) && v > 0){
+    state.labelW = v;
+    recompute();
+  }
+});
+
+$('labelH').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  if(!isNaN(v) && v > 0){
+    state.labelH = v;
+    recompute();
+  }
+});
+
+$('materialW').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  if(!isNaN(v) && v > 0){
+    state.materialW = v;
+    if(state.format === 'custom') recompute();
+  }
+});
+
+$('materialH').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  if(!isNaN(v) && v > 0){
+    state.materialH = v;
+    if(state.format === 'custom') recompute();
+  }
+});
+
+$('spacingInput').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  if(!isNaN(v) && v >= 0){
+    state.spacing = v;
+    recompute();
+  }
+});
+
+recompute();
+</script>
+
+</body>
+</html>

@@ -2,13 +2,31 @@ console.log("Estadísticas JS conectado");
 
 let pedidosStatsDB = [];
 
-// ---------------------------
-// Toast
-// ---------------------------
+// ===========================
+// SUPABASE SEGURO
+// ===========================
+function dbStats() {
+  return window.supabaseClient;
+}
+
+function validarSupabaseStats() {
+  if (!dbStats()) {
+    console.error("No existe window.supabaseClient. Revisa js/supabase.js");
+    toast("No existe conexión Supabase");
+    return false;
+  }
+
+  return true;
+}
+
+// ===========================
+// TOAST
+// ===========================
 function toast(msg) {
   const el = document.getElementById("toast");
+
   if (!el) {
-    alert(msg);
+    console.log(msg);
     return;
   }
 
@@ -20,9 +38,9 @@ function toast(msg) {
   }, 1800);
 }
 
-// ---------------------------
-// Normalizar texto
-// ---------------------------
+// ===========================
+// UTILIDADES
+// ===========================
 function normalizar(valor) {
   return String(valor || "")
     .trim()
@@ -31,17 +49,20 @@ function normalizar(valor) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-// ---------------------------
-// Mostrar nombre bonito
-// ---------------------------
 function textoBonito(valor, fallback = "Sin dato") {
   const txt = String(valor || "").trim();
   return txt || fallback;
 }
 
-// ---------------------------
-// Convertir cantidad a número
-// ---------------------------
+function escapeHtml(valor) {
+  return String(valor ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function parseCantidad(valor) {
   if (valor === null || valor === undefined) return 0;
 
@@ -53,21 +74,69 @@ function parseCantidad(valor) {
   return Number.isFinite(num) ? num : 0;
 }
 
-// ---------------------------
-// Formato número
-// ---------------------------
 function fmt(num) {
   const n = Number(num || 0);
+
   return n.toLocaleString("es-VE", {
     maximumFractionDigits: 2
   });
 }
 
-// ---------------------------
-// Cargar pedidos
-// ---------------------------
+function fechaValida(valor) {
+  const fecha = String(valor || "").trim();
+
+  if (!/^\d{4}-\d{2}-\d{2}/.test(fecha)) return null;
+
+  const d = new Date(fecha + "T00:00:00");
+
+  if (Number.isNaN(d.getTime())) return null;
+
+  return d;
+}
+
+function fechaCorta(valor) {
+  const fecha = String(valor || "").slice(0, 10);
+  return fecha || "—";
+}
+
+function diasEntre(fechaA, fechaB) {
+  const a = fechaValida(fechaA);
+  const b = fechaValida(fechaB);
+
+  if (!a || !b) return null;
+
+  const diff = Math.abs(b.getTime() - a.getTime());
+  return Math.round(diff / 86400000);
+}
+
+function textoFrecuencia(dias) {
+  if (dias === null || dias === undefined || !Number.isFinite(Number(dias))) {
+    return "Sin recurrencia";
+  }
+
+  const d = Math.round(Number(dias));
+
+  if (d <= 0) return "Mismo día";
+  if (d === 1) return "Cada 1 día";
+  if (d < 30) return `Cada ${d} días`;
+
+  const meses = d / 30;
+
+  if (meses < 12) {
+    return `Cada ${meses.toFixed(1)} meses`;
+  }
+
+  const años = d / 365;
+  return `Cada ${años.toFixed(1)} años`;
+}
+
+// ===========================
+// CARGAR PEDIDOS
+// ===========================
 async function cargarPedidosStats() {
-  const { data, error } = await supabaseClient
+  if (!validarSupabaseStats()) return;
+
+  const { data, error } = await dbStats()
     .from("pedidos")
     .select("*")
     .order("fecha", { ascending: true });
@@ -79,14 +148,17 @@ async function cargarPedidosStats() {
   }
 
   pedidosStatsDB = data || [];
+
   llenarAnios();
+  llenarClientesFiltro();
   renderEstadisticas();
+
   toast("Estadísticas actualizadas");
 }
 
-// ---------------------------
-// Llenar selector años
-// ---------------------------
+// ===========================
+// LLENAR AÑOS
+// ===========================
 function llenarAnios() {
   const select = document.getElementById("filterYear");
   if (!select) return;
@@ -95,16 +167,16 @@ function llenarAnios() {
 
   const anios = [...new Set(
     pedidosStatsDB
-      .map(p => String(p.fecha || "").slice(0,4))
+      .map(p => String(p.fecha || "").slice(0, 4))
       .filter(a => /^\d{4}$/.test(a))
-  )].sort((a,b) => Number(b) - Number(a));
+  )].sort((a, b) => Number(b) - Number(a));
 
   select.innerHTML = `<option value="all">Todos los años</option>`;
 
   anios.forEach(anio => {
     select.insertAdjacentHTML(
       "beforeend",
-      `<option value="${anio}">${anio}</option>`
+      `<option value="${escapeHtml(anio)}">${escapeHtml(anio)}</option>`
     );
   });
 
@@ -113,12 +185,44 @@ function llenarAnios() {
   }
 }
 
-// ---------------------------
-// Aplicar filtros
-// ---------------------------
+// ===========================
+// LLENAR CLIENTES
+// ===========================
+function llenarClientesFiltro() {
+  const select = document.getElementById("filterCliente");
+  if (!select) return;
+
+  const actual = select.value || "all";
+
+  const clientes = [...new Map(
+    pedidosStatsDB
+      .map(p => String(p.cliente || "").trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, "es"))
+      .map(nombre => [normalizar(nombre), nombre])
+  ).entries()].map(([key, nombre]) => ({ key, nombre }));
+
+  select.innerHTML = `<option value="all">Todos los clientes</option>`;
+
+  clientes.forEach(c => {
+    select.insertAdjacentHTML(
+      "beforeend",
+      `<option value="${escapeHtml(c.key)}">${escapeHtml(c.nombre)}</option>`
+    );
+  });
+
+  if (actual && [...select.options].some(o => o.value === actual)) {
+    select.value = actual;
+  }
+}
+
+// ===========================
+// FILTROS
+// ===========================
 function pedidosFiltrados() {
   const year = document.getElementById("filterYear")?.value || "all";
   const month = document.getElementById("filterMonth")?.value || "all";
+  const cliente = document.getElementById("filterCliente")?.value || "all";
 
   return pedidosStatsDB.filter(p => {
     const fecha = String(p.fecha || "");
@@ -126,17 +230,19 @@ function pedidosFiltrados() {
     if (year !== "all" && !fecha.startsWith(year)) return false;
 
     if (month !== "all") {
-      const mes = fecha.slice(5,7);
+      const mes = fecha.slice(5, 7);
       if (mes !== month) return false;
     }
+
+    if (cliente !== "all" && normalizar(p.cliente) !== cliente) return false;
 
     return true;
   });
 }
 
-// ---------------------------
-// Agrupar por clave
-// ---------------------------
+// ===========================
+// AGRUPAR
+// ===========================
 function agrupar(lista, getKey, getValue = p => parseCantidad(p.cantidad)) {
   const mapa = {};
 
@@ -155,7 +261,8 @@ function agrupar(lista, getKey, getValue = p => parseCantidad(p.cantidad)) {
         pedidos: 0,
         listos: 0,
         pagados: 0,
-        pendientes: 0
+        pendientes: 0,
+        fechas: []
       };
     }
 
@@ -165,14 +272,53 @@ function agrupar(lista, getKey, getValue = p => parseCantidad(p.cantidad)) {
     if (p.estatus_trabajo === "Listo") mapa[keyNorm].listos += 1;
     if (p.estatus_pago === "Pagado") mapa[keyNorm].pagados += 1;
     if (p.estatus_pago !== "Pagado") mapa[keyNorm].pendientes += 1;
+
+    const fecha = String(p.fecha || "").slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      mapa[keyNorm].fechas.push(fecha);
+    }
   });
 
-  return Object.values(mapa);
+  return Object.values(mapa).map(item => {
+    item.fechas = [...new Set(item.fechas)].sort();
+
+    item.primeraFecha = item.fechas[0] || "";
+    item.ultimaFecha = item.fechas[item.fechas.length - 1] || "";
+
+    item.frecuenciaDias = calcularFrecuenciaPromedio(item.fechas);
+    item.frecuenciaTexto = textoFrecuencia(item.frecuenciaDias);
+
+    return item;
+  });
 }
 
-// ---------------------------
-// Render barras
-// ---------------------------
+function calcularFrecuenciaPromedio(fechas) {
+  const limpias = [...new Set(fechas || [])]
+    .filter(f => /^\d{4}-\d{2}-\d{2}$/.test(f))
+    .sort();
+
+  if (limpias.length < 2) return null;
+
+  let totalDias = 0;
+  let conteo = 0;
+
+  for (let i = 1; i < limpias.length; i++) {
+    const dias = diasEntre(limpias[i - 1], limpias[i]);
+
+    if (dias !== null) {
+      totalDias += dias;
+      conteo++;
+    }
+  }
+
+  if (!conteo) return null;
+
+  return totalDias / conteo;
+}
+
+// ===========================
+// RENDER RANKING
+// ===========================
 function renderRanking(containerId, datos, tipo = "metros", limit = 10) {
   const cont = document.getElementById(containerId);
   if (!cont) return;
@@ -183,14 +329,17 @@ function renderRanking(containerId, datos, tipo = "metros", limit = 10) {
   }
 
   const ordenados = [...datos]
-    .sort((a,b) => {
+    .sort((a, b) => {
       const va = tipo === "pedidos" ? a.pedidos : a.total;
       const vb = tipo === "pedidos" ? b.pedidos : b.total;
       return vb - va;
     })
     .slice(0, limit);
 
-  const max = Math.max(...ordenados.map(x => tipo === "pedidos" ? x.pedidos : x.total), 1);
+  const max = Math.max(
+    ...ordenados.map(x => tipo === "pedidos" ? x.pedidos : x.total),
+    1
+  );
 
   cont.innerHTML = "";
 
@@ -200,8 +349,8 @@ function renderRanking(containerId, datos, tipo = "metros", limit = 10) {
 
     const row = `
       <div class="row">
-        <div class="row-title" title="${item.nombre}">${item.nombre}</div>
-        <div class="row-val">${tipo === "pedidos" ? valor : fmt(valor)}</div>
+        <div class="row-title" title="${escapeHtml(item.nombre)}">${escapeHtml(item.nombre)}</div>
+        <div class="row-val">${tipo === "pedidos" ? fmt(valor) + " pedidos" : fmt(valor)}</div>
         <div class="bar-wrap">
           <div class="bar" style="width:${pct}%"></div>
         </div>
@@ -212,58 +361,78 @@ function renderRanking(containerId, datos, tipo = "metros", limit = 10) {
   });
 }
 
-// ---------------------------
-// Metros por mes
-// ---------------------------
+// ===========================
+// METROS POR MES
+// ===========================
 function renderMetrosPorMes(lista) {
-  const cont = document.getElementById("metrosPorMes");
-  if (!cont) return;
-
-  const meses = {
-    "01":"Enero","02":"Febrero","03":"Marzo","04":"Abril",
-    "05":"Mayo","06":"Junio","07":"Julio","08":"Agosto",
-    "09":"Septiembre","10":"Octubre","11":"Noviembre","12":"Diciembre"
-  };
+  const meses = [
+    ["01", "Enero"],
+    ["02", "Febrero"],
+    ["03", "Marzo"],
+    ["04", "Abril"],
+    ["05", "Mayo"],
+    ["06", "Junio"],
+    ["07", "Julio"],
+    ["08", "Agosto"],
+    ["09", "Septiembre"],
+    ["10", "Octubre"],
+    ["11", "Noviembre"],
+    ["12", "Diciembre"]
+  ];
 
   const mapa = {};
 
-  Object.keys(meses).forEach(m => mapa[m] = {
-    nombre: meses[m],
-    total: 0,
-    pedidos: 0
+  meses.forEach(([key, nombre]) => {
+    mapa[key] = { key, nombre, total: 0, pedidos: 0 };
   });
 
   lista.forEach(p => {
-    const mes = String(p.fecha || "").slice(5,7);
+    const mes = String(p.fecha || "").slice(5, 7);
     if (!mapa[mes]) return;
 
     mapa[mes].total += parseCantidad(p.cantidad);
     mapa[mes].pedidos += 1;
   });
 
-  const datos = Object.entries(mapa).map(([key, val]) => ({
-    key,
-    nombre: val.nombre,
-    total: val.total,
-    pedidos: val.pedidos
-  }));
+  const datos = meses.map(([key]) => mapa[key]);
+  const cont = document.getElementById("metrosPorMes");
+  if (!cont) return;
 
-  renderRanking("metrosPorMes", datos, "metros", 12);
+  const max = Math.max(...datos.map(x => x.total), 1);
+  cont.innerHTML = "";
+
+  datos.forEach(item => {
+    const pct = Math.max((item.total / max) * 100, item.total > 0 ? 2 : 0);
+
+    cont.insertAdjacentHTML("beforeend", `
+      <div class="row">
+        <div class="row-title">${escapeHtml(item.nombre)}</div>
+        <div class="row-val">${fmt(item.total)}</div>
+        <div class="row-sub">${fmt(item.pedidos)} pedido${item.pedidos === 1 ? "" : "s"}</div>
+        <div class="bar-wrap">
+          <div class="bar" style="width:${pct}%"></div>
+        </div>
+      </div>
+    `);
+  });
 }
 
-// ---------------------------
-// Tabla resumen clientes
-// ---------------------------
+// ===========================
+// TABLA CLIENTES
+// ===========================
 function renderTablaClientes(datosClientes) {
   const tbody = document.getElementById("tablaClientes");
   if (!tbody) return;
 
   const ordenados = [...datosClientes]
-    .sort((a,b) => b.total - a.total)
-    .slice(0, 50);
+    .sort((a, b) => {
+      if (b.pedidos !== a.pedidos) return b.pedidos - a.pedidos;
+      return b.total - a.total;
+    })
+    .slice(0, 80);
 
   if (!ordenados.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty">Sin clientes</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="empty">Sin clientes</td></tr>`;
     return;
   }
 
@@ -272,12 +441,14 @@ function renderTablaClientes(datosClientes) {
   ordenados.forEach(c => {
     const row = `
       <tr>
-        <td>${c.nombre}</td>
-        <td>${c.pedidos}</td>
+        <td>${escapeHtml(c.nombre)}</td>
+        <td>${fmt(c.pedidos)}</td>
         <td>${fmt(c.total)}</td>
-        <td><span class="pill green">${c.listos}</span></td>
-        <td><span class="pill green">${c.pagados}</span></td>
-        <td><span class="pill red">${c.pendientes}</span></td>
+        <td>${escapeHtml(fechaCorta(c.primeraFecha))}</td>
+        <td>${escapeHtml(fechaCorta(c.ultimaFecha))}</td>
+        <td><span class="pill green">${fmt(c.listos)}</span></td>
+        <td><span class="pill green">${fmt(c.pagados)}</span></td>
+        <td><span class="pill red">${fmt(c.pendientes)}</span></td>
       </tr>
     `;
 
@@ -285,28 +456,34 @@ function renderTablaClientes(datosClientes) {
   });
 }
 
-// ---------------------------
-// Render principal
-// ---------------------------
+// ===========================
+// RENDER PRINCIPAL
+// ===========================
 function renderEstadisticas() {
   const lista = pedidosFiltrados();
 
   const totalPedidos = lista.length;
-  const totalMetros = lista.reduce((acc,p) => acc + parseCantidad(p.cantidad), 0);
+  const totalMetros = lista.reduce((acc, p) => acc + parseCantidad(p.cantidad), 0);
   const clientesUnicos = new Set(lista.map(p => normalizar(p.cliente)).filter(Boolean)).size;
   const listos = lista.filter(p => p.estatus_trabajo === "Listo").length;
   const pagados = lista.filter(p => p.estatus_pago === "Pagado").length;
-
-  document.getElementById("kpiPedidos").textContent = fmt(totalPedidos);
-  document.getElementById("kpiMetros").textContent = fmt(totalMetros);
-  document.getElementById("kpiClientes").textContent = fmt(clientesUnicos);
-  document.getElementById("kpiListos").textContent = fmt(listos);
-  document.getElementById("kpiPagados").textContent = fmt(pagados);
 
   const porCliente = agrupar(lista, p => p.cliente);
   const porMaterial = agrupar(lista, p => p.material);
   const porImpresion = agrupar(lista, p => p.tipo_impresion);
   const porOperador = agrupar(lista, p => p.operador, p => 1);
+
+  const kpiPedidos = document.getElementById("kpiPedidos");
+  const kpiMetros = document.getElementById("kpiMetros");
+  const kpiClientes = document.getElementById("kpiClientes");
+  const kpiListos = document.getElementById("kpiListos");
+  const kpiPagados = document.getElementById("kpiPagados");
+
+  if (kpiPedidos) kpiPedidos.textContent = fmt(totalPedidos);
+  if (kpiMetros) kpiMetros.textContent = fmt(totalMetros);
+  if (kpiClientes) kpiClientes.textContent = fmt(clientesUnicos);
+  if (kpiListos) kpiListos.textContent = fmt(listos);
+  if (kpiPagados) kpiPagados.textContent = fmt(pagados);
 
   renderRanking("topClientes", porCliente, "metros", 10);
   renderRanking("clientesRecurrentes", porCliente, "pedidos", 10);
@@ -317,7 +494,7 @@ function renderEstadisticas() {
   renderTablaClientes(porCliente);
 }
 
-// ---------------------------
-// Inicio
-// ---------------------------
+// ===========================
+// INICIO
+// ===========================
 window.addEventListener("DOMContentLoaded", cargarPedidosStats);
