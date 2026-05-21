@@ -1203,6 +1203,8 @@ function normalizar(valor){
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -1337,6 +1339,12 @@ function filtrarClientes(){
 
   let lista = [...clientesDB];
 
+  // Por defecto NO mostramos clientes inactivos/fusionados.
+  // Solo aparecen si eliges el filtro "Inactivo".
+  if(estadoFiltro !== "inactivo"){
+    lista = lista.filter(c => c.activo !== false);
+  }
+
   lista = lista.filter(c => {
     const contenido = normalizar([
       c.nombre,
@@ -1349,8 +1357,8 @@ function filtrarClientes(){
     if(texto && !contenido.includes(texto)) return false;
     if(tipoFiltro && c.tipo_cliente !== tipoFiltro) return false;
 
-    if(estadoFiltro === "activo" && c.activo !== true) return false;
-    if(estadoFiltro === "inactivo" && c.activo === true) return false;
+    if(estadoFiltro === "activo" && c.activo === false) return false;
+    if(estadoFiltro === "inactivo" && c.activo !== false) return false;
 
     return true;
   });
@@ -1755,12 +1763,27 @@ async function fusionarDuplicadosExactosCliente(nombreFinal, idPrincipal){
 
   const idsEliminar = duplicados.map(c => c.id);
 
-  const { error } = await db()
+  // Intento 1: borrar físicamente.
+  const { error:deleteError } = await db()
     .from("clientes")
     .delete()
     .in("id", idsEliminar);
 
-  if(error) throw error;
+  // Si Supabase/RLS no permite borrar, NO dejamos visible el duplicado:
+  // lo marcamos inactivo para que desaparezca de la lista normal.
+  if(deleteError){
+    console.warn("No se pudieron borrar duplicados; se ocultarán:", deleteError);
+
+    const { error:hideError } = await db()
+      .from("clientes")
+      .update({
+        activo:false,
+        notas:`Cliente fusionado con: ${nombreBonito(nombreFinal)}`
+      })
+      .in("id", idsEliminar);
+
+    if(hideError) throw hideError;
+  }
 
   return idsEliminar.length;
 }
@@ -1965,7 +1988,20 @@ async function fusionarClientesSeleccionados(){
         .delete()
         .in('id', idsEliminar);
 
-      if(deleteError) throw deleteError;
+      // Si Supabase/RLS no permite borrar, lo ocultamos como inactivo.
+      // Así NO queda visible el duplicado con 0 pedidos.
+      if(deleteError){
+        console.warn('No se pudo borrar duplicado; se ocultará como inactivo:', deleteError);
+        const { error:hideError } = await db()
+          .from('clientes')
+          .update({
+            activo:false,
+            notas:`Cliente fusionado con: ${nombreFinal}`
+          })
+          .in('id', idsEliminar);
+
+        if(hideError) throw hideError;
+      }
     }
 
     // Limpieza extra: elimina duplicados exactos que hayan quedado con el mismo nombre.
