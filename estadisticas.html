@@ -236,7 +236,7 @@ tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font
 @media(max-width:480px){.cards{grid-template-columns:1fr}input,select{width:100%}}
 </style>
 
-<link rel="stylesheet" href="css/menu.css?v=30">
+<link rel="stylesheet" href="css/menu.css?v=34">
 
 <style>
 /* PATCH MENU UNIFICADO v30 · estas páginas usan el mismo header que index/clientes */
@@ -246,6 +246,85 @@ tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font
 .header-tabs[data-auth-menu]{margin-left:auto!important}
 @media(max-width:980px){.header .logo img{width:118px!important;max-width:118px!important}}
 </style>
+
+<style>
+/* =========================================================
+   ESTADÍSTICAS · MENÚ GLOBAL v34
+   Evita conflicto entre CSS local y css/menu.css.
+========================================================= */
+.header{
+  background:#172bd8!important;
+  border-bottom:0!important;
+  box-shadow:0 8px 20px rgba(21,59,255,.18)!important;
+  min-height:64px!important;
+  height:64px!important;
+  padding:14px 18px!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:14px!important;
+  position:sticky!important;
+  top:0!important;
+  z-index:300!important;
+  flex-wrap:nowrap!important;
+  overflow:hidden!important;
+}
+
+.header .logo{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:190px!important;
+  color:#fff!important;
+  border:0!important;
+  padding:0!important;
+  margin:0!important;
+}
+
+.header .logo img{
+  display:block!important;
+  width:112px!important;
+  max-width:112px!important;
+  height:auto!important;
+  object-fit:contain!important;
+}
+
+.header .logo small{
+  display:none!important;
+}
+
+.header-tabs[data-auth-menu]{
+  margin-left:auto!important;
+}
+
+.toolbar{
+  top:64px!important;
+}
+
+@media(max-width:980px){
+  .header{
+    flex-wrap:wrap!important;
+    height:auto!important;
+    min-height:58px!important;
+    overflow:visible!important;
+  }
+
+  .header .logo{
+    min-width:120px!important;
+  }
+
+  .header .logo img{
+    width:118px!important;
+    max-width:118px!important;
+  }
+
+  .toolbar{
+    top:0!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <header class="header">
@@ -301,13 +380,12 @@ tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=1"></script>
-?v=24"></script>
+<script src="js/supabase.js?v=29"></script>
 <script src="js/auth.js?v=24"></script>
 <script src="js/menu.js?v=11"></script>
 
 <script>
-console.log('ESTADISTICAS conectado vClienteSearch FIX v2 sin precio');
+console.log('ESTADISTICAS conectado v34 menu corregido');
 let pedidosStats = [];
 const $ = id => document.getElementById(id);
 
@@ -327,7 +405,7 @@ function fmt(n){
 function showToast(msg){ const t=$('toast'); if(!t) return; t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2200); }
 
 async function cargarPedidosStats(){
-  if(!db()){ showToast('No existe conexión Supabase'); return; }
+  if(!db()){ showToast('No existe conexión Supabase. Revisa js/supabase.js'); return; }
   setEmptyAll('Cargando estadísticas...');
   let res = await db()
     .from('pedidos')
@@ -481,9 +559,6 @@ function setEmptyAll(msg){
 }
 
 document.addEventListener('DOMContentLoaded', function(){
-  const btn = $('mobileMenuBtn');
-  const menu = $('authMenu');
-  if(btn && menu){ btn.addEventListener('click', () => menu.classList.toggle('open')); }
   cargarPedidosStats();
 });
 </script>
