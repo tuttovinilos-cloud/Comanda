@@ -2168,15 +2168,15 @@ table{
 
 <script>
 /* =========================================================
-   NOTIFICACIONES v24 · lectura estable sin parpadeo
+   NOTIFICACIONES v25 · contador anti-parpadeo
    Corrige:
-   - Evita lecturas solapadas.
-   - No pone contador en 0 si Supabase tarda/falla.
-   - No hace 3 lecturas iniciales peleándose.
-   - Mantiene el último estado bueno hasta recibir una lectura válida.
+   - Si una lectura devuelve 0 por retraso/filtro temporal, NO borra el contador.
+   - Para bajar de 1 a 0 necesita 2 lecturas seguidas en 0.
+   - Si marcas como visto / marcar todos, ahí sí baja a 0 de inmediato.
 ========================================================= */
 (function(){
   const CHECK_MS = 6000;
+  const CEROS_PARA_LIMPIAR = 2;
 
   let timer = null;
   let leyendo = false;
@@ -2185,6 +2185,7 @@ table{
   let cacheNotificaciones = [];
   let ultimoIds = new Set();
   let primeraLecturaOk = false;
+  let cerosSeguidos = 0;
 
   function db(){
     return window.supabaseClient || null;
@@ -2420,7 +2421,25 @@ table{
         return cacheNotificaciones;
       }
 
-      cacheNotificaciones = (data || []).filter(n => perteneceAlOperador(n, operador));
+      const nuevas = (data || []).filter(n => perteneceAlOperador(n, operador));
+
+      /*
+        ANTI-PARPADEO:
+        Si ya había notificaciones y una lectura devuelve 0,
+        no la creemos de una vez. Esperamos 2 lecturas en 0.
+      */
+      if(nuevas.length === 0 && cacheNotificaciones.length > 0){
+        cerosSeguidos++;
+
+        if(cerosSeguidos < CEROS_PARA_LIMPIAR){
+          pintarContador(cacheNotificaciones.length);
+          return cacheNotificaciones;
+        }
+      }else{
+        cerosSeguidos = 0;
+      }
+
+      cacheNotificaciones = nuevas;
       actualizarContador(sonar);
 
       return cacheNotificaciones;
@@ -2490,6 +2509,7 @@ table{
     }
 
     cacheNotificaciones = cacheNotificaciones.filter(n => Number(n.id) !== Number(id));
+    cerosSeguidos = 0;
     actualizarContador(false);
     renderNotificaciones();
   };
@@ -2516,6 +2536,7 @@ table{
     }
 
     cacheNotificaciones = [];
+    cerosSeguidos = 0;
     actualizarContador(false);
     renderNotificaciones();
     toast("Notificaciones marcadas como vistas");
@@ -2552,11 +2573,13 @@ table{
     console.log("OPERADOR ACTUAL:", operador);
     console.log("TODAS LAS ÚLTIMAS NOTIFICACIONES:", todas);
     console.log("NOTIFICACIONES FILTRADAS PARA ESTE OPERADOR:", cacheNotificaciones);
+    console.log("CEROS SEGUIDOS:", cerosSeguidos);
 
     alert(
       "Operador actual: " + (operador || "NO DETECTADO") +
       "\\nÚltimas notificaciones en tabla: " + todas.length +
-      "\\nNotificaciones para este operador: " + cacheNotificaciones.length
+      "\\nNotificaciones para este operador: " + cacheNotificaciones.length +
+      "\\nCeros seguidos: " + cerosSeguidos
     );
   };
 
