@@ -2,333 +2,178 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-
-<title>Camara RTSP · Tuttovinilos</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cámara Tuttovinilos</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
-
+*{box-sizing:border-box;margin:0;padding:0}
 body{
-background:#0b1120;
-font-family:Arial,sans-serif;
-color:white;
-overflow-x:hidden;
+  background:#0b1120;
+  color:white;
+  font-family:Arial,sans-serif;
 }
-
 header{
-height:70px;
-display:flex;
-align-items:center;
-justify-content:center;
-background:#111827;
-font-size:26px;
-font-weight:bold;
-letter-spacing:1px;
-border-bottom:1px solid #1f2937;
+  background:#111827;
+  padding:18px;
+  text-align:center;
+  font-size:24px;
+  font-weight:bold;
 }
-
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:14px 18px;
-background:#111827;
-border-bottom:1px solid #1e293b;
-font-size:15px;
-}
-
-.card{
-margin:14px;
-background:#111827;
-border-radius:18px;
-padding:14px;
-border:1px solid #1f2937;
-box-shadow:0 0 20px rgba(0,0,0,.25);
-}
-
 .info{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-margin-bottom:14px;
+  display:flex;
+  justify-content:space-between;
+  padding:12px 16px;
+  background:#1e293b;
+  font-weight:bold;
 }
-
-.box{
-background:#0f172a;
-padding:12px;
-border-radius:14px;
-border:1px solid #1e293b;
+.card{
+  margin:14px;
+  padding:14px;
+  background:#111827;
+  border-radius:18px;
 }
-
-.label{
-font-size:12px;
-opacity:.7;
-margin-bottom:5px;
-}
-
-.value{
-font-size:16px;
-font-weight:bold;
-word-break:break-all;
-}
-
 video{
-width:100%;
-border-radius:16px;
-background:black;
-border:2px solid #1e293b;
+  width:100%;
+  background:black;
+  border-radius:16px;
 }
-
 .buttons{
-display:flex;
-gap:10px;
-margin-top:14px;
+  display:flex;
+  gap:10px;
+  margin-top:14px;
 }
-
 button{
-flex:1;
-padding:14px;
-border:none;
-border-radius:14px;
-font-size:16px;
-font-weight:bold;
-cursor:pointer;
-transition:.2s;
+  flex:1;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  font-size:16px;
+  font-weight:bold;
 }
-
-button:active{
-transform:scale(.97);
-}
-
-.btn-photo{
-background:#22c55e;
-color:white;
-}
-
-.btn-refresh{
-background:#38bdf8;
-color:#0f172a;
-}
-
-.btn-full{
-background:#f59e0b;
-color:white;
-}
-
+.foto{background:#22c55e;color:white}
+.full{background:#f59e0b;color:white}
+.reload{background:#38bdf8;color:#0f172a}
 .status{
-margin-top:12px;
-padding:10px;
-border-radius:12px;
-background:#0f172a;
-font-size:14px;
-text-align:center;
-border:1px solid #1e293b;
+  margin-top:12px;
+  padding:10px;
+  background:#0f172a;
+  border-radius:12px;
+  text-align:center;
 }
-
-canvas{
-display:none;
-}
-
-.footer{
-padding:20px;
-text-align:center;
-opacity:.5;
-font-size:12px;
-}
-
+canvas{display:none}
 </style>
 </head>
 
 <body>
 
-<header>
-📷 Cámara Tuttovinilos
-</header>
+<header>📷 Cámara Tuttovinilos</header>
 
-<div class="topbar">
-<div id="fecha">--/--/----</div>
-<div id="hora">--:--:--</div>
+<div class="info">
+  <div id="fecha">--/--/----</div>
+  <div id="hora">--:--:--</div>
 </div>
 
 <div class="card">
 
-<div class="info">
+  <video id="video" controls autoplay muted playsinline></video>
 
-<div class="box">
-<div class="label">MODELO</div>
-<div class="value">Wyze Cam v2</div>
-</div>
+  <div class="buttons">
+    <button class="foto" onclick="tomarFoto()">📸 Foto</button>
+    <button class="full" onclick="pantallaCompleta()">⛶ Full</button>
+    <button class="reload" onclick="location.reload()">🔄 Recargar</button>
+  </div>
 
-<div class="box">
-<div class="label">IP</div>
-<div class="value">192.168.68.101</div>
-</div>
-
-</div>
-
-<video
-id="video"
-controls
-autoplay
-muted
-playsinline>
-</video>
-
-<div class="buttons">
-
-<button class="btn-photo" onclick="tomarFoto()">
-📸 FOTO
-</button>
-
-<button class="btn-refresh" onclick="recargarVideo()">
-🔄 RECARGAR
-</button>
-
-<button class="btn-full" onclick="pantallaCompleta()">
-⛶ FULL
-</button>
-
-</div>
-
-<div class="status" id="estado">
-Conectando cámara...
-</div>
+  <div class="status" id="estado">Conectando cámara...</div>
 
 </div>
 
 <canvas id="canvas"></canvas>
 
-<div class="footer">
-TUTTOVINILOS · RTSP VIEWER
-</div>
-
 <script>
-
 const video = document.getElementById("video");
 const estado = document.getElementById("estado");
 
 /*
-====================================================
-IMPORTANTE
-====================================================
+IMPORTANTE:
+Este HTML NO abre RTSP directo.
+Debe leer el archivo HLS generado por FFmpeg.
 
-DEBES CAMBIAR ESTA URL
-POR LA URL HLS DE TU FFmpeg
+Si abres el HTML desde la misma PC donde corre FFmpeg:
+*/
+const hlsUrl = "http://localhost:8080/live/camera.m3u8";
 
-EJEMPLO:
-http://192.168.68.120:8080/live/camera.m3u8
-
-====================================================
+/*
+Si lo abres desde un teléfono, cambia localhost por la IP de la PC.
+Ejemplo:
+const hlsUrl = "http://192.168.68.55:8080/live/camera.m3u8";
 */
 
-const hlsUrl = "http://192.168.68.120:8080/live/camera.m3u8";
+function iniciarCamara(){
+  if(Hls.isSupported()){
+    const hls = new Hls({
+      liveSyncDurationCount:1
+    });
 
-function iniciarVideo(){
+    hls.loadSource(hlsUrl);
+    hls.attachMedia(video);
 
-if(Hls.isSupported()){
+    hls.on(Hls.Events.MANIFEST_PARSED, function(){
+      estado.innerHTML = "🟢 Cámara conectada";
+      video.play();
+    });
 
-const hls = new Hls({
-liveSyncDurationCount:1
-});
+    hls.on(Hls.Events.ERROR, function(event, data){
+      estado.innerHTML = "🔴 Error: no se encuentra el video HLS";
+      console.log(data);
+    });
 
-hls.loadSource(hlsUrl);
-
-hls.attachMedia(video);
-
-hls.on(Hls.Events.MANIFEST_PARSED,function(){
-
-estado.innerHTML = "🟢 Cámara conectada";
-
-});
-
-hls.on(Hls.Events.ERROR,function(event,data){
-
-estado.innerHTML = "🔴 Error de conexión";
-
-console.log(data);
-
-});
-
-}else if(video.canPlayType('application/vnd.apple.mpegurl')){
-
-video.src = hlsUrl;
-
-}else{
-
-estado.innerHTML = "⚠ Navegador no compatible";
-
-}
-
+  }else if(video.canPlayType("application/vnd.apple.mpegurl")){
+    video.src = hlsUrl;
+    estado.innerHTML = "🟢 Cámara conectada";
+  }else{
+    estado.innerHTML = "⚠️ Navegador no compatible";
+  }
 }
 
 function actualizarFechaHora(){
-
-const ahora = new Date();
-
-document.getElementById("fecha").innerHTML =
-ahora.toLocaleDateString("es-VE");
-
-document.getElementById("hora").innerHTML =
-ahora.toLocaleTimeString("es-VE");
-
+  const ahora = new Date();
+  document.getElementById("fecha").innerHTML = ahora.toLocaleDateString("es-VE");
+  document.getElementById("hora").innerHTML = ahora.toLocaleTimeString("es-VE");
 }
 
-setInterval(actualizarFechaHora,1000);
-
-actualizarFechaHora();
-
 function tomarFoto(){
+  const canvas = document.getElementById("canvas");
 
-const canvas = document.getElementById("canvas");
+  if(!video.videoWidth){
+    alert("La cámara todavía no ha cargado.");
+    return;
+  }
 
-canvas.width = video.videoWidth;
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
 
-canvas.height = video.videoHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video,0,0,canvas.width,canvas.height);
 
-const ctx = canvas.getContext("2d");
-
-ctx.drawImage(video,0,0,canvas.width,canvas.height);
-
-const enlace = document.createElement("a");
-
-enlace.download = "camara-" + Date.now() + ".png";
-
-enlace.href = canvas.toDataURL("image/png");
-
-enlace.click();
-
+  const link = document.createElement("a");
+  link.download = "foto-camara-" + Date.now() + ".png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
 }
 
 function pantallaCompleta(){
-
-if(video.requestFullscreen){
-
-video.requestFullscreen();
-
-}else if(video.webkitRequestFullscreen){
-
-video.webkitRequestFullscreen();
-
+  if(video.requestFullscreen){
+    video.requestFullscreen();
+  }else if(video.webkitRequestFullscreen){
+    video.webkitRequestFullscreen();
+  }
 }
 
-}
-
-function recargarVideo(){
-
-location.reload();
-
-}
-
-iniciarVideo();
-
+setInterval(actualizarFechaHora,1000);
+actualizarFechaHora();
+iniciarCamara();
 </script>
 
 </body>
