@@ -2139,6 +2139,343 @@ table{
 <script src="js/app.js?v=25"></script>
 
 <script>
+/* =========================================================
+   NOTIFICACIONES v12 · Solicitudes para Rubén + Listo al operador
+   - Todo pedido en "Solicitud" le aparece a Rubén
+   - Roberto también lo ve para supervisar
+   - Si un pedido pasa a "Listo", le avisa al operador que lo creó
+   - Revisa cada 8 segundos
+========================================================= */
+(function(){
+  const AUTH_KEY = "comanda_operador_actual";
+  const NOTI_READ_KEY = "tutto_notificaciones_leidas_v12";
+  const NOTI_LAST_COUNT_KEY = "tutto_notificaciones_count_v12";
+
+  let notiTimer = null;
+  let audioCtx = null;
+  let audioHabilitado = false;
+  let notificacionesActuales = [];
+
+  function db(){
+    return window.supabaseClient;
+  }
+
+  function normalizar(v){
+    return String(v || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+  }
+
+  function esc(v){
+    return String(v ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function getOperador(){
+    try{
+      return JSON.parse(localStorage.getItem(AUTH_KEY) || "null");
+    }catch(e){
+      return null;
+    }
+  }
+
+  function esRuben(op){
+    const n = normalizar(op && op.nombre);
+    return n === "ruben" || n === "rubén";
+  }
+
+  function esRoberto(op){
+    return normalizar(op && op.nombre) === "roberto";
+  }
+
+  function leerLeidas(){
+    try{
+      return JSON.parse(localStorage.getItem(NOTI_READ_KEY) || "[]");
+    }catch(e){
+      return [];
+    }
+  }
+
+  function guardarLeidas(ids){
+    localStorage.setItem(NOTI_READ_KEY, JSON.stringify([...new Set(ids)]));
+  }
+
+  function notiId(tipo, pedido){
+    return `${tipo}_${pedido.id}`;
+  }
+
+  function habilitarAudio(){
+    if(audioHabilitado) return;
+
+    try{
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+
+      if(audioCtx.state === "suspended"){
+        audioCtx.resume();
+      }
+
+      audioHabilitado = true;
+      console.log("Audio de notificaciones habilitado");
+    }catch(e){
+      console.warn("No se pudo habilitar audio:", e);
+    }
+  }
+
+  function beep(){
+    try{
+      habilitarAudio();
+
+      if(!audioCtx) return;
+
+      const now = audioCtx.currentTime;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.setValueAtTime(660, now + 0.10);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.25, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.34);
+    }catch(e){
+      console.warn("No sonó la notificación:", e);
+    }
+  }
+
+  function toast(msg){
+    const t = document.getElementById("toast");
+
+    if(!t){
+      console.log(msg);
+      return;
+    }
+
+    t.textContent = msg;
+    t.style.display = "block";
+
+    setTimeout(() => {
+      t.style.display = "none";
+    }, 2600);
+  }
+
+  async function cargarPedidosParaNotificar(){
+    if(!db()) return [];
+
+    const { data, error } = await db()
+      .from("pedidos")
+      .select("id, fecha, operador, cliente, descripcion, cantidad, material, tipo_impresion, estatus_trabajo, estatus_pago, fecha_entrega")
+      .order("id", { ascending:false })
+      .limit(300);
+
+    if(error){
+      console.warn("Error leyendo pedidos para notificaciones:", error);
+      return [];
+    }
+
+    return data || [];
+  }
+
+  function crearNotificaciones(pedidos){
+    const op = getOperador();
+
+    if(!op) return [];
+
+    const nombreOp = normalizar(op.nombre);
+    const leidas = new Set(leerLeidas());
+
+    const lista = [];
+
+    pedidos.forEach(p => {
+      const estado = normalizar(p.estatus_trabajo);
+      const creador = normalizar(p.operador);
+
+      /*
+        REGLA 1:
+        Todo pedido en Solicitud le aparece a Rubén.
+        Roberto también lo ve para supervisar.
+      */
+      if((esRuben(op) || esRoberto(op)) && estado === "solicitud"){
+        const id = notiId("solicitud_ruben", p);
+
+        if(!leidas.has(id)){
+          lista.push({
+            id,
+            tipo:"solicitud",
+            titulo:"Nueva solicitud para Rubén",
+            mensaje:`${p.cliente || "Sin cliente"} · ${p.descripcion || "Sin descripción"}`,
+            meta:`Pedido #${p.id} · Creado por ${p.operador || "sin operador"} · ${p.fecha || ""}`,
+            pedido:p
+          });
+        }
+      }
+
+      /*
+        REGLA 2:
+        Si un operador creó un pedido y ese pedido pasa a Listo,
+        le aparece campanita a ese operador.
+      */
+      if(creador === nombreOp && estado === "listo"){
+        const id = notiId("listo_operador", p);
+
+        if(!leidas.has(id)){
+          lista.push({
+            id,
+            tipo:"listo",
+            titulo:"Pedido listo",
+            mensaje:`${p.cliente || "Sin cliente"} · ${p.descripcion || "Sin descripción"}`,
+            meta:`Pedido #${p.id} · Marcado como Listo · ${p.fecha_entrega || p.fecha || ""}`,
+            pedido:p
+          });
+        }
+      }
+    });
+
+    return lista;
+  }
+
+  function actualizarCampana(lista, sonar = false){
+    const count = document.getElementById("notiCount");
+
+    if(!count) return;
+
+    const total = lista.length;
+    const anterior = Number(localStorage.getItem(NOTI_LAST_COUNT_KEY) || "0");
+
+    count.textContent = total;
+
+    if(total > 0){
+      count.classList.remove("empty");
+    }else{
+      count.classList.add("empty");
+    }
+
+    if(sonar && total > anterior){
+      beep();
+      toast(`🔔 ${total} notificación${total === 1 ? "" : "es"} pendiente${total === 1 ? "" : "s"}`);
+    }
+
+    localStorage.setItem(NOTI_LAST_COUNT_KEY, String(total));
+  }
+
+  async function refrescarNotificaciones(sonar = false){
+    const pedidos = await cargarPedidosParaNotificar();
+
+    notificacionesActuales = crearNotificaciones(pedidos);
+
+    actualizarCampana(notificacionesActuales, sonar);
+  }
+
+  function renderNotificaciones(){
+    const box = document.getElementById("notiList");
+
+    if(!box) return;
+
+    if(!notificacionesActuales.length){
+      box.innerHTML = `<div class="empty">Sin notificaciones pendientes</div>`;
+      return;
+    }
+
+    box.innerHTML = notificacionesActuales.map(n => `
+      <div class="noti-item">
+        <div class="noti-item-title">${esc(n.titulo)}</div>
+        <div class="noti-item-msg">${esc(n.mensaje)}</div>
+        <div class="noti-item-meta">${esc(n.meta)}</div>
+
+        <div class="noti-actions">
+          <button class="btn-add" type="button" onclick="marcarNotificacionLeida('${esc(n.id)}')">
+            Marcar leída
+          </button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  window.abrirNotificaciones = async function(){
+    habilitarAudio();
+
+    await refrescarNotificaciones(false);
+
+    renderNotificaciones();
+
+    const bd = document.getElementById("notiBackdrop");
+
+    if(bd){
+      bd.style.display = "flex";
+    }
+  };
+
+  window.marcarNotificacionLeida = function(id){
+    const leidas = leerLeidas();
+
+    leidas.push(id);
+
+    guardarLeidas(leidas);
+
+    notificacionesActuales = notificacionesActuales.filter(n => n.id !== id);
+
+    actualizarCampana(notificacionesActuales, false);
+
+    renderNotificaciones();
+  };
+
+  window.marcarTodasNotificacionesLeidas = function(){
+    const leidas = leerLeidas();
+
+    notificacionesActuales.forEach(n => leidas.push(n.id));
+
+    guardarLeidas(leidas);
+
+    notificacionesActuales = [];
+
+    actualizarCampana([], false);
+
+    renderNotificaciones();
+  };
+
+  window.cargarNotificaciones = function(){
+    return refrescarNotificaciones(false);
+  };
+
+  function iniciarNotificaciones(){
+    /*
+      Importante:
+      Chrome/Safari bloquean sonidos hasta que el usuario toque o haga click.
+      Por eso el sonido se habilita con el primer click/touch.
+    */
+    document.addEventListener("click", habilitarAudio, { once:true });
+    document.addEventListener("touchstart", habilitarAudio, { once:true });
+
+    refrescarNotificaciones(false);
+
+    if(notiTimer){
+      clearInterval(notiTimer);
+    }
+
+    notiTimer = setInterval(() => {
+      refrescarNotificaciones(true);
+    }, 8000);
+  }
+
+  document.addEventListener("DOMContentLoaded", iniciarNotificaciones);
+})();
+</script>
+
+
+<script>
 (function(){
   const ABONO_FIELD = "monto_abonado";
   let pintandoAbonos = false;
