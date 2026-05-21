@@ -1905,12 +1905,39 @@ table{
 }
 </style>
 
+
+<style>
+/* PATCH EMERGENCIA CAMPANITA v14 */
+#notiBtnGlobal,
+.header #notiBtnGlobal,
+.header .noti-btn{
+  display:inline-flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  flex:0 0 auto!important;
+  align-items:center!important;
+  justify-content:center!important;
+  position:relative!important;
+  z-index:9999!important;
+}
+.header-tabs{
+  min-width:0!important;
+}
+</style>
+
 </head>
 <body>
 <header class="header">
-  <div class="logo"><img src="Logo tutto1.svg" alt="Tutto Vinilos"><small>COMANDA</small></div>
+  <div class="logo">
+    <img src="Logo tutto1.svg" alt="Tutto Vinilos">
+    <small>COMANDA</small>
+  </div>
+
+  <button class="noti-btn" id="notiBtnGlobal" type="button" onclick="abrirNotificaciones()">
+    🔔 <span class="noti-count empty" id="notiCount">0</span>
+  </button>
+
   <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
-  <button class="noti-btn" type="button" onclick="abrirNotificaciones()">🔔 <span class="noti-count empty" id="notiCount">0</span></button>
 </header>
 <div class="toolbar">
   <div class="search-wrap">
@@ -2140,16 +2167,18 @@ table{
 
 <script>
 /* =========================================================
-   NOTIFICACIONES v13 · Rubén solo Rubén + Listo solo creador + sonido
-   - Todo pedido en "Solicitud" le aparece SOLO a Rubén
-   - Si un pedido pasa a "Listo", le avisa SOLO al operador que lo creó
-   - Revisa cada 8 segundos
-   - Sonido de campanita después del primer toque/click en la página
+   NOTIFICACIONES v14 · Rubén + operador creador + sonido
+   Correcciones:
+   - Campanita siempre visible
+   - Solicitud SOLO para Rubén
+   - Listo SOLO para el operador que creó el pedido
+   - Comparación flexible: Ricardo = Ricardo Ortiz, Rubén = Ruben/Rubén
+   - Sonido tipo campanita después del primer toque/click
 ========================================================= */
 (function(){
   const AUTH_KEY = "comanda_operador_actual";
-  const NOTI_READ_KEY = "tutto_notificaciones_leidas_v13";
-  const NOTI_LAST_COUNT_KEY = "tutto_notificaciones_count_v13";
+  const NOTI_READ_KEY = "tutto_notificaciones_leidas_v14";
+  const NOTI_LAST_COUNT_KEY = "tutto_notificaciones_count_v14";
 
   let notiTimer = null;
   let audioCtx = null;
@@ -2165,7 +2194,41 @@ table{
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
       .trim();
+  }
+
+  function nombreOperador(v){
+    if(!v) return "";
+
+    if(typeof v === "string") return v;
+
+    return v.nombre || v.operador || v.name || v.usuario || v.user || "";
+  }
+
+  function getOperador(){
+    const keys = [
+      "comanda_operador_actual",
+      "operador_actual",
+      "operadorActual",
+      "tutto_operador",
+      "usuario_actual"
+    ];
+
+    for(const key of keys){
+      const raw = localStorage.getItem(key);
+      if(!raw) continue;
+
+      try{
+        const parsed = JSON.parse(raw);
+        const nombre = nombreOperador(parsed);
+        if(nombre) return { nombre, raw:parsed, key };
+      }catch(e){
+        if(String(raw).trim()) return { nombre:raw, raw, key };
+      }
+    }
+
+    return null;
   }
 
   function esc(v){
@@ -2177,17 +2240,23 @@ table{
       .replaceAll("'","&#039;");
   }
 
-  function getOperador(){
-    try{
-      return JSON.parse(localStorage.getItem(AUTH_KEY) || "null");
-    }catch(e){
-      return null;
-    }
+  function esRuben(op){
+    const n = normalizar(nombreOperador(op));
+    return n === "ruben" || n === "rubén" || n.includes("ruben") || n.includes("rubén");
   }
 
-  function esRuben(op){
-    const n = normalizar(op && op.nombre);
-    return n === "ruben" || n === "rubén";
+  function operadorCoincide(creadorPedido, operadorSesion){
+    const a = normalizar(creadorPedido);
+    const b = normalizar(nombreOperador(operadorSesion));
+
+    if(!a || !b) return false;
+    if(a === b) return true;
+    if(a.includes(b) || b.includes(a)) return true;
+
+    const a1 = a.split(" ")[0];
+    const b1 = b.split(" ")[0];
+
+    return !!a1 && !!b1 && a1 === b1;
   }
 
   function leerLeidas(){
@@ -2204,6 +2273,18 @@ table{
 
   function notiId(tipo, pedido){
     return `${tipo}_${pedido.id}_${normalizar(pedido.estatus_trabajo)}`;
+  }
+
+  function forzarCampanaVisible(){
+    const btn = document.getElementById("notiBtnGlobal") || document.querySelector(".noti-btn");
+    if(!btn) return;
+
+    btn.style.setProperty("display", "inline-flex", "important");
+    btn.style.setProperty("visibility", "visible", "important");
+    btn.style.setProperty("opacity", "1", "important");
+    btn.style.setProperty("flex", "0 0 auto", "important");
+    btn.style.setProperty("position", "relative", "important");
+    btn.style.setProperty("z-index", "9999", "important");
   }
 
   function habilitarAudio(){
@@ -2229,20 +2310,18 @@ table{
       if(!audioCtx) return;
 
       const now = audioCtx.currentTime;
-
       const gain = audioCtx.createGain();
+
       gain.gain.setValueAtTime(0.0001, now);
       gain.gain.exponentialRampToValueAtTime(0.24, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.82);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
       gain.connect(audioCtx.destination);
 
-      const tonos = [
+      [
         { f:1046, t:0.00, d:0.12 },
         { f:1318, t:0.16, d:0.13 },
         { f:1568, t:0.33, d:0.18 }
-      ];
-
-      tonos.forEach(tn => {
+      ].forEach(tn => {
         const osc = audioCtx.createOscillator();
         osc.type = "sine";
         osc.frequency.setValueAtTime(tn.f, now + tn.t);
@@ -2272,7 +2351,10 @@ table{
   }
 
   async function cargarPedidosParaNotificar(){
-    if(!db()) return [];
+    if(!db()){
+      console.warn("No existe window.supabaseClient para notificaciones");
+      return [];
+    }
 
     const { data, error } = await db()
       .from("pedidos")
@@ -2291,21 +2373,20 @@ table{
   function crearNotificaciones(pedidos){
     const op = getOperador();
 
-    if(!op) return [];
+    if(!op){
+      console.warn("No se encontró operador actual en localStorage");
+      return [];
+    }
 
-    const nombreOp = normalizar(op.nombre);
     const leidas = new Set(leerLeidas());
-
     const lista = [];
 
     pedidos.forEach(p => {
       const estado = normalizar(p.estatus_trabajo);
-      const creador = normalizar(p.operador);
 
       /*
         REGLA 1:
         Todo pedido en Solicitud le aparece SOLO a Rubén.
-        Ya no le aparece a Roberto ni a otro operador.
       */
       if(esRuben(op) && estado === "solicitud"){
         const id = notiId("solicitud_ruben", p);
@@ -2325,9 +2406,9 @@ table{
       /*
         REGLA 2:
         Si un pedido pasa a Listo, le aparece SOLO al operador que creó ese pedido.
-        Ejemplo: si Ricardo creó el pedido, solo Ricardo ve esa notificación.
+        Ejemplo: si Ricardo creó el pedido, solo Ricardo lo ve.
       */
-      if(creador === nombreOp && estado === "listo"){
+      if(operadorCoincide(p.operador, op) && estado === "listo"){
         const id = notiId("listo_operador", p);
 
         if(!leidas.has(id)){
@@ -2347,8 +2428,9 @@ table{
   }
 
   function actualizarCampana(lista, sonar = false){
-    const count = document.getElementById("notiCount");
+    forzarCampanaVisible();
 
+    const count = document.getElementById("notiCount");
     if(!count) return;
 
     const total = lista.length;
@@ -2371,8 +2453,9 @@ table{
   }
 
   async function refrescarNotificaciones(sonar = false){
-    const pedidos = await cargarPedidosParaNotificar();
+    forzarCampanaVisible();
 
+    const pedidos = await cargarPedidosParaNotificar();
     notificacionesActuales = crearNotificaciones(pedidos);
 
     actualizarCampana(notificacionesActuales, sonar);
@@ -2380,7 +2463,6 @@ table{
 
   function renderNotificaciones(){
     const box = document.getElementById("notiList");
-
     if(!box) return;
 
     if(!notificacionesActuales.length){
@@ -2405,29 +2487,25 @@ table{
 
   window.abrirNotificaciones = async function(){
     habilitarAudio();
-
     await refrescarNotificaciones(false);
-
     renderNotificaciones();
 
     const bd = document.getElementById("notiBackdrop");
-
     if(bd){
       bd.style.display = "flex";
+    }else{
+      alert("No existe el modal de notificaciones: notiBackdrop");
     }
   };
 
   window.marcarNotificacionLeida = function(id){
     const leidas = leerLeidas();
-
     leidas.push(id);
-
     guardarLeidas(leidas);
 
     notificacionesActuales = notificacionesActuales.filter(n => n.id !== id);
 
     actualizarCampana(notificacionesActuales, false);
-
     renderNotificaciones();
   };
 
@@ -2441,7 +2519,6 @@ table{
     notificacionesActuales = [];
 
     actualizarCampana([], false);
-
     renderNotificaciones();
   };
 
@@ -2449,20 +2526,23 @@ table{
     return refrescarNotificaciones(false);
   };
 
-  window.notificarCambioPedidoListo = async function(){
+  window.notificarCambioPedidoListo = function(){
     return refrescarNotificaciones(true);
   };
 
+  window.probarCampanita = function(){
+    habilitarAudio();
+    campanita();
+    toast("🔔 Prueba de campanita");
+  };
+
   function iniciarNotificaciones(){
-    /*
-      Importante:
-      Chrome/Safari bloquean sonidos hasta que el usuario toque o haga click.
-      Por eso el sonido se habilita con el primer click/touch.
-    */
+    forzarCampanaVisible();
+
     document.addEventListener("click", habilitarAudio, { once:true });
     document.addEventListener("touchstart", habilitarAudio, { once:true });
 
-    refrescarNotificaciones(false);
+    setTimeout(() => refrescarNotificaciones(false), 600);
 
     if(notiTimer){
       clearInterval(notiTimer);
@@ -2473,7 +2553,11 @@ table{
     }, 8000);
   }
 
-  document.addEventListener("DOMContentLoaded", iniciarNotificaciones);
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", iniciarNotificaciones);
+  }else{
+    iniciarNotificaciones();
+  }
 })();
 </script>
 
