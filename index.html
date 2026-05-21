@@ -2168,24 +2168,28 @@ table{
 
 <script>
 /* =========================================================
-   NOTIFICACIONES v25 · contador anti-parpadeo
-   Corrige:
-   - Si una lectura devuelve 0 por retraso/filtro temporal, NO borra el contador.
-   - Para bajar de 1 a 0 necesita 2 lecturas seguidas en 0.
-   - Si marcas como visto / marcar todos, ahí sí baja a 0 de inmediato.
+   NOTIFICACIONES v26 · lógica estable por estado real
+   Regla corregida:
+   - Rubén ve solicitudes ACTIVAS leyendo la tabla pedidos.
+     Si está en Solicitud = cuenta.
+     Si pasa a Listo = deja de contar.
+   - Los operadores ven pedidos Listos leyendo la tabla notificaciones.
+   - Ya no se usa "solicitud_ruben" persistente para contar.
+   - Sin parpadeo: el contador se calcula por estado real.
 ========================================================= */
 (function(){
   const CHECK_MS = 6000;
-  const CEROS_PARA_LIMPIAR = 2;
 
   let timer = null;
   let leyendo = false;
   let audioCtx = null;
   let audioHabilitado = false;
-  let cacheNotificaciones = [];
+
+  let solicitudesRuben = [];
+  let notificacionesListo = [];
+  let itemsActuales = [];
   let ultimoIds = new Set();
   let primeraLecturaOk = false;
-  let cerosSeguidos = 0;
 
   function db(){
     return window.supabaseClient || null;
@@ -2248,6 +2252,11 @@ table{
       .replaceAll(">","&gt;")
       .replaceAll('"',"&quot;")
       .replaceAll("'","&#039;");
+  }
+
+  function esRuben(nombre){
+    const n = normalizar(nombre);
+    return n === "ruben" || n === "rubén" || n.includes("ruben") || n.includes("rubén");
   }
 
   function perteneceAlOperador(noti, operadorActual){
@@ -2362,12 +2371,35 @@ table{
     }
   }
 
-  function actualizarContador(sonar){
-    const total = cacheNotificaciones.length;
+  function recalcularItems(){
+    itemsActuales = [
+      ...solicitudesRuben.map(p => ({
+        id:`solicitud_${p.id}`,
+        tipo:"solicitud",
+        pedido_id:p.id,
+        titulo:"Nueva solicitud",
+        mensaje:`${p.cliente || "Sin cliente"} · ${p.descripcion || "Sin descripción"}`,
+        meta:`Pedido #${p.id} · Creado por ${p.operador || "sin operador"}`
+      })),
+      ...notificacionesListo.map(n => ({
+        id:`noti_${n.id}`,
+        notificacion_id:n.id,
+        tipo:"pedido_listo",
+        pedido_id:n.pedido_id,
+        titulo:n.titulo || "Pedido listo",
+        mensaje:n.mensaje || "",
+        meta:`Pedido #${n.pedido_id || ""} · Para: ${n.para_operador || n.destinatario || ""}`
+      }))
+    ];
+  }
 
+  function actualizarContador(sonar){
+    recalcularItems();
+
+    const total = itemsActuales.length;
     pintarContador(total);
 
-    const idsActuales = new Set(cacheNotificaciones.map(n => String(n.id)));
+    const idsActuales = new Set(itemsActuales.map(x => String(x.id)));
     let hayNueva = false;
 
     idsActuales.forEach(id => {
@@ -2383,66 +2415,75 @@ table{
     primeraLecturaOk = true;
   }
 
+  async function leerSolicitudesRuben(operador){
+    if(!esRuben(operador)) return [];
+
+    const { data, error } = await db()
+      .from("pedidos")
+      .select("id, fecha, operador, cliente, descripcion, estatus_trabajo")
+      .eq("estatus_trabajo", "Solicitud")
+      .order("id", { ascending:false })
+      .limit(100);
+
+    if(error){
+      console.error("Error leyendo solicitudes para Rubén:", error);
+      return solicitudesRuben;
+    }
+
+    return data || [];
+  }
+
+  async function leerListosOperador(operador){
+    const { data, error } = await db()
+      .from("notificaciones")
+      .select("id, pedido_id, tipo, para_operador, destinatario, titulo, mensaje, leida, created_at")
+      .eq("leida", false)
+      .eq("tipo", "pedido_listo")
+      .order("created_at", { ascending:false })
+      .limit(100);
+
+    if(error){
+      console.error("Error leyendo pedidos listos:", error);
+      return notificacionesListo;
+    }
+
+    return (data || []).filter(n => perteneceAlOperador(n, operador));
+  }
+
   async function leerNotificaciones(sonar = false){
     asegurarCampana();
 
     if(leyendo){
-      return cacheNotificaciones;
+      return itemsActuales;
     }
 
     const operador = getOperador();
 
     if(!operador){
-      console.warn("Notificaciones: operador aún no detectado. Mantengo contador actual.");
-      pintarContador(cacheNotificaciones.length);
-      return cacheNotificaciones;
+      console.warn("Notificaciones: operador no detectado. Mantengo contador actual.");
+      pintarContador(itemsActuales.length);
+      return itemsActuales;
     }
 
     if(!db()){
-      console.warn("Notificaciones: Supabase aún no disponible. Mantengo contador actual.");
-      pintarContador(cacheNotificaciones.length);
-      return cacheNotificaciones;
+      console.warn("Notificaciones: Supabase no disponible. Mantengo contador actual.");
+      pintarContador(itemsActuales.length);
+      return itemsActuales;
     }
 
     leyendo = true;
 
     try{
-      const { data, error } = await db()
-        .from("notificaciones")
-        .select("id, pedido_id, tipo, para_operador, destinatario, titulo, mensaje, leida, created_at")
-        .eq("leida", false)
-        .order("created_at", { ascending:false })
-        .limit(100);
+      const [solicitudes, listos] = await Promise.all([
+        leerSolicitudesRuben(operador),
+        leerListosOperador(operador)
+      ]);
 
-      if(error){
-        console.error("Error leyendo notificaciones:", error);
-        toast("Error leyendo notificaciones");
-        pintarContador(cacheNotificaciones.length);
-        return cacheNotificaciones;
-      }
+      solicitudesRuben = solicitudes;
+      notificacionesListo = listos;
 
-      const nuevas = (data || []).filter(n => perteneceAlOperador(n, operador));
-
-      /*
-        ANTI-PARPADEO:
-        Si ya había notificaciones y una lectura devuelve 0,
-        no la creemos de una vez. Esperamos 2 lecturas en 0.
-      */
-      if(nuevas.length === 0 && cacheNotificaciones.length > 0){
-        cerosSeguidos++;
-
-        if(cerosSeguidos < CEROS_PARA_LIMPIAR){
-          pintarContador(cacheNotificaciones.length);
-          return cacheNotificaciones;
-        }
-      }else{
-        cerosSeguidos = 0;
-      }
-
-      cacheNotificaciones = nuevas;
       actualizarContador(sonar);
-
-      return cacheNotificaciones;
+      return itemsActuales;
     }finally{
       leyendo = false;
     }
@@ -2452,7 +2493,9 @@ table{
     const box = document.getElementById("notiList");
     if(!box) return;
 
-    if(!cacheNotificaciones.length){
+    recalcularItems();
+
+    if(!itemsActuales.length){
       box.innerHTML = `
         <div class="empty">Sin notificaciones pendientes</div>
         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
@@ -2468,17 +2511,16 @@ table{
         <button class="btn-add noti-read-all-btn" type="button" onclick="marcarTodasNotificacionesLeidas()">Marcar todos leídos</button>
         <button class="btn-add secondary" type="button" onclick="debugNotificaciones()">Debug</button>
       </div>
-      ${cacheNotificaciones.map(n => `
+      ${itemsActuales.map(n => `
         <div class="noti-item">
           <div class="noti-item-title">🔔 ${esc(n.titulo || "Notificación")}</div>
           <div class="noti-item-msg">${esc(n.mensaje || "")}</div>
-          <div class="noti-item-meta">
-            Pedido #${esc(n.pedido_id || "")} · ${esc(n.tipo || "")} · Para: ${esc(n.para_operador || n.destinatario || "")}
-          </div>
+          <div class="noti-item-meta">${esc(n.meta || "")}</div>
           <div class="noti-actions">
-            <button class="noti-seen-btn" type="button" onclick="marcarNotificacionLeida(${Number(n.id)})">
-              Marcar como visto
-            </button>
+            ${n.tipo === "pedido_listo"
+              ? `<button class="noti-seen-btn" type="button" onclick="marcarNotificacionLeida(${Number(n.notificacion_id)})">Marcar como visto</button>`
+              : `<span class="noti-status-chip">Activa mientras el pedido esté en Solicitud</span>`
+            }
           </div>
         </div>
       `).join("")}
@@ -2508,8 +2550,7 @@ table{
       return;
     }
 
-    cacheNotificaciones = cacheNotificaciones.filter(n => Number(n.id) !== Number(id));
-    cerosSeguidos = 0;
+    notificacionesListo = notificacionesListo.filter(n => Number(n.id) !== Number(id));
     actualizarContador(false);
     renderNotificaciones();
   };
@@ -2517,12 +2558,12 @@ table{
   window.marcarTodasNotificacionesLeidas = async function(){
     if(!db()) return;
 
-    if(!cacheNotificaciones.length){
-      toast("No hay notificaciones pendientes");
+    const ids = notificacionesListo.map(n => n.id);
+
+    if(!ids.length){
+      toast("No hay pedidos listos pendientes por marcar");
       return;
     }
-
-    const ids = cacheNotificaciones.map(n => n.id);
 
     const { error } = await db()
       .from("notificaciones")
@@ -2535,57 +2576,33 @@ table{
       return;
     }
 
-    cacheNotificaciones = [];
-    cerosSeguidos = 0;
+    notificacionesListo = [];
     actualizarContador(false);
     renderNotificaciones();
-    toast("Notificaciones marcadas como vistas");
-  };
-
-  window.probarCampanita = function(){
-    habilitarAudio();
-    sonarCampana();
-    toast("🔔 Prueba de campanita");
+    toast("Pedidos listos marcados como vistos");
   };
 
   window.debugNotificaciones = async function(){
     const operador = getOperador();
 
-    let todas = [];
-    if(db()){
-      const { data, error } = await db()
-        .from("notificaciones")
-        .select("id, pedido_id, tipo, para_operador, destinatario, titulo, mensaje, leida, created_at")
-        .order("created_at", { ascending:false })
-        .limit(20);
-
-      if(error){
-        alert("Error leyendo debug: " + error.message);
-        console.error(error);
-        return;
-      }
-
-      todas = data || [];
-    }
-
     await leerNotificaciones(false);
 
-    console.log("OPERADOR ACTUAL:", operador);
-    console.log("TODAS LAS ÚLTIMAS NOTIFICACIONES:", todas);
-    console.log("NOTIFICACIONES FILTRADAS PARA ESTE OPERADOR:", cacheNotificaciones);
-    console.log("CEROS SEGUIDOS:", cerosSeguidos);
+    console.log("OPERADOR:", operador);
+    console.log("SOLICITUDES RUBEN:", solicitudesRuben);
+    console.log("LISTOS OPERADOR:", notificacionesListo);
+    console.log("ITEMS ACTUALES:", itemsActuales);
 
     alert(
-      "Operador actual: " + (operador || "NO DETECTADO") +
-      "\\nÚltimas notificaciones en tabla: " + todas.length +
-      "\\nNotificaciones para este operador: " + cacheNotificaciones.length +
-      "\\nCeros seguidos: " + cerosSeguidos
+      "Operador: " + (operador || "NO DETECTADO") +
+      "\\nSolicitudes activas Rubén: " + solicitudesRuben.length +
+      "\\nPedidos listos para este operador: " + notificacionesListo.length +
+      "\\nTotal campana: " + itemsActuales.length
     );
   };
 
   function iniciar(){
     asegurarCampana();
-    pintarContador(cacheNotificaciones.length);
+    pintarContador(0);
 
     document.addEventListener("click", habilitarAudio, { once:true });
     document.addEventListener("touchstart", habilitarAudio, { once:true });
