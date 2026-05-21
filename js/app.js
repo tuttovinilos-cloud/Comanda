@@ -468,262 +468,15 @@ function clasePago(valor) {
 }
 
 // ===========================
-// NOTIFICACIONES v17
-// - No depende de tabla notificaciones.
-// - Lee directamente la tabla pedidos.
-// - Solicitud: SOLO Rubén.
-// - Listo: SOLO operador que creó el pedido.
-// - Sonido tipo campanita.
+// NOTIFICACIONES
 // ===========================
-const NOTI_READ_KEY = "tutto_notificaciones_leidas_v17";
-const NOTI_LAST_COUNT_KEY = "tutto_notificaciones_count_v17";
-let notiAudioCtx = null;
-let notiAudioHabilitado = false;
-let notiInterval = null;
-
-function normalizarNoti(v){
-  return String(v || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function nombreOperadorActualNoti(){
-  const op = typeof getOperadorSesionLocal === "function"
-    ? getOperadorSesionLocal()
-    : (typeof getSesionOperador === "function" ? getSesionOperador() : null);
-
-  if(!op) return "";
-  if(typeof op === "string") return op.trim();
-
-  return String(op.nombre || op.operador || op.name || op.usuario || "").trim();
-}
-
-function esRubenNoti(nombre){
-  const n = normalizarNoti(nombre);
-  return n === "ruben" || n === "rubén" || n.includes("ruben") || n.includes("rubén");
-}
-
-function operadorCoincideNoti(creadorPedido, operadorSesion){
-  const a = normalizarNoti(creadorPedido);
-  const b = normalizarNoti(operadorSesion);
-
-  if(!a || !b) return false;
-  if(a === b) return true;
-  if(a.includes(b) || b.includes(a)) return true;
-
-  const a1 = a.split(" ")[0];
-  const b1 = b.split(" ")[0];
-
-  return !!a1 && !!b1 && a1 === b1;
-}
-
-function leerNotificacionesLeidas(){
-  try{
-    return JSON.parse(localStorage.getItem(NOTI_READ_KEY) || "[]");
-  }catch(e){
-    return [];
-  }
-}
-
-function guardarNotificacionesLeidas(ids){
-  localStorage.setItem(NOTI_READ_KEY, JSON.stringify([...new Set(ids)]));
-}
-
-function idNotificacionPedido(tipo, pedido){
-  return `${tipo}_${pedido.id}_${normalizarNoti(pedido.estatus_trabajo)}`;
-}
-
-function habilitarAudioNoti(){
-  if(notiAudioHabilitado) return;
-
-  try{
-    notiAudioCtx = notiAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
-
-    if(notiAudioCtx.state === "suspended"){
-      notiAudioCtx.resume();
-    }
-
-    notiAudioHabilitado = true;
-    console.log("Audio de notificaciones habilitado");
-  }catch(e){
-    console.warn("No se pudo habilitar audio:", e);
-  }
-}
-
-function sonarCampanitaNoti(){
-  try{
-    habilitarAudioNoti();
-    if(!notiAudioCtx) return;
-
-    const now = notiAudioCtx.currentTime;
-    const master = notiAudioCtx.createGain();
-
-    master.gain.setValueAtTime(0.0001, now);
-    master.gain.exponentialRampToValueAtTime(0.26, now + 0.02);
-    master.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
-    master.connect(notiAudioCtx.destination);
-
-    [
-      { f:1046.5, t:0.00, d:0.13 },
-      { f:1318.5, t:0.17, d:0.13 },
-      { f:1568.0, t:0.34, d:0.18 }
-    ].forEach(tn => {
-      const osc = notiAudioCtx.createOscillator();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(tn.f, now + tn.t);
-      osc.connect(master);
-      osc.start(now + tn.t);
-      osc.stop(now + tn.t + tn.d);
-    });
-  }catch(e){
-    console.warn("No sonó la campanita:", e);
-  }
-}
-
-function asegurarCampanaHeader(){
-  const btn = document.getElementById("notiBtnGlobal") || document.querySelector(".header .noti-btn");
-  if(!btn) return;
-
-  btn.onclick = function(){ abrirNotificaciones(); };
-  btn.style.setProperty("display", "inline-flex", "important");
-  btn.style.setProperty("visibility", "visible", "important");
-  btn.style.setProperty("opacity", "1", "important");
-}
-
-function actualizarNumeroCampana(total, sonar){
-  asegurarCampanaHeader();
-
-  const count = document.getElementById("notiCount");
-  if(count){
-    count.textContent = String(total);
-    count.classList.toggle("empty", total === 0);
-  }
-
-  const anterior = Number(localStorage.getItem(NOTI_LAST_COUNT_KEY) || "0");
-
-  if(sonar && total > anterior){
-    sonarCampanitaNoti();
-    if(typeof mostrarToast === "function"){
-      mostrarToast(`🔔 ${total} notificación${total === 1 ? "" : "es"} pendiente${total === 1 ? "" : "s"}`);
-    }
-  }
-
-  localStorage.setItem(NOTI_LAST_COUNT_KEY, String(total));
-}
-
-async function crearNotificacionPedidoListo(pedidoOriginal){
-  console.log("Pedido listo detectado para notificación:", pedidoOriginal && pedidoOriginal.id);
-}
-
-async function cargarNotificaciones(sonar = false){
-  if(!validarSupabase()) return;
-
-  const operadorActual = nombreOperadorActualNoti();
-  const list = document.getElementById("notiList");
-
-  if(!operadorActual){
-    actualizarNumeroCampana(0, false);
-    if(list) list.innerHTML = `<div class="empty">Sin operador activo</div>`;
-    return;
-  }
-
-  const { data, error } = await db()
-    .from("pedidos")
-    .select("id, fecha, operador, cliente, descripcion, cantidad, material, tipo_impresion, estatus_trabajo, estatus_pago, fecha_entrega")
-    .order("id", { ascending:false })
-    .limit(400);
-
-  if(error){
-    console.error("Error cargando notificaciones desde pedidos:", error);
-    if(list) list.innerHTML = `<div class="empty">Error cargando notificaciones</div>`;
-    actualizarNumeroCampana(0, false);
-    return;
-  }
-
-  const leidas = new Set(leerNotificacionesLeidas());
-
-  notificacionesDB = (data || []).flatMap(p => {
-    const estado = normalizarNoti(p.estatus_trabajo);
-    const salida = [];
-
-    if(esRubenNoti(operadorActual) && estado === "solicitud"){
-      const id = idNotificacionPedido("solicitud_ruben", p);
-      if(!leidas.has(id)){
-        salida.push({ id, tipo:"solicitud", pedido_id:p.id, cliente:p.cliente || "", descripcion:p.descripcion || "", mensaje:`Nueva solicitud creada por ${p.operador || "sin operador"}.`, created_at:p.fecha || "", _local:true });
-      }
-    }
-
-    if(operadorCoincideNoti(p.operador, operadorActual) && estado === "listo"){
-      const id = idNotificacionPedido("listo_operador", p);
-      if(!leidas.has(id)){
-        salida.push({ id, tipo:"listo", pedido_id:p.id, cliente:p.cliente || "", descripcion:p.descripcion || "", mensaje:`El pedido de ${p.cliente || "Cliente"} ya está listo.`, created_at:p.fecha_entrega || p.fecha || "", _local:true });
-      }
-    }
-
-    return salida;
-  });
-
-  actualizarNumeroCampana(notificacionesDB.length, sonar);
-  if(list) renderNotificaciones();
-}
-
-function abrirNotificaciones(){
-  habilitarAudioNoti();
-  cargarNotificaciones(false);
-  const modal = document.getElementById("notiBackdrop");
-  if(modal) modal.style.display = "flex";
-}
-
-function renderNotificaciones(){
-  const list = document.getElementById("notiList");
-  if(!list) return;
-
-  if(!notificacionesDB.length){
-    list.innerHTML = `<div class="empty">No tienes notificaciones pendientes</div><div style="margin-top:12px"><button class="btn-add" type="button" onclick="probarCampanita()">Probar sonido</button></div>`;
-    return;
-  }
-
-  list.innerHTML = `<div style="margin-bottom:10px"><button class="btn-add" type="button" onclick="probarCampanita()">Probar sonido</button></div>` + notificacionesDB.map(n => `
-    <div class="noti-item">
-      <div class="noti-item-title">🔔 ${escapeHtml(n.cliente || "Pedido")}</div>
-      <div class="noti-item-msg">${escapeHtml(n.mensaje || "Notificación")}</div>
-      <div class="noti-item-msg">${escapeHtml(n.descripcion || "")}</div>
-      <div class="noti-item-meta">Pedido #${escapeHtml(n.pedido_id || "")} · ${escapeHtml(String(n.created_at || "").slice(0,19).replace("T"," "))}</div>
-      <div class="noti-actions"><button class="mini-action" type="button" onclick="marcarNotificacionVista('${escapeHtml(n.id)}')">Marcar como visto</button></div>
-    </div>`).join("");
-}
-
-async function marcarNotificacionVista(id){
-  const leidas = leerNotificacionesLeidas();
-  leidas.push(String(id));
-  guardarNotificacionesLeidas(leidas);
-  await cargarNotificaciones(false);
-  if(typeof mostrarToast === "function") mostrarToast("Notificación marcada como vista");
-}
-
-function probarCampanita(){
-  habilitarAudioNoti();
-  sonarCampanitaNoti();
-  if(typeof mostrarToast === "function") mostrarToast("🔔 Prueba de campanita");
-}
-
-function iniciarNotificacionesComanda(){
-  asegurarCampanaHeader();
-  document.addEventListener("click", habilitarAudioNoti, { once:true });
-  document.addEventListener("touchstart", habilitarAudioNoti, { once:true });
-  setTimeout(() => cargarNotificaciones(false), 900);
-  if(notiInterval) clearInterval(notiInterval);
-  notiInterval = setInterval(() => cargarNotificaciones(true), 8000);
-}
-
-window.abrirNotificaciones = abrirNotificaciones;
-window.cargarNotificaciones = cargarNotificaciones;
-window.marcarNotificacionVista = marcarNotificacionVista;
-window.probarCampanita = probarCampanita;
-window.iniciarNotificacionesComanda = iniciarNotificacionesComanda;
+// IMPORTANTE:
+// La lógica de notificaciones NO vive aquí.
+// Vive en index.html v26 y lee:
+// - pedidos en Solicitud para Rubén
+// - notificaciones tipo pedido_listo para el operador creador
+// Esto evita que dos intervalos distintos modifiquen la misma campana.
+// ===========================
 
 // ===========================
 // CARGAR PEDIDOS
@@ -827,10 +580,6 @@ async function cargarPedidos() {
 
   if (typeof aplicarPermisosComanda === "function") {
     aplicarPermisosComanda();
-  }
-
-  if (typeof cargarNotificaciones === "function") {
-    cargarNotificaciones();
   }
 }
 
@@ -1026,16 +775,8 @@ async function actualizarCampoPedido(id, campo, valor) {
     return;
   }
 
-  if(
-    campo === "estatus_trabajo" &&
-    pedidoOriginal &&
-    pedidoOriginal.estatus_trabajo !== "Listo" &&
-    valor === "Listo"
-  ){
-    await crearNotificacionPedidoListo(pedidoOriginal);
-    await cargarNotificaciones();
-    mostrarToast("Pedido listo. Notificación enviada a " + (pedidoOriginal.operador || "su creador"));
-  }
+  // Notificación de Listo: la maneja Supabase con trigger SQL.
+
 
   const pedidoLocal = pedidosDB.find(p => Number(p.id) === Number(id));
   if(pedidoLocal){
@@ -1437,7 +1178,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 
   try {
-    iniciarNotificacionesComanda();
   } catch (e) {
     console.error("Error iniciando notificaciones:", e);
   }
