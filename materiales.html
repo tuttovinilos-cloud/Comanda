@@ -31,7 +31,7 @@ input,select{width:100%;background:#fff;border:1px solid var(--border2);color:va
 @media(max-width:600px){.layout{padding:10px}.toolbar{padding:10px}.search-wrap{min-width:100%}.card-header{flex-direction:column;align-items:flex-start}.card-actions,.btn{width:100%}.table-scroll{overflow-x:auto}.logo small{display:none}}
 </style>
 
-<link rel="stylesheet" href="css/menu.css?v=31">
+<link rel="stylesheet" href="css/menu.css?v=34">
 
 <style>
 /* PATCH MENU UNIFICADO v30 · estas páginas usan el mismo header que index/clientes */
@@ -41,6 +41,79 @@ input,select{width:100%;background:#fff;border:1px solid var(--border2);color:va
 .header-tabs[data-auth-menu]{margin-left:auto!important}
 @media(max-width:980px){.header .logo img{width:118px!important;max-width:118px!important}}
 </style>
+
+<style>
+/* =========================================================
+   MATERIALES · MENÚ GLOBAL v35
+   Evita conflicto entre CSS local y css/menu.css.
+========================================================= */
+#authTopbar{display:none!important}
+
+.header{
+  background:#172bd8!important;
+  border-bottom:0!important;
+  box-shadow:0 8px 20px rgba(21,59,255,.18)!important;
+  min-height:64px!important;
+  height:64px!important;
+  padding:14px 18px!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:14px!important;
+  position:sticky!important;
+  top:0!important;
+  z-index:300!important;
+  flex-wrap:nowrap!important;
+  overflow:hidden!important;
+}
+
+.header .logo{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:190px!important;
+  color:#fff!important;
+  border:0!important;
+  padding:0!important;
+  margin:0!important;
+}
+
+.header .logo img{
+  display:block!important;
+  width:112px!important;
+  max-width:112px!important;
+  height:auto!important;
+  object-fit:contain!important;
+}
+
+.header .logo small{
+  display:none!important;
+}
+
+.header-tabs[data-auth-menu]{
+  margin-left:auto!important;
+}
+
+@media(max-width:980px){
+  .header{
+    flex-wrap:wrap!important;
+    height:auto!important;
+    min-height:58px!important;
+    overflow:visible!important;
+  }
+
+  .header .logo{
+    min-width:120px!important;
+  }
+
+  .header .logo img{
+    width:118px!important;
+    max-width:118px!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <header class="header">
@@ -59,7 +132,6 @@ input,select{width:100%;background:#fff;border:1px solid var(--border2);color:va
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=29"></script>
-?v=24"></script>
 <script src="js/auth.js?v=24"></script>
 <script src="js/menu.js?v=11"></script>
 
@@ -78,14 +150,52 @@ function safeColor(v, def){const s=String(v||'').trim();return /^#[0-9a-fA-F]{6}
 function activoVal(v){return v !== false}
 async function cargarCatalogos(){if(!validarSupabase()) return; await Promise.all([cargarMateriales(), cargarTiposImpresion()]); filtrarCatalogos();}
 async function cargarMateriales(){
-  const {data,error}=await db().from('materiales').select('id,nombre,precio_base,activo,color_fondo,color_texto').order('nombre',{ascending:true});
-  if(error){console.error(error); document.getElementById('materialesBody').innerHTML=`<tr><td colspan="7" class="empty">Error: ${esc(error.message)}<br>¿Ejecutaste el SQL de colores?</td></tr>`; return;}
-  materialesDB=(data||[]).map(x=>({...x,color_fondo:safeColor(x.color_fondo,DEFAULT_BG),color_texto:safeColor(x.color_texto,DEFAULT_TXT)}));
+  let res = await db()
+    .from('materiales')
+    .select('id,nombre,precio_base,activo,color_fondo,color_texto')
+    .order('nombre',{ascending:true});
+
+  if(res.error){
+    const msg = String(res.error.message || '');
+    if(msg.includes('color_fondo') || msg.includes('color_texto') || msg.includes('schema cache')){
+      res = await db()
+        .from('materiales')
+        .select('id,nombre,precio_base,activo')
+        .order('nombre',{ascending:true});
+    }
+  }
+
+  if(res.error){
+    console.error(res.error);
+    document.getElementById('materialesBody').innerHTML=`<tr><td colspan="7" class="empty">Error: ${esc(res.error.message)}</td></tr>`;
+    return;
+  }
+
+  materialesDB=(res.data||[]).map(x=>({...x,color_fondo:safeColor(x.color_fondo,DEFAULT_BG),color_texto:safeColor(x.color_texto,DEFAULT_TXT)}));
 }
 async function cargarTiposImpresion(){
-  const {data,error}=await db().from('tipos_impresion').select('id,nombre,precio_extra,activo,color_fondo,color_texto').order('nombre',{ascending:true});
-  if(error){console.error(error); document.getElementById('impresionBody').innerHTML=`<tr><td colspan="7" class="empty">Error: ${esc(error.message)}<br>¿Ejecutaste el SQL de colores?</td></tr>`; return;}
-  impresionDB=(data||[]).map(x=>({...x,color_fondo:safeColor(x.color_fondo,DEFAULT_BG),color_texto:safeColor(x.color_texto,DEFAULT_TXT)}));
+  let res = await db()
+    .from('tipos_impresion')
+    .select('id,nombre,precio_extra,activo,color_fondo,color_texto')
+    .order('nombre',{ascending:true});
+
+  if(res.error){
+    const msg = String(res.error.message || '');
+    if(msg.includes('color_fondo') || msg.includes('color_texto') || msg.includes('schema cache')){
+      res = await db()
+        .from('tipos_impresion')
+        .select('id,nombre,precio_extra,activo')
+        .order('nombre',{ascending:true});
+    }
+  }
+
+  if(res.error){
+    console.error(res.error);
+    document.getElementById('impresionBody').innerHTML=`<tr><td colspan="7" class="empty">Error: ${esc(res.error.message)}</td></tr>`;
+    return;
+  }
+
+  impresionDB=(res.data||[]).map(x=>({...x,color_fondo:safeColor(x.color_fondo,DEFAULT_BG),color_texto:safeColor(x.color_texto,DEFAULT_TXT)}));
 }
 function filtrarCatalogos(){const q=normalizar(document.getElementById('searchCatalogos').value); renderMateriales(materialesDB.filter(x=>!q||normalizar(x.nombre).includes(q))); renderTiposImpresion(impresionDB.filter(x=>!q||normalizar(x.nombre).includes(q)));}
 function renderMateriales(lista){const body=document.getElementById('materialesBody');document.getElementById('materialesCount').textContent=`${lista.filter(x=>activoVal(x.activo)).length} activos`; if(!lista.length){body.innerHTML=`<tr><td colspan="7" class="empty">Sin materiales</td></tr>`;return;} body.innerHTML=lista.map((m)=>rowHTML('mat',m,'precio_base')).join('');}
@@ -96,7 +206,59 @@ function nuevoMaterial(){materialesDB.push({id:null,nombre:'Nuevo material',prec
 function nuevoTipoImpresion(){impresionDB.push({id:null,nombre:'Nuevo tipo',precio_extra:0,activo:true,color_fondo:'#e5e7eb',color_texto:'#111827'}); filtrarCatalogos(); toast('Tipo añadido. Edita y guarda.');}
 async function guardarTodosMateriales(){await guardarLista('materiales',materialesDB,'precio_base');}
 async function guardarTodosTiposImpresion(){await guardarLista('tipos_impresion',impresionDB,'precio_extra');}
-async function guardarLista(tabla,lista,precioCampo){if(!validarSupabase())return; try{for(const x of lista){const datos={nombre:String(x.nombre||'').trim(), [precioCampo]:Number(x[precioCampo]||0), activo:activoVal(x.activo), color_fondo:safeColor(x.color_fondo,DEFAULT_BG), color_texto:safeColor(x.color_texto,DEFAULT_TXT)}; if(!datos.nombre) continue; if(x.id){const {error}=await db().from(tabla).update(datos).eq('id',x.id); if(error) throw error;}else{const {data,error}=await db().from(tabla).insert([datos]).select().single(); if(error) throw error; x.id=data.id;}} toast('Cambios guardados'); await recargarTodo();}catch(error){console.error(error); alert('Error guardando: '+(error.message||error));}}
+async function guardarLista(tabla,lista,precioCampo){
+  if(!validarSupabase())return;
+
+  try{
+    for(const x of lista){
+      const datosFull={
+        nombre:String(x.nombre||'').trim(),
+        [precioCampo]:Number(x[precioCampo]||0),
+        activo:activoVal(x.activo),
+        color_fondo:safeColor(x.color_fondo,DEFAULT_BG),
+        color_texto:safeColor(x.color_texto,DEFAULT_TXT)
+      };
+
+      if(!datosFull.nombre) continue;
+
+      let res;
+
+      if(x.id){
+        res = await db().from(tabla).update(datosFull).eq('id',x.id);
+      }else{
+        res = await db().from(tabla).insert([datosFull]).select().single();
+      }
+
+      if(res.error){
+        const msg = String(res.error.message || '');
+        const sinColor = msg.includes('color_fondo') || msg.includes('color_texto') || msg.includes('schema cache');
+
+        if(!sinColor) throw res.error;
+
+        const datosBase = {
+          nombre:datosFull.nombre,
+          [precioCampo]:datosFull[precioCampo],
+          activo:datosFull.activo
+        };
+
+        if(x.id){
+          res = await db().from(tabla).update(datosBase).eq('id',x.id);
+        }else{
+          res = await db().from(tabla).insert([datosBase]).select().single();
+        }
+      }
+
+      if(res.error) throw res.error;
+      if(!x.id && res.data) x.id=res.data.id;
+    }
+
+    toast('Cambios guardados');
+    await recargarTodo();
+  }catch(error){
+    console.error(error);
+    alert('Error guardando: '+(error.message||error));
+  }
+}
 async function eliminarCatalogo(tipo,idx){const arr=tipo==='mat'?materialesDB:impresionDB; const tabla=tipo==='mat'?'materiales':'tipos_impresion'; const item=arr[idx]; if(!item) return; if(!confirm(`¿Eliminar ${item.nombre || 'este registro'}?`)) return; try{if(item.id){const {error}=await db().from(tabla).delete().eq('id',item.id); if(error) throw error;} arr.splice(idx,1); filtrarCatalogos(); toast('Eliminado');}catch(error){console.error(error); alert('Error eliminando: '+(error.message||error));}}
 async function recargarTodo(){await cargarCatalogos(); toast('Catálogos recargados');}
 document.addEventListener('DOMContentLoaded',cargarCatalogos);
