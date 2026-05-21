@@ -9,7 +9,6 @@ async function eliminarCliente(id){
 
   const nombre = cliente.nombre || "Cliente";
 
-  // Contar pedidos asociados
   let pedidosAsociados = [];
 
   try{
@@ -24,35 +23,31 @@ async function eliminarCliente(id){
     console.error(err);
   }
 
-  // Si tiene pedidos NO eliminar
   if(pedidosAsociados.length > 0){
 
     alert(
-      No puedes eliminar este cliente.\n\n +
-      Tiene ${pedidosAsociados.length} pedidos asociados.\n\n +
-      Primero debes fusionarlo o cambiar los pedidos a otro cliente.
+      `No puedes eliminar este cliente.\n\n` +
+      `Tiene ${pedidosAsociados.length} pedidos asociados.\n\n` +
+      `Primero debes fusionarlo o cambiar los pedidos a otro cliente.`
     );
 
     return;
   }
 
-  // Confirmación
   const confirmar = confirm(
-    ¿Seguro que deseas eliminar el cliente "${nombre}"?\n\n +
-    Esta acción no se puede deshacer.
+    `¿Seguro que deseas eliminar el cliente "${nombre}"?\n\n` +
+    `Esta acción no se puede deshacer.`
   );
 
   if(!confirmar) return;
 
   try{
 
-    // Intentar borrar real
     const { error } = await supabase
       .from("clientes")
       .delete()
       .eq("id", id);
 
-    // Si falla -> ocultar
     if(error){
 
       console.warn("No se pudo borrar físicamente. Ocultando...", error);
