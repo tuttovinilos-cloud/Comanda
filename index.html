@@ -2168,22 +2168,23 @@ table{
 
 <script>
 /* =========================================================
-   NOTIFICACIONES v23 · contador estable
-   Corrige bug:
-   - El contador aparecía 1 y luego se quitaba.
-   - Ahora NO se borra el contador si Supabase tarda, falla o el operador aún no cargó.
-   - Lee notificaciones reales desde public.notificaciones.
-   - Soporta para_operador y destinatario.
+   NOTIFICACIONES v24 · lectura estable sin parpadeo
+   Corrige:
+   - Evita lecturas solapadas.
+   - No pone contador en 0 si Supabase tarda/falla.
+   - No hace 3 lecturas iniciales peleándose.
+   - Mantiene el último estado bueno hasta recibir una lectura válida.
 ========================================================= */
 (function(){
-  const CHECK_MS = 5000;
+  const CHECK_MS = 6000;
 
   let timer = null;
+  let leyendo = false;
   let audioCtx = null;
   let audioHabilitado = false;
   let cacheNotificaciones = [];
   let ultimoIds = new Set();
-  let operadorDetectado = "";
+  let primeraLecturaOk = false;
 
   function db(){
     return window.supabaseClient || null;
@@ -2372,31 +2373,29 @@ table{
       if(!ultimoIds.has(id)) hayNueva = true;
     });
 
-    if(sonar && hayNueva && total > 0){
+    if(sonar && primeraLecturaOk && hayNueva && total > 0){
       sonarCampana();
       toast("🔔 Nueva notificación");
     }
 
     ultimoIds = idsActuales;
+    primeraLecturaOk = true;
   }
 
   async function leerNotificaciones(sonar = false){
     asegurarCampana();
 
+    if(leyendo){
+      return cacheNotificaciones;
+    }
+
     const operador = getOperador();
 
-    /*
-      Corrección importante:
-      Si el operador todavía no cargó, NO borramos el contador.
-      Así evitamos el bug de 1 -> 0 sin hacer nada.
-    */
     if(!operador){
       console.warn("Notificaciones: operador aún no detectado. Mantengo contador actual.");
       pintarContador(cacheNotificaciones.length);
       return cacheNotificaciones;
     }
-
-    operadorDetectado = operador;
 
     if(!db()){
       console.warn("Notificaciones: Supabase aún no disponible. Mantengo contador actual.");
@@ -2404,25 +2403,30 @@ table{
       return cacheNotificaciones;
     }
 
-    const { data, error } = await db()
-      .from("notificaciones")
-      .select("id, pedido_id, tipo, para_operador, destinatario, titulo, mensaje, leida, created_at")
-      .eq("leida", false)
-      .order("created_at", { ascending:false })
-      .limit(100);
+    leyendo = true;
 
-    if(error){
-      console.error("Error leyendo notificaciones:", error);
-      toast("Error leyendo notificaciones");
-      pintarContador(cacheNotificaciones.length);
+    try{
+      const { data, error } = await db()
+        .from("notificaciones")
+        .select("id, pedido_id, tipo, para_operador, destinatario, titulo, mensaje, leida, created_at")
+        .eq("leida", false)
+        .order("created_at", { ascending:false })
+        .limit(100);
+
+      if(error){
+        console.error("Error leyendo notificaciones:", error);
+        toast("Error leyendo notificaciones");
+        pintarContador(cacheNotificaciones.length);
+        return cacheNotificaciones;
+      }
+
+      cacheNotificaciones = (data || []).filter(n => perteneceAlOperador(n, operador));
+      actualizarContador(sonar);
+
       return cacheNotificaciones;
+    }finally{
+      leyendo = false;
     }
-
-    cacheNotificaciones = (data || []).filter(n => perteneceAlOperador(n, operador));
-
-    actualizarContador(sonar);
-
-    return cacheNotificaciones;
   }
 
   function renderNotificaciones(){
@@ -2546,7 +2550,6 @@ table{
     await leerNotificaciones(false);
 
     console.log("OPERADOR ACTUAL:", operador);
-    console.log("OPERADOR DETECTADO:", operadorDetectado);
     console.log("TODAS LAS ÚLTIMAS NOTIFICACIONES:", todas);
     console.log("NOTIFICACIONES FILTRADAS PARA ESTE OPERADOR:", cacheNotificaciones);
 
@@ -2564,9 +2567,7 @@ table{
     document.addEventListener("click", habilitarAudio, { once:true });
     document.addEventListener("touchstart", habilitarAudio, { once:true });
 
-    setTimeout(() => leerNotificaciones(false), 500);
-    setTimeout(() => leerNotificaciones(false), 1500);
-    setTimeout(() => leerNotificaciones(false), 3000);
+    setTimeout(() => leerNotificaciones(false), 1200);
 
     if(timer) clearInterval(timer);
 
