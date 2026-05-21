@@ -8,6 +8,12 @@ let pedidosPorPagina = 20;
 let archivoSeleccionado = null;
 let materialesDB = [];
 let tiposImpresionDB = [];
+
+// Mapas visuales para pintar material e impresión desde el primer render.
+// Así evitamos el flash donde primero se ve texto plano y luego la pastilla.
+let materialesMap = new Map();
+let tiposImpresionMap = new Map();
+
 let clientesBusquedaDB = [];
 let clientesCatalogoDB = [];
 
@@ -361,22 +367,120 @@ function aplicarOperadorSesion() {
   });
 }
 
+
+// ===========================
+// CATÁLOGOS VISUALES SIN FLASH
+// ===========================
+function normalizarCatalogo(v){
+  return String(v || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .trim();
+}
+
+function colorSeguro(v, fallback){
+  const s = String(v || "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(s) ? s : fallback;
+}
+
+function catalogCfg(mapa, nombre){
+  return mapa.get(normalizarCatalogo(nombre)) || {
+    color_fondo:"#e5e7eb",
+    color_texto:"#111827"
+  };
+}
+
+function chipCatalogo(nombre, tipo){
+  const raw = String(nombre || "").trim();
+
+  if(!raw || raw === "—"){
+    return escapeHtml(raw || "—");
+  }
+
+  const mapa = tipo === "impresion" ? tiposImpresionMap : materialesMap;
+  const cfg = catalogCfg(mapa, raw);
+
+  return `<span class="catalog-pill" style="background:${escapeHtml(cfg.color_fondo)};color:${escapeHtml(cfg.color_texto)}">${escapeHtml(raw)}</span>`;
+}
+
+function opcionesCatalogoIguales(select, lista, placeholder){
+  if(!select) return true;
+
+  const actuales = [...select.options].map(o => o.value).join("|");
+  const nuevos = ["", ...lista.map(x => x.nombre)].join("|");
+
+  return actuales === nuevos && select.options[0]?.textContent === placeholder;
+}
+
+function pintarSelectCatalogo(select, mapa){
+  if(!select) return;
+
+  const cfg = catalogCfg(mapa, select.value);
+
+  if(select.value){
+    select.classList.add("catalog-select-colored");
+    select.style.background = cfg.color_fondo;
+    select.style.color = cfg.color_texto;
+    select.style.borderColor = cfg.color_fondo;
+  }else{
+    select.classList.remove("catalog-select-colored");
+    select.style.background = "";
+    select.style.color = "";
+    select.style.borderColor = "";
+  }
+}
+
+function pintarSelectsCatalogos(){
+  pintarSelectCatalogo(document.getElementById("q_material"), materialesMap);
+  pintarSelectCatalogo(document.getElementById("f_material"), materialesMap);
+  pintarSelectCatalogo(document.getElementById("q_impresion"), tiposImpresionMap);
+  pintarSelectCatalogo(document.getElementById("f_impresion"), tiposImpresionMap);
+}
+
+document.addEventListener("change", function(e){
+  if(e.target && ["q_material","f_material","q_impresion","f_impresion"].includes(e.target.id)){
+    pintarSelectsCatalogos();
+  }
+});
+
+
 // ===========================
 // MATERIALES
 // ===========================
 async function cargarMateriales() {
-  const { data, error } = await db()
+  let res = await db()
     .from("materiales")
-    .select("id, nombre, precio_base, activo")
+    .select("id, nombre, precio_base, activo, color_fondo, color_texto")
     .eq("activo", true)
     .order("nombre", { ascending: true });
 
-  if (error) {
-    console.error("Error cargando materiales:", error);
+  if (res.error) {
+    const msg = String(res.error.message || "");
+
+    if(msg.includes("color_fondo") || msg.includes("color_texto") || msg.includes("schema cache")){
+      res = await db()
+        .from("materiales")
+        .select("id, nombre, precio_base, activo")
+        .eq("activo", true)
+        .order("nombre", { ascending: true });
+    }
+  }
+
+  if (res.error) {
+    console.error("Error cargando materiales:", res.error);
     return;
   }
 
-  materialesDB = data || [];
+  materialesDB = res.data || [];
+
+  materialesMap = new Map(materialesDB.map(m => [
+    normalizarCatalogo(m.nombre),
+    {
+      color_fondo: colorSeguro(m.color_fondo, "#e5e7eb"),
+      color_texto: colorSeguro(m.color_texto, "#111827")
+    }
+  ]));
 
   const selects = [
     document.getElementById("q_material"),
@@ -388,37 +492,67 @@ async function cargarMateriales() {
 
     const valorActual = select.value;
 
-    select.innerHTML = `<option value="">Material</option>`;
+    /*
+      FIX v34:
+      Antes se vaciaba y se llenaba el select en cada recarga.
+      Eso generaba un flash visual en Material e Impresión.
+      Ahora solo lo reconstruimos si la lista realmente cambió.
+    */
+    if(!opcionesCatalogoIguales(select, materialesDB, "Material")){
+      select.innerHTML = `<option value="">Material</option>`;
 
-    materialesDB.forEach(m => {
-      const opt = document.createElement("option");
-      opt.value = m.nombre;
-      opt.textContent = m.nombre;
-      select.appendChild(opt);
-    });
+      materialesDB.forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m.nombre;
+        opt.textContent = m.nombre;
+        select.appendChild(opt);
+      });
+    }
 
     if (valorActual) select.value = valorActual;
   });
 
-  console.log("Materiales cargados:", materialesDB);
+  pintarSelectsCatalogos();
+
+  console.log("Materiales cargados sin flash:", materialesDB.length);
 }
 
 // ===========================
 // TIPOS DE IMPRESIÓN
 // ===========================
 async function cargarTiposImpresion() {
-  const { data, error } = await db()
+  let res = await db()
     .from("tipos_impresion")
-    .select("id, nombre, precio_extra, activo")
+    .select("id, nombre, precio_extra, activo, color_fondo, color_texto")
     .eq("activo", true)
     .order("nombre", { ascending: true });
 
-  if (error) {
-    console.error("Error cargando tipos de impresión:", error);
+  if (res.error) {
+    const msg = String(res.error.message || "");
+
+    if(msg.includes("color_fondo") || msg.includes("color_texto") || msg.includes("schema cache")){
+      res = await db()
+        .from("tipos_impresion")
+        .select("id, nombre, precio_extra, activo")
+        .eq("activo", true)
+        .order("nombre", { ascending: true });
+    }
+  }
+
+  if (res.error) {
+    console.error("Error cargando tipos de impresión:", res.error);
     return;
   }
 
-  tiposImpresionDB = data || [];
+  tiposImpresionDB = res.data || [];
+
+  tiposImpresionMap = new Map(tiposImpresionDB.map(t => [
+    normalizarCatalogo(t.nombre),
+    {
+      color_fondo: colorSeguro(t.color_fondo, "#e5e7eb"),
+      color_texto: colorSeguro(t.color_texto, "#111827")
+    }
+  ]));
 
   const selects = [
     document.getElementById("q_impresion"),
@@ -430,19 +564,23 @@ async function cargarTiposImpresion() {
 
     const valorActual = select.value;
 
-    select.innerHTML = `<option value="">Impresión</option>`;
+    if(!opcionesCatalogoIguales(select, tiposImpresionDB, "Impresión")){
+      select.innerHTML = `<option value="">Impresión</option>`;
 
-    tiposImpresionDB.forEach(t => {
-      const opt = document.createElement("option");
-      opt.value = t.nombre;
-      opt.textContent = t.nombre;
-      select.appendChild(opt);
-    });
+      tiposImpresionDB.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.nombre;
+        opt.textContent = t.nombre;
+        select.appendChild(opt);
+      });
+    }
 
     if (valorActual) select.value = valorActual;
   });
 
-  console.log("Tipos de impresión cargados:", tiposImpresionDB);
+  pintarSelectsCatalogos();
+
+  console.log("Tipos de impresión cargados sin flash:", tiposImpresionDB.length);
 }
 
 // ===========================
@@ -584,8 +722,8 @@ function pedidoFilaHTML(p){
         />
       </td>
 
-      <td>${escapeHtml(p.material)}</td>
-      <td>${escapeHtml(p.tipo_impresion)}</td>
+      <td>${chipCatalogo(p.material, "material")}</td>
+      <td>${chipCatalogo(p.tipo_impresion, "impresion")}</td>
       <td>${escapeHtml(p.precio)}</td>
 
       <td>
@@ -688,10 +826,6 @@ function renderPedidosPaginados(resetPage = false){
 
   if (typeof aplicarColoresEstadosYAbonos === "function") {
     setTimeout(aplicarColoresEstadosYAbonos, 30);
-  }
-
-  if (typeof refrescarColoresCatalogos === "function") {
-    setTimeout(refrescarColoresCatalogos, 80);
   }
 }
 
@@ -1220,6 +1354,18 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 
   try {
+    await cargarMateriales();
+  } catch (e) {
+    console.error("Error cargando materiales:", e);
+  }
+
+  try {
+    await cargarTiposImpresion();
+  } catch (e) {
+    console.error("Error cargando tipos de impresión:", e);
+  }
+
+  try {
     await cargarPedidos();
   } catch (e) {
     console.error("Error cargando pedidos al iniciar:", e);
@@ -1237,18 +1383,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
   } catch (e) {
     console.error("Error cargando operadores fallback:", e);
-  }
-
-  try {
-    await cargarMateriales();
-  } catch (e) {
-    console.error("Error cargando materiales:", e);
-  }
-
-  try {
-    await cargarTiposImpresion();
-  } catch (e) {
-    console.error("Error cargando tipos de impresión:", e);
   }
 
   aplicarOperadorSesion();

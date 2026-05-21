@@ -1757,7 +1757,7 @@ table{
 }
 
 </style>
-<link rel="stylesheet" href="css/menu.css?v=33">
+<link rel="stylesheet" href="css/menu.css?v=34">
 
 <style>
 /* =========================================================
@@ -1875,6 +1875,44 @@ table{
 /* Evita que el select cambie bruscamente de tamaño al actualizar clase de estado */
 .cell-select{
   min-width:98px!important;
+}
+</style>
+
+
+<style>
+/* =========================================================
+   CATÁLOGOS v34 · sin flash al pintar Material / Impresión
+========================================================= */
+.catalog-pill{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:999px!important;
+  padding:5px 9px!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  line-height:1!important;
+  min-width:54px!important;
+  min-height:24px!important;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)!important;
+  white-space:nowrap!important;
+  transition:none!important;
+  animation:none!important;
+}
+
+.catalog-select-colored{
+  font-weight:800!important;
+  border-radius:10px!important;
+  transition:none!important;
+  animation:none!important;
+}
+
+#q_material,
+#q_impresion,
+#f_material,
+#f_impresion{
+  transition:none!important;
+  animation:none!important;
 }
 </style>
 
@@ -2115,7 +2153,7 @@ table{
 <script src="js/supabase.js?v=24"></script>
 <script src="js/auth.js?v=24"></script>
 <script src="js/menu.js?v=11"></script>
-<script src="js/app.js?v=33"></script>
+<script src="js/app.js?v=34"></script>
 
 <script>
 window.bdClick = window.bdClick || function(e,id){
@@ -2893,123 +2931,12 @@ table{
 }
 </style>
 <script>
-/* V10 · aplica colores definidos en materiales.html a la tabla de pedidos.
-   Requiere SQL: color_fondo y color_texto en materiales y tipos_impresion. */
-(function(){
-  const defaultBg = '#e5e7eb';
-  const defaultTxt = '#111827';
-  let materialMap = new Map();
-  let impresionMap = new Map();
-
-  function norm(v){
-    return String(v || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-  }
-  function esc(v){
-    return String(v ?? '')
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
-      .replaceAll('"','&quot;')
-      .replaceAll("'",'&#039;');
-  }
-  function safeColor(v, def){
-    const s = String(v || '').trim();
-    return /^#[0-9a-fA-F]{6}$/.test(s) ? s : def;
-  }
-  async function cargarColoresCatalogos(){
-    if(!window.supabaseClient) return;
-    try{
-      const [mats, imps] = await Promise.all([
-        window.supabaseClient.from('materiales').select('nombre,color_fondo,color_texto,activo'),
-        window.supabaseClient.from('tipos_impresion').select('nombre,color_fondo,color_texto,activo')
-      ]);
-      if(!mats.error){
-        materialMap = new Map((mats.data || []).map(x => [norm(x.nombre), {
-          bg:safeColor(x.color_fondo, defaultBg),
-          txt:safeColor(x.color_texto, defaultTxt)
-        }]));
-      }else{
-        console.warn('No se pudieron cargar colores de materiales:', mats.error);
-      }
-      if(!imps.error){
-        impresionMap = new Map((imps.data || []).map(x => [norm(x.nombre), {
-          bg:safeColor(x.color_fondo, defaultBg),
-          txt:safeColor(x.color_texto, defaultTxt)
-        }]));
-      }else{
-        console.warn('No se pudieron cargar colores de impresión:', imps.error);
-      }
-      aplicarColoresCatalogos();
-      colorearSelectsCatalogos();
-    }catch(error){
-      console.warn('Error cargando colores de catálogos:', error);
-    }
-  }
-  function chip(texto, mapa){
-    const raw = String(texto || '').trim();
-    if(!raw || raw === '—') return esc(raw || '—');
-    const cfg = mapa.get(norm(raw)) || {bg:defaultBg, txt:defaultTxt};
-    return `<span class="catalog-pill" style="background:${esc(cfg.bg)};color:${esc(cfg.txt)}">${esc(raw)}</span>`;
-  }
-  function aplicarColoresCatalogos(){
-    const rows = document.querySelectorAll('#orderTableBody tr');
-    rows.forEach(tr => {
-      const tds = tr.children;
-      if(tds.length < 8) return;
-      const matCell = tds[6];
-      const impCell = tds[7];
-      if(matCell && !matCell.querySelector('select,input,textarea')){
-        const value = matCell.textContent.trim();
-        matCell.innerHTML = chip(value, materialMap);
-      }
-      if(impCell && !impCell.querySelector('select,input,textarea')){
-        const value = impCell.textContent.trim();
-        impCell.innerHTML = chip(value, impresionMap);
-      }
-    });
-  }
-  function colorearSelect(select, mapa){
-    if(!select) return;
-    const value = select.value || select.options?.[select.selectedIndex]?.textContent || '';
-    const cfg = mapa.get(norm(value));
-    if(cfg){
-      select.classList.add('catalog-select-colored');
-      select.style.background = cfg.bg;
-      select.style.color = cfg.txt;
-      select.style.borderColor = cfg.bg;
-    }else{
-      select.classList.remove('catalog-select-colored');
-      select.style.background = '';
-      select.style.color = '';
-      select.style.borderColor = '';
-    }
-  }
-  function colorearSelectsCatalogos(){
-    ['q_material','f_material'].forEach(id => colorearSelect(document.getElementById(id), materialMap));
-    ['q_impresion','f_impresion'].forEach(id => colorearSelect(document.getElementById(id), impresionMap));
-  }
-  document.addEventListener('change', function(e){
-    if(e.target && ['q_material','f_material','q_impresion','f_impresion'].includes(e.target.id)){
-      colorearSelectsCatalogos();
-    }
-  });
-  window.addEventListener('load', function(){
-    setTimeout(cargarColoresCatalogos, 700);
-    setTimeout(aplicarColoresCatalogos, 1400);
-    const body = document.getElementById('orderTableBody');
-    if(body && window.MutationObserver){
-      const obs = new MutationObserver(function(){
-        clearTimeout(window.__catalogColorTimer);
-        window.__catalogColorTimer = setTimeout(function(){
-          aplicarColoresCatalogos();
-          colorearSelectsCatalogos();
-        }, 80);
-      });
-      obs.observe(body, {childList:true, subtree:true});
-    }
-  });
-  window.refrescarColoresCatalogos = cargarColoresCatalogos;
-})();
+/* =========================================================
+   CATÁLOGOS v34
+   La pintura de Material e Impresión ahora ocurre directamente en js/app.js
+   antes de renderizar la tabla. Se eliminó el repaint posterior que causaba flash.
+========================================================= */
+window.refrescarColoresCatalogos = window.refrescarColoresCatalogos || function(){};
 </script>
 
 </body>
