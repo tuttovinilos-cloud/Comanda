@@ -15,6 +15,68 @@ let data = {
   items: [{ kind: "item", desc: "", qty: 1, price: 0 }]
 };
 
+
+/* =========================================================
+   PATCH v34 · compatibilidad clientes/cotizaciones
+========================================================= */
+function pickClienteField(c, campo){
+  if(!c) return "";
+  if(campo === "rif") return c.rif_cedula || c.rif || c.cedula_rif || c.identificacion || "";
+  if(campo === "correo") return c.correo || c.email || "";
+  if(campo === "direccion") return c.direccion || c.address || "";
+  return c[campo] || "";
+}
+
+function buildClientePayload(form, existente=null, incluirActivo=true){
+  const base = {
+    nombre:nombreBonito(form.cliente),
+    tipo_cliente: existente?.tipo_cliente || "Cliente Básico",
+    telefono: form.telefono || "",
+    correo: form.email || "",
+    notas: existente?.notas || ""
+  };
+
+  // Estas columnas pueden existir o no. Se prueban con fallback.
+  base.rif_cedula = form.rif || "";
+  base.direccion = form.direccion || "";
+
+  if(incluirActivo) base.activo = true;
+
+  return base;
+}
+
+function limpiarPayloadClienteParaFallback(payload, errorMsg){
+  const p = {...payload};
+  const msg = String(errorMsg || "").toLowerCase();
+
+  if(msg.includes("activo") || msg.includes("schema cache")) delete p.activo;
+  if(msg.includes("rif_cedula") || msg.includes("schema cache")) delete p.rif_cedula;
+  if(msg.includes("direccion") || msg.includes("schema cache")) delete p.direccion;
+  if(msg.includes("notas") || msg.includes("schema cache")) delete p.notas;
+
+  return p;
+}
+
+async function ejecutarClienteConFallback(queryFactory, payload){
+  let res = await queryFactory(payload);
+
+  if(res.error){
+    const fallback = limpiarPayloadClienteParaFallback(payload, res.error.message || "");
+    const cambio = JSON.stringify(fallback) !== JSON.stringify(payload);
+
+    if(cambio){
+      res = await queryFactory(fallback);
+    }
+  }
+
+  return res;
+}
+
+function estadoTextoCotizacion(c){
+  return c.aprobado === true ? "Aprobada" : "Pendiente";
+}
+
+
 function db(){ return window.supabaseClient; }
 
 function validarSupabase(){
@@ -427,28 +489,36 @@ function render(){
 async function cargarClientesCotizador(){
   if(!validarSupabase()) return;
 
+  /*
+    FIX v34:
+    La tabla clientes ha cambiado varias veces. Primero intentamos traer todos
+    los campos útiles. Si Supabase rechaza algún campo por schema cache,
+    caemos a un select básico compatible.
+  */
   let res = await db()
     .from("clientes")
-    .select("id,nombre,rif_cedula,telefono,correo,direccion,tipo_cliente,notas,activo")
+    .select("id,nombre,tipo_cliente,telefono,correo,email,rif_cedula,rif,direccion,notas,activo")
     .order("nombre", { ascending:true });
 
   if(res.error){
-    console.warn("Falló cargando clientes con activo. Intentando sin activo:", res.error);
+    console.warn("Clientes select completo falló. Probando básico:", res.error);
 
     res = await db()
       .from("clientes")
-      .select("id,nombre,rif_cedula,telefono,correo,direccion,tipo_cliente,notas")
+      .select("id,nombre,tipo_cliente,telefono,correo,notas")
       .order("nombre", { ascending:true });
   }
 
   if(res.error){
     console.error("Error cargando clientes:", res.error);
     showToast("Error cargando clientes", "err");
+    clientesDB = [];
+    renderClientesDatalist();
     return;
   }
 
   clientesDB = res.data || [];
-  console.log("Clientes cargados:", clientesDB.length, clientesDB);
+  console.log("Clientes cargados en cotizador:", clientesDB.length);
 
   renderClientesDatalist();
 }
@@ -475,10 +545,10 @@ function buscarClientePorNombre(nombre){
 function llenarDatosCliente(cliente){
   if(!cliente) return;
 
-  $("rif").value = cliente.rif_cedula || "";
+  $("rif").value = pickClienteField(cliente, "rif");
   $("telefono").value = cliente.telefono || "";
-  $("email").value = cliente.correo || "";
-  $("direccion").value = cliente.direccion || "";
+  $("email").value = pickClienteField(cliente, "correo");
+  $("direccion").value = pickClienteField(cliente, "direccion");
 
   const mini = $("clienteMini");
   if(mini){
@@ -509,66 +579,37 @@ async function guardarOActualizarClienteDesdeCotizacion(){
   if(!nombre) throw new Error("Coloca el nombre del cliente.");
 
   const existente = buscarClientePorNombre(nombre);
-
-  const datosClienteBase = {
-    nombre,
-    rif_cedula: form.rif || "",
-    telefono: form.telefono || "",
-    correo: form.email || "",
-    direccion: form.direccion || "",
-    tipo_cliente: existente?.tipo_cliente || "Cliente Básico"
-  };
-
-  const datosClienteConActivo = {
-    ...datosClienteBase,
-    activo: true
-  };
+  const payload = buildClientePayload({...form, cliente:nombre}, existente, true);
 
   if(existente){
-    let res = await db()
-      .from("clientes")
-      .update(datosClienteConActivo)
-      .eq("id", existente.id)
-      .select()
-      .single();
-
-    if(res.error){
-      const msg = String(res.error.message || "");
-      if(msg.includes("activo") || msg.includes("schema cache")){
-        res = await db()
-          .from("clientes")
-          .update(datosClienteBase)
-          .eq("id", existente.id)
-          .select()
-          .single();
-      }
-    }
+    const res = await ejecutarClienteConFallback(
+      datos => db()
+        .from("clientes")
+        .update(datos)
+        .eq("id", existente.id)
+        .select()
+        .single(),
+      payload
+    );
 
     if(res.error) throw res.error;
 
     const idx = clientesDB.findIndex(c => Number(c.id) === Number(existente.id));
-    if(idx >= 0) clientesDB[idx] = res.data;
+    if(idx >= 0) clientesDB[idx] = { ...clientesDB[idx], ...res.data };
+    else clientesDB.push(res.data);
 
     renderClientesDatalist();
     return res.data;
   }
 
-  let res = await db()
-    .from("clientes")
-    .insert([datosClienteConActivo])
-    .select()
-    .single();
-
-  if(res.error){
-    const msg = String(res.error.message || "");
-    if(msg.includes("activo") || msg.includes("schema cache")){
-      res = await db()
-        .from("clientes")
-        .insert([datosClienteBase])
-        .select()
-        .single();
-    }
-  }
+  const res = await ejecutarClienteConFallback(
+    datos => db()
+      .from("clientes")
+      .insert([datos])
+      .select()
+      .single(),
+    payload
+  );
 
   if(res.error) throw res.error;
 
@@ -916,8 +957,8 @@ async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null){
     responsable: form.responsable,
     vence: form.vence || null,
     items:{
-      version:3,
-      modo:"texto_json_mas_pdf_base64",
+      version:4,
+      modo:"texto_json_con_pdf_opcional",
       rows:snapshot.items,
       footer:snapshot.footer,
       iva_aplicado:form.iva
@@ -930,43 +971,56 @@ async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null){
     pdf_url:""
   };
 
-  const registroConPdf = {
+  const variantes = [];
+
+  variantes.push({
     ...registroBase,
     pdf_base64: pdfInfo?.base64 || "",
     pdf_mime: pdfInfo?.mime || "application/pdf",
     pdf_nombre: pdfInfo?.nombre || ""
+  });
+
+  variantes.push({
+    ...registroBase,
+    pdf_mime: pdfInfo?.mime || "application/pdf",
+    pdf_nombre: pdfInfo?.nombre || ""
+  });
+
+  variantes.push({...registroBase});
+
+  // Fallback adicional si faltan columnas de cliente/contacto en cotizaciones.
+  const basico = {
+    fecha:registroBase.fecha,
+    numero:registroBase.numero,
+    tipo_documento:registroBase.tipo_documento,
+    cliente:registroBase.cliente,
+    responsable:registroBase.responsable,
+    items:registroBase.items,
+    notas:registroBase.notas,
+    subtotal:registroBase.subtotal,
+    iva:registroBase.iva,
+    total:registroBase.total
   };
+  variantes.push(basico);
 
-  let res = await db()
-    .from("cotizaciones")
-    .insert([registroConPdf])
-    .select()
-    .single();
+  let ultimoError = null;
 
-  if(res.error){
-    const msg = String(res.error.message || "");
-    const faltaColumnasPdf =
-      msg.includes("pdf_base64") ||
-      msg.includes("pdf_mime") ||
-      msg.includes("pdf_nombre") ||
-      msg.includes("schema cache");
-
-    if(!faltaColumnasPdf) throw res.error;
-
-    console.warn("Faltan columnas PDF. Guardando solo texto:", res.error);
-
-    res = await db()
+  for(const payload of variantes){
+    const { data, error } = await db()
       .from("cotizaciones")
-      .insert([registroBase])
+      .insert([payload])
       .select()
       .single();
 
-    if(res.error) throw res.error;
+    if(!error){
+      return data;
+    }
 
-    showToast("Guardó texto. Falta SQL de columnas PDF.", "warn");
+    ultimoError = error;
+    console.warn("Falló variante guardando cotización:", error.message || error);
   }
 
-  return res.data;
+  throw ultimoError || new Error("No se pudo guardar la cotización.");
 }
 
 async function createPDF(){
@@ -999,7 +1053,13 @@ async function createPDF(){
 
     const pdfBlob = doc.output("blob");
     const pdfNombre = nombreArchivoPDF(snapshot);
-    const pdfBase64 = await blobToBase64(pdfBlob);
+
+    let pdfBase64 = "";
+    try{
+      pdfBase64 = await blobToBase64(pdfBlob);
+    }catch(e){
+      console.warn("No se pudo convertir PDF a base64, se guardará texto:", e);
+    }
 
     await guardarRegistroCotizacionTexto(clienteGuardado,{
       base64:pdfBase64,
@@ -1008,17 +1068,23 @@ async function createPDF(){
     });
 
     doc.save(pdfNombre);
+
     showToast("Cotización guardada", "ok");
 
     await cargarCotizacionesPrevias();
     await refrescarNumeroPorFecha();
 
+    const tabPrevias = $("tabPrevias");
+    if(tabPrevias) tabPrevias.click();
+
   }catch(err){
-    console.error(err);
-    showToast("Error: " + (err.message || err), "err");
+    console.error("Error guardando cotización:", err);
+    showToast("Error guardando: " + (err.message || err), "err");
   }finally{
-    btn.classList.remove("loading");
-    btn.disabled = false;
+    if(btn){
+      btn.classList.remove("loading");
+      btn.disabled = false;
+    }
   }
 }
 
@@ -1074,7 +1140,7 @@ function normalizarSnapshotDesdeRegistro(reg){
   };
 }
 
-async function cargarCotizacionesPrevias(){
+async async function cargarCotizacionesPrevias(){
   if(!validarSupabase()) return;
 
   const body = $("cotizacionesBody");
@@ -1083,40 +1149,39 @@ async function cargarCotizacionesPrevias(){
     body.innerHTML = `<tr><td colspan="8" class="empty">Cargando...</td></tr>`;
   }
 
-  const selectConAprobacion = `
-    id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
-    responsable,vence,items,notas,subtotal,iva,total,pdf_url,pdf_path,pdf_nombre,
-    pdf_mime,aprobado,aprobado_at,aprobado_por,created_at
-  `;
+  const selects = [
+    `id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
+     responsable,vence,items,notas,subtotal,iva,total,pdf_url,pdf_path,pdf_nombre,
+     pdf_mime,aprobado,aprobado_at,aprobado_por,created_at`,
 
-  const selectBasico = `
-    id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
-    responsable,vence,items,notas,subtotal,iva,total,pdf_url,pdf_path,pdf_nombre,
-    pdf_mime,created_at
-  `;
+    `id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
+     responsable,vence,items,notas,subtotal,iva,total,pdf_url,pdf_path,pdf_nombre,
+     pdf_mime,created_at`,
 
-  let res = await db()
-    .from("cotizaciones")
-    .select(selectConAprobacion)
-    .order("created_at",{ ascending:false })
-    .limit(150);
+    `id,fecha,numero,tipo_documento,cliente,responsable,items,notas,subtotal,iva,total,created_at`,
 
-  if(res.error){
-    const msg = String(res.error.message || "");
-    if(msg.includes("aprobado") || msg.includes("schema cache")){
-      res = await db()
-        .from("cotizaciones")
-        .select(selectBasico)
-        .order("created_at",{ ascending:false })
-        .limit(150);
-    }
+    `*`
+  ];
+
+  let res = null;
+
+  for(const sel of selects){
+    res = await db()
+      .from("cotizaciones")
+      .select(sel)
+      .order("created_at",{ ascending:false })
+      .limit(200);
+
+    if(!res.error) break;
+
+    console.warn("Falló select cotizaciones previas, probando fallback:", res.error.message || res.error);
   }
 
   if(res.error){
     console.error("Error cargando cotizaciones:", res.error);
 
     if(body){
-      body.innerHTML = `<tr><td colspan="8" class="empty">Error cargando cotizaciones</td></tr>`;
+      body.innerHTML = `<tr><td colspan="8" class="empty">Error cargando cotizaciones: ${html(res.error.message || "")}</td></tr>`;
     }
 
     showToast("Error cargando cotizaciones","err");
@@ -1150,7 +1215,7 @@ function renderCotizacionesPrevias(){
         c.telefono,
         c.total,
         c.tipo_documento,
-        c.aprobado ? "aprobada aprobado" : "pendiente"
+        estadoTextoCotizacion(c)
       ].join(" ");
 
       return normalizar(texto).includes(q);
@@ -1228,7 +1293,12 @@ async function toggleAprobadoCotizacion(id){
 
   if(error){
     console.error(error);
-    showToast("No se pudo actualizar aprobación","err");
+    const msg = String(error.message || "");
+    if(msg.includes("aprobado") || msg.includes("schema cache")){
+      showToast("Faltan columnas de aprobación en Supabase", "err");
+    }else{
+      showToast("No se pudo actualizar aprobación","err");
+    }
     return;
   }
 
