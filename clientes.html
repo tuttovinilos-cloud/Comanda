@@ -1203,6 +1203,8 @@ function normalizar(valor){
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -1349,11 +1351,11 @@ function filtrarClientes(){
     if(texto && !contenido.includes(texto)) return false;
     if(tipoFiltro && c.tipo_cliente !== tipoFiltro) return false;
 
-    // Por defecto NO mostramos clientes inactivos.
-    // Esto evita que un duplicado quede visible cuando Supabase no permite borrarlo físicamente.
+    // Por defecto NO se muestran clientes inactivos.
+    // Esto evita que un cliente fusionado quede visible si Supabase no permite borrarlo físicamente.
     if(!estadoFiltro && c.activo === false) return false;
-    if(estadoFiltro === "activo" && c.activo !== true) return false;
-    if(estadoFiltro === "inactivo" && c.activo === true) return false;
+    if(estadoFiltro === "activo" && c.activo === false) return false;
+    if(estadoFiltro === "inactivo" && c.activo !== false) return false;
 
     return true;
   });
@@ -1711,95 +1713,78 @@ function unirNotas(notaA, notaB){
   return `${a}\n${b}`;
 }
 
-function valoresUnicosCampo(clientes, campo){
-  const mapa = new Map();
-
-  clientes.forEach(c => {
-    const valor = String(c?.[campo] || "").trim();
-    if(!valor) return;
-
-    const clave = normalizar(valor);
-    if(!mapa.has(clave)) mapa.set(clave, valor);
-  });
-
-  return [...mapa.values()];
+function limpiarTelefono(valor){
+  return String(valor || "").replace(/[^0-9+]/g, "").trim();
 }
 
-function elegirValorFusion(campo, etiqueta, clientes, nombreFinal){
-  const valores = valoresUnicosCampo(clientes, campo);
+function limpiarCorreo(valor){
+  return String(valor || "").trim().toLowerCase();
+}
 
-  if(valores.length === 0) return "";
-  if(valores.length === 1) return valores[0];
+function escogerEntreDos(campo, valorA, clienteA, valorB, clienteB){
+  const a = String(valorA || "").trim();
+  const b = String(valorB || "").trim();
 
-  const opciones = valores.map((v,i) => `${i + 1}) ${v}`).join('\n');
-  let respuesta = prompt(
-    `El cliente "${nombreFinal}" tiene varios ${etiqueta}:\n\n${opciones}\n\nEscribe el número del ${etiqueta} que deseas conservar.`,
+  if(!a) return b;
+  if(!b) return a;
+
+  const na = campo === "teléfono" ? limpiarTelefono(a) : limpiarCorreo(a);
+  const nb = campo === "teléfono" ? limpiarTelefono(b) : limpiarCorreo(b);
+
+  if(na && nb && na === nb) return a;
+
+  const respuesta = prompt(
+    `Hay 2 ${campo}s diferentes.\n\n` +
+    `1) ${clienteA || "Cliente principal"}: ${a}\n` +
+    `2) ${clienteB || "Cliente fusionado"}: ${b}\n\n` +
+    `Escribe 1 o 2 para elegir cuál conservar:`,
     "1"
   );
 
-  if(respuesta === null) respuesta = "1";
-
-  const indice = Number(String(respuesta).trim()) - 1;
-  if(indice >= 0 && indice < valores.length) return valores[indice];
-
-  alert(`Opción inválida. Se conservará el primer ${etiqueta}.`);
-  return valores[0];
+  return String(respuesta).trim() === "2" ? b : a;
 }
 
-function fusionarNotasClientes(clientes){
-  const notas = valoresUnicosCampo(clientes, "notas");
-  return notas.join('\n');
-}
+function mezclarDatosCliente(base, nuevo, preguntarConflictos = false){
+  const telefono = preguntarConflictos
+    ? escogerEntreDos("teléfono", base.telefono, base.nombre, nuevo.telefono, nuevo.nombre)
+    : (base.telefono || nuevo.telefono || "");
 
-function elegirTipoClienteFusion(clientes){
-  // Prioridad simple: conserva el tipo del cliente con más datos.
-  const ordenados = clientes
-    .slice()
-    .sort((a,b) => cantidadDatosCliente(b) - cantidadDatosCliente(a));
+  const correo = preguntarConflictos
+    ? escogerEntreDos("correo", base.correo, base.nombre, nuevo.correo, nuevo.nombre)
+    : (base.correo || nuevo.correo || "");
 
-  return ordenados.find(c => c?.tipo_cliente)?.tipo_cliente || "Cliente Standar";
-}
-
-function construirDatosFusionados(clientes, nombreFinal){
   return {
-    nombre: nombreFinal,
-    tipo_cliente: elegirTipoClienteFusion(clientes),
-    telefono: elegirValorFusion("telefono", "teléfonos", clientes, nombreFinal),
-    correo: elegirValorFusion("correo", "correos", clientes, nombreFinal),
-    notas: fusionarNotasClientes(clientes),
+    nombre: nuevo.nombre || base.nombre || "",
+    tipo_cliente: nuevo.tipo_cliente || base.tipo_cliente || "Cliente Standar",
+    telefono,
+    correo,
+    notas: unirNotas(base.notas, nuevo.notas),
     activo: true
   };
 }
 
-function mezclarDatosCliente(base, nuevo){
-  return {
-    nombre: nuevo.nombre || base.nombre || "",
-    tipo_cliente: nuevo.tipo_cliente || base.tipo_cliente || "Cliente Standar",
-    telefono: nuevo.telefono || base.telefono || "",
-    correo: nuevo.correo || base.correo || "",
-    notas: unirNotas(base.notas, nuevo.notas),
-    activo: typeof nuevo.activo === "boolean" ? nuevo.activo : base.activo !== false
-  };
-}
-
-async function eliminarUOcultarClientes(ids){
-  if(!ids || !ids.length) return;
+async function eliminarClienteFisicoOOcultar(id, nombreDestino = ""){
+  if(!id) return;
 
   const { error:deleteError } = await db()
-    .from('clientes')
+    .from("clientes")
     .delete()
-    .in('id', ids);
+    .eq("id", id);
 
-  if(deleteError){
-    console.warn('No se pudo borrar físicamente. Se marcarán como inactivos:', deleteError);
+  if(!deleteError) return;
 
-    const { error:updateError } = await db()
-      .from('clientes')
-      .update({ activo:false })
-      .in('id', ids);
+  console.warn("No se pudo borrar cliente. Se marcará como inactivo:", deleteError);
 
-    if(updateError) throw updateError;
-  }
+  const nota = nombreDestino
+    ? `Cliente fusionado con: ${nombreDestino}`
+    : "Cliente eliminado/desactivado";
+
+  const { error:updateError } = await db()
+    .from("clientes")
+    .update({ activo:false, notas: nota })
+    .eq("id", id);
+
+  if(updateError) throw updateError;
 }
 
 async function actualizarPedidosDeCliente(nombreAnterior, nombreNuevo){
@@ -1834,13 +1819,10 @@ async function fusionarDuplicadosExactosCliente(nombreFinal, idPrincipal){
 
   for(const dup of duplicados){
     await actualizarPedidosDeCliente(dup.nombre, nombreFinal);
+    await eliminarClienteFisicoOOcultar(dup.id, nombreFinal);
   }
 
-  const idsEliminar = duplicados.map(c => c.id);
-
-  await eliminarUOcultarClientes(idsEliminar);
-
-  return idsEliminar.length;
+  return duplicados.length;
 }
 
 async function guardarClienteModal(){
@@ -1876,7 +1858,7 @@ async function guardarClienteModal(){
 
     if(duplicado){
       // Si el nombre nuevo ya existe, NO crea otro registro. Fusiona en el cliente existente.
-      const datosFusionados = mezclarDatosCliente(duplicado, datos);
+      const datosFusionados = mezclarDatosCliente(duplicado, datos, true);
 
       const { error:updateError } = await db()
         .from("clientes")
@@ -1888,7 +1870,7 @@ async function guardarClienteModal(){
       if(clienteOriginal){
         await actualizarPedidosDeCliente(clienteOriginal.nombre, nombre);
 
-        await eliminarUOcultarClientes([clienteOriginal.id]);
+        await eliminarClienteFisicoOOcultar(clienteOriginal.id, nombre);
       }
 
       await actualizarPedidosDeCliente(duplicado.nombre, nombre);
@@ -2005,9 +1987,21 @@ async function fusionarClientesSeleccionados(){
       await actualizarPedidosDeCliente(c.nombre, nombreFinal);
     }
 
-    // Mezclar datos inteligentemente.
-    // Si hay 2 teléfonos o 2 correos distintos, pregunta cuál conservar.
-    const datosFusionados = construirDatosFusionados(todosAFusionar, nombreFinal);
+    // Mezclar datos: conserva teléfono/correo/notas si existen.
+    let datosFusionados = {
+      nombre:nombreFinal,
+      tipo_cliente:'Cliente Standar',
+      telefono:'',
+      correo:'',
+      notas:'',
+      activo:true
+    };
+
+    for(const c of todosAFusionar){
+      datosFusionados = mezclarDatosCliente(datosFusionados, c, true);
+    }
+
+    datosFusionados.nombre = nombreFinal;
 
     const { error:updateError } = await db()
       .from('clientes')
@@ -2021,7 +2015,9 @@ async function fusionarClientesSeleccionados(){
       .map(c => c.id);
 
     if(idsEliminar.length){
-      await eliminarUOcultarClientes(idsEliminar);
+      for(const idEliminar of idsEliminar){
+        await eliminarClienteFisicoOOcultar(idEliminar, nombreFinal);
+      }
     }
 
     // Limpieza extra: elimina duplicados exactos que hayan quedado con el mismo nombre.
@@ -2053,6 +2049,8 @@ function cantidadDatosCliente(c){
 }
 
 async function eliminarCliente(id){
+  if(!validarSupabase()) return;
+
   const cliente = clientesDB.find(c => Number(c.id) === Number(id));
 
   if(!cliente){
@@ -2064,26 +2062,27 @@ async function eliminarCliente(id){
 
   if(pedidos > 0){
     alert(
-      `No puedes eliminar este cliente.\n\n` +
+      `No puedes eliminar este cliente todavía.\n\n` +
       `Cliente: ${cliente.nombre}\n` +
-      `Tiene ${pedidos} pedido(s) asociado(s).\n\n` +
-      `Primero debes fusionarlo con otro cliente para no dejar pedidos huérfanos.`
+      `Pedidos asociados: ${pedidos}\n\n` +
+      `Primero debes fusionarlo con otro cliente o cambiar esos pedidos a otro nombre.`
     );
     return;
   }
 
   const confirmar = confirm(
-    `¿Seguro que deseas eliminar este cliente?\n\nCliente: ${cliente.nombre}\n\nEsta acción no se puede deshacer.`
+    `¿Seguro que deseas eliminar este cliente?\n\n` +
+    `Cliente: ${cliente.nombre}\n\n` +
+    `Esta acción no se puede deshacer.`
   );
 
   if(!confirmar) return;
 
   try{
-    await eliminarUOcultarClientes([id]);
-
+    await eliminarClienteFisicoOOcultar(id);
+    await cargarPedidos();
     await cargarClientes();
     filtrarClientes();
-
     mostrarToast("Cliente eliminado");
   }catch(error){
     console.error("Error eliminando cliente:", error);
