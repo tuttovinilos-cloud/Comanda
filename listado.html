@@ -65,7 +65,7 @@ body{
 .page{max-width:620px;margin:0 auto}
 .listado-head{
   position:sticky;
-  top:64px;
+  top:var(--listado-head-top,64px);
   z-index:35;
   background:var(--bg);
   padding:12px 14px 10px;
@@ -157,7 +157,6 @@ input,select,textarea{
   background:#fff;
 }
 textarea{min-height:72px;resize:vertical}
-.form-help{display:block;margin-top:5px;color:var(--muted);font-size:10px;font-weight:800;line-height:1.35}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .check-row{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:13px;font-weight:800}
 .check-row input{width:auto}
@@ -314,9 +313,86 @@ textarea{min-height:72px;resize:vertical}
   .top-inner{align-items:flex-start;flex-wrap:wrap}
   .logo{padding-top:6px}
   .header-tabs{width:100%;flex-basis:100%}
-  .listado-head{top:58px}
+  .listado-head{top:var(--listado-head-top,58px)}
 }
 @media(max-width:390px){.row2{grid-template-columns:1fr}.page-title{font-size:16px}.price{font-size:18px}}
+
+
+/* =========================================================
+   FIX MENU GLOBAL EN LISTADO
+   - Usa el mismo #authMenu / .tab-btn de menu.js
+   - En escritorio no se corta: permite varias filas
+   - En móvil aparece botón ☰ Menú y el menú se despliega
+========================================================= */
+.header{overflow:visible}
+.top-inner{flex-wrap:wrap;align-items:center;overflow:visible}
+.header-tabs{
+  min-width:0;
+  flex:1 1 540px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+  overflow:visible;
+  max-height:none;
+}
+.header-tabs .tab-btn,
+.header-tabs a.tab-btn,
+.header-tabs button.tab-btn{
+  flex:0 0 auto;
+  white-space:nowrap;
+  max-width:none;
+}
+.mobile-menu-btn{
+  display:none;
+  border:1px solid rgba(255,255,255,.28);
+  background:rgba(255,255,255,.14);
+  color:#fff;
+  border-radius:999px;
+  padding:9px 12px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  margin-left:auto;
+}
+
+@media(max-width:760px){
+  .top-inner{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    align-items:center;
+    gap:8px;
+  }
+  .logo{padding-top:0}
+  .mobile-menu-btn{
+    display:inline-flex;
+    justify-self:end;
+    align-items:center;
+    justify-content:center;
+  }
+  .header-tabs{
+    grid-column:1 / -1;
+    width:100%;
+    flex-basis:100%;
+    display:none;
+    flex-direction:column;
+    align-items:stretch;
+    gap:7px;
+    overflow:visible;
+    padding-top:8px;
+  }
+  .header-tabs.open{display:flex}
+  .header-tabs .tab-btn,
+  .header-tabs a.tab-btn,
+  .header-tabs button.tab-btn,
+  .header-tabs .menu-status{
+    width:100%;
+    justify-content:center;
+    text-align:center;
+  }
+  .listado-head{top:var(--listado-head-top,58px)}
+}
+
 </style>
 </head>
 
@@ -361,13 +437,8 @@ textarea{min-height:72px;resize:vertical}
 
       <div>
         <label>Categoría</label>
-        <select id="fCategoriaSelect" onchange="onCategoriaSelectChange()">
-          <option value="">Seleccionar categoría...</option>
-          <option value="__nueva__">+ NUEVA CATEGORÍA</option>
-        </select>
-        <input id="fCategoria" list="categoriasList" placeholder="ESCRIBE NUEVA CATEGORÍA" style="display:none;margin-top:8px;text-transform:uppercase" oninput="forceUpperInput(this)">
+        <input id="fCategoria" list="categoriasList" placeholder="Ej: Vinil adhesivo">
         <datalist id="categoriasList"></datalist>
-        <small class="form-help">Las categorías se guardan en MAYÚSCULAS para evitar duplicados por mayúsculas/minúsculas.</small>
       </div>
 
       <div class="row2">
@@ -505,72 +576,6 @@ function normalize(text){
     .trim();
 }
 
-function toUpperClean(text){
-  return String(text || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g,'')
-    .replace(/\s+/g,' ')
-    .trim()
-    .toUpperCase();
-}
-
-function forceUpperInput(el){
-  if(!el) return;
-  const pos = el.selectionStart;
-  el.value = toUpperClean(el.value);
-  try{ el.setSelectionRange(pos, pos); }catch(e){}
-}
-
-function getCategoriaFormValue(){
-  const select = document.getElementById('fCategoriaSelect');
-  const input = document.getElementById('fCategoria');
-
-  if(select && select.value && select.value !== '__nueva__'){
-    return toUpperClean(select.value);
-  }
-
-  return toUpperClean(input ? input.value : '');
-}
-
-function onCategoriaSelectChange(){
-  const select = document.getElementById('fCategoriaSelect');
-  const input = document.getElementById('fCategoria');
-  if(!select || !input) return;
-
-  if(select.value === '__nueva__'){
-    input.style.display = 'block';
-    input.value = '';
-    setTimeout(() => input.focus(), 30);
-  }else{
-    input.style.display = 'none';
-    input.value = select.value ? toUpperClean(select.value) : '';
-  }
-}
-
-function setCategoriaFormValue(nombre){
-  const select = document.getElementById('fCategoriaSelect');
-  const input = document.getElementById('fCategoria');
-  const value = toUpperClean(nombre);
-
-  if(!select || !input) return;
-
-  const exists = Array.from(select.options).some(opt => opt.value === value);
-
-  if(value && exists){
-    select.value = value;
-    input.style.display = 'none';
-    input.value = value;
-  }else if(value){
-    select.value = '__nueva__';
-    input.style.display = 'block';
-    input.value = value;
-  }else{
-    select.value = '';
-    input.style.display = 'none';
-    input.value = '';
-  }
-}
-
 function setStatus(msg, type){
   const box = document.getElementById('statusBox');
   if(!box) return;
@@ -613,7 +618,7 @@ async function loadFromSupabase(){
       id: row.id,
       nombre: row.nombre || '',
       categoria_id: row.categoria_id,
-      categoria: toUpperClean(row.categoria?.nombre || 'SIN CATEGORÍA'),
+      categoria: row.categoria?.nombre || 'Sin categoría',
       precio: Number(row.precio || 0),
       unidad: row.unidad || 'm²',
       cantidadMinima: Number(row.cantidad_minima || 0),
@@ -651,34 +656,13 @@ async function loadFromSupabase(){
 
 function renderCategoriasDatalist(){
   const list = document.getElementById('categoriasList');
-  const select = document.getElementById('fCategoriaSelect');
-
-  const nombres = [...new Set(
-    categorias
-      .map(c => toUpperClean(c.nombre))
-      .filter(Boolean)
-  )].sort((a,b) => a.localeCompare(b,'es'));
-
-  if(list){
-    list.innerHTML = nombres.map(nombre => `<option value="${escapeHTML(nombre)}"></option>`).join('');
-  }
-
-  if(select){
-    const current = select.value;
-    select.innerHTML = `
-      <option value="">Seleccionar categoría...</option>
-      ${nombres.map(nombre => `<option value="${escapeHTML(nombre)}">${escapeHTML(nombre)}</option>`).join('')}
-      <option value="__nueva__">+ NUEVA CATEGORÍA</option>
-    `;
-
-    if(current && nombres.includes(current)){
-      select.value = current;
-    }
-  }
+  if(!list) return;
+  list.innerHTML = categorias.map(c => `<option value="${escapeHTML(c.nombre)}"></option>`).join('');
 }
+
 async function getOrCreateCategoria(nombre){
   const db = sb();
-  const cleanName = toUpperClean(nombre);
+  const cleanName = String(nombre || '').trim();
   const key = normalize(cleanName);
 
   if(!cleanName) throw new Error('Categoría vacía');
@@ -931,7 +915,7 @@ async function saveItem(){
     const db = await waitForSupabase();
 
     const nombre = document.getElementById('fNombre').value.trim();
-    const categoriaNombre = getCategoriaFormValue();
+    const categoriaNombre = document.getElementById('fCategoria').value.trim();
 
     if(!nombre){ alert('Coloca el nombre del producto.'); return; }
     if(!categoriaNombre){ alert('Coloca una categoría.'); return; }
@@ -1022,7 +1006,7 @@ function editItem(id){
   setMode('admin');
 
   document.getElementById('fNombre').value = item.nombre || '';
-  setCategoriaFormValue(item.categoria || '');
+  document.getElementById('fCategoria').value = item.categoria || '';
   document.getElementById('fPrecio').value = item.precio || '';
   document.getElementById('fUnidad').value = item.unidad || 'm²';
   document.getElementById('fMinimo').value = item.cantidadMinima || '';
@@ -1044,7 +1028,6 @@ function resetForm(){
     document.getElementById(id).value = '';
   });
 
-  setCategoriaFormValue('');
   document.getElementById('fUnidad').value = 'm²';
   document.getElementById('fTipoMinimo').value = 'm²';
   document.getElementById('exUnidad').value = 'm²';
@@ -1148,6 +1131,21 @@ function escapeJS(v){
     .replaceAll('\n',' ');
 }
 
+
+function updateListadoStickyTop(){
+  const header = document.querySelector('.header');
+  if(!header) return;
+  document.documentElement.style.setProperty('--listado-head-top', header.offsetHeight + 'px');
+}
+
+function hookListadoMenuButton(){
+  const btn = document.getElementById('mobileMenuBtn');
+  if(!btn || btn.dataset.listadoHooked === '1') return;
+  btn.dataset.listadoHooked = '1';
+  btn.addEventListener('click', () => setTimeout(updateListadoStickyTop, 60));
+}
+
+
 document.getElementById('search').addEventListener('input', e => {
   query = normalize(e.target.value);
   document.getElementById('clearBtn').classList.toggle('show', !!query);
@@ -1156,7 +1154,6 @@ document.getElementById('search').addEventListener('input', e => {
 
 document.addEventListener('DOMContentLoaded', () => {
   renderExtrasAdmin();
-  renderCategoriasDatalist();
   loadFromSupabase();
 });
 </script>
