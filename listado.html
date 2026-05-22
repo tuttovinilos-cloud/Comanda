@@ -157,6 +157,7 @@ input,select,textarea{
   background:#fff;
 }
 textarea{min-height:72px;resize:vertical}
+.form-help{display:block;margin-top:5px;color:var(--muted);font-size:10px;font-weight:800;line-height:1.35}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .check-row{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:13px;font-weight:800}
 .check-row input{width:auto}
@@ -360,8 +361,13 @@ textarea{min-height:72px;resize:vertical}
 
       <div>
         <label>Categoría</label>
-        <input id="fCategoria" list="categoriasList" placeholder="Ej: Vinil adhesivo">
+        <select id="fCategoriaSelect" onchange="onCategoriaSelectChange()">
+          <option value="">Seleccionar categoría...</option>
+          <option value="__nueva__">+ NUEVA CATEGORÍA</option>
+        </select>
+        <input id="fCategoria" list="categoriasList" placeholder="ESCRIBE NUEVA CATEGORÍA" style="display:none;margin-top:8px;text-transform:uppercase" oninput="forceUpperInput(this)">
         <datalist id="categoriasList"></datalist>
+        <small class="form-help">Las categorías se guardan en MAYÚSCULAS para evitar duplicados por mayúsculas/minúsculas.</small>
       </div>
 
       <div class="row2">
@@ -499,6 +505,72 @@ function normalize(text){
     .trim();
 }
 
+function toUpperClean(text){
+  return String(text || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,' ')
+    .trim()
+    .toUpperCase();
+}
+
+function forceUpperInput(el){
+  if(!el) return;
+  const pos = el.selectionStart;
+  el.value = toUpperClean(el.value);
+  try{ el.setSelectionRange(pos, pos); }catch(e){}
+}
+
+function getCategoriaFormValue(){
+  const select = document.getElementById('fCategoriaSelect');
+  const input = document.getElementById('fCategoria');
+
+  if(select && select.value && select.value !== '__nueva__'){
+    return toUpperClean(select.value);
+  }
+
+  return toUpperClean(input ? input.value : '');
+}
+
+function onCategoriaSelectChange(){
+  const select = document.getElementById('fCategoriaSelect');
+  const input = document.getElementById('fCategoria');
+  if(!select || !input) return;
+
+  if(select.value === '__nueva__'){
+    input.style.display = 'block';
+    input.value = '';
+    setTimeout(() => input.focus(), 30);
+  }else{
+    input.style.display = 'none';
+    input.value = select.value ? toUpperClean(select.value) : '';
+  }
+}
+
+function setCategoriaFormValue(nombre){
+  const select = document.getElementById('fCategoriaSelect');
+  const input = document.getElementById('fCategoria');
+  const value = toUpperClean(nombre);
+
+  if(!select || !input) return;
+
+  const exists = Array.from(select.options).some(opt => opt.value === value);
+
+  if(value && exists){
+    select.value = value;
+    input.style.display = 'none';
+    input.value = value;
+  }else if(value){
+    select.value = '__nueva__';
+    input.style.display = 'block';
+    input.value = value;
+  }else{
+    select.value = '';
+    input.style.display = 'none';
+    input.value = '';
+  }
+}
+
 function setStatus(msg, type){
   const box = document.getElementById('statusBox');
   if(!box) return;
@@ -541,7 +613,7 @@ async function loadFromSupabase(){
       id: row.id,
       nombre: row.nombre || '',
       categoria_id: row.categoria_id,
-      categoria: row.categoria?.nombre || 'Sin categoría',
+      categoria: toUpperClean(row.categoria?.nombre || 'SIN CATEGORÍA'),
       precio: Number(row.precio || 0),
       unidad: row.unidad || 'm²',
       cantidadMinima: Number(row.cantidad_minima || 0),
@@ -579,13 +651,34 @@ async function loadFromSupabase(){
 
 function renderCategoriasDatalist(){
   const list = document.getElementById('categoriasList');
-  if(!list) return;
-  list.innerHTML = categorias.map(c => `<option value="${escapeHTML(c.nombre)}"></option>`).join('');
-}
+  const select = document.getElementById('fCategoriaSelect');
 
+  const nombres = [...new Set(
+    categorias
+      .map(c => toUpperClean(c.nombre))
+      .filter(Boolean)
+  )].sort((a,b) => a.localeCompare(b,'es'));
+
+  if(list){
+    list.innerHTML = nombres.map(nombre => `<option value="${escapeHTML(nombre)}"></option>`).join('');
+  }
+
+  if(select){
+    const current = select.value;
+    select.innerHTML = `
+      <option value="">Seleccionar categoría...</option>
+      ${nombres.map(nombre => `<option value="${escapeHTML(nombre)}">${escapeHTML(nombre)}</option>`).join('')}
+      <option value="__nueva__">+ NUEVA CATEGORÍA</option>
+    `;
+
+    if(current && nombres.includes(current)){
+      select.value = current;
+    }
+  }
+}
 async function getOrCreateCategoria(nombre){
   const db = sb();
-  const cleanName = String(nombre || '').trim();
+  const cleanName = toUpperClean(nombre);
   const key = normalize(cleanName);
 
   if(!cleanName) throw new Error('Categoría vacía');
@@ -838,7 +931,7 @@ async function saveItem(){
     const db = await waitForSupabase();
 
     const nombre = document.getElementById('fNombre').value.trim();
-    const categoriaNombre = document.getElementById('fCategoria').value.trim();
+    const categoriaNombre = getCategoriaFormValue();
 
     if(!nombre){ alert('Coloca el nombre del producto.'); return; }
     if(!categoriaNombre){ alert('Coloca una categoría.'); return; }
@@ -929,7 +1022,7 @@ function editItem(id){
   setMode('admin');
 
   document.getElementById('fNombre').value = item.nombre || '';
-  document.getElementById('fCategoria').value = item.categoria || '';
+  setCategoriaFormValue(item.categoria || '');
   document.getElementById('fPrecio').value = item.precio || '';
   document.getElementById('fUnidad').value = item.unidad || 'm²';
   document.getElementById('fMinimo').value = item.cantidadMinima || '';
@@ -951,6 +1044,7 @@ function resetForm(){
     document.getElementById(id).value = '';
   });
 
+  setCategoriaFormValue('');
   document.getElementById('fUnidad').value = 'm²';
   document.getElementById('fTipoMinimo').value = 'm²';
   document.getElementById('exUnidad').value = 'm²';
@@ -1062,6 +1156,7 @@ document.getElementById('search').addEventListener('input', e => {
 
 document.addEventListener('DOMContentLoaded', () => {
   renderExtrasAdmin();
+  renderCategoriasDatalist();
   loadFromSupabase();
 });
 </script>
