@@ -591,6 +591,107 @@ html.menu-ready .header-tabs,
 }
 </style>
 
+
+<style>
+/* =========================================================
+   BOTONES ESCALAR SVG / MEDIDA REAL · 2 COLUMNAS CENTRADAS
+========================================================= */
+.importGrid{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:10px!important;
+  align-items:end!important;
+}
+
+.actionGrid{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:10px!important;
+  margin-top:10px!important;
+  width:100%!important;
+  align-items:center!important;
+}
+
+.actionGrid .actionBtn,
+.actionGrid button{
+  width:100%!important;
+  height:46px!important;
+  min-height:46px!important;
+  padding:0 10px!important;
+  margin:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  border-radius:14px!important;
+}
+
+@media(max-width:520px){
+  .importGrid{
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+  }
+
+  .actionGrid{
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+    margin-top:8px!important;
+  }
+
+  .actionGrid .actionBtn,
+  .actionGrid button{
+    height:42px!important;
+    min-height:42px!important;
+    font-size:11px!important;
+    padding:0 6px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    text-align:center!important;
+  }
+}
+</style>
+
+
+<style>
+/* =========================================================
+   ESCALAR POR ANCHO / ALTO
+========================================================= */
+.scaleGrid{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:10px!important;
+  align-items:end!important;
+}
+
+.scaleGrid select,
+.scaleGrid input{
+  width:100%!important;
+  text-align:left!important;
+}
+
+@media(max-width:520px){
+  .scaleGrid{
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+  }
+
+  .scaleGrid label{
+    min-height:20px!important;
+    display:flex!important;
+    align-items:flex-end!important;
+  }
+
+  .scaleGrid select,
+  .scaleGrid input{
+    height:42px!important;
+    min-height:42px!important;
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -1113,12 +1214,19 @@ function detectRealSize(svg){
     realWm = realHm * (vb.width / vb.height);
     method = `Alto leído del SVG y ancho calculado por proporción: height=${svg.getAttribute("height")}`;
   }else{
-    const fw = Number($("fallbackWidth").value || 0);
-    const fu = $("fallbackUnit").value;
-    if(!fw || fw<=0) throw new Error("El SVG no trae medidas reales. Coloca ancho manual de respaldo o presiona Escalar SVG.");
-    realWm = fw * UNITS[fu];
-    realHm = realWm * (vb.height / vb.width);
-    method = `El SVG no traía medidas reales. Se usó ancho manual: ${fw} ${fu}`;
+    const medidaCm = Number($("fallbackWidth").value || 0);
+    const modo = $("scaleMode") ? $("scaleMode").value : "width";
+    const fu = "cm";
+    if(!medidaCm || medidaCm<=0) throw new Error("El SVG no trae medidas reales. Coloca una medida en cm o presiona Escalar SVG.");
+    if(modo === "height"){
+      realHm = medidaCm * UNITS[fu];
+      realWm = realHm * (vb.width / vb.height);
+      method = `El SVG no traía medidas reales. Se usó alto manual: ${medidaCm} cm`;
+    }else{
+      realWm = medidaCm * UNITS[fu];
+      realHm = realWm * (vb.height / vb.width);
+      method = `El SVG no traía medidas reales. Se usó ancho manual: ${medidaCm} cm`;
+    }
   }
   return {vb,realWm,realHm,method,scaleX:realWm/vb.width,scaleY:realHm/vb.height};
 }
@@ -1126,30 +1234,64 @@ function detectRealSize(svg){
 function aplicarAnchoManualAlSVG(){
   try{
     if(!svgText || !svgDoc){ alert("Primero sube un SVG."); return; }
-    const fw = Number($("fallbackWidth").value || 0);
-    const fu = $("fallbackUnit").value;
-    if(!fw || fw <= 0){ alert("Coloca un ancho manual válido."); return; }
+
+    const medidaCm = Number($("fallbackWidth").value || 0);
+    const modo = $("scaleMode") ? $("scaleMode").value : "width";
+    const fu = "cm";
+
+    if(!medidaCm || medidaCm <= 0){
+      alert("Coloca una medida válida en cm.");
+      return;
+    }
+
     const vb = getViewBox(svgDoc);
-    if(!vb || !vb.width || !vb.height){ alert("No se pudo leer el viewBox del SVG."); return; }
-    const altoProporcional = fw * (vb.height / vb.width);
+    if(!vb || !vb.width || !vb.height){
+      alert("No se pudo leer el viewBox del SVG.");
+      return;
+    }
+
+    let anchoCm, altoCm;
+
+    if(modo === "height"){
+      altoCm = medidaCm;
+      anchoCm = altoCm * (vb.width / vb.height);
+    }else{
+      anchoCm = medidaCm;
+      altoCm = anchoCm * (vb.height / vb.width);
+    }
+
     const parser = new DOMParser();
     const doc = parser.parseFromString(svgText, "image/svg+xml");
     const svg = doc.querySelector("svg");
-    if(!svg){ alert("No se encontró etiqueta SVG."); return; }
+
+    if(!svg){
+      alert("No se encontró etiqueta SVG.");
+      return;
+    }
+
     svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.width} ${vb.height}`);
-    svg.setAttribute("width", formatSVGLength(fw, fu));
-    svg.setAttribute("height", formatSVGLength(altoProporcional, fu));
+    svg.setAttribute("width", formatSVGLength(anchoCm, fu));
+    svg.setAttribute("height", formatSVGLength(altoCm, fu));
     svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
     const serializer = new XMLSerializer();
     svgText = serializer.serializeToString(svg);
+
     cargarSVGEnPreview(svgText);
-    const realWm = fw * UNITS[fu];
-    const realHm = realWm * (vb.height / vb.width);
+
+    const realWm = anchoCm * UNITS[fu];
+    const realHm = altoCm * UNITS[fu];
+
     $("kAncho").innerText = fmtCm(realWm);
     $("kAlto").innerText = fmtCm(realHm);
     $("kEscala").innerText = `${(realWm / vb.width * 100).toFixed(4)} cm/u`;
-    setStatus(`SVG escalado correctamente a ${fw} ${fu} × ${altoProporcional.toFixed(2)} ${fu}.`,100);
-    $("method").innerHTML = `<span class="ok">SVG escalado manualmente:</span> ancho ${fw} ${fu}, alto proporcional ${altoProporcional.toFixed(2)} ${fu}. Ahora puedes analizar con medidas reales.`;
+
+    const textoModo = modo === "height" ? "alto" : "ancho";
+
+    setStatus(`SVG escalado por ${textoModo}: ${anchoCm.toFixed(2)} cm × ${altoCm.toFixed(2)} cm.`,100);
+
+    $("method").innerHTML = `<span class="ok">SVG escalado correctamente:</span> ancho ${anchoCm.toFixed(2)} cm, alto ${altoCm.toFixed(2)} cm.`;
+
   }catch(err){
     console.error(err);
     alert("Error aplicando escala: " + err.message);
