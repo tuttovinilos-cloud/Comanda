@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Materia Prima · Tuttovinilos</title>
+<title>Materia Prima · Proveedores · Tuttovinilos</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -25,6 +25,8 @@
   --accent2:#0b1f7a;
   --orange:#ff8616;
   --orange2:#fff3e8;
+  --green:#16a34a;
+  --red:#dc2626;
   --head:'Montserrat',Arial,sans-serif;
   --body:'Inter',Arial,sans-serif;
   --mono:'Roboto Mono',monospace;
@@ -150,10 +152,10 @@ button,input,select,textarea{font:inherit;color-scheme:light}
   border:0;
   background:white;
   display:grid;
-  grid-template-columns:95px 1.4fr 80px 120px 105px 30px;
+  grid-template-columns:85px 1.35fr 105px 105px 115px 105px 28px;
   align-items:center;
   gap:8px;
-  padding:9px 12px;
+  padding:8px 11px;
   text-align:left;
   cursor:pointer;
 }
@@ -223,14 +225,26 @@ button,input,select,textarea{font:inherit;color-scheme:light}
   white-space:nowrap;
 }
 
-.cost-m2 strong{
+.last-price strong{
+  color:var(--accent);
+  font-size:16px;
+}
+
+.range strong{
   color:var(--orange);
-  font-size:14px;
+}
+
+.cost-m2 strong{
+  color:#0b1f7a;
+}
+
+.best strong{
+  color:var(--green);
 }
 
 .arrow{
-  width:28px;
-  height:28px;
+  width:27px;
+  height:27px;
   border-radius:50%;
   background:#eef1ff;
   color:var(--accent);
@@ -258,34 +272,83 @@ button,input,select,textarea{font:inherit;color-scheme:light}
   display:block;
 }
 
-.detail-grid{
+.provider-list{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
+  gap:7px;
 }
 
-.detail-box{
+.provider-row{
+  display:grid;
+  grid-template-columns:1fr 90px 105px 90px;
+  align-items:center;
+  gap:8px;
   background:white;
   border:1px solid var(--border);
   border-radius:13px;
-  padding:9px;
+  padding:8px 10px;
 }
 
-.detail-box small{
-  display:block;
+.provider-name{
+  font-family:var(--head);
+  font-size:13px;
+  font-weight:900;
+  color:var(--accent2);
+}
+
+.provider-price{
+  font-family:var(--mono);
+  font-size:14px;
+  font-weight:900;
+  color:#111827;
+  text-align:right;
+}
+
+.provider-m2{
+  font-family:var(--mono);
+  font-size:12px;
+  font-weight:800;
   color:var(--muted);
+  text-align:right;
+}
+
+.tag{
+  justify-self:end;
+  border-radius:999px;
+  padding:5px 9px;
   font-family:var(--head);
   font-size:9px;
   font-weight:900;
   text-transform:uppercase;
+  white-space:nowrap;
 }
 
-.detail-box strong{
-  display:block;
-  margin-top:4px;
-  color:var(--accent2);
-  font-size:13px;
-  font-weight:900;
+.tag.min{
+  background:#dcfce7;
+  color:#166534;
+  border:1px solid #86efac;
+}
+
+.tag.max{
+  background:#fee2e2;
+  color:#991b1b;
+  border:1px solid #fecaca;
+}
+
+.tag.normal{
+  background:#eef1ff;
+  color:var(--accent);
+  border:1px solid #c7d2fe;
+}
+
+.detail-note{
+  margin-top:8px;
+  background:var(--orange2);
+  border:1px solid #fed7aa;
+  border-radius:13px;
+  padding:9px;
+  color:#9a3412;
+  font-size:12px;
+  font-weight:800;
 }
 
 .detail-actions{
@@ -326,6 +389,16 @@ button,input,select,textarea{font:inherit;color-scheme:light}
   display:none;
 }
 
+@media(max-width:900px){
+  .item-main{
+    grid-template-columns:78px 1fr 92px 95px 28px;
+  }
+
+  .hide-tablet{
+    display:none;
+  }
+}
+
 @media(max-width:760px){
   .main{padding:10px}
   .page-title{font-size:18px}
@@ -333,7 +406,7 @@ button,input,select,textarea{font:inherit;color-scheme:light}
   .btn{width:100%}
 
   .item-main{
-    grid-template-columns:78px 1fr 86px 28px;
+    grid-template-columns:72px 1fr 82px 28px;
     gap:7px;
     padding:8px 9px;
   }
@@ -354,8 +427,13 @@ button,input,select,textarea{font:inherit;color-scheme:light}
     font-size:12px;
   }
 
-  .detail-grid{
-    grid-template-columns:1fr 1fr;
+  .provider-row{
+    grid-template-columns:1fr 75px;
+  }
+
+  .provider-m2,
+  .tag{
+    display:none;
   }
 }
 </style>
@@ -376,11 +454,11 @@ button,input,select,textarea{font:inherit;color-scheme:light}
 
   <section class="page-head">
     <h1 class="page-title">Materia prima</h1>
-    <p class="page-sub">Lista compacta de precios. Toca un material para desplegar más información.</p>
+    <p class="page-sub">Comparación compacta por proveedor: último precio, mínimo, máximo y costo por m².</p>
 
     <div class="tools">
-      <input class="search" id="searchInput" placeholder="Buscar PVC, acrílico, 3mm, formato, proveedor...">
-      <button class="btn" type="button" onclick="alert('Luego conectamos este botón a Supabase')">+ Añadir material</button>
+      <input class="search" id="searchInput" placeholder="Buscar AR2, Vecxel, PVC, acrílico, 3mm...">
+      <button class="btn" type="button" onclick="alert('Luego conectamos este botón a Supabase')">+ Añadir precio</button>
     </div>
 
     <div class="cats">
@@ -406,25 +484,147 @@ button,input,select,textarea{font:inherit;color-scheme:light}
 
 <script>
 const materiales = [
-  { categoria:"PVC", material:"PVC Blanco", espesor:"3mm", formato:"120 x 240 cm", precio:35, area:2.88, proveedor:"Proveedor A", nota:"Formato estándar para router y letras pequeñas." },
-  { categoria:"PVC", material:"PVC Blanco", espesor:"5mm", formato:"120 x 240 cm", precio:45, area:2.88, proveedor:"Proveedor A", nota:"Opción intermedia para trabajos livianos." },
-  { categoria:"PVC", material:"PVC Blanco", espesor:"9mm", formato:"120 x 240 cm", precio:48, area:2.88, proveedor:"Proveedor B", nota:"Muy usado para logos corpóreos y bases." },
-  { categoria:"PVC", material:"PVC Blanco", espesor:"15mm", formato:"120 x 240 cm", precio:68, area:2.88, proveedor:"Proveedor B", nota:"Usado en letras corpóreas con más grosor." },
-  { categoria:"PVC", material:"PVC Blanco", espesor:"18mm", formato:"120 x 240 cm", precio:78, area:2.88, proveedor:"Proveedor B", nota:"Mayor cuerpo y rigidez." },
-  { categoria:"ACRILICO", material:"Acrílico Transparente", espesor:"3mm", formato:"120 x 240 cm", precio:90, area:2.88, proveedor:"Proveedor C", nota:"Frontal, placas y detalles transparentes." },
-  { categoria:"ACRILICO", material:"Acrílico Transparente", espesor:"5mm", formato:"120 x 240 cm", precio:140, area:2.88, proveedor:"Proveedor C", nota:"Más rígido para piezas premium." },
-  { categoria:"ACRILICO", material:"Acrílico Transparente", espesor:"8mm", formato:"120 x 240 cm", precio:180, area:2.88, proveedor:"Proveedor C", nota:"Especial para bases gruesas o premium." },
-  { categoria:"VINIL", material:"Vinil Adhesivo", espesor:"-", formato:"137 cm x 50 m", precio:110, area:68.5, proveedor:"Proveedor Vinil", nota:"Cálculo por rollo completo." },
-  { categoria:"VINIL", material:"Vinil Holográfico", espesor:"-", formato:"137 cm x 50 m", precio:280, area:68.5, proveedor:"Proveedor Vinil", nota:"Producto especial para etiquetas." },
-  { categoria:"LED", material:"Módulos LED", espesor:"-", formato:"20 módulos", precio:8, area:0, proveedor:"Proveedor LED", nota:"No calcula m². Se calcula por paquete." },
-  { categoria:"CONSUMIBLE", material:"Cable", espesor:"-", formato:"Metro lineal", precio:1, area:0, proveedor:"General", nota:"Consumible por metro." }
+  {
+    categoria:"ACRILICO",
+    material:"Acrílico Transparente",
+    espesor:"3mm",
+    formato:"120 x 240 cm",
+    area:2.88,
+    nota:"Ejemplo real: AR2 y Vecxel tienen precios distintos para el mismo material.",
+    proveedores:[
+      {nombre:"AR2", precio:90, fecha:"2026-05-23"},
+      {nombre:"Vecxel", precio:80, fecha:"2026-05-23"},
+      {nombre:"Proveedor C", precio:95, fecha:"2026-05-10"}
+    ]
+  },
+  {
+    categoria:"ACRILICO",
+    material:"Acrílico Transparente",
+    espesor:"5mm",
+    formato:"120 x 240 cm",
+    area:2.88,
+    nota:"Acrílico grueso. Revisar diferencias por marca y disponibilidad.",
+    proveedores:[
+      {nombre:"AR2", precio:140, fecha:"2026-05-23"},
+      {nombre:"Vecxel", precio:132, fecha:"2026-05-23"},
+      {nombre:"Proveedor C", precio:150, fecha:"2026-05-10"}
+    ]
+  },
+  {
+    categoria:"PVC",
+    material:"PVC Blanco",
+    espesor:"3mm",
+    formato:"120 x 240 cm",
+    area:2.88,
+    nota:"Formato estándar. Ideal comparar rápido por proveedor.",
+    proveedores:[
+      {nombre:"AR2", precio:35, fecha:"2026-05-23"},
+      {nombre:"Vecxel", precio:38, fecha:"2026-05-23"},
+      {nombre:"Proveedor B", precio:42, fecha:"2026-05-10"}
+    ]
+  },
+  {
+    categoria:"PVC",
+    material:"PVC Blanco",
+    espesor:"5mm",
+    formato:"120 x 240 cm",
+    area:2.88,
+    nota:"Opción intermedia para trabajos livianos.",
+    proveedores:[
+      {nombre:"AR2", precio:45, fecha:"2026-05-23"},
+      {nombre:"Vecxel", precio:48, fecha:"2026-05-23"}
+    ]
+  },
+  {
+    categoria:"PVC",
+    material:"PVC Blanco",
+    espesor:"9mm",
+    formato:"120 x 240 cm",
+    area:2.88,
+    nota:"Muy usado para logos corpóreos y bases.",
+    proveedores:[
+      {nombre:"AR2", precio:48, fecha:"2026-05-23"},
+      {nombre:"Vecxel", precio:55, fecha:"2026-05-23"},
+      {nombre:"Proveedor B", precio:58, fecha:"2026-05-10"}
+    ]
+  },
+  {
+    categoria:"PVC",
+    material:"PVC Blanco",
+    espesor:"15mm",
+    formato:"120 x 240 cm",
+    area:2.88,
+    nota:"Usado en letras corpóreas con más grosor.",
+    proveedores:[
+      {nombre:"AR2", precio:68, fecha:"2026-05-23"},
+      {nombre:"Vecxel", precio:72, fecha:"2026-05-23"},
+      {nombre:"Proveedor B", precio:76, fecha:"2026-05-10"}
+    ]
+  },
+  {
+    categoria:"VINIL",
+    material:"Vinil Adhesivo",
+    espesor:"-",
+    formato:"137 cm x 50 m",
+    area:68.5,
+    nota:"Cálculo por rollo completo.",
+    proveedores:[
+      {nombre:"AR2", precio:110, fecha:"2026-05-23"},
+      {nombre:"Vecxel", precio:118, fecha:"2026-05-23"}
+    ]
+  },
+  {
+    categoria:"LED",
+    material:"Módulos LED",
+    espesor:"-",
+    formato:"20 módulos",
+    area:0,
+    nota:"No calcula m². Se calcula por paquete.",
+    proveedores:[
+      {nombre:"AR2", precio:8, fecha:"2026-05-23"},
+      {nombre:"Vecxel", precio:9, fecha:"2026-05-23"}
+    ]
+  }
 ];
 
 let categoriaActual = "TODOS";
 
-function costoM2(item){
-  if(!item.area || item.area <= 0) return "-";
-  return "$" + (item.precio / item.area).toFixed(2);
+function precios(item){
+  return item.proveedores.map(p => Number(p.precio || 0)).filter(p => p > 0);
+}
+
+function minPrecio(item){
+  const arr = precios(item);
+  return arr.length ? Math.min(...arr) : 0;
+}
+
+function maxPrecio(item){
+  const arr = precios(item);
+  return arr.length ? Math.max(...arr) : 0;
+}
+
+function ultimoPrecio(item){
+  if(!item.proveedores.length) return 0;
+  return item.proveedores[0].precio;
+}
+
+function mejorProveedor(item){
+  const min = minPrecio(item);
+  const found = item.proveedores.find(p => Number(p.precio) === min);
+  return found ? found.nombre : "-";
+}
+
+function costoM2(precio, area){
+  if(!area || area <= 0) return "-";
+  return "$" + (Number(precio || 0) / area).toFixed(2);
+}
+
+function rango(item){
+  const min = minPrecio(item);
+  const max = maxPrecio(item);
+  if(!min && !max) return "-";
+  if(min === max) return "$" + min;
+  return "$" + min + " → $" + max;
 }
 
 function setCat(cat, btn){
@@ -439,13 +639,23 @@ function toggleItem(index){
   if(item) item.classList.toggle("open");
 }
 
+function proveedorTag(item, precio){
+  const min = minPrecio(item);
+  const max = maxPrecio(item);
+
+  if(Number(precio) === min && min !== max) return '<span class="tag min">Mejor</span>';
+  if(Number(precio) === max && min !== max) return '<span class="tag max">Más alto</span>';
+  return '<span class="tag normal">Normal</span>';
+}
+
 function render(){
   const q = document.getElementById("searchInput").value.toUpperCase().trim();
 
   const lista = materiales
     .map((item, originalIndex) => ({...item, originalIndex}))
     .filter(item => {
-      const texto = Object.values(item).join(" ").toUpperCase();
+      const proveedoresTexto = item.proveedores.map(p => `${p.nombre} ${p.precio} ${p.fecha}`).join(" ");
+      const texto = `${item.categoria} ${item.material} ${item.espesor} ${item.formato} ${item.nota} ${proveedoresTexto}`.toUpperCase();
       const okTexto = texto.includes(q);
       const okCat = categoriaActual === "TODOS" || item.categoria === categoriaActual;
       return okTexto && okCat;
@@ -461,68 +671,48 @@ function render(){
           <small>${item.espesor} · ${item.formato}</small>
         </span>
 
-        <span class="cell-mini hide-mobile">
-          <small>Formato</small>
-          <strong>$${item.precio}</strong>
+        <span class="cell-mini last-price">
+          <small>Último</small>
+          <strong>$${ultimoPrecio(item)}</strong>
         </span>
 
-        <span class="cell-mini cost-m2">
+        <span class="cell-mini range hide-mobile">
+          <small>Min / Max</small>
+          <strong>${rango(item)}</strong>
+        </span>
+
+        <span class="cell-mini cost-m2 hide-tablet">
           <small>Costo m²</small>
-          <strong>${costoM2(item)}</strong>
+          <strong>${costoM2(minPrecio(item), item.area)}</strong>
         </span>
 
-        <span class="cell-mini hide-mobile">
-          <small>Proveedor</small>
-          <strong>${item.proveedor}</strong>
+        <span class="cell-mini best hide-mobile">
+          <small>Mejor prov.</small>
+          <strong>${mejorProveedor(item)}</strong>
         </span>
 
         <span class="arrow">⌄</span>
       </button>
 
       <div class="item-details">
-        <div class="detail-grid">
-          <div class="detail-box">
-            <small>Categoría</small>
-            <strong>${item.categoria}</strong>
-          </div>
-          <div class="detail-box">
-            <small>Material</small>
-            <strong>${item.material}</strong>
-          </div>
-          <div class="detail-box">
-            <small>Espesor</small>
-            <strong>${item.espesor}</strong>
-          </div>
-          <div class="detail-box">
-            <small>Formato</small>
-            <strong>${item.formato}</strong>
-          </div>
-          <div class="detail-box">
-            <small>Precio formato</small>
-            <strong>$${item.precio}</strong>
-          </div>
-          <div class="detail-box">
-            <small>Área</small>
-            <strong>${item.area ? item.area + " m²" : "-"}</strong>
-          </div>
-          <div class="detail-box">
-            <small>Costo m²</small>
-            <strong>${costoM2(item)}</strong>
-          </div>
-          <div class="detail-box">
-            <small>Proveedor</small>
-            <strong>${item.proveedor}</strong>
-          </div>
+        <div class="provider-list">
+          ${item.proveedores.map(p => `
+            <div class="provider-row">
+              <div class="provider-name">${p.nombre}</div>
+              <div class="provider-price">$${p.precio}</div>
+              <div class="provider-m2">${costoM2(p.precio, item.area)} m²</div>
+              ${proveedorTag(item, p.precio)}
+            </div>
+          `).join("")}
         </div>
 
-        <div class="detail-box" style="margin-top:8px">
-          <small>Nota</small>
-          <strong>${item.nota}</strong>
+        <div class="detail-note">
+          ${item.nota}
         </div>
 
         <div class="detail-actions">
-          <button class="action" type="button" onclick="event.stopPropagation(); alert('Luego editamos este material')">Editar</button>
-          <button class="action orange" type="button" onclick="event.stopPropagation(); alert('Luego conectamos historial de precios')">Historial</button>
+          <button class="action" type="button" onclick="event.stopPropagation(); alert('Luego editamos este material')">Editar material</button>
+          <button class="action orange" type="button" onclick="event.stopPropagation(); alert('Luego agregamos nuevo precio/proveedor')">+ Precio proveedor</button>
         </div>
       </div>
     </article>
