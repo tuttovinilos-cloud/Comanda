@@ -165,7 +165,7 @@ button{cursor:pointer}
 
         <div class="field">
           <label>Tipo de detalle</label>
-          <select id="f_detalle_label">
+          <select id="f_detalle_label" onchange="toggleNuevoTipoDetalle()">
             <option value="ESPESOR">ESPESOR</option>
             <option value="MEDIDA">MEDIDA</option>
             <option value="REFERENCIA">REFERENCIA</option>
@@ -175,12 +175,18 @@ button{cursor:pointer}
             <option value="CALIBRE">CALIBRE</option>
             <option value="COLOR">COLOR</option>
             <option value="ACABADO">ACABADO</option>
+            <option value="__NUEVO__">+ NUEVO TIPO</option>
           </select>
+        </div>
+
+        <div class="field" id="nuevoTipoDetalleBox" style="display:none">
+          <label>Nuevo tipo de detalle</label>
+          <input id="f_nuevo_detalle_label" placeholder="Ej: VOLTAJE, AMPERAJE, DIÁMETRO" oninput="forceUppercase(this)">
         </div>
 
         <div class="field">
           <label>Valor del detalle</label>
-          <input id="f_detalle_valor" placeholder="Ej: 3MM, 25X19, REF200, BOTELLA 1L">
+          <input id="f_detalle_valor" placeholder="Ej: 3MM, 25X19, REF200, BOTELLA 1L" oninput="forceUppercase(this)">
         </div>
 
         <div class="format-panel">
@@ -374,6 +380,22 @@ function detalleLabelSugerido(categoria){
   return mapa[cat] || "TIPO";
 }
 
+function toggleNuevoTipoDetalle(){
+  const select = document.getElementById("f_detalle_label");
+  const box = document.getElementById("nuevoTipoDetalleBox");
+
+  if(!select || !box) return;
+
+  box.style.display = select.value === "__NUEVO__" ? "flex" : "none";
+
+  if(select.value === "__NUEVO__"){
+    setTimeout(()=>{
+      const input = document.getElementById("f_nuevo_detalle_label");
+      if(input) input.focus();
+    },80);
+  }
+}
+
 function aplicarDetallePorCategoria(){
   const categoria = categoriaFormulario ? categoriaFormulario() : document.getElementById("f_categoria")?.value;
   const select = document.getElementById("f_detalle_label");
@@ -381,6 +403,8 @@ function aplicarDetallePorCategoria(){
 
   const sugerido = detalleLabelSugerido(categoria);
   select.value = sugerido;
+  document.getElementById("f_nuevo_detalle_label").value = "";
+  toggleNuevoTipoDetalle();
 }
 
 function detalleValorActual(){
@@ -388,7 +412,13 @@ function detalleValorActual(){
 }
 
 function detalleLabelActual(){
-  return String(document.getElementById("f_detalle_label")?.value || "TIPO").trim().toUpperCase();
+  const selectValue = String(document.getElementById("f_detalle_label")?.value || "TIPO").trim().toUpperCase();
+
+  if(selectValue !== "__NUEVO__"){
+    return selectValue;
+  }
+
+  return String(document.getElementById("f_nuevo_detalle_label")?.value || "").trim().toUpperCase();
 }
 
 function proveedoresOrdenados(item){
@@ -623,6 +653,8 @@ function applyCatalogTemplate(){
   toggleNuevaCategoria();
   document.getElementById("f_nombre").value = c.nombre;
   document.getElementById("f_detalle_label").value = c.detalle_label || detalleLabelSugerido(c.categoria);
+  document.getElementById("f_nuevo_detalle_label").value = "";
+  toggleNuevoTipoDetalle();
   document.getElementById("f_detalle_valor").value = c.detalle_valor || c.espesor || "";
   document.getElementById("f_tipo_medida").value = c.tipo_medida || "M2";
   document.getElementById("f_ancho_cm").value = c.ancho_cm || "";
@@ -654,7 +686,18 @@ function openMaterialModal(id = null){
 
   toggleNuevaCategoria();
   document.getElementById("f_nombre").value = item.nombre || "";
-  document.getElementById("f_detalle_label").value = item.detalle_label || detalleLabelSugerido(item.categoria);
+  const labelExistente = String(item.detalle_label || detalleLabelSugerido(item.categoria)).toUpperCase();
+  const opcionesDetalle = [...document.getElementById("f_detalle_label").options].map(o => o.value);
+
+  if(opcionesDetalle.includes(labelExistente)){
+    document.getElementById("f_detalle_label").value = labelExistente;
+    document.getElementById("f_nuevo_detalle_label").value = "";
+  }else{
+    document.getElementById("f_detalle_label").value = "__NUEVO__";
+    document.getElementById("f_nuevo_detalle_label").value = labelExistente;
+  }
+
+  toggleNuevoTipoDetalle();
   document.getElementById("f_detalle_valor").value = item.detalle_valor || item.espesor || "";
   document.getElementById("f_tipo_medida").value = item.tipo_medida || "M2";
   document.getElementById("f_ancho_cm").value = item.ancho_cm || "";
@@ -742,6 +785,11 @@ async function saveMaterial(){
 
   const detalleLabelFinal = detalleLabelActual();
   const detalleValorFinal = detalleValorActual();
+
+  if(!detalleLabelFinal){
+    toast("Falta tipo de detalle");
+    return;
+  }
 
   const nombreFinal = await validarMaterialUnicoDb(client, categoriaFinal, nombreOriginal, detalleValorFinal, editId);
 
@@ -858,7 +906,18 @@ function duplicateMaterial(id){
   toggleNuevaCategoria();
 
   document.getElementById("f_nombre").value = item.nombre || "";
-  document.getElementById("f_detalle_label").value = item.detalle_label || detalleLabelSugerido(item.categoria);
+  const labelExistente = String(item.detalle_label || detalleLabelSugerido(item.categoria)).toUpperCase();
+  const opcionesDetalle = [...document.getElementById("f_detalle_label").options].map(o => o.value);
+
+  if(opcionesDetalle.includes(labelExistente)){
+    document.getElementById("f_detalle_label").value = labelExistente;
+    document.getElementById("f_nuevo_detalle_label").value = "";
+  }else{
+    document.getElementById("f_detalle_label").value = "__NUEVO__";
+    document.getElementById("f_nuevo_detalle_label").value = labelExistente;
+  }
+
+  toggleNuevoTipoDetalle();
   document.getElementById("f_detalle_valor").value = item.detalle_valor || item.espesor || "";
   document.getElementById("f_tipo_medida").value = item.tipo_medida || "M2";
   document.getElementById("f_ancho_cm").value = item.ancho_cm || "";
