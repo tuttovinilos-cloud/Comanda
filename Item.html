@@ -614,6 +614,67 @@ function addPriceToMaterial(id){
   setTimeout(()=> addProviderInput(), 100);
 }
 
+function duplicateMaterial(id){
+  const item = materiales.find(m => Number(m.id) === Number(id));
+
+  if(!item){
+    toast("Material no encontrado");
+    return;
+  }
+
+  editId = null;
+
+  loadCatalogSelect();
+  fillCategorySelect();
+
+  document.getElementById("catalogSelect").value = "";
+  document.getElementById("modalTitle").textContent = "Duplicar material";
+
+  if(categoriasActuales().includes(item.categoria)){
+    document.getElementById("f_categoria").value = item.categoria || "PVC";
+  }else{
+    document.getElementById("f_categoria").value = "__NUEVA__";
+    document.getElementById("f_nueva_categoria").value = item.categoria || "";
+  }
+
+  toggleNuevaCategoria();
+
+  document.getElementById("f_nombre").value = item.nombre || "";
+  document.getElementById("f_espesor").value = item.espesor || "";
+  document.getElementById("f_ancho_cm").value = item.ancho_cm || "";
+  document.getElementById("f_largo_cm").value = item.largo_cm || "";
+  document.getElementById("f_formato").value = item.formato || "";
+  document.getElementById("f_area").value = item.area || "";
+  document.getElementById("f_nota").value = item.nota || "";
+
+  const providerBox = document.getElementById("providerInputs");
+  providerBox.innerHTML = "";
+
+  (item.proveedores || []).forEach(p => {
+    addProviderInput({
+      proveedor:p.proveedor,
+      precio:p.precio,
+      fecha:p.fecha
+    });
+  });
+
+  if(!(item.proveedores || []).length){
+    addProviderInput();
+  }
+
+  document.getElementById("materialBackdrop").style.display = "flex";
+
+  setTimeout(()=>{
+    const input = document.getElementById("f_nombre");
+    if(input){
+      input.focus();
+      input.select();
+    }
+  },120);
+
+  toast("Material duplicado listo");
+}
+
 function render(){
   renderCategoryTabs();
   renderProveedoresDatalist();
@@ -676,6 +737,7 @@ function render(){
           <div class="detail-actions">
             <button class="action" type="button" onclick="event.stopPropagation(); openMaterialModal(${item.id})">Editar material</button>
             <button class="action orange" type="button" onclick="event.stopPropagation(); addPriceToMaterial(${item.id})">+ Precio proveedor</button>
+            <button class="action" type="button" onclick="event.stopPropagation(); duplicateMaterial(${item.id})">Duplicar</button>
             <button class="action" type="button" onclick="event.stopPropagation(); deleteMaterial(${item.id})">Eliminar</button>
           </div>
         </div>
@@ -696,4 +758,3 @@ window.addEventListener("load", async function(){
 </script>
 </body>
 </html>
-
