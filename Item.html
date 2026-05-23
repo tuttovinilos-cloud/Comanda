@@ -77,6 +77,7 @@ button{cursor:pointer}
 .field input[readonly]{background:#f8f9ff;color:var(--accent2);font-weight:900}
 .field textarea{min-height:74px;resize:vertical}
 .full{grid-column:1/-1}
+.hidden-field{display:none!important}
 .format-panel,.catalog-panel{grid-column:1/-1;border:1px solid var(--border);background:#f8f9ff;border-radius:16px;padding:10px}
 .panel-title{font-family:var(--head);font-size:11px;font-weight:900;color:var(--accent2);text-transform:uppercase;margin-bottom:8px}
 .provider-editor{border:1px solid var(--border);border-radius:16px;background:#f8f9ff;padding:10px}
@@ -168,26 +169,40 @@ button{cursor:pointer}
         </div>
 
         <div class="format-panel">
-          <div class="panel-title">Formato / medidas en cm</div>
+          <div class="panel-title">Formato / tipo de cálculo</div>
           <div class="form-grid">
             <div class="field">
+              <label>Tipo</label>
+              <select id="f_tipo_medida" onchange="toggleTipoMedida()">
+                <option value="M2">M²</option>
+                <option value="M">M</option>
+                <option value="UNITARIO">Unitario</option>
+              </select>
+            </div>
+
+            <div class="field medida-m2">
               <label>Ancho cm</label>
               <input id="f_ancho_cm" type="number" step="0.01" placeholder="Ej: 120">
             </div>
 
-            <div class="field">
-              <label>Largo cm</label>
+            <div class="field medida-m2">
+              <label>Alto / largo cm</label>
               <input id="f_largo_cm" type="number" step="0.01" placeholder="Ej: 240">
             </div>
 
-            <div class="field">
+            <div class="field medida-m">
+              <label>Metros lineales</label>
+              <input id="f_metros_lineales" type="number" step="0.01" placeholder="Ej: 50">
+            </div>
+
+            <div class="field medida-m2">
               <label>Área m² automático</label>
               <input id="f_area" type="number" step="0.0001" readonly placeholder="0.0000">
             </div>
 
             <div class="field full">
               <label>Formato visible</label>
-              <input id="f_formato" placeholder="Se genera automático: 120 × 240 cm">
+              <input id="f_formato" placeholder="Se genera automático">
             </div>
           </div>
         </div>
@@ -253,12 +268,12 @@ function renderProveedoresDatalist(){
 }
 
 const catalogoBase = [
-  {categoria:"PVC", nombre:"Blanco", espesor:"3mm", ancho_cm:120, largo_cm:240, nota:"PVC blanco estándar."},
-  {categoria:"PVC", nombre:"Blanco", espesor:"5mm", ancho_cm:120, largo_cm:240, nota:"PVC blanco intermedio."},
-  {categoria:"PVC", nombre:"Blanco", espesor:"9mm", ancho_cm:120, largo_cm:240, nota:"PVC blanco para corpóreos."},
-  {categoria:"ACRILICO", nombre:"Transparente", espesor:"3mm", ancho_cm:120, largo_cm:240, nota:"Acrílico transparente."},
-  {categoria:"ACRILICO", nombre:"Transparente", espesor:"5mm", ancho_cm:120, largo_cm:240, nota:"Acrílico transparente grueso."},
-  {categoria:"VINIL", nombre:"Adhesivo Blanco", espesor:"-", ancho_cm:137, largo_cm:5000, nota:"Rollo de vinil adhesivo."}
+  {categoria:"PVC", nombre:"Blanco", espesor:"3mm", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"PVC blanco estándar."},
+  {categoria:"PVC", nombre:"Blanco", espesor:"5mm", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"PVC blanco intermedio."},
+  {categoria:"PVC", nombre:"Blanco", espesor:"9mm", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"PVC blanco para corpóreos."},
+  {categoria:"ACRILICO", nombre:"Transparente", espesor:"3mm", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"Acrílico transparente."},
+  {categoria:"ACRILICO", nombre:"Transparente", espesor:"5mm", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"Acrílico transparente grueso."},
+  {categoria:"VINIL", nombre:"Adhesivo Blanco", espesor:"-", tipo_medida:"M", ancho_cm:0, largo_cm:0, metros_lineales:50, nota:"Rollo de vinil adhesivo."}
 ];
 
 function sb(){
@@ -280,9 +295,36 @@ function calcArea(anchoCm, largoCm){
   return (a / 100) * (l / 100);
 }
 
-function formatoFromCm(anchoCm, largoCm){
-  if(!anchoCm || !largoCm) return "";
-  return `${Number(anchoCm)} × ${Number(largoCm)} cm`;
+function tipoMedidaActual(){
+  return document.getElementById("f_tipo_medida")?.value || "M2";
+}
+
+function formatoVisible(tipo, anchoCm, largoCm, metrosLineales){
+  if(tipo === "M2"){
+    if(!anchoCm || !largoCm) return "";
+    return `${Number(anchoCm)} × ${Number(largoCm)} cm`;
+  }
+
+  if(tipo === "M"){
+    if(!metrosLineales) return "";
+    return `${Number(metrosLineales)} m`;
+  }
+
+  return "Unitario";
+}
+
+function toggleTipoMedida(){
+  const tipo = tipoMedidaActual();
+
+  document.querySelectorAll(".medida-m2").forEach(el => {
+    el.classList.toggle("hidden-field", tipo !== "M2");
+  });
+
+  document.querySelectorAll(".medida-m").forEach(el => {
+    el.classList.toggle("hidden-field", tipo !== "M");
+  });
+
+  autoFormatoYArea();
 }
 
 function normalCat(v){
@@ -308,7 +350,16 @@ function mejorProveedor(item){
   return prov.length ? prov[0].proveedor : "-";
 }
 
-function costoM2(precio, area){
+function costoM2(precio, area, tipo = "M2", metros = 0){
+  if(tipo === "M"){
+    if(!metros || metros <= 0) return "-";
+    return "$" + (Number(precio || 0) / metros).toFixed(2);
+  }
+
+  if(tipo === "UNITARIO"){
+    return "$" + Number(precio || 0).toFixed(2);
+  }
+
   if(!area || area<=0) return "-";
   return "$" + (Number(precio || 0) / area).toFixed(2);
 }
@@ -469,8 +520,10 @@ async function loadAll(){
     categoria:m.categoria,
     nombre:m.nombre,
     espesor:m.espesor,
+    tipo_medida:m.tipo_medida || "M2",
     ancho_cm:m.ancho_cm,
     largo_cm:m.largo_cm,
+    metros_lineales:m.metros_lineales || 0,
     formato:m.formato,
     area:m.area_m2,
     nota:m.nota,
@@ -487,7 +540,10 @@ function loadCatalogSelect(){
     const area = calcArea(c.ancho_cm, c.largo_cm);
     const opt = document.createElement("option");
     opt.value = i;
-    opt.textContent = `${c.categoria} · ${c.nombre} · ${c.espesor} · ${c.ancho_cm}×${c.largo_cm} cm · ${area.toFixed(2)} m²`;
+    const formatoCat = c.tipo_medida === "M"
+      ? `${c.metros_lineales} m`
+      : `${c.ancho_cm}×${c.largo_cm} cm · ${area.toFixed(2)} m²`;
+    opt.textContent = `${c.categoria} · ${c.nombre} · ${c.espesor} · ${c.tipo_medida || "M2"} · ${formatoCat}`;
     sel.appendChild(opt);
   });
 }
@@ -502,10 +558,12 @@ function applyCatalogTemplate(){
   toggleNuevaCategoria();
   document.getElementById("f_nombre").value = c.nombre;
   document.getElementById("f_espesor").value = c.espesor;
-  document.getElementById("f_ancho_cm").value = c.ancho_cm;
-  document.getElementById("f_largo_cm").value = c.largo_cm;
+  document.getElementById("f_tipo_medida").value = c.tipo_medida || "M2";
+  document.getElementById("f_ancho_cm").value = c.ancho_cm || "";
+  document.getElementById("f_largo_cm").value = c.largo_cm || "";
+  document.getElementById("f_metros_lineales").value = c.metros_lineales || "";
   document.getElementById("f_nota").value = c.nota || "";
-  autoFormatoYArea();
+  toggleTipoMedida();
 }
 
 function openMaterialModal(id = null){
@@ -516,7 +574,7 @@ function openMaterialModal(id = null){
   document.getElementById("modalTitle").textContent = id === null ? "Añadir material" : "Editar material";
 
   const item = id === null ? {
-    categoria:"PVC", nombre:"", espesor:"", ancho_cm:"", largo_cm:"", formato:"", area:"", nota:"", proveedores:[]
+    categoria:"PVC", nombre:"", espesor:"", tipo_medida:"M2", ancho_cm:"", largo_cm:"", metros_lineales:"", formato:"", area:"", nota:"", proveedores:[]
   } : materiales.find(m => Number(m.id) === Number(id));
 
   if(!item) return;
@@ -531,11 +589,14 @@ function openMaterialModal(id = null){
   toggleNuevaCategoria();
   document.getElementById("f_nombre").value = item.nombre || "";
   document.getElementById("f_espesor").value = item.espesor || "";
+  document.getElementById("f_tipo_medida").value = item.tipo_medida || "M2";
   document.getElementById("f_ancho_cm").value = item.ancho_cm || "";
   document.getElementById("f_largo_cm").value = item.largo_cm || "";
+  document.getElementById("f_metros_lineales").value = item.metros_lineales || "";
   document.getElementById("f_formato").value = item.formato || "";
   document.getElementById("f_area").value = item.area || "";
   document.getElementById("f_nota").value = item.nota || "";
+  toggleTipoMedida();
 
   const providerBox = document.getElementById("providerInputs");
   providerBox.innerHTML = "";
@@ -571,24 +632,30 @@ function addProviderInput(provider = {}){
 }
 
 function autoFormatoYArea(){
+  const tipo = tipoMedidaActual();
   const ancho = Number(document.getElementById("f_ancho_cm").value || 0);
   const largo = Number(document.getElementById("f_largo_cm").value || 0);
-  const area = calcArea(ancho, largo);
-  document.getElementById("f_formato").value = formatoFromCm(ancho, largo);
+  const metros = Number(document.getElementById("f_metros_lineales").value || 0);
+
+  const area = tipo === "M2" ? calcArea(ancho, largo) : 0;
+
+  document.getElementById("f_formato").value = formatoVisible(tipo, ancho, largo, metros);
   document.getElementById("f_area").value = area ? area.toFixed(4) : "";
 }
 
 document.addEventListener("input", function(e){
-  if(["f_ancho_cm","f_largo_cm"].includes(e.target.id)) autoFormatoYArea();
+  if(["f_ancho_cm","f_largo_cm","f_metros_lineales"].includes(e.target.id)) autoFormatoYArea();
 });
 
 async function saveMaterial(){
   const client = sb();
   if(!client){ toast("No hay conexión Supabase"); return; }
 
-  const anchoCm = Number(document.getElementById("f_ancho_cm").value || 0);
-  const largoCm = Number(document.getElementById("f_largo_cm").value || 0);
-  const area = calcArea(anchoCm, largoCm);
+  const tipoMedida = tipoMedidaActual();
+  const anchoCm = tipoMedida === "M2" ? Number(document.getElementById("f_ancho_cm").value || 0) : 0;
+  const largoCm = tipoMedida === "M2" ? Number(document.getElementById("f_largo_cm").value || 0) : 0;
+  const metrosLineales = tipoMedida === "M" ? Number(document.getElementById("f_metros_lineales").value || 0) : 0;
+  const area = tipoMedida === "M2" ? calcArea(anchoCm, largoCm) : 0;
   const categoriaFinal = categoriaFormulario();
 
   const proveedores = [...document.querySelectorAll(".provider-input-row")].map(row => ({
@@ -602,7 +669,8 @@ async function saveMaterial(){
   const nombreOriginal = document.getElementById("f_nombre").value.trim().toUpperCase();
 
   if(!nombreOriginal){ toast("Falta nombre"); return; }
-  if(!anchoCm || !largoCm){ toast("Falta ancho o largo en cm"); return; }
+  if(tipoMedida === "M2" && (!anchoCm || !largoCm)){ toast("Falta ancho o alto en cm"); return; }
+  if(tipoMedida === "M" && !metrosLineales){ toast("Falta cantidad de metros lineales"); return; }
   if(!proveedores.length){ toast("Agrega al menos un proveedor"); return; }
 
   const nombreFinal = await validarNombreUnicoDb(client, categoriaFinal, nombreOriginal, editId);
@@ -619,8 +687,10 @@ async function saveMaterial(){
     categoria: categoriaFinal,
     nombre: nombreFinal,
     espesor: document.getElementById("f_espesor").value.trim(),
+    tipo_medida: tipoMedida,
     ancho_cm: anchoCm,
     largo_cm: largoCm,
+    metros_lineales: metrosLineales,
     formato: document.getElementById("f_formato").value.trim(),
     area_m2: Number(area.toFixed(4)),
     nota: document.getElementById("f_nota").value.trim(),
@@ -715,11 +785,14 @@ function duplicateMaterial(id){
 
   document.getElementById("f_nombre").value = item.nombre || "";
   document.getElementById("f_espesor").value = item.espesor || "";
+  document.getElementById("f_tipo_medida").value = item.tipo_medida || "M2";
   document.getElementById("f_ancho_cm").value = item.ancho_cm || "";
   document.getElementById("f_largo_cm").value = item.largo_cm || "";
+  document.getElementById("f_metros_lineales").value = item.metros_lineales || "";
   document.getElementById("f_formato").value = item.formato || "";
   document.getElementById("f_area").value = item.area || "";
   document.getElementById("f_nota").value = item.nota || "";
+  toggleTipoMedida();
 
   const providerBox = document.getElementById("providerInputs");
   providerBox.innerHTML = "";
@@ -771,7 +844,7 @@ function render(){
 
           <span class="name">
             <strong>${item.nombre}</strong>
-            <small>${item.espesor || "-"} · ${item.formato} · ${Number(item.area || 0).toFixed(2)} m²</small>
+            <small>${item.espesor || "-"} · ${item.tipo_medida || "M2"} · ${item.formato}${item.tipo_medida === "M2" ? " · " + Number(item.area || 0).toFixed(2) + " m²" : ""}</small>
           </span>
 
           <span class="cell-mini lamina">
@@ -799,7 +872,7 @@ function render(){
                 <div class="provider-rank">${idx + 1}</div>
                 <div class="provider-name">${p.proveedor}</div>
                 <div class="provider-price">$${p.precio}</div>
-                <div class="provider-m2">${costoM2(p.precio, item.area)} /m²</div>
+                <div class="provider-m2">${costoM2(p.precio, item.area, item.tipo_medida, item.metros_lineales)} ${item.tipo_medida === "M" ? "/m" : (item.tipo_medida === "UNITARIO" ? "/und" : "/m²")}</div>
                 <div class="provider-date">${p.fecha || "-"}</div>
                 <button class="icon-btn" type="button" onclick="event.stopPropagation(); openMaterialModal(${item.id})">✎</button>
               </div>
@@ -832,4 +905,3 @@ window.addEventListener("load", async function(){
 </script>
 </body>
 </html>
-
