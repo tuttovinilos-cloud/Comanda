@@ -165,26 +165,7 @@ button{cursor:pointer}
 
         <div class="field">
           <label>Tipo de detalle</label>
-          <select id="f_detalle_label" onchange="toggleNuevoTipoDetalle()">
-            <option value="ESPESOR">ESPESOR</option>
-            <option value="MEDIDA">MEDIDA</option>
-            <option value="REFERENCIA">REFERENCIA</option>
-            <option value="PRESENTACIÓN">PRESENTACIÓN</option>
-            <option value="TIPO">TIPO</option>
-            <option value="FORMATO">FORMATO</option>
-            <option value="CALIBRE">CALIBRE</option>
-            <option value="COLOR">COLOR</option>
-            <option value="ACABADO">ACABADO</option>
-            <option value="MODELO">MODELO</option>
-            <option value="VOLTAJE">VOLTAJE</option>
-            <option value="AMPERAJE">AMPERAJE</option>
-            <option value="DIÁMETRO">DIÁMETRO</option>
-            <option value="LONGITUD">LONGITUD</option>
-            <option value="CAPACIDAD">CAPACIDAD</option>
-            <option value="ROSCA">ROSCA</option>
-            <option value="GRAMAJE">GRAMAJE</option>
-            <option value="__NUEVO__">+ NUEVO TIPO</option>
-          </select>
+          <select id="f_detalle_label" onchange="toggleNuevoTipoDetalle()"></select>
         </div>
 
         <div class="field" id="nuevoTipoDetalleBox" style="display:none">
@@ -370,8 +351,8 @@ function detalleLabelSugerido(categoria){
     "MDF":"ESPESOR",
     "MDP":"ESPESOR",
     "ACM":"ESPESOR",
-    "VINIL":"REFERENCIA",
-    "LONA":"FORMATO",
+    "VINIL":"ROLLO",
+    "LONA":"ROLLO",
     "PERNOS":"MEDIDA",
     "HERRAJE":"MEDIDA",
     "HERRAJES":"MEDIDA",
@@ -388,7 +369,91 @@ function detalleLabelSugerido(categoria){
   return mapa[cat] || "TIPO";
 }
 
-function toggleNuevoTipoDetalle(){
+const tiposDetalleBasePorCategoria = {
+  "PVC":["ESPESOR"],
+  "ACRILICO":["ESPESOR"],
+  "ACRÍLICO":["ESPESOR"],
+  "MDF":["ESPESOR"],
+  "MDP":["ESPESOR"],
+  "ACM":["ESPESOR"],
+  "VINIL":["ROLLO"],
+  "LONA":["ROLLO"],
+  "PERNOS":["MEDIDA"],
+  "HERRAJE":["MEDIDA"],
+  "HERRAJES":["MEDIDA"],
+  "TORNILLOS":["MEDIDA"],
+  "TINTA":["PRESENTACIÓN"],
+  "TINTAS":["PRESENTACIÓN"],
+  "LED":["TIPO"],
+  "CABLE":["CALIBRE"],
+  "ADHESIVO":["FORMATO"],
+  "ADHESIVOS":["FORMATO"],
+  "FÓRMICA":["FORMATO"],
+  "FORMICA":["FORMATO"]
+};
+
+const tiposDetalleGlobales = [
+  "ESPESOR",
+  "MEDIDA",
+  "REFERENCIA",
+  "PRESENTACIÓN",
+  "TIPO",
+  "FORMATO",
+  "CALIBRE",
+  "COLOR",
+  "ACABADO",
+  "MODELO",
+  "VOLTAJE",
+  "AMPERAJE",
+  "DIÁMETRO",
+  "LONGITUD",
+  "CAPACIDAD",
+  "ROSCA",
+  "GRAMAJE",
+  "ROLLO",
+  "PLIEGO"
+];
+
+function tiposDetalleParaCategoria(categoria){
+  const cat = normalCat(categoria);
+  const set = new Set(tiposDetalleBasePorCategoria[cat] || []);
+
+  materiales.forEach(m => {
+    if(normalCat(m.categoria) === cat){
+      const label = String(m.detalle_label || "").trim().toUpperCase();
+      if(label) set.add(label);
+    }
+  });
+
+  if(!set.size){
+    set.add(detalleLabelSugerido(cat));
+  }
+
+  return [...set].sort((a,b)=>a.localeCompare(b, "es", {numeric:true}));
+}
+
+function poblarSelectTipoDetalle(valorPreferido = ""){
+  const select = document.getElementById("f_detalle_label");
+  if(!select) return;
+
+  const categoria = categoriaFormulario ? categoriaFormulario() : document.getElementById("f_categoria")?.value;
+  const tipos = tiposDetalleParaCategoria(categoria);
+  const preferido = String(valorPreferido || "").toUpperCase();
+
+  select.innerHTML = tipos
+    .map(tipo => `<option value="${tipo}">${tipo}</option>`)
+    .join("") + `<option value="__NUEVO__">+ NUEVO TIPO</option>`;
+
+  if(preferido && tipos.includes(preferido)){
+    select.value = preferido;
+  }else{
+    select.value = tipos[0] || "__NUEVO__";
+  }
+
+  toggleNuevoTipoDetalle();
+}
+
+function toggleNuevoTipoDetalle(){function toggleNuevoTipoDetalle(){
   const select = document.getElementById("f_detalle_label");
   const box = document.getElementById("nuevoTipoDetalleBox");
 
@@ -406,20 +471,11 @@ function toggleNuevoTipoDetalle(){
 
 function aplicarDetallePorCategoria(){
   const categoria = categoriaFormulario ? categoriaFormulario() : document.getElementById("f_categoria")?.value;
-  const select = document.getElementById("f_detalle_label");
-  if(!select) return;
-
   const sugerido = detalleLabelSugerido(categoria);
-  const existe = [...select.options].some(opt => opt.value === sugerido);
+  poblarSelectTipoDetalle(sugerido);
 
-  if(existe){
-    select.value = sugerido;
-  }else{
-    select.value = "TIPO";
-  }
-
-  document.getElementById("f_nuevo_detalle_label").value = "";
-  toggleNuevoTipoDetalle();
+  const nuevo = document.getElementById("f_nuevo_detalle_label");
+  if(nuevo) nuevo.value = "";
 }
 
 function detalleValorActual(){
@@ -667,7 +723,7 @@ function applyCatalogTemplate(){
   document.getElementById("f_categoria").value = c.categoria;
   toggleNuevaCategoria();
   document.getElementById("f_nombre").value = c.nombre;
-  document.getElementById("f_detalle_label").value = c.detalle_label || detalleLabelSugerido(c.categoria);
+  poblarSelectTipoDetalle(c.detalle_label || detalleLabelSugerido(c.categoria));
   document.getElementById("f_nuevo_detalle_label").value = "";
   toggleNuevoTipoDetalle();
   document.getElementById("f_detalle_valor").value = c.detalle_valor || c.espesor || "";
@@ -702,9 +758,10 @@ function openMaterialModal(id = null){
   toggleNuevaCategoria();
   document.getElementById("f_nombre").value = item.nombre || "";
   const labelExistente = String(item.detalle_label || detalleLabelSugerido(item.categoria)).toUpperCase();
+  poblarSelectTipoDetalle(labelExistente);
   const opcionesDetalle = [...document.getElementById("f_detalle_label").options].map(o => o.value);
 
-  if(opcionesDetalle.includes(labelExistente)){
+  if(opcionesDetalle.includes(labelExistente) && labelExistente !== "__NUEVO__"){
     document.getElementById("f_detalle_label").value = labelExistente;
     document.getElementById("f_nuevo_detalle_label").value = "";
   }else{
@@ -922,9 +979,10 @@ function duplicateMaterial(id){
 
   document.getElementById("f_nombre").value = item.nombre || "";
   const labelExistente = String(item.detalle_label || detalleLabelSugerido(item.categoria)).toUpperCase();
+  poblarSelectTipoDetalle(labelExistente);
   const opcionesDetalle = [...document.getElementById("f_detalle_label").options].map(o => o.value);
 
-  if(opcionesDetalle.includes(labelExistente)){
+  if(opcionesDetalle.includes(labelExistente) && labelExistente !== "__NUEVO__"){
     document.getElementById("f_detalle_label").value = labelExistente;
     document.getElementById("f_nuevo_detalle_label").value = "";
   }else{
