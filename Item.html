@@ -962,11 +962,30 @@ function render(){
 
   const q = document.getElementById("searchInput").value.toUpperCase().trim();
 
-  const lista = materiales.filter(item=>{
-    const proveedoresTexto = (item.proveedores || []).map(p=>`${p.proveedor} ${p.precio} ${p.fecha}`).join(" ");
-    const texto = `${item.categoria} ${item.nombre} ${item.espesor} ${item.formato} ${item.nota} ${proveedoresTexto}`.toUpperCase();
-    return texto.includes(q) && (categoriaActual === "TODOS" || item.categoria === categoriaActual);
-  });
+  const lista = materiales
+    .filter(item=>{
+      const proveedoresTexto = (item.proveedores || []).map(p=>`${p.proveedor} ${p.precio} ${p.fecha}`).join(" ");
+      const texto = `${item.categoria} ${item.nombre} ${item.detalle_label} ${item.detalle_valor || item.espesor} ${item.formato} ${item.nota} ${proveedoresTexto}`.toUpperCase();
+      return texto.includes(q) && (categoriaActual === "TODOS" || item.categoria === categoriaActual);
+    })
+    .sort((a,b)=>{
+      const catA = String(a.categoria || "").toUpperCase();
+      const catB = String(b.categoria || "").toUpperCase();
+
+      const nomA = String(a.nombre || "").toUpperCase();
+      const nomB = String(b.nombre || "").toUpperCase();
+
+      const labelA = String(a.detalle_label || "").toUpperCase();
+      const labelB = String(b.detalle_label || "").toUpperCase();
+
+      const detA = String(a.detalle_valor || a.espesor || "").toUpperCase();
+      const detB = String(b.detalle_valor || b.espesor || "").toUpperCase();
+
+      return catA.localeCompare(catB, "es", {numeric:true})
+        || nomA.localeCompare(nomB, "es", {numeric:true})
+        || labelA.localeCompare(labelB, "es", {numeric:true})
+        || detA.localeCompare(detB, "es", {numeric:true});
+    });
 
   document.getElementById("materialList").innerHTML = lista.map(item=>{
     const proveedores = proveedoresOrdenados(item);
