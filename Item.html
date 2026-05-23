@@ -319,6 +319,69 @@ function rangoLamina(item){
   return min === max ? "$" + min : "$" + min + " – $" + max;
 }
 
+function nombreBaseSinCorrelativo(nombre){
+  return String(nombre || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+\d+$/, "");
+}
+
+function generarNombreCorrelativoDesdeLista(nombre, nombresExistentes){
+  const base = nombreBaseSinCorrelativo(nombre);
+  const existentes = new Set((nombresExistentes || []).map(n => String(n || "").trim().toUpperCase()));
+
+  if(!existentes.has(base)){
+    return base;
+  }
+
+  let n = 1;
+  let candidato = `${base} ${n}`;
+
+  while(existentes.has(candidato)){
+    n++;
+    candidato = `${base} ${n}`;
+  }
+
+  return candidato;
+}
+
+async function validarNombreUnicoDb(client, categoriaFinal, nombreOriginal, idIgnorar = null){
+  const cat = normalCat(categoriaFinal);
+  const nombre = String(nombreOriginal || "").trim().toUpperCase();
+
+  const { data, error } = await client
+    .from("materia_materiales")
+    .select("id,nombre,categoria")
+    .eq("categoria", cat)
+    .eq("activo", true);
+
+  if(error){
+    console.error(error);
+    toast("Error validando nombres");
+    return null;
+  }
+
+  const nombresExistentes = (data || [])
+    .filter(m => Number(m.id) !== Number(idIgnorar))
+    .map(m => String(m.nombre || "").trim().toUpperCase());
+
+  const nombreFinal = generarNombreCorrelativoDesdeLista(nombre, nombresExistentes);
+
+  if(nombreFinal !== nombre){
+    const aceptar = confirm(
+      `Ya existe un material en la categoría "${cat}" con el nombre "${nombre}".\n\n` +
+      `¿Quieres guardarlo como "${nombreFinal}"?`
+    );
+
+    if(!aceptar){
+      toast("Guardado cancelado");
+      return null;
+    }
+  }
+
+  return nombreFinal;
+}
+
 function categoriasActuales(){
   const base = ["PVC","ACRILICO","VINIL","LED","CONSUMIBLE"];
   const fromDb = categorias.map(c => normalCat(c.nombre)).filter(Boolean);
@@ -519,74 +582,6 @@ document.addEventListener("input", function(e){
   if(["f_ancho_cm","f_largo_cm"].includes(e.target.id)) autoFormatoYArea();
 });
 
-
-function nombreBaseSinCorrelativo(nombre){
-  return String(nombre || "")
-    .trim()
-    .toUpperCase()
-    .replace(/\s+\d+$/,"");
-}
-
-function nombreExisteEnCategoria(categoria, nombre, ignorarId = null){
-  const cat = normalCat(categoria);
-  const nom = String(nombre || "").trim().toUpperCase();
-
-  return materiales.some(m =>
-    Number(m.id) !== Number(ignorarId) &&
-    normalCat(m.categoria) === cat &&
-    String(m.nombre || "").trim().toUpperCase() === nom
-  );
-}
-
-function siguienteNombreCorrelativo(categoria, nombre, ignorarId = null){
-  const cat = normalCat(categoria);
-  const base = nombreBaseSinCorrelativo(nombre);
-
-  let mayor = 0;
-  let existeBase = false;
-
-  materiales.forEach(m => {
-    if(Number(m.id) === Number(ignorarId)) return;
-    if(normalCat(m.categoria) !== cat) return;
-
-    const nom = String(m.nombre || "").trim().toUpperCase();
-
-    if(nom === base){
-      existeBase = true;
-      mayor = Math.max(mayor, 0);
-      return;
-    }
-
-    const match = nom.match(new RegExp("^" + base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\\\s+(\\\\d+)$"));
-
-    if(match){
-      mayor = Math.max(mayor, Number(match[1] || 0));
-    }
-  });
-
-  if(!existeBase && mayor === 0) return base;
-  return `${base} ${mayor + 1}`;
-}
-
-function resolverNombreDuplicado(categoria, nombre, ignorarId = null){
-  const nombreNormal = String(nombre || "").trim().toUpperCase();
-
-  if(!nombreExisteEnCategoria(categoria, nombreNormal, ignorarId)){
-    return nombreNormal;
-  }
-
-  const sugerido = siguienteNombreCorrelativo(categoria, nombreNormal, ignorarId);
-
-  const aceptar = confirm(
-    `Ya existe un material en la categoría ${categoria} con el nombre "${nombreNormal}".\n\n` +
-    `¿Quieres guardarlo como "${sugerido}"?`
-  );
-
-  if(!aceptar) return null;
-
-  return sugerido;
-}
-
 async function saveMaterial(){
   const client = sb();
   if(!client){ toast("No hay conexión Supabase"); return; }
@@ -604,19 +599,19 @@ async function saveMaterial(){
 
   if(!categoriaFinal){ toast("Falta categoría"); return; }
 
-  const nombreFinal = resolverNombreDuplicado(
-    categoriaFinal,
-    document.getElementById("f_nombre").value,
-    editId
-  );
+  const nombreOriginal = document.getElementById("f_nombre").value.trim().toUpperCase();
+
+  if(!nombreOriginal){ toast("Falta nombre"); return; }
+  if(!anchoCm || !largoCm){ toast("Falta ancho o largo en cm"); return; }
+  if(!proveedores.length){ toast("Agrega al menos un proveedor"); return; }
+
+  const nombreFinal = await validarNombreUnicoDb(client, categoriaFinal, nombreOriginal, editId);
 
   if(!nombreFinal){
-    toast("Guardado cancelado");
     return;
   }
 
-  if(!anchoCm || !largoCm){ toast("Falta ancho o largo en cm"); return; }
-  if(!proveedores.length){ toast("Agrega al menos un proveedor"); return; }
+  document.getElementById("f_nombre").value = nombreFinal;
 
   await client.from("materia_categorias").upsert({ nombre: categoriaFinal }, { onConflict:"nombre" });
 
