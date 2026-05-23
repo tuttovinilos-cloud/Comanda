@@ -133,14 +133,7 @@ button{cursor:pointer}
       <button class="btn light" type="button" onclick="resetDemo()">Reset demo</button>
     </div>
 
-    <div class="cats">
-      <button class="cat active" type="button" onclick="setCat('TODOS', this)">Todos</button>
-      <button class="cat" type="button" onclick="setCat('PVC', this)">PVC</button>
-      <button class="cat" type="button" onclick="setCat('ACRILICO', this)">Acrílico</button>
-      <button class="cat" type="button" onclick="setCat('VINIL', this)">Vinil</button>
-      <button class="cat" type="button" onclick="setCat('LED', this)">Iluminación</button>
-      <button class="cat" type="button" onclick="setCat('CONSUMIBLE', this)">Consumibles</button>
-    </div>
+    <div class="cats" id="categoryTabs"></div>
   </section>
 
   <section class="list" id="materialList"></section>
@@ -168,13 +161,12 @@ button{cursor:pointer}
       <div class="form-grid">
         <div class="field">
           <label>Categoría</label>
-          <select id="f_categoria">
-            <option>PVC</option>
-            <option>ACRILICO</option>
-            <option>VINIL</option>
-            <option>LED</option>
-            <option>CONSUMIBLE</option>
-          </select>
+          <select id="f_categoria" onchange="toggleNuevaCategoria()"></select>
+        </div>
+
+        <div class="field" id="nuevaCategoriaBox" style="display:none">
+          <label>Nueva categoría</label>
+          <input id="f_nueva_categoria" placeholder="Ej: ACM, MDF, HERRAJES">
         </div>
 
         <div class="field">
@@ -276,6 +268,45 @@ let materiales = loadMateriales();
 let categoriaActual = "TODOS";
 let editIndex = null;
 
+function categoriasActuales(){
+  const base = ["PVC", "ACRILICO", "VINIL", "LED", "CONSUMIBLE"];
+  const extras = materiales.map(m => String(m.categoria || "").trim().toUpperCase()).filter(Boolean);
+  return [...new Set([...base, ...extras])];
+}
+
+function renderCategoryTabs(){
+  const cats = ["TODOS", ...categoriasActuales()];
+  document.getElementById("categoryTabs").innerHTML = cats.map(cat => `
+    <button class="cat ${categoriaActual === cat ? "active" : ""}" type="button" onclick="setCat('${cat}', this)">
+      ${cat === "TODOS" ? "Todos" : cat}
+    </button>
+  `).join("");
+}
+
+function fillCategorySelect(){
+  const select = document.getElementById("f_categoria");
+  const selected = select.value || "PVC";
+  select.innerHTML = categoriasActuales().map(cat => `<option value="${cat}">${cat}</option>`).join("") + `<option value="__NUEVA__">+ Nueva categoría</option>`;
+  select.value = categoriasActuales().includes(selected) ? selected : "PVC";
+  toggleNuevaCategoria();
+}
+
+function toggleNuevaCategoria(){
+  const select = document.getElementById("f_categoria");
+  const box = document.getElementById("nuevaCategoriaBox");
+  if(!select || !box) return;
+  box.style.display = select.value === "__NUEVA__" ? "flex" : "none";
+  if(select.value === "__NUEVA__"){
+    setTimeout(() => document.getElementById("f_nueva_categoria")?.focus(), 50);
+  }
+}
+
+function categoriaFormulario(){
+  const select = document.getElementById("f_categoria");
+  if(select.value !== "__NUEVA__") return select.value;
+  return document.getElementById("f_nueva_categoria").value.trim().toUpperCase();
+}
+
 function loadMateriales(){
   try{
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -369,7 +400,9 @@ function applyCatalogTemplate(){
   const c = catalogoBase[Number(val)];
   if(!c) return;
 
+  fillCategorySelect();
   document.getElementById("f_categoria").value = c.categoria;
+  toggleNuevaCategoria();
   document.getElementById("f_nombre").value = c.nombre;
   document.getElementById("f_espesor").value = c.espesor;
   document.getElementById("f_ancho_cm").value = c.ancho_cm;
@@ -383,12 +416,19 @@ function openMaterialModal(index = null){
   loadCatalogSelect();
   document.getElementById("catalogSelect").value = "";
   document.getElementById("modalTitle").textContent = index === null ? "Añadir material" : "Editar material";
+  fillCategorySelect();
 
   const item = index === null ? {
     categoria:"PVC", nombre:"", espesor:"", ancho_cm:"", largo_cm:"", formato:"", area:"", nota:"", proveedores:[]
   } : materiales[index];
 
-  document.getElementById("f_categoria").value = item.categoria || "PVC";
+  if(categoriasActuales().includes(item.categoria)){
+    document.getElementById("f_categoria").value = item.categoria || "PVC";
+  }else{
+    document.getElementById("f_categoria").value = "__NUEVA__";
+    document.getElementById("f_nueva_categoria").value = item.categoria || "";
+  }
+  toggleNuevaCategoria();
   document.getElementById("f_nombre").value = item.nombre || "";
   document.getElementById("f_espesor").value = item.espesor || "";
   document.getElementById("f_ancho_cm").value = item.ancho_cm || "";
@@ -452,8 +492,10 @@ function saveMaterial(){
     };
   }).filter(p => p.nombre && p.precio > 0);
 
+  const categoriaFinal = categoriaFormulario();
+
   const item = {
-    categoria: document.getElementById("f_categoria").value,
+    categoria: categoriaFinal,
     nombre: document.getElementById("f_nombre").value.trim().toUpperCase(),
     espesor: document.getElementById("f_espesor").value.trim(),
     ancho_cm: anchoCm,
@@ -464,6 +506,7 @@ function saveMaterial(){
     proveedores
   };
 
+  if(!item.categoria){ toast("Falta categoría"); return; }
   if(!item.nombre){ toast("Falta nombre"); return; }
   if(!item.ancho_cm || !item.largo_cm){ toast("Falta ancho o largo en cm"); return; }
   if(!item.proveedores.length){ toast("Agrega al menos un proveedor"); return; }
@@ -503,6 +546,7 @@ function resetDemo(){
 }
 
 function render(){
+  renderCategoryTabs();
   const q = document.getElementById("searchInput").value.toUpperCase().trim();
 
   const lista = materiales.map((item, originalIndex)=>({...item, originalIndex})).filter(item=>{
