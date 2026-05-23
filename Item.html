@@ -396,19 +396,21 @@ function generarNombreCorrelativoDesdeLista(nombre, nombresExistentes){
   return candidato;
 }
 
-async function validarNombreUnicoDb(client, categoriaFinal, nombreOriginal, idIgnorar = null){
+async function validarMaterialUnicoDb(client, categoriaFinal, nombreOriginal, espesorFinal, idIgnorar = null){
   const cat = normalCat(categoriaFinal);
   const nombre = String(nombreOriginal || "").trim().toUpperCase();
+  const espesor = String(espesorFinal || "").trim().toUpperCase();
 
   const { data, error } = await client
     .from("materia_materiales")
-    .select("id,nombre,categoria")
+    .select("id,nombre,categoria,espesor")
     .eq("categoria", cat)
+    .eq("espesor", espesor)
     .eq("activo", true);
 
   if(error){
     console.error(error);
-    toast("Error validando nombres");
+    toast("Error validando material");
     return null;
   }
 
@@ -420,7 +422,8 @@ async function validarNombreUnicoDb(client, categoriaFinal, nombreOriginal, idIg
 
   if(nombreFinal !== nombre){
     const aceptar = confirm(
-      `Ya existe un material en la categoría "${cat}" con el nombre "${nombre}".\n\n` +
+      `Ya existe un material con la misma categoría, nombre y espesor:\n\n` +
+      `${cat} · ${nombre} · ${espesor || "SIN ESPESOR"}\n\n` +
       `¿Quieres guardarlo como "${nombreFinal}"?`
     );
 
@@ -673,20 +676,23 @@ async function saveMaterial(){
   if(tipoMedida === "M" && !metrosLineales){ toast("Falta cantidad de metros lineales"); return; }
   if(!proveedores.length){ toast("Agrega al menos un proveedor"); return; }
 
-  const nombreFinal = await validarNombreUnicoDb(client, categoriaFinal, nombreOriginal, editId);
+  const espesorFinal = document.getElementById("f_espesor").value.trim().toUpperCase();
+
+  const nombreFinal = await validarMaterialUnicoDb(client, categoriaFinal, nombreOriginal, espesorFinal, editId);
 
   if(!nombreFinal){
     return;
   }
 
   document.getElementById("f_nombre").value = nombreFinal;
+  document.getElementById("f_espesor").value = espesorFinal;
 
   await client.from("materia_categorias").upsert({ nombre: categoriaFinal }, { onConflict:"nombre" });
 
   const payload = {
     categoria: categoriaFinal,
     nombre: nombreFinal,
-    espesor: document.getElementById("f_espesor").value.trim(),
+    espesor: espesorFinal,
     tipo_medida: tipoMedida,
     ancho_cm: anchoCm,
     largo_cm: largoCm,
