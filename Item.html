@@ -128,7 +128,6 @@ button{cursor:pointer}
 </main>
 
 <datalist id="proveedoresDatalist"></datalist>
-<datalist id="detalleTiposDatalist"></datalist>
 
 <div class="backdrop" id="materialBackdrop" onclick="backdropClick(event)">
   <div class="modal">
@@ -166,7 +165,31 @@ button{cursor:pointer}
 
         <div class="field">
           <label>Tipo de detalle</label>
-          <input id="f_detalle_label" list="detalleTiposDatalist" placeholder="Ej: ESPESOR, MEDIDA, REFERENCIA" oninput="onDetalleLabelInput(this)" onblur="validarDetalleLabel()">
+          <select id="f_detalle_label" onchange="toggleNuevoTipoDetalle()">
+            <option value="ESPESOR">ESPESOR</option>
+            <option value="MEDIDA">MEDIDA</option>
+            <option value="REFERENCIA">REFERENCIA</option>
+            <option value="PRESENTACIÓN">PRESENTACIÓN</option>
+            <option value="TIPO">TIPO</option>
+            <option value="FORMATO">FORMATO</option>
+            <option value="CALIBRE">CALIBRE</option>
+            <option value="COLOR">COLOR</option>
+            <option value="ACABADO">ACABADO</option>
+            <option value="MODELO">MODELO</option>
+            <option value="VOLTAJE">VOLTAJE</option>
+            <option value="AMPERAJE">AMPERAJE</option>
+            <option value="DIÁMETRO">DIÁMETRO</option>
+            <option value="LONGITUD">LONGITUD</option>
+            <option value="CAPACIDAD">CAPACIDAD</option>
+            <option value="ROSCA">ROSCA</option>
+            <option value="GRAMAJE">GRAMAJE</option>
+            <option value="__NUEVO__">+ NUEVO TIPO</option>
+          </select>
+        </div>
+
+        <div class="field" id="nuevoTipoDetalleBox" style="display:none">
+          <label>Nuevo tipo de detalle</label>
+          <input id="f_nuevo_detalle_label" placeholder="Ej: VOLTAJE, AMPERAJE, DIÁMETRO" oninput="forceUppercase(this)">
         </div>
 
         <div class="field">
@@ -365,81 +388,38 @@ function detalleLabelSugerido(categoria){
   return mapa[cat] || "TIPO";
 }
 
-const detalleTiposBase = [
-  "ESPESOR",
-  "MEDIDA",
-  "REFERENCIA",
-  "PRESENTACIÓN",
-  "TIPO",
-  "FORMATO",
-  "CALIBRE",
-  "COLOR",
-  "ACABADO",
-  "MODELO",
-  "VOLTAJE",
-  "AMPERAJE",
-  "DIÁMETRO",
-  "LONGITUD",
-  "CAPACIDAD",
-  "ROSCA",
-  "GRAMAJE"
-];
+function toggleNuevoTipoDetalle(){
+  const select = document.getElementById("f_detalle_label");
+  const box = document.getElementById("nuevoTipoDetalleBox");
 
-function detalleTiposExistentes(){
-  const set = new Set(detalleTiposBase);
+  if(!select || !box) return;
 
-  materiales.forEach(m => {
-    const label = String(m.detalle_label || "").trim().toUpperCase();
-    if(label) set.add(label);
-  });
+  box.style.display = select.value === "__NUEVO__" ? "flex" : "none";
 
-  return [...set].sort((a,b)=>a.localeCompare(b, "es", {numeric:true}));
-}
-
-function renderDetalleTiposDatalist(){
-  const dl = document.getElementById("detalleTiposDatalist");
-  if(!dl) return;
-
-  dl.innerHTML = detalleTiposExistentes()
-    .map(tipo => `<option value="${tipo}"></option>`)
-    .join("");
-}
-
-function onDetalleLabelInput(input){
-  forceUppercase(input);
-}
-
-function validarDetalleLabel(){
-  const input = document.getElementById("f_detalle_label");
-  if(!input) return;
-
-  const valor = String(input.value || "").trim().toUpperCase();
-
-  if(!valor){
-    input.value = "";
-    return;
-  }
-
-  const existe = detalleTiposExistentes().includes(valor);
-
-  if(!existe){
-    toast("Ese tipo de detalle no existe. No se agregó.");
-    input.value = "";
+  if(select.value === "__NUEVO__"){
+    setTimeout(()=>{
+      const input = document.getElementById("f_nuevo_detalle_label");
+      if(input) input.focus();
+    },80);
   }
 }
 
 function aplicarDetallePorCategoria(){
   const categoria = categoriaFormulario ? categoriaFormulario() : document.getElementById("f_categoria")?.value;
-  const input = document.getElementById("f_detalle_label");
-  if(!input) return;
+  const select = document.getElementById("f_detalle_label");
+  if(!select) return;
 
   const sugerido = detalleLabelSugerido(categoria);
+  const existe = [...select.options].some(opt => opt.value === sugerido);
 
-  if(detalleTiposExistentes().includes(sugerido)){
-    input.value = sugerido;
+  if(existe){
+    select.value = sugerido;
   }else{
-    input.value = "";
+    select.value = "TIPO";
   }
+
+  document.getElementById("f_nuevo_detalle_label").value = "";
+  toggleNuevoTipoDetalle();
 }
 
 function detalleValorActual(){
@@ -447,17 +427,13 @@ function detalleValorActual(){
 }
 
 function detalleLabelActual(){
-  const valor = String(document.getElementById("f_detalle_label")?.value || "").trim().toUpperCase();
+  const selectValue = String(document.getElementById("f_detalle_label")?.value || "TIPO").trim().toUpperCase();
 
-  if(!valor){
-    return "";
+  if(selectValue !== "__NUEVO__"){
+    return selectValue;
   }
 
-  if(!detalleTiposExistentes().includes(valor)){
-    return "";
-  }
-
-  return valor;
+  return String(document.getElementById("f_nuevo_detalle_label")?.value || "").trim().toUpperCase();
 }
 
 function proveedoresOrdenados(item){
@@ -692,7 +668,8 @@ function applyCatalogTemplate(){
   toggleNuevaCategoria();
   document.getElementById("f_nombre").value = c.nombre;
   document.getElementById("f_detalle_label").value = c.detalle_label || detalleLabelSugerido(c.categoria);
-  validarDetalleLabel();
+  document.getElementById("f_nuevo_detalle_label").value = "";
+  toggleNuevoTipoDetalle();
   document.getElementById("f_detalle_valor").value = c.detalle_valor || c.espesor || "";
   document.getElementById("f_tipo_medida").value = c.tipo_medida || "M2";
   document.getElementById("f_ancho_cm").value = c.ancho_cm || "";
@@ -725,13 +702,17 @@ function openMaterialModal(id = null){
   toggleNuevaCategoria();
   document.getElementById("f_nombre").value = item.nombre || "";
   const labelExistente = String(item.detalle_label || detalleLabelSugerido(item.categoria)).toUpperCase();
+  const opcionesDetalle = [...document.getElementById("f_detalle_label").options].map(o => o.value);
 
-  if(detalleTiposExistentes().includes(labelExistente)){
+  if(opcionesDetalle.includes(labelExistente)){
     document.getElementById("f_detalle_label").value = labelExistente;
+    document.getElementById("f_nuevo_detalle_label").value = "";
   }else{
-    document.getElementById("f_detalle_label").value = "";
+    document.getElementById("f_detalle_label").value = "__NUEVO__";
+    document.getElementById("f_nuevo_detalle_label").value = labelExistente;
   }
 
+  toggleNuevoTipoDetalle();
   document.getElementById("f_detalle_valor").value = item.detalle_valor || item.espesor || "";
   document.getElementById("f_tipo_medida").value = item.tipo_medida || "M2";
   document.getElementById("f_ancho_cm").value = item.ancho_cm || "";
@@ -821,7 +802,7 @@ async function saveMaterial(){
   const detalleValorFinal = detalleValorActual();
 
   if(!detalleLabelFinal){
-    toast("Selecciona un tipo de detalle existente");
+    toast("Falta tipo de detalle");
     return;
   }
 
@@ -941,13 +922,17 @@ function duplicateMaterial(id){
 
   document.getElementById("f_nombre").value = item.nombre || "";
   const labelExistente = String(item.detalle_label || detalleLabelSugerido(item.categoria)).toUpperCase();
+  const opcionesDetalle = [...document.getElementById("f_detalle_label").options].map(o => o.value);
 
-  if(detalleTiposExistentes().includes(labelExistente)){
+  if(opcionesDetalle.includes(labelExistente)){
     document.getElementById("f_detalle_label").value = labelExistente;
+    document.getElementById("f_nuevo_detalle_label").value = "";
   }else{
-    document.getElementById("f_detalle_label").value = "";
+    document.getElementById("f_detalle_label").value = "__NUEVO__";
+    document.getElementById("f_nuevo_detalle_label").value = labelExistente;
   }
 
+  toggleNuevoTipoDetalle();
   document.getElementById("f_detalle_valor").value = item.detalle_valor || item.espesor || "";
   document.getElementById("f_tipo_medida").value = item.tipo_medida || "M2";
   document.getElementById("f_ancho_cm").value = item.ancho_cm || "";
@@ -989,7 +974,6 @@ function duplicateMaterial(id){
 function render(){
   renderCategoryTabs();
   renderProveedoresDatalist();
-  renderDetalleTiposDatalist();
 
   const q = document.getElementById("searchInput").value.toUpperCase().trim();
 
