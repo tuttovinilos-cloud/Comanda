@@ -150,7 +150,7 @@ button{cursor:pointer}
       <div class="form-grid">
         <div class="field">
           <label>Categoría</label>
-          <select id="f_categoria" onchange="toggleNuevaCategoria()"></select>
+          <select id="f_categoria" onchange="toggleNuevaCategoria(); aplicarDetallePorCategoria()"></select>
         </div>
 
         <div class="field" id="nuevaCategoriaBox" style="display:none">
@@ -164,8 +164,23 @@ button{cursor:pointer}
         </div>
 
         <div class="field">
-          <label>Espesor</label>
-          <input id="f_espesor" placeholder="Ej: 3mm, 5mm, -">
+          <label>Tipo de detalle</label>
+          <select id="f_detalle_label">
+            <option value="ESPESOR">ESPESOR</option>
+            <option value="MEDIDA">MEDIDA</option>
+            <option value="REFERENCIA">REFERENCIA</option>
+            <option value="PRESENTACIÓN">PRESENTACIÓN</option>
+            <option value="TIPO">TIPO</option>
+            <option value="FORMATO">FORMATO</option>
+            <option value="CALIBRE">CALIBRE</option>
+            <option value="COLOR">COLOR</option>
+            <option value="ACABADO">ACABADO</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Valor del detalle</label>
+          <input id="f_detalle_valor" placeholder="Ej: 3MM, 25X19, REF200, BOTELLA 1L">
         </div>
 
         <div class="format-panel">
@@ -268,12 +283,12 @@ function renderProveedoresDatalist(){
 }
 
 const catalogoBase = [
-  {categoria:"PVC", nombre:"Blanco", espesor:"3mm", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"PVC blanco estándar."},
-  {categoria:"PVC", nombre:"Blanco", espesor:"5mm", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"PVC blanco intermedio."},
-  {categoria:"PVC", nombre:"Blanco", espesor:"9mm", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"PVC blanco para corpóreos."},
-  {categoria:"ACRILICO", nombre:"Transparente", espesor:"3mm", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"Acrílico transparente."},
-  {categoria:"ACRILICO", nombre:"Transparente", espesor:"5mm", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"Acrílico transparente grueso."},
-  {categoria:"VINIL", nombre:"Adhesivo Blanco", espesor:"-", tipo_medida:"M", ancho_cm:0, largo_cm:0, metros_lineales:50, nota:"Rollo de vinil adhesivo."}
+  {categoria:"PVC", nombre:"Blanco", detalle_label:"ESPESOR", detalle_valor:"3MM", espesor:"3MM", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"PVC blanco estándar."},
+  {categoria:"PVC", nombre:"Blanco", detalle_label:"ESPESOR", detalle_valor:"5MM", espesor:"5MM", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"PVC blanco intermedio."},
+  {categoria:"PVC", nombre:"Blanco", detalle_label:"ESPESOR", detalle_valor:"9MM", espesor:"9MM", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"PVC blanco para corpóreos."},
+  {categoria:"ACRILICO", nombre:"Transparente", detalle_label:"ESPESOR", detalle_valor:"3MM", espesor:"3MM", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"Acrílico transparente."},
+  {categoria:"ACRILICO", nombre:"Transparente", detalle_label:"ESPESOR", detalle_valor:"5MM", espesor:"5MM", tipo_medida:"M2", ancho_cm:120, largo_cm:240, metros_lineales:0, nota:"Acrílico transparente grueso."},
+  {categoria:"VINIL", nombre:"Adhesivo Blanco", detalle_label:"REFERENCIA", detalle_valor:"REF", espesor:"REF", tipo_medida:"M", ancho_cm:0, largo_cm:0, metros_lineales:50, nota:"Rollo de vinil adhesivo."}
 ];
 
 function sb(){
@@ -329,6 +344,51 @@ function toggleTipoMedida(){
 
 function normalCat(v){
   return String(v || "").trim().toUpperCase();
+}
+
+function detalleLabelSugerido(categoria){
+  const cat = normalCat(categoria);
+
+  const mapa = {
+    "PVC":"ESPESOR",
+    "ACRILICO":"ESPESOR",
+    "ACRÍLICO":"ESPESOR",
+    "MDF":"ESPESOR",
+    "MDP":"ESPESOR",
+    "ACM":"ESPESOR",
+    "VINIL":"REFERENCIA",
+    "LONA":"FORMATO",
+    "PERNOS":"MEDIDA",
+    "HERRAJE":"MEDIDA",
+    "HERRAJES":"MEDIDA",
+    "TINTA":"PRESENTACIÓN",
+    "TINTAS":"PRESENTACIÓN",
+    "LED":"TIPO",
+    "CABLE":"CALIBRE",
+    "ADHESIVO":"FORMATO",
+    "ADHESIVOS":"FORMATO",
+    "FÓRMICA":"FORMATO",
+    "FORMICA":"FORMATO"
+  };
+
+  return mapa[cat] || "TIPO";
+}
+
+function aplicarDetallePorCategoria(){
+  const categoria = categoriaFormulario ? categoriaFormulario() : document.getElementById("f_categoria")?.value;
+  const select = document.getElementById("f_detalle_label");
+  if(!select) return;
+
+  const sugerido = detalleLabelSugerido(categoria);
+  select.value = sugerido;
+}
+
+function detalleValorActual(){
+  return String(document.getElementById("f_detalle_valor")?.value || "").trim().toUpperCase();
+}
+
+function detalleLabelActual(){
+  return String(document.getElementById("f_detalle_label")?.value || "TIPO").trim().toUpperCase();
 }
 
 function proveedoresOrdenados(item){
@@ -396,10 +456,10 @@ function generarNombreCorrelativoDesdeLista(nombre, nombresExistentes){
   return candidato;
 }
 
-async function validarMaterialUnicoDb(client, categoriaFinal, nombreOriginal, espesorFinal, idIgnorar = null){
+async function validarMaterialUnicoDb(client, categoriaFinal, nombreOriginal, detalleValorFinal, idIgnorar = null){
   const cat = normalCat(categoriaFinal);
   const nombre = String(nombreOriginal || "").trim().toUpperCase();
-  const espesor = String(espesorFinal || "").trim().toUpperCase();
+  const espesor = String(detalleValorFinal || "").trim().toUpperCase();
 
   const { data, error } = await client
     .from("materia_materiales")
@@ -423,7 +483,7 @@ async function validarMaterialUnicoDb(client, categoriaFinal, nombreOriginal, es
   if(nombreFinal !== nombre){
     const aceptar = confirm(
       `Ya existe un material con la misma categoría, nombre y espesor:\n\n` +
-      `${cat} · ${nombre} · ${espesor || "SIN ESPESOR"}\n\n` +
+      `${cat} · ${nombre} · ${espesor || "SIN DETALLE"}\n\n` +
       `¿Quieres guardarlo como "${nombreFinal}"?`
     );
 
@@ -522,7 +582,9 @@ async function loadAll(){
     id:m.id,
     categoria:m.categoria,
     nombre:m.nombre,
-    espesor:m.espesor,
+    detalle_label:m.detalle_label || "ESPESOR",
+    detalle_valor:m.detalle_valor || m.espesor || "",
+    espesor:m.detalle_valor || m.espesor || "",
     tipo_medida:m.tipo_medida || "M2",
     ancho_cm:m.ancho_cm,
     largo_cm:m.largo_cm,
@@ -546,7 +608,7 @@ function loadCatalogSelect(){
     const formatoCat = c.tipo_medida === "M"
       ? `${c.metros_lineales} m`
       : `${c.ancho_cm}×${c.largo_cm} cm · ${area.toFixed(2)} m²`;
-    opt.textContent = `${c.categoria} · ${c.nombre} · ${c.espesor} · ${c.tipo_medida || "M2"} · ${formatoCat}`;
+    opt.textContent = `${c.categoria} · ${c.nombre} · ${c.detalle_label || "DETALLE"}: ${c.detalle_valor || c.espesor || "-"} · ${c.tipo_medida || "M2"} · ${formatoCat}`;
     sel.appendChild(opt);
   });
 }
@@ -560,7 +622,8 @@ function applyCatalogTemplate(){
   document.getElementById("f_categoria").value = c.categoria;
   toggleNuevaCategoria();
   document.getElementById("f_nombre").value = c.nombre;
-  document.getElementById("f_espesor").value = c.espesor;
+  document.getElementById("f_detalle_label").value = c.detalle_label || detalleLabelSugerido(c.categoria);
+  document.getElementById("f_detalle_valor").value = c.detalle_valor || c.espesor || "";
   document.getElementById("f_tipo_medida").value = c.tipo_medida || "M2";
   document.getElementById("f_ancho_cm").value = c.ancho_cm || "";
   document.getElementById("f_largo_cm").value = c.largo_cm || "";
@@ -577,7 +640,7 @@ function openMaterialModal(id = null){
   document.getElementById("modalTitle").textContent = id === null ? "Añadir material" : "Editar material";
 
   const item = id === null ? {
-    categoria:"PVC", nombre:"", espesor:"", tipo_medida:"M2", ancho_cm:"", largo_cm:"", metros_lineales:"", formato:"", area:"", nota:"", proveedores:[]
+    categoria:"PVC", nombre:"", detalle_label:"ESPESOR", detalle_valor:"", espesor:"", tipo_medida:"M2", ancho_cm:"", largo_cm:"", metros_lineales:"", formato:"", area:"", nota:"", proveedores:[]
   } : materiales.find(m => Number(m.id) === Number(id));
 
   if(!item) return;
@@ -591,7 +654,8 @@ function openMaterialModal(id = null){
 
   toggleNuevaCategoria();
   document.getElementById("f_nombre").value = item.nombre || "";
-  document.getElementById("f_espesor").value = item.espesor || "";
+  document.getElementById("f_detalle_label").value = item.detalle_label || detalleLabelSugerido(item.categoria);
+  document.getElementById("f_detalle_valor").value = item.detalle_valor || item.espesor || "";
   document.getElementById("f_tipo_medida").value = item.tipo_medida || "M2";
   document.getElementById("f_ancho_cm").value = item.ancho_cm || "";
   document.getElementById("f_largo_cm").value = item.largo_cm || "";
@@ -676,23 +740,27 @@ async function saveMaterial(){
   if(tipoMedida === "M" && !metrosLineales){ toast("Falta cantidad de metros lineales"); return; }
   if(!proveedores.length){ toast("Agrega al menos un proveedor"); return; }
 
-  const espesorFinal = document.getElementById("f_espesor").value.trim().toUpperCase();
+  const detalleLabelFinal = detalleLabelActual();
+  const detalleValorFinal = detalleValorActual();
 
-  const nombreFinal = await validarMaterialUnicoDb(client, categoriaFinal, nombreOriginal, espesorFinal, editId);
+  const nombreFinal = await validarMaterialUnicoDb(client, categoriaFinal, nombreOriginal, detalleValorFinal, editId);
 
   if(!nombreFinal){
     return;
   }
 
   document.getElementById("f_nombre").value = nombreFinal;
-  document.getElementById("f_espesor").value = espesorFinal;
+  document.getElementById("f_detalle_label").value = detalleLabelFinal;
+  document.getElementById("f_detalle_valor").value = detalleValorFinal;
 
   await client.from("materia_categorias").upsert({ nombre: categoriaFinal }, { onConflict:"nombre" });
 
   const payload = {
     categoria: categoriaFinal,
     nombre: nombreFinal,
-    espesor: espesorFinal,
+    detalle_label: detalleLabelFinal,
+    detalle_valor: detalleValorFinal,
+    espesor: detalleValorFinal,
     tipo_medida: tipoMedida,
     ancho_cm: anchoCm,
     largo_cm: largoCm,
@@ -790,7 +858,8 @@ function duplicateMaterial(id){
   toggleNuevaCategoria();
 
   document.getElementById("f_nombre").value = item.nombre || "";
-  document.getElementById("f_espesor").value = item.espesor || "";
+  document.getElementById("f_detalle_label").value = item.detalle_label || detalleLabelSugerido(item.categoria);
+  document.getElementById("f_detalle_valor").value = item.detalle_valor || item.espesor || "";
   document.getElementById("f_tipo_medida").value = item.tipo_medida || "M2";
   document.getElementById("f_ancho_cm").value = item.ancho_cm || "";
   document.getElementById("f_largo_cm").value = item.largo_cm || "";
@@ -850,7 +919,7 @@ function render(){
 
           <span class="name">
             <strong>${item.nombre}</strong>
-            <small>${item.espesor || "-"} · ${item.tipo_medida || "M2"} · ${item.formato}${item.tipo_medida === "M2" ? " · " + Number(item.area || 0).toFixed(2) + " m²" : ""}</small>
+            <small>${item.detalle_label || "DETALLE"}: ${item.detalle_valor || item.espesor || "-"} · ${item.tipo_medida || "M2"} · ${item.formato}${item.tipo_medida === "M2" ? " · " + Number(item.area || 0).toFixed(2) + " m²" : ""}</small>
           </span>
 
           <span class="cell-mini lamina">
