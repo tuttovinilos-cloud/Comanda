@@ -126,6 +126,8 @@ button{cursor:pointer}
   <div class="empty" id="emptyState">Sin materiales encontrados</div>
 </main>
 
+<datalist id="proveedoresDatalist"></datalist>
+
 <div class="backdrop" id="materialBackdrop" onclick="backdropClick(event)">
   <div class="modal">
     <div class="modal-head">
@@ -222,6 +224,33 @@ let categorias = [];
 let materiales = [];
 let categoriaActual = "TODOS";
 let editId = null;
+
+function forceUppercase(input){
+  if(!input) return;
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  input.value = String(input.value || "").toUpperCase();
+  try{ input.setSelectionRange(start, end); }catch(e){}
+}
+
+function proveedoresExistentes(){
+  const set = new Set();
+  materiales.forEach(m => {
+    (m.proveedores || []).forEach(p => {
+      const nombre = String(p.proveedor || p.nombre || "").trim().toUpperCase();
+      if(nombre) set.add(nombre);
+    });
+  });
+  return [...set].sort();
+}
+
+function renderProveedoresDatalist(){
+  const dl = document.getElementById("proveedoresDatalist");
+  if(!dl) return;
+  dl.innerHTML = proveedoresExistentes()
+    .map(nombre => `<option value="${nombre}"></option>`)
+    .join("");
+}
 
 const catalogoBase = [
   {categoria:"PVC", nombre:"Blanco", espesor:"3mm", ancho_cm:120, largo_cm:240, nota:"PVC blanco estándar."},
@@ -382,7 +411,7 @@ async function loadAll(){
     formato:m.formato,
     area:m.area_m2,
     nota:m.nota,
-    proveedores:m.proveedores || []
+    proveedores:(m.proveedores || []).map(p => ({...p, proveedor:String(p.proveedor || "").toUpperCase()}))
   }));
 
   render();
@@ -470,7 +499,7 @@ function addProviderInput(provider = {}){
   const row = document.createElement("div");
   row.className = "provider-input-row";
   row.innerHTML = `
-    <input class="p_nombre" placeholder="Proveedor" value="${provider.proveedor || provider.nombre || ""}">
+    <input class="p_nombre" list="proveedoresDatalist" placeholder="Proveedor" value="${String(provider.proveedor || provider.nombre || "").toUpperCase()}" oninput="forceUppercase(this)">
     <input class="p_precio" type="number" step="0.01" placeholder="$" value="${provider.precio || ""}">
     <input class="p_fecha" type="date" value="${provider.fecha || new Date().toISOString().slice(0,10)}">
     <button class="remove-provider" type="button" onclick="this.closest('.provider-input-row').remove()">✕</button>
@@ -500,7 +529,7 @@ async function saveMaterial(){
   const categoriaFinal = categoriaFormulario();
 
   const proveedores = [...document.querySelectorAll(".provider-input-row")].map(row => ({
-    proveedor: row.querySelector(".p_nombre").value.trim(),
+    proveedor: row.querySelector(".p_nombre").value.trim().toUpperCase(),
     precio: Number(row.querySelector(".p_precio").value || 0),
     fecha: row.querySelector(".p_fecha").value || new Date().toISOString().slice(0,10)
   })).filter(p => p.proveedor && p.precio > 0);
@@ -587,6 +616,7 @@ function addPriceToMaterial(id){
 
 function render(){
   renderCategoryTabs();
+  renderProveedoresDatalist();
 
   const q = document.getElementById("searchInput").value.toUpperCase().trim();
 
