@@ -33,6 +33,49 @@ button{cursor:pointer}
 .cat{border:1px solid var(--border2);background:white;color:var(--accent2);border-radius:999px;padding:8px 13px;font-family:var(--head);font-size:10px;font-weight:900;text-transform:uppercase;white-space:nowrap}
 .cat.active{background:var(--orange);color:white;border-color:var(--orange);box-shadow:0 7px 16px rgba(255,134,22,.20)}
 
+.catalog-preview{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(155px,1fr));
+  gap:8px;
+  margin:0 0 12px;
+}
+.catalog-card{
+  background:white;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:10px;
+  box-shadow:0 5px 16px rgba(15,23,42,.04);
+}
+.catalog-card small{
+  display:block;
+  font-family:var(--head);
+  color:var(--muted);
+  font-size:9px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.catalog-card strong{
+  display:block;
+  margin-top:3px;
+  font-family:var(--head);
+  color:var(--accent2);
+  font-size:13px;
+  font-weight:900;
+}
+.catalog-card button{
+  margin-top:8px;
+  width:100%;
+  min-height:30px;
+  border:1px solid #fed7aa;
+  background:var(--orange2);
+  color:#c2410c;
+  border-radius:999px;
+  font-family:var(--head);
+  font-size:9px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+
 .list{display:grid;gap:8px}
 .item{background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(15,23,42,.04)}
 .item-main{
@@ -82,8 +125,24 @@ button{cursor:pointer}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-family:var(--head);font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
 .field input,.field select,.field textarea{width:100%;border:1px solid var(--border2);border-radius:13px;background:#fff;color:#111827;min-height:40px;padding:9px 11px;outline:none}
+.field input[readonly]{background:#f8f9ff;color:var(--accent2);font-weight:900}
 .field textarea{min-height:74px;resize:vertical}
 .full{grid-column:1/-1}
+.format-panel{
+  grid-column:1/-1;
+  border:1px solid var(--border);
+  background:#f8f9ff;
+  border-radius:16px;
+  padding:10px;
+}
+.format-title{
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:900;
+  color:var(--accent2);
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
 .provider-editor{border:1px solid var(--border);border-radius:16px;background:#f8f9ff;padding:10px}
 .provider-editor-title{font-family:var(--head);font-size:11px;font-weight:900;color:var(--accent2);text-transform:uppercase;margin-bottom:8px}
 .provider-input-row{display:grid;grid-template-columns:1fr 105px 135px 38px;gap:7px;margin-bottom:7px}
@@ -122,7 +181,7 @@ button{cursor:pointer}
 <main class="main">
   <section class="page-head">
     <h1 class="page-title">Materia prima</h1>
-    <p class="page-sub">Agrega materiales, formatos, proveedores y precios. Los proveedores se ordenan automáticamente de menor a mayor.</p>
+    <p class="page-sub">Catálogo base + materiales nuevos. El formato tiene ancho y largo en cm, y calcula m² automático.</p>
 
     <div class="tools">
       <input class="search" id="searchInput" placeholder="Buscar transparente, AR2, Vecxel, PVC, 3mm...">
@@ -140,6 +199,7 @@ button{cursor:pointer}
     </div>
   </section>
 
+  <section class="catalog-preview" id="catalogPreview"></section>
   <section class="list" id="materialList"></section>
   <div class="empty" id="emptyState">Sin materiales encontrados</div>
 </main>
@@ -174,33 +234,29 @@ button{cursor:pointer}
           <input id="f_espesor" placeholder="Ej: 3mm, 5mm, -">
         </div>
 
-        <div class="field">
-          <label>Ancho</label>
-          <input id="f_ancho" type="number" step="0.01" placeholder="Ej: 120">
-        </div>
+        <div class="format-panel">
+          <div class="format-title">Formato / medidas en cm</div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Ancho cm</label>
+              <input id="f_ancho_cm" type="number" step="0.01" placeholder="Ej: 120">
+            </div>
 
-        <div class="field">
-          <label>Alto / largo</label>
-          <input id="f_alto" type="number" step="0.01" placeholder="Ej: 240">
-        </div>
+            <div class="field">
+              <label>Largo cm</label>
+              <input id="f_largo_cm" type="number" step="0.01" placeholder="Ej: 240">
+            </div>
 
-        <div class="field">
-          <label>Unidad formato</label>
-          <select id="f_unidad">
-            <option value="cm">cm</option>
-            <option value="m">m</option>
-            <option value="unidad">unidad</option>
-          </select>
-        </div>
+            <div class="field">
+              <label>Área m² automático</label>
+              <input id="f_area" type="number" step="0.0001" readonly placeholder="0.0000">
+            </div>
 
-        <div class="field">
-          <label>Formato visible</label>
-          <input id="f_formato" placeholder="Se genera automático, editable">
-        </div>
-
-        <div class="field">
-          <label>Área m²</label>
-          <input id="f_area" type="number" step="0.0001" placeholder="Se calcula automático">
+            <div class="field full">
+              <label>Formato visible</label>
+              <input id="f_formato" placeholder="Se genera automático: 120 × 240 cm">
+            </div>
+          </div>
         </div>
 
         <div class="field full">
@@ -231,10 +287,20 @@ button{cursor:pointer}
 <script src="js/menu.js?v=11"></script>
 
 <script>
-const STORAGE_KEY = "tutto_materia_prima_demo_v1";
+const STORAGE_KEY = "tutto_materia_prima_demo_v2";
+
+const catalogoBase = [
+  {categoria:"PVC", nombre:"Blanco", espesor:"3mm", ancho_cm:120, largo_cm:240, nota:"PVC blanco estándar."},
+  {categoria:"PVC", nombre:"Blanco", espesor:"5mm", ancho_cm:120, largo_cm:240, nota:"PVC blanco intermedio."},
+  {categoria:"PVC", nombre:"Blanco", espesor:"9mm", ancho_cm:120, largo_cm:240, nota:"PVC blanco para corpóreos."},
+  {categoria:"ACRILICO", nombre:"Transparente", espesor:"3mm", ancho_cm:120, largo_cm:240, nota:"Acrílico transparente."},
+  {categoria:"ACRILICO", nombre:"Transparente", espesor:"5mm", ancho_cm:120, largo_cm:240, nota:"Acrílico transparente grueso."},
+  {categoria:"VINIL", nombre:"Adhesivo Blanco", espesor:"-", ancho_cm:137, largo_cm:5000, nota:"Rollo de vinil adhesivo."}
+];
+
 const demoMateriales = [
   {
-    categoria:"ACRILICO", nombre:"Transparente", espesor:"3mm", formato:"120 × 240 cm", area:2.88,
+    categoria:"ACRILICO", nombre:"TRANSPARENTE", espesor:"3mm", ancho_cm:120, largo_cm:240, formato:"120 × 240 cm", area:2.88,
     nota:"Los proveedores se muestran ordenados de menor a mayor precio.",
     proveedores:[
       {nombre:"Vecxel", precio:80, fecha:"2026-05-23"},
@@ -243,7 +309,7 @@ const demoMateriales = [
     ]
   },
   {
-    categoria:"PVC", nombre:"Blanco", espesor:"3mm", formato:"120 × 240 cm", area:2.88,
+    categoria:"PVC", nombre:"BLANCO", espesor:"3mm", ancho_cm:120, largo_cm:240, formato:"120 × 240 cm", area:2.88,
     nota:"PVC blanco estándar para router y letras pequeñas.",
     proveedores:[
       {nombre:"AR2", precio:35, fecha:"2026-05-23"},
@@ -276,6 +342,18 @@ function toast(msg){
   el.style.display = "block";
   clearTimeout(window.__toastTimer);
   window.__toastTimer = setTimeout(()=> el.style.display = "none", 2200);
+}
+
+function calcArea(anchoCm, largoCm){
+  const a = Number(anchoCm || 0);
+  const l = Number(largoCm || 0);
+  if(!a || !l) return 0;
+  return (a / 100) * (l / 100);
+}
+
+function formatoFromCm(anchoCm, largoCm){
+  if(!anchoCm || !largoCm) return "";
+  return `${Number(anchoCm)} × ${Number(largoCm)} cm`;
 }
 
 function proveedoresOrdenados(item){
@@ -325,19 +403,17 @@ function openMaterialModal(index = null){
   document.getElementById("modalTitle").textContent = index === null ? "Añadir material" : "Editar material";
 
   const item = index === null ? {
-    categoria:"PVC", nombre:"", espesor:"", formato:"", area:"", nota:"", proveedores:[]
+    categoria:"PVC", nombre:"", espesor:"", ancho_cm:"", largo_cm:"", formato:"", area:"", nota:"", proveedores:[]
   } : materiales[index];
 
   document.getElementById("f_categoria").value = item.categoria || "PVC";
   document.getElementById("f_nombre").value = item.nombre || "";
   document.getElementById("f_espesor").value = item.espesor || "";
+  document.getElementById("f_ancho_cm").value = item.ancho_cm || "";
+  document.getElementById("f_largo_cm").value = item.largo_cm || "";
   document.getElementById("f_formato").value = item.formato || "";
   document.getElementById("f_area").value = item.area || "";
   document.getElementById("f_nota").value = item.nota || "";
-
-  document.getElementById("f_ancho").value = "";
-  document.getElementById("f_alto").value = "";
-  document.getElementById("f_unidad").value = "cm";
 
   const providerBox = document.getElementById("providerInputs");
   providerBox.innerHTML = "";
@@ -345,6 +421,18 @@ function openMaterialModal(index = null){
   if(!(item.proveedores || []).length) addProviderInput();
 
   document.getElementById("materialBackdrop").style.display = "flex";
+}
+
+function openFromCatalog(i){
+  const c = catalogoBase[i];
+  openMaterialModal();
+  document.getElementById("f_categoria").value = c.categoria;
+  document.getElementById("f_nombre").value = c.nombre;
+  document.getElementById("f_espesor").value = c.espesor;
+  document.getElementById("f_ancho_cm").value = c.ancho_cm;
+  document.getElementById("f_largo_cm").value = c.largo_cm;
+  document.getElementById("f_nota").value = c.nota;
+  autoFormatoYArea();
 }
 
 function closeMaterialModal(){
@@ -369,32 +457,23 @@ function addProviderInput(provider = {}){
 }
 
 function autoFormatoYArea(){
-  const ancho = Number(document.getElementById("f_ancho").value || 0);
-  const alto = Number(document.getElementById("f_alto").value || 0);
-  const unidad = document.getElementById("f_unidad").value;
+  const ancho = Number(document.getElementById("f_ancho_cm").value || 0);
+  const largo = Number(document.getElementById("f_largo_cm").value || 0);
+  const area = calcArea(ancho, largo);
 
-  if(!ancho || !alto) return;
-
-  if(unidad === "cm"){
-    document.getElementById("f_formato").value = `${ancho} × ${alto} cm`;
-    document.getElementById("f_area").value = ((ancho / 100) * (alto / 100)).toFixed(4);
-  }else if(unidad === "m"){
-    document.getElementById("f_formato").value = `${ancho} × ${alto} m`;
-    document.getElementById("f_area").value = (ancho * alto).toFixed(4);
-  }else{
-    document.getElementById("f_formato").value = `${ancho} × ${alto} unidad`;
-    document.getElementById("f_area").value = "";
-  }
+  document.getElementById("f_formato").value = formatoFromCm(ancho, largo);
+  document.getElementById("f_area").value = area ? area.toFixed(4) : "";
 }
 
 document.addEventListener("input", function(e){
-  if(["f_ancho","f_alto"].includes(e.target.id)) autoFormatoYArea();
-});
-document.addEventListener("change", function(e){
-  if(e.target.id === "f_unidad") autoFormatoYArea();
+  if(["f_ancho_cm","f_largo_cm"].includes(e.target.id)) autoFormatoYArea();
 });
 
 function saveMaterial(){
+  const anchoCm = Number(document.getElementById("f_ancho_cm").value || 0);
+  const largoCm = Number(document.getElementById("f_largo_cm").value || 0);
+  const area = calcArea(anchoCm, largoCm);
+
   const proveedores = [...document.querySelectorAll(".provider-input-row")].map(row => {
     return {
       nombre: row.querySelector(".p_nombre").value.trim(),
@@ -407,26 +486,17 @@ function saveMaterial(){
     categoria: document.getElementById("f_categoria").value,
     nombre: document.getElementById("f_nombre").value.trim().toUpperCase(),
     espesor: document.getElementById("f_espesor").value.trim(),
+    ancho_cm: anchoCm,
+    largo_cm: largoCm,
     formato: document.getElementById("f_formato").value.trim(),
-    area: Number(document.getElementById("f_area").value || 0),
+    area: Number(area.toFixed(4)),
     nota: document.getElementById("f_nota").value.trim(),
     proveedores
   };
 
-  if(!item.nombre){
-    toast("Falta nombre del material");
-    return;
-  }
-
-  if(!item.formato){
-    toast("Falta formato");
-    return;
-  }
-
-  if(!item.proveedores.length){
-    toast("Agrega al menos un proveedor");
-    return;
-  }
+  if(!item.nombre){ toast("Falta nombre"); return; }
+  if(!item.ancho_cm || !item.largo_cm){ toast("Falta ancho o largo en cm"); return; }
+  if(!item.proveedores.length){ toast("Agrega al menos un proveedor"); return; }
 
   if(editIndex === null){
     materiales.unshift(item);
@@ -462,7 +532,23 @@ function resetDemo(){
   toast("Demo reiniciada");
 }
 
+function renderCatalog(){
+  document.getElementById("catalogPreview").innerHTML = catalogoBase.map((c, i)=>{
+    const area = calcArea(c.ancho_cm, c.largo_cm);
+    return `
+      <div class="catalog-card">
+        <small>${c.categoria} · ${c.espesor}</small>
+        <strong>${c.nombre}</strong>
+        <small style="margin-top:4px">${c.ancho_cm} × ${c.largo_cm} cm · ${area.toFixed(2)} m²</small>
+        <button type="button" onclick="openFromCatalog(${i})">Usar catálogo</button>
+      </div>
+    `;
+  }).join("");
+}
+
 function render(){
+  renderCatalog();
+
   const q = document.getElementById("searchInput").value.toUpperCase().trim();
 
   const lista = materiales.map((item, originalIndex)=>({...item, originalIndex})).filter(item=>{
@@ -481,7 +567,7 @@ function render(){
 
           <span class="name">
             <strong>${item.nombre}</strong>
-            <small>${item.espesor || "-"} · ${item.formato}</small>
+            <small>${item.espesor || "-"} · ${item.formato} · ${Number(item.area || 0).toFixed(2)} m²</small>
           </span>
 
           <span class="cell-mini lamina">
