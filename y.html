@@ -831,6 +831,46 @@ html.menu-ready .header-tabs,
 }
 </style>
 
+
+<style>
+/* =========================================================
+   FIX FINAL · UN SOLO BOTÓN CALCULAR
+========================================================= */
+.actionGrid.singleAction{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  width:100%!important;
+  margin-top:10px!important;
+}
+
+.actionGrid.singleAction .actionBtn,
+.actionGrid.singleAction button{
+  width:100%!important;
+  height:44px!important;
+  min-height:44px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  line-height:1!important;
+  font-size:13px!important;
+  border-radius:14px!important;
+}
+
+@media(max-width:520px){
+  .actionGrid.singleAction{
+    grid-template-columns:1fr!important;
+  }
+
+  .actionGrid.singleAction .actionBtn,
+  .actionGrid.singleAction button{
+    height:42px!important;
+    min-height:42px!important;
+    font-size:11px!important;
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -881,9 +921,8 @@ html.menu-ready .header-tabs,
       </div>
     </div>
 
-    <div class="actionGrid">
-      <button class="orange actionBtn" onclick="aplicarAnchoManualAlSVG()">Escalar SVG</button>
-      <button class="actionBtn" onclick="analizarSVG()">Medida real</button>
+    <div class="actionGrid singleAction">
+      <button class="actionBtn" onclick="calcularSVG()">Calcular</button>
     </div>
 
     <br>
@@ -1071,6 +1110,8 @@ let svgText = "";
 let svgDoc = null;
 let currentFileName = "";
 let lastResults = null;
+let originalRealWm = 0;
+let originalRealHm = 0;
 
 const PRICES = {
   "PVC 3mm":11,
@@ -1279,12 +1320,41 @@ function money(v){ return "$" + (Number(v)||0).toFixed(2); }
 function qty(v){ return (Math.abs(v) >= 100 ? Number(v).toFixed(0) : Number(v).toFixed(4)).replace(/\.0000$/,""); }
 
 $("fileInput").addEventListener("change", async e=>{
-  const file = e.target.files[0]; if(!file) return;
+  const file = e.target.files[0]; 
+  if(!file) return;
+
   currentFileName = file.name;
   svgText = await file.text();
   cargarSVGEnPreview(svgText);
-  setStatus("SVG cargado. Puedes analizarlo o aplicar ancho manual.",0);
+
+  try{
+    const info = detectRealSize(svgDoc);
+    originalRealWm = info.realWm;
+    originalRealHm = info.realHm;
+
+    actualizarCampoMedidaDesdeModo();
+
+    $("kAncho").innerText = fmtCm(originalRealWm);
+    $("kAlto").innerText = fmtCm(originalRealHm);
+    $("kEscala").innerText = `${(originalRealWm / info.vb.width * 100).toFixed(4)} cm/u`;
+
+    setStatus("SVG cargado. Medida original detectada.",0);
+    $("method").innerHTML = `<span class="ok">SVG cargado:</span> ${info.method}`;
+  }catch(err){
+    originalRealWm = 0;
+    originalRealHm = 0;
+    setStatus("SVG cargado. Coloca una medida en cm y presiona Calcular.",0);
+    $("method").innerHTML = `<span class="warn">No se detectó medida real:</span> coloca ancho o alto manual en cm.`;
+  }
 });
+
+window.addEventListener("load", function(){
+  const scaleMode = $("scaleMode");
+  if(scaleMode){
+    scaleMode.addEventListener("change", actualizarCampoMedidaDesdeModo);
+  }
+});
+
 
 function cargarSVGEnPreview(text){
   $("preview").innerHTML = text;
@@ -1362,76 +1432,86 @@ function detectRealSize(svg){
   return {vb,realWm,realHm,method,scaleX:realWm/vb.width,scaleY:realHm/vb.height};
 }
 
-function aplicarAnchoManualAlSVG(){
-  try{
-    if(!svgText || !svgDoc){
-      alert("Primero sube un SVG.");
-      return;
-    }
+function actualizarCampoMedidaDesdeModo(){
+  if(!$("fallbackWidth")) return;
 
-    const medidaCm = Number($("fallbackWidth").value || 0);
-    const modo = $("scaleMode") ? $("scaleMode").value : "width";
-    const fu = "cm";
+  const modo = $("scaleMode") ? $("scaleMode").value : "width";
 
-    if(!medidaCm || medidaCm <= 0){
-      alert("Coloca una medida válida en cm.");
-      return;
-    }
-
-    const vb = getViewBox(svgDoc);
-
-    if(!vb || !vb.width || !vb.height){
-      alert("No se pudo leer el viewBox del SVG.");
-      return;
-    }
-
-    let anchoCm = 0;
-    let altoCm = 0;
-
-    if(modo === "height"){
-      altoCm = medidaCm;
-      anchoCm = altoCm * (vb.width / vb.height);
-    }else{
-      anchoCm = medidaCm;
-      altoCm = anchoCm * (vb.height / vb.width);
-    }
-
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(svgText, "image/svg+xml");
-    const svg = doc.querySelector("svg");
-
-    if(!svg){
-      alert("No se encontró etiqueta SVG.");
-      return;
-    }
-
-    svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.width} ${vb.height}`);
-    svg.setAttribute("width", `${anchoCm.toFixed(4)}cm`);
-    svg.setAttribute("height", `${altoCm.toFixed(4)}cm`);
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-
-    const serializer = new XMLSerializer();
-    svgText = serializer.serializeToString(svg);
-
-    cargarSVGEnPreview(svgText);
-
-    const realWm = anchoCm * 0.01;
-    const realHm = altoCm * 0.01;
-
-    $("kAncho").innerText = fmtCm(realWm);
-    $("kAlto").innerText = fmtCm(realHm);
-    $("kEscala").innerText = `${(realWm / vb.width * 100).toFixed(4)} cm/u`;
-
-    const textoModo = modo === "height" ? "alto" : "ancho";
-
-    setStatus(`SVG escalado por ${textoModo}: ${anchoCm.toFixed(2)} cm × ${altoCm.toFixed(2)} cm.`,100);
-
-    $("method").innerHTML = `<span class="ok">SVG escalado correctamente:</span> ancho ${anchoCm.toFixed(2)} cm, alto ${altoCm.toFixed(2)} cm.`;
-
-  }catch(err){
-    console.error(err);
-    alert("Error aplicando escala: " + err.message);
+  if(modo === "height" && originalRealHm > 0){
+    $("fallbackWidth").value = (originalRealHm * 100).toFixed(2);
+  }else if(originalRealWm > 0){
+    $("fallbackWidth").value = (originalRealWm * 100).toFixed(2);
   }
+}
+
+function escalarSVGSegunCampo(){
+  if(!svgText || !svgDoc){
+    alert("Primero sube un SVG.");
+    return false;
+  }
+
+  const medidaCm = Number($("fallbackWidth").value || 0);
+  const modo = $("scaleMode") ? $("scaleMode").value : "width";
+
+  if(!medidaCm || medidaCm <= 0){
+    alert("Coloca una medida válida en cm.");
+    return false;
+  }
+
+  const vb = getViewBox(svgDoc);
+
+  if(!vb || !vb.width || !vb.height){
+    alert("No se pudo leer el viewBox del SVG.");
+    return false;
+  }
+
+  let anchoCm = 0;
+  let altoCm = 0;
+
+  if(modo === "height"){
+    altoCm = medidaCm;
+    anchoCm = altoCm * (vb.width / vb.height);
+  }else{
+    anchoCm = medidaCm;
+    altoCm = anchoCm * (vb.height / vb.width);
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgText, "image/svg+xml");
+  const svg = doc.querySelector("svg");
+
+  if(!svg){
+    alert("No se encontró etiqueta SVG.");
+    return false;
+  }
+
+  svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.width} ${vb.height}`);
+  svg.setAttribute("width", `${anchoCm.toFixed(4)}cm`);
+  svg.setAttribute("height", `${altoCm.toFixed(4)}cm`);
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+  const serializer = new XMLSerializer();
+  svgText = serializer.serializeToString(svg);
+
+  cargarSVGEnPreview(svgText);
+
+  originalRealWm = anchoCm * 0.01;
+  originalRealHm = altoCm * 0.01;
+
+  $("kAncho").innerText = fmtCm(originalRealWm);
+  $("kAlto").innerText = fmtCm(originalRealHm);
+  $("kEscala").innerText = `${(originalRealWm / vb.width * 100).toFixed(4)} cm/u`;
+
+  const textoModo = modo === "height" ? "alto" : "ancho";
+  setStatus(`Medida aplicada por ${textoModo}: ${anchoCm.toFixed(2)} cm × ${altoCm.toFixed(2)} cm.`,15);
+
+  return true;
+}
+
+async function calcularSVG(){
+  const ok = escalarSVGSegunCampo();
+  if(!ok) return;
+  await analizarSVG();
 }
 
 function formatSVGLength(value, unit){
@@ -1833,4 +1913,3 @@ renderMaterialPage();
 
 </body>
 </html>
-
