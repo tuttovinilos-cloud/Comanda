@@ -61,7 +61,7 @@ tr:nth-child(even) td{background:#fbfcff}
 .bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--orange))}
 .hidden{display:none!important}
 .desglose{display:none}.desglose.show{display:block}
-.componentLine{display:grid;grid-template-columns:1.5fr 1fr 1fr .8fr .8fr .8fr .7fr auto;gap:7px;align-items:end;margin-bottom:8px;background:#f8f9ff;border:1px solid var(--border);border-radius:15px;padding:9px}
+.componentLine{display:grid;grid-template-columns:.8fr 1.5fr 1fr .8fr .8fr .8fr .7fr auto;gap:7px;align-items:end;margin-bottom:8px;background:#f8f9ff;border:1px solid var(--border);border-radius:15px;padding:9px}
 .previewMini{font-family:var(--mono);font-size:11px;font-weight:900;color:#0f172a;background:#eef1ff;border-radius:12px;padding:9px;line-height:1.45}
 .rowBtns{display:flex;gap:8px;flex-wrap:wrap}
 .materialList{display:grid;gap:4px;max-height:260px;overflow:auto}
@@ -215,7 +215,7 @@ tr:nth-child(even) td{background:#fbfcff}
         </div>
       </div>
       <br>
-      <p class="hint">Sin SVG cargado, el editor muestra un estimado usando base = 1. Con SVG cargado, calcula con los valores reales.</p>
+      <p class="hint">Sin SVG cargado, el editor muestra un estimado usando base = 1. En tipo Servicio: costo = 0 y toda la venta es ganancia.</p>
       <br>
       <div id="componentLines"></div>
       <div class="rowBtns">
@@ -559,7 +559,14 @@ function addComponentLine(data={}){
   div.className="componentLine";
   div.innerHTML=`
     <div>
-      <label>Material</label>
+      <label>Tipo</label>
+      <select class="cTipoComp" onchange="updateCompoundPreview()">
+        <option value="MATERIAL" ${(data.tipo_componente||"MATERIAL")==="MATERIAL"?"selected":""}>Material</option>
+        <option value="SERVICIO" ${(data.tipo_componente||"MATERIAL")==="SERVICIO"?"selected":""}>Servicio</option>
+      </select>
+    </div>
+    <div>
+      <label>Material / Servicio</label>
       <select class="cMaterial" onchange="updateCompoundPreview()">${materialOptions(data.material_id||"")}</select>
     </div>
     <div>
@@ -601,6 +608,7 @@ function renderComponentMaterialOptions(){
 
 function readComponentLines(){
   return [...document.querySelectorAll(".componentLine")].map((line,idx)=>({
+    tipo_componente:line.querySelector(".cTipoComp")?.value || "MATERIAL",
     material_id:Number(line.querySelector(".cMaterial").value||0),
     base_parametro:line.querySelector(".cBase").value,
     factor_consumo:Number(line.querySelector(".cFactorConsumo").value||0),
@@ -625,12 +633,36 @@ function baseValue(base,r=lastResults){
 function calcComponent(c,r=lastResults){
   const m=materialById(c.material_id);
   if(!m) return null;
+
+  const tipo=String(c.tipo_componente || "MATERIAL").toUpperCase();
   const fee=Number(c.fee ?? c.extra ?? 0);
+
   let cantidad=baseValue(c.base_parametro,r)*Number(c.factor_consumo||0);
   if(c.redondear) cantidad=Math.ceil(cantidad);
-  const costo=cantidad*Number(m.precio_unitario||0);
-  const venta=(costo*Number(c.factor_venta||1))+fee;
-  return {...c,fee,material:m,cantidad,costo,venta,ganancia:venta-costo};
+
+  const precioUnit=Number(m.precio_unitario||0);
+
+  let costo=0;
+  let venta=0;
+
+  if(tipo==="SERVICIO"){
+    costo=0;
+    venta=(cantidad*precioUnit)+fee;
+  }else{
+    costo=cantidad*precioUnit;
+    venta=(costo*Number(c.factor_venta||1))+fee;
+  }
+
+  return {
+    ...c,
+    tipo_componente:tipo,
+    fee,
+    material:m,
+    cantidad,
+    costo,
+    venta,
+    ganancia:venta-costo
+  };
 }
 
 function updateCompoundPreview(){
@@ -642,7 +674,7 @@ function updateCompoundPreview(){
     const box=line.querySelector(".previewMini");
     if(calc){
       cost+=calc.costo; sale+=calc.venta; profit+=calc.ganancia;
-      box.innerHTML=`${!lastResults ? "Estimado base 1<br>" : ""}${esc(calc.material.proveedor)}<br>Costo: ${money(calc.costo)}<br>Fee: ${money(calc.fee||0)}<br>Venta: ${money(calc.venta)}<br>Ganancia: ${money(calc.ganancia)}`;
+      box.innerHTML=`${!lastResults ? "Estimado base 1<br>" : ""}${calc.tipo_componente==="SERVICIO" ? "SERVICIO<br>" : "MATERIAL<br>"}${esc(calc.material.proveedor)}<br>Costo: ${money(calc.costo)}<br>Fee: ${money(calc.fee||0)}<br>Venta: ${money(calc.venta)}<br>Ganancia: ${money(calc.ganancia)}`;
     }
   });
   $("editCost").textContent=money(cost);
@@ -762,8 +794,9 @@ function renderQuote(){
   const rows=c.componentes.map(x=>calcComponent(x,lastResults)).filter(Boolean);
   rows.forEach(r=>{ cost+=r.costo; sale+=r.venta; profit+=r.ganancia; });
   $("totalCost").textContent=money(cost); $("totalSale").textContent=money(sale); $("totalProfit").textContent=money(profit);
-  $("quoteTable").innerHTML=`<tr><th>Material</th><th>Base</th><th>Cantidad</th><th>Precio base</th><th>Costo</th><th>Factor venta</th><th>Fee</th><th>Venta</th><th>Ganancia</th></tr>`+
+  $("quoteTable").innerHTML=`<tr><th>Tipo</th><th>Material / Servicio</th><th>Base</th><th>Cantidad</th><th>Precio base</th><th>Costo</th><th>Factor venta</th><th>Fee</th><th>Venta</th><th>Ganancia</th></tr>`+
     rows.map(r=>`<tr>
+      <td>${r.tipo_componente==="SERVICIO" ? "Servicio" : "Material"}</td>
       <td>${esc(r.material.categoria)} · ${esc(r.material.nombre)} · ${esc(r.material.detalle_valor)}</td>
       <td>${baseLabel(r.base_parametro)}</td>
       <td>${qty(r.cantidad)}</td>
