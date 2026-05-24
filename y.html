@@ -1,17 +1,12 @@
 <!DOCTYPE html>
-<html lang="es" class="loading-menu">
+<html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Analizador SVG Preciso · Tuttovinilos</title>
-<link rel="icon" href="data:,">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Tuttovinilos · Medidor de Logos PRO</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-<link rel="stylesheet" href="css/menu.css?v=34">
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
 :root{
@@ -20,2586 +15,1226 @@
   --panel2:#f8f9ff;
   --border:#d9deea;
   --border2:#cbd3e6;
-  --accent:#153bff;
-  --accent2:#0b1f7a;
-  --mono:'Roboto Mono',monospace;
-  --head:'Montserrat',Arial,sans-serif;
-  --body:'Inter',Arial,sans-serif;
-  --card:#ffffff;
-  --card2:#f8fafc;
-  --line:#d9e4f2;
   --text:#111827;
   --muted:#64748b;
-  --blue:#0f6bff;
-  --blue2:#0057c8;
+  --blue:#153bff;
+  --blue2:#0b1f7a;
   --orange:#ff8616;
-  --green:#22c783;
-  --red:#ff4d5e;
-  --yellow:#ffd166;
+  --green:#16a34a;
+  --red:#ef4444;
+  --yellow:#f59e0b;
   --shadow:0 10px 28px rgba(15,23,42,.08);
+  --head:'Montserrat',Arial,sans-serif;
+  --body:'Inter',Arial,sans-serif;
+  --mono:'Roboto Mono',monospace;
+  --safe:env(safe-area-inset-bottom,0px);
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100dvh;overflow-x:hidden}
+button,input,select{font-family:inherit}
+button{border:0;cursor:pointer}
+input{outline:none}
 
-.main{padding:18px;max-width:1400px;margin:auto}
-.page-hero{
-  background:linear-gradient(135deg,#ffffff,#eef5ff);
-  border:1px solid var(--line);
-  border-radius:24px;
-  padding:20px;
-  margin-bottom:16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  box-shadow:var(--shadow);
-}
-.page-hero h1{margin:0;font-size:28px;font-weight:900;color:#0f172a}
-.page-hero p{margin:6px 0 0;color:var(--muted);font-size:13px}
-.heroBadge{
-  background:linear-gradient(135deg,var(--blue),var(--blue2));
-  color:white;
-  padding:10px 14px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:800;
-}
-.wrap{max-width:1300px;margin:auto}
-.card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:20px;
-  padding:16px;
-  margin-bottom:16px;
-  box-shadow:var(--shadow);
-}
-.card h2{margin:0 0 12px;font-size:18px;color:#0f172a}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.kpi{background:var(--card2);border:1px solid #dbeafe;border-radius:16px;padding:14px;min-height:76px}
-.kpi b{display:block;font-size:22px;color:#0f172a;line-height:1.15}
-.kpi span{font-size:12px;color:var(--muted)}
-label{display:block;margin-bottom:6px;font-size:12px;color:var(--muted);font-weight:600}
-input,select,button{width:100%;border:none;border-radius:12px;font-size:14px}
-input,select{padding:12px;background:white;border:1px solid #cbd5e1;color:#111827}
-button{padding:12px;font-weight:800;cursor:pointer;color:white;background:linear-gradient(135deg,var(--blue),var(--blue2))}
-button.orange{background:linear-gradient(135deg,#ff8616,#d45500)}
-button.gray{background:#e2e8f0;color:#0f172a}
-.tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.tabBtn{background:#dbeafe;color:#0f172a}
-.tabBtn.active{background:linear-gradient(135deg,var(--blue),var(--blue2));color:white}
-.hint{color:var(--muted);font-size:12px;line-height:1.5}
-.tiny{font-size:11px;color:var(--muted)}
-.tableWrap{overflow:auto;border:1px solid var(--line);border-radius:16px}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left;white-space:nowrap}
-th{background:#f8fafc;color:#0f172a}
-.money{color:var(--green);font-weight:900}
-.totalBox{background:#f8fafc;border:1px solid #dbeafe;border-radius:18px;padding:16px;margin-top:14px}
-.resultPrice{font-size:36px;font-weight:900;color:var(--green)}
-.toolbarBtns{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
-#previewShell{
-  width:100%;
+.app{max-width:980px;margin:auto;padding:12px}
+.top{position:sticky;top:0;z-index:50;background:rgba(240,242,249,.92);backdrop-filter:blur(18px);padding:10px 0 12px}
+.brand{background:linear-gradient(135deg,#153bff,#0b1f7a);color:#fff;border-radius:24px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 24px rgba(21,59,255,.22)}
+.brand h1{font-family:var(--head);font-size:18px;font-weight:900;letter-spacing:.4px}
+.brand span{font-size:11px;opacity:.82;font-weight:700}
+
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.step{border:1px solid var(--border);border-radius:999px;background:#fff;padding:9px 8px;font-size:10px;font-weight:900;color:var(--muted);text-align:center;font-family:var(--head);letter-spacing:.2px}
+.step.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.step.done{background:#e9efff;border-color:#bfcaff;color:var(--blue)}
+
+.card{background:#fff;border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
+.card h2{font-family:var(--head);font-size:16px;color:var(--blue2);margin-bottom:10px}
+.hint{font-size:12px;color:var(--muted);line-height:1.45}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+label{display:block;font-size:11px;color:var(--muted);font-weight:800;margin-bottom:6px}
+input,select{width:100%;height:42px;border-radius:13px;border:1px solid var(--border);background:#fff;padding:0 12px;font-size:14px;color:var(--text)}
+.btn{width:100%;min-height:42px;border-radius:14px;background:var(--blue);color:#fff;font-family:var(--head);font-weight:900;font-size:13px;letter-spacing:.25px;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn.orange{background:var(--orange)}
+.btn.gray{background:#fff;color:var(--blue);border:1px solid var(--border2)}
+.btn.green{background:var(--green)}
+.btn.red{background:var(--red)}
+.btn:active{transform:scale(.98)}
+
+.viewerCard{background:#fff;border:1px solid var(--border);border-radius:24px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:12px}
+.viewerHead{padding:10px 12px;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--border);background:#fbfcff;overflow:auto;scrollbar-width:none}
+.viewerHead::-webkit-scrollbar{display:none}
+.tool{flex:0 0 auto;height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--border2);background:#fff;color:var(--muted);font-weight:900;font-size:12px;font-family:var(--head)}
+.tool.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.tool.orange.active{background:var(--orange);border-color:var(--orange)}
+.tool.green.active{background:var(--green);border-color:var(--green)}
+
+.viewerStageWrap{width:100%;display:flex;justify-content:center;background:#f8f9ff;padding:12px}
+.viewerStage{
+  position:relative;
+  width:min(100%,420px);
+  max-width:420px;
   aspect-ratio:1/1;
-  max-height:1200px;
-  background:#f8fafc;
-  border:1px solid var(--line);
+  background:
+    linear-gradient(45deg,#f7f7f7 25%,transparent 25%),
+    linear-gradient(-45deg,#f7f7f7 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#f7f7f7 75%),
+    linear-gradient(-45deg,transparent 75%,#f7f7f7 75%);
+  background-size:20px 20px;
+  background-position:0 0,0 10px,10px -10px,-10px 0px;
+  border:1px solid var(--border);
   border-radius:18px;
-  padding:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-#preview{
-  width:100%;
-  height:100%;
-  background:white;
-  border-radius:14px;
   overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  touch-action:none;
 }
-#preview svg{width:100%!important;height:100%!important;max-width:100%;max-height:100%;display:block;margin:auto}
-.progress{height:8px;border-radius:999px;overflow:hidden;background:#dbeafe}
-.bar{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--orange))}
+#canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.badge{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:11px;color:var(--blue2);font-weight:900;font-family:var(--head);pointer-events:none;box-shadow:0 6px 18px rgba(15,23,42,.08)}
+.zoomBadge{position:absolute;right:10px;bottom:10px;background:rgba(15,23,42,.75);color:white;border-radius:999px;padding:5px 10px;font-size:11px;font-family:var(--mono);pointer-events:none}
+
+.fileBtn{position:relative;overflow:hidden}
+.fileBtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+.infoGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.info{background:#f8f9ff;border:1px solid var(--border);border-radius:16px;padding:10px;min-height:68px}
+.info span{display:block;color:var(--muted);font-size:10px;font-weight:800;margin-bottom:6px}
+.info b{font-family:var(--mono);font-size:14px;color:#111827}
+.resultBig{background:linear-gradient(135deg,#eef4ff,#fff);border:1px solid #bfd0ff;border-radius:18px;padding:14px;margin-top:10px;text-align:center}
+.resultBig span{display:block;font-size:11px;color:var(--muted);font-weight:900;margin-bottom:4px}
+.resultBig b{font-family:var(--head);color:var(--blue);font-size:28px;font-weight:900}
+.panelGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.measureTools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.measureTools .btn.active{background:var(--orange)}
+.toast{position:fixed;left:50%;bottom:calc(18px + var(--safe));transform:translateX(-50%) translateY(15px);background:#111827;color:#fff;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;opacity:0;pointer-events:none;transition:.25s;z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .hidden{display:none!important}
-.desglose{display:none}
-.desglose.show{display:block}
-.row{display:flex;gap:10px;align-items:center}
-.row input[type=checkbox]{width:auto}
-.pill{
-  display:inline-block;
-  padding:7px 10px;
-  border-radius:999px;
-  background:#dbeafe;
-  border:1px solid #bfdbfe;
-  color:#0f172a;
-  font-size:12px;
-  font-weight:700;
-}
-.materialEditor{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:end}
-.componentEditor{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:10px}
-.priceInput{max-width:90px;padding:7px}
-.sectionTitle{margin:12px 0;font-size:15px;font-weight:800}
-.pdfNote{font-size:11px;color:var(--muted)}
-.ok{color:var(--green)}.bad{color:var(--red)}.warn{color:var(--yellow)}
-.miniBtn{padding:8px;margin:0;font-size:12px}
-.subtle{opacity:.75}
 
-@media(max-width:900px){
-  .grid,.grid2,.kpis{grid-template-columns:1fr 1fr}
-  .materialEditor,.componentEditor{grid-template-columns:1fr 1fr}
-  .componentEditor button,.materialEditor button{grid-column:1/-1}
-  .page-hero{flex-direction:column;align-items:flex-start;gap:12px}
-}
-@media(max-width:520px){
-  .grid,.grid2,.kpis,.tabs{grid-template-columns:1fr}
-  .toolbarBtns{grid-template-columns:1fr}
-  .main{padding:10px}
-  .card{padding:12px;border-radius:16px}
-  .page-hero{padding:16px;border-radius:18px}
-  .page-hero h1{font-size:22px}
-  input,select,button{font-size:13px;padding:10px}
-  th,td{padding:8px}
-}
-
-/* =========================================================
-   ANALIZADOR SVG · ESTILO COMANDA
-   No reemplaza menu.css. Solo adapta el contenido.
-========================================================= */
-html,body{
-  background:#f0f2f9!important;
-  color-scheme:light!important;
-}
-
-.main{
-  padding:14px 18px 18px;
-  max-width:1400px;
-  margin:auto;
-}
-
-.page-hero{
-  background:linear-gradient(135deg,#ffffff,#eef1ff)!important;
-  border:1px solid #d9deea!important;
-  border-radius:24px!important;
-  padding:20px!important;
-  margin-bottom:16px!important;
-  display:flex!important;
-  justify-content:space-between!important;
-  align-items:center!important;
-  box-shadow:0 4px 18px rgba(0,0,0,.055)!important;
-}
-
-.page-hero h1{
-  margin:0!important;
-  font-family:var(--head,Montserrat,Arial,sans-serif)!important;
-  font-size:28px!important;
-  font-weight:900!important;
-  color:#0b1f7a!important;
-  letter-spacing:.2px!important;
-}
-
-.page-hero p{
-  margin:6px 0 0!important;
-  color:#6b7280!important;
-  font-size:13px!important;
-}
-
-.heroBadge{
-  background:#153bff!important;
-  color:white!important;
-  padding:10px 14px!important;
-  border-radius:999px!important;
-  font-family:var(--head,Montserrat,Arial,sans-serif)!important;
-  font-size:12px!important;
-  font-weight:900!important;
-  text-transform:uppercase!important;
-  letter-spacing:.5px!important;
-}
-
-.card{
-  background:#ffffff!important;
-  border:1px solid #d9deea!important;
-  box-shadow:0 4px 18px rgba(0,0,0,.055)!important;
-}
-
-.card h2{
-  font-family:var(--head,Montserrat,Arial,sans-serif)!important;
-  color:#0b1f7a!important;
-  letter-spacing:.25px!important;
-}
-
-.tabs{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-bottom:16px;
-}
-
-.tabBtn{
-  font-family:var(--head,Montserrat,Arial,sans-serif)!important;
-  background:#eef1ff!important;
-  color:#153bff!important;
-  border:1px solid #cbd3e6!important;
-  border-radius:999px!important;
-  font-weight:900!important;
-  letter-spacing:.45px!important;
-  text-transform:uppercase!important;
-}
-
-.tabBtn.active{
-  background:#153bff!important;
-  color:#ffffff!important;
-  border-color:#153bff!important;
-  box-shadow:0 6px 16px rgba(21,59,255,.18)!important;
-}
-
-input,select,textarea,button{
-  color-scheme:light!important;
-  -webkit-tap-highlight-color:transparent!important;
-}
-
-input,select{
-  background:#fff!important;
-  border:1px solid #d9deea!important;
-  color:#111827!important;
-}
-
-select option{
-  background:#fff!important;
-  color:#111827!important;
-}
-
-button{
-  background:#153bff!important;
-  color:#fff!important;
-  border-radius:12px!important;
-  font-family:var(--head,Montserrat,Arial,sans-serif)!important;
-  font-weight:900!important;
-  letter-spacing:.35px!important;
-}
-
-button.gray{
-  background:#fff!important;
-  color:#153bff!important;
-  border:1px solid #cbd3e6!important;
-}
-
-button.orange{
-  background:#ff8616!important;
-  color:#fff!important;
-}
-
-.kpi,.totalBox{
-  background:#f8f9ff!important;
-  border:1px solid #d9deea!important;
-}
-
-.kpi b,.resultPrice{
-  font-family:var(--head,Montserrat,Arial,sans-serif)!important;
-}
-
-.resultPrice{
-  color:#16a34a!important;
-}
-
-.tableWrap{
-  border:1px solid #d9deea!important;
-  background:#fff!important;
-}
-
-th{
-  background:#eef1ff!important;
-  color:#6b7280!important;
-  font-family:var(--head,Montserrat,Arial,sans-serif)!important;
-  font-size:10px!important;
-  font-weight:900!important;
-  letter-spacing:.6px!important;
-  text-transform:uppercase!important;
-}
-
-td{
-  background:#fff!important;
-  color:#111827!important;
-  border-bottom:1px solid #e4e8f2!important;
-}
-
-tr:nth-child(even) td{
-  background:#fbfcff!important;
-}
-
-.pill{
-  background:#eef1ff!important;
-  border:1px solid #cbd3e6!important;
-  color:#153bff!important;
-  font-family:var(--head,Montserrat,Arial,sans-serif)!important;
-  font-weight:900!important;
-}
-
-#previewShell{
-  background:#f8f9ff!important;
-  border:1px solid #d9deea!important;
-}
-
-#preview{
-  background:#fff!important;
-}
-
-/* fallback mínimo si menu.js no llegó a pintar el menú */
-html.loading-menu .header-tabs{
-  opacity:0!important;
-  visibility:hidden!important;
-}
-html.menu-ready .header-tabs,
-.header.menu-ready .header-tabs{
-  opacity:1!important;
-  visibility:visible!important;
-}
-
-@media(max-width:980px){
-  html.loading-menu .header-tabs,
-  html.menu-ready .header-tabs,
-  .header.menu-ready .header-tabs{
-    opacity:1!important;
-    visibility:visible!important;
-  }
-}
-
-@media(max-width:900px){
-  .page-hero{
-    flex-direction:column!important;
-    align-items:flex-start!important;
-    gap:12px!important;
-  }
-}
+.tableWrap{width:100%;overflow:auto;border:1px solid var(--border);border-radius:18px;margin-top:10px;background:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#eef1fb;color:#5b6475;font-family:var(--head);font-weight:900;text-align:left;padding:10px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--border);white-space:nowrap;font-family:var(--mono)}
+tr:last-child td{border-bottom:none}
+.bad{color:var(--red)!important}
+.good{color:var(--green)!important}
+.smallNote{font-size:11px;color:var(--muted);line-height:1.4;margin-top:8px}
+.toggleBox{display:flex;align-items:center;gap:8px;margin-top:10px}
+.toggleBox input{width:auto;height:auto}
+.toggleBox label{margin:0;font-size:12px;color:var(--text)}
 
 @media(max-width:520px){
-  .tabs{
-    grid-template-columns:1fr!important;
-  }
-  .page-hero h1{
-    font-size:22px!important;
-  }
-}
-
-
-/* =========================================================
-   AJUSTES MÓVIL · ANALIZADOR SVG
-========================================================= */
-.analyzeBtnBox{
-  margin-top:0;
-}
-
-@media(max-width:520px){
-  body{
-    font-size:80%!important;
-  }
-
-  .main{
-    padding:8px!important;
-  }
-
-  .card{
-    padding:10px!important;
-    border-radius:14px!important;
-    margin-bottom:10px!important;
-  }
-
-  .card h2{
-    font-size:13px!important;
-    margin-bottom:8px!important;
-  }
-
-  label,
-  .hint,
-  .tiny,
-  .kpi span,
-  .pdfNote{
-    font-size:10px!important;
-  }
-
-  input,
-  select,
-  button{
-    font-size:11px!important;
-    padding:8px!important;
-    min-height:34px!important;
-    border-radius:10px!important;
-  }
-
-  .tabs{
-    gap:7px!important;
-    margin-bottom:10px!important;
-  }
-
-  .tabBtn{
-    min-height:34px!important;
-    font-size:10px!important;
-  }
-
-  /* Ancho manual + unidad en 2 columnas */
-  .importGrid{
-    display:grid!important;
-    grid-template-columns:1fr 1fr!important;
-    gap:8px!important;
-  }
-
-  /* Botón escalar + analizar en 2 columnas visuales */
-  .importGrid > div:nth-child(3){
-    grid-column:1 / 2!important;
-  }
-
-  .analyzeBtnBox{
-    display:block!important;
-    margin-top:-42px!important;
-    margin-left:calc(50% + 4px)!important;
-    width:calc(50% - 4px)!important;
-  }
-
-  .analyzeBtnBox button{
-    height:34px!important;
-    display:flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-    text-align:center!important;
-    padding-left:4px!important;
-    padding-right:4px!important;
-  }
-
-  .row{
-    margin-top:8px!important;
-  }
-
-  /* Resultados siempre en 4 columnas en móvil */
-  .kpis{
-    grid-template-columns:repeat(4,1fr)!important;
-    gap:6px!important;
-  }
-
-  .kpi{
-    padding:7px 5px!important;
-    border-radius:10px!important;
-    min-height:58px!important;
-  }
-
-  .kpi b{
-    font-size:11px!important;
-    line-height:1.1!important;
-    word-break:break-word!important;
-  }
-
-  .kpi span{
-    font-size:8px!important;
-    line-height:1.1!important;
-  }
-
-  .resultPrice{
-    font-size:24px!important;
-  }
-
-  #previewShell{
-    padding:7px!important;
-    border-radius:12px!important;
-  }
-
-  #preview{
-    border-radius:10px!important;
-  }
-
-  .toolbarBtns{
-    gap:7px!important;
-  }
-
-  table{
-    font-size:10px!important;
-  }
-
-  th,td{
-    padding:6px!important;
-  }
-}
-
-
-.analyzeBtnBox button{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  text-align:center!important;
-}
-
-
-/* =========================================================
-   FIX BOTONES CENTRADOS · ESCALAR SVG / MEDIDA REAL
-========================================================= */
-.actionGrid{
-  display:grid!important;
-  grid-template-columns:1fr 1fr!important;
-  gap:10px!important;
-  align-items:center!important;
-}
-
-.actionGrid button{
-  width:100%!important;
-  min-height:46px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  text-align:center!important;
-  line-height:1!important;
-  padding:0 12px!important;
-}
-
-@media(max-width:520px){
-  .importGrid{
-    grid-template-columns:1fr 1fr!important;
-    gap:8px!important;
-  }
-
-  .actionGrid{
-    grid-template-columns:1fr 1fr!important;
-    gap:8px!important;
-  }
-
-  .actionGrid button{
-    min-height:42px!important;
-    height:42px!important;
-    font-size:11px!important;
-    padding:0 8px!important;
-    display:flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-    text-align:center!important;
-  }
-
-  .analyzeBtnBox{
-    margin:0!important;
-    width:auto!important;
-  }
-}
-
-</style>
-
-<style>
-@media(max-width:520px){
-  .analyzeBtnBox{
-    margin:0!important;
-    margin-top:0!important;
-    margin-left:0!important;
-    width:auto!important;
-  }
+  .app{padding:8px}
+  .brand{border-radius:20px;padding:12px}
+  .brand h1{font-size:15px}
+  .brand span{font-size:10px}
+  .steps{gap:5px}
+  .step{font-size:8px;padding:8px 3px}
+  .card{padding:12px;border-radius:18px}
+  .card h2{font-size:14px}
+  .panelGrid{grid-template-columns:1fr}
+  .grid2{grid-template-columns:1fr 1fr}
+  .grid3{grid-template-columns:1fr 1fr 1fr}
+  .infoGrid{grid-template-columns:repeat(4,1fr);gap:6px}
+  .info{padding:7px 5px;min-height:56px;border-radius:12px}
+  .info span{font-size:8px;line-height:1.1}
+  .info b{font-size:10px}
+  input,select,.btn{font-size:11px;min-height:38px;height:38px;border-radius:12px}
+  .viewerStage{width:min(100%,335px);max-width:335px}
+  .viewerStageWrap{padding:8px}
+  .tool{height:32px;font-size:10px;padding:0 10px}
+  .resultBig b{font-size:22px}
+  table{font-size:12px}
+  th,td{padding:8px 9px}
 }
 </style>
-
-
-<style>
-/* =========================================================
-   BOTONES ESCALAR SVG / MEDIDA REAL · 2 COLUMNAS CENTRADAS
-========================================================= */
-.importGrid{
-  display:grid!important;
-  grid-template-columns:1fr 1fr!important;
-  gap:10px!important;
-  align-items:end!important;
-}
-
-.actionGrid{
-  display:grid!important;
-  grid-template-columns:1fr 1fr!important;
-  gap:10px!important;
-  margin-top:10px!important;
-  width:100%!important;
-  align-items:center!important;
-}
-
-.actionGrid .actionBtn,
-.actionGrid button{
-  width:100%!important;
-  height:46px!important;
-  min-height:46px!important;
-  padding:0 10px!important;
-  margin:0!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  text-align:center!important;
-  line-height:1!important;
-  white-space:nowrap!important;
-  border-radius:14px!important;
-}
-
-@media(max-width:520px){
-  .importGrid{
-    grid-template-columns:1fr 1fr!important;
-    gap:8px!important;
-  }
-
-  .actionGrid{
-    grid-template-columns:1fr 1fr!important;
-    gap:8px!important;
-    margin-top:8px!important;
-  }
-
-  .actionGrid .actionBtn,
-  .actionGrid button{
-    height:42px!important;
-    min-height:42px!important;
-    font-size:11px!important;
-    padding:0 6px!important;
-    display:flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-    text-align:center!important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   ESCALAR POR ANCHO / ALTO
-========================================================= */
-.scaleGrid{
-  display:grid!important;
-  grid-template-columns:1fr 1fr!important;
-  gap:10px!important;
-  align-items:end!important;
-}
-
-.scaleGrid select,
-.scaleGrid input{
-  width:100%!important;
-  text-align:left!important;
-}
-
-@media(max-width:520px){
-  .scaleGrid{
-    grid-template-columns:1fr 1fr!important;
-    gap:8px!important;
-  }
-
-  .scaleGrid label{
-    min-height:20px!important;
-    display:flex!important;
-    align-items:flex-end!important;
-  }
-
-  .scaleGrid select,
-  .scaleGrid input{
-    height:42px!important;
-    min-height:42px!important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   ESCALAR SVG POR ANCHO / ALTO · DEFINITIVO
-========================================================= */
-.scaleGrid{
-  display:grid!important;
-  grid-template-columns:1fr 1fr!important;
-  gap:10px!important;
-  align-items:end!important;
-}
-
-.scaleGrid label{
-  min-height:18px!important;
-}
-
-.scaleGrid select,
-.scaleGrid input{
-  width:100%!important;
-  height:42px!important;
-  min-height:42px!important;
-}
-
-.actionGrid{
-  display:grid!important;
-  grid-template-columns:1fr 1fr!important;
-  gap:10px!important;
-  margin-top:10px!important;
-}
-
-.actionGrid button{
-  width:100%!important;
-  height:44px!important;
-  min-height:44px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  text-align:center!important;
-  padding:0 8px!important;
-  line-height:1!important;
-}
-
-@media(max-width:520px){
-  .scaleGrid,
-  .actionGrid{
-    grid-template-columns:1fr 1fr!important;
-    gap:8px!important;
-  }
-
-  .actionGrid button{
-    height:42px!important;
-    min-height:42px!important;
-    font-size:11px!important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   FIX FINAL · ESCALAR POR + MEDIDA / BOTONES 2 COLUMNAS
-========================================================= */
-.scaleGrid{
-  display:grid!important;
-  grid-template-columns:1fr 1fr!important;
-  gap:10px!important;
-  align-items:end!important;
-  margin-bottom:10px!important;
-}
-
-.scaleGrid > div{
-  min-width:0!important;
-}
-
-.scaleGrid label{
-  min-height:18px!important;
-  display:block!important;
-}
-
-.scaleGrid select,
-.scaleGrid input{
-  width:100%!important;
-  height:42px!important;
-  min-height:42px!important;
-  text-align:left!important;
-}
-
-.actionGrid{
-  display:grid!important;
-  grid-template-columns:1fr 1fr!important;
-  gap:10px!important;
-  width:100%!important;
-  margin-top:0!important;
-  align-items:center!important;
-}
-
-.actionGrid .actionBtn,
-.actionGrid button{
-  width:100%!important;
-  height:44px!important;
-  min-height:44px!important;
-  margin:0!important;
-  padding:0 8px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  text-align:center!important;
-  line-height:1!important;
-  white-space:nowrap!important;
-  border-radius:14px!important;
-}
-
-.analyzeBtnBox{
-  display:none!important;
-}
-
-@media(max-width:520px){
-  .scaleGrid,
-  .actionGrid{
-    grid-template-columns:1fr 1fr!important;
-    gap:8px!important;
-  }
-
-  .scaleGrid select,
-  .scaleGrid input{
-    height:42px!important;
-    min-height:42px!important;
-  }
-
-  .actionGrid .actionBtn,
-  .actionGrid button{
-    height:42px!important;
-    min-height:42px!important;
-    font-size:11px!important;
-    padding:0 6px!important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   FIX FINAL · UN SOLO BOTÓN CALCULAR
-========================================================= */
-.actionGrid.singleAction{
-  display:grid!important;
-  grid-template-columns:1fr!important;
-  width:100%!important;
-  margin-top:10px!important;
-}
-
-.actionGrid.singleAction .actionBtn,
-.actionGrid.singleAction button{
-  width:100%!important;
-  height:44px!important;
-  min-height:44px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  text-align:center!important;
-  line-height:1!important;
-  font-size:13px!important;
-  border-radius:14px!important;
-}
-
-@media(max-width:520px){
-  .actionGrid.singleAction{
-    grid-template-columns:1fr!important;
-  }
-
-  .actionGrid.singleAction .actionBtn,
-  .actionGrid.singleAction button{
-    height:42px!important;
-    min-height:42px!important;
-    font-size:11px!important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   GRID DE ESCALA EN VISTA PREVIA
-   Línea suave: 5 cm
-   Línea marcada: 10 cm
-========================================================= */
-#preview{
-  position:relative!important;
-  background-color:#ffffff!important;
-  background-image:
-    linear-gradient(to right, rgba(21,59,255,.10) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(21,59,255,.10) 1px, transparent 1px),
-    linear-gradient(to right, rgba(21,59,255,.22) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(21,59,255,.22) 1px, transparent 1px)!important;
-  background-size:
-    var(--grid-5cm-x, 50px) var(--grid-5cm-y, 50px),
-    var(--grid-5cm-x, 50px) var(--grid-5cm-y, 50px),
-    var(--grid-10cm-x, 100px) var(--grid-10cm-y, 100px),
-    var(--grid-10cm-x, 100px) var(--grid-10cm-y, 100px)!important;
-  background-position:center center!important;
-}
-
-#preview svg{
-  position:relative!important;
-  z-index:2!important;
-}
-</style>
-
-
-<style>
-/* =========================================================
-   GRID FRONTAL + MEDICIÓN DE 2 PUNTOS
-   Azul fuerte cada 10 cm, azul claro cada 5 cm
-========================================================= */
-#preview{
-  position:relative!important;
-  cursor:crosshair!important;
-}
-
-#preview > svg:not(#measureLayer){
-  position:relative!important;
-  z-index:2!important;
-}
-
-#gridOverlay{
-  position:absolute!important;
-  inset:0!important;
-  z-index:5!important;
-  pointer-events:none!important;
-  background-image:
-    linear-gradient(to right, rgba(21,59,255,.18) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(21,59,255,.18) 1px, transparent 1px),
-    linear-gradient(to right, rgba(21,59,255,.52) 1.4px, transparent 1.4px),
-    linear-gradient(to bottom, rgba(21,59,255,.52) 1.4px, transparent 1.4px)!important;
-  background-size:
-    var(--grid-5cm-x, 50px) var(--grid-5cm-y, 50px),
-    var(--grid-5cm-x, 50px) var(--grid-5cm-y, 50px),
-    var(--grid-10cm-x, 100px) var(--grid-10cm-y, 100px),
-    var(--grid-10cm-x, 100px) var(--grid-10cm-y, 100px)!important;
-  background-position:center center!important;
-}
-
-#measureLayer{
-  position:absolute!important;
-  inset:0!important;
-  z-index:6!important;
-  width:100%!important;
-  height:100%!important;
-  pointer-events:none!important;
-  overflow:visible!important;
-}
-
-.measureInfo{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin-top:10px;
-  padding:10px 12px;
-  border:1px solid #d9deea;
-  border-radius:14px;
-  background:#f8f9ff;
-  color:#475569;
-  font-size:12px;
-  line-height:1.25;
-}
-
-.measureInfo b{
-  color:#153bff;
-  font-family:var(--head,Montserrat,Arial,sans-serif);
-  font-weight:900;
-  white-space:nowrap;
-}
-
-.miniMeasureBtn{
-  width:auto!important;
-  min-width:110px!important;
-  padding:8px 10px!important;
-  min-height:34px!important;
-  font-size:11px!important;
-}
-
-@media(max-width:520px){
-  .measureInfo{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:7px;
-    font-size:10px;
-  }
-
-  .measureInfo b{
-    font-size:11px;
-  }
-
-  .miniMeasureBtn{
-    width:100%!important;
-    min-width:0!important;
-    min-height:32px!important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   FIX GRID SIMPLE + BOTONES PUNTO 1 / PUNTO 2
-========================================================= */
-#gridOverlay{
-  background-image:
-    linear-gradient(to right, rgba(21,59,255,.12) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(21,59,255,.12) 1px, transparent 1px),
-    linear-gradient(to right, rgba(21,59,255,.42) 1.5px, transparent 1.5px),
-    linear-gradient(to bottom, rgba(21,59,255,.42) 1.5px, transparent 1.5px)!important;
-  background-size:
-    var(--grid-5cm, 50px) var(--grid-5cm, 50px),
-    var(--grid-5cm, 50px) var(--grid-5cm, 50px),
-    var(--grid-10cm, 100px) var(--grid-10cm, 100px),
-    var(--grid-10cm, 100px) var(--grid-10cm, 100px)!important;
-  background-position:center center!important;
-}
-
-.pointTools{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:6px;
-  min-width:170px;
-}
-
-.pointBtn{
-  width:100%!important;
-  min-height:34px!important;
-  padding:0 10px!important;
-  border-radius:999px!important;
-  background:#ffffff!important;
-  color:#153bff!important;
-  border:1px solid #cbd3e6!important;
-  font-size:11px!important;
-}
-
-.pointBtn.active{
-  background:#153bff!important;
-  color:#ffffff!important;
-  border-color:#153bff!important;
-}
-
-@media(max-width:520px){
-  .pointTools{
-    min-width:0;
-    width:100%;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   COTA VISUAL ENTRE PUNTO 1 Y PUNTO 2
-========================================================= */
-#measureLayer{
-  pointer-events:none!important;
-}
-
-.measure-point{
-  filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
-}
-
-.pointBtn.active{
-  background:#ff8616!important;
-  color:#ffffff!important;
-  border-color:#ff8616!important;
-}
-
-.measureInfo{
-  align-items:center!important;
-}
-</style>
-
-
-<style>
-/* =========================================================
-   FIX MEDIDOR · SVG NO BORRA GRID NI PUNTOS
-========================================================= */
-#preview{
-  position:relative!important;
-  overflow:hidden!important;
-}
-
-#svgHolder{
-  position:absolute!important;
-  inset:0!important;
-  z-index:1!important;
-  width:100%!important;
-  height:100%!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-
-#svgHolder svg{
-  width:100%!important;
-  height:100%!important;
-  max-width:100%!important;
-  max-height:100%!important;
-  display:block!important;
-  margin:auto!important;
-}
-
-#gridOverlay{
-  position:absolute!important;
-  inset:0!important;
-  z-index:5!important;
-  pointer-events:none!important;
-}
-
-#measureLayer{
-  position:absolute!important;
-  inset:0!important;
-  z-index:6!important;
-  width:100%!important;
-  height:100%!important;
-  pointer-events:none!important;
-  overflow:visible!important;
-}
-</style>
-
-
-<style>
-/* =========================================================
-   MEDIDOR FINO · puntos pequeños y valor fuera de imagen
-========================================================= */
-#measureLayer circle{
-  filter:drop-shadow(0 1px 2px rgba(0,0,0,.25));
-}
-
-.measureInfo{
-  justify-content:flex-start!important;
-}
-
-#measureResult{
-  margin-left:auto!important;
-  background:#eef1ff!important;
-  border:1px solid #cbd3e6!important;
-  border-radius:999px!important;
-  padding:8px 12px!important;
-  min-width:150px!important;
-  text-align:center!important;
-}
-
-@media(max-width:520px){
-  #measureResult{
-    margin-left:0!important;
-    width:100%!important;
-    min-width:0!important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   AJUSTE FINAL MEDIDOR
-   - Cota más fina
-   - Valor a un lado de la imagen
-   - Grid y puntos respetan proporción real del SVG
-========================================================= */
-.previewMeasureLayout{
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) 230px!important;
-  gap:12px!important;
-  align-items:start!important;
-}
-
-.measureInfo{
-  margin-top:0!important;
-  min-height:160px!important;
-  display:flex!important;
-  flex-direction:column!important;
-  justify-content:flex-start!important;
-  align-items:stretch!important;
-  gap:10px!important;
-}
-
-#measureResult{
-  margin-left:0!important;
-  width:100%!important;
-  min-width:0!important;
-  background:#eef1ff!important;
-  border:1px solid #cbd3e6!important;
-  border-radius:14px!important;
-  padding:12px!important;
-  text-align:center!important;
-  color:#153bff!important;
-  font-size:13px!important;
-}
-
-#gridOverlay{
-  background-position:
-    var(--grid-left, center) var(--grid-top, center),
-    var(--grid-left, center) var(--grid-top, center),
-    var(--grid-left, center) var(--grid-top, center),
-    var(--grid-left, center) var(--grid-top, center)!important;
-}
-
-#measureLayer line{
-  vector-effect:non-scaling-stroke!important;
-}
-
-@media(max-width:760px){
-  .previewMeasureLayout{
-    grid-template-columns:1fr!important;
-  }
-
-  .measureInfo{
-    min-height:0!important;
-    display:grid!important;
-    grid-template-columns:1fr!important;
-  }
-}
-</style>
-
-
-<style>
-/* =========================================================
-   FIX CLICK PUNTOS · siempre permite marcar
-========================================================= */
-#preview{
-  cursor:crosshair!important;
-}
-
-#svgHolder,
-#gridOverlay,
-#measureLayer{
-  pointer-events:none!important;
-}
-
-#measureLayer{
-  z-index:20!important;
-}
-
-#gridOverlay{
-  z-index:10!important;
-}
-</style>
-
 </head>
 
 <body>
+<div class="app">
 
-<header class="header">
-  <div class="logo">
-    <img src="Logo tutto1.svg" alt="Tutto Vinilos">
-    <small>COMANDA</small>
+  <div class="top">
+    <div class="brand">
+      <div>
+        <h1>MEDIDOR DE LOGOS PRO</h1>
+        <span>Recortar · Escalar · Medir · Área</span>
+      </div>
+      <span>TUTTOVINILOS</span>
+    </div>
+    <div class="steps">
+      <div id="step1" class="step active">1 RECORTAR</div>
+      <div id="step2" class="step">2 ESCALAR</div>
+      <div id="step3" class="step">3 MEDIR</div>
+      <div id="step4" class="step">4 ÁREAS</div>
+    </div>
   </div>
 
-  <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
-</header>
-
-<main class="main">
-
-<div class="wrap">
-
-<div class="tabs">
-  <button id="btnTabAnalyzer" class="tabBtn active" onclick="switchTab('analyzer')">Analizador / Cotizador</button>
-  <button id="btnTabMaterials" class="tabBtn" onclick="switchTab('materials')">Materiales / Compuestos</button>
-</div>
-
-<section id="tabAnalyzer">
   <div class="card">
-    <h2>1) Importar SVG</h2>
-
+    <h2>Imagen</h2>
     <div class="grid2">
-      <div>
-        <label>Archivo SVG</label>
-        <input type="file" id="fileInput" accept=".svg,image/svg+xml">
+      <button class="btn fileBtn">Abrir imagen
+        <input id="fileInput" type="file" accept="image/*">
+      </button>
+      <button class="btn gray" onclick="resetAll()">Reiniciar</button>
+    </div>
+    <p class="hint" style="margin-top:8px">En móvil: 1 dedo marca/mueve puntos. 2 dedos hacen zoom y mueven la imagen.</p>
+  </div>
+
+  <div id="viewerCard" class="viewerCard hidden">
+    <div class="viewerHead">
+      <button id="toolPan" class="tool active" onclick="setMode('pan')">Mover</button>
+      <button id="toolCrop" class="tool orange" onclick="setMode('crop')">Recortar</button>
+      <button id="toolMeasure" class="tool green" onclick="setMode('measure')">Medir</button>
+      <button class="tool" onclick="centerImage()">Centrar</button>
+      <button class="tool" onclick="fitCropToView()">Ver recorte</button>
+      <button class="tool" onclick="analyzeAreas()">Analizar áreas</button>
+    </div>
+
+    <div class="viewerStageWrap">
+      <div id="viewerStage" class="viewerStage">
+        <canvas id="canvas"></canvas>
+        <div id="badge" class="badge">Carga una imagen</div>
+        <div id="zoomBadge" class="zoomBadge">100%</div>
       </div>
-</div>
+    </div>
+  </div>
 
-    <br>
+  <div class="panelGrid">
+    <div id="cropCard" class="card hidden">
+      <h2>1) Recorte rectangular</h2>
+      <p class="hint">Arrastra esquinas o lados. El recorte siempre queda rectangular a 90°.</p>
 
-    <div class="scaleGrid">
+      <div class="infoGrid" style="margin-top:10px">
+        <div class="info"><span>X</span><b id="cropX">—</b></div>
+        <div class="info"><span>Y</span><b id="cropY">—</b></div>
+        <div class="info"><span>Ancho</span><b id="cropW">—</b></div>
+        <div class="info"><span>Alto</span><b id="cropH">—</b></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn gray" onclick="resetCrop()">Reset</button>
+        <button class="btn orange" onclick="applyCrop()">Aplicar recorte</button>
+      </div>
+    </div>
+
+    <div id="scaleCard" class="card hidden">
+      <h2>2) Escalar</h2>
+      <p class="hint">Coloca una medida real. Todo el cálculo de área depende de esta escala.</p>
+
+      <div class="grid2" style="margin-top:10px">
+        <div>
+          <label>Escalar por</label>
+          <select id="scaleMode" onchange="syncScaleInputs()">
+            <option value="width">Ancho</option>
+            <option value="height">Alto</option>
+          </select>
+        </div>
+        <div>
+          <label>Medida cm</label>
+          <input id="scaleValue" type="number" inputmode="decimal" step="0.01" placeholder="Ej: 60" oninput="calcScaleLive()">
+        </div>
+      </div>
+
+      <div class="resultBig">
+        <span>Tamaño real</span>
+        <b id="realSize">—</b>
+      </div>
+
+      <div class="actions">
+        <button class="btn gray" onclick="useWidthPreset()">Usar ancho</button>
+        <button class="btn green" onclick="confirmScale()">Confirmar escala</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="measureCard" class="card hidden">
+    <h2>3) Medición por 2 puntos</h2>
+    <p class="hint">Pulsa Punto 1 y toca la imagen. Luego Punto 2 y toca la imagen.</p>
+
+    <div class="measureTools">
+      <button id="btnP1" class="btn active" onclick="setActivePoint(1)">Punto 1</button>
+      <button id="btnP2" class="btn gray" onclick="setActivePoint(2)">Punto 2</button>
+    </div>
+
+    <div class="resultBig">
+      <span>Distancia</span>
+      <b id="measureResult">—</b>
+    </div>
+
+    <div class="infoGrid" style="margin-top:10px">
+      <div class="info"><span>P1 X</span><b id="p1x">—</b></div>
+      <div class="info"><span>P1 Y</span><b id="p1y">—</b></div>
+      <div class="info"><span>P2 X</span><b id="p2x">—</b></div>
+      <div class="info"><span>P2 Y</span><b id="p2y">—</b></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn gray" onclick="clearMeasure()">Limpiar puntos</button>
+      <button class="btn" onclick="copyMeasure()">Copiar medida</button>
+    </div>
+  </div>
+
+  <div id="areaCard" class="card hidden">
+    <h2>4) Áreas reales y marco optimizado</h2>
+    <p class="hint">Corrección aplicada: el marco optimizado usa perímetro real × grosor en cm. Ya no depende de píxeles sin escala ni de selección - relleno.</p>
+
+    <div class="grid3" style="margin-top:10px">
       <div>
-        <label>Escalar por</label>
-        <select id="scaleMode">
-          <option value="width" selected>Ancho</option>
-          <option value="height">Alto</option>
+        <label>Fondo a ignorar</label>
+        <select id="bgMode" onchange="analyzeAreas()">
+          <option value="white">Blanco / claro</option>
+          <option value="transparent">Transparente</option>
+          <option value="black">Negro / oscuro</option>
+          <option value="none">No ignorar</option>
         </select>
       </div>
-
       <div>
-        <label>Medida en cm</label>
-        <input id="fallbackWidth" type="number" value="60" step="0.01" placeholder="Ej: 60">
-      </div>
-    </div>
-
-    <div class="actionGrid singleAction">
-      <button class="actionBtn" onclick="calcularSVG()">Calcular</button>
-    </div>
-
-    <br>
-
-    <div class="row">
-      <input type="checkbox" id="ignoreWhite" checked>
-      <label for="ignoreWhite" style="margin:0">Ignorar blanco como hueco / vacío</label>
-    </div>
-<div class="progress"><div class="bar" id="bar"></div></div>
-    <p class="hint" id="status">Listo.</p>
-  </div>
-
-  <div class="card">
-    <h2>2) Vista previa · máximo 1200 × 1200</h2>
-    <div class="previewMeasureLayout">
-      <div id="previewShell">
-        <div id="preview">
-          <div id="svgHolder"></div>
-          <div id="gridOverlay"></div>
-          <svg id="measureLayer" aria-hidden="true"></svg>
-        </div>
-      </div>
-
-      <div class="measureInfo">
-        <div class="pointTools">
-          <button type="button" id="btnPoint1" class="pointBtn active" onclick="setActiveMeasurePoint(1)">Punto 1</button>
-          <button type="button" id="btnPoint2" class="pointBtn" onclick="setActiveMeasurePoint(2)">Punto 2</button>
-        </div>
-        <span>📏 Elige Punto 1 o Punto 2 y toca la imagen.</span>
-        <b id="measureResult">Distancia: —</b>
-        <button type="button" class="gray miniMeasureBtn" onclick="clearMeasure()">Limpiar medida</button>
-      </div>
-    </div>
-    <p class="hint">La vista se ajusta automáticamente: si el SVG es pequeño, hace zoom; si es grande, lo reduce para verlo completo.</p>
-  </div>
-
-  <div class="card">
-    <h2>3) Resultados</h2>
-    <div class="kpis">
-      <div class="kpi"><b id="kAncho">0</b><span>Ancho real detectado</span></div>
-      <div class="kpi"><b id="kAlto">0</b><span>Alto real detectado</span></div>
-      <div class="kpi"><b id="kPiezas">0</b><span>Piezas detectadas</span></div>
-      <div class="kpi"><b id="kPerimetro">0</b><span>Perímetro aprox.</span></div>
-      <div class="kpi"><b id="kAreaRelleno">0</b><span>Área de relleno</span></div>
-      <div class="kpi"><b id="kAreaMarco">0</b><span>Área de marco optimizada</span></div>
-      <div class="kpi"><b id="kAreaSel">0</b><span>Área de selección</span></div>
-      <div class="kpi"><b id="kEscala">0</b><span>Escala usada</span></div>
-    </div>
-    <p class="hint" id="method"></p>
-  </div>
-
-  <div class="card">
-    <h2>4) Detalle por pieza</h2>
-    <button class="gray" onclick="togglePieceDetail()">Ver / ocultar tallaje por pieza</button>
-    <p class="hint">Lo dejo cerrado por defecto para no ensuciar la pantalla. Ábrelo solo cuando quieras revisar cada pieza.</p>
-    <div id="pieceDetailBox" class="tableWrap desglose">
-      <table id="tabla">
-        <tr><th>#</th><th>Pixeles</th><th>Ancho</th><th>Alto</th><th>Marco</th></tr>
-      </table>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>5) Producto / MTR / Precio</h2>
-    <p class="hint">Selecciona el tipo de material o producto. Si eliges <b>Front Lit</b>, verás solo el precio final; el desglose queda oculto hasta presionar el botón.</p>
-
-    <div class="grid2">
-      <div>
-        <label>Producto / Material</label>
-        <select id="productSelect" onchange="renderPricing(lastResults)"></select>
+        <label>Tolerancia</label>
+        <input id="tolerance" type="number" value="245" min="0" max="255" oninput="analyzeAreas()">
       </div>
       <div>
-        <label>Multiplicador / margen de venta</label>
-        <input id="saleMultiplier" type="number" value="1" min="0" step="0.01" onchange="renderPricing(lastResults)">
+        <label>Grosor marco cm</label>
+        <input id="frameThickness" type="number" value="2" step="0.1" oninput="analyzeAreas()">
       </div>
     </div>
 
-    <br>
-
-    <div class="kpis">
-      <div class="kpi"><b id="pK43">0</b><span>K43 · Piezas</span></div>
-      <div class="kpi"><b id="pK44">0</b><span>K44 · Perímetro</span></div>
-      <div class="kpi"><b id="pK45">0</b><span>K45 · Área relleno</span></div>
-      <div class="kpi"><b id="pK46">0</b><span>K46 · Área marco</span></div>
+    <div class="grid3" style="margin-top:8px">
+      <div>
+        <label>Pieza mínima px</label>
+        <input id="minPiecePx" type="number" value="120" min="1" oninput="analyzeAreas()">
+      </div>
+      <div>
+        <label>Detalle</label>
+        <select id="detailMode" onchange="renderPieceTable()">
+          <option value="hide">Oculto</option>
+          <option value="show">Mostrar</option>
+        </select>
+      </div>
+      <div>
+        <label>Decimales</label>
+        <select id="decimalsMode" onchange="renderAreas()">
+          <option value="4">4</option>
+          <option value="3" selected>3</option>
+          <option value="2">2</option>
+        </select>
+      </div>
     </div>
 
-    <div class="totalBox">
-      <label>Precio calculado</label>
-      <div class="resultPrice" id="selectedTotal">$0.00</div>
-      <div class="hint" id="selectedFormula">Importa y analiza un SVG.</div>
+    <div class="infoGrid" style="margin-top:10px">
+      <div class="info"><span>Selección</span><b id="areaSelection">—</b></div>
+      <div class="info"><span>Relleno</span><b id="areaFill">—</b></div>
+      <div class="info"><span>Perímetro</span><b id="areaPerimeter">—</b></div>
+      <div class="info"><span>Marco opt.</span><b id="areaFrameOpt">—</b></div>
     </div>
 
-    <div class="toolbarBtns">
-      <button class="gray" onclick="toggleDesglose()">Ver / ocultar desglose</button>
-      <button onclick="crearPDF()">Crear PDF</button>
-      <button class="orange" onclick="copiarResumen()">Copiar resumen</button>
+    <div class="infoGrid" style="margin-top:8px">
+      <div class="info"><span>Total + marco</span><b id="areaTotalFrame">—</b></div>
+      <div class="info"><span>Vacío caja</span><b id="areaEmptyBox">—</b></div>
+      <div class="info"><span>Piezas</span><b id="pieceCount">—</b></div>
+      <div class="info"><span>Px útiles</span><b id="usefulPixels">—</b></div>
     </div>
-    <p class="pdfNote">El PDF se genera en tamaño carta con medidas, datos técnicos, producto seleccionado, precio y especificaciones del letrero.</p>
 
-    <div id="desgloseBox" class="desglose">
-      <h3 class="sectionTitle">Desglose del producto seleccionado</h3>
+    <div class="actions">
+      <button class="btn green" onclick="analyzeAreas()">Recalcular áreas</button>
+      <button class="btn gray" onclick="copyAreaSummary()">Copiar resumen</button>
+    </div>
+
+    <p class="smallNote">
+      Fórmulas principales: Área real = px² × cmPerPx². Perímetro real = perímetroPx × cmPerPx. Marco optimizado = perímetroCm × grosorMarcoCm.
+    </p>
+
+    <div id="pieceTableBox" class="hidden">
       <div class="tableWrap">
-        <table id="selectedBreakdown">
-          <tr><th>Partida</th><th>Unidad</th><th>Cant.</th><th>Precio</th><th>Total</th><th>Base</th></tr>
-        </table>
-      </div>
-
-      <h3 class="sectionTitle">Lista MTR general</h3>
-      <div class="tableWrap">
-        <table id="mtrTable">
-          <tr><th>Material</th><th>Unidad</th><th>Cant.</th><th>Precio</th><th>Total</th></tr>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>PÍXELES</th>
+              <th>ANCHO</th>
+              <th>ALTO</th>
+              <th>RELLENO</th>
+              <th>PERÍMETRO</th>
+              <th>MARCO OPT.</th>
+              <th>ÁNGULO</th>
+            </tr>
+          </thead>
+          <tbody id="pieceTableBody"></tbody>
         </table>
       </div>
     </div>
   </div>
-</section>
-
-<section id="tabMaterials" class="hidden">
-  <div class="card">
-    <h2>Materiales base</h2>
-    <p class="hint">Aquí creas o cambias precios de tus materiales. Esto se guarda en este navegador con localStorage.</p>
-    <div class="materialEditor">
-      <div><label>Material</label><input id="matName" placeholder="Ej: PVC 6mm"></div>
-      <div><label>Unidad</label><select id="matUnit"><option>m²</option><option>ml</option><option>und</option><option>m</option><option>kg</option><option>combo</option></select></div>
-      <div><label>Precio</label><input id="matPrice" type="number" step="0.01" value="0"></div>
-      <button onclick="saveMaterialFromForm()">Guardar material</button>
-    </div>
-    <br>
-    <div class="tableWrap"><table id="materialsTable"></table></div>
-  </div>
-
-  <div class="card">
-    <h2>Material compuesto / Grupo</h2>
-    <p class="hint">Ejemplo: <b>Front Lit</b> no es un material simple; es un grupo compuesto por PVC, acrílico, módulos, cable, chupones, etc. Aquí puedes crear tus propios grupos.</p>
-    <div class="grid2">
-      <div><label>Nombre del grupo</label><input id="groupName" placeholder="Ej: Front Lit"></div>
-      <div><label>Acción</label><button onclick="saveCompositeFromEditor()">Guardar grupo compuesto</button></div>
-    </div>
-    <br>
-    <div id="componentLines"></div>
-    <button class="gray" onclick="addComponentLine()">+ Añadir componente</button>
-    <br><br>
-    <div class="tableWrap"><table id="groupsTable"></table></div>
-    <br>
-    <button class="orange" onclick="resetMaterialDefaults()">Restaurar materiales y grupos base</button>
-  </div>
-</section>
 
 </div>
-</main>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=24"></script>
-<script src="js/auth.js?v=24"></script>
-<script src="js/menu.js?v=34"></script>
+<div id="toast" class="toast">Listo</div>
 
 <script>
-(function(){
-  function fallbackMenu(){
-    const html = document.documentElement;
-    const header = document.querySelector(".header");
-    const nav = document.getElementById("authMenu");
-
-    if(nav && !nav.children.length){
-      nav.innerHTML = `
-        <a class="tab-btn" href="index.html">Pedidos</a>
-        <a class="tab-btn" href="cotizador.html">Cotizador</a>
-        <a class="tab-btn" href="materiales.html">Materiales</a>
-        <a class="tab-btn" href="estadisticas.html">Estadísticas</a>
-        <a class="tab-btn" href="configuracion.html">Configuración</a>
-        <a class="tab-btn" href="organizador.html">Organizador</a>
-        <a class="tab-btn" href="label.html">Label</a>
-        <a class="tab-btn active" href="analizador-svg.html">Analizador SVG</a>
-        <span class="storage-pill"><span class="storage-dot"></span><span>LOCAL</span></span>
-      `;
-    }
-
-    if(header && !document.querySelector(".mobile-menu-btn")){
-      const btn = document.createElement("button");
-      btn.className = "mobile-menu-btn";
-      btn.type = "button";
-      btn.textContent = "MENÚ";
-      btn.onclick = function(){
-        const menu = document.getElementById("authMenu");
-        if(menu) menu.classList.toggle("open");
-      };
-      header.insertBefore(btn, nav);
-    }
-
-    html.classList.remove("loading-menu");
-    html.classList.add("menu-ready");
-    if(header) header.classList.add("menu-ready");
-  }
-
-  window.addEventListener("load", function(){
-    setTimeout(fallbackMenu, 350);
-  });
-})();
-</script>
-
-<script>
-let svgText = "";
-let svgDoc = null;
-let currentFileName = "";
-let lastResults = null;
-let originalRealWm = 0;
-let originalRealHm = 0;
-
-const PRICES = {
-  "PVC 3mm":11,
-  "Pvc 5mm":13,
-  "Pvc 9mm":17,
-  "Pvc 15mm":25,
-  "Pvc 18mm":30,
-  "Acrilico 1mm":11,
-  "Acrilico 2mm":24,
-  "Acrilico 3mm espejo":53,
-  "Acrilico 3mm Transp":39,
-  "Acrilico 3mm color":37,
-  "Acrilico 5mm Transp":51,
-  "Acrilico 5mm color":71,
-  "Acrilico 8mm":115,
-  "Alucobond":45,
-  "Acero inoxidable":120,
-  "Filamento":35,
-  "ROWMARK":60,
-  "PVC 3mm + acrilico":48,
-  "PVC 5mm + acrilico":52,
-  "PVC 9mm + acrilico":56,
-  "PVC 15mm + acrilico":72,
-  "Banda aluminio":6,
-  "Automotriz":220,
-  "Acero inox":120,
-  "Módulos cálidos":0.4,
-  "Cable 18":1.5,
-  "Chupones L":1.2,
-  "Estaño":14,
-  "Pega acrílico":15,
-  "Pega acrílico soldadura":18,
-  "Pernos 19×25":2,
-  "Teipe negro":15
-};
-
-let COMPOSITES = {};
-const DEFAULT_PRICES = JSON.parse(JSON.stringify(PRICES));
-const DEFAULT_COMPOSITES = {
-  "Front Lit": [
-    {name:"Pvc 9mm", unit:"m²", base:"K46", factor:1, offset:0, round:false},
-    {name:"Acrilico 3mm color", unit:"m²", base:"K46", factor:1, offset:0, round:false},
-    {name:"Módulos cálidos", unit:"und", base:"K45", factor:220, offset:0, round:true},
-    {name:"Cable 18", unit:"m", base:"CUSTOM_CABLE", factor:1, offset:0, round:true},
-    {name:"Chupones L", unit:"und", base:"K43", factor:4, offset:0, round:false},
-    {name:"Estaño", unit:"und", base:"K45", factor:0.05, offset:0, round:false},
-    {name:"Pega acrílico", unit:"und", base:"K44", factor:0.0666667, offset:0, round:false},
-    {name:"Pega acrílico soldadura", unit:"und", base:"K44", factor:0.05, offset:0, round:false},
-    {name:"Pernos 19×25", unit:"und", base:"K45", factor:0.001, offset:0, round:false},
-    {name:"Teipe negro", unit:"und", base:"K44", factor:0.0333333, offset:0, round:false},
-    {name:"Banda aluminio", unit:"ml", base:"K44_PLUS_PIEZAS", factor:1, offset:0, round:false}
-  ],
-  "PVC 3mm + acrilico": [
-    {name:"PVC 3mm", unit:"m²", base:"K46", factor:1, offset:0, round:false},
-    {name:"Acrilico 3mm color", unit:"m²", base:"K46", factor:1, offset:0, round:false}
-  ],
-  "PVC 5mm + acrilico": [
-    {name:"Pvc 5mm", unit:"m²", base:"K46", factor:1, offset:0, round:false},
-    {name:"Acrilico 3mm color", unit:"m²", base:"K46", factor:1, offset:0, round:false}
-  ],
-  "PVC 9mm + acrilico": [
-    {name:"Pvc 9mm", unit:"m²", base:"K46", factor:1, offset:0, round:false},
-    {name:"Acrilico 3mm color", unit:"m²", base:"K46", factor:1, offset:0, round:false}
-  ],
-  "PVC 15mm + acrilico": [
-    {name:"Pvc 15mm", unit:"m²", base:"K46", factor:1, offset:0, round:false},
-    {name:"Acrilico 3mm color", unit:"m²", base:"K46", factor:1, offset:0, round:false}
-  ]
-};
-
-function loadStoredData(){
-  try{
-    const p = JSON.parse(localStorage.getItem("tv_svg_prices") || "null");
-    const g = JSON.parse(localStorage.getItem("tv_svg_composites") || "null");
-    if(p && typeof p === "object") Object.assign(PRICES,p);
-    COMPOSITES = g && typeof g === "object" ? g : JSON.parse(JSON.stringify(DEFAULT_COMPOSITES));
-  }catch(e){ COMPOSITES = JSON.parse(JSON.stringify(DEFAULT_COMPOSITES)); }
-}
-function saveStoredData(){
-  localStorage.setItem("tv_svg_prices", JSON.stringify(PRICES));
-  localStorage.setItem("tv_svg_composites", JSON.stringify(COMPOSITES));
-}
-function productNames(){
-  const base = [
-    "PVC 3mm","Pvc 5mm","Pvc 9mm","Pvc 15mm","Pvc 18mm",
-    "Acrilico 1mm","Acrilico 2mm","Acrilico 3mm espejo","Acrilico 3mm Transp","Acrilico 3mm color",
-    "Acrilico 5mm Transp","Acrilico 5mm color","Acrilico 8mm","Alucobond","Acero inoxidable",
-    "Filamento","ROWMARK","PVC 3mm + acrilico","PVC 5mm + acrilico","PVC 9mm + acrilico","PVC 15mm + acrilico",
-    "Front Lit","Banda aluminio","Automotriz","Acero inox"
-  ];
-  Object.keys(PRICES).forEach(k=>{ if(!base.includes(k)) base.push(k); });
-  Object.keys(COMPOSITES).forEach(k=>{ if(!base.includes(k)) base.push(k); });
-  return base;
-}
-function populateProductSelect(selected="Front Lit"){
-  const sel = $("productSelect"); if(!sel) return;
-  sel.innerHTML = productNames().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
-  sel.value = productNames().includes(selected) ? selected : "Front Lit";
-}
-function esc(s){ return String(s).replace(/[&<>\"]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m])); }
-function escAttr(s){ return String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/\n/g," "); }
-
-function switchTab(tab){
-  $("tabAnalyzer").classList.toggle("hidden", tab!=="analyzer");
-  $("tabMaterials").classList.toggle("hidden", tab!=="materials");
-  $("btnTabAnalyzer").classList.toggle("active", tab==="analyzer");
-  $("btnTabMaterials").classList.toggle("active", tab==="materials");
-  if(tab==="materials") renderMaterialPage();
-}
-function togglePieceDetail(){ const b=$("pieceDetailBox"); if(b) b.classList.toggle("show"); }
-
-function renderMaterialPage(){
-  if(!$("materialsTable")) return;
-  const names = Object.keys(PRICES).sort((a,b)=>a.localeCompare(b));
-  $("materialsTable").innerHTML = `<tr><th>Material</th><th>Precio</th><th>Acción</th></tr>` + names.map(n=>`
-    <tr><td>${esc(n)}</td><td>${priceInput(n)}</td><td><button class="miniBtn gray" onclick="deleteMaterial('${escAttr(n)}')">Eliminar</button></td></tr>`).join("");
-  $("groupsTable").innerHTML = `<tr><th>Grupo compuesto</th><th>Componentes</th><th>Acción</th></tr>` + Object.keys(COMPOSITES).sort().map(n=>`
-    <tr><td>${esc(n)}</td><td>${COMPOSITES[n].length}</td><td><button class="miniBtn" onclick="loadCompositeToEditor('${escAttr(n)}')">Editar</button> <button class="miniBtn gray" onclick="deleteComposite('${escAttr(n)}')">Eliminar</button></td></tr>`).join("");
-  if(!$("componentLines").children.length) loadCompositeToEditor("Front Lit");
-}
-function saveMaterialFromForm(){
-  const n=$("matName").value.trim(); const price=Number($("matPrice").value)||0;
-  if(!n){ alert("Coloca nombre del material."); return; }
-  PRICES[n]=price; saveStoredData(); populateProductSelect($("productSelect").value); renderMaterialPage(); renderPricing(lastResults);
-  $("matName").value=""; $("matPrice").value="0";
-}
-function deleteMaterial(n){
-  if(!confirm("Eliminar material: "+n+"?")) return;
-  delete PRICES[n]; saveStoredData(); populateProductSelect($("productSelect").value); renderMaterialPage(); renderPricing(lastResults);
-}
-function baseOptions(selected="K46"){
-  const opts = [
-    ["K46","K46 área marco"],["K45","K45 área relleno"],["K44","K44 perímetro"],["K43","K43 piezas"],
-    ["K47","K47 área selección"],["CUSTOM_CABLE","Cable FrontLit"],["K44_PLUS_PIEZAS","Perímetro + piezas"],["FIXED","Fijo/manual"]
-  ];
-  return opts.map(o=>`<option value="${o[0]}" ${o[0]===selected?"selected":""}>${o[1]}</option>`).join("");
-}
-function materialOptions(selected=""){
-  return Object.keys(PRICES).sort((a,b)=>a.localeCompare(b)).map(n=>`<option value="${esc(n)}" ${n===selected?"selected":""}>${esc(n)}</option>`).join("");
-}
-function addComponentLine(data={name:"PVC 3mm",unit:"m²",base:"K46",factor:1,offset:0,round:false}){
-  const wrap=$("componentLines");
-  const div=document.createElement("div");
-  div.className="componentEditor";
-  div.innerHTML=`
-    <div><label>Componente</label><select class="cName">${materialOptions(data.name)}</select></div>
-    <div><label>Unidad</label><input class="cUnit" value="${esc(data.unit||'m²')}"></div>
-    <div><label>Base</label><select class="cBase">${baseOptions(data.base)}</select></div>
-    <div><label>Factor</label><input class="cFactor" type="number" step="0.0001" value="${Number(data.factor??1)}"></div>
-    <div><label>Extra</label><input class="cOffset" type="number" step="0.0001" value="${Number(data.offset??0)}"></div>
-    <div class="row"><input class="cRound" type="checkbox" ${data.round?"checked":""}><label style="margin:0">Redondear</label></div>
-    <button class="gray" onclick="this.parentElement.remove()">Eliminar línea</button>`;
-  wrap.appendChild(div);
-}
-function loadCompositeToEditor(name){
-  $("groupName").value=name;
-  $("componentLines").innerHTML="";
-  (COMPOSITES[name] || []).forEach(c=>addComponentLine(c));
-  if(!(COMPOSITES[name] || []).length) addComponentLine();
-}
-function saveCompositeFromEditor(){
-  const name=$("groupName").value.trim();
-  if(!name){ alert("Coloca nombre del grupo."); return; }
-  const lines=[...$("componentLines").querySelectorAll(".componentEditor")].map(div=>({
-    name:div.querySelector(".cName").value,
-    unit:div.querySelector(".cUnit").value || "und",
-    base:div.querySelector(".cBase").value,
-    factor:Number(div.querySelector(".cFactor").value)||0,
-    offset:Number(div.querySelector(".cOffset").value)||0,
-    round:div.querySelector(".cRound").checked
-  }));
-  COMPOSITES[name]=lines; saveStoredData(); populateProductSelect(name); renderMaterialPage(); renderPricing(lastResults); alert("Grupo guardado.");
-}
-function deleteComposite(n){
-  if(!confirm("Eliminar grupo compuesto: "+n+"?")) return;
-  delete COMPOSITES[n]; saveStoredData(); populateProductSelect($("productSelect").value); renderMaterialPage(); renderPricing(lastResults);
-}
-function resetMaterialDefaults(){
-  if(!confirm("¿Restaurar materiales y grupos base? Esto reemplaza tus cambios guardados.")) return;
-  Object.keys(PRICES).forEach(k=>delete PRICES[k]);
-  Object.assign(PRICES, JSON.parse(JSON.stringify(DEFAULT_PRICES)));
-  COMPOSITES = JSON.parse(JSON.stringify(DEFAULT_COMPOSITES));
-  saveStoredData();
-  populateProductSelect("Front Lit");
-  renderMaterialPage();
-  renderPricing(lastResults);
-}
-function compositeQty(base, factor, offset, c){
-  const K43=c?.piezas||0, K44=c?.perimetroM||0, K45=c?.areaRellenoM2||0, K46=c?.areaMarcoM2||0, K47=c?.areaSeleccionM2||0;
-  let v=0;
-  if(base==="K43") v=K43; else if(base==="K44") v=K44; else if(base==="K45") v=K45; else if(base==="K46") v=K46; else if(base==="K47") v=K47;
-  else if(base==="CUSTOM_CABLE") v=(Math.sqrt(K46)*2)+(K43*0.4)+2;
-  else if(base==="K44_PLUS_PIEZAS") v=K44+(K43*0.1);
-  else if(base==="FIXED") v=1;
-  return (v*(Number(factor)||0))+(Number(offset)||0);
-}
-
-loadStoredData();
-
-const UNITS = {
-  mm:0.001, cm:0.01, m:1, in:0.0254,
-  px:0.0254/96, pt:0.0254/72, pc:0.0254/6
-};
-
 const $ = id => document.getElementById(id);
-function setStatus(txt,pct=0){ $("status").innerHTML = txt; $("bar").style.width = Math.max(0,Math.min(100,pct))+"%"; }
-function fmtM(v){ return (Number(v)||0).toFixed(4)+" m"; }
-function fmtM2(v){ return (Number(v)||0).toFixed(4)+" m²"; }
-function fmtCm(v){ return ((Number(v)||0)*100).toFixed(2)+" cm"; }
-function money(v){ return "$" + (Number(v)||0).toFixed(2); }
-function qty(v){ return (Math.abs(v) >= 100 ? Number(v).toFixed(0) : Number(v).toFixed(4)).replace(/\.0000$/,""); }
+const canvas = $("canvas");
+const ctx = canvas.getContext("2d");
 
-/* =========================================================
-   MEDIDOR SIMPLE · PUNTO 1 / PUNTO 2 + COTA
-========================================================= */
-let measurePoints = [];
-let activeMeasurePoint = 1;
+const S = {
+  img:null,
+  imgName:"",
+  iw:0,
+  ih:0,
+  viewSize:420,
+  ox:0,
+  oy:0,
+  scale:1,
+  mode:"pan",
+  dragging:false,
+  dragCorner:-1,
+  last:null,
+  crop:null,
+  dragMode:null,
+  cmPerPx:null,
+  realW:0,
+  realH:0,
+  activePoint:1,
+  p1:null,
+  p2:null,
+  pinch:null,
+  areas:null,
+  pieces:[]
+};
 
-function setActiveMeasurePoint(n){
-  activeMeasurePoint = n === 2 ? 2 : 1;
-
-  const b1 = $("btnPoint1");
-  const b2 = $("btnPoint2");
-
-  if(b1) b1.classList.toggle("active", activeMeasurePoint === 1);
-  if(b2) b2.classList.toggle("active", activeMeasurePoint === 2);
+function toast(msg){
+  const t=$("toast");
+  t.textContent=msg;
+  t.classList.add("show");
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.classList.remove("show"),1800);
 }
 
-function previewPointToCm(clientX, clientY){
-  const m = getRenderedSvgMetrics();
-  if(!m) return null;
+function updateCanvasSize(){
+  const stage=$("viewerStage");
+  const r=stage.getBoundingClientRect();
+  const dpr=window.devicePixelRatio || 1;
+  canvas.width=Math.round(r.width*dpr);
+  canvas.height=Math.round(r.height*dpr);
+  canvas.style.width=r.width+"px";
+  canvas.style.height=r.height+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  S.viewSize=r.width;
+  draw();
+}
 
-  const clickX = clientX - m.rect.left;
-  const clickY = clientY - m.rect.top;
+window.addEventListener("resize",()=>setTimeout(updateCanvasSize,80));
 
-  /*
-    Se usa la escala real del SVG renderizado.
-    No se usa el cuadro completo para convertir a cm.
-    Si el clic cae un poco fuera del SVG visible, se permite marcar,
-    pero la coordenada se calcula con la misma escala del SVG.
-  */
-  const localX = clickX - m.offsetX;
-  const localY = clickY - m.offsetY;
-
-  return {
-    xPx: clickX,
-    yPx: clickY,
-    xCm: (localX / m.contentW) * m.widthCm,
-    yCm: (localY / m.contentH) * m.heightCm
+$("fileInput").addEventListener("change", e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const img=new Image();
+  img.onload=()=>{
+    S.img=img;
+    S.imgName=file.name;
+    S.iw=img.naturalWidth;
+    S.ih=img.naturalHeight;
+    $("viewerCard").classList.remove("hidden");
+    $("cropCard").classList.remove("hidden");
+    $("scaleCard").classList.remove("hidden");
+    $("measureCard").classList.remove("hidden");
+    $("areaCard").classList.remove("hidden");
+    updateCanvasSize();
+    resetCrop();
+    centerImage();
+    setMode("crop");
+    setStep(1);
+    toast("Imagen cargada");
   };
+  img.onerror=()=>toast("No se pudo abrir la imagen");
+  img.src=URL.createObjectURL(file);
+  e.target.value="";
+});
+
+function setStep(n){
+  $("step1").className="step"+(n===1?" active":n>1?" done":"");
+  $("step2").className="step"+(n===2?" active":n>2?" done":"");
+  $("step3").className="step"+(n===3?" active":n>3?" done":"");
+  $("step4").className="step"+(n===4?" active":"");
+}
+
+function setMode(m){
+  S.mode=m;
+  $("toolPan").classList.toggle("active",m==="pan");
+  $("toolCrop").classList.toggle("active",m==="crop");
+  $("toolMeasure").classList.toggle("active",m==="measure");
+  $("badge").textContent = m==="pan" ? "Mover / Zoom" : m==="crop" ? "Recortar" : "Medir con 2 puntos";
+  draw();
+}
+
+function centerImage(){
+  if(!S.img)return;
+  const fit=Math.min(S.viewSize/S.iw,S.viewSize/S.ih)*0.92;
+  S.scale=fit;
+  S.ox=(S.viewSize-S.iw*S.scale)/2;
+  S.oy=(S.viewSize-S.ih*S.scale)/2;
+  draw();
+}
+
+function resetAll(){
+  S.img=null;
+  S.crop=null;
+  S.dragMode=null;
+  S.lastCropImg=null;
+  S.cmPerPx=null;
+  S.p1=null;
+  S.p2=null;
+  S.areas=null;
+  S.pieces=[];
+  $("viewerCard").classList.add("hidden");
+  $("cropCard").classList.add("hidden");
+  $("scaleCard").classList.add("hidden");
+  $("measureCard").classList.add("hidden");
+  $("areaCard").classList.add("hidden");
+  $("realSize").textContent="—";
+  $("measureResult").textContent="—";
+  $("fileInput").value="";
+  renderAreas();
+  setStep(1);
+}
+
+function imgToScreen(p){
+  return {x:p.x*S.scale+S.ox,y:p.y*S.scale+S.oy};
+}
+function screenToImg(x,y){
+  return {x:(x-S.ox)/S.scale,y:(y-S.oy)/S.scale};
+}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+
+function resetCrop(){
+  if(!S.img)return;
+  const pad=Math.min(S.iw,S.ih)*0.08;
+  S.crop={x:pad,y:pad,w:S.iw-(pad*2),h:S.ih-(pad*2)};
+  updateCropInfo();
+  draw();
+}
+
+function cropBox(){
+  if(!S.crop)return null;
+  return {x:S.crop.x,y:S.crop.y,w:S.crop.w,h:S.crop.h};
+}
+
+function updateCropInfo(){
+  const b=cropBox();
+  if(!b)return;
+  $("cropX").textContent=Math.round(b.x);
+  $("cropY").textContent=Math.round(b.y);
+  $("cropW").textContent=Math.round(b.w);
+  $("cropH").textContent=Math.round(b.h);
+}
+
+function applyCrop(){
+  if(!S.img || !S.crop)return;
+  const b=cropBox();
+  if(b.w<5 || b.h<5){toast("Recorte muy pequeño");return;}
+  const c=document.createElement("canvas");
+  c.width=Math.round(b.w);
+  c.height=Math.round(b.h);
+  c.getContext("2d").drawImage(S.img,b.x,b.y,b.w,b.h,0,0,c.width,c.height);
+  const img=new Image();
+  img.onload=()=>{
+    S.img=img;
+    S.iw=img.naturalWidth;
+    S.ih=img.naturalHeight;
+    S.crop=null;
+    S.p1=null;
+    S.p2=null;
+    S.cmPerPx=null;
+    S.areas=null;
+    S.pieces=[];
+    resetCrop();
+    centerImage();
+    setStep(2);
+    setMode("pan");
+    $("realSize").textContent="—";
+    $("measureResult").textContent="—";
+    renderAreas();
+    toast("Recorte aplicado");
+  };
+  img.src=c.toDataURL("image/png");
+}
+
+function fitCropToView(){
+  const b=cropBox();
+  if(!b)return;
+  const fit=Math.min(S.viewSize/b.w,S.viewSize/b.h)*0.82;
+  S.scale=fit;
+  S.ox=(S.viewSize-b.w*S.scale)/2-b.x*S.scale;
+  S.oy=(S.viewSize-b.h*S.scale)/2-b.y*S.scale;
+  draw();
+}
+
+function calcScaleLive(){
+  if(!S.img)return;
+  const val=Number($("scaleValue").value||0);
+  if(!val || val<=0){$("realSize").textContent="—";return;}
+  const mode=$("scaleMode").value;
+  S.cmPerPx = mode==="width" ? val/S.iw : val/S.ih;
+  S.realW=S.iw*S.cmPerPx;
+  S.realH=S.ih*S.cmPerPx;
+  $("realSize").textContent=S.realW.toFixed(2)+" × "+S.realH.toFixed(2)+" cm";
+  updateMeasureResult();
+  analyzeAreas(false);
+}
+
+function syncScaleInputs(){
+  if(S.cmPerPx){
+    if($("scaleMode").value==="width") $("scaleValue").value=S.realW.toFixed(2);
+    else $("scaleValue").value=S.realH.toFixed(2);
+  }
+  calcScaleLive();
+}
+
+function useWidthPreset(){
+  $("scaleMode").value="width";
+  if(S.realW) $("scaleValue").value=S.realW.toFixed(2);
+  calcScaleLive();
+}
+
+function confirmScale(){
+  calcScaleLive();
+  if(!S.cmPerPx){toast("Coloca una medida válida");return;}
+  setStep(3);
+  setMode("measure");
+  analyzeAreas();
+  toast("Escala confirmada");
+}
+
+function setActivePoint(n){
+  S.activePoint=n===2?2:1;
+  $("btnP1").classList.toggle("active",S.activePoint===1);
+  $("btnP1").classList.toggle("gray",S.activePoint!==1);
+  $("btnP2").classList.toggle("active",S.activePoint===2);
+  $("btnP2").classList.toggle("gray",S.activePoint!==2);
 }
 
 function clearMeasure(){
-  measurePoints = [];
-  setActiveMeasurePoint(1);
-  drawMeasure();
+  S.p1=null; S.p2=null;
+  updateMeasureResult();
+  draw();
 }
 
-function drawMeasure(){
-  const layer = $("measureLayer");
-  const result = $("measureResult");
+function placeMeasurePoint(imgPoint){
+  const p={x:clamp(imgPoint.x,0,S.iw),y:clamp(imgPoint.y,0,S.ih)};
+  if(S.activePoint===1){S.p1=p;setActivePoint(2);}
+  else{S.p2=p;setActivePoint(1);}
+  updateMeasureResult();
+  draw();
+}
 
-  if(!layer) return;
+function updateMeasureResult(){
+  $("p1x").textContent=S.p1?Math.round(S.p1.x):"—";
+  $("p1y").textContent=S.p1?Math.round(S.p1.y):"—";
+  $("p2x").textContent=S.p2?Math.round(S.p2.x):"—";
+  $("p2y").textContent=S.p2?Math.round(S.p2.y):"—";
 
-  layer.innerHTML = "";
-
-  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-
-  const markerStart = document.createElementNS("http://www.w3.org/2000/svg", "marker");
-  markerStart.setAttribute("id", "arrowStart");
-  markerStart.setAttribute("markerWidth", "6");
-  markerStart.setAttribute("markerHeight", "6");
-  markerStart.setAttribute("refX", "1.4");
-  markerStart.setAttribute("refY", "3");
-  markerStart.setAttribute("orient", "auto");
-  markerStart.setAttribute("markerUnits", "strokeWidth");
-  markerStart.innerHTML = '<path d="M6,0 L0,3 L6,6 Z" fill="#153bff"></path>';
-
-  const markerEnd = document.createElementNS("http://www.w3.org/2000/svg", "marker");
-  markerEnd.setAttribute("id", "arrowEnd");
-  markerEnd.setAttribute("markerWidth", "6");
-  markerEnd.setAttribute("markerHeight", "6");
-  markerEnd.setAttribute("refX", "4.6");
-  markerEnd.setAttribute("refY", "3");
-  markerEnd.setAttribute("orient", "auto");
-  markerEnd.setAttribute("markerUnits", "strokeWidth");
-  markerEnd.innerHTML = '<path d="M0,0 L6,3 L0,6 Z" fill="#153bff"></path>';
-
-  defs.appendChild(markerStart);
-  defs.appendChild(markerEnd);
-  layer.appendChild(defs);
-
-  measurePoints.forEach((p, i)=>{
-    if(!p) return;
-
-    const color = i === 0 ? "#ff8616" : "#153bff";
-
-    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    c.setAttribute("cx", p.xPx);
-    c.setAttribute("cy", p.yPx);
-    c.setAttribute("r", "2.2");
-    c.setAttribute("fill", color);
-    c.setAttribute("stroke", "#ffffff");
-    c.setAttribute("stroke-width", "1.2");
-    layer.appendChild(c);
-
-    const tag = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    tag.setAttribute("x", p.xPx + 9);
-    tag.setAttribute("y", p.yPx - 25);
-    tag.setAttribute("rx", "7");
-    tag.setAttribute("width", "34");
-    tag.setAttribute("height", "23");
-    tag.setAttribute("fill", color);
-    layer.appendChild(tag);
-
-    const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    txt.setAttribute("x", p.xPx + 26);
-    txt.setAttribute("y", p.yPx - 10);
-    txt.setAttribute("fill", "#ffffff");
-    txt.setAttribute("font-size", "13");
-    txt.setAttribute("font-weight", "900");
-    txt.setAttribute("text-anchor", "middle");
-    txt.textContent = `P${i + 1}`;
-    layer.appendChild(txt);
-  });
-
-  if(measurePoints[0] && measurePoints[1]){
-    const p1 = measurePoints[0];
-    const p2 = measurePoints[1];
-
-    const dxPx = p2.xPx - p1.xPx;
-    const dyPx = p2.yPx - p1.yPx;
-    const lenPx = Math.sqrt(dxPx * dxPx + dyPx * dyPx) || 1;
-
-    const nx = -dyPx / lenPx;
-    const ny = dxPx / lenPx;
-    const offset = 20;
-
-    const a1x = p1.xPx + nx * offset;
-    const a1y = p1.yPx + ny * offset;
-    const a2x = p2.xPx + nx * offset;
-    const a2y = p2.yPx + ny * offset;
-
-    [["x1", p1.xPx], ["y1", p1.yPx], ["x2", a1x], ["y2", a1y]];
-
-    const ext1 = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    ext1.setAttribute("x1", p1.xPx);
-    ext1.setAttribute("y1", p1.yPx);
-    ext1.setAttribute("x2", a1x);
-    ext1.setAttribute("y2", a1y);
-    ext1.setAttribute("stroke", "#153bff");
-    ext1.setAttribute("stroke-width", "0.75");
-    ext1.setAttribute("stroke-dasharray", "5 4");
-    layer.appendChild(ext1);
-
-    const ext2 = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    ext2.setAttribute("x1", p2.xPx);
-    ext2.setAttribute("y1", p2.yPx);
-    ext2.setAttribute("x2", a2x);
-    ext2.setAttribute("y2", a2y);
-    ext2.setAttribute("stroke", "#153bff");
-    ext2.setAttribute("stroke-width", "0.75");
-    ext2.setAttribute("stroke-dasharray", "5 4");
-    layer.appendChild(ext2);
-
-    const dimLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    dimLine.setAttribute("x1", a1x);
-    dimLine.setAttribute("y1", a1y);
-    dimLine.setAttribute("x2", a2x);
-    dimLine.setAttribute("y2", a2y);
-    dimLine.setAttribute("stroke", "#153bff");
-    dimLine.setAttribute("stroke-width", "1.15");
-    dimLine.setAttribute("stroke-linecap", "round");
-    dimLine.setAttribute("marker-start", "url(#arrowStart)");
-    dimLine.setAttribute("marker-end", "url(#arrowEnd)");
-    layer.appendChild(dimLine);
-
-    const dxCm = p2.xCm - p1.xCm;
-    const dyCm = p2.yCm - p1.yCm;
-    const dist = Math.sqrt(dxCm * dxCm + dyCm * dyCm);
-
-    const midX = (a1x + a2x) / 2;
-    const midY = (a1y + a2y) / 2;
-
-    const labelBg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    labelBg.setAttribute("x", midX - 54);
-    labelBg.setAttribute("y", midY - 36);
-    labelBg.setAttribute("rx", "9");
-    labelBg.setAttribute("width", "108");
-    labelBg.setAttribute("height", "30");
-    labelBg.setAttribute("fill", "#153bff");
-    labelBg.setAttribute("stroke", "#ffffff");
-    labelBg.setAttribute("stroke-width", "2");
-    layer.appendChild(labelBg);
-
-    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    label.setAttribute("x", midX);
-    label.setAttribute("y", midY - 16);
-    label.setAttribute("fill", "#ffffff");
-    label.setAttribute("font-size", "13");
-    label.setAttribute("font-weight", "900");
-    label.setAttribute("text-anchor", "middle");
-    label.textContent = `${dist.toFixed(2)} cm`;
-    layer.appendChild(label);
-
-    if(result) result.textContent = `Distancia: ${dist.toFixed(2)} cm`;
+  if(S.p1 && S.p2){
+    const dx=S.p2.x-S.p1.x, dy=S.p2.y-S.p1.y;
+    const px=Math.hypot(dx,dy);
+    $("measureResult").textContent=S.cmPerPx ? (px*S.cmPerPx).toFixed(2)+" cm" : px.toFixed(1)+" px";
   }else{
-    const count = measurePoints.filter(Boolean).length;
-    if(result) result.textContent = count === 1 ? "Distancia: falta punto 2" : "Distancia: —";
+    $("measureResult").textContent="—";
   }
 }
 
-function setupMeasureTool(){
-  const preview = $("preview");
-  if(!preview || preview.dataset.measureReady === "1") return;
-
-  preview.dataset.measureReady = "1";
-
-  preview.addEventListener("click", function(e){
-    if(!originalRealWm || !originalRealHm){
-      alert("Primero carga y calcula un SVG para activar la medición.");
-      return;
-    }
-
-    const p = previewPointToCm(e.clientX, e.clientY);
-    if(!p) return;
-
-    measurePoints[activeMeasurePoint - 1] = p;
-    drawMeasure();
-  });
+async function copyMeasure(){
+  const txt=$("measureResult").textContent;
+  if(txt==="—"){toast("No hay medida");return;}
+  try{await navigator.clipboard.writeText(txt);toast("Medida copiada");}
+  catch(e){toast(txt);}
 }
 
-
-$("fileInput").addEventListener("change", async e=>{
-  const file = e.target.files[0]; 
-  if(!file) return;
-
-  currentFileName = file.name;
-  svgText = await file.text();
-  cargarSVGEnPreview(svgText);
-
-  try{
-    const info = detectRealSize(svgDoc);
-    originalRealWm = info.realWm;
-    originalRealHm = info.realHm;
-
-    actualizarCampoMedidaDesdeModo();
-
-    $("kAncho").innerText = fmtCm(originalRealWm);
-    $("kAlto").innerText = fmtCm(originalRealHm);
-    $("kEscala").innerText = `${(originalRealWm / info.vb.width * 100).toFixed(4)} cm/u`;
-    setTimeout(()=>updatePreviewGrid(originalRealWm, originalRealHm), 80);
-
-    setStatus("SVG cargado. Medida original detectada.",0);
-    $("method").innerHTML = `<span class="ok">SVG cargado:</span> ${info.method}`;
-  }catch(err){
-    originalRealWm = 0;
-    originalRealHm = 0;
-    setStatus("SVG cargado. Coloca una medida en cm y presiona Calcular.",0);
-    $("method").innerHTML = `<span class="warn">No se detectó medida real:</span> coloca ancho o alto manual en cm.`;
-  }
-});
-
-window.addEventListener("load", function(){
-  const scaleMode = $("scaleMode");
-  if(scaleMode){
-    scaleMode.addEventListener("change", actualizarCampoMedidaDesdeModo);
-  }
-});
-
-window.addEventListener("resize", function(){
-  if(originalRealWm && originalRealHm){
-    updatePreviewGrid(originalRealWm, originalRealHm);
-    drawMeasure();
-  }
-});
-
-
-
-
-function getRenderedSvgMetrics(){
-  const preview = $("preview");
-  const svg = svgDoc;
-
-  if(!preview || !svg || !originalRealWm || !originalRealHm) return null;
-
-  const rect = preview.getBoundingClientRect();
-  const vb = getViewBox(svg);
-
-  if(!vb || !vb.width || !vb.height) return null;
-
-  /*
-    IMPORTANTE:
-    La escala de la cota se calcula en función al SVG cargado,
-    NO al cuadro blanco completo.
-
-    El SVG se muestra con preserveAspectRatio="xMidYMid meet".
-    Por eso se calcula el tamaño real renderizado del SVG dentro del preview
-    y los márgenes sobrantes se descuentan.
-  */
-  const svgScale = Math.min(rect.width / vb.width, rect.height / vb.height);
-
-  const svgRenderedW = vb.width * svgScale;
-  const svgRenderedH = vb.height * svgScale;
-
-  const svgLeft = (rect.width - svgRenderedW) / 2;
-  const svgTop = (rect.height - svgRenderedH) / 2;
-
-  return {
-    rect,
-    vb,
-    svgScale,
-    contentW: svgRenderedW,
-    contentH: svgRenderedH,
-    offsetX: svgLeft,
-    offsetY: svgTop,
-    widthCm: originalRealWm * 100,
-    heightCm: originalRealHm * 100
-  };
+/* ÁREAS */
+function getSourceCanvas(){
+  const c=document.createElement("canvas");
+  c.width=S.iw;
+  c.height=S.ih;
+  const cx=c.getContext("2d",{willReadFrequently:true});
+  cx.drawImage(S.img,0,0,S.iw,S.ih);
+  return {c,cx};
 }
 
-function updatePreviewGrid(realWm, realHm){
-  const overlay = $("gridOverlay");
-  if(!overlay || !realWm || !realHm) return;
+function isUsefulPixel(r,g,b,a){
+  const mode=$("bgMode")?.value || "white";
+  const tol=Number($("tolerance")?.value || 245);
 
-  const m = getRenderedSvgMetrics();
-  if(!m || m.widthCm <= 0 || m.heightCm <= 0) return;
-
-  const pxPorCm = m.contentW / m.widthCm;
-
-  overlay.style.setProperty("--grid-5cm", `${pxPorCm * 5}px`);
-  overlay.style.setProperty("--grid-10cm", `${pxPorCm * 10}px`);
-
-  // El grid arranca donde realmente comienza el SVG dentro del preview.
-  overlay.style.setProperty("--grid-left", `${m.offsetX}px`);
-  overlay.style.setProperty("--grid-top", `${m.offsetY}px`);
-}
-
-function cargarSVGEnPreview(text){
-  const holder = $("svgHolder");
-  if(!holder) return;
-
-  holder.innerHTML = text;
-  svgDoc = holder.querySelector("svg");
-
-  if(svgDoc){
-    svgDoc.setAttribute("preserveAspectRatio", svgDoc.getAttribute("preserveAspectRatio") || "xMidYMid meet");
-    svgDoc.style.width = "100%";
-    svgDoc.style.height = "100%";
-    svgDoc.style.maxWidth = "100%";
-    svgDoc.style.maxHeight = "100%";
-    svgDoc.style.display = "block";
-    svgDoc.style.margin = "auto";
+  if(mode==="transparent"){
+    return a>=20;
   }
 
-  clearMeasure();
-}
+  if(a<20) return false;
 
-function parseLength(raw){
-  if(!raw) return null;
-  raw = String(raw).trim();
-  if(raw.endsWith("%")) return null;
-  const m = raw.match(/^([-+]?\d*\.?\d+(?:e[-+]?\d+)?)\s*([a-zA-Z]*)$/);
-  if(!m) return null;
-  const value = Number(m[1]);
-  const unit = (m[2] || "px").toLowerCase();
-  if(!isFinite(value) || !UNITS[unit]) return null;
-  return {value,unit,meters:value*UNITS[unit]};
-}
-
-function getViewBox(svg){
-  const vb = svg.getAttribute("viewBox");
-  if(vb){
-    const p = vb.trim().split(/[\s,]+/).map(Number);
-    if(p.length===4 && p.every(isFinite) && p[2]>0 && p[3]>0){ return {x:p[0],y:p[1],width:p[2],height:p[3]}; }
-  }
-  try{
-    const b = svg.getBBox();
-    if(b.width>0 && b.height>0) return {x:b.x,y:b.y,width:b.width,height:b.height};
-  }catch(e){}
-  return null;
-}
-
-function detectRealSize(svg){
-  const vb = getViewBox(svg);
-  if(!vb) throw new Error("El SVG no tiene viewBox ni bounding box válido.");
-  const wLen = parseLength(svg.getAttribute("width"));
-  const hLen = parseLength(svg.getAttribute("height"));
-  let realWm, realHm, method;
-
-  if(wLen && hLen && wLen.meters>0 && hLen.meters>0){
-    realWm = wLen.meters;
-    realHm = hLen.meters;
-    method = `Medidas leídas del SVG: width=${svg.getAttribute("width")}, height=${svg.getAttribute("height")}`;
-  }else if(wLen && wLen.meters>0){
-    realWm = wLen.meters;
-    realHm = realWm * (vb.height / vb.width);
-    method = `Ancho leído del SVG y alto calculado por proporción: width=${svg.getAttribute("width")}`;
-  }else if(hLen && hLen.meters>0){
-    realHm = hLen.meters;
-    realWm = realHm * (vb.width / vb.height);
-    method = `Alto leído del SVG y ancho calculado por proporción: height=${svg.getAttribute("height")}`;
-  }else{
-    const medidaCm = Number($("fallbackWidth").value || 0);
-    const modo = $("scaleMode") ? $("scaleMode").value : "width";
-    if(!medidaCm || medidaCm<=0) throw new Error("El SVG no trae medidas reales. Coloca una medida en cm o presiona Escalar SVG.");
-
-    if(modo === "height"){
-      realHm = medidaCm * 0.01;
-      realWm = realHm * (vb.width / vb.height);
-      method = `El SVG no traía medidas reales. Se usó alto manual: ${medidaCm} cm`;
-    }else{
-      realWm = medidaCm * 0.01;
-      realHm = realWm * (vb.height / vb.width);
-      method = `El SVG no traía medidas reales. Se usó ancho manual: ${medidaCm} cm`;
-    }
-  }
-  return {vb,realWm,realHm,method,scaleX:realWm/vb.width,scaleY:realHm/vb.height};
-}
-
-function actualizarCampoMedidaDesdeModo(){
-  if(!$("fallbackWidth")) return;
-
-  const modo = $("scaleMode") ? $("scaleMode").value : "width";
-
-  if(modo === "height" && originalRealHm > 0){
-    $("fallbackWidth").value = (originalRealHm * 100).toFixed(2);
-  }else if(originalRealWm > 0){
-    $("fallbackWidth").value = (originalRealWm * 100).toFixed(2);
-  }
-}
-
-function escalarSVGSegunCampo(){
-  if(!svgText || !svgDoc){
-    alert("Primero sube un SVG.");
-    return false;
+  if(mode==="white"){
+    return !(r>=tol && g>=tol && b>=tol);
   }
 
-  const medidaCm = Number($("fallbackWidth").value || 0);
-  const modo = $("scaleMode") ? $("scaleMode").value : "width";
-
-  if(!medidaCm || medidaCm <= 0){
-    alert("Coloca una medida válida en cm.");
-    return false;
+  if(mode==="black"){
+    const t=Math.max(0,255-tol);
+    return !(r<=t && g<=t && b<=t);
   }
-
-  const vb = getViewBox(svgDoc);
-
-  if(!vb || !vb.width || !vb.height){
-    alert("No se pudo leer el viewBox del SVG.");
-    return false;
-  }
-
-  let anchoCm = 0;
-  let altoCm = 0;
-
-  if(modo === "height"){
-    altoCm = medidaCm;
-    anchoCm = altoCm * (vb.width / vb.height);
-  }else{
-    anchoCm = medidaCm;
-    altoCm = anchoCm * (vb.height / vb.width);
-  }
-
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svgText, "image/svg+xml");
-  const svg = doc.querySelector("svg");
-
-  if(!svg){
-    alert("No se encontró etiqueta SVG.");
-    return false;
-  }
-
-  svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.width} ${vb.height}`);
-  svg.setAttribute("width", `${anchoCm.toFixed(4)}cm`);
-  svg.setAttribute("height", `${altoCm.toFixed(4)}cm`);
-  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-
-  const serializer = new XMLSerializer();
-  svgText = serializer.serializeToString(svg);
-
-  cargarSVGEnPreview(svgText);
-
-  originalRealWm = anchoCm * 0.01;
-  originalRealHm = altoCm * 0.01;
-
-  $("kAncho").innerText = fmtCm(originalRealWm);
-  $("kAlto").innerText = fmtCm(originalRealHm);
-  $("kEscala").innerText = `${(originalRealWm / vb.width * 100).toFixed(4)} cm/u`;
-  setTimeout(()=>updatePreviewGrid(originalRealWm, originalRealHm), 80);
-
-  const textoModo = modo === "height" ? "alto" : "ancho";
-  setStatus(`Medida aplicada por ${textoModo}: ${anchoCm.toFixed(2)} cm × ${altoCm.toFixed(2)} cm.`,15);
 
   return true;
 }
 
-async function calcularSVG(){
-  const ok = escalarSVGSegunCampo();
-  if(!ok) return;
-  await analizarSVG();
-}
-
-function formatSVGLength(value, unit){
-  value = Number(value) || 0;
-  if(unit === "m") return (value * 100).toFixed(4) + "cm";
-  return value.toFixed(4) + unit;
-}
-
-function descargarSVGActual(){
-  if(!svgText){ alert("Primero sube o escala un SVG."); return; }
-  const blob = new Blob([svgText], {type:"image/svg+xml"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  const base = (currentFileName || "svg_escalado").replace(/\.[^.]+$/, "");
-  a.href = url;
-  a.download = base + "_escalado.svg";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-async function analizarSVG(){
-  try{
-    if(!svgText || !svgDoc){ alert("Sube un SVG primero."); return; }
-    setStatus("Leyendo medidas reales del SVG...",8);
-    const info = detectRealSize(svgDoc);
-    setStatus("Calculando perímetro vectorial aproximado...",18);
-    const vectorPerM = getVectorLengthMeters(svgDoc, info.scaleX, info.scaleY);
-    setStatus("Rasterizando SVG para área real y huecos...",35);
-    const maskData = await rasterMask(svgText, info.realWm, info.realHm);
-    setStatus("Calculando área real de relleno...",55);
-    const pixelAreaM2 = (info.realWm / maskData.w) * (info.realHm / maskData.h);
-    const areaRellenoM2 = maskData.fgCount * pixelAreaM2;
-    setStatus("Calculando perímetro por máscara...",65);
-    const perimeterMaskM = perimeterFromMask(maskData.mask, maskData.w, maskData.h, info.realWm/maskData.w, info.realHm/maskData.h);
-    setStatus("Detectando piezas conectadas...",78);
-    const components = connectedComponents(maskData.mask, maskData.w, maskData.h);
-    setStatus("Calculando área de marco optimizada por pieza...",90);
-    const detail = calcMarcoComponents(components, maskData.w, maskData.h, info.realWm/maskData.w, info.realHm/maskData.h);
-    const areaMarcoM2 = detail.reduce((s,d)=>s+d.marcoM2,0);
-    const areaSelM2 = info.realWm * info.realHm;
-    renderResults(info, components.length, vectorPerM || perimeterMaskM, perimeterMaskM, areaRellenoM2, areaMarcoM2, areaSelM2, detail, maskData);
-    setStatus("Análisis completado.",100);
-  }catch(err){
-    console.error(err);
-    setStatus(`<span class="bad">Error: ${err.message}</span>`,0);
-    alert(err.message);
-  }
-}
-
-function getVectorLengthMeters(svg, sx, sy){
-  let total = 0;
-  const els = svg.querySelectorAll("path,rect,circle,ellipse,polygon,polyline,line");
-  els.forEach(el=>{
-    try{
-      let len = 0;
-      if(el.getTotalLength) len = el.getTotalLength();
-      if(!len) len = basicLength(el);
-      const s = (Math.abs(sx-sy)<1e-12) ? sx : ((sx+sy)/2);
-      total += len * s;
-    }catch(e){}
-  });
-  return total;
-}
-
-function basicLength(el){
-  const tag = el.tagName.toLowerCase();
-  if(tag==="rect"){
-    const w=+el.getAttribute("width")||0,h=+el.getAttribute("height")||0;return 2*(w+h);
-  }
-  if(tag==="circle"){
-    const r=+el.getAttribute("r")||0;return 2*Math.PI*r;
-  }
-  if(tag==="ellipse"){
-    const rx=+el.getAttribute("rx")||0,ry=+el.getAttribute("ry")||0;
-    return Math.PI*(3*(rx+ry)-Math.sqrt((3*rx+ry)*(rx+3*ry)));
-  }
-  if(tag==="line"){
-    const x1=+el.getAttribute("x1")||0,y1=+el.getAttribute("y1")||0,x2=+el.getAttribute("x2")||0,y2=+el.getAttribute("y2")||0;return Math.hypot(x2-x1,y2-y1);
-  }
+function estimateAngle(piece){
+  const w=piece.maxX-piece.minX+1;
+  const h=piece.maxY-piece.minY+1;
+  if(w<2 || h<2)return 0;
+  const ratio=Math.min(w,h)/Math.max(w,h);
+  if(ratio>.72)return 45;
   return 0;
 }
 
-async function rasterMask(text, realWm, realHm){
-  const maxPx = 5000;
-  const ratio = realHm / realWm;
-  let w,h;
-  if(ratio>=1){ h=maxPx; w=Math.max(20,Math.round(maxPx/ratio)); }
-  else{ w=maxPx; h=Math.max(20,Math.round(maxPx*ratio)); }
-  const svgBlob = new Blob([text],{type:"image/svg+xml"});
-  const url = URL.createObjectURL(svgBlob);
-  const img = new Image();
-  img.decoding = "async";
-  img.src = url;
-  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error("No se pudo cargar el SVG como imagen."));});
-  const canvas = document.createElement("canvas");
-  canvas.width=w; canvas.height=h;
-  const ctx = canvas.getContext("2d", {willReadFrequently:true});
-  ctx.clearRect(0,0,w,h);
-  ctx.drawImage(img,0,0,w,h);
-  URL.revokeObjectURL(url);
-  const data = ctx.getImageData(0,0,w,h).data;
-  const mask = new Uint8Array(w*h);
-  let fgCount = 0;
-  const ignoreWhite = $("ignoreWhite").checked;
-  for(let i=0,p=0;i<data.length;i+=4,p++){
-    const r=data[i],g=data[i+1],b=data[i+2],a=data[i+3];
-    let fg = a>18;
-    if(fg && ignoreWhite && r>242 && g>242 && b>242) fg=false;
-    if(fg){ mask[p]=1; fgCount++; }
+function analyzeAreas(showToast=true){
+  if(!S.img){return;}
+  if(!S.cmPerPx){
+    renderAreas();
+    if(showToast)toast("Primero confirma la escala");
+    return;
   }
-  return {mask,w,h,fgCount};
-}
 
-function perimeterFromMask(mask,w,h,sx,sy){
-  let p=0;
-  for(let y=0;y<h;y++){
-    const row=y*w;
-    for(let x=0;x<w;x++){
-      const idx=row+x;
-      if(!mask[idx]) continue;
-      if(x===0 || !mask[idx-1]) p += sy;
-      if(x===w-1 || !mask[idx+1]) p += sy;
-      if(y===0 || !mask[idx-w]) p += sx;
-      if(y===h-1 || !mask[idx+w]) p += sx;
+  const {cx}=getSourceCanvas();
+  const data=cx.getImageData(0,0,S.iw,S.ih).data;
+  const total=S.iw*S.ih;
+  const mask=new Uint8Array(total);
+  let useful=0;
+
+  for(let y=0;y<S.ih;y++){
+    for(let x=0;x<S.iw;x++){
+      const i=(y*S.iw+x)*4;
+      if(isUsefulPixel(data[i],data[i+1],data[i+2],data[i+3])){
+        mask[y*S.iw+x]=1;
+        useful++;
+      }
     }
   }
-  return p;
-}
 
-function connectedComponents(mask,w,h){
-  const seen = new Uint8Array(w*h);
-  const comps = [];
-  const qx = new Int32Array(w*h>2500000?2500000:w*h);
-  const qy = new Int32Array(w*h>2500000?2500000:w*h);
-  const minPixels = Math.max(8, Math.round((w*h)*0.000005));
-  for(let y=0;y<h;y++){
-    for(let x=0;x<w;x++){
-      const start=y*w+x;
-      if(!mask[start] || seen[start]) continue;
-      let head=0,tail=0,count=0,minX=x,maxX=x,minY=y,maxY=y;
-      const pts=[];
-      qx[tail]=x;qy[tail]=y;tail++;seen[start]=1;
-      while(head<tail){
-        const cx=qx[head], cy=qy[head]; head++; count++;
-        if(cx<minX)minX=cx;if(cx>maxX)maxX=cx;if(cy<minY)minY=cy;if(cy>maxY)maxY=cy;
-        if(pts.length<12000 && (count%3===0)) pts.push(cx,cy);
-        const nbs=[[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]];
-        for(const nb of nbs){
-          const nx=nb[0], ny=nb[1];
-          if(nx<0||ny<0||nx>=w||ny>=h) continue;
-          const ni=ny*w+nx;
-          if(mask[ni] && !seen[ni]){
-            seen[ni]=1;
-            if(tail<qx.length){qx[tail]=nx;qy[tail]=ny;tail++;}
+  const visited=new Uint8Array(total);
+  const pieces=[];
+  const minPiece=Number($("minPiecePx")?.value || 120);
+  let totalPerimeterPx=0;
+
+  for(let y0=0;y0<S.ih;y0++){
+    for(let x0=0;x0<S.iw;x0++){
+      const start=y0*S.iw+x0;
+      if(!mask[start] || visited[start])continue;
+
+      const q=[start];
+      visited[start]=1;
+      let head=0;
+      let pixels=0;
+      let minX=x0,maxX=x0,minY=y0,maxY=y0;
+      let perimeterPx=0;
+
+      while(head<q.length){
+        const idx=q[head++];
+        const x=idx%S.iw;
+        const y=Math.floor(idx/S.iw);
+        pixels++;
+        if(x<minX)minX=x;if(x>maxX)maxX=x;
+        if(y<minY)minY=y;if(y>maxY)maxY=y;
+
+        const ns=[
+          [x-1,y,idx-1],
+          [x+1,y,idx+1],
+          [x,y-1,idx-S.iw],
+          [x,y+1,idx+S.iw]
+        ];
+
+        for(const [nx,ny,nidx] of ns){
+          if(nx<0 || nx>=S.iw || ny<0 || ny>=S.ih){
+            perimeterPx++;
+          }else if(!mask[nidx]){
+            perimeterPx++;
+          }else if(!visited[nidx]){
+            visited[nidx]=1;
+            q.push(nidx);
           }
         }
       }
-      if(count>=minPixels) comps.push({count,minX,maxX,minY,maxY,pts});
+
+      if(pixels>=minPiece){
+        const piece={pixels,minX,maxX,minY,maxY,perimeterPx};
+        piece.angle=estimateAngle(piece);
+        pieces.push(piece);
+        totalPerimeterPx+=perimeterPx;
+      }
     }
   }
-  comps.sort((a,b)=>b.count-a.count);
-  return comps;
-}
 
-function calcMarcoComponents(comps,w,h,sx,sy){
-  return comps.map((c,idx)=>{
-    let minArea = Infinity, bestW=0, bestH=0, bestAng=0;
-    const pts = c.pts.length ? c.pts : [c.minX,c.minY,c.maxX,c.maxY];
-    for(let ang=0;ang<90;ang+=2){
-      const res = rotatedBBox(pts, ang, sx, sy);
-      if(res.area<minArea){minArea=res.area;bestW=res.width;bestH=res.height;bestAng=ang;}
-    }
-    for(let ang=Math.max(0,bestAng-2);ang<=Math.min(89,bestAng+2);ang+=0.5){
-      const res = rotatedBBox(pts, ang, sx, sy);
-      if(res.area<minArea){minArea=res.area;bestW=res.width;bestH=res.height;bestAng=ang;}
-    }
-    return {
-      n:idx+1,
-      pixels:c.count,
-      anchoM:(c.maxX-c.minX+1)*sx,
-      altoM:(c.maxY-c.minY+1)*sy,
-      marcoM2:minArea,
-      marcoW:bestW,
-      marcoH:bestH,
-      ang:bestAng
-    };
+  pieces.sort((a,b)=>b.pixels-a.pixels);
+
+  const cmPerPx=S.cmPerPx;
+  const cm2PerPx=cmPerPx*cmPerPx;
+  const thicknessCm=Number($("frameThickness")?.value || 0);
+
+  const areaSelectionCm2=S.iw*S.ih*cm2PerPx;
+  const areaFillCm2=useful*cm2PerPx;
+  const perimeterCm=totalPerimeterPx*cmPerPx;
+  const areaFrameOptCm2=perimeterCm*thicknessCm;
+  const totalWithFrameCm2=areaFillCm2+areaFrameOptCm2;
+  const emptyBoxCm2=Math.max(0,areaSelectionCm2-areaFillCm2);
+
+  S.pieces=pieces.map(p=>{
+    const wCm=(p.maxX-p.minX+1)*cmPerPx;
+    const hCm=(p.maxY-p.minY+1)*cmPerPx;
+    const fillCm2=p.pixels*cm2PerPx;
+    const perimeterCm=p.perimeterPx*cmPerPx;
+    const frameOptCm2=perimeterCm*thicknessCm;
+    return {...p,wCm,hCm,fillCm2,perimeterCm,frameOptCm2};
   });
-}
 
-function rotatedBBox(pts,angDeg,sx,sy){
-  const a=angDeg*Math.PI/180, ca=Math.cos(a), sa=Math.sin(a);
-  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
-  for(let i=0;i<pts.length;i+=2){
-    const x=pts[i]*sx, y=pts[i+1]*sy;
-    const rx=x*ca-y*sa, ry=x*sa+y*ca;
-    if(rx<minX)minX=rx;if(rx>maxX)maxX=rx;if(ry<minY)minY=ry;if(ry>maxY)maxY=ry;
-  }
-  const width=maxX-minX, height=maxY-minY;
-  return {width,height,area:Math.abs(width*height)};
-}
-
-function renderResults(info, piezas, vectorPerM, maskPerM, areaRellenoM2, areaMarcoM2, areaSelM2, detail, maskData){
-  $("kAncho").innerText = fmtCm(info.realWm);
-  $("kAlto").innerText = fmtCm(info.realHm);
-  $("kPiezas").innerText = piezas;
-  $("kPerimetro").innerText = fmtM(vectorPerM);
-  $("kAreaRelleno").innerText = fmtM2(areaRellenoM2);
-  $("kAreaMarco").innerText = fmtM2(areaMarcoM2);
-  $("kAreaSel").innerText = fmtM2(areaSelM2);
-  $("kEscala").innerText = `${(info.scaleX*100).toFixed(4)} cm/u`;
-  setTimeout(()=>updatePreviewGrid(info.realWm, info.realHm), 80);
-  $("method").innerHTML = `<span class="pill">${currentFileName || "SVG"}</span> <br><br>${info.method}<br>Canvas usado: ${maskData.w} × ${maskData.h} px. Perímetro vectorial: ${fmtM(vectorPerM)}. Perímetro por máscara: ${fmtM(maskPerM)}.`;
-  let html = `<tr><th>#</th><th>Pixeles</th><th>Ancho</th><th>Alto</th><th>Marco</th><th>Ángulo</th></tr>`;
-  detail.forEach(d=>{
-    html += `<tr><td>${d.n}</td><td>${d.pixels}</td><td>${fmtCm(d.anchoM)}</td><td>${fmtCm(d.altoM)}</td><td>${fmtM2(d.marcoM2)}</td><td>${d.ang.toFixed(1)}°</td></tr>`;
-  });
-  $("tabla").innerHTML = html;
-  lastResults = {
-    piezas,
-    perimetroM: vectorPerM,
-    perimetroMaskM: maskPerM,
-    areaRellenoM2,
-    areaMarcoM2,
-    areaSeleccionM2: areaSelM2,
-    anchoM: info.realWm,
-    altoM: info.realHm
+  S.areas={
+    useful,
+    areaSelectionCm2,
+    areaFillCm2,
+    perimeterCm,
+    areaFrameOptCm2,
+    totalWithFrameCm2,
+    emptyBoxCm2,
+    pieceCount:S.pieces.length
   };
-  renderPricing(lastResults);
+
+  renderAreas();
+  setStep(4);
+  if(showToast)toast("Áreas recalculadas");
 }
 
-function priceInput(key){
-  return `<input class="priceInput" type="number" step="0.01" value="${PRICES[key] ?? 0}" data-key="${esc(key)}" onchange="PRICES[this.dataset.key]=Number(this.value)||0; saveStoredData(); renderPricing(lastResults); renderMaterialPage()">`;
+function fmtM2(cm2){
+  const d=Number($("decimalsMode")?.value || 3);
+  return (cm2/10000).toFixed(d)+" m²";
+}
+function fmtCm(v){
+  return v.toFixed(1)+" cm";
 }
 
-function getCalcRows(product, c){
-  const piezas = c?.piezas || 0;
-  const K44 = c?.perimetroM || 0;
-  const K45 = c?.areaRellenoM2 || 0;
-  const K46 = c?.areaMarcoM2 || 0;
-  const areaMarco = (name) => [[name, "m²", K46, name, "K46 área de marco"]];
-  const areaRelleno = (name) => [[name, "m²", K45, name, "K45 área de relleno"]];
-  if(COMPOSITES[product]){
-    return COMPOSITES[product].map(item=>{
-      let q = compositeQty(item.base, item.factor, item.offset, c);
-      if(item.round) q = Math.ceil(q);
-      return [item.name, item.unit || "und", q, item.name, `${item.base} × ${item.factor} + ${item.offset}`];
+function renderAreas(){
+  if(!S.areas){
+    ["areaSelection","areaFill","areaPerimeter","areaFrameOpt","areaTotalFrame","areaEmptyBox","pieceCount","usefulPixels"].forEach(id=>{
+      if($(id))$(id).textContent="—";
     });
+    $("pieceTableBody").innerHTML="";
+    $("pieceTableBox").classList.add("hidden");
+    return;
   }
-  if(product === "Banda aluminio") return [["Banda aluminio", "ml", K44 + (piezas * 0.1), "Banda aluminio", "K44+(K43×0.1)"]];
-  if(product === "Automotriz") return areaRelleno("Automotriz");
-  if(product === "Filamento") return areaRelleno("Filamento");
-  return areaMarco(product);
+
+  $("areaSelection").textContent=fmtM2(S.areas.areaSelectionCm2);
+  $("areaFill").textContent=fmtM2(S.areas.areaFillCm2);
+  $("areaPerimeter").textContent=fmtCm(S.areas.perimeterCm);
+  $("areaFrameOpt").textContent=fmtM2(S.areas.areaFrameOptCm2);
+  $("areaTotalFrame").textContent=fmtM2(S.areas.totalWithFrameCm2);
+  $("areaEmptyBox").textContent=fmtM2(S.areas.emptyBoxCm2);
+  $("pieceCount").textContent=S.areas.pieceCount;
+  $("usefulPixels").textContent=S.areas.useful;
+  renderPieceTable();
 }
 
-function calcTotal(rows){
-  return rows.reduce((s,r)=>s + ((Number(r[2])||0) * (Number(PRICES[r[3]])||0)), 0);
-}
-
-function renderPricing(c){
-  if(!c) return;
-  const product = $("productSelect")?.value || "Front Lit";
-  const piezas = c.piezas || 0;
-  const K44 = c.perimetroM || 0;
-  const K45 = c.areaRellenoM2 || 0;
-  const K46 = c.areaMarcoM2 || 0;
-  if($("pK43")){
-    $("pK43").innerText = piezas;
-    $("pK44").innerText = fmtM(K44);
-    $("pK45").innerText = fmtM2(K45);
-    $("pK46").innerText = fmtM2(K46);
+function renderPieceTable(){
+  const box=$("pieceTableBox");
+  const body=$("pieceTableBody");
+  if($("detailMode").value!=="show"){
+    box.classList.add("hidden");
+    return;
   }
-  const rows = getCalcRows(product, c);
-  const cost = calcTotal(rows);
-  const mult = Number($("saleMultiplier")?.value || 1);
-  const sale = cost * mult;
-  $("selectedTotal").innerText = money(sale);
-  $("selectedFormula").innerHTML = `<b>${product}</b> · Costo base: ${money(cost)} · Multiplicador: ${mult}`;
-  let html = `<tr><th>Partida</th><th>Unidad</th><th>Cant.</th><th>Precio</th><th>Total</th><th>Base</th></tr>`;
-  rows.forEach(r=>{
-    const total = (Number(r[2])||0) * (Number(PRICES[r[3]])||0);
-    html += `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${qty(r[2])}</td><td>${priceInput(r[3])}</td><td class="money">${money(total)}</td><td class="subtle">${esc(r[4])}</td></tr>`;
+  box.classList.remove("hidden");
+  body.innerHTML="";
+  S.pieces.forEach((p,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${i+1}</td>
+      <td>${p.pixels}</td>
+      <td>${p.wCm.toFixed(2)} cm</td>
+      <td>${p.hCm.toFixed(2)} cm</td>
+      <td>${fmtM2(p.fillCm2)}</td>
+      <td>${p.perimeterCm.toFixed(1)} cm</td>
+      <td>${fmtM2(p.frameOptCm2)}</td>
+      <td>${p.angle.toFixed(1)}°</td>
+    `;
+    body.appendChild(tr);
   });
-  if($("selectedBreakdown")) $("selectedBreakdown").innerHTML = html;
-  const allProducts = Array.from($("productSelect").options).map(o=>o.value);
-  let mtrHtml = `<tr><th>Producto</th><th>Unidad</th><th>Cant.</th><th>Precio base</th><th>Total</th></tr>`;
-  allProducts.forEach(name=>{
-    const rws = getCalcRows(name,c);
-    if(!rws.length) return;
-    const total = calcTotal(rws) * mult;
-    const unit = name === "Front Lit" ? "combo" : rws[0][1];
-    const cant = name === "Front Lit" ? 1 : rws[0][2];
-    const active = name === product ? " style='background:#eef5ff'" : "";
-    const safeName = esc(name).replace(/'/g,"&#39;");
-    mtrHtml += `<tr${active} onclick="$('productSelect').value='${safeName}';renderPricing(lastResults)"><td>${esc(name)}</td><td>${esc(unit)}</td><td>${qty(cant)}</td><td>${name === "Front Lit" ? "varios" : priceInput(rws[0][3])}</td><td class="money">${money(total)}</td></tr>`;
-  });
-  if($("mtrTable")) $("mtrTable").innerHTML = mtrHtml;
 }
 
-function toggleDesglose(){
-  const box = $("desgloseBox");
-  if(box) box.classList.toggle("show");
+async function copyAreaSummary(){
+  if(!S.areas){toast("No hay áreas");return;}
+  const txt=[
+    "Tuttovinilos · Resumen de áreas",
+    "Tamaño real: "+$("realSize").textContent,
+    "Área selección: "+$("areaSelection").textContent,
+    "Área relleno: "+$("areaFill").textContent,
+    "Perímetro: "+$("areaPerimeter").textContent,
+    "Marco optimizado: "+$("areaFrameOpt").textContent,
+    "Total + marco: "+$("areaTotalFrame").textContent,
+    "Piezas: "+$("pieceCount").textContent
+  ].join("\n");
+  try{await navigator.clipboard.writeText(txt);toast("Resumen copiado");}
+  catch(e){toast("No se pudo copiar");}
 }
 
-function buildResumenText(){
-  if(!lastResults) return "No hay SVG analizado.";
-  const product = $("productSelect")?.value || "Front Lit";
-  const rows = getCalcRows(product,lastResults);
-  const cost = calcTotal(rows);
-  const mult = Number($("saleMultiplier")?.value || 1);
-  const sale = cost * mult;
-  return `TUTTOVINILOS · ESPECIFICACIONES DEL LETRERO
+/* CROP */
+function hitCropHandle(x,y){
+  if(!S.crop)return null;
 
-Archivo: ${currentFileName || "SVG"}
-Producto: ${product}
-Ancho: ${fmtCm(lastResults.anchoM)}
-Alto: ${fmtCm(lastResults.altoM)}
-Piezas: ${lastResults.piezas}
-Perímetro: ${fmtM(lastResults.perimetroM)}
-Área relleno: ${fmtM2(lastResults.areaRellenoM2)}
-Área marco: ${fmtM2(lastResults.areaMarcoM2)}
-Área selección: ${fmtM2(lastResults.areaSeleccionM2)}
+  const b=cropBox();
+  const p1=imgToScreen({x:b.x,y:b.y});
+  const p2=imgToScreen({x:b.x+b.w,y:b.y});
+  const p3=imgToScreen({x:b.x+b.w,y:b.y+b.h});
+  const p4=imgToScreen({x:b.x,y:b.y+b.h});
 
-Costo base: ${money(cost)}
-Multiplicador: ${mult}
-PRECIO: ${money(sale)}`;
-}
-
-async function copiarResumen(){
-  const txt = buildResumenText();
-  try{ await navigator.clipboard.writeText(txt); alert("Resumen copiado."); }
-  catch(e){ prompt("Copia el resumen:", txt); }
-}
-
-function crearPDF(){
-  if(!lastResults){ alert("Primero importa y analiza un SVG."); return; }
-  if(!window.jspdf || !window.jspdf.jsPDF){ alert("No se pudo cargar jsPDF. Revisa internet/CDN."); return; }
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({orientation:"portrait", unit:"pt", format:"letter"});
-  const product = $("productSelect")?.value || "Front Lit";
-  const rows = getCalcRows(product,lastResults);
-  const cost = calcTotal(rows);
-  const mult = Number($("saleMultiplier")?.value || 1);
-  const sale = cost * mult;
-  const margin = 42;
-  let y = 45;
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(16);
-  doc.text("TUTTOVINILOS · Especificaciones del letrero", margin, y);
-  y += 24;
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(10);
-  doc.text(`Archivo: ${currentFileName || "SVG"}`, margin, y); y += 16;
-  doc.text(`Producto seleccionado: ${product}`, margin, y); y += 16;
-  doc.text(`Ancho: ${fmtCm(lastResults.anchoM)}    Alto: ${fmtCm(lastResults.altoM)}`, margin, y); y += 16;
-  doc.text(`Piezas: ${lastResults.piezas}    Perímetro: ${fmtM(lastResults.perimetroM)}`, margin, y); y += 16;
-  doc.text(`Area relleno: ${fmtM2(lastResults.areaRellenoM2)}    Area marco: ${fmtM2(lastResults.areaMarcoM2)}    Area seleccion: ${fmtM2(lastResults.areaSeleccionM2)}`, margin, y); y += 24;
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(14);
-  doc.text(`PRECIO: ${money(sale)}`, margin, y); y += 18;
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(10);
-  doc.text(`Costo base: ${money(cost)} · Multiplicador: ${mult}`, margin, y); y += 24;
-  doc.setFont("helvetica","bold");
-  doc.text("Desglose tecnico", margin, y); y += 14;
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(9);
-  const headers = ["Partida", "Und", "Cant", "Precio", "Total", "Base"];
-  const col = [margin, margin+150, margin+195, margin+250, margin+305, margin+365];
-  headers.forEach((h,i)=>doc.text(h,col[i],y));
-  y += 8;
-  doc.line(margin,y,570,y); y += 13;
-  rows.forEach(r=>{
-    if(y > 720){ doc.addPage(); y = 45; }
-    const total = (Number(r[2])||0) * (Number(PRICES[r[3]])||0);
-    const vals = [r[0], r[1], qty(r[2]), money(PRICES[r[3]]||0), money(total), r[4]];
-    vals.forEach((v,i)=>doc.text(String(v).slice(0,28), col[i], y));
-    y += 14;
-  });
-  y += 18;
-  if(y > 700){ doc.addPage(); y = 45; }
-  doc.setFont("helvetica","bold");
-  doc.text("Notas", margin, y); y += 14;
-  doc.setFont("helvetica","normal");
-  const notes = [
-    "Medidas calculadas desde el SVG importado.",
-    "El area de relleno se calcula por mascara/pixeles para considerar huecos visuales.",
-    "El area de marco representa el area rectangular optimizada de las piezas detectadas.",
-    "Verificar manualmente antes de fabricar si el SVG tiene trazos abiertos, capas ocultas o elementos blancos intencionales."
+  const handles=[
+    {type:"nw",x:p1.x,y:p1.y},
+    {type:"ne",x:p2.x,y:p2.y},
+    {type:"se",x:p3.x,y:p3.y},
+    {type:"sw",x:p4.x,y:p4.y},
+    {type:"n",x:(p1.x+p2.x)/2,y:p1.y},
+    {type:"e",x:p2.x,y:(p2.y+p3.y)/2},
+    {type:"s",x:(p4.x+p3.x)/2,y:p3.y},
+    {type:"w",x:p1.x,y:(p1.y+p4.y)/2}
   ];
-  notes.forEach(n=>{ doc.text("- " + n, margin, y); y += 14; });
-  const safeName = (product + "_" + (currentFileName || "letrero")).replace(/[^a-z0-9_-]+/gi,"_").slice(0,60);
-  doc.save(`Tuttovinilos_${safeName}.pdf`);
+
+  let best=null;
+  let dist=30;
+  handles.forEach(h=>{
+    const d=Math.hypot(x-h.x,y-h.y);
+    if(d<dist){dist=d;best=h.type;}
+  });
+
+  if(!best && x>=p1.x && x<=p3.x && y>=p1.y && y<=p3.y){
+    best="moveCrop";
+  }
+
+  return best;
 }
 
-populateProductSelect("Front Lit");
-renderMaterialPage();
+function applyCropHandle(type, pos){
+  if(!S.crop)return;
 
+  const ip=screenToImg(pos.x,pos.y);
+  const minSize=8;
 
-document.addEventListener("DOMContentLoaded", function(){
-  setupMeasureTool();
+  let left=S.crop.x;
+  let top=S.crop.y;
+  let right=S.crop.x+S.crop.w;
+  let bottom=S.crop.y+S.crop.h;
+
+  if(type==="moveCrop"){
+    if(!S.lastCropImg){
+      S.lastCropImg=ip;
+      return;
+    }
+
+    const dx=ip.x-S.lastCropImg.x;
+    const dy=ip.y-S.lastCropImg.y;
+
+    left=clamp(left+dx,0,S.iw-S.crop.w);
+    top=clamp(top+dy,0,S.ih-S.crop.h);
+    S.crop.x=left;
+    S.crop.y=top;
+
+    S.lastCropImg=ip;
+    updateCropInfo();
+    draw();
+    return;
+  }
+
+  if(type.includes("w")) left=clamp(ip.x,0,right-minSize);
+  if(type.includes("e")) right=clamp(ip.x,left+minSize,S.iw);
+  if(type.includes("n")) top=clamp(ip.y,0,bottom-minSize);
+  if(type.includes("s")) bottom=clamp(ip.y,top+minSize,S.ih);
+
+  S.crop.x=left;
+  S.crop.y=top;
+  S.crop.w=right-left;
+  S.crop.h=bottom-top;
+
+  updateCropInfo();
+  draw();
+}
+
+function draw(){
+  if(!canvas.width)return;
+  const w=S.viewSize, h=S.viewSize;
+  ctx.clearRect(0,0,w,h);
+
+  if(!S.img)return;
+
+  ctx.save();
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality="high";
+  ctx.drawImage(S.img,S.ox,S.oy,S.iw*S.scale,S.ih*S.scale);
+  ctx.restore();
+
+  if(S.mode==="crop" && S.crop) drawCrop();
+  if(S.p1 || S.p2) drawMeasure();
+
+  $("zoomBadge").textContent=Math.round(S.scale*100)+"%";
+  updateCropInfo();
+}
+
+function drawCrop(){
+  const b=cropBox();
+  if(!b)return;
+
+  const p1=imgToScreen({x:b.x,y:b.y});
+  const p2=imgToScreen({x:b.x+b.w,y:b.y});
+  const p3=imgToScreen({x:b.x+b.w,y:b.y+b.h});
+  const p4=imgToScreen({x:b.x,y:b.y+b.h});
+
+  const w=S.viewSize, h=S.viewSize;
+
+  ctx.save();
+
+  ctx.fillStyle="rgba(255,255,255,.62)";
+  ctx.fillRect(0,0,w,h);
+
+  ctx.globalCompositeOperation="destination-out";
+  ctx.beginPath();
+  ctx.rect(p1.x,p1.y,p3.x-p1.x,p3.y-p1.y);
+  ctx.fill();
+
+  ctx.globalCompositeOperation="source-over";
+
+  ctx.strokeStyle="#111";
+  ctx.lineWidth=1.4;
+  ctx.setLineDash([]);
+  ctx.strokeRect(p1.x,p1.y,p3.x-p1.x,p3.y-p1.y);
+
+  ctx.strokeStyle="rgba(17,17,17,.22)";
+  ctx.lineWidth=0.8;
+  const thirdX=(p3.x-p1.x)/3;
+  const thirdY=(p3.y-p1.y)/3;
+  for(let i=1;i<=2;i++){
+    ctx.beginPath();
+    ctx.moveTo(p1.x+thirdX*i,p1.y);
+    ctx.lineTo(p1.x+thirdX*i,p3.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(p1.x,p1.y+thirdY*i);
+    ctx.lineTo(p3.x,p1.y+thirdY*i);
+    ctx.stroke();
+  }
+
+  const L=18;
+  const cornerData=[
+    [p1,-1,-1],
+    [p2,1,-1],
+    [p3,1,1],
+    [p4,-1,1]
+  ];
+
+  cornerData.forEach(([p,dx,dy])=>{
+    ctx.strokeStyle="#111";
+    ctx.lineWidth=3;
+    ctx.lineCap="square";
+    ctx.beginPath();
+    ctx.moveTo(p.x+dx*L,p.y);
+    ctx.lineTo(p.x,p.y);
+    ctx.lineTo(p.x,p.y+dy*L);
+    ctx.stroke();
+
+    ctx.fillStyle="#ff8616";
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,5,0,Math.PI*2);
+    ctx.fill();
+  });
+
+  const handles=[
+    {x:(p1.x+p2.x)/2,y:p1.y},
+    {x:p2.x,y:(p2.y+p3.y)/2},
+    {x:(p4.x+p3.x)/2,y:p3.y},
+    {x:p1.x,y:(p1.y+p4.y)/2}
+  ];
+
+  handles.forEach(p=>{
+    ctx.fillStyle="#111";
+    ctx.fillRect(p.x-14,p.y-2,28,4);
+  });
+
+  ctx.restore();
+}
+
+function drawMeasure(){
+  ctx.save();
+
+  const p1=S.p1?imgToScreen(S.p1):null;
+  const p2=S.p2?imgToScreen(S.p2):null;
+
+  if(p1 && p2){
+    ctx.strokeStyle="#153bff";
+    ctx.lineWidth=1.2;
+    ctx.setLineDash([5,4]);
+    ctx.beginPath();
+    ctx.moveTo(p1.x,p1.y);
+    ctx.lineTo(p2.x,p2.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  [[p1,"1","#ff8616"],[p2,"2","#153bff"]].forEach(([p,t,c])=>{
+    if(!p)return;
+    ctx.fillStyle=c;
+    ctx.strokeStyle="#fff";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,5,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.font="900 12px Montserrat";
+    ctx.fillStyle=c;
+    ctx.fillText("P"+t,p.x+8,p.y-8);
+  });
+
+  ctx.restore();
+}
+
+/* POINTERS */
+function getCanvasPosFromEvent(e){
+  const rect=canvas.getBoundingClientRect();
+  const t=e.touches ? e.touches[0] : e;
+  return {x:t.clientX-rect.left,y:t.clientY-rect.top};
+}
+function distTouch(t1,t2){return Math.hypot(t2.clientX-t1.clientX,t2.clientY-t1.clientY)}
+function midTouch(t1,t2){return {x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2}}
+
+canvas.addEventListener("touchstart",e=>{
+  if(!S.img)return;
+  e.preventDefault();
+
+  if(e.touches.length===2){
+    const m=midTouch(e.touches[0],e.touches[1]);
+    const r=canvas.getBoundingClientRect();
+    S.pinch={dist:distTouch(e.touches[0],e.touches[1]),x:m.x-r.left,y:m.y-r.top,ox:S.ox,oy:S.oy,scale:S.scale};
+    S.dragging=false;
+    return;
+  }
+
+  const pos=getCanvasPosFromEvent(e);
+
+  if(S.mode==="crop"){
+    const h=hitCropHandle(pos.x,pos.y);
+    if(h){
+      S.dragMode=h;
+      S.dragging=true;
+      S.lastCropImg=null;
+      return;
+    }
+  }
+
+  if(S.mode==="measure"){
+    placeMeasurePoint(screenToImg(pos.x,pos.y));
+    return;
+  }
+
+  S.dragging=true;
+  S.last=pos;
+},{passive:false});
+
+canvas.addEventListener("touchmove",e=>{
+  if(!S.img)return;
+  e.preventDefault();
+
+  if(e.touches.length===2 && S.pinch){
+    const d=distTouch(e.touches[0],e.touches[1]);
+    const m=midTouch(e.touches[0],e.touches[1]);
+    const r=canvas.getBoundingClientRect();
+    const mx=m.x-r.left, my=m.y-r.top;
+    const factor=d/S.pinch.dist;
+    const newScale=clamp(S.pinch.scale*factor,0.02,30);
+    S.scale=newScale;
+    S.ox=mx-(S.pinch.x-S.pinch.ox)*(S.scale/S.pinch.scale);
+    S.oy=my-(S.pinch.y-S.pinch.oy)*(S.scale/S.pinch.scale);
+    draw();
+    return;
+  }
+
+  const pos=getCanvasPosFromEvent(e);
+
+  if(S.mode==="crop" && S.dragging && S.dragMode){
+    applyCropHandle(S.dragMode,pos);
+    return;
+  }
+
+  if(S.mode==="pan" && S.dragging && S.last){
+    S.ox += pos.x-S.last.x;
+    S.oy += pos.y-S.last.y;
+    S.last=pos;
+    draw();
+  }
+},{passive:false});
+
+canvas.addEventListener("touchend",e=>{
+  if(e.touches.length<2)S.pinch=null;
+  S.dragging=false;
+  S.dragCorner=-1;
+  S.dragMode=null;
+  S.lastCropImg=null;
+  S.last=null;
+},{passive:false});
+
+canvas.addEventListener("mousedown",e=>{
+  if(!S.img)return;
+  const rect=canvas.getBoundingClientRect();
+  const pos={x:e.clientX-rect.left,y:e.clientY-rect.top};
+
+  if(S.mode==="crop"){
+    const h=hitCropHandle(pos.x,pos.y);
+    if(h){
+      S.dragMode=h;
+      S.dragging=true;
+      S.lastCropImg=null;
+      return;
+    }
+  }
+
+  if(S.mode==="measure"){
+    placeMeasurePoint(screenToImg(pos.x,pos.y));
+    return;
+  }
+
+  S.dragging=true;
+  S.last=pos;
 });
-</script>
 
+window.addEventListener("mousemove",e=>{
+  if(!S.img || !S.dragging)return;
+  const rect=canvas.getBoundingClientRect();
+  const pos={x:e.clientX-rect.left,y:e.clientY-rect.top};
+
+  if(S.mode==="crop" && S.dragMode){
+    applyCropHandle(S.dragMode,pos);
+    return;
+  }
+
+  if(S.mode==="pan" && S.last){
+    S.ox += pos.x-S.last.x;
+    S.oy += pos.y-S.last.y;
+    S.last=pos;
+    draw();
+  }
+});
+
+window.addEventListener("mouseup",()=>{
+  S.dragging=false;
+  S.dragCorner=-1;
+  S.dragMode=null;
+  S.lastCropImg=null;
+  S.last=null;
+});
+
+canvas.addEventListener("wheel",e=>{
+  if(!S.img)return;
+  e.preventDefault();
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const factor=e.deltaY<0?1.12:0.88;
+  const newScale=clamp(S.scale*factor,0.02,30);
+  S.ox=mx-(mx-S.ox)*(newScale/S.scale);
+  S.oy=my-(my-S.oy)*(newScale/S.scale);
+  S.scale=newScale;
+  draw();
+},{passive:false});
+
+setActivePoint(1);
+</script>
 </body>
 </html>
