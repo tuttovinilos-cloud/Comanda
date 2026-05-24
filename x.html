@@ -4,27 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
-<title>Cortar · Escalar · Medir</title>
+<title>Tuttovinilos · Crop & Measure</title>
 
 <style>
+
 :root{
-  --bg:#f1f4fb;
+  --bg:#eef2f9;
   --panel:#ffffff;
   --line:#d7dfef;
-  --blue:#1b4dff;
-  --orange:#ff7b00;
+  --blue:#1c4fff;
+  --orange:#ff7a00;
   --text:#111827;
 }
 
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
 
 body{
   margin:0;
+  overflow:hidden;
   background:var(--bg);
   font-family:Arial;
   color:var(--text);
-  overflow:hidden;
 }
+
+/* TOP */
 
 .top{
   position:fixed;
@@ -32,7 +38,8 @@ body{
   left:0;
   right:0;
   z-index:100;
-  background:white;
+  background:rgba(255,255,255,.94);
+  backdrop-filter:blur(12px);
   border-bottom:1px solid var(--line);
   padding:10px;
 }
@@ -43,51 +50,81 @@ body{
   gap:8px;
 }
 
-button,input{
-  height:44px;
+button,
+input{
   border:none;
-  border-radius:12px;
+  border-radius:14px;
+  height:46px;
   font-size:14px;
 }
 
 button{
   background:var(--blue);
   color:white;
-  font-weight:bold;
+  font-weight:800;
 }
 
 input{
+  background:white;
   border:1px solid var(--line);
   padding:10px;
 }
 
+/* VISOR */
+
 .viewer{
   position:fixed;
-  top:150px;
+  top:160px;
   left:0;
   right:0;
-  bottom:0;
-  overflow:hidden;
-}
+  bottom:110px;
 
-.canvasWrap{
-  width:100%;
-  height:100%;
   display:flex;
   justify-content:center;
   align-items:center;
-  overflow:hidden;
-  touch-action:none;
-  position:relative;
 }
+
+.canvasWrap{
+
+  width:min(335px, calc(100vw - 24px));
+  height:min(335px, calc(100vw - 24px));
+
+  max-width:335px;
+  max-height:335px;
+
+  background:white;
+  border:1px solid var(--line);
+  border-radius:22px;
+
+  overflow:hidden;
+  position:relative;
+
+  touch-action:none;
+}
+
+/* IMAGEN */
 
 #img{
   position:absolute;
-  max-width:1200px;
-  max-height:1200px;
+
+  left:50%;
+  top:50%;
+
   transform-origin:center center;
-  user-select:none;
+
+  max-width:none;
+  max-height:none;
+
   pointer-events:none;
+  user-select:none;
+}
+
+/* CROP */
+
+#cropBox{
+  position:absolute;
+  border:2px solid black;
+  z-index:20;
 }
 
 .corner{
@@ -97,15 +134,10 @@ input{
   border-radius:50%;
   background:var(--orange);
   border:3px solid white;
-  z-index:20;
-  touch-action:none;
+  z-index:30;
 }
 
-#line{
-  position:absolute;
-  border:2px dashed var(--orange);
-  z-index:10;
-}
+/* MEDIDOR */
 
 .measurePoint{
   position:absolute;
@@ -115,6 +147,7 @@ input{
   background:var(--blue);
   border:3px solid white;
   z-index:40;
+  display:none;
 }
 
 #measureLine{
@@ -123,21 +156,39 @@ input{
   background:var(--blue);
   transform-origin:left center;
   z-index:35;
+  display:none;
+}
+
+/* INFO */
+
+.bottom{
+  position:fixed;
+  left:10px;
+  right:10px;
+  bottom:10px;
+
+  background:white;
+  border-radius:18px;
+  border:1px solid var(--line);
+
+  padding:14px;
+  z-index:100;
 }
 
 .info{
-  position:fixed;
-  bottom:10px;
-  left:10px;
-  right:10px;
-  background:white;
-  border-radius:16px;
-  padding:12px;
-  z-index:100;
-  border:1px solid var(--line);
-  font-weight:bold;
   text-align:center;
+  font-weight:800;
+  font-size:15px;
+  margin-bottom:10px;
 }
+
+.bottomBtns{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+}
+
+/* MOBILE */
 
 @media(max-width:520px){
 
@@ -149,11 +200,20 @@ input{
     grid-template-columns:1fr;
   }
 
+  button,
+  input{
+    height:42px;
+    font-size:13px;
+  }
+
 }
+
 </style>
 </head>
 
 <body>
+
+<!-- TOP -->
 
 <div class="top">
 
@@ -165,15 +225,13 @@ input{
 
 <button onclick="applyScale()">Aplicar escala</button>
 
-<button onclick="cropImage()">Cortar imagen</button>
-
 <button onclick="enableMeasure()">Medir</button>
 
-<button onclick="resetView()">Centrar</button>
-
 </div>
 
 </div>
+
+<!-- VIEWER -->
 
 <div class="viewer">
 
@@ -181,102 +239,146 @@ input{
 
 <img id="img">
 
-<div id="line"></div>
+<div id="cropBox"></div>
 
 <div class="corner" id="c1"></div>
 <div class="corner" id="c2"></div>
 <div class="corner" id="c3"></div>
 <div class="corner" id="c4"></div>
 
-<div class="measurePoint" id="m1" style="display:none"></div>
-<div class="measurePoint" id="m2" style="display:none"></div>
+<div class="measurePoint" id="m1"></div>
+<div class="measurePoint" id="m2"></div>
 
-<div id="measureLine" style="display:none"></div>
+<div id="measureLine"></div>
+
+</div>
 
 </div>
 
-</div>
+<!-- BOTTOM -->
+
+<div class="bottom">
 
 <div class="info" id="info">
 Sin imagen
 </div>
 
+<div class="bottomBtns">
+
+<button onclick="cropImage()">
+Cortar
+</button>
+
+<button onclick="resetView()">
+Centrar
+</button>
+
+<button onclick="enableMeasure()">
+Medir
+</button>
+
+</div>
+
+</div>
+
 <script>
 
-const wrap=document.getElementById("wrap")
-const img=document.getElementById("img")
-const info=document.getElementById("info")
+const wrap = document.getElementById("wrap")
+const img = document.getElementById("img")
+const info = document.getElementById("info")
 
-let scale=1
-let posX=0
-let posY=0
+let scale = 1
+let posX = 0
+let posY = 0
 
-let startX=0
-let startY=0
+let startX = 0
+let startY = 0
 
-let moving=false
+let moving = false
 
-let realCm=0
-let pxToCm=1
+let realCm = 0
+let pxToCm = 1
 
-let measuring=false
-let measureClicks=[]
+let measuring = false
+let measurePoints = []
+
+/* =========================
+   CARGAR IMAGEN
+========================= */
 
 document.getElementById("file").addEventListener("change",e=>{
 
-  const file=e.target.files[0]
+  const file = e.target.files[0]
+
   if(!file)return
 
-  img.src=URL.createObjectURL(file)
+  img.src = URL.createObjectURL(file)
 
-  img.onload=()=>{
+  img.onload = ()=>{
 
     resetView()
 
-    const w=wrap.clientWidth
-    const h=wrap.clientHeight
+    createCrop()
 
-    const size=Math.min(w,h)*0.7
-
-    const left=(w-size)/2
-    const top=(h-size)/2
-
-    setCorner("c1",left,top)
-    setCorner("c2",left+size,top)
-    setCorner("c3",left+size,top+size)
-    setCorner("c4",left,top+size)
-
-    updateCrop()
+    info.innerHTML = "Imagen cargada"
 
   }
 
 })
 
+/* =========================
+   CENTRAR
+========================= */
+
 function resetView(){
 
-  scale=1
-  posX=0
-  posY=0
+  const wrapW = wrap.clientWidth
+  const wrapH = wrap.clientHeight
+
+  const imgW = img.naturalWidth
+  const imgH = img.naturalHeight
+
+  const fit = Math.min(
+    wrapW / imgW,
+    wrapH / imgH
+  )
+
+  scale = fit
+
+  posX = 0
+  posY = 0
 
   updateTransform()
 
 }
 
+/* =========================
+   TRANSFORM
+========================= */
+
 function updateTransform(){
 
-  img.style.transform=
-  `translate(${posX}px,${posY}px) scale(${scale})`
+  img.style.transform =
+  `
+  translate(-50%,-50%)
+  translate(${posX}px,${posY}px)
+  scale(${scale})
+  `
 
 }
+
+/* =========================
+   MOVER IMAGEN
+========================= */
 
 wrap.addEventListener("touchstart",e=>{
 
   if(e.touches.length===1){
 
-    moving=true
+    moving = true
 
-    startX=e.touches[0].clientX-posX
-    startY=e.touches[0].clientY-posY
+    startX = e.touches[0].clientX - posX
+    startY = e.touches[0].clientY - posY
 
   }
 
@@ -286,41 +388,51 @@ wrap.addEventListener("touchmove",e=>{
 
   e.preventDefault()
 
+  /* 1 dedo mover */
+
   if(e.touches.length===1 && moving){
 
-    posX=e.touches[0].clientX-startX
-    posY=e.touches[0].clientY-startY
+    posX =
+    e.touches[0].clientX - startX
+
+    posY =
+    e.touches[0].clientY - startY
 
     updateTransform()
 
   }
 
+  /* 2 dedos zoom */
+
   if(e.touches.length===2){
 
-    const dx=
-    e.touches[0].clientX-
+    const dx =
+    e.touches[0].clientX -
     e.touches[1].clientX
 
-    const dy=
-    e.touches[0].clientY-
+    const dy =
+    e.touches[0].clientY -
     e.touches[1].clientY
 
-    const dist=Math.sqrt(dx*dx+dy*dy)
+    const dist =
+    Math.sqrt(dx*dx + dy*dy)
 
     if(!window.lastDist){
-      window.lastDist=dist
+
+      window.lastDist = dist
+
     }
 
-    const delta=dist-window.lastDist
+    const delta = dist - window.lastDist
 
-    scale+=delta*0.003
+    scale += delta * 0.003
 
-    if(scale<0.2)scale=0.2
-    if(scale>15)scale=15
+    if(scale<0.1)scale=0.1
+    if(scale>20)scale=20
 
     updateTransform()
 
-    window.lastDist=dist
+    window.lastDist = dist
 
   }
 
@@ -328,23 +440,49 @@ wrap.addEventListener("touchmove",e=>{
 
 wrap.addEventListener("touchend",()=>{
 
-  moving=false
-  window.lastDist=null
+  moving = false
+
+  window.lastDist = null
 
 })
 
+/* =========================
+   CROP
+========================= */
+
+function createCrop(){
+
+  const size = wrap.clientWidth * .75
+
+  const left =
+  (wrap.clientWidth-size)/2
+
+  const top =
+  (wrap.clientHeight-size)/2
+
+  setCorner("c1",left,top)
+  setCorner("c2",left+size,top)
+  setCorner("c3",left+size,top+size)
+  setCorner("c4",left,top+size)
+
+  updateCrop()
+
+}
+
 function setCorner(id,x,y){
 
-  const el=document.getElementById(id)
+  const el =
+  document.getElementById(id)
 
-  el.style.left=(x-14)+"px"
-  el.style.top=(y-14)+"px"
+  el.style.left = (x-14)+"px"
+  el.style.top  = (y-14)+"px"
 
 }
 
 function getCorner(id){
 
-  const el=document.getElementById(id)
+  const el =
+  document.getElementById(id)
 
   return{
     x:parseFloat(el.style.left)+14,
@@ -355,39 +493,51 @@ function getCorner(id){
 
 function updateCrop(){
 
-  const p1=getCorner("c1")
-  const p3=getCorner("c3")
+  const p1 = getCorner("c1")
+  const p3 = getCorner("c3")
 
-  const line=document.getElementById("line")
+  const box =
+  document.getElementById("cropBox")
 
-  line.style.left=p1.x+"px"
-  line.style.top=p1.y+"px"
-  line.style.width=(p3.x-p1.x)+"px"
-  line.style.height=(p3.y-p1.y)+"px"
+  box.style.left = p1.x+"px"
+  box.style.top = p1.y+"px"
+
+  box.style.width =
+  (p3.x-p1.x)+"px"
+
+  box.style.height =
+  (p3.y-p1.y)+"px"
 
 }
 
 ;["c1","c2","c3","c4"].forEach(id=>{
 
-  const el=document.getElementById(id)
+  const el =
+  document.getElementById(id)
 
-  let drag=false
+  let dragging = false
 
   el.addEventListener("touchstart",e=>{
 
-    drag=true
+    dragging = true
+
     e.stopPropagation()
 
   })
 
   el.addEventListener("touchmove",e=>{
 
-    if(!drag)return
+    if(!dragging)return
 
     e.preventDefault()
 
-    const x=e.touches[0].clientX
-    const y=e.touches[0].clientY
+    const x =
+    e.touches[0].clientX -
+    wrap.getBoundingClientRect().left
+
+    const y =
+    e.touches[0].clientY -
+    wrap.getBoundingClientRect().top
 
     setCorner(id,x,y)
 
@@ -399,7 +549,7 @@ function updateCrop(){
 
   el.addEventListener("touchend",()=>{
 
-    drag=false
+    dragging = false
 
   })
 
@@ -409,64 +559,89 @@ function syncCorners(id,x,y){
 
   if(id==="c1"){
 
-    setCorner("c2",getCorner("c2").x,y)
-    setCorner("c4",x,getCorner("c4").y)
+    setCorner("c2",
+    getCorner("c2").x,y)
+
+    setCorner("c4",
+    x,getCorner("c4").y)
 
   }
 
   if(id==="c2"){
 
-    setCorner("c1",getCorner("c1").x,y)
-    setCorner("c3",x,getCorner("c3").y)
+    setCorner("c1",
+    getCorner("c1").x,y)
+
+    setCorner("c3",
+    x,getCorner("c3").y)
 
   }
 
   if(id==="c3"){
 
-    setCorner("c2",x,getCorner("c2").y)
-    setCorner("c4",getCorner("c4").x,y)
+    setCorner("c2",
+    x,getCorner("c2").y)
+
+    setCorner("c4",
+    getCorner("c4").x,y)
 
   }
 
   if(id==="c4"){
 
-    setCorner("c1",x,getCorner("c1").y)
-    setCorner("c3",getCorner("c3").x,y)
+    setCorner("c1",
+    x,getCorner("c1").y)
+
+    setCorner("c3",
+    getCorner("c3").x,y)
 
   }
 
 }
 
+/* =========================
+   ESCALA REAL
+========================= */
+
 function applyScale(){
 
-  realCm=parseFloat(document.getElementById("realWidth").value)
+  realCm =
+  parseFloat(
+    document.getElementById("realWidth").value
+  )
 
   if(!realCm)return
 
-  const p1=getCorner("c1")
-  const p2=getCorner("c2")
+  const p1 = getCorner("c1")
+  const p2 = getCorner("c2")
 
-  const px=Math.abs(p2.x-p1.x)
+  const px =
+  Math.abs(p2.x-p1.x)
 
-  pxToCm=realCm/px
+  pxToCm = realCm / px
 
-  info.innerHTML=
-  "Escala aplicada: "+
+  info.innerHTML =
   pxToCm.toFixed(4)+
   " cm por pixel"
 
 }
 
+/* =========================
+   MEDIR
+========================= */
+
 function enableMeasure(){
 
-  measuring=true
-  measureClicks=[]
+  measuring = true
+
+  measurePoints = []
 
   document.getElementById("m1").style.display="none"
   document.getElementById("m2").style.display="none"
   document.getElementById("measureLine").style.display="none"
 
-  info.innerHTML="Toca 2 puntos"
+  info.innerHTML =
+  "Toca 2 puntos"
 
 }
 
@@ -474,24 +649,30 @@ wrap.addEventListener("click",e=>{
 
   if(!measuring)return
 
-  measureClicks.push({
-    x:e.clientX,
-    y:e.clientY
-  })
+  const rect =
+  wrap.getBoundingClientRect()
 
-  if(measureClicks.length===1){
+  const x =
+  e.clientX - rect.left
 
-    showPoint("m1",e.clientX,e.clientY)
+  const y =
+  e.clientY - rect.top
+
+  measurePoints.push({x,y})
+
+  if(measurePoints.length===1){
+
+    showPoint("m1",x,y)
 
   }
 
-  if(measureClicks.length===2){
+  if(measurePoints.length===2){
 
-    showPoint("m2",e.clientX,e.clientY)
+    showPoint("m2",x,y)
 
     drawMeasure()
 
-    measuring=false
+    measuring = false
 
   }
 
@@ -499,7 +680,8 @@ wrap.addEventListener("click",e=>{
 
 function showPoint(id,x,y){
 
-  const p=document.getElementById(id)
+  const p =
+  document.getElementById(id)
 
   p.style.display="block"
 
@@ -510,37 +692,104 @@ function showPoint(id,x,y){
 
 function drawMeasure(){
 
-  const a=measureClicks[0]
-  const b=measureClicks[1]
+  const a = measurePoints[0]
+  const b = measurePoints[1]
 
-  const dx=b.x-a.x
-  const dy=b.y-a.y
+  const dx = b.x-a.x
+  const dy = b.y-a.y
 
-  const distPx=Math.sqrt(dx*dx+dy*dy)
+  const distPx =
+  Math.sqrt(dx*dx+dy*dy)
 
-  const distCm=distPx*pxToCm
+  const distCm =
+  distPx * pxToCm
 
-  const line=document.getElementById("measureLine")
+  const line =
+  document.getElementById("measureLine")
 
   line.style.display="block"
-  line.style.left=a.x+"px"
-  line.style.top=a.y+"px"
-  line.style.width=distPx+"px"
 
-  const angle=Math.atan2(dy,dx)*180/Math.PI
+  line.style.left = a.x+"px"
+  line.style.top = a.y+"px"
 
-  line.style.transform=`rotate(${angle}deg)`
+  line.style.width =
+  distPx+"px"
 
-  info.innerHTML=
+  const angle =
+  Math.atan2(dy,dx)*180/Math.PI
+
+  line.style.transform =
+  `rotate(${angle}deg)`
+
+  info.innerHTML =
   "Distancia: "+
   distCm.toFixed(2)+
   " cm"
 
 }
 
+/* =========================
+   CORTAR
+========================= */
+
 function cropImage(){
 
-  info.innerHTML="Corte visual aplicado"
+  const p1 = getCorner("c1")
+  const p3 = getCorner("c3")
+
+  const canvas =
+  document.createElement("canvas")
+
+  const ctx =
+  canvas.getContext("2d")
+
+  const rect =
+  wrap.getBoundingClientRect()
+
+  const sx =
+  (p1.x - wrap.clientWidth/2 - posX)
+  / scale +
+  img.naturalWidth/2
+
+  const sy =
+  (p1.y - wrap.clientHeight/2 - posY)
+  / scale +
+  img.naturalHeight/2
+
+  const sw =
+  (p3.x-p1.x)/scale
+
+  const sh =
+  (p3.y-p1.y)/scale
+
+  canvas.width = sw
+  canvas.height = sh
+
+  ctx.drawImage(
+    img,
+    sx,
+    sy,
+    sw,
+    sh,
+    0,
+    0,
+    sw,
+    sh
+  )
+
+  img.src =
+  canvas.toDataURL("image/png")
+
+  img.onload=()=>{
+
+    resetView()
+
+    createCrop()
+
+  }
+
+  info.innerHTML =
+  "Imagen cortada"
 
 }
 
