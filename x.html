@@ -2,663 +2,561 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cortar · Escalar · Medir Imagen</title>
-<link rel="icon" href="data:,">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/menu.css?v=34">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor Imagen · Corte + Escala + Cota</title>
 
 <style>
-:root{
-  --bg:#f0f2f9;--card:#fff;--line:#d9deea;--text:#111827;--muted:#64748b;
-  --blue:#153bff;--blue2:#0b1f7a;--orange:#ff8616;--green:#16a34a;--red:#ef4444;
-  --shadow:0 10px 28px rgba(15,23,42,.08);
-  --head:'Montserrat',Arial,sans-serif;--body:'Inter',Arial,sans-serif;
-}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh}
-.main{max-width:1400px;margin:auto;padding:14px 18px 18px}
-.layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:14px;align-items:start}
-.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
-h1,h2{font-family:var(--head);color:var(--blue2);margin:0 0 12px}
-h1{font-size:21px}h2{font-size:16px}
-.hint{color:var(--muted);font-size:12px;line-height:1.45;margin:8px 0}
-label{display:block;margin-bottom:6px;font-size:12px;font-weight:800;color:var(--muted)}
-input,select,button{width:100%;border:0;border-radius:12px;font-size:14px}
-input,select{background:#fff;border:1px solid var(--line);color:var(--text);padding:11px}
-button{background:var(--blue);color:#fff;font-family:var(--head);font-weight:900;padding:12px;cursor:pointer}
-button.orange{background:var(--orange)}
-button.gray{background:#fff;color:var(--blue);border:1px solid #cbd3e6}
-button.active{background:var(--orange)!important;color:#fff!important;border-color:var(--orange)!important}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.kpi{background:#f8f9ff;border:1px solid var(--line);border-radius:14px;padding:10px;min-height:64px}
-.kpi b{display:block;font-family:var(--head);font-size:18px;line-height:1.1;color:#0f172a}
-.kpi span{font-size:10px;color:var(--muted)}
-.status{padding:10px 12px;border-radius:14px;background:#f8f9ff;border:1px solid var(--line);color:var(--muted);font-size:12px}
-.ok{color:var(--green);font-weight:900}.bad{color:var(--red);font-weight:900}
-.tools{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding-right:2px}
-.previewCard{position:sticky;top:12px}
-.canvasShell{height:calc(100vh - 120px);min-height:560px;background:#f8f9ff;border:1px solid var(--line);border-radius:20px;padding:12px;overflow:auto}
+body{
+  margin:0;
+  background:#eef2f9;
+  font-family:Arial,sans-serif;
+  color:#111827;
+}
+main{
+  max-width:1400px;
+  margin:auto;
+  padding:14px;
+}
+.card{
+  background:#fff;
+  border:1px solid #d9deea;
+  border-radius:18px;
+  padding:14px;
+  margin-bottom:14px;
+  box-shadow:0 4px 16px rgba(0,0,0,.06);
+}
+.grid{
+  display:grid;
+  grid-template-columns:330px 1fr;
+  gap:14px;
+}
+h1,h2{
+  margin:0 0 10px;
+  color:#0b1f7a;
+}
+label{
+  display:block;
+  margin-bottom:6px;
+  font-size:12px;
+  font-weight:bold;
+  color:#64748b;
+}
+input,select,button{
+  width:100%;
+  padding:11px;
+  border-radius:12px;
+  font-size:14px;
+}
+input,select{
+  border:1px solid #cbd5e1;
+  background:#fff;
+}
+button{
+  border:none;
+  background:#153bff;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+button.orange{background:#ff8616}
+button.gray{
+  background:#fff;
+  color:#153bff;
+  border:1px solid #cbd5e1;
+}
+button.active{
+  background:#ff8616!important;
+  color:#fff!important;
+}
+.row2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.note{
+  font-size:12px;
+  line-height:1.45;
+  color:#64748b;
+}
+.result{
+  background:#f8f9ff;
+  border:1px solid #d9deea;
+  border-radius:14px;
+  padding:12px;
+  line-height:1.7;
+}
+.result b{
+  color:#153bff;
+}
+.viewer{
+  width:100%;
+  height:calc(100vh - 80px);
+  min-height:700px;
+  background:#f8f9ff;
+  border:1px solid #d9deea;
+  border-radius:18px;
+  overflow:auto;
+  padding:14px;
+}
 .stage{
-  min-width:760px;min-height:760px;background:#fff;border:1px solid #e5e7eb;border-radius:16px;
-  display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
+  width:1200px;
+  height:1200px;
+  background:white;
+  border:1px solid #e5e7eb;
+  border-radius:18px;
+  position:relative;
+  overflow:hidden;
+  margin:auto;
 }
-canvas{max-width:100%;max-height:100%;display:block;touch-action:none}
-.sideResult{
-  display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:12px;align-items:start;
+canvas{
+  position:absolute;
+  left:0;
+  top:0;
+  touch-action:none;
+  cursor:grab;
 }
-.measurePanel{
-  background:#f8f9ff;border:1px solid var(--line);border-radius:16px;padding:12px;min-height:180px;
-  display:flex;flex-direction:column;gap:10px;
+.cropBox{
+  position:absolute;
+  border:2px dashed #153bff;
+  background:rgba(21,59,255,.14);
+  pointer-events:none;
 }
-.measurePanel b{font-family:var(--head);color:var(--blue);font-size:16px}
-.badge{display:inline-block;background:#eef1ff;border:1px solid #cbd3e6;color:var(--blue);border-radius:999px;padding:6px 9px;font-size:11px;font-weight:900;font-family:var(--head)}
-.rangeLine{display:grid;grid-template-columns:1fr 70px;gap:8px;align-items:center}
-.rangeLine input[type=number]{padding:8px;text-align:center}
-@media(max-width:980px){
-  .layout{grid-template-columns:1fr}
-  .tools,.previewCard{position:relative;top:auto;max-height:none}
-  .sideResult{grid-template-columns:1fr}
-  .canvasShell{height:auto;min-height:440px}
-}
-@media(max-width:540px){
-  .main{padding:8px}.card{padding:11px;border-radius:16px}h1{font-size:17px}h2{font-size:13px}
-  input,select,button{font-size:12px;padding:9px}
-  .grid2,.grid3,.actions{grid-template-columns:1fr}
-  .stage{min-width:560px;min-height:560px}
+@media(max-width:900px){
+  .grid{grid-template-columns:1fr}
+  .viewer{
+    height:auto;
+    min-height:520px;
+  }
 }
 </style>
 </head>
 
 <body>
-<header class="header">
-  <div class="logo">
-    <img src="Logo tutto1.svg" alt="Tutto Vinilos">
-    <small>COMANDA</small>
+
+<main>
+
+<div class="card">
+  <h1>Editor práctico · Cortar · Mover · Escalar · Medir</h1>
+  <div class="note">
+    La imagen SIEMPRE abre dentro de un área máxima de 1200 × 1200 sin deformarse.<br>
+    Puedes mover la imagen libremente para cortar cómodamente.
   </div>
-  <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
-</header>
+</div>
 
-<main class="main">
-  <div class="layout">
+<div class="grid">
 
-    <section class="tools">
-      <div class="card">
-        <h1>Cortar · Escalar · Medir</h1>
-        <p class="hint">1) Importas imagen. 2) Cortas el área útil. 3) Escalas por ancho o alto. 4) Marcas 2 puntos y te da la cota real.</p>
-      </div>
+<section>
 
-      <div class="card">
-        <h2>1) Imagen</h2>
-        <label>Archivo JPG / PNG / WebP</label>
-        <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp">
-        <br><br>
-        <div class="actions">
-          <button class="gray" onclick="modoCorte()">Modo cortar</button>
-          <button class="gray" onclick="resetTodo()">Limpiar</button>
-        </div>
-        <p class="hint">En modo cortar: arrastra sobre la imagen para crear el recorte.</p>
-      </div>
+<div class="card">
+  <h2>1) Imagen</h2>
 
-      <div class="card">
-        <h2>2) Recorte</h2>
-        <div class="actions">
-          <button class="orange" onclick="aplicarCorte()">Aplicar corte</button>
-          <button class="gray" onclick="resetCorte()">Quitar corte</button>
-        </div>
-        <p class="hint">El corte conserva exactamente el área marcada. Desde ese momento la escala y la cota trabajan sobre esa imagen cortada.</p>
-      </div>
+  <label>Cargar JPG / PNG / WEBP</label>
+  <input type="file" id="fileInput" accept="image/*">
+</div>
 
-      <div class="card">
-        <h2>3) Escalar imagen</h2>
-        <div class="grid2">
-          <div>
-            <label>Escalar por</label>
-            <select id="scaleMode" onchange="aplicarEscala()">
-              <option value="width" selected>Ancho</option>
-              <option value="height">Alto</option>
-            </select>
-          </div>
-          <div>
-            <label>Medida en cm</label>
-            <input id="measureCm" type="number" value="60" min="0.01" step="0.01" oninput="aplicarEscala()">
-          </div>
-        </div>
-      </div>
+<div class="card">
+  <h2>2) Herramientas</h2>
 
-      <div class="card">
-        <h2>4) Cota con 2 puntos</h2>
-        <div class="grid2">
-          <button id="btnP1" class="gray active" onclick="setPointMode(1)">Punto 1</button>
-          <button id="btnP2" class="gray" onclick="setPointMode(2)">Punto 2</button>
-        </div>
-        <br>
-        <button class="gray" onclick="limpiarPuntos()">Limpiar puntos</button>
-        <p class="hint">Selecciona Punto 1 o Punto 2 y toca la imagen. La distancia se calcula según la escala real de la imagen cortada.</p>
-      </div>
+  <button class="orange" onclick="setMode('move')">Mover imagen</button>
+  <br><br>
 
-      <div class="card">
-        <h2>Resultado</h2>
-        <div class="kpis">
-          <div class="kpi"><b id="kW">0 cm</b><span>Ancho real</span></div>
-          <div class="kpi"><b id="kH">0 cm</b><span>Alto real</span></div>
-          <div class="kpi"><b id="kCrop">—</b><span>Recorte px</span></div>
-          <div class="kpi"><b id="kDistance">—</b><span>Cota</span></div>
-        </div>
-        <br>
-        <div class="actions">
-          <button onclick="descargarCorte()">Descargar corte</button>
-          <button class="gray" onclick="copiarMedidas()">Copiar medidas</button>
-        </div>
-        <br>
-        <div id="status" class="status">Listo.</div>
-      </div>
-    </section>
+  <button onclick="setMode('crop')">Modo corte</button>
+  <br><br>
 
-    <section class="previewCard">
-      <div class="card">
-        <h2>Vista de trabajo</h2>
-        <div class="sideResult">
-          <div class="canvasShell">
-            <div class="stage">
-              <canvas id="canvas"></canvas>
-            </div>
-          </div>
-          <div class="measurePanel">
-            <span class="badge" id="toolBadge">MODO: CORTAR</span>
-            <b id="distanceText">Distancia: —</b>
-            <span class="hint" id="infoText">Importa una imagen para comenzar.</span>
-          </div>
-        </div>
-      </div>
-    </section>
+  <button onclick="applyCrop()">Aplicar corte</button>
+  <br><br>
 
+  <button class="gray" onclick="resetImage()">Restaurar</button>
+</div>
+
+<div class="card">
+  <h2>3) Escala real</h2>
+
+  <div class="row2">
+    <div>
+      <label>Escalar por</label>
+      <select id="scaleMode" onchange="updateRealSize()">
+        <option value="width">Ancho</option>
+        <option value="height">Alto</option>
+      </select>
+    </div>
+
+    <div>
+      <label>Valor en cm</label>
+      <input type="number" id="scaleValue" value="60" step="0.01" oninput="updateRealSize()">
+    </div>
   </div>
+</div>
+
+<div class="card">
+  <h2>4) Medir cota</h2>
+
+  <div class="row2">
+    <button id="btn1" class="gray active" onclick="activeMeasure=1;updateBtns()">Punto 1</button>
+    <button id="btn2" class="gray" onclick="activeMeasure=2;updateBtns()">Punto 2</button>
+  </div>
+
+  <br>
+
+  <button onclick="setMode('measure')">Modo medir</button>
+
+  <br><br>
+
+  <button class="gray" onclick="clearMeasure()">Limpiar medida</button>
+</div>
+
+<div class="card">
+  <h2>Información</h2>
+
+  <div class="result">
+    Tamaño real:<br>
+    <b id="realSize">—</b><br><br>
+
+    Resolución:<br>
+    <b id="pixelSize">—</b><br><br>
+
+    Distancia:<br>
+    <b id="distance">—</b>
+  </div>
+</div>
+
+</section>
+
+<section class="card">
+
+<h2>Vista</h2>
+
+<div class="viewer">
+  <div class="stage" id="stage">
+    <canvas id="canvas"></canvas>
+    <div class="cropBox" id="cropBox" style="display:none"></div>
+  </div>
+</div>
+
+</section>
+
+</div>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=24"></script>
-<script src="js/auth.js?v=24"></script>
-<script src="js/menu.js?v=34"></script>
-
 <script>
-(function(){
-  function fallbackMenu(){
-    const html = document.documentElement;
-    const header = document.querySelector(".header");
-    const nav = document.getElementById("authMenu");
-    if(nav && !nav.children.length){
-      nav.innerHTML = `
-        <a class="tab-btn" href="index.html">Pedidos</a>
-        <a class="tab-btn" href="cotizador.html">Cotizador</a>
-        <a class="tab-btn" href="materiales.html">Materiales</a>
-        <a class="tab-btn" href="estadisticas.html">Estadísticas</a>
-        <a class="tab-btn" href="configuracion.html">Configuración</a>
-        <a class="tab-btn" href="organizador.html">Organizador</a>
-        <a class="tab-btn" href="label.html">Label</a>
-        <a class="tab-btn active" href="medidor-imagen.html">Medidor Imagen</a>
-        <span class="storage-pill"><span class="storage-dot"></span><span>LOCAL</span></span>`;
-    }
-    if(header && !document.querySelector(".mobile-menu-btn")){
-      const btn = document.createElement("button");
-      btn.className = "mobile-menu-btn";
-      btn.type = "button";
-      btn.textContent = "MENÚ";
-      btn.onclick = function(){
-        const menu = document.getElementById("authMenu");
-        if(menu) menu.classList.toggle("open");
-      };
-      header.insertBefore(btn, nav);
-    }
-    html.classList.remove("loading-menu");
-    html.classList.add("menu-ready");
-    if(header) header.classList.add("menu-ready");
-  }
-  window.addEventListener("load", ()=>setTimeout(fallbackMenu,350));
-})();
-</script>
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
 
-<script>
-const $ = id => document.getElementById(id);
-const canvas = $("canvas");
-const ctx = canvas.getContext("2d");
+const cropBox=document.getElementById("cropBox");
 
-let img = new Image();
-let fileName = "imagen_cortada.png";
-let originalCanvas = document.createElement("canvas");
-let workCanvas = document.createElement("canvas");
+let originalImage=null;
 
-let hasImage = false;
-let mode = "crop";
-let pointMode = 1;
+let imgX=0;
+let imgY=0;
 
-let cropStart = null;
-let cropRect = null;
-let isDragging = false;
+let imgW=0;
+let imgH=0;
 
-let realWcm = 0;
-let realHcm = 0;
+let realWcm=0;
+let realHcm=0;
 
-let p1 = null;
-let p2 = null;
+let dragging=false;
+let dragStart=null;
 
-function setStatus(txt, cls=""){
-  $("status").innerHTML = cls ? `<span class="${cls}">${txt}</span>` : txt;
+let cropStart=null;
+let cropRect=null;
+
+let mode="move";
+
+let p1=null;
+let p2=null;
+let activeMeasure=1;
+
+function $(id){return document.getElementById(id)}
+
+function updateBtns(){
+  $("btn1").classList.toggle("active",activeMeasure===1);
+  $("btn2").classList.toggle("active",activeMeasure===2);
 }
 
-function fitCanvasSize(w,h){
-  canvas.width = w;
-  canvas.height = h;
+function setMode(m){
+  mode=m;
+  canvas.style.cursor=
+    m==="move"?"grab":
+    m==="crop"?"crosshair":
+    "pointer";
+}
+
+function fitImage(img){
+  const max=1200;
+
+  let w=img.width;
+  let h=img.height;
+
+  const ratio=Math.min(max/w,max/h,1);
+
+  imgW=w*ratio;
+  imgH=h*ratio;
+
+  imgX=(1200-imgW)/2;
+  imgY=(1200-imgH)/2;
+
+  canvas.width=1200;
+  canvas.height=1200;
+
+  draw();
+  updateRealSize();
 }
 
 function draw(){
+
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  if(!hasImage){
-    ctx.fillStyle = "#f8f9ff";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle = "#64748b";
-    ctx.font = "18px Inter";
-    ctx.textAlign = "center";
-    ctx.fillText("Importa una imagen", canvas.width/2, canvas.height/2);
-    return;
+  ctx.fillStyle="#fff";
+  ctx.fillRect(0,0,1200,1200);
+
+  if(originalImage){
+    ctx.drawImage(originalImage,imgX,imgY,imgW,imgH);
   }
 
-  ctx.drawImage(workCanvas,0,0);
+  drawPoint(p1,"#ff8616","P1");
+  drawPoint(p2,"#153bff","P2");
 
-  // Rectángulo de corte
-  if(cropRect){
-    ctx.save();
-    ctx.fillStyle = "rgba(21,59,255,.12)";
-    ctx.strokeStyle = "#153bff";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([8,5]);
-    ctx.fillRect(cropRect.x,cropRect.y,cropRect.w,cropRect.h);
-    ctx.strokeRect(cropRect.x,cropRect.y,cropRect.w,cropRect.h);
-    ctx.restore();
-  }
-
-  // Puntos
-  drawPoint(p1, "#ff8616", "P1");
-  drawPoint(p2, "#153bff", "P2");
-
-  // Cota
-  if(p1 && p2){
-    drawDimension();
+  if(p1&&p2){
+    ctx.strokeStyle="#153bff";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(p1.x,p1.y);
+    ctx.lineTo(p2.x,p2.y);
+    ctx.stroke();
   }
 }
 
-function drawPoint(p, color, label){
-  if(!p) return;
-  ctx.save();
+function drawPoint(p,color,label){
+  if(!p)return;
+
   ctx.beginPath();
-  ctx.arc(p.x,p.y,4,0,Math.PI*2);
-  ctx.fillStyle = color;
+  ctx.arc(p.x,p.y,5,0,Math.PI*2);
+  ctx.fillStyle=color;
   ctx.fill();
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = "#fff";
-  ctx.stroke();
 
-  ctx.font = "900 12px Montserrat";
-  ctx.fillStyle = color;
-  ctx.fillText(label, p.x + 8, p.y - 8);
-  ctx.restore();
+  ctx.fillStyle=color;
+  ctx.font="bold 14px Arial";
+  ctx.fillText(label,p.x+10,p.y-10);
 }
 
-function drawDimension(){
-  const dx = p2.x - p1.x;
-  const dy = p2.y - p1.y;
-  const len = Math.sqrt(dx*dx + dy*dy) || 1;
+$("fileInput").addEventListener("change",e=>{
 
-  const nx = -dy / len;
-  const ny = dx / len;
-  const off = 18;
+  const file=e.target.files[0];
+  if(!file)return;
 
-  const a1 = {x:p1.x + nx*off, y:p1.y + ny*off};
-  const a2 = {x:p2.x + nx*off, y:p2.y + ny*off};
+  const img=new Image();
 
-  ctx.save();
-  ctx.strokeStyle = "#153bff";
-  ctx.lineWidth = 1;
-  ctx.setLineDash([4,4]);
-  ctx.beginPath();
-  ctx.moveTo(p1.x,p1.y); ctx.lineTo(a1.x,a1.y);
-  ctx.moveTo(p2.x,p2.y); ctx.lineTo(a2.x,a2.y);
-  ctx.stroke();
+  img.onload=()=>{
+    originalImage=img;
+    fitImage(img);
 
-  ctx.setLineDash([]);
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.moveTo(a1.x,a1.y);
-  ctx.lineTo(a2.x,a2.y);
-  ctx.stroke();
+    $("pixelSize").textContent=
+      img.width+" × "+img.height+" px";
+  };
 
-  // flechas simples
-  drawArrow(a1, a2);
-  drawArrow(a2, a1);
-  ctx.restore();
+  img.src=URL.createObjectURL(file);
+});
+
+function updateRealSize(){
+
+  if(!originalImage)return;
+
+  const val=Number($("scaleValue").value)||60;
+  const modeScale=$("scaleMode").value;
+
+  if(modeScale==="height"){
+    realHcm=val;
+    realWcm=realHcm*(imgW/imgH);
+  }else{
+    realWcm=val;
+    realHcm=realWcm*(imgH/imgW);
+  }
+
+  $("realSize").textContent=
+    realWcm.toFixed(2)+" × "+
+    realHcm.toFixed(2)+" cm";
+
+  updateDistance();
 }
 
-function drawArrow(from, to){
-  const angle = Math.atan2(to.y-from.y, to.x-from.x);
-  const size = 7;
-  ctx.beginPath();
-  ctx.moveTo(from.x, from.y);
-  ctx.lineTo(from.x + Math.cos(angle + .45)*size, from.y + Math.sin(angle + .45)*size);
-  ctx.moveTo(from.x, from.y);
-  ctx.lineTo(from.x + Math.cos(angle - .45)*size, from.y + Math.sin(angle - .45)*size);
-  ctx.stroke();
-}
+function getMouse(e){
 
-function getCanvasPoint(e){
-  const rect = canvas.getBoundingClientRect();
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  return {
-    x:(clientX - rect.left) * (canvas.width / rect.width),
-    y:(clientY - rect.top) * (canvas.height / rect.height)
+  const rect=canvas.getBoundingClientRect();
+
+  return{
+    x:(e.clientX-rect.left)*(canvas.width/rect.width),
+    y:(e.clientY-rect.top)*(canvas.height/rect.height)
   };
 }
 
-$("fileInput").addEventListener("change", e=>{
-  const file = e.target.files[0];
-  if(!file) return;
+canvas.addEventListener("mousedown",e=>{
 
-  fileName = file.name.replace(/\.[^.]+$/,"") + "_cortada.png";
+  const p=getMouse(e);
 
-  const url = URL.createObjectURL(file);
-  img.onload = ()=>{
-    originalCanvas.width = img.naturalWidth;
-    originalCanvas.height = img.naturalHeight;
-    originalCanvas.getContext("2d").drawImage(img,0,0);
+  if(mode==="move"){
 
-    workCanvas.width = img.naturalWidth;
-    workCanvas.height = img.naturalHeight;
-    workCanvas.getContext("2d").drawImage(img,0,0);
+    dragging=true;
 
-    hasImage = true;
-    cropRect = null;
-    p1 = null;
-    p2 = null;
+    dragStart={
+      x:p.x-imgX,
+      y:p.y-imgY
+    };
 
-    fitCanvasSize(workCanvas.width, workCanvas.height);
-    aplicarEscala();
-    modoCorte();
+  }else if(mode==="crop"){
+
+    cropStart=p;
+
+    cropRect={
+      x:p.x,
+      y:p.y,
+      w:0,
+      h:0
+    };
+
+    cropBox.style.display="block";
+
+  }else if(mode==="measure"){
+
+    if(activeMeasure===1){
+      p1=p;
+    }else{
+      p2=p;
+    }
+
+    updateDistance();
     draw();
-
-    URL.revokeObjectURL(url);
-    setStatus("Imagen cargada correctamente.", "ok");
-  };
-  img.onerror = ()=>{
-    setStatus("No se pudo cargar la imagen.", "bad");
-  };
-  img.src = url;
+  }
 });
 
-function modoCorte(){
-  mode = "crop";
-  $("toolBadge").textContent = "MODO: CORTAR";
-  setStatus("Modo cortar activo. Arrastra sobre la imagen.");
-}
+canvas.addEventListener("mousemove",e=>{
 
-function setPointMode(n){
-  mode = "measure";
-  pointMode = n === 2 ? 2 : 1;
-  $("btnP1").classList.toggle("active", pointMode === 1);
-  $("btnP2").classList.toggle("active", pointMode === 2);
-  $("toolBadge").textContent = "MODO: MEDIR PUNTO " + pointMode;
-  setStatus("Marca el punto " + pointMode + " sobre la imagen.");
-}
+  const p=getMouse(e);
 
-canvas.addEventListener("mousedown", e=>{
-  if(!hasImage) return;
-  const p = getCanvasPoint(e);
+  if(mode==="move"&&dragging){
 
-  if(mode === "crop"){
-    isDragging = true;
-    cropStart = p;
-    cropRect = {x:p.x,y:p.y,w:0,h:0};
+    imgX=p.x-dragStart.x;
+    imgY=p.y-dragStart.y;
+
     draw();
-  }else{
-    setMeasurePoint(p);
+  }
+
+  if(mode==="crop"&&cropRect){
+
+    cropRect.w=p.x-cropStart.x;
+    cropRect.h=p.y-cropStart.y;
+
+    const x=Math.min(cropStart.x,p.x);
+    const y=Math.min(cropStart.y,p.y);
+
+    cropBox.style.left=x+"px";
+    cropBox.style.top=y+"px";
+    cropBox.style.width=Math.abs(cropRect.w)+"px";
+    cropBox.style.height=Math.abs(cropRect.h)+"px";
   }
 });
 
-canvas.addEventListener("mousemove", e=>{
-  if(!hasImage || !isDragging || mode !== "crop") return;
-  const p = getCanvasPoint(e);
+window.addEventListener("mouseup",()=>{
 
-  cropRect = normalizeRect({
-    x:cropStart.x,
-    y:cropStart.y,
-    w:p.x - cropStart.x,
-    h:p.y - cropStart.y
-  });
-
-  draw();
+  dragging=false;
 });
 
-window.addEventListener("mouseup", ()=>{
-  isDragging = false;
-});
+function applyCrop(){
 
-canvas.addEventListener("touchstart", e=>{
-  e.preventDefault();
-  if(!hasImage) return;
-  const p = getCanvasPoint(e);
+  if(!cropRect||!originalImage){
+    alert("Primero selecciona el área.");
+    return;
+  }
 
-  if(mode === "crop"){
-    isDragging = true;
-    cropStart = p;
-    cropRect = {x:p.x,y:p.y,w:0,h:0};
+  const x=Math.min(cropStart.x,cropStart.x+cropRect.w);
+  const y=Math.min(cropStart.y,cropStart.y+cropRect.h);
+
+  const w=Math.abs(cropRect.w);
+  const h=Math.abs(cropRect.h);
+
+  if(w<5||h<5){
+    alert("Área demasiado pequeña.");
+    return;
+  }
+
+  const scaleX=originalImage.width/imgW;
+  const scaleY=originalImage.height/imgH;
+
+  const realX=(x-imgX)*scaleX;
+  const realY=(y-imgY)*scaleY;
+
+  const realW=w*scaleX;
+  const realH=h*scaleY;
+
+  const temp=document.createElement("canvas");
+  temp.width=realW;
+  temp.height=realH;
+
+  temp.getContext("2d").drawImage(
+    originalImage,
+    realX,
+    realY,
+    realW,
+    realH,
+    0,
+    0,
+    realW,
+    realH
+  );
+
+  const newImg=new Image();
+
+  newImg.onload=()=>{
+    originalImage=newImg;
+
+    fitImage(newImg);
+
+    cropRect=null;
+    cropBox.style.display="none";
+
+    p1=null;
+    p2=null;
+
     draw();
-  }else{
-    setMeasurePoint(p);
-  }
-},{passive:false});
-
-canvas.addEventListener("touchmove", e=>{
-  e.preventDefault();
-  if(!hasImage || !isDragging || mode !== "crop") return;
-  const p = getCanvasPoint(e);
-
-  cropRect = normalizeRect({
-    x:cropStart.x,
-    y:cropStart.y,
-    w:p.x - cropStart.x,
-    h:p.y - cropStart.y
-  });
-
-  draw();
-},{passive:false});
-
-window.addEventListener("touchend", ()=>{
-  isDragging = false;
-});
-
-function normalizeRect(r){
-  let x = r.w < 0 ? r.x + r.w : r.x;
-  let y = r.h < 0 ? r.y + r.h : r.y;
-  let w = Math.abs(r.w);
-  let h = Math.abs(r.h);
-
-  x = Math.max(0, Math.min(canvas.width, x));
-  y = Math.max(0, Math.min(canvas.height, y));
-  w = Math.max(0, Math.min(canvas.width - x, w));
-  h = Math.max(0, Math.min(canvas.height - y, h));
-
-  return {x,y,w,h};
-}
-
-function aplicarCorte(){
-  if(!hasImage){
-    alert("Primero importa una imagen.");
-    return;
-  }
-
-  if(!cropRect || cropRect.w < 2 || cropRect.h < 2){
-    alert("Primero marca un área de corte.");
-    return;
-  }
-
-  const r = {
-    x:Math.round(cropRect.x),
-    y:Math.round(cropRect.y),
-    w:Math.round(cropRect.w),
-    h:Math.round(cropRect.h)
   };
 
-  const newCanvas = document.createElement("canvas");
-  newCanvas.width = r.w;
-  newCanvas.height = r.h;
-  newCanvas.getContext("2d").drawImage(workCanvas, r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
-
-  workCanvas = newCanvas;
-  fitCanvasSize(workCanvas.width, workCanvas.height);
-
-  cropRect = null;
-  p1 = null;
-  p2 = null;
-
-  aplicarEscala();
-  draw();
-
-  setStatus("Corte aplicado. Ahora puedes escalar y medir.", "ok");
+  newImg.src=temp.toDataURL();
 }
 
-function resetCorte(){
-  if(!hasImage) return;
+function resetImage(){
 
-  workCanvas = document.createElement("canvas");
-  workCanvas.width = originalCanvas.width;
-  workCanvas.height = originalCanvas.height;
-  workCanvas.getContext("2d").drawImage(originalCanvas,0,0);
-
-  fitCanvasSize(workCanvas.width, workCanvas.height);
-
-  cropRect = null;
-  p1 = null;
-  p2 = null;
-
-  aplicarEscala();
-  draw();
-
-  setStatus("Corte eliminado. Imagen original restaurada.", "ok");
+  location.reload();
 }
 
-function aplicarEscala(){
-  if(!hasImage) return;
+function updateDistance(){
 
-  const val = Math.max(0.01, Number($("measureCm").value) || 60);
-  const modeScale = $("scaleMode").value;
-
-  if(modeScale === "height"){
-    realHcm = val;
-    realWcm = realHcm * (workCanvas.width / workCanvas.height);
-  }else{
-    realWcm = val;
-    realHcm = realWcm * (workCanvas.height / workCanvas.width);
-  }
-
-  $("kW").textContent = realWcm.toFixed(2) + " cm";
-  $("kH").textContent = realHcm.toFixed(2) + " cm";
-  $("kCrop").textContent = workCanvas.width + "×" + workCanvas.height;
-  actualizarDistancia();
-  draw();
-}
-
-function setMeasurePoint(p){
-  if(pointMode === 1){
-    p1 = p;
-  }else{
-    p2 = p;
-  }
-
-  actualizarDistancia();
-  draw();
-}
-
-function actualizarDistancia(){
-  if(!p1 || !p2 || !realWcm || !realHcm){
-    $("kDistance").textContent = "—";
-    $("distanceText").textContent = "Distancia: —";
+  if(!p1||!p2){
+    $("distance").textContent="—";
     return;
   }
 
-  const dxCm = ((p2.x - p1.x) / workCanvas.width) * realWcm;
-  const dyCm = ((p2.y - p1.y) / workCanvas.height) * realHcm;
-  const d = Math.sqrt(dxCm*dxCm + dyCm*dyCm);
+  const dx=((p2.x-p1.x)/imgW)*realWcm;
+  const dy=((p2.y-p1.y)/imgH)*realHcm;
 
-  $("kDistance").textContent = d.toFixed(2) + " cm";
-  $("distanceText").textContent = "Distancia: " + d.toFixed(2) + " cm";
-  $("infoText").textContent = "DX: " + Math.abs(dxCm).toFixed(2) + " cm · DY: " + Math.abs(dyCm).toFixed(2) + " cm";
+  const d=Math.sqrt(dx*dx+dy*dy);
+
+  $("distance").textContent=
+    d.toFixed(2)+" cm";
 }
 
-function limpiarPuntos(){
-  p1 = null;
-  p2 = null;
-  actualizarDistancia();
+function clearMeasure(){
+
+  p1=null;
+  p2=null;
+
+  updateDistance();
   draw();
 }
 
-function descargarCorte(){
-  if(!hasImage){
-    alert("Primero importa una imagen.");
-    return;
-  }
-
-  workCanvas.toBlob(blob=>{
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }, "image/png");
-}
-
-async function copiarMedidas(){
-  const txt = `Imagen medida
-Ancho: ${realWcm.toFixed(2)} cm
-Alto: ${realHcm.toFixed(2)} cm
-Recorte: ${workCanvas.width} x ${workCanvas.height} px
-Cota: ${$("kDistance").textContent}`;
-
-  try{
-    await navigator.clipboard.writeText(txt);
-    setStatus("Medidas copiadas.", "ok");
-  }catch(e){
-    prompt("Copia las medidas:", txt);
-  }
-}
-
-function resetTodo(){
-  hasImage = false;
-  cropRect = null;
-  p1 = null;
-  p2 = null;
-  realWcm = 0;
-  realHcm = 0;
-  $("fileInput").value = "";
-  $("kW").textContent = "0 cm";
-  $("kH").textContent = "0 cm";
-  $("kCrop").textContent = "—";
-  $("kDistance").textContent = "—";
-  $("distanceText").textContent = "Distancia: —";
-  $("infoText").textContent = "Importa una imagen para comenzar.";
-  setStatus("Listo.");
-  fitCanvasSize(760,760);
-  draw();
-}
-
-fitCanvasSize(760,760);
+setMode("move");
 draw();
 </script>
+
 </body>
 </html>
