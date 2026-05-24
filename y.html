@@ -215,6 +215,8 @@ tr:nth-child(even) td{background:#fbfcff}
         </div>
       </div>
       <br>
+      <p class="hint">Sin SVG cargado, el editor muestra un estimado usando base = 1. Con SVG cargado, calcula con los valores reales.</p>
+      <br>
       <div id="componentLines"></div>
       <div class="rowBtns">
         <button class="btn light" onclick="addComponentLine()">+ Añadir componente</button>
@@ -611,7 +613,12 @@ function readComponentLines(){
 }
 
 function baseValue(base,r=lastResults){
-  if(!r) return base==="fixed" ? 1 : 0;
+  /*
+    Si no hay SVG cargado, usamos base de prueba = 1.
+    Así el editor de compuestos muestra costo, venta y ganancia automáticamente.
+    Cuando haya SVG analizado, usa los valores reales.
+  */
+  if(!r) return 1;
   if(base==="fixed") return 1;
   return Number(r[base]||0);
 }
@@ -636,7 +643,7 @@ function updateCompoundPreview(){
     const box=line.querySelector(".previewMini");
     if(calc){
       cost+=calc.costo; sale+=calc.venta; profit+=calc.ganancia;
-      box.innerHTML=`${esc(calc.material.proveedor)}<br>Costo: ${money(calc.costo)}<br>Fee: ${money(calc.fee||0)}<br>Venta: ${money(calc.venta)}<br>Ganancia: ${money(calc.ganancia)}`;
+      box.innerHTML=`${!lastResults ? "Estimado base 1<br>" : ""}${esc(calc.material.proveedor)}<br>Costo: ${money(calc.costo)}<br>Fee: ${money(calc.fee||0)}<br>Venta: ${money(calc.venta)}<br>Ganancia: ${money(calc.ganancia)}`;
     }
   });
   $("editCost").textContent=money(cost);
