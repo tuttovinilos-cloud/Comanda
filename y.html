@@ -994,6 +994,57 @@ html.menu-ready .header-tabs,
 }
 </style>
 
+
+<style>
+/* =========================================================
+   FIX GRID SIMPLE + BOTONES PUNTO 1 / PUNTO 2
+========================================================= */
+#gridOverlay{
+  background-image:
+    linear-gradient(to right, rgba(21,59,255,.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(21,59,255,.12) 1px, transparent 1px),
+    linear-gradient(to right, rgba(21,59,255,.42) 1.5px, transparent 1.5px),
+    linear-gradient(to bottom, rgba(21,59,255,.42) 1.5px, transparent 1.5px)!important;
+  background-size:
+    var(--grid-5cm, 50px) var(--grid-5cm, 50px),
+    var(--grid-5cm, 50px) var(--grid-5cm, 50px),
+    var(--grid-10cm, 100px) var(--grid-10cm, 100px),
+    var(--grid-10cm, 100px) var(--grid-10cm, 100px)!important;
+  background-position:center center!important;
+}
+
+.pointTools{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  min-width:170px;
+}
+
+.pointBtn{
+  width:100%!important;
+  min-height:34px!important;
+  padding:0 10px!important;
+  border-radius:999px!important;
+  background:#ffffff!important;
+  color:#153bff!important;
+  border:1px solid #cbd3e6!important;
+  font-size:11px!important;
+}
+
+.pointBtn.active{
+  background:#153bff!important;
+  color:#ffffff!important;
+  border-color:#153bff!important;
+}
+
+@media(max-width:520px){
+  .pointTools{
+    min-width:0;
+    width:100%;
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -1067,7 +1118,11 @@ html.menu-ready .header-tabs,
       </div>
     </div>
     <div class="measureInfo">
-      <span>📏 Haz clic en 2 puntos para medir distancia.</span>
+      <div class="pointTools">
+        <button type="button" id="btnPoint1" class="pointBtn active" onclick="setActiveMeasurePoint(1)">Punto 1</button>
+        <button type="button" id="btnPoint2" class="pointBtn" onclick="setActiveMeasurePoint(2)">Punto 2</button>
+      </div>
+      <span>📏 Selecciona punto 1 o punto 2 y toca el panel.</span>
       <b id="measureResult">Distancia: —</b>
       <button type="button" class="gray miniMeasureBtn" onclick="clearMeasure()">Limpiar medida</button>
     </div>
@@ -1428,6 +1483,7 @@ function resetMaterialDefaults(){
   Object.keys(PRICES).forEach(k=>delete PRICES[k]); Object.assign(PRICES, JSON.parse(JSON.stringify(DEFAULT_PRICES)));
   COMPOSITES=JSON.parse(JSON.stringify(DEFAULT_COMPOSITES)); saveStoredData(); 
 let measurePoints = [];
+let activeMeasurePoint = 1;
 
 function previewPointToCm(clientX, clientY){
   const preview = $("preview");
@@ -1454,6 +1510,7 @@ function drawMeasure(){
   layer.innerHTML = "";
 
   measurePoints.forEach((p, i)=>{
+    if(!p) return;
     const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     c.setAttribute("cx", p.xPx);
     c.setAttribute("cy", p.yPx);
@@ -1473,7 +1530,7 @@ function drawMeasure(){
     layer.appendChild(t);
   });
 
-  if(measurePoints.length === 2){
+  if(measurePoints[0] && measurePoints[1]){
     const p1 = measurePoints[0];
     const p2 = measurePoints[1];
 
@@ -1521,7 +1578,18 @@ function drawMeasure(){
 
 function clearMeasure(){
   measurePoints = [];
+  setActiveMeasurePoint(1);
   drawMeasure();
+}
+
+function setActiveMeasurePoint(n){
+  activeMeasurePoint = n === 2 ? 2 : 1;
+
+  const b1 = $("btnPoint1");
+  const b2 = $("btnPoint2");
+
+  if(b1) b1.classList.toggle("active", activeMeasurePoint === 1);
+  if(b2) b2.classList.toggle("active", activeMeasurePoint === 2);
 }
 
 function setupMeasureTool(){
@@ -1537,8 +1605,12 @@ function setupMeasureTool(){
     const p = previewPointToCm(e.clientX, e.clientY);
     if(!p) return;
 
-    if(measurePoints.length >= 2) measurePoints = [];
-    measurePoints.push(p);
+    measurePoints[activeMeasurePoint - 1] = p;
+
+    if(activeMeasurePoint === 1 && !measurePoints[1]){
+      setActiveMeasurePoint(2);
+    }
+
     drawMeasure();
   });
 }
@@ -1629,13 +1701,16 @@ function updatePreviewGrid(realWm, realHm){
   if(widthCm <= 0 || heightCm <= 0) return;
 
   const rect = preview.getBoundingClientRect();
-  const pxPerCmX = rect.width / widthCm;
-  const pxPerCmY = rect.height / heightCm;
 
-  overlay.style.setProperty("--grid-5cm-x", `${pxPerCmX * 5}px`);
-  overlay.style.setProperty("--grid-5cm-y", `${pxPerCmY * 5}px`);
-  overlay.style.setProperty("--grid-10cm-x", `${pxPerCmX * 10}px`);
-  overlay.style.setProperty("--grid-10cm-y", `${pxPerCmY * 10}px`);
+  /*
+    Grid simple:
+    usa una escala uniforme para que los cuadros no salgan deformes.
+    Toma el menor px/cm entre ancho y alto.
+  */
+  const pxPerCm = Math.min(rect.width / widthCm, rect.height / heightCm);
+
+  overlay.style.setProperty("--grid-5cm", `${pxPerCm * 5}px`);
+  overlay.style.setProperty("--grid-10cm", `${pxPerCm * 10}px`);
 }
 
 function cargarSVGEnPreview(text){
