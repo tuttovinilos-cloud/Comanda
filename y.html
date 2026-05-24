@@ -871,6 +871,35 @@ html.menu-ready .header-tabs,
 }
 </style>
 
+
+<style>
+/* =========================================================
+   GRID DE ESCALA EN VISTA PREVIA
+   Línea suave: 5 cm
+   Línea marcada: 10 cm
+========================================================= */
+#preview{
+  position:relative!important;
+  background-color:#ffffff!important;
+  background-image:
+    linear-gradient(to right, rgba(21,59,255,.10) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(21,59,255,.10) 1px, transparent 1px),
+    linear-gradient(to right, rgba(21,59,255,.22) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(21,59,255,.22) 1px, transparent 1px)!important;
+  background-size:
+    var(--grid-5cm-x, 50px) var(--grid-5cm-y, 50px),
+    var(--grid-5cm-x, 50px) var(--grid-5cm-y, 50px),
+    var(--grid-10cm-x, 100px) var(--grid-10cm-y, 100px),
+    var(--grid-10cm-x, 100px) var(--grid-10cm-y, 100px)!important;
+  background-position:center center!important;
+}
+
+#preview svg{
+  position:relative!important;
+  z-index:2!important;
+}
+</style>
+
 </head>
 
 <body>
@@ -1337,6 +1366,7 @@ $("fileInput").addEventListener("change", async e=>{
     $("kAncho").innerText = fmtCm(originalRealWm);
     $("kAlto").innerText = fmtCm(originalRealHm);
     $("kEscala").innerText = `${(originalRealWm / info.vb.width * 100).toFixed(4)} cm/u`;
+    setTimeout(()=>updatePreviewGrid(originalRealWm, originalRealHm), 80);
 
     setStatus("SVG cargado. Medida original detectada.",0);
     $("method").innerHTML = `<span class="ok">SVG cargado:</span> ${info.method}`;
@@ -1355,6 +1385,32 @@ window.addEventListener("load", function(){
   }
 });
 
+window.addEventListener("resize", function(){
+  if(originalRealWm && originalRealHm){
+    updatePreviewGrid(originalRealWm, originalRealHm);
+  }
+});
+
+
+
+function updatePreviewGrid(realWm, realHm){
+  const preview = $("preview");
+  if(!preview || !realWm || !realHm) return;
+
+  const widthCm = realWm * 100;
+  const heightCm = realHm * 100;
+
+  if(widthCm <= 0 || heightCm <= 0) return;
+
+  const rect = preview.getBoundingClientRect();
+  const pxPerCmX = rect.width / widthCm;
+  const pxPerCmY = rect.height / heightCm;
+
+  preview.style.setProperty("--grid-5cm-x", `${pxPerCmX * 5}px`);
+  preview.style.setProperty("--grid-5cm-y", `${pxPerCmY * 5}px`);
+  preview.style.setProperty("--grid-10cm-x", `${pxPerCmX * 10}px`);
+  preview.style.setProperty("--grid-10cm-y", `${pxPerCmY * 10}px`);
+}
 
 function cargarSVGEnPreview(text){
   $("preview").innerHTML = text;
@@ -1501,6 +1557,7 @@ function escalarSVGSegunCampo(){
   $("kAncho").innerText = fmtCm(originalRealWm);
   $("kAlto").innerText = fmtCm(originalRealHm);
   $("kEscala").innerText = `${(originalRealWm / vb.width * 100).toFixed(4)} cm/u`;
+  setTimeout(()=>updatePreviewGrid(originalRealWm, originalRealHm), 80);
 
   const textoModo = modo === "height" ? "alto" : "ancho";
   setStatus(`Medida aplicada por ${textoModo}: ${anchoCm.toFixed(2)} cm × ${altoCm.toFixed(2)} cm.`,15);
@@ -1724,6 +1781,7 @@ function renderResults(info, piezas, vectorPerM, maskPerM, areaRellenoM2, areaMa
   $("kAreaMarco").innerText = fmtM2(areaMarcoM2);
   $("kAreaSel").innerText = fmtM2(areaSelM2);
   $("kEscala").innerText = `${(info.scaleX*100).toFixed(4)} cm/u`;
+  setTimeout(()=>updatePreviewGrid(info.realWm, info.realHm), 80);
   $("method").innerHTML = `<span class="pill">${currentFileName || "SVG"}</span> <br><br>${info.method}<br>Canvas usado: ${maskData.w} × ${maskData.h} px. Perímetro vectorial: ${fmtM(vectorPerM)}. Perímetro por máscara: ${fmtM(maskPerM)}.`;
   let html = `<tr><th>#</th><th>Pixeles</th><th>Ancho</th><th>Alto</th><th>Marco</th><th>Ángulo</th></tr>`;
   detail.forEach(d=>{
@@ -1913,4 +1971,3 @@ renderMaterialPage();
 
 </body>
 </html>
-
