@@ -1703,19 +1703,22 @@ function previewPointToCm(clientX, clientY){
   const m = getRenderedSvgMetrics();
   if(!m) return null;
 
-  const xPx = clientX - m.rect.left;
-  const yPx = clientY - m.rect.top;
+  const clickX = clientX - m.rect.left;
+  const clickY = clientY - m.rect.top;
 
-  const localX = xPx - m.offsetX;
-  const localY = yPx - m.offsetY;
+  const localX = clickX - m.offsetX;
+  const localY = clickY - m.offsetY;
 
+  // Ignora clics fuera del área real donde se dibuja el SVG.
   if(localX < 0 || localY < 0 || localX > m.contentW || localY > m.contentH){
     return null;
   }
 
   return {
-    xPx,
-    yPx,
+    xPx: clickX,
+    yPx: clickY,
+
+    // Coordenadas reales en cm según el SVG cargado/escalado.
     xCm: (localX / m.contentW) * m.widthCm,
     yCm: (localY / m.contentH) * m.heightCm
   };
@@ -1895,7 +1898,7 @@ function setupMeasureTool(){
 
     const p = previewPointToCm(e.clientX, e.clientY);
     if(!p){
-      setStatus("Toca dentro del área real del SVG para colocar el punto.", 100);
+      setStatus("Toca dentro del SVG, no en el cuadro blanco.", 100);
       return;
     }
 
@@ -1960,22 +1963,34 @@ function getRenderedSvgMetrics(){
 
   const rect = preview.getBoundingClientRect();
   const vb = getViewBox(svg);
+
   if(!vb || !vb.width || !vb.height) return null;
 
-  const scale = Math.min(rect.width / vb.width, rect.height / vb.height);
-  const contentW = vb.width * scale;
-  const contentH = vb.height * scale;
-  const offsetX = (rect.width - contentW) / 2;
-  const offsetY = (rect.height - contentH) / 2;
+  /*
+    IMPORTANTE:
+    La escala de la cota se calcula en función al SVG cargado,
+    NO al cuadro blanco completo.
+
+    El SVG se muestra con preserveAspectRatio="xMidYMid meet".
+    Por eso se calcula el tamaño real renderizado del SVG dentro del preview
+    y los márgenes sobrantes se descuentan.
+  */
+  const svgScale = Math.min(rect.width / vb.width, rect.height / vb.height);
+
+  const svgRenderedW = vb.width * svgScale;
+  const svgRenderedH = vb.height * svgScale;
+
+  const svgLeft = (rect.width - svgRenderedW) / 2;
+  const svgTop = (rect.height - svgRenderedH) / 2;
 
   return {
     rect,
     vb,
-    scale,
-    contentW,
-    contentH,
-    offsetX,
-    offsetY,
+    svgScale,
+    contentW: svgRenderedW,
+    contentH: svgRenderedH,
+    offsetX: svgLeft,
+    offsetY: svgTop,
     widthCm: originalRealWm * 100,
     heightCm: originalRealHm * 100
   };
@@ -1988,10 +2003,12 @@ function updatePreviewGrid(realWm, realHm){
   const m = getRenderedSvgMetrics();
   if(!m || m.widthCm <= 0 || m.heightCm <= 0) return;
 
-  const pxPerCm = m.contentW / m.widthCm;
+  const pxPorCm = m.contentW / m.widthCm;
 
-  overlay.style.setProperty("--grid-5cm", `${pxPerCm * 5}px`);
-  overlay.style.setProperty("--grid-10cm", `${pxPerCm * 10}px`);
+  overlay.style.setProperty("--grid-5cm", `${pxPorCm * 5}px`);
+  overlay.style.setProperty("--grid-10cm", `${pxPorCm * 10}px`);
+
+  // El grid arranca donde realmente comienza el SVG dentro del preview.
   overlay.style.setProperty("--grid-left", `${m.offsetX}px`);
   overlay.style.setProperty("--grid-top", `${m.offsetY}px`);
 }
