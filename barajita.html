@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Checklist Álbum Mundial 2026</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+:root{
+  --bg:#f3f5fb;
+  --card:#fff;
+  --text:#111827;
+  --muted:#6b7280;
+  --line:#d8deea;
+  --blue:#0b4ea2;
+  --green:#16a34a;
+  --red:#dc2626;
+  --orange:#f97316;
+  --dark:#0f172a;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+header{
+  position:sticky;
+  top:0;
+  z-index:10;
+  background:#fff;
+  border-bottom:1px solid var(--line);
+  padding:12px;
+}
+h1{
+  margin:0;
+  font-size:20px;
+  font-weight:900;
+}
+.sub{
+  font-size:13px;
+  color:var(--muted);
+  margin-top:4px;
+}
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-top:10px;
+}
+.stat{
+  background:#f8fafc;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:8px;
+  text-align:center;
+}
+.stat b{
+  display:block;
+  font-size:18px;
+}
+.stat span{
+  font-size:11px;
+  color:var(--muted);
+}
+.actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+button{
+  border:0;
+  border-radius:10px;
+  padding:10px 12px;
+  font-weight:800;
+  cursor:pointer;
+}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-dark{background:var(--dark);color:#fff}
+.btn-light{background:#e5e7eb;color:#111}
+main{
+  padding:14px;
+  max-width:1100px;
+  margin:auto;
+}
+.search{
+  width:100%;
+  padding:13px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  font-size:16px;
+  margin-bottom:12px;
+}
+.group{
+  margin-bottom:20px;
+}
+.group-title{
+  background:var(--blue);
+  color:#fff;
+  display:inline-block;
+  padding:6px 16px;
+  border-radius:999px;
+  font-weight:900;
+  margin-bottom:10px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:12px;
+}
+.team{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:12px;
+  box-shadow:0 4px 12px rgba(15,23,42,.05);
+}
+.team-head{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:center;
+  margin-bottom:8px;
+}
+.team h3{
+  margin:0;
+  font-size:17px;
+}
+.team small{
+  color:var(--muted);
+}
+.progress{
+  height:8px;
+  background:#e5e7eb;
+  border-radius:999px;
+  overflow:hidden;
+  margin-bottom:10px;
+}
+.bar{
+  height:100%;
+  background:var(--green);
+  width:0%;
+}
+.stickers{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:6px;
+}
+.sticker{
+  border:1px solid var(--line);
+  border-radius:8px;
+  min-height:34px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:900;
+  background:#fff;
+  position:relative;
+  cursor:pointer;
+  user-select:none;
+}
+.sticker.got{
+  background:#dcfce7;
+  border-color:#16a34a;
+  color:#166534;
+}
+.sticker.rep{
+  background:#fee2e2;
+  border-color:#dc2626;
+  color:#991b1b;
+}
+.sticker.rep::after{
+  content:"R";
+  position:absolute;
+  top:-6px;
+  right:-5px;
+  background:#dc2626;
+  color:#fff;
+  font-size:10px;
+  border-radius:999px;
+  padding:2px 5px;
+}
+.legend{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:12px;
+}
+.tag{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:6px 10px;
+}
+.special-box{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:12px;
+  margin-bottom:20px;
+}
+textarea{
+  width:100%;
+  min-height:110px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px;
+  font-size:14px;
+}
+.note{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:8px;
+}
+@media(max-width:600px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  h1{font-size:17px}
+  button{flex:1}
+  main{padding:10px}
+  .stickers{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Checklist Álbum Mundial 2026</h1>
+  <div class="sub">978 figuritas · 48 selecciones · 20 por selección · Especiales FWC</div>
+
+  <div class="stats">
+    <div class="stat"><b id="totalPegadas">0</b><span>Pegadas</span></div>
+    <div class="stat"><b id="totalFaltan">978</b><span>Me faltan</span></div>
+    <div class="stat"><b id="totalRepetidas">0</b><span>Repetidas</span></div>
+    <div class="stat"><b id="porcentaje">0%</b><span>Completado</span></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-blue" onclick="exportMissingPDF()">PDF faltantes</button>
+    <button class="btn-red" onclick="exportRepeatedPDF()">PDF repetidas</button>
+    <button class="btn-green" onclick="copyRepeatedList()">Copiar repetidas</button>
+    <button class="btn-dark" onclick="shareRepeated()">Compartir repetidas</button>
+    <button class="btn-light" onclick="resetAll()">Reiniciar</button>
+  </div>
+</header>
+
+<main>
+
+<input class="search" id="search" placeholder="Buscar selección: México, Brasil, Argentina..." oninput="render()">
+
+<div class="legend">
+  <div class="tag">Blanco = falta</div>
+  <div class="tag">Verde = pegada</div>
+  <div class="tag">Rojo/R = repetida</div>
+  <div class="tag">Click 1: pegada · Click 2: repetida · Click 3: limpiar</div>
+</div>
+
+<div class="special-box">
+  <h3>Figuritas especiales</h3>
+  <div class="stickers" id="specials"></div>
+</div>
+
+<div id="app"></div>
+
+<div class="special-box">
+  <h3>Lista manual de repetidas para mostrar a otros</h3>
+  <textarea id="repText" readonly></textarea>
+  <div class="note">Esta lista se actualiza sola con tus repetidas.</div>
+</div>
+
+</main>
+
+<script>
+const TOTAL = 978;
+
+const groups = {
+  "GRUPO A":[
+    ["MEX","México"],["RSA","South Africa"],["KOR","Korea Republic"],["CZE","Czechia"]
+  ],
+  "GRUPO B":[
+    ["CAN","Canada"],["BIH","Bosnia-Herz."],["QAT","Qatar"],["SUI","Switzerland"]
+  ],
+  "GRUPO C":[
+    ["BRA","Brazil"],["MAR","Morocco"],["HAI","Haiti"],["SCO","Scotland"]
+  ],
+  "GRUPO D":[
+    ["USA","USA"],["PAR","Paraguay"],["AUS","Australia"],["TUR","Türkiye"]
+  ],
+  "GRUPO E":[
+    ["GER","Germany"],["CUW","Curaçao"],["CIV","Côte d’Ivoire"],["ECU","Ecuador"]
+  ],
+  "GRUPO F":[
+    ["NED","Netherlands"],["JPN","Japan"],["SWE","Sweden"],["TUN","Tunisia"]
+  ],
+  "GRUPO G":[
+    ["BEL","Belgium"],["EGY","Egypt"],["IRN","IR Iran"],["NZL","New Zealand"]
+  ],
+  "GRUPO H":[
+    ["ESP","Spain"],["CPV","Cabo Verde"],["KSA","Saudi Arabia"],["URU","Uruguay"]
+  ],
+  "GRUPO I":[
+    ["FRA","France"],["SEN","Senegal"],["IRQ","Iraq"],["NOR","Norway"]
+  ],
+  "GRUPO J":[
+    ["ARG","Argentina"],["ALG","Algeria"],["AUT","Austria"],["JOR","Jordan"]
+  ],
+  "GRUPO K":[
+    ["POR","Portugal"],["COD","Congo DR"],["UZB","Uzbekistan"],["COL","Colombia"]
+  ],
+  "GRUPO L":[
+    ["ENG","England"],["CRO","Croatia"],["GHA","Ghana"],["PAN","Panama"]
+  ]
+};
+
+const specialItems = ["#00","FWC1","FWC2","FWC3","FWC4","FWC5","FWC6","FWC7","FWC8","FWC9","FWC10","FWC11","FWC12","FWC13","FWC14","FWC15","FWC16","FWC17"];
+
+let data = JSON.parse(localStorage.getItem("album2026_checklist") || "{}");
+
+function save(){
+  localStorage.setItem("album2026_checklist", JSON.stringify(data));
+  updateStats();
+}
+
+function key(code,num){
+  return `${code}-${num}`;
+}
+
+function cycle(id){
+  const current = data[id] || 0;
+  data[id] = current === 0 ? 1 : current === 1 ? 2 : 0;
+  if(data[id] === 0) delete data[id];
+  save();
+  render();
+}
+
+function renderSticker(id,label){
+  const state = data[id] || 0;
+  let cls = "sticker";
+  if(state === 1) cls += " got";
+  if(state === 2) cls += " rep";
+  return `<div class="${cls}" onclick="cycle('${id}')">${label}</div>`;
+}
+
+function renderSpecials(){
+  document.getElementById("specials").innerHTML = specialItems.map(item =>
+    renderSticker(`ESP-${item}`, item)
+  ).join("");
+}
+
+function render(){
+  const q = document.getElementById("search").value.toLowerCase();
+  const app = document.getElementById("app");
+  let html = "";
+
+  Object.entries(groups).forEach(([groupName,teams])=>{
+    let groupHtml = "";
+
+    teams.forEach(([code,name])=>{
+      const full = `${code} ${name}`.toLowerCase();
+      if(q && !full.includes(q)) return;
+
+      let got = 0;
+      for(let i=1;i<=20;i++){
+        if(data[key(code,i)] === 1) got++;
+      }
+
+      let stickers = "";
+      for(let i=1;i<=20;i++){
+        stickers += renderSticker(key(code,i), i);
+      }
+
+      groupHtml += `
+        <div class="team">
+          <div class="team-head">
+            <div>
+              <h3>${code}</h3>
+              <small>${name}</small>
+            </div>
+            <small>${got}/20</small>
+          </div>
+          <div class="progress"><div class="bar" style="width:${(got/20)*100}%"></div></div>
+          <div class="stickers">${stickers}</div>
+        </div>
+      `;
+    });
+
+    if(groupHtml){
+      html += `
+        <section class="group">
+          <div class="group-title">${groupName}</div>
+          <div class="grid">${groupHtml}</div>
+        </section>
+      `;
+    }
+  });
+
+  app.innerHTML = html;
+  renderSpecials();
+  updateStats();
+}
+
+function allItems(){
+  let items = [];
+
+  specialItems.forEach(s=>{
+    items.push({id:`ESP-${s}`, label:s, group:"Especiales"});
+  });
+
+  Object.values(groups).flat().forEach(([code,name])=>{
+    for(let i=1;i<=20;i++){
+      items.push({
+        id:key(code,i),
+        label:`${code} ${i}`,
+        group:name
+      });
+    }
+  });
+
+  return items;
+}
+
+function updateStats(){
+  const items = allItems();
+  const pegadas = items.filter(x=>data[x.id] === 1).length;
+  const repetidas = items.filter(x=>data[x.id] === 2).length;
+  const faltan = TOTAL - pegadas;
+  const pct = Math.round((pegadas / TOTAL) * 100);
+
+  document.getElementById("totalPegadas").textContent = pegadas;
+  document.getElementById("totalFaltan").textContent = faltan;
+  document.getElementById("totalRepetidas").textContent = repetidas;
+  document.getElementById("porcentaje").textContent = pct + "%";
+
+  const repList = items
+    .filter(x=>data[x.id] === 2)
+    .map(x=>x.label)
+    .join(", ");
+
+  document.getElementById("repText").value = repList || "No tengo repetidas registradas.";
+}
+
+function getMissing(){
+  return allItems().filter(x=>data[x.id] !== 1);
+}
+
+function getRepeated(){
+  return allItems().filter(x=>data[x.id] === 2);
+}
+
+function exportPDF(title, list){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.setFontSize(16);
+  doc.text(title, 14, 18);
+
+  doc.setFontSize(10);
+  doc.text(`Generado: ${new Date().toLocaleDateString()}`, 14, 26);
+  doc.text(`Total: ${list.length}`, 14, 32);
+
+  let y = 42;
+  doc.setFontSize(11);
+
+  list.forEach((item, index)=>{
+    if(y > 280){
+      doc.addPage();
+      y = 20;
+    }
+    doc.text(`${index+1}. ${item.label} - ${item.group}`, 14, y);
+    y += 7;
+  });
+
+  doc.save(title.replaceAll(" ","_") + ".pdf");
+}
+
+function exportMissingPDF(){
+  exportPDF("Figuritas que me faltan Mundial 2026", getMissing());
+}
+
+function exportRepeatedPDF(){
+  exportPDF("Figuritas repetidas Mundial 2026", getRepeated());
+}
+
+function copyRepeatedList(){
+  const text = document.getElementById("repText").value;
+  navigator.clipboard.writeText(text);
+  alert("Lista de repetidas copiada.");
+}
+
+function shareRepeated(){
+  const text = "Mis repetidas del álbum Mundial 2026:\n\n" + document.getElementById("repText").value;
+
+  if(navigator.share){
+    navigator.share({
+      title:"Mis repetidas Mundial 2026",
+      text:text
+    });
+  }else{
+    navigator.clipboard.writeText(text);
+    alert("Tu navegador no permite compartir directo. La lista fue copiada.");
+  }
+}
+
+function resetAll(){
+  if(confirm("¿Seguro que quieres borrar todo el progreso?")){
+    data = {};
+    save();
+    render();
+  }
+}
+
+render();
+</script>
+
+</body>
+</html>
