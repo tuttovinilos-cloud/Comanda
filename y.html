@@ -1069,6 +1069,54 @@ html.menu-ready .header-tabs,
 }
 </style>
 
+
+<style>
+/* =========================================================
+   FIX MEDIDOR · SVG NO BORRA GRID NI PUNTOS
+========================================================= */
+#preview{
+  position:relative!important;
+  overflow:hidden!important;
+}
+
+#svgHolder{
+  position:absolute!important;
+  inset:0!important;
+  z-index:1!important;
+  width:100%!important;
+  height:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+
+#svgHolder svg{
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  display:block!important;
+  margin:auto!important;
+}
+
+#gridOverlay{
+  position:absolute!important;
+  inset:0!important;
+  z-index:5!important;
+  pointer-events:none!important;
+}
+
+#measureLayer{
+  position:absolute!important;
+  inset:0!important;
+  z-index:6!important;
+  width:100%!important;
+  height:100%!important;
+  pointer-events:none!important;
+  overflow:visible!important;
+}
+</style>
+
 </head>
 
 <body>
@@ -1137,6 +1185,7 @@ html.menu-ready .header-tabs,
     <h2>2) Vista previa · máximo 1200 × 1200</h2>
     <div id="previewShell">
       <div id="preview">
+        <div id="svgHolder"></div>
         <div id="gridOverlay"></div>
         <svg id="measureLayer" aria-hidden="true"></svg>
       </div>
@@ -1708,7 +1757,8 @@ function setActiveMeasurePoint(n){
 
 function setupMeasureTool(){
   const preview = $("preview");
-  if(!preview) return;
+  if(!preview || preview.dataset.measureReady === "1") return;
+  preview.dataset.measureReady = "1";
 
   preview.addEventListener("click", function(e){
     if(!originalRealWm || !originalRealHm){
@@ -1827,17 +1877,23 @@ function updatePreviewGrid(realWm, realHm){
 }
 
 function cargarSVGEnPreview(text){
-  $("preview").innerHTML = text;
-  svgDoc = $("preview").querySelector("svg");
+  const holder = $("svgHolder");
+  if(!holder) return;
+
+  holder.innerHTML = text;
+  svgDoc = holder.querySelector("svg");
+
   if(svgDoc){
     svgDoc.setAttribute("preserveAspectRatio", svgDoc.getAttribute("preserveAspectRatio") || "xMidYMid meet");
-    svgDoc.style.width="100%";
-    svgDoc.style.height="100%";
-    svgDoc.style.maxWidth="100%";
-    svgDoc.style.maxHeight="100%";
-    svgDoc.style.display="block";
-    svgDoc.style.margin="auto";
+    svgDoc.style.width = "100%";
+    svgDoc.style.height = "100%";
+    svgDoc.style.maxWidth = "100%";
+    svgDoc.style.maxHeight = "100%";
+    svgDoc.style.display = "block";
+    svgDoc.style.margin = "auto";
   }
+
+  clearMeasure();
 }
 
 function parseLength(raw){
@@ -2381,6 +2437,11 @@ function crearPDF(){
 
 populateProductSelect("Front Lit");
 renderMaterialPage();
+
+
+document.addEventListener("DOMContentLoaded", function(){
+  setupMeasureTool();
+});
 </script>
 
 </body>
