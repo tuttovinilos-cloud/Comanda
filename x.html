@@ -1,251 +1,759 @@
-INTEGRACIÓN DEL ANALIZADOR SVG AL ESTILO DE LA PÁGINA TUTTOVINILOS
-=================================================================
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-OBJETIVO:
-Convertir el HTML del Analizador SVG en una página más del sistema, con el mismo menú, estructura visual y estilo general.
+<title>Analizador SVG Preciso · Tuttovinilos</title>
 
-Nombre recomendado del archivo:
-analizador-svg.html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-------------------------------------------------------------
-1) CAMBIAR EL BODY
-------------------------------------------------------------
+<link rel="stylesheet" href="css/menu.css?v=31">
+<link rel="stylesheet" href="css/app.css?v=31">
 
-Busca esto:
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=31"></script>
+<script src="js/auth.js?v=31"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+
+:root{
+  --bg:#f3f6fb;
+  --card:#ffffff;
+  --card2:#f8fafc;
+  --line:#d9e4f2;
+  --text:#111827;
+  --muted:#64748b;
+
+  --blue:#0f6bff;
+  --blue2:#0057c8;
+
+  --orange:#ff8616;
+  --green:#22c783;
+  --red:#ff4d5e;
+  --yellow:#ffd166;
+
+  --shadow:0 10px 28px rgba(15,23,42,.08);
+}
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+}
+
+.main{
+  padding:18px;
+  max-width:1400px;
+  margin:auto;
+}
+
+.page-hero{
+  background:linear-gradient(135deg,#ffffff,#eef5ff);
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:20px;
+  margin-bottom:16px;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  box-shadow:var(--shadow);
+}
+
+.page-hero h1{
+  margin:0;
+  font-size:28px;
+  font-weight:900;
+  color:#0f172a;
+}
+
+.page-hero p{
+  margin:6px 0 0;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.heroBadge{
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  color:white;
+  padding:10px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+}
+
+.wrap{
+  max-width:1300px;
+  margin:auto;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:16px;
+  margin-bottom:16px;
+  box-shadow:var(--shadow);
+}
+
+.card h2{
+  margin:0 0 12px;
+  font-size:18px;
+  color:#0f172a;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+
+.grid2{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+
+.kpi{
+  background:var(--card2);
+  border:1px solid #dbeafe;
+  border-radius:16px;
+  padding:14px;
+}
+
+.kpi b{
+  display:block;
+  font-size:22px;
+  color:#0f172a;
+}
+
+.kpi span{
+  font-size:12px;
+  color:var(--muted);
+}
+
+label{
+  display:block;
+  margin-bottom:6px;
+  font-size:12px;
+  color:var(--muted);
+  font-weight:600;
+}
+
+input,
+select,
+button{
+  width:100%;
+  border:none;
+  border-radius:12px;
+  font-size:14px;
+}
+
+input,
+select{
+  padding:12px;
+  background:white;
+  border:1px solid #cbd5e1;
+  color:#111827;
+}
+
+button{
+  padding:12px;
+  font-weight:800;
+  cursor:pointer;
+  color:white;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+}
+
+button.orange{
+  background:linear-gradient(135deg,#ff8616,#d45500);
+}
+
+button.gray{
+  background:#e2e8f0;
+  color:#0f172a;
+}
+
+.tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:16px;
+}
+
+.tabBtn{
+  background:#dbeafe;
+  color:#0f172a;
+}
+
+.tabBtn.active{
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  color:white;
+}
+
+.hint{
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.5;
+}
+
+.tiny{
+  font-size:11px;
+  color:var(--muted);
+}
+
+.tableWrap{
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:16px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+
+th,td{
+  padding:10px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
+  white-space:nowrap;
+}
+
+th{
+  background:#f8fafc;
+  color:#0f172a;
+}
+
+.money{
+  color:var(--green);
+  font-weight:900;
+}
+
+.totalBox{
+  background:#f8fafc;
+  border:1px solid #dbeafe;
+  border-radius:18px;
+  padding:16px;
+  margin-top:14px;
+}
+
+.resultPrice{
+  font-size:36px;
+  font-weight:900;
+  color:var(--green);
+}
+
+.toolbarBtns{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:12px;
+}
+
+#previewShell{
+  width:100%;
+  aspect-ratio:1/1;
+  max-height:1200px;
+
+  background:#f8fafc;
+  border:1px solid var(--line);
+
+  border-radius:18px;
+  padding:12px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+#preview{
+  width:100%;
+  height:100%;
+  background:white;
+  border-radius:14px;
+
+  overflow:hidden;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+#preview svg{
+  width:100%!important;
+  height:100%!important;
+  max-width:100%;
+  max-height:100%;
+}
+
+.progress{
+  height:8px;
+  border-radius:999px;
+  overflow:hidden;
+  background:#dbeafe;
+}
+
+.bar{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,var(--blue),var(--orange));
+}
+
+.hidden{
+  display:none!important;
+}
+
+.desglose{
+  display:none;
+}
+
+.desglose.show{
+  display:block;
+}
+
+.row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.row input[type=checkbox]{
+  width:auto;
+}
+
+.pill{
+  display:inline-block;
+  padding:7px 10px;
+  border-radius:999px;
+  background:#dbeafe;
+  border:1px solid #bfdbfe;
+  color:#0f172a;
+  font-size:12px;
+  font-weight:700;
+}
+
+.materialEditor{
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr auto;
+  gap:10px;
+  align-items:end;
+}
+
+.componentEditor{
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr 1fr auto auto;
+  gap:10px;
+  align-items:end;
+}
+
+.priceInput{
+  max-width:90px;
+  padding:7px;
+}
+
+.sectionTitle{
+  margin:12px 0;
+  font-size:15px;
+  font-weight:800;
+}
+
+.pdfNote{
+  font-size:11px;
+  color:var(--muted);
+}
+
+@media(max-width:900px){
+
+  .grid,
+  .grid2,
+  .kpis{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .materialEditor,
+  .componentEditor{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .page-hero{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:12px;
+  }
+
+}
+
+@media(max-width:520px){
+
+  .grid,
+  .grid2,
+  .kpis,
+  .tabs{
+    grid-template-columns:1fr;
+  }
+
+  .toolbarBtns{
+    grid-template-columns:1fr;
+  }
+
+  .main{
+    padding:10px;
+  }
+
+  .card{
+    padding:12px;
+    border-radius:16px;
+  }
+
+  .page-hero{
+    padding:16px;
+    border-radius:18px;
+  }
+
+  .page-hero h1{
+    font-size:22px;
+  }
+
+}
+
+</style>
+</head>
 
 <body>
 
-Reemplázalo por esto:
+<div id="menu-container"></div>
 
-<body class="tv-page">
-  <div id="menu-container"></div>
-
-  <main class="main">
-
-
-------------------------------------------------------------
-2) CAMBIAR EL HEADER ORIGINAL
-------------------------------------------------------------
-
-Busca esto:
-
-<header><h1>📐 Analizador SVG Preciso · Tuttovinilos</h1></header>
-
-Elimínalo y coloca esto dentro de <main class="main">:
+<main class="main">
 
 <section class="page-hero">
   <div>
     <h1>📐 Analizador SVG Preciso</h1>
     <p>Medidas reales, piezas, perímetro, área, MTR y cotización técnica.</p>
   </div>
-  <span class="badge">Tuttovinilos</span>
+
+  <div class="heroBadge">
+    Tuttovinilos
+  </div>
 </section>
 
+<div class="wrap">
 
-------------------------------------------------------------
-3) CERRAR EL MAIN
-------------------------------------------------------------
+<div class="tabs">
+  <button id="btnTabAnalyzer" class="tabBtn active" onclick="switchTab('analyzer')">
+    Analizador / Cotizador
+  </button>
 
-Antes de este bloque:
+  <button id="btnTabMaterials" class="tabBtn" onclick="switchTab('materials')">
+    Materiales / Compuestos
+  </button>
+</div>
+
+<section id="tabAnalyzer">
+
+<div class="card">
+
+<h2>1) Importar SVG</h2>
+
+<div class="grid2">
+
+<div>
+<label>Archivo SVG</label>
+<input type="file" id="fileInput" accept=".svg,image/svg+xml">
+</div>
+
+<div>
+<label>Precisión</label>
+
+<div class="pill" style="width:100%;padding:12px;text-align:center">
+Extrema fija · 5000 px
+</div>
+
+<p class="tiny">
+Siempre analiza en calidad extrema.
+</p>
+</div>
+
+</div>
+
+<br>
+
+<div class="grid">
+
+<div>
+<label>Ancho manual</label>
+<input id="fallbackWidth" type="number" value="60" step="0.01">
+</div>
+
+<div>
+<label>Unidad</label>
+
+<select id="fallbackUnit">
+<option value="mm">mm</option>
+<option value="cm" selected>cm</option>
+<option value="m">m</option>
+<option value="in">in</option>
+</select>
+</div>
+
+<div>
+<label>Aplicar medida</label>
+<button class="orange" onclick="aplicarAnchoManualAlSVG()">
+Escalar SVG
+</button>
+</div>
+
+<div>
+<label>Descargar SVG</label>
+<button class="gray" onclick="descargarSVGActual()">
+Descargar
+</button>
+</div>
+
+</div>
+
+<br>
+
+<div class="grid2">
+<button onclick="analizarSVG()">
+Analizar SVG
+</button>
+</div>
+
+<br>
+
+<div class="row">
+<input type="checkbox" id="ignoreWhite" checked>
+<label for="ignoreWhite" style="margin:0">
+Ignorar blanco como hueco
+</label>
+</div>
+
+<br>
+
+<div class="progress">
+<div class="bar" id="bar"></div>
+</div>
+
+<p class="hint" id="status">
+Listo.
+</p>
+
+</div>
+
+<div class="card">
+
+<h2>2) Vista previa</h2>
+
+<div id="previewShell">
+<div id="preview"></div>
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>3) Resultados</h2>
+
+<div class="kpis">
+
+<div class="kpi">
+<b id="kAncho">0</b>
+<span>Ancho real</span>
+</div>
+
+<div class="kpi">
+<b id="kAlto">0</b>
+<span>Alto real</span>
+</div>
+
+<div class="kpi">
+<b id="kPiezas">0</b>
+<span>Piezas</span>
+</div>
+
+<div class="kpi">
+<b id="kPerimetro">0</b>
+<span>Perímetro</span>
+</div>
+
+<div class="kpi">
+<b id="kAreaRelleno">0</b>
+<span>Área relleno</span>
+</div>
+
+<div class="kpi">
+<b id="kAreaMarco">0</b>
+<span>Área marco</span>
+</div>
+
+<div class="kpi">
+<b id="kAreaSel">0</b>
+<span>Área selección</span>
+</div>
+
+<div class="kpi">
+<b id="kEscala">0</b>
+<span>Escala</span>
+</div>
+
+</div>
+
+<br>
+
+<p class="hint" id="method"></p>
+
+</div>
+
+<div class="card">
+
+<h2>4) Producto / Precio</h2>
+
+<div class="grid2">
+
+<div>
+<label>Producto</label>
+
+<select id="productSelect" onchange="renderPricing(lastResults)">
+</select>
+</div>
+
+<div>
+<label>Multiplicador</label>
+<input id="saleMultiplier" type="number" value="1" step="0.01" onchange="renderPricing(lastResults)">
+</div>
+
+</div>
+
+<br>
+
+<div class="totalBox">
+
+<label>Precio final</label>
+
+<div class="resultPrice" id="selectedTotal">
+$0.00
+</div>
+
+<div class="hint" id="selectedFormula">
+Importa y analiza un SVG.
+</div>
+
+</div>
+
+<div class="toolbarBtns">
+
+<button class="gray" onclick="toggleDesglose()">
+Desglose
+</button>
+
+<button onclick="crearPDF()">
+Crear PDF
+</button>
+
+<button class="orange" onclick="copiarResumen()">
+Copiar resumen
+</button>
+
+</div>
+
+<br>
+
+<div id="desgloseBox" class="desglose">
+
+<div class="tableWrap">
+<table id="selectedBreakdown"></table>
+</div>
+
+<br>
+
+<div class="tableWrap">
+<table id="mtrTable"></table>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<section id="tabMaterials" class="hidden">
+
+<div class="card">
+
+<h2>Materiales</h2>
+
+<div class="materialEditor">
+
+<div>
+<label>Material</label>
+<input id="matName">
+</div>
+
+<div>
+<label>Unidad</label>
+
+<select id="matUnit">
+<option>m²</option>
+<option>ml</option>
+<option>und</option>
+<option>m</option>
+<option>kg</option>
+</select>
+
+</div>
+
+<div>
+<label>Precio</label>
+<input id="matPrice" type="number" value="0">
+</div>
+
+<button onclick="saveMaterialFromForm()">
+Guardar
+</button>
+
+</div>
+
+<br>
+
+<div class="tableWrap">
+<table id="materialsTable"></table>
+</div>
+
+</div>
+
+</section>
+
+</div>
+
+</main>
+
+<script src="js/menu.js?v=31"></script>
 
 <script>
 
-Agrega esto:
+/* TU SCRIPT ORIGINAL COMPLETO AQUÍ */
+/* NO LO BORRES */
+/* SOLO PEGA TODO TU JS DE ABAJO */
 
-  </main>
+</script>
 
-
-------------------------------------------------------------
-4) AGREGAR LOS CSS DEL SISTEMA
-------------------------------------------------------------
-
-Dentro del <head>, después del <title>, agrega:
-
-<link rel="stylesheet" href="css/menu.css?v=31">
-<link rel="stylesheet" href="css/app.css?v=31">
-
-IMPORTANTE:
-Si tu sistema usa otro CSS principal, por ejemplo:
-
-css/index.css
-css/cotizador.css
-css/style.css
-
-usa el CSS que ya esté usando tu página principal.
-
-
-------------------------------------------------------------
-5) AGREGAR LOS SCRIPTS DEL SISTEMA
-------------------------------------------------------------
-
-Antes de cerrar </body>, agrega:
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=31"></script>
-<script src="js/auth.js?v=31"></script>
-<script src="js/menu.js?v=31"></script>
-
-IMPORTANTE:
-Si tu analizador no usará Supabase todavía, puedes dejar solo:
-
-<script src="js/menu.js?v=31"></script>
-
-Pero si tu sistema exige login, deja también auth.js y supabase.js.
-
-
-------------------------------------------------------------
-6) ESTRUCTURA FINAL RECOMENDADA DEL BODY
-------------------------------------------------------------
-
-El body debería quedar así:
-
-<body class="tv-page">
-  <div id="menu-container"></div>
-
-  <main class="main">
-
-    <section class="page-hero">
-      <div>
-        <h1>📐 Analizador SVG Preciso</h1>
-        <p>Medidas reales, piezas, perímetro, área, MTR y cotización técnica.</p>
-      </div>
-      <span class="badge">Tuttovinilos</span>
-    </section>
-
-    <div class="wrap">
-      <!-- AQUÍ VA TODO EL CONTENIDO ACTUAL DEL ANALIZADOR -->
-    </div>
-
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase.js?v=31"></script>
-  <script src="js/auth.js?v=31"></script>
-  <script src="js/menu.js?v=31"></script>
-
-  <script>
-    // AQUÍ VA TODO EL JAVASCRIPT ACTUAL DEL ANALIZADOR
-  </script>
 </body>
-
-
-------------------------------------------------------------
-7) AGREGAR EL BOTÓN AL MENÚ
-------------------------------------------------------------
-
-En tu archivo:
-
-js/menu.js
-
-Busca donde tienes la lista de botones/páginas del menú.
-
-Agrega este item:
-
-{
-  label: "Analizador SVG",
-  href: "analizador-svg.html",
-  icon: "📐"
-}
-
-Ejemplo:
-
-const MENU_ITEMS = [
-  { label: "Pedidos", href: "index.html", icon: "📋" },
-  { label: "Cotizador", href: "cotizador.html", icon: "💰" },
-  { label: "Materiales", href: "materiales.html", icon: "🧱" },
-  { label: "Analizador SVG", href: "analizador-svg.html", icon: "📐" },
-  { label: "Configuración", href: "configuracion.html", icon: "⚙️" }
-];
-
-
-------------------------------------------------------------
-8) AJUSTE VISUAL PARA QUE EL ANALIZADOR NO CHOQUE CON EL MENÚ
-------------------------------------------------------------
-
-Si el contenido queda pegado arriba o escondido debajo del menú, agrega este CSS al archivo analizador-svg.html:
-
-<style>
-.main{
-  width:100%;
-  max-width:1280px;
-  margin:0 auto;
-  padding:18px;
-}
-
-.page-hero{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:14px;
-  margin-bottom:16px;
-  padding:18px;
-  border-radius:18px;
-  background:linear-gradient(135deg,#ffffff,#f3f7ff);
-  border:1px solid #dce5f5;
-  box-shadow:0 10px 28px rgba(15,23,42,.08);
-}
-
-.page-hero h1{
-  margin:0;
-  font-size:24px;
-  font-weight:900;
-  color:#102033;
-}
-
-.page-hero p{
-  margin:5px 0 0;
-  color:#64748b;
-  font-size:14px;
-}
-
-.badge{
-  padding:8px 12px;
-  border-radius:999px;
-  background:#e8f2ff;
-  color:#0b5dab;
-  font-weight:800;
-  font-size:12px;
-  white-space:nowrap;
-}
-
-@media(max-width:700px){
-  .main{
-    padding:10px;
-  }
-
-  .page-hero{
-    flex-direction:column;
-    align-items:flex-start;
-  }
-
-  .page-hero h1{
-    font-size:20px;
-  }
-}
-</style>
-
-
-------------------------------------------------------------
-9) RECOMENDACIÓN IMPORTANTE
-------------------------------------------------------------
-
-Por ahora NO cambies los cálculos del analizador.
-Primero haz solo esto:
-
-1. Crear analizador-svg.html
-2. Pegar el analizador actual
-3. Agregar menú y estilos
-4. Probar que abre desde el menú
-5. Probar subir un SVG
-6. Probar analizar
-7. Probar PDF
-
-Después de que eso funcione, se puede hacer la segunda etapa:
-
-- conectar materiales a Supabase
-- ordenar nombres de materiales
-- separar costo real y precio cliente
-- añadir corte router/láser
-- añadir luz, transformador, cable y fijación
-- guardar análisis/cotizaciones
-
+</html>
