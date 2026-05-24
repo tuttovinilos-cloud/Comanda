@@ -1,1240 +1,251 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Tuttovinilos · Medidor de Logos PRO</title>
+INTEGRACIÓN DEL ANALIZADOR SVG AL ESTILO DE LA PÁGINA TUTTOVINILOS
+=================================================================
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+OBJETIVO:
+Convertir el HTML del Analizador SVG en una página más del sistema, con el mismo menú, estructura visual y estilo general.
 
-<style>
-:root{
-  --bg:#f0f2f9;
-  --panel:#ffffff;
-  --panel2:#f8f9ff;
-  --border:#d9deea;
-  --border2:#cbd3e6;
-  --text:#111827;
-  --muted:#64748b;
-  --blue:#153bff;
-  --blue2:#0b1f7a;
-  --orange:#ff8616;
-  --green:#16a34a;
-  --red:#ef4444;
-  --yellow:#f59e0b;
-  --shadow:0 10px 28px rgba(15,23,42,.08);
-  --head:'Montserrat',Arial,sans-serif;
-  --body:'Inter',Arial,sans-serif;
-  --mono:'Roboto Mono',monospace;
-  --safe:env(safe-area-inset-bottom,0px);
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100dvh;overflow-x:hidden}
-button,input,select{font-family:inherit}
-button{border:0;cursor:pointer}
-input{outline:none}
+Nombre recomendado del archivo:
+analizador-svg.html
 
-.app{max-width:980px;margin:auto;padding:12px}
-.top{position:sticky;top:0;z-index:50;background:rgba(240,242,249,.92);backdrop-filter:blur(18px);padding:10px 0 12px}
-.brand{background:linear-gradient(135deg,#153bff,#0b1f7a);color:#fff;border-radius:24px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 24px rgba(21,59,255,.22)}
-.brand h1{font-family:var(--head);font-size:18px;font-weight:900;letter-spacing:.4px}
-.brand span{font-size:11px;opacity:.82;font-weight:700}
+------------------------------------------------------------
+1) CAMBIAR EL BODY
+------------------------------------------------------------
 
-.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
-.step{border:1px solid var(--border);border-radius:999px;background:#fff;padding:9px 8px;font-size:10px;font-weight:900;color:var(--muted);text-align:center;font-family:var(--head);letter-spacing:.2px}
-.step.active{background:var(--blue);border-color:var(--blue);color:#fff}
-.step.done{background:#e9efff;border-color:#bfcaff;color:var(--blue)}
-
-.card{background:#fff;border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
-.card h2{font-family:var(--head);font-size:16px;color:var(--blue2);margin-bottom:10px}
-.hint{font-size:12px;color:var(--muted);line-height:1.45}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-label{display:block;font-size:11px;color:var(--muted);font-weight:800;margin-bottom:6px}
-input,select{width:100%;height:42px;border-radius:13px;border:1px solid var(--border);background:#fff;padding:0 12px;font-size:14px;color:var(--text)}
-.btn{width:100%;min-height:42px;border-radius:14px;background:var(--blue);color:#fff;font-family:var(--head);font-weight:900;font-size:13px;letter-spacing:.25px;display:flex;align-items:center;justify-content:center;gap:7px}
-.btn.orange{background:var(--orange)}
-.btn.gray{background:#fff;color:var(--blue);border:1px solid var(--border2)}
-.btn.green{background:var(--green)}
-.btn.red{background:var(--red)}
-.btn:active{transform:scale(.98)}
-
-.viewerCard{background:#fff;border:1px solid var(--border);border-radius:24px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:12px}
-.viewerHead{padding:10px 12px;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--border);background:#fbfcff;overflow:auto;scrollbar-width:none}
-.viewerHead::-webkit-scrollbar{display:none}
-.tool{flex:0 0 auto;height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--border2);background:#fff;color:var(--muted);font-weight:900;font-size:12px;font-family:var(--head)}
-.tool.active{background:var(--blue);color:#fff;border-color:var(--blue)}
-.tool.orange.active{background:var(--orange);border-color:var(--orange)}
-.tool.green.active{background:var(--green);border-color:var(--green)}
-
-.viewerStageWrap{width:100%;display:flex;justify-content:center;background:#f8f9ff;padding:12px}
-.viewerStage{
-  position:relative;
-  width:min(100%,420px);
-  max-width:420px;
-  aspect-ratio:1/1;
-  background:
-    linear-gradient(45deg,#f7f7f7 25%,transparent 25%),
-    linear-gradient(-45deg,#f7f7f7 25%,transparent 25%),
-    linear-gradient(45deg,transparent 75%,#f7f7f7 75%),
-    linear-gradient(-45deg,transparent 75%,#f7f7f7 75%);
-  background-size:20px 20px;
-  background-position:0 0,0 10px,10px -10px,-10px 0px;
-  border:1px solid var(--border);
-  border-radius:18px;
-  overflow:hidden;
-  touch-action:none;
-}
-#canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
-.badge{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:11px;color:var(--blue2);font-weight:900;font-family:var(--head);pointer-events:none;box-shadow:0 6px 18px rgba(15,23,42,.08)}
-.zoomBadge{position:absolute;right:10px;bottom:10px;background:rgba(15,23,42,.75);color:white;border-radius:999px;padding:5px 10px;font-size:11px;font-family:var(--mono);pointer-events:none}
-
-.fileBtn{position:relative;overflow:hidden}
-.fileBtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
-
-.infoGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.info{background:#f8f9ff;border:1px solid var(--border);border-radius:16px;padding:10px;min-height:68px}
-.info span{display:block;color:var(--muted);font-size:10px;font-weight:800;margin-bottom:6px}
-.info b{font-family:var(--mono);font-size:14px;color:#111827}
-.resultBig{background:linear-gradient(135deg,#eef4ff,#fff);border:1px solid #bfd0ff;border-radius:18px;padding:14px;margin-top:10px;text-align:center}
-.resultBig span{display:block;font-size:11px;color:var(--muted);font-weight:900;margin-bottom:4px}
-.resultBig b{font-family:var(--head);color:var(--blue);font-size:28px;font-weight:900}
-.panelGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.measureTools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.measureTools .btn.active{background:var(--orange)}
-.toast{position:fixed;left:50%;bottom:calc(18px + var(--safe));transform:translateX(-50%) translateY(15px);background:#111827;color:#fff;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;opacity:0;pointer-events:none;transition:.25s;z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.hidden{display:none!important}
-
-.tableWrap{width:100%;overflow:auto;border:1px solid var(--border);border-radius:18px;margin-top:10px;background:#fff}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{background:#eef1fb;color:#5b6475;font-family:var(--head);font-weight:900;text-align:left;padding:10px;border-bottom:1px solid var(--border);white-space:nowrap}
-td{padding:9px 10px;border-bottom:1px solid var(--border);white-space:nowrap;font-family:var(--mono)}
-tr:last-child td{border-bottom:none}
-.bad{color:var(--red)!important}
-.good{color:var(--green)!important}
-.smallNote{font-size:11px;color:var(--muted);line-height:1.4;margin-top:8px}
-.toggleBox{display:flex;align-items:center;gap:8px;margin-top:10px}
-.toggleBox input{width:auto;height:auto}
-.toggleBox label{margin:0;font-size:12px;color:var(--text)}
-
-@media(max-width:520px){
-  .app{padding:8px}
-  .brand{border-radius:20px;padding:12px}
-  .brand h1{font-size:15px}
-  .brand span{font-size:10px}
-  .steps{gap:5px}
-  .step{font-size:8px;padding:8px 3px}
-  .card{padding:12px;border-radius:18px}
-  .card h2{font-size:14px}
-  .panelGrid{grid-template-columns:1fr}
-  .grid2{grid-template-columns:1fr 1fr}
-  .grid3{grid-template-columns:1fr 1fr 1fr}
-  .infoGrid{grid-template-columns:repeat(4,1fr);gap:6px}
-  .info{padding:7px 5px;min-height:56px;border-radius:12px}
-  .info span{font-size:8px;line-height:1.1}
-  .info b{font-size:10px}
-  input,select,.btn{font-size:11px;min-height:38px;height:38px;border-radius:12px}
-  .viewerStage{width:min(100%,335px);max-width:335px}
-  .viewerStageWrap{padding:8px}
-  .tool{height:32px;font-size:10px;padding:0 10px}
-  .resultBig b{font-size:22px}
-  table{font-size:12px}
-  th,td{padding:8px 9px}
-}
-</style>
-</head>
+Busca esto:
 
 <body>
-<div class="app">
 
-  <div class="top">
-    <div class="brand">
-      <div>
-        <h1>MEDIDOR DE LOGOS PRO</h1>
-        <span>Recortar · Escalar · Medir · Área</span>
-      </div>
-      <span>TUTTOVINILOS</span>
-    </div>
-    <div class="steps">
-      <div id="step1" class="step active">1 RECORTAR</div>
-      <div id="step2" class="step">2 ESCALAR</div>
-      <div id="step3" class="step">3 MEDIR</div>
-      <div id="step4" class="step">4 ÁREAS</div>
-    </div>
+Reemplázalo por esto:
+
+<body class="tv-page">
+  <div id="menu-container"></div>
+
+  <main class="main">
+
+
+------------------------------------------------------------
+2) CAMBIAR EL HEADER ORIGINAL
+------------------------------------------------------------
+
+Busca esto:
+
+<header><h1>📐 Analizador SVG Preciso · Tuttovinilos</h1></header>
+
+Elimínalo y coloca esto dentro de <main class="main">:
+
+<section class="page-hero">
+  <div>
+    <h1>📐 Analizador SVG Preciso</h1>
+    <p>Medidas reales, piezas, perímetro, área, MTR y cotización técnica.</p>
   </div>
+  <span class="badge">Tuttovinilos</span>
+</section>
 
-  <div class="card">
-    <h2>Imagen</h2>
-    <div class="grid2">
-      <button class="btn fileBtn">Abrir imagen
-        <input id="fileInput" type="file" accept="image/*">
-      </button>
-      <button class="btn gray" onclick="resetAll()">Reiniciar</button>
-    </div>
-    <p class="hint" style="margin-top:8px">En móvil: 1 dedo marca/mueve puntos. 2 dedos hacen zoom y mueven la imagen.</p>
-  </div>
 
-  <div id="viewerCard" class="viewerCard hidden">
-    <div class="viewerHead">
-      <button id="toolPan" class="tool active" onclick="setMode('pan')">Mover</button>
-      <button id="toolCrop" class="tool orange" onclick="setMode('crop')">Recortar</button>
-      <button id="toolMeasure" class="tool green" onclick="setMode('measure')">Medir</button>
-      <button class="tool" onclick="centerImage()">Centrar</button>
-      <button class="tool" onclick="fitCropToView()">Ver recorte</button>
-      <button class="tool" onclick="analyzeAreas()">Analizar áreas</button>
-    </div>
+------------------------------------------------------------
+3) CERRAR EL MAIN
+------------------------------------------------------------
 
-    <div class="viewerStageWrap">
-      <div id="viewerStage" class="viewerStage">
-        <canvas id="canvas"></canvas>
-        <div id="badge" class="badge">Carga una imagen</div>
-        <div id="zoomBadge" class="zoomBadge">100%</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="panelGrid">
-    <div id="cropCard" class="card hidden">
-      <h2>1) Recorte rectangular</h2>
-      <p class="hint">Arrastra esquinas o lados. El recorte siempre queda rectangular a 90°.</p>
-
-      <div class="infoGrid" style="margin-top:10px">
-        <div class="info"><span>X</span><b id="cropX">—</b></div>
-        <div class="info"><span>Y</span><b id="cropY">—</b></div>
-        <div class="info"><span>Ancho</span><b id="cropW">—</b></div>
-        <div class="info"><span>Alto</span><b id="cropH">—</b></div>
-      </div>
-
-      <div class="actions">
-        <button class="btn gray" onclick="resetCrop()">Reset</button>
-        <button class="btn orange" onclick="applyCrop()">Aplicar recorte</button>
-      </div>
-    </div>
-
-    <div id="scaleCard" class="card hidden">
-      <h2>2) Escalar</h2>
-      <p class="hint">Coloca una medida real. Todo el cálculo de área depende de esta escala.</p>
-
-      <div class="grid2" style="margin-top:10px">
-        <div>
-          <label>Escalar por</label>
-          <select id="scaleMode" onchange="syncScaleInputs()">
-            <option value="width">Ancho</option>
-            <option value="height">Alto</option>
-          </select>
-        </div>
-        <div>
-          <label>Medida cm</label>
-          <input id="scaleValue" type="number" inputmode="decimal" step="0.01" placeholder="Ej: 60" oninput="calcScaleLive()">
-        </div>
-      </div>
-
-      <div class="resultBig">
-        <span>Tamaño real</span>
-        <b id="realSize">—</b>
-      </div>
-
-      <div class="actions">
-        <button class="btn gray" onclick="useWidthPreset()">Usar ancho</button>
-        <button class="btn green" onclick="confirmScale()">Confirmar escala</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="measureCard" class="card hidden">
-    <h2>3) Medición por 2 puntos</h2>
-    <p class="hint">Pulsa Punto 1 y toca la imagen. Luego Punto 2 y toca la imagen.</p>
-
-    <div class="measureTools">
-      <button id="btnP1" class="btn active" onclick="setActivePoint(1)">Punto 1</button>
-      <button id="btnP2" class="btn gray" onclick="setActivePoint(2)">Punto 2</button>
-    </div>
-
-    <div class="resultBig">
-      <span>Distancia</span>
-      <b id="measureResult">—</b>
-    </div>
-
-    <div class="infoGrid" style="margin-top:10px">
-      <div class="info"><span>P1 X</span><b id="p1x">—</b></div>
-      <div class="info"><span>P1 Y</span><b id="p1y">—</b></div>
-      <div class="info"><span>P2 X</span><b id="p2x">—</b></div>
-      <div class="info"><span>P2 Y</span><b id="p2y">—</b></div>
-    </div>
-
-    <div class="actions">
-      <button class="btn gray" onclick="clearMeasure()">Limpiar puntos</button>
-      <button class="btn" onclick="copyMeasure()">Copiar medida</button>
-    </div>
-  </div>
-
-  <div id="areaCard" class="card hidden">
-    <h2>4) Áreas reales y marco optimizado</h2>
-    <p class="hint">Corrección aplicada: el marco optimizado usa perímetro real × grosor en cm. Ya no depende de píxeles sin escala ni de selección - relleno.</p>
-
-    <div class="grid3" style="margin-top:10px">
-      <div>
-        <label>Fondo a ignorar</label>
-        <select id="bgMode" onchange="analyzeAreas()">
-          <option value="white">Blanco / claro</option>
-          <option value="transparent">Transparente</option>
-          <option value="black">Negro / oscuro</option>
-          <option value="none">No ignorar</option>
-        </select>
-      </div>
-      <div>
-        <label>Tolerancia</label>
-        <input id="tolerance" type="number" value="245" min="0" max="255" oninput="analyzeAreas()">
-      </div>
-      <div>
-        <label>Grosor marco cm</label>
-        <input id="frameThickness" type="number" value="2" step="0.1" oninput="analyzeAreas()">
-      </div>
-    </div>
-
-    <div class="grid3" style="margin-top:8px">
-      <div>
-        <label>Pieza mínima px</label>
-        <input id="minPiecePx" type="number" value="120" min="1" oninput="analyzeAreas()">
-      </div>
-      <div>
-        <label>Detalle</label>
-        <select id="detailMode" onchange="renderPieceTable()">
-          <option value="hide">Oculto</option>
-          <option value="show">Mostrar</option>
-        </select>
-      </div>
-      <div>
-        <label>Decimales</label>
-        <select id="decimalsMode" onchange="renderAreas()">
-          <option value="4">4</option>
-          <option value="3" selected>3</option>
-          <option value="2">2</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="infoGrid" style="margin-top:10px">
-      <div class="info"><span>Selección</span><b id="areaSelection">—</b></div>
-      <div class="info"><span>Relleno</span><b id="areaFill">—</b></div>
-      <div class="info"><span>Perímetro</span><b id="areaPerimeter">—</b></div>
-      <div class="info"><span>Marco opt.</span><b id="areaFrameOpt">—</b></div>
-    </div>
-
-    <div class="infoGrid" style="margin-top:8px">
-      <div class="info"><span>Total + marco</span><b id="areaTotalFrame">—</b></div>
-      <div class="info"><span>Vacío caja</span><b id="areaEmptyBox">—</b></div>
-      <div class="info"><span>Piezas</span><b id="pieceCount">—</b></div>
-      <div class="info"><span>Px útiles</span><b id="usefulPixels">—</b></div>
-    </div>
-
-    <div class="actions">
-      <button class="btn green" onclick="analyzeAreas()">Recalcular áreas</button>
-      <button class="btn gray" onclick="copyAreaSummary()">Copiar resumen</button>
-    </div>
-
-    <p class="smallNote">
-      Fórmulas principales: Área real = px² × cmPerPx². Perímetro real = perímetroPx × cmPerPx. Marco optimizado = perímetroCm × grosorMarcoCm.
-    </p>
-
-    <div id="pieceTableBox" class="hidden">
-      <div class="tableWrap">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>PÍXELES</th>
-              <th>ANCHO</th>
-              <th>ALTO</th>
-              <th>RELLENO</th>
-              <th>PERÍMETRO</th>
-              <th>MARCO OPT.</th>
-              <th>ÁNGULO</th>
-            </tr>
-          </thead>
-          <tbody id="pieceTableBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<div id="toast" class="toast">Listo</div>
+Antes de este bloque:
 
 <script>
-const $ = id => document.getElementById(id);
-const canvas = $("canvas");
-const ctx = canvas.getContext("2d");
 
-const S = {
-  img:null,
-  imgName:"",
-  iw:0,
-  ih:0,
-  viewSize:420,
-  ox:0,
-  oy:0,
-  scale:1,
-  mode:"pan",
-  dragging:false,
-  dragCorner:-1,
-  last:null,
-  crop:null,
-  dragMode:null,
-  cmPerPx:null,
-  realW:0,
-  realH:0,
-  activePoint:1,
-  p1:null,
-  p2:null,
-  pinch:null,
-  areas:null,
-  pieces:[]
-};
+Agrega esto:
 
-function toast(msg){
-  const t=$("toast");
-  t.textContent=msg;
-  t.classList.add("show");
-  clearTimeout(t._timer);
-  t._timer=setTimeout(()=>t.classList.remove("show"),1800);
-}
+  </main>
 
-function updateCanvasSize(){
-  const stage=$("viewerStage");
-  const r=stage.getBoundingClientRect();
-  const dpr=window.devicePixelRatio || 1;
-  canvas.width=Math.round(r.width*dpr);
-  canvas.height=Math.round(r.height*dpr);
-  canvas.style.width=r.width+"px";
-  canvas.style.height=r.height+"px";
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  S.viewSize=r.width;
-  draw();
-}
 
-window.addEventListener("resize",()=>setTimeout(updateCanvasSize,80));
+------------------------------------------------------------
+4) AGREGAR LOS CSS DEL SISTEMA
+------------------------------------------------------------
 
-$("fileInput").addEventListener("change", e=>{
-  const file=e.target.files[0];
-  if(!file)return;
-  const img=new Image();
-  img.onload=()=>{
-    S.img=img;
-    S.imgName=file.name;
-    S.iw=img.naturalWidth;
-    S.ih=img.naturalHeight;
-    $("viewerCard").classList.remove("hidden");
-    $("cropCard").classList.remove("hidden");
-    $("scaleCard").classList.remove("hidden");
-    $("measureCard").classList.remove("hidden");
-    $("areaCard").classList.remove("hidden");
-    updateCanvasSize();
-    resetCrop();
-    centerImage();
-    setMode("crop");
-    setStep(1);
-    toast("Imagen cargada");
-  };
-  img.onerror=()=>toast("No se pudo abrir la imagen");
-  img.src=URL.createObjectURL(file);
-  e.target.value="";
-});
+Dentro del <head>, después del <title>, agrega:
 
-function setStep(n){
-  $("step1").className="step"+(n===1?" active":n>1?" done":"");
-  $("step2").className="step"+(n===2?" active":n>2?" done":"");
-  $("step3").className="step"+(n===3?" active":n>3?" done":"");
-  $("step4").className="step"+(n===4?" active":"");
-}
+<link rel="stylesheet" href="css/menu.css?v=31">
+<link rel="stylesheet" href="css/app.css?v=31">
 
-function setMode(m){
-  S.mode=m;
-  $("toolPan").classList.toggle("active",m==="pan");
-  $("toolCrop").classList.toggle("active",m==="crop");
-  $("toolMeasure").classList.toggle("active",m==="measure");
-  $("badge").textContent = m==="pan" ? "Mover / Zoom" : m==="crop" ? "Recortar" : "Medir con 2 puntos";
-  draw();
-}
+IMPORTANTE:
+Si tu sistema usa otro CSS principal, por ejemplo:
 
-function centerImage(){
-  if(!S.img)return;
-  const fit=Math.min(S.viewSize/S.iw,S.viewSize/S.ih)*0.92;
-  S.scale=fit;
-  S.ox=(S.viewSize-S.iw*S.scale)/2;
-  S.oy=(S.viewSize-S.ih*S.scale)/2;
-  draw();
-}
+css/index.css
+css/cotizador.css
+css/style.css
 
-function resetAll(){
-  S.img=null;
-  S.crop=null;
-  S.dragMode=null;
-  S.lastCropImg=null;
-  S.cmPerPx=null;
-  S.p1=null;
-  S.p2=null;
-  S.areas=null;
-  S.pieces=[];
-  $("viewerCard").classList.add("hidden");
-  $("cropCard").classList.add("hidden");
-  $("scaleCard").classList.add("hidden");
-  $("measureCard").classList.add("hidden");
-  $("areaCard").classList.add("hidden");
-  $("realSize").textContent="—";
-  $("measureResult").textContent="—";
-  $("fileInput").value="";
-  renderAreas();
-  setStep(1);
-}
+usa el CSS que ya esté usando tu página principal.
 
-function imgToScreen(p){
-  return {x:p.x*S.scale+S.ox,y:p.y*S.scale+S.oy};
-}
-function screenToImg(x,y){
-  return {x:(x-S.ox)/S.scale,y:(y-S.oy)/S.scale};
-}
-function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 
-function resetCrop(){
-  if(!S.img)return;
-  const pad=Math.min(S.iw,S.ih)*0.08;
-  S.crop={x:pad,y:pad,w:S.iw-(pad*2),h:S.ih-(pad*2)};
-  updateCropInfo();
-  draw();
-}
+------------------------------------------------------------
+5) AGREGAR LOS SCRIPTS DEL SISTEMA
+------------------------------------------------------------
 
-function cropBox(){
-  if(!S.crop)return null;
-  return {x:S.crop.x,y:S.crop.y,w:S.crop.w,h:S.crop.h};
-}
+Antes de cerrar </body>, agrega:
 
-function updateCropInfo(){
-  const b=cropBox();
-  if(!b)return;
-  $("cropX").textContent=Math.round(b.x);
-  $("cropY").textContent=Math.round(b.y);
-  $("cropW").textContent=Math.round(b.w);
-  $("cropH").textContent=Math.round(b.h);
-}
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=31"></script>
+<script src="js/auth.js?v=31"></script>
+<script src="js/menu.js?v=31"></script>
 
-function applyCrop(){
-  if(!S.img || !S.crop)return;
-  const b=cropBox();
-  if(b.w<5 || b.h<5){toast("Recorte muy pequeño");return;}
-  const c=document.createElement("canvas");
-  c.width=Math.round(b.w);
-  c.height=Math.round(b.h);
-  c.getContext("2d").drawImage(S.img,b.x,b.y,b.w,b.h,0,0,c.width,c.height);
-  const img=new Image();
-  img.onload=()=>{
-    S.img=img;
-    S.iw=img.naturalWidth;
-    S.ih=img.naturalHeight;
-    S.crop=null;
-    S.p1=null;
-    S.p2=null;
-    S.cmPerPx=null;
-    S.areas=null;
-    S.pieces=[];
-    resetCrop();
-    centerImage();
-    setStep(2);
-    setMode("pan");
-    $("realSize").textContent="—";
-    $("measureResult").textContent="—";
-    renderAreas();
-    toast("Recorte aplicado");
-  };
-  img.src=c.toDataURL("image/png");
-}
+IMPORTANTE:
+Si tu analizador no usará Supabase todavía, puedes dejar solo:
 
-function fitCropToView(){
-  const b=cropBox();
-  if(!b)return;
-  const fit=Math.min(S.viewSize/b.w,S.viewSize/b.h)*0.82;
-  S.scale=fit;
-  S.ox=(S.viewSize-b.w*S.scale)/2-b.x*S.scale;
-  S.oy=(S.viewSize-b.h*S.scale)/2-b.y*S.scale;
-  draw();
-}
+<script src="js/menu.js?v=31"></script>
 
-function calcScaleLive(){
-  if(!S.img)return;
-  const val=Number($("scaleValue").value||0);
-  if(!val || val<=0){$("realSize").textContent="—";return;}
-  const mode=$("scaleMode").value;
-  S.cmPerPx = mode==="width" ? val/S.iw : val/S.ih;
-  S.realW=S.iw*S.cmPerPx;
-  S.realH=S.ih*S.cmPerPx;
-  $("realSize").textContent=S.realW.toFixed(2)+" × "+S.realH.toFixed(2)+" cm";
-  updateMeasureResult();
-  analyzeAreas(false);
-}
+Pero si tu sistema exige login, deja también auth.js y supabase.js.
 
-function syncScaleInputs(){
-  if(S.cmPerPx){
-    if($("scaleMode").value==="width") $("scaleValue").value=S.realW.toFixed(2);
-    else $("scaleValue").value=S.realH.toFixed(2);
-  }
-  calcScaleLive();
-}
 
-function useWidthPreset(){
-  $("scaleMode").value="width";
-  if(S.realW) $("scaleValue").value=S.realW.toFixed(2);
-  calcScaleLive();
-}
+------------------------------------------------------------
+6) ESTRUCTURA FINAL RECOMENDADA DEL BODY
+------------------------------------------------------------
 
-function confirmScale(){
-  calcScaleLive();
-  if(!S.cmPerPx){toast("Coloca una medida válida");return;}
-  setStep(3);
-  setMode("measure");
-  analyzeAreas();
-  toast("Escala confirmada");
-}
+El body debería quedar así:
 
-function setActivePoint(n){
-  S.activePoint=n===2?2:1;
-  $("btnP1").classList.toggle("active",S.activePoint===1);
-  $("btnP1").classList.toggle("gray",S.activePoint!==1);
-  $("btnP2").classList.toggle("active",S.activePoint===2);
-  $("btnP2").classList.toggle("gray",S.activePoint!==2);
-}
+<body class="tv-page">
+  <div id="menu-container"></div>
 
-function clearMeasure(){
-  S.p1=null; S.p2=null;
-  updateMeasureResult();
-  draw();
-}
+  <main class="main">
 
-function placeMeasurePoint(imgPoint){
-  const p={x:clamp(imgPoint.x,0,S.iw),y:clamp(imgPoint.y,0,S.ih)};
-  if(S.activePoint===1){S.p1=p;setActivePoint(2);}
-  else{S.p2=p;setActivePoint(1);}
-  updateMeasureResult();
-  draw();
-}
+    <section class="page-hero">
+      <div>
+        <h1>📐 Analizador SVG Preciso</h1>
+        <p>Medidas reales, piezas, perímetro, área, MTR y cotización técnica.</p>
+      </div>
+      <span class="badge">Tuttovinilos</span>
+    </section>
 
-function updateMeasureResult(){
-  $("p1x").textContent=S.p1?Math.round(S.p1.x):"—";
-  $("p1y").textContent=S.p1?Math.round(S.p1.y):"—";
-  $("p2x").textContent=S.p2?Math.round(S.p2.x):"—";
-  $("p2y").textContent=S.p2?Math.round(S.p2.y):"—";
+    <div class="wrap">
+      <!-- AQUÍ VA TODO EL CONTENIDO ACTUAL DEL ANALIZADOR -->
+    </div>
 
-  if(S.p1 && S.p2){
-    const dx=S.p2.x-S.p1.x, dy=S.p2.y-S.p1.y;
-    const px=Math.hypot(dx,dy);
-    $("measureResult").textContent=S.cmPerPx ? (px*S.cmPerPx).toFixed(2)+" cm" : px.toFixed(1)+" px";
-  }else{
-    $("measureResult").textContent="—";
-  }
-}
+  </main>
 
-async function copyMeasure(){
-  const txt=$("measureResult").textContent;
-  if(txt==="—"){toast("No hay medida");return;}
-  try{await navigator.clipboard.writeText(txt);toast("Medida copiada");}
-  catch(e){toast(txt);}
-}
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js?v=31"></script>
+  <script src="js/auth.js?v=31"></script>
+  <script src="js/menu.js?v=31"></script>
 
-/* ÁREAS */
-function getSourceCanvas(){
-  const c=document.createElement("canvas");
-  c.width=S.iw;
-  c.height=S.ih;
-  const cx=c.getContext("2d",{willReadFrequently:true});
-  cx.drawImage(S.img,0,0,S.iw,S.ih);
-  return {c,cx};
-}
-
-function isUsefulPixel(r,g,b,a){
-  const mode=$("bgMode")?.value || "white";
-  const tol=Number($("tolerance")?.value || 245);
-
-  if(mode==="transparent"){
-    return a>=20;
-  }
-
-  if(a<20) return false;
-
-  if(mode==="white"){
-    return !(r>=tol && g>=tol && b>=tol);
-  }
-
-  if(mode==="black"){
-    const t=Math.max(0,255-tol);
-    return !(r<=t && g<=t && b<=t);
-  }
-
-  return true;
-}
-
-function estimateAngle(piece){
-  const w=piece.maxX-piece.minX+1;
-  const h=piece.maxY-piece.minY+1;
-  if(w<2 || h<2)return 0;
-  const ratio=Math.min(w,h)/Math.max(w,h);
-  if(ratio>.72)return 45;
-  return 0;
-}
-
-function analyzeAreas(showToast=true){
-  if(!S.img){return;}
-  if(!S.cmPerPx){
-    renderAreas();
-    if(showToast)toast("Primero confirma la escala");
-    return;
-  }
-
-  const {cx}=getSourceCanvas();
-  const data=cx.getImageData(0,0,S.iw,S.ih).data;
-  const total=S.iw*S.ih;
-  const mask=new Uint8Array(total);
-  let useful=0;
-
-  for(let y=0;y<S.ih;y++){
-    for(let x=0;x<S.iw;x++){
-      const i=(y*S.iw+x)*4;
-      if(isUsefulPixel(data[i],data[i+1],data[i+2],data[i+3])){
-        mask[y*S.iw+x]=1;
-        useful++;
-      }
-    }
-  }
-
-  const visited=new Uint8Array(total);
-  const pieces=[];
-  const minPiece=Number($("minPiecePx")?.value || 120);
-  let totalPerimeterPx=0;
-
-  for(let y0=0;y0<S.ih;y0++){
-    for(let x0=0;x0<S.iw;x0++){
-      const start=y0*S.iw+x0;
-      if(!mask[start] || visited[start])continue;
-
-      const q=[start];
-      visited[start]=1;
-      let head=0;
-      let pixels=0;
-      let minX=x0,maxX=x0,minY=y0,maxY=y0;
-      let perimeterPx=0;
-
-      while(head<q.length){
-        const idx=q[head++];
-        const x=idx%S.iw;
-        const y=Math.floor(idx/S.iw);
-        pixels++;
-        if(x<minX)minX=x;if(x>maxX)maxX=x;
-        if(y<minY)minY=y;if(y>maxY)maxY=y;
-
-        const ns=[
-          [x-1,y,idx-1],
-          [x+1,y,idx+1],
-          [x,y-1,idx-S.iw],
-          [x,y+1,idx+S.iw]
-        ];
-
-        for(const [nx,ny,nidx] of ns){
-          if(nx<0 || nx>=S.iw || ny<0 || ny>=S.ih){
-            perimeterPx++;
-          }else if(!mask[nidx]){
-            perimeterPx++;
-          }else if(!visited[nidx]){
-            visited[nidx]=1;
-            q.push(nidx);
-          }
-        }
-      }
-
-      if(pixels>=minPiece){
-        const piece={pixels,minX,maxX,minY,maxY,perimeterPx};
-        piece.angle=estimateAngle(piece);
-        pieces.push(piece);
-        totalPerimeterPx+=perimeterPx;
-      }
-    }
-  }
-
-  pieces.sort((a,b)=>b.pixels-a.pixels);
-
-  const cmPerPx=S.cmPerPx;
-  const cm2PerPx=cmPerPx*cmPerPx;
-  const thicknessCm=Number($("frameThickness")?.value || 0);
-
-  const areaSelectionCm2=S.iw*S.ih*cm2PerPx;
-  const areaFillCm2=useful*cm2PerPx;
-  const perimeterCm=totalPerimeterPx*cmPerPx;
-  const areaFrameOptCm2=perimeterCm*thicknessCm;
-  const totalWithFrameCm2=areaFillCm2+areaFrameOptCm2;
-  const emptyBoxCm2=Math.max(0,areaSelectionCm2-areaFillCm2);
-
-  S.pieces=pieces.map(p=>{
-    const wCm=(p.maxX-p.minX+1)*cmPerPx;
-    const hCm=(p.maxY-p.minY+1)*cmPerPx;
-    const fillCm2=p.pixels*cm2PerPx;
-    const perimeterCm=p.perimeterPx*cmPerPx;
-    const frameOptCm2=perimeterCm*thicknessCm;
-    return {...p,wCm,hCm,fillCm2,perimeterCm,frameOptCm2};
-  });
-
-  S.areas={
-    useful,
-    areaSelectionCm2,
-    areaFillCm2,
-    perimeterCm,
-    areaFrameOptCm2,
-    totalWithFrameCm2,
-    emptyBoxCm2,
-    pieceCount:S.pieces.length
-  };
-
-  renderAreas();
-  setStep(4);
-  if(showToast)toast("Áreas recalculadas");
-}
-
-function fmtM2(cm2){
-  const d=Number($("decimalsMode")?.value || 3);
-  return (cm2/10000).toFixed(d)+" m²";
-}
-function fmtCm(v){
-  return v.toFixed(1)+" cm";
-}
-
-function renderAreas(){
-  if(!S.areas){
-    ["areaSelection","areaFill","areaPerimeter","areaFrameOpt","areaTotalFrame","areaEmptyBox","pieceCount","usefulPixels"].forEach(id=>{
-      if($(id))$(id).textContent="—";
-    });
-    $("pieceTableBody").innerHTML="";
-    $("pieceTableBox").classList.add("hidden");
-    return;
-  }
-
-  $("areaSelection").textContent=fmtM2(S.areas.areaSelectionCm2);
-  $("areaFill").textContent=fmtM2(S.areas.areaFillCm2);
-  $("areaPerimeter").textContent=fmtCm(S.areas.perimeterCm);
-  $("areaFrameOpt").textContent=fmtM2(S.areas.areaFrameOptCm2);
-  $("areaTotalFrame").textContent=fmtM2(S.areas.totalWithFrameCm2);
-  $("areaEmptyBox").textContent=fmtM2(S.areas.emptyBoxCm2);
-  $("pieceCount").textContent=S.areas.pieceCount;
-  $("usefulPixels").textContent=S.areas.useful;
-  renderPieceTable();
-}
-
-function renderPieceTable(){
-  const box=$("pieceTableBox");
-  const body=$("pieceTableBody");
-  if($("detailMode").value!=="show"){
-    box.classList.add("hidden");
-    return;
-  }
-  box.classList.remove("hidden");
-  body.innerHTML="";
-  S.pieces.forEach((p,i)=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td>${i+1}</td>
-      <td>${p.pixels}</td>
-      <td>${p.wCm.toFixed(2)} cm</td>
-      <td>${p.hCm.toFixed(2)} cm</td>
-      <td>${fmtM2(p.fillCm2)}</td>
-      <td>${p.perimeterCm.toFixed(1)} cm</td>
-      <td>${fmtM2(p.frameOptCm2)}</td>
-      <td>${p.angle.toFixed(1)}°</td>
-    `;
-    body.appendChild(tr);
-  });
-}
-
-async function copyAreaSummary(){
-  if(!S.areas){toast("No hay áreas");return;}
-  const txt=[
-    "Tuttovinilos · Resumen de áreas",
-    "Tamaño real: "+$("realSize").textContent,
-    "Área selección: "+$("areaSelection").textContent,
-    "Área relleno: "+$("areaFill").textContent,
-    "Perímetro: "+$("areaPerimeter").textContent,
-    "Marco optimizado: "+$("areaFrameOpt").textContent,
-    "Total + marco: "+$("areaTotalFrame").textContent,
-    "Piezas: "+$("pieceCount").textContent
-  ].join("\n");
-  try{await navigator.clipboard.writeText(txt);toast("Resumen copiado");}
-  catch(e){toast("No se pudo copiar");}
-}
-
-/* CROP */
-function hitCropHandle(x,y){
-  if(!S.crop)return null;
-
-  const b=cropBox();
-  const p1=imgToScreen({x:b.x,y:b.y});
-  const p2=imgToScreen({x:b.x+b.w,y:b.y});
-  const p3=imgToScreen({x:b.x+b.w,y:b.y+b.h});
-  const p4=imgToScreen({x:b.x,y:b.y+b.h});
-
-  const handles=[
-    {type:"nw",x:p1.x,y:p1.y},
-    {type:"ne",x:p2.x,y:p2.y},
-    {type:"se",x:p3.x,y:p3.y},
-    {type:"sw",x:p4.x,y:p4.y},
-    {type:"n",x:(p1.x+p2.x)/2,y:p1.y},
-    {type:"e",x:p2.x,y:(p2.y+p3.y)/2},
-    {type:"s",x:(p4.x+p3.x)/2,y:p3.y},
-    {type:"w",x:p1.x,y:(p1.y+p4.y)/2}
-  ];
-
-  let best=null;
-  let dist=30;
-  handles.forEach(h=>{
-    const d=Math.hypot(x-h.x,y-h.y);
-    if(d<dist){dist=d;best=h.type;}
-  });
-
-  if(!best && x>=p1.x && x<=p3.x && y>=p1.y && y<=p3.y){
-    best="moveCrop";
-  }
-
-  return best;
-}
-
-function applyCropHandle(type, pos){
-  if(!S.crop)return;
-
-  const ip=screenToImg(pos.x,pos.y);
-  const minSize=8;
-
-  let left=S.crop.x;
-  let top=S.crop.y;
-  let right=S.crop.x+S.crop.w;
-  let bottom=S.crop.y+S.crop.h;
-
-  if(type==="moveCrop"){
-    if(!S.lastCropImg){
-      S.lastCropImg=ip;
-      return;
-    }
-
-    const dx=ip.x-S.lastCropImg.x;
-    const dy=ip.y-S.lastCropImg.y;
-
-    left=clamp(left+dx,0,S.iw-S.crop.w);
-    top=clamp(top+dy,0,S.ih-S.crop.h);
-    S.crop.x=left;
-    S.crop.y=top;
-
-    S.lastCropImg=ip;
-    updateCropInfo();
-    draw();
-    return;
-  }
-
-  if(type.includes("w")) left=clamp(ip.x,0,right-minSize);
-  if(type.includes("e")) right=clamp(ip.x,left+minSize,S.iw);
-  if(type.includes("n")) top=clamp(ip.y,0,bottom-minSize);
-  if(type.includes("s")) bottom=clamp(ip.y,top+minSize,S.ih);
-
-  S.crop.x=left;
-  S.crop.y=top;
-  S.crop.w=right-left;
-  S.crop.h=bottom-top;
-
-  updateCropInfo();
-  draw();
-}
-
-function draw(){
-  if(!canvas.width)return;
-  const w=S.viewSize, h=S.viewSize;
-  ctx.clearRect(0,0,w,h);
-
-  if(!S.img)return;
-
-  ctx.save();
-  ctx.imageSmoothingEnabled=true;
-  ctx.imageSmoothingQuality="high";
-  ctx.drawImage(S.img,S.ox,S.oy,S.iw*S.scale,S.ih*S.scale);
-  ctx.restore();
-
-  if(S.mode==="crop" && S.crop) drawCrop();
-  if(S.p1 || S.p2) drawMeasure();
-
-  $("zoomBadge").textContent=Math.round(S.scale*100)+"%";
-  updateCropInfo();
-}
-
-function drawCrop(){
-  const b=cropBox();
-  if(!b)return;
-
-  const p1=imgToScreen({x:b.x,y:b.y});
-  const p2=imgToScreen({x:b.x+b.w,y:b.y});
-  const p3=imgToScreen({x:b.x+b.w,y:b.y+b.h});
-  const p4=imgToScreen({x:b.x,y:b.y+b.h});
-
-  const w=S.viewSize, h=S.viewSize;
-
-  ctx.save();
-
-  ctx.fillStyle="rgba(255,255,255,.62)";
-  ctx.fillRect(0,0,w,h);
-
-  ctx.globalCompositeOperation="destination-out";
-  ctx.beginPath();
-  ctx.rect(p1.x,p1.y,p3.x-p1.x,p3.y-p1.y);
-  ctx.fill();
-
-  ctx.globalCompositeOperation="source-over";
-
-  ctx.strokeStyle="#111";
-  ctx.lineWidth=1.4;
-  ctx.setLineDash([]);
-  ctx.strokeRect(p1.x,p1.y,p3.x-p1.x,p3.y-p1.y);
-
-  ctx.strokeStyle="rgba(17,17,17,.22)";
-  ctx.lineWidth=0.8;
-  const thirdX=(p3.x-p1.x)/3;
-  const thirdY=(p3.y-p1.y)/3;
-  for(let i=1;i<=2;i++){
-    ctx.beginPath();
-    ctx.moveTo(p1.x+thirdX*i,p1.y);
-    ctx.lineTo(p1.x+thirdX*i,p3.y);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(p1.x,p1.y+thirdY*i);
-    ctx.lineTo(p3.x,p1.y+thirdY*i);
-    ctx.stroke();
-  }
-
-  const L=18;
-  const cornerData=[
-    [p1,-1,-1],
-    [p2,1,-1],
-    [p3,1,1],
-    [p4,-1,1]
-  ];
-
-  cornerData.forEach(([p,dx,dy])=>{
-    ctx.strokeStyle="#111";
-    ctx.lineWidth=3;
-    ctx.lineCap="square";
-    ctx.beginPath();
-    ctx.moveTo(p.x+dx*L,p.y);
-    ctx.lineTo(p.x,p.y);
-    ctx.lineTo(p.x,p.y+dy*L);
-    ctx.stroke();
-
-    ctx.fillStyle="#ff8616";
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,5,0,Math.PI*2);
-    ctx.fill();
-  });
-
-  const handles=[
-    {x:(p1.x+p2.x)/2,y:p1.y},
-    {x:p2.x,y:(p2.y+p3.y)/2},
-    {x:(p4.x+p3.x)/2,y:p3.y},
-    {x:p1.x,y:(p1.y+p4.y)/2}
-  ];
-
-  handles.forEach(p=>{
-    ctx.fillStyle="#111";
-    ctx.fillRect(p.x-14,p.y-2,28,4);
-  });
-
-  ctx.restore();
-}
-
-function drawMeasure(){
-  ctx.save();
-
-  const p1=S.p1?imgToScreen(S.p1):null;
-  const p2=S.p2?imgToScreen(S.p2):null;
-
-  if(p1 && p2){
-    ctx.strokeStyle="#153bff";
-    ctx.lineWidth=1.2;
-    ctx.setLineDash([5,4]);
-    ctx.beginPath();
-    ctx.moveTo(p1.x,p1.y);
-    ctx.lineTo(p2.x,p2.y);
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
-
-  [[p1,"1","#ff8616"],[p2,"2","#153bff"]].forEach(([p,t,c])=>{
-    if(!p)return;
-    ctx.fillStyle=c;
-    ctx.strokeStyle="#fff";
-    ctx.lineWidth=2;
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,5,0,Math.PI*2);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.font="900 12px Montserrat";
-    ctx.fillStyle=c;
-    ctx.fillText("P"+t,p.x+8,p.y-8);
-  });
-
-  ctx.restore();
-}
-
-/* POINTERS */
-function getCanvasPosFromEvent(e){
-  const rect=canvas.getBoundingClientRect();
-  const t=e.touches ? e.touches[0] : e;
-  return {x:t.clientX-rect.left,y:t.clientY-rect.top};
-}
-function distTouch(t1,t2){return Math.hypot(t2.clientX-t1.clientX,t2.clientY-t1.clientY)}
-function midTouch(t1,t2){return {x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2}}
-
-canvas.addEventListener("touchstart",e=>{
-  if(!S.img)return;
-  e.preventDefault();
-
-  if(e.touches.length===2){
-    const m=midTouch(e.touches[0],e.touches[1]);
-    const r=canvas.getBoundingClientRect();
-    S.pinch={dist:distTouch(e.touches[0],e.touches[1]),x:m.x-r.left,y:m.y-r.top,ox:S.ox,oy:S.oy,scale:S.scale};
-    S.dragging=false;
-    return;
-  }
-
-  const pos=getCanvasPosFromEvent(e);
-
-  if(S.mode==="crop"){
-    const h=hitCropHandle(pos.x,pos.y);
-    if(h){
-      S.dragMode=h;
-      S.dragging=true;
-      S.lastCropImg=null;
-      return;
-    }
-  }
-
-  if(S.mode==="measure"){
-    placeMeasurePoint(screenToImg(pos.x,pos.y));
-    return;
-  }
-
-  S.dragging=true;
-  S.last=pos;
-},{passive:false});
-
-canvas.addEventListener("touchmove",e=>{
-  if(!S.img)return;
-  e.preventDefault();
-
-  if(e.touches.length===2 && S.pinch){
-    const d=distTouch(e.touches[0],e.touches[1]);
-    const m=midTouch(e.touches[0],e.touches[1]);
-    const r=canvas.getBoundingClientRect();
-    const mx=m.x-r.left, my=m.y-r.top;
-    const factor=d/S.pinch.dist;
-    const newScale=clamp(S.pinch.scale*factor,0.02,30);
-    S.scale=newScale;
-    S.ox=mx-(S.pinch.x-S.pinch.ox)*(S.scale/S.pinch.scale);
-    S.oy=my-(S.pinch.y-S.pinch.oy)*(S.scale/S.pinch.scale);
-    draw();
-    return;
-  }
-
-  const pos=getCanvasPosFromEvent(e);
-
-  if(S.mode==="crop" && S.dragging && S.dragMode){
-    applyCropHandle(S.dragMode,pos);
-    return;
-  }
-
-  if(S.mode==="pan" && S.dragging && S.last){
-    S.ox += pos.x-S.last.x;
-    S.oy += pos.y-S.last.y;
-    S.last=pos;
-    draw();
-  }
-},{passive:false});
-
-canvas.addEventListener("touchend",e=>{
-  if(e.touches.length<2)S.pinch=null;
-  S.dragging=false;
-  S.dragCorner=-1;
-  S.dragMode=null;
-  S.lastCropImg=null;
-  S.last=null;
-},{passive:false});
-
-canvas.addEventListener("mousedown",e=>{
-  if(!S.img)return;
-  const rect=canvas.getBoundingClientRect();
-  const pos={x:e.clientX-rect.left,y:e.clientY-rect.top};
-
-  if(S.mode==="crop"){
-    const h=hitCropHandle(pos.x,pos.y);
-    if(h){
-      S.dragMode=h;
-      S.dragging=true;
-      S.lastCropImg=null;
-      return;
-    }
-  }
-
-  if(S.mode==="measure"){
-    placeMeasurePoint(screenToImg(pos.x,pos.y));
-    return;
-  }
-
-  S.dragging=true;
-  S.last=pos;
-});
-
-window.addEventListener("mousemove",e=>{
-  if(!S.img || !S.dragging)return;
-  const rect=canvas.getBoundingClientRect();
-  const pos={x:e.clientX-rect.left,y:e.clientY-rect.top};
-
-  if(S.mode==="crop" && S.dragMode){
-    applyCropHandle(S.dragMode,pos);
-    return;
-  }
-
-  if(S.mode==="pan" && S.last){
-    S.ox += pos.x-S.last.x;
-    S.oy += pos.y-S.last.y;
-    S.last=pos;
-    draw();
-  }
-});
-
-window.addEventListener("mouseup",()=>{
-  S.dragging=false;
-  S.dragCorner=-1;
-  S.dragMode=null;
-  S.lastCropImg=null;
-  S.last=null;
-});
-
-canvas.addEventListener("wheel",e=>{
-  if(!S.img)return;
-  e.preventDefault();
-  const rect=canvas.getBoundingClientRect();
-  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
-  const factor=e.deltaY<0?1.12:0.88;
-  const newScale=clamp(S.scale*factor,0.02,30);
-  S.ox=mx-(mx-S.ox)*(newScale/S.scale);
-  S.oy=my-(my-S.oy)*(newScale/S.scale);
-  S.scale=newScale;
-  draw();
-},{passive:false});
-
-setActivePoint(1);
-</script>
+  <script>
+    // AQUÍ VA TODO EL JAVASCRIPT ACTUAL DEL ANALIZADOR
+  </script>
 </body>
-</html>
+
+
+------------------------------------------------------------
+7) AGREGAR EL BOTÓN AL MENÚ
+------------------------------------------------------------
+
+En tu archivo:
+
+js/menu.js
+
+Busca donde tienes la lista de botones/páginas del menú.
+
+Agrega este item:
+
+{
+  label: "Analizador SVG",
+  href: "analizador-svg.html",
+  icon: "📐"
+}
+
+Ejemplo:
+
+const MENU_ITEMS = [
+  { label: "Pedidos", href: "index.html", icon: "📋" },
+  { label: "Cotizador", href: "cotizador.html", icon: "💰" },
+  { label: "Materiales", href: "materiales.html", icon: "🧱" },
+  { label: "Analizador SVG", href: "analizador-svg.html", icon: "📐" },
+  { label: "Configuración", href: "configuracion.html", icon: "⚙️" }
+];
+
+
+------------------------------------------------------------
+8) AJUSTE VISUAL PARA QUE EL ANALIZADOR NO CHOQUE CON EL MENÚ
+------------------------------------------------------------
+
+Si el contenido queda pegado arriba o escondido debajo del menú, agrega este CSS al archivo analizador-svg.html:
+
+<style>
+.main{
+  width:100%;
+  max-width:1280px;
+  margin:0 auto;
+  padding:18px;
+}
+
+.page-hero{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+  margin-bottom:16px;
+  padding:18px;
+  border-radius:18px;
+  background:linear-gradient(135deg,#ffffff,#f3f7ff);
+  border:1px solid #dce5f5;
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+}
+
+.page-hero h1{
+  margin:0;
+  font-size:24px;
+  font-weight:900;
+  color:#102033;
+}
+
+.page-hero p{
+  margin:5px 0 0;
+  color:#64748b;
+  font-size:14px;
+}
+
+.badge{
+  padding:8px 12px;
+  border-radius:999px;
+  background:#e8f2ff;
+  color:#0b5dab;
+  font-weight:800;
+  font-size:12px;
+  white-space:nowrap;
+}
+
+@media(max-width:700px){
+  .main{
+    padding:10px;
+  }
+
+  .page-hero{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .page-hero h1{
+    font-size:20px;
+  }
+}
+</style>
+
+
+------------------------------------------------------------
+9) RECOMENDACIÓN IMPORTANTE
+------------------------------------------------------------
+
+Por ahora NO cambies los cálculos del analizador.
+Primero haz solo esto:
+
+1. Crear analizador-svg.html
+2. Pegar el analizador actual
+3. Agregar menú y estilos
+4. Probar que abre desde el menú
+5. Probar subir un SVG
+6. Probar analizar
+7. Probar PDF
+
+Después de que eso funcione, se puede hacer la segunda etapa:
+
+- conectar materiales a Supabase
+- ordenar nombres de materiales
+- separar costo real y precio cliente
+- añadir corte router/láser
+- añadir luz, transformador, cable y fijación
+- guardar análisis/cotizaciones
+
