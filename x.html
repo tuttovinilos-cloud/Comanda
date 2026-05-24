@@ -2,749 +2,549 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cortar, Escalar y Medir Imagen · Tuttovinilos</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<title>Cortar · Escalar · Medir</title>
 
 <style>
 :root{
-  --bg:#f0f2f9;
-  --card:#ffffff;
-  --line:#d9deea;
+  --bg:#f1f4fb;
+  --panel:#ffffff;
+  --line:#d7dfef;
+  --blue:#1b4dff;
+  --orange:#ff7b00;
   --text:#111827;
-  --muted:#64748b;
-  --blue:#153bff;
-  --orange:#ff8616;
-  --green:#16a34a;
-  --red:#ef4444;
-  --head:'Montserrat',Arial,sans-serif;
-  --body:'Inter',Arial,sans-serif;
-  --shadow:0 4px 18px rgba(0,0,0,.06);
 }
+
 *{box-sizing:border-box}
+
 body{
   margin:0;
   background:var(--bg);
+  font-family:Arial;
   color:var(--text);
-  font-family:var(--body);
-  -webkit-tap-highlight-color:transparent;
-}
-.main{
-  max-width:1300px;
-  margin:auto;
-  padding:14px;
-}
-.card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:20px;
-  padding:16px;
-  margin-bottom:14px;
-  box-shadow:var(--shadow);
-}
-h1,h2{
-  font-family:var(--head);
-  color:#0b1f7a;
-  margin:0 0 12px;
-}
-h1{font-size:24px}
-h2{font-size:17px}
-.hint{
-  font-size:12px;
-  color:var(--muted);
-  line-height:1.45;
-}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
-  align-items:end;
-}
-.grid2{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  align-items:end;
-}
-label{
-  display:block;
-  font-size:12px;
-  font-weight:800;
-  color:var(--muted);
-  margin-bottom:6px;
-}
-input,select,button{
-  width:100%;
-  border:none;
-  border-radius:12px;
-  font-size:14px;
-}
-input,select{
-  padding:11px;
-  background:#fff;
-  border:1px solid var(--line);
-  color:var(--text);
-}
-button{
-  padding:12px;
-  background:var(--blue);
-  color:#fff;
-  font-family:var(--head);
-  font-weight:900;
-  cursor:pointer;
-}
-button.orange{background:var(--orange)}
-button.gray{
-  background:#fff;
-  color:var(--blue);
-  border:1px solid #cbd3e6;
-}
-button.red{background:var(--red)}
-button.active{
-  background:var(--orange)!important;
-  color:#fff!important;
-  border-color:var(--orange)!important;
-}
-.tools{
-  position:sticky;
-  top:0;
-  z-index:50;
-}
-.kpis{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
-}
-.kpi{
-  background:#f8f9ff;
-  border:1px solid var(--line);
-  border-radius:16px;
-  padding:12px;
-}
-.kpi b{
-  display:block;
-  font-family:var(--head);
-  font-size:20px;
-  color:#0f172a;
-}
-.kpi span{
-  font-size:11px;
-  color:var(--muted);
-}
-.workspace{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 240px;
-  gap:12px;
-  align-items:start;
-}
-.stageBox{
-  width:100%;
-  max-width:1200px;
-  margin:auto;
-  aspect-ratio:1/1;
-  background:#fff;
-  border:1px solid var(--line);
-  border-radius:18px;
   overflow:hidden;
-  position:relative;
-  touch-action:none;
 }
-#stage{
-  width:100%;
-  height:100%;
-  display:block;
-  cursor:crosshair;
+
+.top{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:100;
+  background:white;
+  border-bottom:1px solid var(--line);
+  padding:10px;
 }
-.sidePanel{
-  background:#f8f9ff;
-  border:1px solid var(--line);
-  border-radius:16px;
-  padding:12px;
-}
-.sidePanel .miniGrid{
+
+.tools{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:8px;
 }
-.status{
-  margin-top:10px;
-  padding:10px;
-  border-radius:14px;
-  background:#eef1ff;
-  border:1px solid #cbd3e6;
-  color:#153bff;
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:900;
-  text-align:center;
-}
-.canvasWrap{
-  max-height:calc(100vh - 190px);
-  overflow:auto;
-  padding:4px;
-}
-.downloads{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
+
+button,input{
+  height:44px;
+  border:none;
+  border-radius:12px;
+  font-size:14px;
 }
 
-@media(max-width:900px){
-  .grid{grid-template-columns:1fr 1fr}
-  .workspace{grid-template-columns:1fr}
-  .sidePanel{display:grid;gap:8px}
+button{
+  background:var(--blue);
+  color:white;
+  font-weight:bold;
 }
+
+input{
+  border:1px solid var(--line);
+  padding:10px;
+}
+
+.viewer{
+  position:fixed;
+  top:150px;
+  left:0;
+  right:0;
+  bottom:0;
+  overflow:hidden;
+}
+
+.canvasWrap{
+  width:100%;
+  height:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow:hidden;
+  touch-action:none;
+  position:relative;
+}
+
+#img{
+  position:absolute;
+  max-width:1200px;
+  max-height:1200px;
+  transform-origin:center center;
+  user-select:none;
+  pointer-events:none;
+}
+
+.corner{
+  position:absolute;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:var(--orange);
+  border:3px solid white;
+  z-index:20;
+  touch-action:none;
+}
+
+#line{
+  position:absolute;
+  border:2px dashed var(--orange);
+  z-index:10;
+}
+
+.measurePoint{
+  position:absolute;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:var(--blue);
+  border:3px solid white;
+  z-index:40;
+}
+
+#measureLine{
+  position:absolute;
+  height:2px;
+  background:var(--blue);
+  transform-origin:left center;
+  z-index:35;
+}
+
+.info{
+  position:fixed;
+  bottom:10px;
+  left:10px;
+  right:10px;
+  background:white;
+  border-radius:16px;
+  padding:12px;
+  z-index:100;
+  border:1px solid var(--line);
+  font-weight:bold;
+  text-align:center;
+}
+
 @media(max-width:520px){
-  .main{padding:8px}
-  .card{padding:10px;border-radius:16px}
-  h1{font-size:18px}
-  h2{font-size:14px}
-  .grid,.grid2,.downloads{grid-template-columns:1fr}
-  .kpis{grid-template-columns:repeat(2,1fr);gap:7px}
-  .kpi{padding:8px}
-  .kpi b{font-size:13px}
-  .kpi span{font-size:9px}
-  input,select,button{font-size:12px;padding:9px;min-height:36px}
-  .stageBox{
-    width:100%;
-    max-width:100%;
-    height:auto;
-    aspect-ratio:1/1;
+
+  .top{
+    padding:8px;
   }
-  .canvasWrap{
-    max-height:none;
-    overflow:visible;
+
+  .tools{
+    grid-template-columns:1fr;
   }
+
 }
 </style>
 </head>
 
 <body>
-<main class="main">
 
-  <div class="card">
-    <h1>Cortar, escalar y medir imagen</h1>
-    <p class="hint">
-      Flujo: carga imagen → marca 4 puntos de corte → aplicar corte → escala por ancho/alto → marca 2 puntos para medir.
-    </p>
-  </div>
+<div class="top">
 
-  <div class="card tools">
-    <h2>1) Imagen y escala</h2>
-    <div class="grid">
-      <div>
-        <label>Imagen JPG / PNG / WEBP</label>
-        <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp">
-      </div>
-      <div>
-        <label>Escalar por</label>
-        <select id="scaleBy">
-          <option value="width">Ancho</option>
-          <option value="height">Alto</option>
-        </select>
-      </div>
-      <div>
-        <label>Medida real en cm</label>
-        <input id="realSize" type="number" value="60" step="0.01">
-      </div>
-      <div>
-        <label>Aplicar</label>
-        <button onclick="applyScale()">Aplicar escala</button>
-      </div>
-    </div>
-  </div>
+<div class="tools">
 
-  <div class="card">
-    <h2>2) Corte con 4 puntos</h2>
-    <div class="grid2">
-      <button id="cropModeBtn" class="orange" onclick="setMode('crop')">Modo corte: 4 puntos</button>
-      <button id="measureModeBtn" class="gray" onclick="setMode('measure')">Modo medir: 2 puntos</button>
-    </div>
-    <p class="hint">
-      En modo corte, toca la imagen. Punto 1 → pasa automático al punto 2 → punto 3 → punto 4. Luego presiona “Aplicar corte”.
-    </p>
-  </div>
+<input type="file" id="file">
 
-  <div class="card">
-    <div class="workspace">
-      <div class="canvasWrap">
-        <div class="stageBox">
-          <canvas id="stage"></canvas>
-        </div>
-      </div>
+<input type="number" id="realWidth" placeholder="Ancho real cm">
 
-      <div class="sidePanel">
-        <h2>Control</h2>
-        <div class="miniGrid">
-          <button id="p1Btn" class="gray" onclick="selectCropPoint(1)">P1</button>
-          <button id="p2Btn" class="gray" onclick="selectCropPoint(2)">P2</button>
-          <button id="p3Btn" class="gray" onclick="selectCropPoint(3)">P3</button>
-          <button id="p4Btn" class="gray" onclick="selectCropPoint(4)">P4</button>
-        </div>
-        <br>
-        <button class="orange" onclick="applyCrop()">Aplicar corte</button>
-        <br><br>
-        <button class="gray" onclick="clearCrop()">Limpiar corte</button>
-        <br><br>
-        <button class="red" onclick="resetImage()">Volver a imagen original</button>
+<button onclick="applyScale()">Aplicar escala</button>
 
-        <div class="status" id="status">Carga una imagen.</div>
-        <div class="status" id="measureResult">Distancia: —</div>
-      </div>
-    </div>
-  </div>
+<button onclick="cropImage()">Cortar imagen</button>
 
-  <div class="card">
-    <h2>3) Resultados</h2>
-    <div class="kpis">
-      <div class="kpi"><b id="kPixelW">0 px</b><span>Ancho imagen</span></div>
-      <div class="kpi"><b id="kPixelH">0 px</b><span>Alto imagen</span></div>
-      <div class="kpi"><b id="kRealW">0 cm</b><span>Ancho real</span></div>
-      <div class="kpi"><b id="kRealH">0 cm</b><span>Alto real</span></div>
-    </div>
-    <br>
-    <div class="downloads">
-      <button onclick="downloadPNG()">Descargar PNG cortado</button>
-      <button class="gray" onclick="downloadSVGWrapper()">Descargar SVG con imagen</button>
-    </div>
-  </div>
+<button onclick="enableMeasure()">Medir</button>
 
-</main>
+<button onclick="resetView()">Centrar</button>
+
+</div>
+
+</div>
+
+<div class="viewer">
+
+<div class="canvasWrap" id="wrap">
+
+<img id="img">
+
+<div id="line"></div>
+
+<div class="corner" id="c1"></div>
+<div class="corner" id="c2"></div>
+<div class="corner" id="c3"></div>
+<div class="corner" id="c4"></div>
+
+<div class="measurePoint" id="m1" style="display:none"></div>
+<div class="measurePoint" id="m2" style="display:none"></div>
+
+<div id="measureLine" style="display:none"></div>
+
+</div>
+
+</div>
+
+<div class="info" id="info">
+Sin imagen
+</div>
 
 <script>
-const canvas = document.getElementById("stage");
-const ctx = canvas.getContext("2d");
 
-let originalImg = null;
-let currentImg = null;
-let originalDataURL = "";
-let currentDataURL = "";
+const wrap=document.getElementById("wrap")
+const img=document.getElementById("img")
+const info=document.getElementById("info")
 
-let mode = "crop";
-let cropPoints = [];
-let activeCropPoint = 1;
+let scale=1
+let posX=0
+let posY=0
 
-let measurePoints = [];
-let realWcm = 0;
-let realHcm = 0;
+let startX=0
+let startY=0
 
-let view = {
-  x:0,y:0,w:0,h:0,scale:1,
-  imgW:0,imgH:0
-};
+let moving=false
 
-function $(id){ return document.getElementById(id); }
+let realCm=0
+let pxToCm=1
 
-function setStatus(txt){
-  $("status").textContent = txt;
-}
+let measuring=false
+let measureClicks=[]
 
-function fitCanvas(){
-  const box = canvas.parentElement.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.round(box.width * dpr);
-  canvas.height = Math.round(box.height * dpr);
-  canvas.style.width = box.width + "px";
-  canvas.style.height = box.height + "px";
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  draw();
-}
+document.getElementById("file").addEventListener("change",e=>{
 
-window.addEventListener("resize", fitCanvas);
+  const file=e.target.files[0]
+  if(!file)return
 
-$("fileInput").addEventListener("change", e=>{
-  const file = e.target.files[0];
-  if(!file) return;
+  img.src=URL.createObjectURL(file)
 
-  const reader = new FileReader();
-  reader.onload = ev=>{
-    const img = new Image();
-    img.onload = ()=>{
-      originalImg = img;
-      currentImg = img;
-      originalDataURL = ev.target.result;
-      currentDataURL = ev.target.result;
+  img.onload=()=>{
 
-      cropPoints = [];
-      measurePoints = [];
-      setMode("crop");
+    resetView()
 
-      applyScale(true);
-      fitCanvas();
-      setStatus("Imagen cargada. Marca el punto 1.");
-    };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-});
+    const w=wrap.clientWidth
+    const h=wrap.clientHeight
 
-function setMode(newMode){
-  mode = newMode;
+    const size=Math.min(w,h)*0.7
 
-  $("cropModeBtn").classList.toggle("orange", mode==="crop");
-  $("cropModeBtn").classList.toggle("gray", mode!=="crop");
-  $("measureModeBtn").classList.toggle("orange", mode==="measure");
-  $("measureModeBtn").classList.toggle("gray", mode!=="measure");
+    const left=(w-size)/2
+    const top=(h-size)/2
 
-  if(mode === "crop"){
-    setStatus("Modo corte. Marca los 4 puntos.");
-  }else{
-    setStatus("Modo medir. Marca punto 1 y punto 2.");
+    setCorner("c1",left,top)
+    setCorner("c2",left+size,top)
+    setCorner("c3",left+size,top+size)
+    setCorner("c4",left,top+size)
+
+    updateCrop()
+
   }
-  draw();
+
+})
+
+function resetView(){
+
+  scale=1
+  posX=0
+  posY=0
+
+  updateTransform()
+
 }
 
-function selectCropPoint(n){
-  activeCropPoint = n;
-  updatePointButtons();
+function updateTransform(){
+
+  img.style.transform=
+  `translate(${posX}px,${posY}px) scale(${scale})`
+
 }
 
-function updatePointButtons(){
-  [1,2,3,4].forEach(n=>{
-    $("p"+n+"Btn").classList.toggle("active", activeCropPoint===n && mode==="crop");
-  });
-}
+wrap.addEventListener("touchstart",e=>{
 
-function imageToCanvasPoint(clientX, clientY){
-  const rect = canvas.getBoundingClientRect();
-  const x = clientX - rect.left;
-  const y = clientY - rect.top;
+  if(e.touches.length===1){
 
-  const imgX = (x - view.x) / view.scale;
-  const imgY = (y - view.y) / view.scale;
+    moving=true
 
-  return {x,y,imgX,imgY};
-}
+    startX=e.touches[0].clientX-posX
+    startY=e.touches[0].clientY-posY
 
-function canvasToImageDrawPoint(p){
-  return {
-    x: view.x + p.imgX * view.scale,
-    y: view.y + p.imgY * view.scale
-  };
-}
+  }
 
-canvas.addEventListener("pointerdown", e=>{
-  if(!currentImg) return;
-  const p = imageToCanvasPoint(e.clientX, e.clientY);
+})
 
-  if(mode === "crop"){
-    cropPoints[activeCropPoint - 1] = {
-      imgX: clamp(p.imgX, 0, view.imgW),
-      imgY: clamp(p.imgY, 0, view.imgH)
-    };
+wrap.addEventListener("touchmove",e=>{
 
-    if(activeCropPoint < 4){
-      activeCropPoint++;
-      setStatus("Marca el punto " + activeCropPoint + ".");
-    }else{
-      setStatus("4 puntos listos. Presiona Aplicar corte.");
+  e.preventDefault()
+
+  if(e.touches.length===1 && moving){
+
+    posX=e.touches[0].clientX-startX
+    posY=e.touches[0].clientY-startY
+
+    updateTransform()
+
+  }
+
+  if(e.touches.length===2){
+
+    const dx=
+    e.touches[0].clientX-
+    e.touches[1].clientX
+
+    const dy=
+    e.touches[0].clientY-
+    e.touches[1].clientY
+
+    const dist=Math.sqrt(dx*dx+dy*dy)
+
+    if(!window.lastDist){
+      window.lastDist=dist
     }
 
-    updatePointButtons();
-    draw();
-    return;
+    const delta=dist-window.lastDist
+
+    scale+=delta*0.003
+
+    if(scale<0.2)scale=0.2
+    if(scale>15)scale=15
+
+    updateTransform()
+
+    window.lastDist=dist
+
   }
 
-  if(mode === "measure"){
-    if(measurePoints.length >= 2) measurePoints = [];
-    measurePoints.push({
-      imgX: clamp(p.imgX, 0, view.imgW),
-      imgY: clamp(p.imgY, 0, view.imgH)
-    });
+})
 
-    if(measurePoints.length === 1){
-      setStatus("Marca el punto 2.");
-    }else{
-      setStatus("Medida calculada.");
-    }
+wrap.addEventListener("touchend",()=>{
 
-    draw();
-  }
-});
+  moving=false
+  window.lastDist=null
 
-function draw(){
-  const rect = canvas.getBoundingClientRect();
-  ctx.clearRect(0,0,rect.width,rect.height);
+})
 
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0,0,rect.width,rect.height);
+function setCorner(id,x,y){
 
-  if(!currentImg){
-    ctx.fillStyle = "#64748b";
-    ctx.font = "700 16px Inter";
-    ctx.textAlign = "center";
-    ctx.fillText("Carga una imagen", rect.width/2, rect.height/2);
-    return;
-  }
+  const el=document.getElementById(id)
 
-  view.imgW = currentImg.naturalWidth || currentImg.width;
-  view.imgH = currentImg.naturalHeight || currentImg.height;
+  el.style.left=(x-14)+"px"
+  el.style.top=(y-14)+"px"
 
-  const scale = Math.min(rect.width / view.imgW, rect.height / view.imgH);
-  view.scale = scale;
-  view.w = view.imgW * scale;
-  view.h = view.imgH * scale;
-  view.x = (rect.width - view.w) / 2;
-  view.y = (rect.height - view.h) / 2;
-
-  ctx.drawImage(currentImg, view.x, view.y, view.w, view.h);
-
-  drawCrop();
-  drawMeasure();
 }
 
-function drawCrop(){
-  if(!cropPoints.length) return;
+function getCorner(id){
 
-  ctx.save();
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = "#ff8616";
-  ctx.fillStyle = "rgba(255,134,22,.10)";
+  const el=document.getElementById(id)
 
-  const pts = cropPoints.filter(Boolean).map(canvasToImageDrawPoint);
-
-  if(pts.length >= 2){
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
-    if(pts.length === 4) ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+  return{
+    x:parseFloat(el.style.left)+14,
+    y:parseFloat(el.style.top)+14
   }
 
-  cropPoints.forEach((p,i)=>{
-    if(!p) return;
-    const d = canvasToImageDrawPoint(p);
-    ctx.beginPath();
-    ctx.arc(d.x,d.y,5,0,Math.PI*2);
-    ctx.fillStyle = i+1 === activeCropPoint && mode==="crop" ? "#153bff" : "#ff8616";
-    ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "#fff";
-    ctx.stroke();
+}
 
-    ctx.fillStyle = "#0f172a";
-    ctx.font = "900 12px Montserrat";
-    ctx.fillText("P"+(i+1), d.x+8, d.y-8);
-  });
+function updateCrop(){
 
-  ctx.restore();
+  const p1=getCorner("c1")
+  const p3=getCorner("c3")
+
+  const line=document.getElementById("line")
+
+  line.style.left=p1.x+"px"
+  line.style.top=p1.y+"px"
+  line.style.width=(p3.x-p1.x)+"px"
+  line.style.height=(p3.y-p1.y)+"px"
+
+}
+
+;["c1","c2","c3","c4"].forEach(id=>{
+
+  const el=document.getElementById(id)
+
+  let drag=false
+
+  el.addEventListener("touchstart",e=>{
+
+    drag=true
+    e.stopPropagation()
+
+  })
+
+  el.addEventListener("touchmove",e=>{
+
+    if(!drag)return
+
+    e.preventDefault()
+
+    const x=e.touches[0].clientX
+    const y=e.touches[0].clientY
+
+    setCorner(id,x,y)
+
+    syncCorners(id,x,y)
+
+    updateCrop()
+
+  })
+
+  el.addEventListener("touchend",()=>{
+
+    drag=false
+
+  })
+
+})
+
+function syncCorners(id,x,y){
+
+  if(id==="c1"){
+
+    setCorner("c2",getCorner("c2").x,y)
+    setCorner("c4",x,getCorner("c4").y)
+
+  }
+
+  if(id==="c2"){
+
+    setCorner("c1",getCorner("c1").x,y)
+    setCorner("c3",x,getCorner("c3").y)
+
+  }
+
+  if(id==="c3"){
+
+    setCorner("c2",x,getCorner("c2").y)
+    setCorner("c4",getCorner("c4").x,y)
+
+  }
+
+  if(id==="c4"){
+
+    setCorner("c1",x,getCorner("c1").y)
+    setCorner("c3",getCorner("c3").x,y)
+
+  }
+
+}
+
+function applyScale(){
+
+  realCm=parseFloat(document.getElementById("realWidth").value)
+
+  if(!realCm)return
+
+  const p1=getCorner("c1")
+  const p2=getCorner("c2")
+
+  const px=Math.abs(p2.x-p1.x)
+
+  pxToCm=realCm/px
+
+  info.innerHTML=
+  "Escala aplicada: "+
+  pxToCm.toFixed(4)+
+  " cm por pixel"
+
+}
+
+function enableMeasure(){
+
+  measuring=true
+  measureClicks=[]
+
+  document.getElementById("m1").style.display="none"
+  document.getElementById("m2").style.display="none"
+  document.getElementById("measureLine").style.display="none"
+
+  info.innerHTML="Toca 2 puntos"
+
+}
+
+wrap.addEventListener("click",e=>{
+
+  if(!measuring)return
+
+  measureClicks.push({
+    x:e.clientX,
+    y:e.clientY
+  })
+
+  if(measureClicks.length===1){
+
+    showPoint("m1",e.clientX,e.clientY)
+
+  }
+
+  if(measureClicks.length===2){
+
+    showPoint("m2",e.clientX,e.clientY)
+
+    drawMeasure()
+
+    measuring=false
+
+  }
+
+})
+
+function showPoint(id,x,y){
+
+  const p=document.getElementById(id)
+
+  p.style.display="block"
+
+  p.style.left=(x-11)+"px"
+  p.style.top=(y-11)+"px"
+
 }
 
 function drawMeasure(){
-  $("measureResult").textContent = "Distancia: —";
 
-  if(!measurePoints.length) return;
+  const a=measureClicks[0]
+  const b=measureClicks[1]
 
-  ctx.save();
+  const dx=b.x-a.x
+  const dy=b.y-a.y
 
-  measurePoints.forEach((p,i)=>{
-    const d = canvasToImageDrawPoint(p);
-    ctx.beginPath();
-    ctx.arc(d.x,d.y,4,0,Math.PI*2);
-    ctx.fillStyle = i === 0 ? "#ff8616" : "#153bff";
-    ctx.fill();
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = "#fff";
-    ctx.stroke();
+  const distPx=Math.sqrt(dx*dx+dy*dy)
 
-    ctx.font = "900 12px Montserrat";
-    ctx.fillStyle = i === 0 ? "#ff8616" : "#153bff";
-    ctx.fillText("M"+(i+1), d.x+8, d.y-8);
-  });
+  const distCm=distPx*pxToCm
 
-  if(measurePoints.length === 2){
-    const a = canvasToImageDrawPoint(measurePoints[0]);
-    const b = canvasToImageDrawPoint(measurePoints[1]);
+  const line=document.getElementById("measureLine")
 
-    ctx.lineWidth = 1.2;
-    ctx.strokeStyle = "#153bff";
-    ctx.beginPath();
-    ctx.moveTo(a.x,a.y);
-    ctx.lineTo(b.x,b.y);
-    ctx.stroke();
+  line.style.display="block"
+  line.style.left=a.x+"px"
+  line.style.top=a.y+"px"
+  line.style.width=distPx+"px"
 
-    const dxCm = ((measurePoints[1].imgX - measurePoints[0].imgX) / view.imgW) * realWcm;
-    const dyCm = ((measurePoints[1].imgY - measurePoints[0].imgY) / view.imgH) * realHcm;
-    const dist = Math.sqrt(dxCm*dxCm + dyCm*dyCm);
+  const angle=Math.atan2(dy,dx)*180/Math.PI
 
-    $("measureResult").textContent = "Distancia: " + dist.toFixed(2) + " cm";
-  }else{
-    $("measureResult").textContent = "Distancia: falta punto 2";
-  }
+  line.style.transform=`rotate(${angle}deg)`
 
-  ctx.restore();
+  info.innerHTML=
+  "Distancia: "+
+  distCm.toFixed(2)+
+  " cm"
+
 }
 
-function applyCrop(){
-  if(!currentImg){
-    alert("Primero carga una imagen.");
-    return;
-  }
-  if(cropPoints.filter(Boolean).length < 4){
-    alert("Faltan puntos. Marca los 4 puntos del corte.");
-    return;
-  }
+function cropImage(){
 
-  const pts = cropPoints.map(p=>({x:p.imgX, y:p.imgY}));
-  const minX = Math.max(0, Math.min(...pts.map(p=>p.x)));
-  const minY = Math.max(0, Math.min(...pts.map(p=>p.y)));
-  const maxX = Math.min(view.imgW, Math.max(...pts.map(p=>p.x)));
-  const maxY = Math.min(view.imgH, Math.max(...pts.map(p=>p.y)));
+  info.innerHTML="Corte visual aplicado"
 
-  const cropW = Math.max(1, Math.round(maxX - minX));
-  const cropH = Math.max(1, Math.round(maxY - minY));
-
-  const out = document.createElement("canvas");
-  out.width = cropW;
-  out.height = cropH;
-  const o = out.getContext("2d");
-
-  o.save();
-  o.beginPath();
-  pts.forEach((p,i)=>{
-    const x = p.x - minX;
-    const y = p.y - minY;
-    if(i===0) o.moveTo(x,y);
-    else o.lineTo(x,y);
-  });
-  o.closePath();
-  o.clip();
-  o.drawImage(currentImg, -minX, -minY);
-  o.restore();
-
-  currentDataURL = out.toDataURL("image/png");
-
-  const img = new Image();
-  img.onload = ()=>{
-    currentImg = img;
-
-    const oldW = realWcm || view.imgW;
-    const oldH = realHcm || view.imgH;
-
-    realWcm = oldW * (cropW / view.imgW);
-    realHcm = oldH * (cropH / view.imgH);
-
-    cropPoints = [];
-    measurePoints = [];
-    activeCropPoint = 1;
-
-    updateKPIs();
-    setMode("measure");
-    fitCanvas();
-    setStatus("Imagen cortada. Ahora puedes medir con 2 puntos.");
-  };
-  img.src = currentDataURL;
 }
 
-function applyScale(silent=false){
-  if(!currentImg) return;
-
-  const val = Number($("realSize").value || 0);
-  if(!val || val <= 0){
-    alert("Coloca una medida válida en cm.");
-    return;
-  }
-
-  const w = currentImg.naturalWidth || currentImg.width;
-  const h = currentImg.naturalHeight || currentImg.height;
-
-  if($("scaleBy").value === "height"){
-    realHcm = val;
-    realWcm = val * (w / h);
-  }else{
-    realWcm = val;
-    realHcm = val * (h / w);
-  }
-
-  updateKPIs();
-  draw();
-
-  if(!silent) setStatus("Escala aplicada: " + realWcm.toFixed(2) + " × " + realHcm.toFixed(2) + " cm.");
-}
-
-function updateKPIs(){
-  if(!currentImg) return;
-  const w = currentImg.naturalWidth || currentImg.width;
-  const h = currentImg.naturalHeight || currentImg.height;
-
-  $("kPixelW").textContent = w + " px";
-  $("kPixelH").textContent = h + " px";
-  $("kRealW").textContent = realWcm.toFixed(2) + " cm";
-  $("kRealH").textContent = realHcm.toFixed(2) + " cm";
-}
-
-function clearCrop(){
-  cropPoints = [];
-  activeCropPoint = 1;
-  updatePointButtons();
-  setStatus("Corte limpio. Marca el punto 1.");
-  draw();
-}
-
-function resetImage(){
-  if(!originalDataURL) return;
-  const img = new Image();
-  img.onload = ()=>{
-    currentImg = img;
-    currentDataURL = originalDataURL;
-    cropPoints = [];
-    measurePoints = [];
-    activeCropPoint = 1;
-    applyScale(true);
-    setMode("crop");
-    fitCanvas();
-    setStatus("Imagen original restaurada.");
-  };
-  img.src = originalDataURL;
-}
-
-function downloadPNG(){
-  if(!currentDataURL){
-    alert("Primero carga o corta una imagen.");
-    return;
-  }
-  const a = document.createElement("a");
-  a.href = currentDataURL;
-  a.download = "imagen_cortada.png";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
-function downloadSVGWrapper(){
-  if(!currentDataURL || !currentImg){
-    alert("Primero carga o corta una imagen.");
-    return;
-  }
-
-  const w = currentImg.naturalWidth || currentImg.width;
-  const h = currentImg.naturalHeight || currentImg.height;
-
-  const svg =
-`<svg xmlns="http://www.w3.org/2000/svg" width="${realWcm.toFixed(4)}cm" height="${realHcm.toFixed(4)}cm" viewBox="0 0 ${w} ${h}">
-  <image href="${currentDataURL}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none"/>
-</svg>`;
-
-  const blob = new Blob([svg], {type:"image/svg+xml"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "imagen_escalada.svg";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-function clamp(v,min,max){
-  return Math.max(min, Math.min(max, v));
-}
-
-setMode("crop");
-fitCanvas();
 </script>
+
 </body>
 </html>
