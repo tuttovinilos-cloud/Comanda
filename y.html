@@ -1149,6 +1149,69 @@ html.menu-ready .header-tabs,
 }
 </style>
 
+
+<style>
+/* =========================================================
+   AJUSTE FINAL MEDIDOR
+   - Cota más fina
+   - Valor a un lado de la imagen
+   - Grid y puntos respetan proporción real del SVG
+========================================================= */
+.previewMeasureLayout{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 230px!important;
+  gap:12px!important;
+  align-items:start!important;
+}
+
+.measureInfo{
+  margin-top:0!important;
+  min-height:160px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-start!important;
+  align-items:stretch!important;
+  gap:10px!important;
+}
+
+#measureResult{
+  margin-left:0!important;
+  width:100%!important;
+  min-width:0!important;
+  background:#eef1ff!important;
+  border:1px solid #cbd3e6!important;
+  border-radius:14px!important;
+  padding:12px!important;
+  text-align:center!important;
+  color:#153bff!important;
+  font-size:13px!important;
+}
+
+#gridOverlay{
+  background-position:
+    var(--grid-left, center) var(--grid-top, center),
+    var(--grid-left, center) var(--grid-top, center),
+    var(--grid-left, center) var(--grid-top, center),
+    var(--grid-left, center) var(--grid-top, center)!important;
+}
+
+#measureLayer line{
+  vector-effect:non-scaling-stroke!important;
+}
+
+@media(max-width:760px){
+  .previewMeasureLayout{
+    grid-template-columns:1fr!important;
+  }
+
+  .measureInfo{
+    min-height:0!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -1215,21 +1278,24 @@ html.menu-ready .header-tabs,
 
   <div class="card">
     <h2>2) Vista previa · máximo 1200 × 1200</h2>
-    <div id="previewShell">
-      <div id="preview">
-        <div id="svgHolder"></div>
-        <div id="gridOverlay"></div>
-        <svg id="measureLayer" aria-hidden="true"></svg>
+    <div class="previewMeasureLayout">
+      <div id="previewShell">
+        <div id="preview">
+          <div id="svgHolder"></div>
+          <div id="gridOverlay"></div>
+          <svg id="measureLayer" aria-hidden="true"></svg>
+        </div>
       </div>
-    </div>
-    <div class="measureInfo">
-      <div class="pointTools">
-        <button type="button" id="btnPoint1" class="pointBtn active" onclick="setActiveMeasurePoint(1)">Punto 1</button>
-        <button type="button" id="btnPoint2" class="pointBtn" onclick="setActiveMeasurePoint(2)">Punto 2</button>
+
+      <div class="measureInfo">
+        <div class="pointTools">
+          <button type="button" id="btnPoint1" class="pointBtn active" onclick="setActiveMeasurePoint(1)">Punto 1</button>
+          <button type="button" id="btnPoint2" class="pointBtn" onclick="setActiveMeasurePoint(2)">Punto 2</button>
+        </div>
+        <span>📏 Elige Punto 1 o Punto 2 y toca la imagen.</span>
+        <b id="measureResult">Distancia: —</b>
+        <button type="button" class="gray miniMeasureBtn" onclick="clearMeasure()">Limpiar medida</button>
       </div>
-      <span>📏 Elige Punto 1 o Punto 2 y toca la imagen.</span>
-      <b id="measureResult">Distancia: —</b>
-      <button type="button" class="gray miniMeasureBtn" onclick="clearMeasure()">Limpiar medida</button>
     </div>
     <p class="hint">La vista se ajusta automáticamente: si el SVG es pequeño, hace zoom; si es grande, lo reduce para verlo completo.</p>
   </div>
@@ -1634,21 +1700,24 @@ function setActiveMeasurePoint(n){
 }
 
 function previewPointToCm(clientX, clientY){
-  const preview = $("preview");
-  if(!preview || !originalRealWm || !originalRealHm) return null;
+  const m = getRenderedSvgMetrics();
+  if(!m) return null;
 
-  const rect = preview.getBoundingClientRect();
-  const xPx = clientX - rect.left;
-  const yPx = clientY - rect.top;
+  const xPx = clientX - m.rect.left;
+  const yPx = clientY - m.rect.top;
 
-  const widthCm = originalRealWm * 100;
-  const heightCm = originalRealHm * 100;
+  const localX = xPx - m.offsetX;
+  const localY = yPx - m.offsetY;
+
+  if(localX < 0 || localY < 0 || localX > m.contentW || localY > m.contentH){
+    return null;
+  }
 
   return {
     xPx,
     yPx,
-    xCm: (xPx / rect.width) * widthCm,
-    yCm: (yPx / rect.height) * heightCm
+    xCm: (localX / m.contentW) * m.widthCm,
+    yCm: (localY / m.contentH) * m.heightCm
   };
 }
 
@@ -1670,23 +1739,23 @@ function drawMeasure(){
 
   const markerStart = document.createElementNS("http://www.w3.org/2000/svg", "marker");
   markerStart.setAttribute("id", "arrowStart");
-  markerStart.setAttribute("markerWidth", "10");
-  markerStart.setAttribute("markerHeight", "10");
-  markerStart.setAttribute("refX", "2");
-  markerStart.setAttribute("refY", "5");
+  markerStart.setAttribute("markerWidth", "6");
+  markerStart.setAttribute("markerHeight", "6");
+  markerStart.setAttribute("refX", "1.4");
+  markerStart.setAttribute("refY", "3");
   markerStart.setAttribute("orient", "auto");
   markerStart.setAttribute("markerUnits", "strokeWidth");
-  markerStart.innerHTML = '<path d="M10,0 L0,5 L10,10 Z" fill="#153bff"></path>';
+  markerStart.innerHTML = '<path d="M6,0 L0,3 L6,6 Z" fill="#153bff"></path>';
 
   const markerEnd = document.createElementNS("http://www.w3.org/2000/svg", "marker");
   markerEnd.setAttribute("id", "arrowEnd");
-  markerEnd.setAttribute("markerWidth", "10");
-  markerEnd.setAttribute("markerHeight", "10");
-  markerEnd.setAttribute("refX", "8");
-  markerEnd.setAttribute("refY", "5");
+  markerEnd.setAttribute("markerWidth", "6");
+  markerEnd.setAttribute("markerHeight", "6");
+  markerEnd.setAttribute("refX", "4.6");
+  markerEnd.setAttribute("refY", "3");
   markerEnd.setAttribute("orient", "auto");
   markerEnd.setAttribute("markerUnits", "strokeWidth");
-  markerEnd.innerHTML = '<path d="M0,0 L10,5 L0,10 Z" fill="#153bff"></path>';
+  markerEnd.innerHTML = '<path d="M0,0 L6,3 L0,6 Z" fill="#153bff"></path>';
 
   defs.appendChild(markerStart);
   defs.appendChild(markerEnd);
@@ -1751,7 +1820,7 @@ function drawMeasure(){
     ext1.setAttribute("x2", a1x);
     ext1.setAttribute("y2", a1y);
     ext1.setAttribute("stroke", "#153bff");
-    ext1.setAttribute("stroke-width", "1.2");
+    ext1.setAttribute("stroke-width", "0.75");
     ext1.setAttribute("stroke-dasharray", "5 4");
     layer.appendChild(ext1);
 
@@ -1761,7 +1830,7 @@ function drawMeasure(){
     ext2.setAttribute("x2", a2x);
     ext2.setAttribute("y2", a2y);
     ext2.setAttribute("stroke", "#153bff");
-    ext2.setAttribute("stroke-width", "1.2");
+    ext2.setAttribute("stroke-width", "0.75");
     ext2.setAttribute("stroke-dasharray", "5 4");
     layer.appendChild(ext2);
 
@@ -1771,7 +1840,7 @@ function drawMeasure(){
     dimLine.setAttribute("x2", a2x);
     dimLine.setAttribute("y2", a2y);
     dimLine.setAttribute("stroke", "#153bff");
-    dimLine.setAttribute("stroke-width", "2.2");
+    dimLine.setAttribute("stroke-width", "1.15");
     dimLine.setAttribute("stroke-linecap", "round");
     dimLine.setAttribute("marker-start", "url(#arrowStart)");
     dimLine.setAttribute("marker-end", "url(#arrowEnd)");
@@ -1825,7 +1894,10 @@ function setupMeasureTool(){
     }
 
     const p = previewPointToCm(e.clientX, e.clientY);
-    if(!p) return;
+    if(!p){
+      setStatus("Toca dentro del área real del SVG para colocar el punto.", 100);
+      return;
+    }
 
     measurePoints[activeMeasurePoint - 1] = p;
     drawMeasure();
@@ -1879,28 +1951,49 @@ window.addEventListener("resize", function(){
 
 
 
-function updatePreviewGrid(realWm, realHm){
+
+function getRenderedSvgMetrics(){
   const preview = $("preview");
-  const overlay = $("gridOverlay");
+  const svg = svgDoc;
 
-  if(!preview || !overlay || !realWm || !realHm) return;
-
-  const widthCm = realWm * 100;
-  const heightCm = realHm * 100;
-
-  if(widthCm <= 0 || heightCm <= 0) return;
+  if(!preview || !svg || !originalRealWm || !originalRealHm) return null;
 
   const rect = preview.getBoundingClientRect();
+  const vb = getViewBox(svg);
+  if(!vb || !vb.width || !vb.height) return null;
 
-  /*
-    Grid simple:
-    usa una escala uniforme para que los cuadros no salgan deformes.
-    Toma el menor px/cm entre ancho y alto.
-  */
-  const pxPerCm = Math.min(rect.width / widthCm, rect.height / heightCm);
+  const scale = Math.min(rect.width / vb.width, rect.height / vb.height);
+  const contentW = vb.width * scale;
+  const contentH = vb.height * scale;
+  const offsetX = (rect.width - contentW) / 2;
+  const offsetY = (rect.height - contentH) / 2;
+
+  return {
+    rect,
+    vb,
+    scale,
+    contentW,
+    contentH,
+    offsetX,
+    offsetY,
+    widthCm: originalRealWm * 100,
+    heightCm: originalRealHm * 100
+  };
+}
+
+function updatePreviewGrid(realWm, realHm){
+  const overlay = $("gridOverlay");
+  if(!overlay || !realWm || !realHm) return;
+
+  const m = getRenderedSvgMetrics();
+  if(!m || m.widthCm <= 0 || m.heightCm <= 0) return;
+
+  const pxPerCm = m.contentW / m.widthCm;
 
   overlay.style.setProperty("--grid-5cm", `${pxPerCm * 5}px`);
   overlay.style.setProperty("--grid-10cm", `${pxPerCm * 10}px`);
+  overlay.style.setProperty("--grid-left", `${m.offsetX}px`);
+  overlay.style.setProperty("--grid-top", `${m.offsetY}px`);
 }
 
 function cargarSVGEnPreview(text){
