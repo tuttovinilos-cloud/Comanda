@@ -1045,6 +1045,30 @@ html.menu-ready .header-tabs,
 }
 </style>
 
+
+<style>
+/* =========================================================
+   COTA VISUAL ENTRE PUNTO 1 Y PUNTO 2
+========================================================= */
+#measureLayer{
+  pointer-events:none!important;
+}
+
+.measure-point{
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
+}
+
+.pointBtn.active{
+  background:#ff8616!important;
+  color:#ffffff!important;
+  border-color:#ff8616!important;
+}
+
+.measureInfo{
+  align-items:center!important;
+}
+</style>
+
 </head>
 
 <body>
@@ -1122,7 +1146,7 @@ html.menu-ready .header-tabs,
         <button type="button" id="btnPoint1" class="pointBtn active" onclick="setActiveMeasurePoint(1)">Punto 1</button>
         <button type="button" id="btnPoint2" class="pointBtn" onclick="setActiveMeasurePoint(2)">Punto 2</button>
       </div>
-      <span>📏 Selecciona punto 1 o punto 2 y toca el panel.</span>
+      <span>📏 Elige Punto 1 o Punto 2 y toca la imagen.</span>
       <b id="measureResult">Distancia: —</b>
       <button type="button" class="gray miniMeasureBtn" onclick="clearMeasure()">Limpiar medida</button>
     </div>
@@ -1505,28 +1529,69 @@ function previewPointToCm(clientX, clientY){
 function drawMeasure(){
   const layer = $("measureLayer");
   const result = $("measureResult");
+
   if(!layer) return;
 
   layer.innerHTML = "";
 
+  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+
+  const markerStart = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+  markerStart.setAttribute("id", "arrowStart");
+  markerStart.setAttribute("markerWidth", "10");
+  markerStart.setAttribute("markerHeight", "10");
+  markerStart.setAttribute("refX", "2");
+  markerStart.setAttribute("refY", "5");
+  markerStart.setAttribute("orient", "auto");
+  markerStart.setAttribute("markerUnits", "strokeWidth");
+  markerStart.innerHTML = `<path d="M10,0 L0,5 L10,10 Z" fill="#153bff"></path>`;
+
+  const markerEnd = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+  markerEnd.setAttribute("id", "arrowEnd");
+  markerEnd.setAttribute("markerWidth", "10");
+  markerEnd.setAttribute("markerHeight", "10");
+  markerEnd.setAttribute("refX", "8");
+  markerEnd.setAttribute("refY", "5");
+  markerEnd.setAttribute("orient", "auto");
+  markerEnd.setAttribute("markerUnits", "strokeWidth");
+  markerEnd.innerHTML = `<path d="M0,0 L10,5 L0,10 Z" fill="#153bff"></path>`;
+
+  defs.appendChild(markerStart);
+  defs.appendChild(markerEnd);
+  layer.appendChild(defs);
+
+  const puntosValidos = measurePoints.filter(Boolean);
+
   measurePoints.forEach((p, i)=>{
     if(!p) return;
+
     const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("class", "measure-point");
     c.setAttribute("cx", p.xPx);
     c.setAttribute("cy", p.yPx);
-    c.setAttribute("r", "6");
-    c.setAttribute("fill", "#153bff");
+    c.setAttribute("r", "7");
+    c.setAttribute("fill", i === 0 ? "#ff8616" : "#153bff");
     c.setAttribute("stroke", "#ffffff");
     c.setAttribute("stroke-width", "3");
     layer.appendChild(c);
 
+    const tBg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    tBg.setAttribute("x", p.xPx + 8);
+    tBg.setAttribute("y", p.yPx - 24);
+    tBg.setAttribute("rx", "7");
+    tBg.setAttribute("width", "32");
+    tBg.setAttribute("height", "22");
+    tBg.setAttribute("fill", i === 0 ? "#ff8616" : "#153bff");
+    layer.appendChild(tBg);
+
     const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    t.setAttribute("x", p.xPx + 10);
-    t.setAttribute("y", p.yPx - 10);
-    t.setAttribute("fill", "#153bff");
-    t.setAttribute("font-size", "16");
+    t.setAttribute("x", p.xPx + 24);
+    t.setAttribute("y", p.yPx - 9);
+    t.setAttribute("fill", "#ffffff");
+    t.setAttribute("font-size", "13");
     t.setAttribute("font-weight", "900");
-    t.textContent = String(i + 1);
+    t.setAttribute("text-anchor", "middle");
+    t.textContent = `P${i + 1}`;
     layer.appendChild(t);
   });
 
@@ -1534,35 +1599,78 @@ function drawMeasure(){
     const p1 = measurePoints[0];
     const p2 = measurePoints[1];
 
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("x1", p1.xPx);
-    line.setAttribute("y1", p1.yPx);
-    line.setAttribute("x2", p2.xPx);
-    line.setAttribute("y2", p2.yPx);
-    line.setAttribute("stroke", "#153bff");
-    line.setAttribute("stroke-width", "4");
-    line.setAttribute("stroke-linecap", "round");
-    layer.insertBefore(line, layer.firstChild);
+    const dxPx = p2.xPx - p1.xPx;
+    const dyPx = p2.yPx - p1.yPx;
+    const lenPx = Math.sqrt(dxPx*dxPx + dyPx*dyPx) || 1;
+
+    const nx = -dyPx / lenPx;
+    const ny = dxPx / lenPx;
+
+    const offset = 18;
+
+    const a1x = p1.xPx + nx * offset;
+    const a1y = p1.yPx + ny * offset;
+    const a2x = p2.xPx + nx * offset;
+    const a2y = p2.yPx + ny * offset;
+
+    // Líneas auxiliares desde puntos hasta la cota
+    const ext1 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    ext1.setAttribute("x1", p1.xPx);
+    ext1.setAttribute("y1", p1.yPx);
+    ext1.setAttribute("x2", a1x);
+    ext1.setAttribute("y2", a1y);
+    ext1.setAttribute("stroke", "#153bff");
+    ext1.setAttribute("stroke-width", "2");
+    ext1.setAttribute("stroke-dasharray", "5 4");
+    layer.appendChild(ext1);
+
+    const ext2 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    ext2.setAttribute("x1", p2.xPx);
+    ext2.setAttribute("y1", p2.yPx);
+    ext2.setAttribute("x2", a2x);
+    ext2.setAttribute("y2", a2y);
+    ext2.setAttribute("stroke", "#153bff");
+    ext2.setAttribute("stroke-width", "2");
+    ext2.setAttribute("stroke-dasharray", "5 4");
+    layer.appendChild(ext2);
+
+    // Línea de cota con flechas
+    const dimLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    dimLine.setAttribute("x1", a1x);
+    dimLine.setAttribute("y1", a1y);
+    dimLine.setAttribute("x2", a2x);
+    dimLine.setAttribute("y2", a2y);
+    dimLine.setAttribute("stroke", "#153bff");
+    dimLine.setAttribute("stroke-width", "4");
+    dimLine.setAttribute("stroke-linecap", "round");
+    dimLine.setAttribute("marker-start", "url(#arrowStart)");
+    dimLine.setAttribute("marker-end", "url(#arrowEnd)");
+    layer.appendChild(dimLine);
 
     const dx = p2.xCm - p1.xCm;
     const dy = p2.yCm - p1.yCm;
     const dist = Math.sqrt(dx*dx + dy*dy);
 
-    const midX = (p1.xPx + p2.xPx) / 2;
-    const midY = (p1.yPx + p2.yPx) / 2;
+    const midX = (a1x + a2x) / 2;
+    const midY = (a1y + a2y) / 2;
+
+    const labelW = 104;
+    const labelH = 30;
 
     const labelBg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    labelBg.setAttribute("x", midX - 44);
-    labelBg.setAttribute("y", midY - 18);
-    labelBg.setAttribute("rx", "8");
-    labelBg.setAttribute("width", "88");
-    labelBg.setAttribute("height", "30");
+    labelBg.setAttribute("x", midX - labelW/2);
+    labelBg.setAttribute("y", midY - labelH - 7);
+    labelBg.setAttribute("rx", "9");
+    labelBg.setAttribute("width", labelW);
+    labelBg.setAttribute("height", labelH);
     labelBg.setAttribute("fill", "#153bff");
+    labelBg.setAttribute("stroke", "#ffffff");
+    labelBg.setAttribute("stroke-width", "2");
     layer.appendChild(labelBg);
 
     const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
     label.setAttribute("x", midX);
-    label.setAttribute("y", midY + 2);
+    label.setAttribute("y", midY - 16);
     label.setAttribute("fill", "#ffffff");
     label.setAttribute("font-size", "13");
     label.setAttribute("font-weight", "900");
@@ -1572,7 +1680,13 @@ function drawMeasure(){
 
     if(result) result.textContent = `Distancia: ${dist.toFixed(2)} cm`;
   }else{
-    if(result) result.textContent = "Distancia: —";
+    if(result){
+      if(puntosValidos.length === 1){
+        result.textContent = "Distancia: falta punto 2";
+      }else{
+        result.textContent = "Distancia: —";
+      }
+    }
   }
 }
 
@@ -1605,11 +1719,10 @@ function setupMeasureTool(){
     const p = previewPointToCm(e.clientX, e.clientY);
     if(!p) return;
 
+    // Coloca exactamente el punto activo:
+    // Punto 1 si el botón Punto 1 está activo.
+    // Punto 2 si el botón Punto 2 está activo.
     measurePoints[activeMeasurePoint - 1] = p;
-
-    if(activeMeasurePoint === 1 && !measurePoints[1]){
-      setActiveMeasurePoint(2);
-    }
 
     drawMeasure();
   });
