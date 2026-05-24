@@ -181,7 +181,7 @@ input,select{width:100%;height:42px;border-radius:13px;border:1px solid var(--bo
   <div class="panelGrid">
     <div id="cropCard" class="card hidden">
       <h2>1) Recorte</h2>
-      <p class="hint">Arrastra las esquinas naranjas hasta el borde del logo. Luego aplica el recorte.</p>
+      <p class="hint">Arrastra las esquinas o los lados del recorte. Siempre mantiene forma rectangular a 90°.</p>
 
       <div class="infoGrid" style="margin-top:10px">
         <div class="info"><span>X</span><b id="cropX">—</b></div>
@@ -276,6 +276,7 @@ const S = {
   dragCorner:-1,
   last:null,
   crop:null,
+  dragMode:null,
   cmPerPx:null,
   realW:0,
   realH:0,
@@ -360,6 +361,8 @@ function centerImage(){
 function resetAll(){
   S.img=null;
   S.crop=null;
+  S.dragMode=null;
+  S.lastCropImg=null;
   S.cmPerPx=null;
   S.p1=null;
   S.p2=null;
@@ -384,23 +387,24 @@ function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 function resetCrop(){
   if(!S.img)return;
   const pad=Math.min(S.iw,S.ih)*0.08;
-  S.crop=[
-    {x:pad,y:pad},
-    {x:S.iw-pad,y:pad},
-    {x:S.iw-pad,y:S.ih-pad},
-    {x:pad,y:S.ih-pad}
-  ];
+  S.crop={
+    x:pad,
+    y:pad,
+    w:S.iw-(pad*2),
+    h:S.ih-(pad*2)
+  };
   updateCropInfo();
   draw();
 }
 
 function cropBox(){
   if(!S.crop)return null;
-  const xs=S.crop.map(p=>p.x);
-  const ys=S.crop.map(p=>p.y);
-  const x=Math.min(...xs), y=Math.min(...ys);
-  const w=Math.max(...xs)-x, h=Math.max(...ys)-y;
-  return {x,y,w,h};
+  return {
+    x:S.crop.x,
+    y:S.crop.y,
+    w:S.crop.w,
+    h:S.crop.h
+  };
 }
 
 function updateCropInfo(){
@@ -536,15 +540,84 @@ async function copyMeasure(){
   catch(e){toast(txt);}
 }
 
-function nearCorner(x,y){
-  if(!S.crop)return -1;
-  let best=-1, dist=28;
-  S.crop.forEach((p,i)=>{
-    const s=imgToScreen(p);
-    const d=Math.hypot(x-s.x,y-s.y);
-    if(d<dist){dist=d;best=i;}
+function hitCropHandle(x,y){
+  if(!S.crop)return null;
+
+  const b=cropBox();
+  const p1=imgToScreen({x:b.x,y:b.y});
+  const p2=imgToScreen({x:b.x+b.w,y:b.y});
+  const p3=imgToScreen({x:b.x+b.w,y:b.y+b.h});
+  const p4=imgToScreen({x:b.x,y:b.y+b.h});
+
+  const handles=[
+    {type:"nw",x:p1.x,y:p1.y},
+    {type:"ne",x:p2.x,y:p2.y},
+    {type:"se",x:p3.x,y:p3.y},
+    {type:"sw",x:p4.x,y:p4.y},
+    {type:"n",x:(p1.x+p2.x)/2,y:p1.y},
+    {type:"e",x:p2.x,y:(p2.y+p3.y)/2},
+    {type:"s",x:(p4.x+p3.x)/2,y:p3.y},
+    {type:"w",x:p1.x,y:(p1.y+p4.y)/2}
+  ];
+
+  let best=null;
+  let dist=30;
+  handles.forEach(h=>{
+    const d=Math.hypot(x-h.x,y-h.y);
+    if(d<dist){dist=d;best=h.type;}
   });
+
+  // Permite mover todo el rectángulo tocando dentro
+  if(!best && x>=p1.x && x<=p3.x && y>=p1.y && y<=p3.y){
+    best="moveCrop";
+  }
+
   return best;
+}
+
+function applyCropHandle(type, pos){
+  if(!S.crop)return;
+
+  const ip=screenToImg(pos.x,pos.y);
+  const minSize=8;
+
+  let left=S.crop.x;
+  let top=S.crop.y;
+  let right=S.crop.x+S.crop.w;
+  let bottom=S.crop.y+S.crop.h;
+
+  if(type==="moveCrop"){
+    if(!S.lastCropImg){
+      S.lastCropImg=ip;
+      return;
+    }
+
+    const dx=ip.x-S.lastCropImg.x;
+    const dy=ip.y-S.lastCropImg.y;
+
+    left=clamp(left+dx,0,S.iw-S.crop.w);
+    top=clamp(top+dy,0,S.ih-S.crop.h);
+    S.crop.x=left;
+    S.crop.y=top;
+
+    S.lastCropImg=ip;
+    updateCropInfo();
+    draw();
+    return;
+  }
+
+  if(type.includes("w")) left=clamp(ip.x,0,right-minSize);
+  if(type.includes("e")) right=clamp(ip.x,left+minSize,S.iw);
+  if(type.includes("n")) top=clamp(ip.y,0,bottom-minSize);
+  if(type.includes("s")) bottom=clamp(ip.y,top+minSize,S.ih);
+
+  S.crop.x=left;
+  S.crop.y=top;
+  S.crop.w=right-left;
+  S.crop.h=bottom-top;
+
+  updateCropInfo();
+  draw();
 }
 
 function draw(){
@@ -568,8 +641,17 @@ function draw(){
 }
 
 function drawCrop(){
-  const pts=S.crop.map(imgToScreen);
+  const b=cropBox();
+  if(!b)return;
+
+  const p1=imgToScreen({x:b.x,y:b.y});
+  const p2=imgToScreen({x:b.x+b.w,y:b.y});
+  const p3=imgToScreen({x:b.x+b.w,y:b.y+b.h});
+  const p4=imgToScreen({x:b.x,y:b.y+b.h});
+
+  const pts=[p1,p2,p3,p4];
   const w=S.viewSize, h=S.viewSize;
+
   ctx.save();
 
   ctx.fillStyle="rgba(255,255,255,.62)";
@@ -577,36 +659,69 @@ function drawCrop(){
 
   ctx.globalCompositeOperation="destination-out";
   ctx.beginPath();
-  ctx.moveTo(pts[0].x,pts[0].y);
-  for(let i=1;i<4;i++)ctx.lineTo(pts[i].x,pts[i].y);
-  ctx.closePath();
+  ctx.rect(p1.x,p1.y,p3.x-p1.x,p3.y-p1.y);
   ctx.fill();
 
   ctx.globalCompositeOperation="source-over";
-  ctx.strokeStyle="#111";
-  ctx.lineWidth=1.2;
-  ctx.beginPath();
-  ctx.moveTo(pts[0].x,pts[0].y);
-  for(let i=1;i<4;i++)ctx.lineTo(pts[i].x,pts[i].y);
-  ctx.closePath();
-  ctx.stroke();
 
-  pts.forEach((p,i)=>{
-    const L=18;
-    const dir=[[-1,-1],[1,-1],[1,1],[-1,1]][i];
+  ctx.strokeStyle="#111";
+  ctx.lineWidth=1.4;
+  ctx.setLineDash([]);
+  ctx.strokeRect(p1.x,p1.y,p3.x-p1.x,p3.y-p1.y);
+
+  // Líneas suaves tipo guías de recorte
+  ctx.strokeStyle="rgba(17,17,17,.22)";
+  ctx.lineWidth=0.8;
+  const thirdX=(p3.x-p1.x)/3;
+  const thirdY=(p3.y-p1.y)/3;
+  for(let i=1;i<=2;i++){
+    ctx.beginPath();
+    ctx.moveTo(p1.x+thirdX*i,p1.y);
+    ctx.lineTo(p1.x+thirdX*i,p3.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(p1.x,p1.y+thirdY*i);
+    ctx.lineTo(p3.x,p1.y+thirdY*i);
+    ctx.stroke();
+  }
+
+  // Esquinas
+  const L=18;
+  const cornerData=[
+    [p1,-1,-1],
+    [p2,1,-1],
+    [p3,1,1],
+    [p4,-1,1]
+  ];
+
+  cornerData.forEach(([p,dx,dy])=>{
     ctx.strokeStyle="#111";
     ctx.lineWidth=3;
     ctx.lineCap="square";
     ctx.beginPath();
-    ctx.moveTo(p.x+dir[0]*L,p.y);
+    ctx.moveTo(p.x+dx*L,p.y);
     ctx.lineTo(p.x,p.y);
-    ctx.lineTo(p.x,p.y+dir[1]*L);
+    ctx.lineTo(p.x,p.y+dy*L);
     ctx.stroke();
 
     ctx.fillStyle="#ff8616";
     ctx.beginPath();
     ctx.arc(p.x,p.y,5,0,Math.PI*2);
     ctx.fill();
+  });
+
+  // Handles laterales
+  const handles=[
+    {x:(p1.x+p2.x)/2,y:p1.y},
+    {x:p2.x,y:(p2.y+p3.y)/2},
+    {x:(p4.x+p3.x)/2,y:p3.y},
+    {x:p1.x,y:(p1.y+p4.y)/2}
+  ];
+
+  handles.forEach(p=>{
+    ctx.fillStyle="#111";
+    ctx.fillRect(p.x-14,p.y-2,28,4);
   });
 
   ctx.restore();
@@ -671,8 +786,13 @@ canvas.addEventListener("touchstart",e=>{
   const pos=getCanvasPosFromEvent(e);
 
   if(S.mode==="crop"){
-    const c=nearCorner(pos.x,pos.y);
-    if(c>=0){S.dragCorner=c;S.dragging=true;return;}
+    const h=hitCropHandle(pos.x,pos.y);
+    if(h){
+      S.dragMode=h;
+      S.dragging=true;
+      S.lastCropImg=null;
+      return;
+    }
   }
 
   if(S.mode==="measure"){
@@ -707,10 +827,8 @@ canvas.addEventListener("touchmove",e=>{
 
   const pos=getCanvasPosFromEvent(e);
 
-  if(S.mode==="crop" && S.dragging && S.dragCorner>=0){
-    const ip=screenToImg(pos.x,pos.y);
-    S.crop[S.dragCorner]={x:clamp(ip.x,0,S.iw),y:clamp(ip.y,0,S.ih)};
-    draw();
+  if(S.mode==="crop" && S.dragging && S.dragMode){
+    applyCropHandle(S.dragMode,pos);
     return;
   }
 
@@ -726,6 +844,8 @@ canvas.addEventListener("touchend",e=>{
   if(e.touches.length<2)S.pinch=null;
   S.dragging=false;
   S.dragCorner=-1;
+  S.dragMode=null;
+  S.lastCropImg=null;
   S.last=null;
 },{passive:false});
 
@@ -735,8 +855,13 @@ canvas.addEventListener("mousedown",e=>{
   const pos={x:e.clientX-rect.left,y:e.clientY-rect.top};
 
   if(S.mode==="crop"){
-    const c=nearCorner(pos.x,pos.y);
-    if(c>=0){S.dragCorner=c;S.dragging=true;return;}
+    const h=hitCropHandle(pos.x,pos.y);
+    if(h){
+      S.dragMode=h;
+      S.dragging=true;
+      S.lastCropImg=null;
+      return;
+    }
   }
 
   if(S.mode==="measure"){
@@ -753,10 +878,8 @@ window.addEventListener("mousemove",e=>{
   const rect=canvas.getBoundingClientRect();
   const pos={x:e.clientX-rect.left,y:e.clientY-rect.top};
 
-  if(S.mode==="crop" && S.dragCorner>=0){
-    const ip=screenToImg(pos.x,pos.y);
-    S.crop[S.dragCorner]={x:clamp(ip.x,0,S.iw),y:clamp(ip.y,0,S.ih)};
-    draw();
+  if(S.mode==="crop" && S.dragMode){
+    applyCropHandle(S.dragMode,pos);
     return;
   }
 
@@ -771,6 +894,8 @@ window.addEventListener("mousemove",e=>{
 window.addEventListener("mouseup",()=>{
   S.dragging=false;
   S.dragCorner=-1;
+  S.dragMode=null;
+  S.lastCropImg=null;
   S.last=null;
 });
 
