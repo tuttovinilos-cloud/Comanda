@@ -900,6 +900,100 @@ html.menu-ready .header-tabs,
 }
 </style>
 
+
+<style>
+/* =========================================================
+   GRID FRONTAL + MEDICIÓN DE 2 PUNTOS
+   Azul fuerte cada 10 cm, azul claro cada 5 cm
+========================================================= */
+#preview{
+  position:relative!important;
+  cursor:crosshair!important;
+}
+
+#preview > svg:not(#measureLayer){
+  position:relative!important;
+  z-index:2!important;
+}
+
+#gridOverlay{
+  position:absolute!important;
+  inset:0!important;
+  z-index:5!important;
+  pointer-events:none!important;
+  background-image:
+    linear-gradient(to right, rgba(21,59,255,.18) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(21,59,255,.18) 1px, transparent 1px),
+    linear-gradient(to right, rgba(21,59,255,.52) 1.4px, transparent 1.4px),
+    linear-gradient(to bottom, rgba(21,59,255,.52) 1.4px, transparent 1.4px)!important;
+  background-size:
+    var(--grid-5cm-x, 50px) var(--grid-5cm-y, 50px),
+    var(--grid-5cm-x, 50px) var(--grid-5cm-y, 50px),
+    var(--grid-10cm-x, 100px) var(--grid-10cm-y, 100px),
+    var(--grid-10cm-x, 100px) var(--grid-10cm-y, 100px)!important;
+  background-position:center center!important;
+}
+
+#measureLayer{
+  position:absolute!important;
+  inset:0!important;
+  z-index:6!important;
+  width:100%!important;
+  height:100%!important;
+  pointer-events:none!important;
+  overflow:visible!important;
+}
+
+.measureInfo{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:10px;
+  padding:10px 12px;
+  border:1px solid #d9deea;
+  border-radius:14px;
+  background:#f8f9ff;
+  color:#475569;
+  font-size:12px;
+  line-height:1.25;
+}
+
+.measureInfo b{
+  color:#153bff;
+  font-family:var(--head,Montserrat,Arial,sans-serif);
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.miniMeasureBtn{
+  width:auto!important;
+  min-width:110px!important;
+  padding:8px 10px!important;
+  min-height:34px!important;
+  font-size:11px!important;
+}
+
+@media(max-width:520px){
+  .measureInfo{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:7px;
+    font-size:10px;
+  }
+
+  .measureInfo b{
+    font-size:11px;
+  }
+
+  .miniMeasureBtn{
+    width:100%!important;
+    min-width:0!important;
+    min-height:32px!important;
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -966,7 +1060,17 @@ html.menu-ready .header-tabs,
 
   <div class="card">
     <h2>2) Vista previa · máximo 1200 × 1200</h2>
-    <div id="previewShell"><div id="preview"></div></div>
+    <div id="previewShell">
+      <div id="preview">
+        <div id="gridOverlay"></div>
+        <svg id="measureLayer" aria-hidden="true"></svg>
+      </div>
+    </div>
+    <div class="measureInfo">
+      <span>📏 Haz clic en 2 puntos para medir distancia.</span>
+      <b id="measureResult">Distancia: —</b>
+      <button type="button" class="gray miniMeasureBtn" onclick="clearMeasure()">Limpiar medida</button>
+    </div>
     <p class="hint">La vista se ajusta automáticamente: si el SVG es pequeño, hace zoom; si es grande, lo reduce para verlo completo.</p>
   </div>
 
@@ -1249,6 +1353,7 @@ function switchTab(tab){
   $("btnTabAnalyzer").classList.toggle("active", tab==="analyzer");
   $("btnTabMaterials").classList.toggle("active", tab==="materials");
   if(tab==="materials") renderMaterialPage();
+setupMeasureTool();
 }
 function togglePieceDetail(){ const b=$("pieceDetailBox"); if(b) b.classList.toggle("show"); }
 
@@ -1321,7 +1426,125 @@ function deleteComposite(n){
 function resetMaterialDefaults(){
   if(!confirm("¿Restaurar materiales y grupos base? Esto reemplaza tus cambios guardados.")) return;
   Object.keys(PRICES).forEach(k=>delete PRICES[k]); Object.assign(PRICES, JSON.parse(JSON.stringify(DEFAULT_PRICES)));
-  COMPOSITES=JSON.parse(JSON.stringify(DEFAULT_COMPOSITES)); saveStoredData(); populateProductSelect("Front Lit"); renderMaterialPage(); renderPricing(lastResults);
+  COMPOSITES=JSON.parse(JSON.stringify(DEFAULT_COMPOSITES)); saveStoredData(); 
+let measurePoints = [];
+
+function previewPointToCm(clientX, clientY){
+  const preview = $("preview");
+  if(!preview || !originalRealWm || !originalRealHm) return null;
+
+  const rect = preview.getBoundingClientRect();
+  const xPx = clientX - rect.left;
+  const yPx = clientY - rect.top;
+
+  const widthCm = originalRealWm * 100;
+  const heightCm = originalRealHm * 100;
+
+  const xCm = (xPx / rect.width) * widthCm;
+  const yCm = (yPx / rect.height) * heightCm;
+
+  return { xPx, yPx, xCm, yCm };
+}
+
+function drawMeasure(){
+  const layer = $("measureLayer");
+  const result = $("measureResult");
+  if(!layer) return;
+
+  layer.innerHTML = "";
+
+  measurePoints.forEach((p, i)=>{
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("cx", p.xPx);
+    c.setAttribute("cy", p.yPx);
+    c.setAttribute("r", "6");
+    c.setAttribute("fill", "#153bff");
+    c.setAttribute("stroke", "#ffffff");
+    c.setAttribute("stroke-width", "3");
+    layer.appendChild(c);
+
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.setAttribute("x", p.xPx + 10);
+    t.setAttribute("y", p.yPx - 10);
+    t.setAttribute("fill", "#153bff");
+    t.setAttribute("font-size", "16");
+    t.setAttribute("font-weight", "900");
+    t.textContent = String(i + 1);
+    layer.appendChild(t);
+  });
+
+  if(measurePoints.length === 2){
+    const p1 = measurePoints[0];
+    const p2 = measurePoints[1];
+
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", p1.xPx);
+    line.setAttribute("y1", p1.yPx);
+    line.setAttribute("x2", p2.xPx);
+    line.setAttribute("y2", p2.yPx);
+    line.setAttribute("stroke", "#153bff");
+    line.setAttribute("stroke-width", "4");
+    line.setAttribute("stroke-linecap", "round");
+    layer.insertBefore(line, layer.firstChild);
+
+    const dx = p2.xCm - p1.xCm;
+    const dy = p2.yCm - p1.yCm;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+
+    const midX = (p1.xPx + p2.xPx) / 2;
+    const midY = (p1.yPx + p2.yPx) / 2;
+
+    const labelBg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    labelBg.setAttribute("x", midX - 44);
+    labelBg.setAttribute("y", midY - 18);
+    labelBg.setAttribute("rx", "8");
+    labelBg.setAttribute("width", "88");
+    labelBg.setAttribute("height", "30");
+    labelBg.setAttribute("fill", "#153bff");
+    layer.appendChild(labelBg);
+
+    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    label.setAttribute("x", midX);
+    label.setAttribute("y", midY + 2);
+    label.setAttribute("fill", "#ffffff");
+    label.setAttribute("font-size", "13");
+    label.setAttribute("font-weight", "900");
+    label.setAttribute("text-anchor", "middle");
+    label.textContent = `${dist.toFixed(2)} cm`;
+    layer.appendChild(label);
+
+    if(result) result.textContent = `Distancia: ${dist.toFixed(2)} cm`;
+  }else{
+    if(result) result.textContent = "Distancia: —";
+  }
+}
+
+function clearMeasure(){
+  measurePoints = [];
+  drawMeasure();
+}
+
+function setupMeasureTool(){
+  const preview = $("preview");
+  if(!preview) return;
+
+  preview.addEventListener("click", function(e){
+    if(!originalRealWm || !originalRealHm){
+      alert("Primero carga y calcula un SVG para activar la medición.");
+      return;
+    }
+
+    const p = previewPointToCm(e.clientX, e.clientY);
+    if(!p) return;
+
+    if(measurePoints.length >= 2) measurePoints = [];
+    measurePoints.push(p);
+    drawMeasure();
+  });
+}
+
+
+populateProductSelect("Front Lit"); renderMaterialPage(); renderPricing(lastResults);
 }
 function compositeQty(base, factor, offset, c){
   const K43=c?.piezas||0, K44=c?.perimetroM||0, K45=c?.areaRellenoM2||0, K46=c?.areaMarcoM2||0, K47=c?.areaSeleccionM2||0;
@@ -1388,6 +1611,7 @@ window.addEventListener("load", function(){
 window.addEventListener("resize", function(){
   if(originalRealWm && originalRealHm){
     updatePreviewGrid(originalRealWm, originalRealHm);
+    drawMeasure();
   }
 });
 
@@ -1395,7 +1619,9 @@ window.addEventListener("resize", function(){
 
 function updatePreviewGrid(realWm, realHm){
   const preview = $("preview");
-  if(!preview || !realWm || !realHm) return;
+  const overlay = $("gridOverlay");
+
+  if(!preview || !overlay || !realWm || !realHm) return;
 
   const widthCm = realWm * 100;
   const heightCm = realHm * 100;
@@ -1406,10 +1632,10 @@ function updatePreviewGrid(realWm, realHm){
   const pxPerCmX = rect.width / widthCm;
   const pxPerCmY = rect.height / heightCm;
 
-  preview.style.setProperty("--grid-5cm-x", `${pxPerCmX * 5}px`);
-  preview.style.setProperty("--grid-5cm-y", `${pxPerCmY * 5}px`);
-  preview.style.setProperty("--grid-10cm-x", `${pxPerCmX * 10}px`);
-  preview.style.setProperty("--grid-10cm-y", `${pxPerCmY * 10}px`);
+  overlay.style.setProperty("--grid-5cm-x", `${pxPerCmX * 5}px`);
+  overlay.style.setProperty("--grid-5cm-y", `${pxPerCmY * 5}px`);
+  overlay.style.setProperty("--grid-10cm-x", `${pxPerCmX * 10}px`);
+  overlay.style.setProperty("--grid-10cm-y", `${pxPerCmY * 10}px`);
 }
 
 function cargarSVGEnPreview(text){
