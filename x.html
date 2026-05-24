@@ -342,7 +342,7 @@ hr{border:0;border-top:1px solid var(--line);margin:14px 0}
       </div>
 
       <div class="stageOuter">
-        <div class="stageWrap">
+        <div class="stageWrap" style="width:1200px;height:1200px;">
           <div id="stage">
             <div class="empty" id="emptyMsg">
               <div>
@@ -503,14 +503,21 @@ $("fileInput").addEventListener("change", function(e){
 });
 
 function fitImageToStage(){
-  const r = stage.getBoundingClientRect();
-  const scale = Math.min(r.width / naturalW, r.height / naturalH);
+
+  const stageSize = 1200;
+
+  const scale = Math.min(
+    stageSize / naturalW,
+    stageSize / naturalH
+  );
+
   visualScale = scale;
 
   imgW = naturalW * scale;
   imgH = naturalH * scale;
-  imgX = (r.width - imgW) / 2;
-  imgY = (r.height - imgH) / 2;
+
+  imgX = (stageSize - imgW) / 2;
+  imgY = (stageSize - imgH) / 2;
 
   renderImage();
 }
@@ -530,13 +537,20 @@ function renderImage(){
 }
 
 function createInitialCrop(){
+
+  const margin = Math.min(imgW,imgH) * 0.06;
+
   cropRect = {
-    x: imgX + imgW * 0.08,
-    y: imgY + imgH * 0.08,
-    w: imgW * 0.84,
-    h: imgH * 0.84
+    x: imgX + margin,
+    y: imgY + margin,
+    w: imgW - (margin * 2),
+    h: imgH - (margin * 2)
   };
+
   cropBox.style.display = "block";
+
+  clampCropToImage();
+
   renderImage();
 }
 
@@ -687,11 +701,15 @@ stage.addEventListener("pointermove", function(e){
   const dy = y - drag.startY;
 
   if(drag.type === "panImage"){
+
     imgX = drag.imgX + dx;
     imgY = drag.imgY + dy;
+
     if(cropRect){
-      cropRect.x += dx - ((imgX - drag.imgX) - dx);
+      cropRect.x += dx;
+      cropRect.y += dy;
     }
+
     renderImage();
     return;
   }
