@@ -2,43 +2,613 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Probador de IP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Convertidor Imagen a SVG · Tuttovinilos</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"></script>
+
 <style>
-  body { font-family: Arial; padding: 20px; }
-  input, button { font-size: 18px; padding: 10px; margin: 5px 0; width: 100%; }
-  a { display:block; margin:10px 0; font-size:18px; }
+:root{
+  --bg:#f0f2f9;
+  --card:#ffffff;
+  --card2:#f8f9ff;
+  --line:#d9deea;
+  --text:#111827;
+  --muted:#64748b;
+  --blue:#153bff;
+  --blue2:#0b1f7a;
+  --orange:#ff8616;
+  --green:#16a34a;
+  --red:#dc2626;
+  --shadow:0 10px 28px rgba(15,23,42,.08);
+  --head:'Montserrat',Arial,sans-serif;
+  --body:'Inter',Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  -webkit-tap-highlight-color:transparent;
+}
+.header{
+  background:#172bd8;
+  min-height:64px;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  position:sticky;
+  top:0;
+  z-index:20;
+  box-shadow:0 8px 20px rgba(21,59,255,.18);
+}
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:#fff;
+  font-family:var(--head);
+  font-weight:900;
+  letter-spacing:.6px;
+  text-transform:uppercase;
+}
+.logo img{
+  width:112px;
+  max-width:112px;
+  height:auto;
+  display:block;
+}
+.logo span{
+  font-size:12px;
+  opacity:.92;
+}
+.headerBadge{
+  color:#fff;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.28);
+  border-radius:999px;
+  padding:9px 13px;
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.main{
+  max-width:1300px;
+  margin:auto;
+  padding:16px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:380px 1fr;
+  gap:16px;
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:16px;
+  box-shadow:var(--shadow);
+  margin-bottom:16px;
+}
+.card h2{
+  margin:0 0 12px;
+  font-family:var(--head);
+  font-size:18px;
+  color:var(--blue2);
+}
+label{
+  display:block;
+  margin-bottom:6px;
+  font-size:12px;
+  color:var(--muted);
+  font-weight:800;
+}
+input,select,button{
+  width:100%;
+  border:none;
+  border-radius:12px;
+  font-size:14px;
+}
+input,select{
+  padding:11px;
+  background:#fff;
+  border:1px solid #cbd5e1;
+  color:#111827;
+}
+button{
+  padding:12px;
+  font-family:var(--head);
+  font-weight:900;
+  cursor:pointer;
+  color:white;
+  background:var(--blue);
+  min-height:42px;
+}
+button.orange{background:var(--orange)}
+button.gray{
+  background:#fff;
+  color:var(--blue);
+  border:1px solid #cbd5e1;
+}
+button.green{background:var(--green)}
+.formGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+.hint{
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.5;
+}
+.previewGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.previewBox{
+  min-height:360px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:18px;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+}
+.previewBox img,
+.previewBox svg{
+  max-width:100%;
+  max-height:100%;
+  width:auto;
+  height:auto;
+  display:block;
+}
+.previewTitle{
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:900;
+  color:var(--blue2);
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+.kpi{
+  background:var(--card2);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+}
+.kpi b{
+  display:block;
+  font-family:var(--head);
+  font-size:18px;
+  color:#0f172a;
+}
+.kpi span{
+  color:var(--muted);
+  font-size:11px;
+}
+.status{
+  margin-top:10px;
+  padding:10px 12px;
+  background:#eef1ff;
+  border:1px solid #cbd3e6;
+  border-radius:14px;
+  color:var(--blue2);
+  font-size:12px;
+  font-weight:800;
+}
+.fileName{
+  word-break:break-word;
+  font-size:12px;
+  color:var(--muted);
+}
+canvas{display:none}
+@media(max-width:980px){
+  .grid{grid-template-columns:1fr}
+  .previewGrid{grid-template-columns:1fr}
+}
+@media(max-width:520px){
+  .main{padding:10px}
+  .header{padding:12px}
+  .logo img{width:100px}
+  .headerBadge{display:none}
+  .card{padding:12px;border-radius:16px}
+  .formGrid,.actions{grid-template-columns:1fr 1fr}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  input,select,button{font-size:12px;padding:9px}
+  .previewBox{min-height:280px}
+}
 </style>
 </head>
+
 <body>
 
-<h2>Probador de cámara/IP</h2>
+<header class="header">
+  <div class="logo">
+    <img src="Logo tutto1.svg" alt="Tutto Vinilos" onerror="this.style.display='none'">
+    <span>Convertidor SVG</span>
+  </div>
+  <div class="headerBadge">JPG / PNG / WEBP → SVG</div>
+</header>
 
-<input id="ip" value="192.168.0.118" placeholder="IP del dispositivo">
+<main class="main">
 
-<button onclick="generar()">Generar pruebas</button>
+<div class="grid">
 
-<div id="links"></div>
+  <section>
+    <div class="card">
+      <h2>1) Cargar imagen</h2>
+
+      <label>Imagen JPG / PNG / WEBP</label>
+      <input type="file" id="imageInput" accept="image/png,image/jpeg,image/webp">
+
+      <p class="hint">
+        Este convertidor funciona mejor con logos, dibujos, íconos o imágenes con buen contraste.
+        Para fotos complejas, primero prueba modo blanco y negro.
+      </p>
+
+      <div class="status" id="status">Listo. Carga una imagen.</div>
+      <p class="fileName" id="fileName"></p>
+    </div>
+
+    <div class="card">
+      <h2>2) Ajustes</h2>
+
+      <div class="formGrid">
+        <div>
+          <label>Modo</label>
+          <select id="mode">
+            <option value="bw" selected>Blanco / negro</option>
+            <option value="color">Color simple</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Ancho SVG cm</label>
+          <input id="svgWidthCm" type="number" value="60" min="1" step="0.1">
+        </div>
+
+        <div>
+          <label>Umbral B/N</label>
+          <input id="threshold" type="number" value="180" min="0" max="255" step="1">
+        </div>
+
+        <div>
+          <label>Colores</label>
+          <input id="colors" type="number" value="8" min="2" max="32" step="1">
+        </div>
+
+        <div>
+          <label>Detalle</label>
+          <input id="detail" type="number" value="1" min="0" max="5" step="0.1">
+        </div>
+
+        <div>
+          <label>Eliminar blanco</label>
+          <select id="removeWhite">
+            <option value="yes" selected>Sí</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="orange" onclick="convertImageToSvg()">Convertir</button>
+        <button class="gray" onclick="resetAll()">Limpiar</button>
+      </div>
+
+      <div class="actions">
+        <button class="green" onclick="downloadSvg()">Descargar SVG</button>
+        <button onclick="copySvg()">Copiar SVG</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3) Datos</h2>
+      <div class="kpis">
+        <div class="kpi"><b id="kOriginal">0</b><span>Original px</span></div>
+        <div class="kpi"><b id="kProcesado">0</b><span>Procesado px</span></div>
+        <div class="kpi"><b id="kMedida">0</b><span>Medida SVG</span></div>
+        <div class="kpi"><b id="kPeso">0</b><span>Peso SVG</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>Vista previa</h2>
+
+      <div class="previewGrid">
+        <div>
+          <div class="previewTitle">Imagen original</div>
+          <div class="previewBox">
+            <img id="originalPreview" alt="Imagen original" style="display:none">
+            <span class="hint" id="emptyOriginal">Sin imagen</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="previewTitle">SVG convertido</div>
+          <div class="previewBox" id="svgPreview">
+            <span class="hint" id="emptySvg">Sin SVG</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<canvas id="workCanvas"></canvas>
+
+</main>
 
 <script>
-function generar() {
-  const ip = document.getElementById("ip").value.trim();
+let loadedImage = null;
+let loadedFileName = "imagen";
+let currentSvgText = "";
 
-  const urls = [
-    `http://${ip}`,
-    `http://${ip}:80`,
-    `http://${ip}:81`,
-    `http://${ip}:81/stream`,
-    `http://${ip}/stream`,
-    `http://${ip}:8080`,
-    `http://${ip}:8080/video`,
-    `rtsp://${ip}:554/live`,
-    `rtsp://${ip}/live`,
-    `rtsp://${ip}:554/stream1`
-  ];
+const $ = id => document.getElementById(id);
 
-  document.getElementById("links").innerHTML = urls.map(url => `
-    <a href="${url}" target="_blank">${url}</a>
-  `).join("");
+function setStatus(msg){
+  $("status").textContent = msg;
+}
+
+function safeName(name){
+  return String(name || "imagen")
+    .replace(/\.[^.]+$/, "")
+    .replace(/[^a-z0-9_-]+/gi, "_")
+    .slice(0, 60);
+}
+
+$("imageInput").addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+
+  loadedFileName = safeName(file.name);
+  $("fileName").textContent = file.name;
+
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+
+  img.onload = function(){
+    loadedImage = img;
+
+    $("originalPreview").src = url;
+    $("originalPreview").style.display = "block";
+    $("emptyOriginal").style.display = "none";
+
+    $("kOriginal").textContent = img.naturalWidth + "×" + img.naturalHeight;
+
+    setStatus("Imagen cargada. Ahora presiona Convertir.");
+  };
+
+  img.onerror = function(){
+    alert("No se pudo cargar la imagen.");
+  };
+
+  img.src = url;
+});
+
+function getScaledSize(w, h, maxSide){
+  const s = Math.min(1, maxSide / Math.max(w, h));
+  return {
+    w: Math.max(1, Math.round(w * s)),
+    h: Math.max(1, Math.round(h * s))
+  };
+}
+
+function preprocessImage(img){
+  const mode = $("mode").value;
+  const threshold = Number($("threshold").value || 180);
+  const removeWhite = $("removeWhite").value === "yes";
+
+  const size = getScaledSize(img.naturalWidth, img.naturalHeight, 1200);
+
+  const canvas = $("workCanvas");
+  canvas.width = size.w;
+  canvas.height = size.h;
+
+  const ctx = canvas.getContext("2d", { willReadFrequently:true });
+  ctx.clearRect(0, 0, size.w, size.h);
+  ctx.drawImage(img, 0, 0, size.w, size.h);
+
+  const imageData = ctx.getImageData(0, 0, size.w, size.h);
+  const data = imageData.data;
+
+  if(mode === "bw"){
+    for(let i = 0; i < data.length; i += 4){
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const a = data[i + 3];
+
+      if(a < 20){
+        data[i + 3] = 0;
+        continue;
+      }
+
+      const gray = (r * 0.299) + (g * 0.587) + (b * 0.114);
+
+      if(gray > threshold){
+        if(removeWhite){
+          data[i + 3] = 0;
+        }else{
+          data[i] = 255;
+          data[i + 1] = 255;
+          data[i + 2] = 255;
+          data[i + 3] = 255;
+        }
+      }else{
+        data[i] = 0;
+        data[i + 1] = 0;
+        data[i + 2] = 0;
+        data[i + 3] = 255;
+      }
+    }
+  }else if(removeWhite){
+    for(let i = 0; i < data.length; i += 4){
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const a = data[i + 3];
+
+      if(a < 20 || (r > 242 && g > 242 && b > 242)){
+        data[i + 3] = 0;
+      }
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+
+  return ctx.getImageData(0, 0, size.w, size.h);
+}
+
+function addRealSizeToSvg(svg, pxW, pxH){
+  const widthCm = Number($("svgWidthCm").value || 60);
+  const heightCm = widthCm * (pxH / pxW);
+
+  let clean = svg;
+
+  clean = clean.replace(/<svg([^>]*)>/i, function(match, attrs){
+    attrs = attrs
+      .replace(/\swidth="[^"]*"/i, "")
+      .replace(/\sheight="[^"]*"/i, "")
+      .replace(/\sviewBox="[^"]*"/i, "");
+
+    return `<svg${attrs} width="${widthCm.toFixed(4)}cm" height="${heightCm.toFixed(4)}cm" viewBox="0 0 ${pxW} ${pxH}" preserveAspectRatio="xMidYMid meet">`;
+  });
+
+  $("kMedida").textContent = widthCm.toFixed(2) + "×" + heightCm.toFixed(2) + " cm";
+
+  return clean;
+}
+
+function convertImageToSvg(){
+  if(!loadedImage){
+    alert("Primero carga una imagen.");
+    return;
+  }
+
+  if(!window.ImageTracer){
+    alert("No cargó ImageTracerJS. Revisa internet o el CDN.");
+    return;
+  }
+
+  setStatus("Procesando imagen...");
+
+  setTimeout(function(){
+    try{
+      const mode = $("mode").value;
+      const detail = Math.max(0, Math.min(5, Number($("detail").value || 1)));
+      const colors = Math.max(2, Math.min(32, Number($("colors").value || 8)));
+
+      const imgData = preprocessImage(loadedImage);
+
+      const options = {
+        ltres: detail,
+        qtres: detail,
+        pathomit: mode === "bw" ? 4 : 8,
+        colorsampling: 2,
+        numberofcolors: mode === "bw" ? 2 : colors,
+        mincolorratio: 0.01,
+        colorquantcycles: 3,
+        scale: 1,
+        roundcoords: 1,
+        viewbox: true,
+        blurradius: 0,
+        blurdelta: 20
+      };
+
+      let svg = ImageTracer.imagedataToSVG(imgData, options);
+      svg = addRealSizeToSvg(svg, imgData.width, imgData.height);
+
+      currentSvgText = svg;
+
+      $("svgPreview").innerHTML = svg;
+      $("kProcesado").textContent = imgData.width + "×" + imgData.height;
+      $("kPeso").textContent = Math.round(new Blob([svg]).size / 1024) + " KB";
+
+      setStatus("SVG convertido correctamente.");
+    }catch(err){
+      console.error(err);
+      alert("Error convirtiendo imagen: " + err.message);
+      setStatus("Error convirtiendo imagen.");
+    }
+  }, 80);
+}
+
+function downloadSvg(){
+  if(!currentSvgText){
+    alert("Primero convierte una imagen.");
+    return;
+  }
+
+  const blob = new Blob([currentSvgText], { type:"image/svg+xml" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = loadedFileName + "_convertido.svg";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+}
+
+async function copySvg(){
+  if(!currentSvgText){
+    alert("Primero convierte una imagen.");
+    return;
+  }
+
+  try{
+    await navigator.clipboard.writeText(currentSvgText);
+    setStatus("SVG copiado al portapapeles.");
+  }catch(err){
+    prompt("Copia el SVG:", currentSvgText);
+  }
+}
+
+function resetAll(){
+  loadedImage = null;
+  currentSvgText = "";
+  loadedFileName = "imagen";
+
+  $("imageInput").value = "";
+  $("originalPreview").removeAttribute("src");
+  $("originalPreview").style.display = "none";
+  $("emptyOriginal").style.display = "block";
+  $("svgPreview").innerHTML = '<span class="hint" id="emptySvg">Sin SVG</span>';
+  $("fileName").textContent = "";
+
+  $("kOriginal").textContent = "0";
+  $("kProcesado").textContent = "0";
+  $("kMedida").textContent = "0";
+  $("kPeso").textContent = "0";
+
+  setStatus("Listo. Carga una imagen.");
 }
 </script>
 
