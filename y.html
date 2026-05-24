@@ -692,6 +692,63 @@ html.menu-ready .header-tabs,
 }
 </style>
 
+
+<style>
+/* =========================================================
+   ESCALAR SVG POR ANCHO / ALTO · DEFINITIVO
+========================================================= */
+.scaleGrid{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:10px!important;
+  align-items:end!important;
+}
+
+.scaleGrid label{
+  min-height:18px!important;
+}
+
+.scaleGrid select,
+.scaleGrid input{
+  width:100%!important;
+  height:42px!important;
+  min-height:42px!important;
+}
+
+.actionGrid{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:10px!important;
+  margin-top:10px!important;
+}
+
+.actionGrid button{
+  width:100%!important;
+  height:44px!important;
+  min-height:44px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  padding:0 8px!important;
+  line-height:1!important;
+}
+
+@media(max-width:520px){
+  .scaleGrid,
+  .actionGrid{
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+  }
+
+  .actionGrid button{
+    height:42px!important;
+    min-height:42px!important;
+    font-size:11px!important;
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -727,19 +784,17 @@ html.menu-ready .header-tabs,
 
     <br>
 
-    <div class="grid importGrid">
+    <div class="scaleGrid">
       <div>
-        <label>Ancho manual</label>
+        <label>Medida en cm</label>
         <input id="fallbackWidth" type="number" value="60" step="0.01" placeholder="Ej: 60">
       </div>
 
       <div>
-        <label>Unidad del ancho manual</label>
-        <select id="fallbackUnit">
-          <option value="mm">mm</option>
-          <option value="cm" selected>cm</option>
-          <option value="m">m</option>
-          <option value="in">in</option>
+        <label>Escalar por</label>
+        <select id="scaleMode">
+          <option value="width" selected>Ancho</option>
+          <option value="height">Alto</option>
         </select>
       </div>
 
@@ -1216,14 +1271,14 @@ function detectRealSize(svg){
   }else{
     const medidaCm = Number($("fallbackWidth").value || 0);
     const modo = $("scaleMode") ? $("scaleMode").value : "width";
-    const fu = "cm";
     if(!medidaCm || medidaCm<=0) throw new Error("El SVG no trae medidas reales. Coloca una medida en cm o presiona Escalar SVG.");
+
     if(modo === "height"){
-      realHm = medidaCm * UNITS[fu];
+      realHm = medidaCm * 0.01;
       realWm = realHm * (vb.width / vb.height);
       method = `El SVG no traía medidas reales. Se usó alto manual: ${medidaCm} cm`;
     }else{
-      realWm = medidaCm * UNITS[fu];
+      realWm = medidaCm * 0.01;
       realHm = realWm * (vb.height / vb.width);
       method = `El SVG no traía medidas reales. Se usó ancho manual: ${medidaCm} cm`;
     }
@@ -1233,7 +1288,10 @@ function detectRealSize(svg){
 
 function aplicarAnchoManualAlSVG(){
   try{
-    if(!svgText || !svgDoc){ alert("Primero sube un SVG."); return; }
+    if(!svgText || !svgDoc){
+      alert("Primero sube un SVG.");
+      return;
+    }
 
     const medidaCm = Number($("fallbackWidth").value || 0);
     const modo = $("scaleMode") ? $("scaleMode").value : "width";
@@ -1245,12 +1303,14 @@ function aplicarAnchoManualAlSVG(){
     }
 
     const vb = getViewBox(svgDoc);
+
     if(!vb || !vb.width || !vb.height){
       alert("No se pudo leer el viewBox del SVG.");
       return;
     }
 
-    let anchoCm, altoCm;
+    let anchoCm = 0;
+    let altoCm = 0;
 
     if(modo === "height"){
       altoCm = medidaCm;
@@ -1270,8 +1330,8 @@ function aplicarAnchoManualAlSVG(){
     }
 
     svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.width} ${vb.height}`);
-    svg.setAttribute("width", formatSVGLength(anchoCm, fu));
-    svg.setAttribute("height", formatSVGLength(altoCm, fu));
+    svg.setAttribute("width", `${anchoCm.toFixed(4)}cm`);
+    svg.setAttribute("height", `${altoCm.toFixed(4)}cm`);
     svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
     const serializer = new XMLSerializer();
@@ -1279,8 +1339,8 @@ function aplicarAnchoManualAlSVG(){
 
     cargarSVGEnPreview(svgText);
 
-    const realWm = anchoCm * UNITS[fu];
-    const realHm = altoCm * UNITS[fu];
+    const realWm = anchoCm * 0.01;
+    const realHm = altoCm * 0.01;
 
     $("kAncho").innerText = fmtCm(realWm);
     $("kAlto").innerText = fmtCm(realHm);
