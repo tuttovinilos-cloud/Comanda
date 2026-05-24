@@ -64,11 +64,11 @@ tr:nth-child(even) td{background:#fbfcff}
 .componentLine{display:grid;grid-template-columns:1.5fr 1fr 1fr .8fr .8fr .8fr .7fr auto;gap:7px;align-items:end;margin-bottom:8px;background:#f8f9ff;border:1px solid var(--border);border-radius:15px;padding:9px}
 .previewMini{font-family:var(--mono);font-size:11px;font-weight:900;color:#0f172a;background:#eef1ff;border-radius:12px;padding:9px;line-height:1.45}
 .rowBtns{display:flex;gap:8px;flex-wrap:wrap}
-.materialList{display:grid;gap:7px;max-height:340px;overflow:auto}
-.materialItem{display:grid;grid-template-columns:90px 1fr 110px 110px;gap:8px;align-items:center;background:white;border:1px solid var(--border);border-radius:14px;padding:8px}
-.badge{display:inline-flex;align-items:center;justify-content:center;background:#eef1ff;color:var(--accent);border:1px solid #c7d2fe;border-radius:999px;padding:5px 8px;font-size:9px;font-family:var(--head);font-weight:900}
-.name strong{display:block;font-family:var(--head);font-size:13px;font-weight:900;color:var(--accent2)}
-.name small{display:block;margin-top:2px;color:var(--muted);font-size:10px;font-weight:800}
+.materialList{display:grid;gap:4px;max-height:260px;overflow:auto}
+.materialItem{display:grid;grid-template-columns:74px 1fr 92px 92px;gap:6px;align-items:center;background:white;border:1px solid var(--border);border-radius:11px;padding:5px 7px;min-height:44px}
+.badge{display:inline-flex;align-items:center;justify-content:center;background:#eef1ff;color:var(--accent);border:1px solid #c7d2fe;border-radius:999px;padding:4px 6px;font-size:8px;font-family:var(--head);font-weight:900}
+.name strong{display:block;font-family:var(--head);font-size:11px;font-weight:900;color:var(--accent2);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.name small{display:block;margin-top:1px;color:var(--muted);font-size:8.5px;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111827;color:white;border-radius:999px;padding:10px 16px;font-family:var(--head);font-size:12px;font-weight:900;z-index:999;display:none}
 @media(max-width:900px){
   .grid,.grid2,.grid3,.totalGrid,.kpis{grid-template-columns:1fr 1fr}
@@ -79,7 +79,7 @@ tr:nth-child(even) td{background:#fbfcff}
   .main{padding:8px}.tabs{grid-template-columns:1fr}.card{padding:10px;border-radius:15px}
   .grid,.grid2,.grid3,.totalGrid{grid-template-columns:1fr}
   .kpis{grid-template-columns:1fr 1fr}
-  .materialItem{grid-template-columns:1fr}
+  .materialItem{grid-template-columns:1fr;min-height:0;padding:6px}
   th,td{padding:6px;font-size:10px}
 }
 </style>
@@ -499,13 +499,17 @@ async function loadBaseMaterials(){
   if(error){ console.error(error); toast("Error cargando materiales"); return; }
   baseMaterials=(data||[]).map(m=>{
     const prov=(m.proveedores||[]).map(p=>({...p,precio:Number(p.precio||0)})).sort((a,b)=>a.precio-b.precio);
-    const best=prov[0]||null;
+    const cheapest=prov[0]||null;
+    const expensive=prov.length ? prov[prov.length-1] : null;
+    const used=expensive || cheapest;
     return {
       id:m.id,categoria:m.categoria,nombre:m.nombre,detalle_label:m.detalle_label||"DETALLE",
       detalle_valor:m.detalle_valor||m.espesor||"",tipo_medida:m.tipo_medida||"M2",
       area_m2:Number(m.area_m2||0),metros_lineales:Number(m.metros_lineales||0),formato:m.formato||"",
-      proveedor:best?best.proveedor:"-",precio_base:best?Number(best.precio||0):0,
-      precio_unitario:calcUnitPrice(best?best.precio:0,m.tipo_medida||"M2",m.area_m2,m.metros_lineales)
+      proveedor:used?used.proveedor:"-",proveedor_barato:cheapest?cheapest.proveedor:"-",
+      proveedor_caro:expensive?expensive.proveedor:"-",precio_barato:cheapest?Number(cheapest.precio||0):0,
+      precio_caro:expensive?Number(expensive.precio||0):0,precio_base:used?Number(used.precio||0):0,
+      precio_unitario:calcUnitPrice(used?used.precio:0,m.tipo_medida||"M2",m.area_m2,m.metros_lineales)
     };
   });
   renderMaterialBaseList(); renderComponentMaterialOptions(); updateCompoundPreview(); renderQuote();
@@ -525,8 +529,8 @@ function renderMaterialBaseList(){
     <div class="materialItem">
       <span class="badge">${esc(m.categoria)}</span>
       <span class="name"><strong>${esc(m.nombre)}</strong><small>${esc(m.detalle_label)}: ${esc(m.detalle_valor)} · ${esc(m.tipo_medida)} · ${esc(m.formato)}</small></span>
-      <span class="name"><strong>${money(m.precio_unitario)}</strong><small>Precio ${m.tipo_medida==="M2"?"/m²":m.tipo_medida==="M"?"/m":"/und"}</small></span>
-      <span class="name"><strong>${esc(m.proveedor)}</strong><small>Proveedor</small></span>
+      <span class="name"><strong>${money(m.precio_unitario)}</strong><small>Usado ${m.tipo_medida==="M2"?"/m²":m.tipo_medida==="M"?"/m":"/und"}</small></span>
+      <span class="name"><strong>${esc(m.proveedor_caro||m.proveedor)}</strong><small>Más caro</small></span>
     </div>
   `).join("") || `<div class="hint">Sin materiales.</div>`;
 }
