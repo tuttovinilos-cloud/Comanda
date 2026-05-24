@@ -1212,6 +1212,30 @@ html.menu-ready .header-tabs,
 }
 </style>
 
+
+<style>
+/* =========================================================
+   FIX CLICK PUNTOS · siempre permite marcar
+========================================================= */
+#preview{
+  cursor:crosshair!important;
+}
+
+#svgHolder,
+#gridOverlay,
+#measureLayer{
+  pointer-events:none!important;
+}
+
+#measureLayer{
+  z-index:20!important;
+}
+
+#gridOverlay{
+  z-index:10!important;
+}
+</style>
+
 </head>
 
 <body>
@@ -1706,19 +1730,18 @@ function previewPointToCm(clientX, clientY){
   const clickX = clientX - m.rect.left;
   const clickY = clientY - m.rect.top;
 
+  /*
+    Se usa la escala real del SVG renderizado.
+    No se usa el cuadro completo para convertir a cm.
+    Si el clic cae un poco fuera del SVG visible, se permite marcar,
+    pero la coordenada se calcula con la misma escala del SVG.
+  */
   const localX = clickX - m.offsetX;
   const localY = clickY - m.offsetY;
-
-  // Ignora clics fuera del área real donde se dibuja el SVG.
-  if(localX < 0 || localY < 0 || localX > m.contentW || localY > m.contentH){
-    return null;
-  }
 
   return {
     xPx: clickX,
     yPx: clickY,
-
-    // Coordenadas reales en cm según el SVG cargado/escalado.
     xCm: (localX / m.contentW) * m.widthCm,
     yCm: (localY / m.contentH) * m.heightCm
   };
@@ -1897,10 +1920,7 @@ function setupMeasureTool(){
     }
 
     const p = previewPointToCm(e.clientX, e.clientY);
-    if(!p){
-      setStatus("Toca dentro del SVG, no en el cuadro blanco.", 100);
-      return;
-    }
+    if(!p) return;
 
     measurePoints[activeMeasurePoint - 1] = p;
     drawMeasure();
