@@ -570,8 +570,8 @@ function addComponentLine(data={}){
       <input class="cFactorConsumo" type="number" step="0.0001" value="${data.factor_consumo??1}" oninput="updateCompoundPreview()">
     </div>
     <div>
-      <label>Extra</label>
-      <input class="cExtra" type="number" step="0.0001" value="${data.extra??0}" oninput="updateCompoundPreview()">
+      <label>Fee</label>
+      <input class="cFee" type="number" step="0.0001" value="${data.fee??0}" oninput="updateCompoundPreview()">
     </div>
     <div>
       <label>Factor venta</label>
@@ -603,7 +603,7 @@ function readComponentLines(){
     material_id:Number(line.querySelector(".cMaterial").value||0),
     base_parametro:line.querySelector(".cBase").value,
     factor_consumo:Number(line.querySelector(".cFactorConsumo").value||0),
-    extra:Number(line.querySelector(".cExtra").value||0),
+    fee:Number(line.querySelector(".cFee").value||0),
     factor_venta:Number(line.querySelector(".cFactorVenta").value||1),
     redondear:line.querySelector(".cRound").value==="true",
     orden:idx+1
@@ -619,11 +619,12 @@ function baseValue(base,r=lastResults){
 function calcComponent(c,r=lastResults){
   const m=materialById(c.material_id);
   if(!m) return null;
-  let cantidad=(baseValue(c.base_parametro,r)*Number(c.factor_consumo||0))+Number(c.extra||0);
+  const fee=Number(c.fee ?? c.extra ?? 0);
+  let cantidad=baseValue(c.base_parametro,r)*Number(c.factor_consumo||0);
   if(c.redondear) cantidad=Math.ceil(cantidad);
   const costo=cantidad*Number(m.precio_unitario||0);
-  const venta=costo*Number(c.factor_venta||1);
-  return {...c,material:m,cantidad,costo,venta,ganancia:venta-costo};
+  const venta=(costo*Number(c.factor_venta||1))+fee;
+  return {...c,fee,material:m,cantidad,costo,venta,ganancia:venta-costo};
 }
 
 function updateCompoundPreview(){
@@ -635,7 +636,7 @@ function updateCompoundPreview(){
     const box=line.querySelector(".previewMini");
     if(calc){
       cost+=calc.costo; sale+=calc.venta; profit+=calc.ganancia;
-      box.innerHTML=`${esc(calc.material.proveedor)}<br>Costo: ${money(calc.costo)}<br>Venta: ${money(calc.venta)}<br>Ganancia: ${money(calc.ganancia)}`;
+      box.innerHTML=`${esc(calc.material.proveedor)}<br>Costo: ${money(calc.costo)}<br>Fee: ${money(calc.fee||0)}<br>Venta: ${money(calc.venta)}<br>Ganancia: ${money(calc.ganancia)}`;
     }
   });
   $("editCost").textContent=money(cost);
@@ -755,7 +756,7 @@ function renderQuote(){
   const rows=c.componentes.map(x=>calcComponent(x,lastResults)).filter(Boolean);
   rows.forEach(r=>{ cost+=r.costo; sale+=r.venta; profit+=r.ganancia; });
   $("totalCost").textContent=money(cost); $("totalSale").textContent=money(sale); $("totalProfit").textContent=money(profit);
-  $("quoteTable").innerHTML=`<tr><th>Material</th><th>Base</th><th>Cantidad</th><th>Precio base</th><th>Costo</th><th>Factor venta</th><th>Venta</th><th>Ganancia</th></tr>`+
+  $("quoteTable").innerHTML=`<tr><th>Material</th><th>Base</th><th>Cantidad</th><th>Precio base</th><th>Costo</th><th>Factor venta</th><th>Fee</th><th>Venta</th><th>Ganancia</th></tr>`+
     rows.map(r=>`<tr>
       <td>${esc(r.material.categoria)} · ${esc(r.material.nombre)} · ${esc(r.material.detalle_valor)}</td>
       <td>${baseLabel(r.base_parametro)}</td>
@@ -763,6 +764,7 @@ function renderQuote(){
       <td>${money(r.material.precio_unitario)}</td>
       <td>${money(r.costo)}</td>
       <td>${r.factor_venta}</td>
+      <td>${money(r.fee||0)}</td>
       <td class="money">${money(r.venta)}</td>
       <td class="money">${money(r.ganancia)}</td>
     </tr>`).join("");
