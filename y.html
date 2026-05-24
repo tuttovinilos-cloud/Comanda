@@ -1,390 +1,820 @@
-RESUMEN FUNCIONAL · ANALIZADOR / COTIZADOR + MATERIA PRIMA
-TUTTOVINILOS
-
-1. IDEA GENERAL
-
-El sistema debe separar claramente tres cosas:
-
-1) El Analizador SVG
-   - Solo calcula los parámetros base del diseño.
-
-2) Materia Prima / Item.html
-   - Es la tabla madre de materiales, precios, proveedores y tipo de cálculo.
-
-3) Materiales Compuestos
-   - Son fórmulas que usan los parámetros base del SVG y los materiales reales de Item.html para calcular costo, precio de venta y ganancia.
-
-
-2. PARÁMETROS BASE DEL SVG
-
-El analizador/cotizador debe calcular:
-
-- Perímetro
-- Cantidad de piezas
-- Área de relleno
-- Área de marco
-- Área de selección
-- Ancho real
-- Alto real
-- Escala usada
-
-Los códigos K43, K44, K45 y K46 pueden omitirse visualmente.
-Deben mostrarse con nombres claros para el usuario.
-
-
-3. LÓGICA DEL PRECIO
-
-El precio no debe salir directamente del SVG.
-
-El SVG solamente genera los parámetros base.
-
-El precio calculado debe salir del material compuesto seleccionado.
-
-Ejemplo:
-
-Si se selecciona Front Lit:
-
-- PVC 9mm puede usar área de marco.
-- Acrílico puede usar área de marco.
-- Módulos LED pueden usar área de relleno.
-- Cable puede usar perímetro o fórmula especial.
-- Chupones pueden usar cantidad de piezas.
-- Pernos pueden usar cantidad fija o por pieza.
-
-El compuesto decide cómo usar los parámetros base.
-
-
-4. MATERIALES BASE DESDE ITEM.HTML
-
-La pestaña Materiales / Compuestos del analizador no debe tener una lista independiente de materiales.
-
-Debe estar anclada a la misma lista de Item.html / Materia Prima.
-
-Eso significa que debe leer desde Supabase:
-
-- materia_materiales
-- materia_precios
-- proveedores
-- categoría
-- nombre
-- detalle
-- tipo de medida
-- formato
-- área m²
-- metros lineales
-- precio
-- proveedor más barato
-
-No deben existir materiales duplicados en localStorage dentro del analizador.
-
-
-5. TIPOS DE CÁLCULO DE MATERIALES
-
-Item.html ya maneja diferentes formas de precio:
-
-1) M²
-   Para materiales como:
-   - PVC
-   - Acrílico
-   - ACM
-   - MDF
-   - Láminas
-
-2) Metro lineal
-   Para materiales como:
-   - Vinil en rollo
-   - Cable
-   - Cinta
-   - Banda
-
-3) Unitario
-   Para materiales como:
-   - Módulos LED
-   - Pernos
-   - Chupones
-   - Pegas
-   - Estaño
-   - Interruptores
-
-El material compuesto debe respetar el tipo de cálculo del material base.
-
-
-6. PESTAÑA ANALIZADOR / COTIZADOR
-
-Debe mostrar:
-
-- Carga de SVG
-- Medida real
-- Vista previa
-- Parámetros base
-- Selección de material compuesto
-- Resultado del cálculo
-
-Debe mostrar:
-
-- Costo real
-- Precio de venta
-- Ganancia
-- Desglose opcional
-
-
-7. PESTAÑA MATERIALES / COMPUESTOS
-
-Debe tener dos bloques principales:
-
-A) Materiales base
-
-Debe mostrar la misma lista de materiales de Item.html:
-
-- Categoría
-- Nombre
-- Detalle
-- Tipo de medida
-- Formato
-- Mejor proveedor
-- Precio base
-- Precio por m², metro o unidad
-
-Esta lista debe ser solo para consultar y seleccionar materiales.
-
-B) Materiales compuestos
-
-Aquí se crean las fórmulas de productos como:
-
-- Front Lit
-- PVC + Acrílico
-- Letras con luz
-- Letras sin luz
-- Neón LED
-- Base con luz
-- Producto personalizado
-
-
-8. CAMPOS DEL MATERIAL COMPUESTO
-
-Cada grupo compuesto debe tener:
-
-- Nombre del grupo
-- Componente
-- Unidad
-- Base
-- Factor de consumo
-- Extra
-- Redondear
-- Factor de venta
-- Costo real
-- Precio venta
-- Ganancia
-
-Bases disponibles:
-
-- Perímetro
-- Cantidad de piezas
-- Área de relleno
-- Área de marco
-- Área de selección
-- Fijo/manual
-- Fórmula especial
-
-
-9. DIFERENCIA ENTRE FACTOR DE CONSUMO Y FACTOR DE VENTA
-
-No deben mezclarse.
-
-A) Factor de consumo
-
-Sirve para calcular la cantidad de material.
-
-Ejemplos:
-
-- Módulos LED = área de relleno × 220
-- Chupones = cantidad de piezas × 4
-- Cable = perímetro × 1.2
-- PVC = área de marco × 1
-
-B) Factor de venta
-
-Sirve para calcular la ganancia.
-
-Ejemplos:
-
-- PVC costo $100 × factor venta 2 = $200
-- Módulo LED costo $0.75 × factor venta 5 = $3.75
-- Cable costo $1 × factor venta 3 = $3
-
-
-10. FÓRMULAS DE COSTO, PRECIO Y GANANCIA
-
-Por cada componente:
-
-Cantidad calculada =
-Base × factor de consumo + extra
-
-Costo real =
-Cantidad calculada × precio base del material
-
-Precio venta =
-Costo real × factor de venta
-
-Ganancia =
-Precio venta - costo real
-
-Fórmula resumida:
-
-Precio venta = precio material × factor venta
-Ganancia = precio venta - precio material
-
-
-11. EJEMPLO SIMPLE
-
-Material:
-PVC
-
-Costo real:
-$100
-
-Factor venta:
-2
-
-Precio venta:
-$200
-
-Ganancia:
-$100
-
-
-12. EJEMPLO FRONT LIT
-
-Parámetros SVG:
-
-- Área de marco: 1.20 m²
-- Área de relleno: 0.85 m²
-- Perímetro: 6.50 m
-- Piezas: 8
-
-Componentes:
-
-1) PVC 9mm
-   Base: área de marco
-   Consumo: 1.20 m²
-   Factor consumo: 1
-   Factor venta: 2
-
-2) Acrílico 3mm
-   Base: área de marco
-   Consumo: 1.20 m²
-   Factor consumo: 1
-   Factor venta: 2
-
-3) Módulos LED
-   Base: área de relleno
-   Consumo: área × 220
-   Factor venta: 5
-
-4) Cable
-   Base: perímetro
-   Consumo: perímetro × 1.2 + extra
-   Factor venta: 3
-
-5) Chupones
-   Base: piezas
-   Consumo: piezas × 4
-   Factor venta: 2
-
-
-13. VISUALIZACIÓN MIENTRAS SE CREA EL COMPUESTO
-
-Cuando se esté armando un grupo compuesto, al seleccionar un material debe mostrar:
-
-- Precio base actual
-- Tipo de cálculo
-- Proveedor más barato
-- Cantidad estimada
-- Costo real estimado
-- Factor de venta
-- Precio venta estimado
-- Ganancia estimada
-- Total acumulado del compuesto
-
-Esto permite trabajar viendo si el precio tiene sentido.
-
-
-14. GUARDAR MATERIAL COMPUESTO
-
-Al guardar un compuesto:
-
-1) Guardar en base de datos.
-2) Mostrar aviso: Grupo guardado.
-3) Limpiar el formulario.
-4) Dejar una línea nueva lista.
-5) Actualizar la lista de compuestos.
-
-Después debe permitir:
-
-- Editar
-- Duplicar
-- Eliminar
-
-
-15. BASE DE DATOS RECOMENDADA PARA COMPUESTOS
-
-Se recomienda crear tablas separadas:
-
-A) materia_compuestos
-
-Campos sugeridos:
-
-- id
-- nombre
-- descripcion
-- activo
-- created_at
-- updated_at
-
-B) materia_compuesto_componentes
-
-Campos sugeridos:
-
-- id
-- compuesto_id
-- material_id
-- base_parametro
-- factor_consumo
-- extra
-- redondear
-- factor_venta
-- orden
-- activo
-- created_at
-- updated_at
-
-Así los compuestos quedan guardados en Supabase y no en localStorage.
-
-
-16. FLUJO FINAL DEL SISTEMA
-
-1) El usuario registra materiales y precios en Item.html.
-2) El analizador SVG lee esos materiales.
-3) El usuario crea materiales compuestos usando esos materiales.
-4) El usuario sube un SVG.
-5) El sistema calcula parámetros base.
-6) El usuario selecciona un compuesto.
-7) El sistema calcula:
-   - Costo real
-   - Precio de venta
-   - Ganancia
-   - Desglose
-8) Se puede exportar resumen o PDF.
-
-
-17. CONCLUSIÓN
-
-La estructura correcta es:
-
-Item.html = tabla madre de materiales y precios.
-
-Analizador SVG = cálculo técnico del diseño.
-
-Material compuesto = fórmula comercial que convierte el análisis en costo, precio y ganancia.
-
-Esto evita duplicar materiales, mejora el control de precios y permite crear productos complejos como Front Lit usando datos reales.
+<!DOCTYPE html>
+<html lang="es" class="loading-menu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Analizador / Cotizador SVG · Tuttovinilos</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/menu.css?v=34">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f2f9;--panel:#fff;--panel2:#f8f9ff;--border:#d9deea;--border2:#cbd3e6;
+  --text:#111827;--muted:#64748b;--accent:#153bff;--accent2:#0b1f7a;
+  --orange:#ff8616;--green:#16a34a;--red:#dc2626;--yellow:#f59e0b;
+  --head:'Montserrat',Arial,sans-serif;--body:'Inter',Arial,sans-serif;--mono:'Roboto Mono',monospace;
+  --shadow:0 8px 24px rgba(15,23,42,.055);
+}
+html,body{background:var(--bg)!important;color:var(--text);font-family:var(--body);min-height:100vh;color-scheme:light}
+button,input,select,textarea{font:inherit;color-scheme:light}
+button{cursor:pointer;border:0}
+.main{padding:12px;max-width:1350px;margin:auto}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.tabBtn{min-height:44px;border-radius:999px;background:#eef1ff;color:var(--accent);border:1px solid var(--border2);font-family:var(--head);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.4px}
+.tabBtn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card h2{font-family:var(--head);font-size:17px;font-weight:900;color:var(--accent2);margin-bottom:10px;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+label{display:block;margin-bottom:5px;font-family:var(--head);font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.35px}
+input,select,textarea{width:100%;min-height:40px;border:1px solid var(--border2);border-radius:13px;background:white;color:#111827;padding:9px 11px;outline:none}
+textarea{min-height:74px;resize:vertical}
+.btn{min-height:40px;border-radius:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-family:var(--head);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.35px;padding:0 13px}
+.btn.orange{background:linear-gradient(135deg,var(--orange),#c2410c)}
+.btn.light{background:white;color:var(--accent);border:1px solid #c7d2fe}
+.btn.red{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+.hint{font-size:12px;color:var(--muted);font-weight:700;line-height:1.45}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.kpi{background:#f8f9ff;border:1px solid var(--border);border-radius:16px;padding:11px;min-height:72px}
+.kpi b{display:block;font-family:var(--mono);font-size:15px;font-weight:900;color:#0f172a;line-height:1.2;word-break:break-word}
+.kpi span{display:block;margin-top:4px;font-size:10px;color:var(--muted);font-weight:800}
+.totalGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.totalBox{background:#f8f9ff;border:1px solid var(--border);border-radius:18px;padding:14px}
+.totalBox b{display:block;font-family:var(--head);font-size:24px;font-weight:900}
+.cost{color:#111827}.sale{color:var(--green)}.profit{color:var(--orange)}
+.tableWrap{overflow:auto;border:1px solid var(--border);border-radius:16px;background:white}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:9px;border-bottom:1px solid #e4e8f2;text-align:left;white-space:nowrap}
+th{background:#eef1ff;color:#64748b;font-family:var(--head);font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.45px}
+td{background:white}
+tr:nth-child(even) td{background:#fbfcff}
+.money{font-family:var(--mono);font-weight:900;color:var(--green)}
+#previewShell{width:100%;aspect-ratio:1/1;max-height:900px;background:#f8f9ff;border:1px solid var(--border);border-radius:18px;padding:10px;display:flex;align-items:center;justify-content:center}
+#preview{width:100%;height:100%;background:#fff;border-radius:14px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background-image:linear-gradient(to right,rgba(21,59,255,.10) 1px,transparent 1px),linear-gradient(to bottom,rgba(21,59,255,.10) 1px,transparent 1px);background-size:50px 50px}
+#preview svg{width:100%!important;height:100%!important;display:block}
+.progress{height:8px;border-radius:999px;overflow:hidden;background:#dbeafe;margin-top:10px}
+.bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--orange))}
+.hidden{display:none!important}
+.desglose{display:none}.desglose.show{display:block}
+.componentLine{display:grid;grid-template-columns:1.5fr 1fr 1fr .8fr .8fr .8fr .7fr auto;gap:7px;align-items:end;margin-bottom:8px;background:#f8f9ff;border:1px solid var(--border);border-radius:15px;padding:9px}
+.previewMini{font-family:var(--mono);font-size:11px;font-weight:900;color:#0f172a;background:#eef1ff;border-radius:12px;padding:9px;line-height:1.45}
+.rowBtns{display:flex;gap:8px;flex-wrap:wrap}
+.materialList{display:grid;gap:7px;max-height:340px;overflow:auto}
+.materialItem{display:grid;grid-template-columns:90px 1fr 110px 110px;gap:8px;align-items:center;background:white;border:1px solid var(--border);border-radius:14px;padding:8px}
+.badge{display:inline-flex;align-items:center;justify-content:center;background:#eef1ff;color:var(--accent);border:1px solid #c7d2fe;border-radius:999px;padding:5px 8px;font-size:9px;font-family:var(--head);font-weight:900}
+.name strong{display:block;font-family:var(--head);font-size:13px;font-weight:900;color:var(--accent2)}
+.name small{display:block;margin-top:2px;color:var(--muted);font-size:10px;font-weight:800}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111827;color:white;border-radius:999px;padding:10px 16px;font-family:var(--head);font-size:12px;font-weight:900;z-index:999;display:none}
+@media(max-width:900px){
+  .grid,.grid2,.grid3,.totalGrid,.kpis{grid-template-columns:1fr 1fr}
+  .componentLine{grid-template-columns:1fr 1fr}
+  .componentLine .fullLine{grid-column:1/-1}
+}
+@media(max-width:560px){
+  .main{padding:8px}.tabs{grid-template-columns:1fr}.card{padding:10px;border-radius:15px}
+  .grid,.grid2,.grid3,.totalGrid{grid-template-columns:1fr}
+  .kpis{grid-template-columns:1fr 1fr}
+  .materialItem{grid-template-columns:1fr}
+  th,td{padding:6px;font-size:10px}
+}
+</style>
+</head>
+
+<body>
+<header class="header">
+  <div class="logo">
+    <img src="Logo tutto1.svg" alt="Tutto Vinilos">
+    <small>COMANDA</small>
+  </div>
+  <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
+</header>
+
+<main class="main">
+  <div class="tabs">
+    <button id="btnAnalyzer" class="tabBtn active" onclick="switchTab('analyzer')">Analizador / Cotizador</button>
+    <button id="btnMaterials" class="tabBtn" onclick="switchTab('materials')">Materiales / Compuestos</button>
+  </div>
+
+  <section id="tabAnalyzer">
+    <div class="card">
+      <h2>Importar SVG</h2>
+      <div class="grid3">
+        <div>
+          <label>Archivo SVG</label>
+          <input type="file" id="fileInput" accept=".svg,image/svg+xml">
+        </div>
+        <div>
+          <label>Escalar por</label>
+          <select id="scaleMode">
+            <option value="width" selected>Ancho</option>
+            <option value="height">Alto</option>
+          </select>
+        </div>
+        <div>
+          <label>Medida en cm</label>
+          <input id="manualCm" type="number" value="60" step="0.01">
+        </div>
+      </div>
+      <br>
+      <div class="rowBtns">
+        <button class="btn" onclick="calcularSVG()">Calcular SVG</button>
+        <button class="btn light" onclick="descargarSVGActual()">Descargar SVG escalado</button>
+        <button class="btn orange" onclick="crearPDF()">Crear PDF</button>
+      </div>
+      <div class="progress"><div class="bar" id="bar"></div></div>
+      <p class="hint" id="status">Listo.</p>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Vista previa</h2>
+        <div id="previewShell"><div id="preview"></div></div>
+      </div>
+
+      <div class="card">
+        <h2>Parámetros base</h2>
+        <div class="kpis">
+          <div class="kpi"><b id="rAncho">0</b><span>Ancho</span></div>
+          <div class="kpi"><b id="rAlto">0</b><span>Alto</span></div>
+          <div class="kpi"><b id="rPiezas">0</b><span>Piezas</span></div>
+          <div class="kpi"><b id="rPerimetro">0</b><span>Perímetro</span></div>
+          <div class="kpi"><b id="rRelleno">0</b><span>Área relleno</span></div>
+          <div class="kpi"><b id="rMarco">0</b><span>Área marco</span></div>
+          <div class="kpi"><b id="rSeleccion">0</b><span>Área selección</span></div>
+          <div class="kpi"><b id="rEscala">0</b><span>Escala</span></div>
+        </div>
+        <br>
+        <p class="hint" id="method">Sube un SVG para analizar.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Cotizar con material compuesto</h2>
+      <div class="grid2">
+        <div>
+          <label>Material compuesto</label>
+          <select id="compoundSelect" onchange="renderQuote()"></select>
+        </div>
+        <div>
+          <label>Acción</label>
+          <button class="btn light" onclick="loadCompounds()">Recargar compuestos</button>
+        </div>
+      </div>
+      <br>
+      <div class="totalGrid">
+        <div class="totalBox"><label>Costo real</label><b class="cost" id="totalCost">$0.00</b></div>
+        <div class="totalBox"><label>Precio venta</label><b class="sale" id="totalSale">$0.00</b></div>
+        <div class="totalBox"><label>Ganancia</label><b class="profit" id="totalProfit">$0.00</b></div>
+      </div>
+      <br>
+      <div class="rowBtns">
+        <button class="btn light" onclick="toggleBreakdown()">Ver / ocultar desglose</button>
+        <button class="btn orange" onclick="copiarResumen()">Copiar resumen</button>
+      </div>
+      <br>
+      <div id="breakdownBox" class="desglose">
+        <div class="tableWrap">
+          <table id="quoteTable"></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tabMaterials" class="hidden">
+    <div class="card">
+      <h2>Materiales base desde Item.html / Materia Prima</h2>
+      <div class="grid2">
+        <div>
+          <label>Buscar material</label>
+          <input id="materialSearch" placeholder="PVC, acrílico, módulo, cable..." oninput="renderMaterialBaseList()">
+        </div>
+        <div>
+          <label>Acción</label>
+          <button class="btn light" onclick="loadBaseMaterials()">Recargar materiales</button>
+        </div>
+      </div>
+      <br>
+      <div class="materialList" id="baseMaterialList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Crear material compuesto</h2>
+      <div class="grid2">
+        <div>
+          <label>Nombre del grupo</label>
+          <input id="compoundName" placeholder="Ej: FRONT LIT">
+        </div>
+        <div>
+          <label>Descripción</label>
+          <input id="compoundDesc" placeholder="Ej: PVC + acrílico + módulos LED">
+        </div>
+      </div>
+      <br>
+      <div id="componentLines"></div>
+      <div class="rowBtns">
+        <button class="btn light" onclick="addComponentLine()">+ Añadir componente</button>
+        <button class="btn orange" onclick="saveCompound()">Guardar compuesto</button>
+        <button class="btn light" onclick="clearCompoundForm()">Limpiar</button>
+      </div>
+      <br>
+      <div class="totalGrid">
+        <div class="totalBox"><label>Costo estimado</label><b class="cost" id="editCost">$0.00</b></div>
+        <div class="totalBox"><label>Venta estimada</label><b class="sale" id="editSale">$0.00</b></div>
+        <div class="totalBox"><label>Ganancia estimada</label><b class="profit" id="editProfit">$0.00</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Compuestos guardados</h2>
+      <div class="tableWrap">
+        <table id="compoundTable"></table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=24"></script>
+<script src="js/auth.js?v=24"></script>
+<script src="js/menu.js?v=34"></script>
+
+<script>
+let svgText="", svgDoc=null, currentFileName="", lastResults=null;
+let baseMaterials=[], compounds=[], currentEditCompoundId=null;
+
+const $ = id => document.getElementById(id);
+
+function sb(){ return window.supabaseClient || window.supabase; }
+function toast(msg){ const el=$("toast"); el.textContent=msg; el.style.display="block"; clearTimeout(window.__t); window.__t=setTimeout(()=>el.style.display="none",2200); }
+function money(v){ return "$"+(Number(v)||0).toFixed(2); }
+function fmtCm(v){ return ((Number(v)||0)*100).toFixed(2)+" cm"; }
+function fmtM(v){ return (Number(v)||0).toFixed(4)+" m"; }
+function fmtM2(v){ return (Number(v)||0).toFixed(4)+" m²"; }
+function qty(v){ return (Math.abs(v)>=100 ? Number(v).toFixed(0) : Number(v).toFixed(4)).replace(/\.0000$/,""); }
+function esc(s){ return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+function setStatus(txt,pct=0){ $("status").innerHTML=txt; $("bar").style.width=Math.max(0,Math.min(100,pct))+"%"; }
+
+function switchTab(tab){
+  $("tabAnalyzer").classList.toggle("hidden",tab!=="analyzer");
+  $("tabMaterials").classList.toggle("hidden",tab!=="materials");
+  $("btnAnalyzer").classList.toggle("active",tab==="analyzer");
+  $("btnMaterials").classList.toggle("active",tab==="materials");
+  if(tab==="materials"){ renderMaterialBaseList(); renderCompoundTable(); updateCompoundPreview(); }
+}
+
+const UNITS={mm:.001,cm:.01,m:1,in:.0254,px:.0254/96,pt:.0254/72,pc:.0254/6};
+
+function parseLength(raw){
+  if(!raw) return null;
+  raw=String(raw).trim();
+  if(raw.endsWith("%")) return null;
+  const m=raw.match(/^([-+]?\d*\.?\d+(?:e[-+]?\d+)?)\s*([a-zA-Z]*)$/);
+  if(!m) return null;
+  const value=Number(m[1]), unit=(m[2]||"px").toLowerCase();
+  if(!isFinite(value)||!UNITS[unit]) return null;
+  return {value,unit,meters:value*UNITS[unit]};
+}
+
+function getViewBox(svg){
+  const vb=svg.getAttribute("viewBox");
+  if(vb){
+    const p=vb.trim().split(/[\s,]+/).map(Number);
+    if(p.length===4 && p.every(isFinite) && p[2]>0 && p[3]>0) return {x:p[0],y:p[1],width:p[2],height:p[3]};
+  }
+  try{ const b=svg.getBBox(); if(b.width>0&&b.height>0) return {x:b.x,y:b.y,width:b.width,height:b.height}; }catch(e){}
+  return null;
+}
+
+function detectRealSize(svg){
+  const vb=getViewBox(svg);
+  if(!vb) throw new Error("El SVG no tiene viewBox válido.");
+  const wLen=parseLength(svg.getAttribute("width"));
+  const hLen=parseLength(svg.getAttribute("height"));
+  let realWm,realHm,method;
+  if(wLen&&hLen){ realWm=wLen.meters; realHm=hLen.meters; method="Medidas reales leídas del SVG."; }
+  else{
+    const cm=Number($("manualCm").value||0), mode=$("scaleMode").value;
+    if(!cm) throw new Error("Coloca una medida en cm.");
+    if(mode==="height"){ realHm=cm*.01; realWm=realHm*(vb.width/vb.height); method="Medida manual por alto."; }
+    else{ realWm=cm*.01; realHm=realWm*(vb.height/vb.width); method="Medida manual por ancho."; }
+  }
+  return {vb,realWm,realHm,method,scaleX:realWm/vb.width,scaleY:realHm/vb.height};
+}
+
+function cargarPreview(text){
+  $("preview").innerHTML=text;
+  svgDoc=$("preview").querySelector("svg");
+  if(svgDoc){
+    svgDoc.setAttribute("preserveAspectRatio","xMidYMid meet");
+    svgDoc.style.width="100%"; svgDoc.style.height="100%";
+  }
+}
+
+function escalarSVG(){
+  if(!svgText||!svgDoc){ alert("Primero sube un SVG."); return false; }
+  const cm=Number($("manualCm").value||0), mode=$("scaleMode").value, vb=getViewBox(svgDoc);
+  if(!cm||!vb){ alert("Medida o viewBox inválido."); return false; }
+  let anchoCm,altoCm;
+  if(mode==="height"){ altoCm=cm; anchoCm=altoCm*(vb.width/vb.height); }
+  else{ anchoCm=cm; altoCm=anchoCm*(vb.height/vb.width); }
+  const doc=new DOMParser().parseFromString(svgText,"image/svg+xml");
+  const svg=doc.querySelector("svg");
+  svg.setAttribute("viewBox",`${vb.x} ${vb.y} ${vb.width} ${vb.height}`);
+  svg.setAttribute("width",`${anchoCm.toFixed(4)}cm`);
+  svg.setAttribute("height",`${altoCm.toFixed(4)}cm`);
+  svgText=new XMLSerializer().serializeToString(svg);
+  cargarPreview(svgText);
+  return true;
+}
+
+$("fileInput").addEventListener("change",async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  currentFileName=f.name;
+  svgText=await f.text();
+  cargarPreview(svgText);
+  try{
+    const i=detectRealSize(svgDoc);
+    $("manualCm").value=($("scaleMode").value==="height"?i.realHm:i.realWm)*100;
+    $("method").textContent=i.method;
+    setStatus("SVG cargado.",0);
+  }catch(err){ setStatus("SVG cargado. Coloca medida manual.",0); }
+});
+
+async function calcularSVG(){
+  if(!escalarSVG()) return;
+  try{
+    setStatus("Analizando SVG...",15);
+    const info=detectRealSize(svgDoc);
+    const vectorPerM=getVectorLengthMeters(svgDoc,info.scaleX,info.scaleY);
+    setStatus("Rasterizando área...",40);
+    const maskData=await rasterMask(svgText,info.realWm,info.realHm);
+    const pixelArea=(info.realWm/maskData.w)*(info.realHm/maskData.h);
+    const areaRelleno=maskData.fgCount*pixelArea;
+    const maskPer=perimeterFromMask(maskData.mask,maskData.w,maskData.h,info.realWm/maskData.w,info.realHm/maskData.h);
+    setStatus("Detectando piezas...",70);
+    const comps=connectedComponents(maskData.mask,maskData.w,maskData.h);
+    const detail=calcMarcoComponents(comps,maskData.w,maskData.h,info.realWm/maskData.w,info.realHm/maskData.h);
+    const areaMarco=detail.reduce((s,d)=>s+d.marcoM2,0);
+    lastResults={anchoM:info.realWm,altoM:info.realHm,piezas:comps.length,perimetroM:vectorPerM||maskPer,areaRellenoM2:areaRelleno,areaMarcoM2:areaMarco,areaSeleccionM2:info.realWm*info.realHm};
+    renderResults(info,maskData,maskPer);
+    renderQuote();
+    setStatus("Análisis completado.",100);
+  }catch(err){ console.error(err); setStatus("Error: "+err.message,0); alert(err.message); }
+}
+
+function renderResults(info,maskData,maskPer){
+  $("rAncho").textContent=fmtCm(lastResults.anchoM);
+  $("rAlto").textContent=fmtCm(lastResults.altoM);
+  $("rPiezas").textContent=lastResults.piezas;
+  $("rPerimetro").textContent=fmtM(lastResults.perimetroM);
+  $("rRelleno").textContent=fmtM2(lastResults.areaRellenoM2);
+  $("rMarco").textContent=fmtM2(lastResults.areaMarcoM2);
+  $("rSeleccion").textContent=fmtM2(lastResults.areaSeleccionM2);
+  $("rEscala").textContent=(info.scaleX*100).toFixed(4)+" cm/u";
+  $("method").innerHTML=`${esc(info.method)}<br>Canvas: ${maskData.w} × ${maskData.h}px · Perímetro máscara: ${fmtM(maskPer)}`;
+}
+
+function getVectorLengthMeters(svg,sx,sy){
+  let total=0;
+  svg.querySelectorAll("path,rect,circle,ellipse,polygon,polyline,line").forEach(el=>{
+    try{
+      let len=el.getTotalLength?el.getTotalLength():0;
+      if(!len) len=basicLength(el);
+      total+=len*((sx+sy)/2);
+    }catch(e){}
+  });
+  return total;
+}
+
+function basicLength(el){
+  const t=el.tagName.toLowerCase();
+  if(t==="rect") return 2*((+el.getAttribute("width")||0)+(+el.getAttribute("height")||0));
+  if(t==="circle") return 2*Math.PI*(+el.getAttribute("r")||0);
+  if(t==="ellipse"){
+    const rx=+el.getAttribute("rx")||0, ry=+el.getAttribute("ry")||0;
+    return Math.PI*(3*(rx+ry)-Math.sqrt((3*rx+ry)*(rx+3*ry)));
+  }
+  if(t==="line") return Math.hypot((+el.getAttribute("x2")||0)-(+el.getAttribute("x1")||0),(+el.getAttribute("y2")||0)-(+el.getAttribute("y1")||0));
+  if(t==="polygon"||t==="polyline"){
+    const nums=(el.getAttribute("points")||"").trim().split(/[\s,]+/).map(Number).filter(Number.isFinite);
+    let p=0; for(let i=0;i<nums.length-3;i+=2) p+=Math.hypot(nums[i+2]-nums[i],nums[i+3]-nums[i+1]);
+    if(t==="polygon"&&nums.length>=4) p+=Math.hypot(nums[0]-nums[nums.length-2],nums[1]-nums[nums.length-1]);
+    return p;
+  }
+  return 0;
+}
+
+async function rasterMask(text,realWm,realHm){
+  const maxPx=3800, ratio=realHm/realWm;
+  let w,h; if(ratio>=1){ h=maxPx; w=Math.max(20,Math.round(maxPx/ratio)); } else { w=maxPx; h=Math.max(20,Math.round(maxPx*ratio)); }
+  const url=URL.createObjectURL(new Blob([text],{type:"image/svg+xml"}));
+  const img=new Image(); img.src=url;
+  await new Promise((res,rej)=>{img.onload=res; img.onerror=()=>rej(new Error("No se pudo rasterizar SVG."));});
+  const canvas=document.createElement("canvas"); canvas.width=w; canvas.height=h;
+  const ctx=canvas.getContext("2d",{willReadFrequently:true}); ctx.clearRect(0,0,w,h); ctx.drawImage(img,0,0,w,h); URL.revokeObjectURL(url);
+  const data=ctx.getImageData(0,0,w,h).data, mask=new Uint8Array(w*h);
+  let fgCount=0;
+  for(let i=0,p=0;i<data.length;i+=4,p++){
+    const r=data[i],g=data[i+1],b=data[i+2],a=data[i+3];
+    let fg=a>18;
+    if(fg && r>242&&g>242&&b>242) fg=false;
+    if(fg){ mask[p]=1; fgCount++; }
+  }
+  return {mask,w,h,fgCount};
+}
+
+function perimeterFromMask(mask,w,h,sx,sy){
+  let p=0;
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+    const i=y*w+x; if(!mask[i]) continue;
+    if(x===0||!mask[i-1]) p+=sy; if(x===w-1||!mask[i+1]) p+=sy;
+    if(y===0||!mask[i-w]) p+=sx; if(y===h-1||!mask[i+w]) p+=sx;
+  }
+  return p;
+}
+
+function connectedComponents(mask,w,h){
+  const seen=new Uint8Array(w*h), comps=[], minPixels=Math.max(8,Math.round(w*h*.000005));
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+    const start=y*w+x; if(!mask[start]||seen[start]) continue;
+    let head=0,tail=0,count=0,minX=x,maxX=x,minY=y,maxY=y;
+    const qx=[],qy=[],pts=[]; qx[tail]=x; qy[tail]=y; tail++; seen[start]=1;
+    while(head<tail){
+      const cx=qx[head],cy=qy[head]; head++; count++;
+      if(cx<minX)minX=cx;if(cx>maxX)maxX=cx;if(cy<minY)minY=cy;if(cy>maxY)maxY=cy;
+      const idx=cy*w+cx;
+      const border=cx===0||cy===0||cx===w-1||cy===h-1||!mask[idx-1]||!mask[idx+1]||!mask[idx-w]||!mask[idx+w];
+      if(border&&pts.length<24000) pts.push(cx,cy);
+      [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]].forEach(([nx,ny])=>{
+        if(nx>=0&&ny>=0&&nx<w&&ny<h){ const ni=ny*w+nx; if(mask[ni]&&!seen[ni]){seen[ni]=1;qx[tail]=nx;qy[tail]=ny;tail++;} }
+      });
+    }
+    if(count>=minPixels) comps.push({count,minX,maxX,minY,maxY,pts});
+  }
+  return comps.sort((a,b)=>b.count-a.count);
+}
+
+function calcMarcoComponents(comps,w,h,sx,sy){
+  return comps.map(c=>{
+    let minArea=Infinity,bw=0,bh=0;
+    const base=[c.minX,c.minY,c.maxX,c.minY,c.maxX,c.maxY,c.minX,c.maxY];
+    const pts=c.pts&&c.pts.length?base.concat(c.pts):base;
+    for(let a=0;a<90;a+=1){
+      const r=rotatedBBox(pts,a,sx,sy);
+      if(r.area<minArea){minArea=r.area;bw=r.width;bh=r.height;}
+    }
+    return {marcoM2:minArea,marcoW:bw,marcoH:bh};
+  });
+}
+
+function rotatedBBox(pts,ang,sx,sy){
+  const a=ang*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a);
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(let i=0;i<pts.length;i+=2){
+    const x=pts[i]*sx,y=pts[i+1]*sy,rx=x*ca-y*sa,ry=x*sa+y*ca;
+    if(rx<minX)minX=rx;if(rx>maxX)maxX=rx;if(ry<minY)minY=ry;if(ry>maxY)maxY=ry;
+  }
+  return {width:maxX-minX,height:maxY-minY,area:Math.abs((maxX-minX)*(maxY-minY))};
+}
+
+function descargarSVGActual(){
+  if(!svgText){ alert("Primero sube un SVG."); return; }
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([svgText],{type:"image/svg+xml"}));
+  a.download=(currentFileName||"svg").replace(/\.[^.]+$/,"")+"_escalado.svg";
+  a.click();
+}
+
+async function loadBaseMaterials(){
+  const client=sb();
+  if(!client){ toast("No hay Supabase"); return; }
+  const {data,error}=await client.from("materia_materiales").select("*, proveedores:materia_precios(*)").eq("activo",true).order("categoria",{ascending:true});
+  if(error){ console.error(error); toast("Error cargando materiales"); return; }
+  baseMaterials=(data||[]).map(m=>{
+    const prov=(m.proveedores||[]).map(p=>({...p,precio:Number(p.precio||0)})).sort((a,b)=>a.precio-b.precio);
+    const best=prov[0]||null;
+    return {
+      id:m.id,categoria:m.categoria,nombre:m.nombre,detalle_label:m.detalle_label||"DETALLE",
+      detalle_valor:m.detalle_valor||m.espesor||"",tipo_medida:m.tipo_medida||"M2",
+      area_m2:Number(m.area_m2||0),metros_lineales:Number(m.metros_lineales||0),formato:m.formato||"",
+      proveedor:best?best.proveedor:"-",precio_base:best?Number(best.precio||0):0,
+      precio_unitario:calcUnitPrice(best?best.precio:0,m.tipo_medida||"M2",m.area_m2,m.metros_lineales)
+    };
+  });
+  renderMaterialBaseList(); renderComponentMaterialOptions(); updateCompoundPreview(); renderQuote();
+}
+
+function calcUnitPrice(precio,tipo,area,metros){
+  precio=Number(precio||0);
+  if(tipo==="M2") return area>0 ? precio/area : precio;
+  if(tipo==="M") return metros>0 ? precio/metros : precio;
+  return precio;
+}
+
+function renderMaterialBaseList(){
+  const q=($("materialSearch")?.value||"").toUpperCase();
+  const list=baseMaterials.filter(m=>`${m.categoria} ${m.nombre} ${m.detalle_label} ${m.detalle_valor} ${m.formato} ${m.proveedor}`.toUpperCase().includes(q));
+  $("baseMaterialList").innerHTML=list.map(m=>`
+    <div class="materialItem">
+      <span class="badge">${esc(m.categoria)}</span>
+      <span class="name"><strong>${esc(m.nombre)}</strong><small>${esc(m.detalle_label)}: ${esc(m.detalle_valor)} · ${esc(m.tipo_medida)} · ${esc(m.formato)}</small></span>
+      <span class="name"><strong>${money(m.precio_unitario)}</strong><small>Precio ${m.tipo_medida==="M2"?"/m²":m.tipo_medida==="M"?"/m":"/und"}</small></span>
+      <span class="name"><strong>${esc(m.proveedor)}</strong><small>Proveedor</small></span>
+    </div>
+  `).join("") || `<div class="hint">Sin materiales.</div>`;
+}
+
+function materialById(id){ return baseMaterials.find(m=>Number(m.id)===Number(id)); }
+
+function baseParamOptions(selected="areaMarcoM2"){
+  const opts=[
+    ["perimetroM","Perímetro"],
+    ["piezas","Cantidad de piezas"],
+    ["areaRellenoM2","Área de relleno"],
+    ["areaMarcoM2","Área de marco"],
+    ["areaSeleccionM2","Área de selección"],
+    ["fixed","Fijo / manual"]
+  ];
+  return opts.map(o=>`<option value="${o[0]}" ${o[0]===selected?"selected":""}>${o[1]}</option>`).join("");
+}
+
+function materialOptions(selected=""){
+  return baseMaterials.map(m=>`<option value="${m.id}" ${Number(m.id)===Number(selected)?"selected":""}>${esc(m.categoria)} · ${esc(m.nombre)} · ${esc(m.detalle_valor)} · ${money(m.precio_unitario)}/${m.tipo_medida==="M2"?"m²":m.tipo_medida==="M"?"m":"und"}</option>`).join("");
+}
+
+function addComponentLine(data={}){
+  const div=document.createElement("div");
+  div.className="componentLine";
+  div.innerHTML=`
+    <div>
+      <label>Material</label>
+      <select class="cMaterial" onchange="updateCompoundPreview()">${materialOptions(data.material_id||"")}</select>
+    </div>
+    <div>
+      <label>Base</label>
+      <select class="cBase" onchange="updateCompoundPreview()">${baseParamOptions(data.base_parametro||"areaMarcoM2")}</select>
+    </div>
+    <div>
+      <label>Factor consumo</label>
+      <input class="cFactorConsumo" type="number" step="0.0001" value="${data.factor_consumo??1}" oninput="updateCompoundPreview()">
+    </div>
+    <div>
+      <label>Extra</label>
+      <input class="cExtra" type="number" step="0.0001" value="${data.extra??0}" oninput="updateCompoundPreview()">
+    </div>
+    <div>
+      <label>Factor venta</label>
+      <input class="cFactorVenta" type="number" step="0.01" value="${data.factor_venta??2}" oninput="updateCompoundPreview()">
+    </div>
+    <div>
+      <label>Redondear</label>
+      <select class="cRound" onchange="updateCompoundPreview()">
+        <option value="false" ${!data.redondear?"selected":""}>No</option>
+        <option value="true" ${data.redondear?"selected":""}>Sí</option>
+      </select>
+    </div>
+    <div class="previewMini fullLine">Costo: $0.00<br>Venta: $0.00<br>Ganancia: $0.00</div>
+    <button class="btn red" type="button" onclick="this.closest('.componentLine').remove();updateCompoundPreview()">Eliminar</button>
+  `;
+  $("componentLines").appendChild(div);
+  updateCompoundPreview();
+}
+
+function renderComponentMaterialOptions(){
+  document.querySelectorAll(".cMaterial").forEach(sel=>{
+    const val=sel.value;
+    sel.innerHTML=materialOptions(val);
+  });
+}
+
+function readComponentLines(){
+  return [...document.querySelectorAll(".componentLine")].map((line,idx)=>({
+    material_id:Number(line.querySelector(".cMaterial").value||0),
+    base_parametro:line.querySelector(".cBase").value,
+    factor_consumo:Number(line.querySelector(".cFactorConsumo").value||0),
+    extra:Number(line.querySelector(".cExtra").value||0),
+    factor_venta:Number(line.querySelector(".cFactorVenta").value||1),
+    redondear:line.querySelector(".cRound").value==="true",
+    orden:idx+1
+  })).filter(x=>x.material_id);
+}
+
+function baseValue(base,r=lastResults){
+  if(!r) return base==="fixed" ? 1 : 0;
+  if(base==="fixed") return 1;
+  return Number(r[base]||0);
+}
+
+function calcComponent(c,r=lastResults){
+  const m=materialById(c.material_id);
+  if(!m) return null;
+  let cantidad=(baseValue(c.base_parametro,r)*Number(c.factor_consumo||0))+Number(c.extra||0);
+  if(c.redondear) cantidad=Math.ceil(cantidad);
+  const costo=cantidad*Number(m.precio_unitario||0);
+  const venta=costo*Number(c.factor_venta||1);
+  return {...c,material:m,cantidad,costo,venta,ganancia:venta-costo};
+}
+
+function updateCompoundPreview(){
+  let cost=0,sale=0,profit=0;
+  const lines=[...document.querySelectorAll(".componentLine")];
+  const comps=readComponentLines();
+  lines.forEach((line,idx)=>{
+    const calc=calcComponent(comps[idx]||{});
+    const box=line.querySelector(".previewMini");
+    if(calc){
+      cost+=calc.costo; sale+=calc.venta; profit+=calc.ganancia;
+      box.innerHTML=`${esc(calc.material.proveedor)}<br>Costo: ${money(calc.costo)}<br>Venta: ${money(calc.venta)}<br>Ganancia: ${money(calc.ganancia)}`;
+    }
+  });
+  $("editCost").textContent=money(cost);
+  $("editSale").textContent=money(sale);
+  $("editProfit").textContent=money(profit);
+}
+
+async function saveCompound(){
+  const client=sb();
+  if(!client){ toast("No hay Supabase"); return; }
+  const name=($("compoundName").value||"").trim().toUpperCase();
+  if(!name){ toast("Falta nombre del grupo"); return; }
+  const components=readComponentLines();
+  if(!components.length){ toast("Agrega componentes"); return; }
+
+  let compoundId=currentEditCompoundId;
+  const payload={nombre:name,descripcion:($("compoundDesc").value||"").trim(),activo:true,updated_at:new Date().toISOString()};
+
+  if(compoundId){
+    const {error}=await client.from("materia_compuestos").update(payload).eq("id",compoundId);
+    if(error){ console.error(error); toast("Error actualizando compuesto"); return; }
+    await client.from("materia_compuesto_componentes").delete().eq("compuesto_id",compoundId);
+  }else{
+    const {data,error}=await client.from("materia_compuestos").insert(payload).select().single();
+    if(error){ console.error(error); toast("Error guardando compuesto. Revisa SQL."); return; }
+    compoundId=data.id;
+  }
+
+  const rows=components.map(c=>({...c,compuesto_id:compoundId,activo:true}));
+  const {error:err2}=await client.from("materia_compuesto_componentes").insert(rows);
+  if(err2){ console.error(err2); toast("Compuesto guardado, error en componentes"); return; }
+
+  toast("Grupo guardado");
+  clearCompoundForm();
+  await loadCompounds();
+}
+
+function clearCompoundForm(){
+  currentEditCompoundId=null;
+  $("compoundName").value="";
+  $("compoundDesc").value="";
+  $("componentLines").innerHTML="";
+  addComponentLine();
+  updateCompoundPreview();
+}
+
+async function loadCompounds(){
+  const client=sb();
+  if(!client){ toast("No hay Supabase"); return; }
+  const {data,error}=await client.from("materia_compuestos").select("*, componentes:materia_compuesto_componentes(*)").eq("activo",true).order("nombre",{ascending:true});
+  if(error){ console.error(error); toast("Error cargando compuestos. Revisa SQL."); return; }
+  compounds=(data||[]).map(c=>({...c,componentes:(c.componentes||[]).filter(x=>x.activo!==false).sort((a,b)=>(a.orden||0)-(b.orden||0))}));
+  renderCompoundSelect(); renderCompoundTable(); renderQuote();
+}
+
+function renderCompoundSelect(){
+  $("compoundSelect").innerHTML=compounds.map(c=>`<option value="${c.id}">${esc(c.nombre)}</option>`).join("");
+}
+
+function renderCompoundTable(){
+  $("compoundTable").innerHTML=`<tr><th>Grupo</th><th>Componentes</th><th>Descripción</th><th>Acción</th></tr>`+
+    compounds.map(c=>`<tr>
+      <td>${esc(c.nombre)}</td>
+      <td>${c.componentes.length}</td>
+      <td>${esc(c.descripcion||"")}</td>
+      <td>
+        <button class="btn light" onclick="editCompound(${c.id})">Editar</button>
+        <button class="btn light" onclick="duplicateCompound(${c.id})">Duplicar</button>
+        <button class="btn red" onclick="deleteCompound(${c.id})">Eliminar</button>
+      </td>
+    </tr>`).join("");
+}
+
+function editCompound(id){
+  const c=compounds.find(x=>Number(x.id)===Number(id)); if(!c) return;
+  currentEditCompoundId=c.id;
+  $("compoundName").value=c.nombre||"";
+  $("compoundDesc").value=c.descripcion||"";
+  $("componentLines").innerHTML="";
+  c.componentes.forEach(x=>addComponentLine(x));
+  if(!c.componentes.length) addComponentLine();
+  switchTab("materials");
+}
+
+function duplicateCompound(id){
+  const c=compounds.find(x=>Number(x.id)===Number(id)); if(!c) return;
+  currentEditCompoundId=null;
+  $("compoundName").value=(c.nombre||"")+" COPIA";
+  $("compoundDesc").value=c.descripcion||"";
+  $("componentLines").innerHTML="";
+  c.componentes.forEach(x=>addComponentLine(x));
+  switchTab("materials");
+}
+
+async function deleteCompound(id){
+  if(!confirm("¿Eliminar compuesto?")) return;
+  const client=sb();
+  const {error}=await client.from("materia_compuestos").update({activo:false,updated_at:new Date().toISOString()}).eq("id",id);
+  if(error){ console.error(error); toast("Error eliminando"); return; }
+  toast("Compuesto eliminado");
+  await loadCompounds();
+}
+
+function selectedCompound(){
+  const id=Number($("compoundSelect").value||0);
+  return compounds.find(c=>Number(c.id)===id);
+}
+
+function renderQuote(){
+  const c=selectedCompound();
+  if(!lastResults||!c){
+    $("totalCost").textContent=money(0); $("totalSale").textContent=money(0); $("totalProfit").textContent=money(0);
+    $("quoteTable").innerHTML=`<tr><th>Mensaje</th></tr><tr><td>Analiza un SVG y selecciona un compuesto.</td></tr>`;
+    return;
+  }
+  let cost=0,sale=0,profit=0;
+  const rows=c.componentes.map(x=>calcComponent(x,lastResults)).filter(Boolean);
+  rows.forEach(r=>{ cost+=r.costo; sale+=r.venta; profit+=r.ganancia; });
+  $("totalCost").textContent=money(cost); $("totalSale").textContent=money(sale); $("totalProfit").textContent=money(profit);
+  $("quoteTable").innerHTML=`<tr><th>Material</th><th>Base</th><th>Cantidad</th><th>Precio base</th><th>Costo</th><th>Factor venta</th><th>Venta</th><th>Ganancia</th></tr>`+
+    rows.map(r=>`<tr>
+      <td>${esc(r.material.categoria)} · ${esc(r.material.nombre)} · ${esc(r.material.detalle_valor)}</td>
+      <td>${baseLabel(r.base_parametro)}</td>
+      <td>${qty(r.cantidad)}</td>
+      <td>${money(r.material.precio_unitario)}</td>
+      <td>${money(r.costo)}</td>
+      <td>${r.factor_venta}</td>
+      <td class="money">${money(r.venta)}</td>
+      <td class="money">${money(r.ganancia)}</td>
+    </tr>`).join("");
+}
+
+function baseLabel(v){
+  return ({perimetroM:"Perímetro",piezas:"Piezas",areaRellenoM2:"Área relleno",areaMarcoM2:"Área marco",areaSeleccionM2:"Área selección",fixed:"Fijo"})[v]||v;
+}
+
+function toggleBreakdown(){ $("breakdownBox").classList.toggle("show"); }
+
+function buildResumen(){
+  const c=selectedCompound();
+  return `TUTTOVINILOS · COTIZACIÓN SVG
+
+Archivo: ${currentFileName||"SVG"}
+Compuesto: ${c?c.nombre:"-"}
+
+Ancho: ${lastResults?fmtCm(lastResults.anchoM):"0"}
+Alto: ${lastResults?fmtCm(lastResults.altoM):"0"}
+Piezas: ${lastResults?lastResults.piezas:0}
+Perímetro: ${lastResults?fmtM(lastResults.perimetroM):"0"}
+Área relleno: ${lastResults?fmtM2(lastResults.areaRellenoM2):"0"}
+Área marco: ${lastResults?fmtM2(lastResults.areaMarcoM2):"0"}
+Área selección: ${lastResults?fmtM2(lastResults.areaSeleccionM2):"0"}
+
+Costo real: ${$("totalCost").textContent}
+Precio venta: ${$("totalSale").textContent}
+Ganancia: ${$("totalProfit").textContent}`;
+}
+
+async function copiarResumen(){
+  const txt=buildResumen();
+  try{ await navigator.clipboard.writeText(txt); toast("Resumen copiado"); }
+  catch(e){ prompt("Copia:",txt); }
+}
+
+function crearPDF(){
+  if(!lastResults){ alert("Primero analiza un SVG."); return; }
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:"portrait",unit:"pt",format:"letter"});
+  let y=45,m=42;
+  doc.setFont("helvetica","bold"); doc.setFontSize(16);
+  doc.text("TUTTOVINILOS · Cotización SVG",m,y); y+=24;
+  doc.setFont("helvetica","normal"); doc.setFontSize(10);
+  buildResumen().split("\n").forEach(line=>{ if(y>740){doc.addPage();y=45;} doc.text(line,m,y); y+=14; });
+  doc.save("Tuttovinilos_cotizacion_svg.pdf");
+}
+
+window.addEventListener("load",async()=>{
+  document.documentElement.classList.remove("loading-menu");
+  document.documentElement.classList.add("menu-ready");
+  await loadBaseMaterials();
+  await loadCompounds();
+  if(!$("componentLines").children.length) addComponentLine();
+});
+</script>
+</body>
+</html>
