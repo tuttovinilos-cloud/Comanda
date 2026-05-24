@@ -2,798 +2,792 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Tuttovinilos · Medidor de Logos</title>
 
-<title>Tuttovinilos · Crop & Measure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
-
 :root{
-  --bg:#eef2f9;
+  --bg:#f0f2f9;
   --panel:#ffffff;
-  --line:#d7dfef;
-  --blue:#1c4fff;
-  --orange:#ff7a00;
+  --panel2:#f8f9ff;
+  --border:#d9deea;
+  --border2:#cbd3e6;
   --text:#111827;
+  --muted:#64748b;
+  --blue:#153bff;
+  --blue2:#0b1f7a;
+  --orange:#ff8616;
+  --green:#16a34a;
+  --red:#ef4444;
+  --shadow:0 10px 28px rgba(15,23,42,.08);
+  --head:'Montserrat',Arial,sans-serif;
+  --body:'Inter',Arial,sans-serif;
+  --mono:'Roboto Mono',monospace;
+  --safe:env(safe-area-inset-bottom,0px);
 }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100dvh;overflow-x:hidden}
+button,input,select{font-family:inherit}
+button{border:0;cursor:pointer}
+input{outline:none}
 
-*{
-  box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
-}
+.app{max-width:980px;margin:auto;padding:12px}
+.top{position:sticky;top:0;z-index:50;background:rgba(240,242,249,.92);backdrop-filter:blur(18px);padding:10px 0 12px}
+.brand{background:linear-gradient(135deg,#153bff,#0b1f7a);color:#fff;border-radius:24px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 24px rgba(21,59,255,.22)}
+.brand h1{font-family:var(--head);font-size:18px;font-weight:900;letter-spacing:.4px}
+.brand span{font-size:11px;opacity:.82;font-weight:700}
 
-body{
-  margin:0;
-  overflow:hidden;
-  background:var(--bg);
-  font-family:Arial;
-  color:var(--text);
-}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.step{border:1px solid var(--border);border-radius:999px;background:#fff;padding:9px 8px;font-size:11px;font-weight:900;color:var(--muted);text-align:center;font-family:var(--head);letter-spacing:.3px}
+.step.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.step.done{background:#e9efff;border-color:#bfcaff;color:var(--blue)}
 
-/* TOP */
+.card{background:#fff;border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
+.card h2{font-family:var(--head);font-size:16px;color:var(--blue2);margin-bottom:10px}
+.hint{font-size:12px;color:var(--muted);line-height:1.45}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+label{display:block;font-size:11px;color:var(--muted);font-weight:800;margin-bottom:6px}
+input,select{width:100%;height:42px;border-radius:13px;border:1px solid var(--border);background:#fff;padding:0 12px;font-size:14px;color:var(--text)}
+.btn{width:100%;min-height:42px;border-radius:14px;background:var(--blue);color:#fff;font-family:var(--head);font-weight:900;font-size:13px;letter-spacing:.25px;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn.orange{background:var(--orange)}
+.btn.gray{background:#fff;color:var(--blue);border:1px solid var(--border2)}
+.btn.green{background:var(--green)}
+.btn.red{background:var(--red)}
+.btn:active{transform:scale(.98)}
 
-.top{
-  position:fixed;
-  top:0;
-  left:0;
-  right:0;
-  z-index:100;
-  background:rgba(255,255,255,.94);
-  backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--line);
-  padding:10px;
-}
+.viewerCard{background:#fff;border:1px solid var(--border);border-radius:24px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:12px}
+.viewerHead{padding:10px 12px;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--border);background:#fbfcff;overflow:auto;scrollbar-width:none}
+.viewerHead::-webkit-scrollbar{display:none}
+.tool{flex:0 0 auto;height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--border2);background:#fff;color:var(--muted);font-weight:900;font-size:12px;font-family:var(--head)}
+.tool.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.tool.orange.active{background:var(--orange);border-color:var(--orange)}
+.tool.green.active{background:var(--green);border-color:var(--green)}
 
-.tools{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-
-button,
-input{
-  border:none;
-  border-radius:14px;
-  height:46px;
-  font-size:14px;
-}
-
-button{
-  background:var(--blue);
-  color:white;
-  font-weight:800;
-}
-
-input{
-  background:white;
-  border:1px solid var(--line);
-  padding:10px;
-}
-
-/* VISOR */
-
-.viewer{
-  position:fixed;
-  top:160px;
-  left:0;
-  right:0;
-  bottom:110px;
-
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-
-.canvasWrap{
-
-  width:min(335px, calc(100vw - 24px));
-  height:min(335px, calc(100vw - 24px));
-
-  max-width:335px;
-  max-height:335px;
-
-  background:white;
-  border:1px solid var(--line);
-  border-radius:22px;
-
-  overflow:hidden;
+.viewerStageWrap{width:100%;display:flex;justify-content:center;background:#f8f9ff;padding:12px}
+.viewerStage{
   position:relative;
-
+  width:min(100%,420px);
+  max-width:420px;
+  aspect-ratio:1/1;
+  background:
+    linear-gradient(45deg,#f7f7f7 25%,transparent 25%),
+    linear-gradient(-45deg,#f7f7f7 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#f7f7f7 75%),
+    linear-gradient(-45deg,transparent 75%,#f7f7f7 75%);
+  background-size:20px 20px;
+  background-position:0 0,0 10px,10px -10px,-10px 0px;
+  border:1px solid var(--border);
+  border-radius:18px;
+  overflow:hidden;
   touch-action:none;
 }
+#canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.badge{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:11px;color:var(--blue2);font-weight:900;font-family:var(--head);pointer-events:none;box-shadow:0 6px 18px rgba(15,23,42,.08)}
+.zoomBadge{position:absolute;right:10px;bottom:10px;background:rgba(15,23,42,.75);color:white;border-radius:999px;padding:5px 10px;font-size:11px;font-family:var(--mono);pointer-events:none}
 
-/* IMAGEN */
+.fileBtn{position:relative;overflow:hidden}
+.fileBtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 
-#img{
-  position:absolute;
-
-  left:50%;
-  top:50%;
-
-  transform-origin:center center;
-
-  max-width:none;
-  max-height:none;
-
-  pointer-events:none;
-  user-select:none;
-}
-
-/* CROP */
-
-#cropBox{
-  position:absolute;
-  border:2px solid black;
-  z-index:20;
-}
-
-.corner{
-  position:absolute;
-  width:28px;
-  height:28px;
-  border-radius:50%;
-  background:var(--orange);
-  border:3px solid white;
-  z-index:30;
-}
-
-/* MEDIDOR */
-
-.measurePoint{
-  position:absolute;
-  width:22px;
-  height:22px;
-  border-radius:50%;
-  background:var(--blue);
-  border:3px solid white;
-  z-index:40;
-  display:none;
-}
-
-#measureLine{
-  position:absolute;
-  height:2px;
-  background:var(--blue);
-  transform-origin:left center;
-  z-index:35;
-  display:none;
-}
-
-/* INFO */
-
-.bottom{
-  position:fixed;
-  left:10px;
-  right:10px;
-  bottom:10px;
-
-  background:white;
-  border-radius:18px;
-  border:1px solid var(--line);
-
-  padding:14px;
-  z-index:100;
-}
-
-.info{
-  text-align:center;
-  font-weight:800;
-  font-size:15px;
-  margin-bottom:10px;
-}
-
-.bottomBtns{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  gap:8px;
-}
-
-/* MOBILE */
+.infoGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.info{background:#f8f9ff;border:1px solid var(--border);border-radius:16px;padding:10px;min-height:68px}
+.info span{display:block;color:var(--muted);font-size:10px;font-weight:800;margin-bottom:6px}
+.info b{font-family:var(--mono);font-size:14px;color:#111827}
+.resultBig{background:linear-gradient(135deg,#eef4ff,#fff);border:1px solid #bfd0ff;border-radius:18px;padding:14px;margin-top:10px;text-align:center}
+.resultBig span{display:block;font-size:11px;color:var(--muted);font-weight:900;margin-bottom:4px}
+.resultBig b{font-family:var(--head);color:var(--blue);font-size:28px;font-weight:900}
+.panelGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.measureTools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.measureTools .btn.active{background:var(--orange)}
+.toast{position:fixed;left:50%;bottom:calc(18px + var(--safe));transform:translateX(-50%) translateY(15px);background:#111827;color:#fff;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;opacity:0;pointer-events:none;transition:.25s;z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.hidden{display:none!important}
 
 @media(max-width:520px){
-
-  .top{
-    padding:8px;
-  }
-
-  .tools{
-    grid-template-columns:1fr;
-  }
-
-  button,
-  input{
-    height:42px;
-    font-size:13px;
-  }
-
+  .app{padding:8px}
+  .brand{border-radius:20px;padding:12px}
+  .brand h1{font-size:15px}
+  .brand span{font-size:10px}
+  .step{font-size:9px;padding:8px 4px}
+  .card{padding:12px;border-radius:18px}
+  .card h2{font-size:14px}
+  .panelGrid{grid-template-columns:1fr}
+  .grid2{grid-template-columns:1fr 1fr}
+  .grid3{grid-template-columns:1fr 1fr 1fr}
+  .infoGrid{grid-template-columns:repeat(4,1fr);gap:6px}
+  .info{padding:7px 5px;min-height:56px;border-radius:12px}
+  .info span{font-size:8px;line-height:1.1}
+  .info b{font-size:10px}
+  input,select,.btn{font-size:11px;min-height:38px;height:38px;border-radius:12px}
+  .viewerStage{width:min(100%,335px);max-width:335px}
+  .viewerStageWrap{padding:8px}
+  .tool{height:32px;font-size:10px;padding:0 10px}
+  .resultBig b{font-size:22px}
 }
-
 </style>
 </head>
 
 <body>
+<div class="app">
 
-<!-- TOP -->
+  <div class="top">
+    <div class="brand">
+      <div>
+        <h1>MEDIDOR DE LOGOS</h1>
+        <span>Recortar · Escalar · Medir</span>
+      </div>
+      <span>TUTTOVINILOS</span>
+    </div>
+    <div class="steps">
+      <div id="step1" class="step active">1 RECORTAR</div>
+      <div id="step2" class="step">2 ESCALAR</div>
+      <div id="step3" class="step">3 MEDIR</div>
+    </div>
+  </div>
 
-<div class="top">
+  <div class="card">
+    <h2>Imagen</h2>
+    <div class="grid2">
+      <button class="btn fileBtn">Abrir imagen
+        <input id="fileInput" type="file" accept="image/*">
+      </button>
+      <button class="btn gray" onclick="resetAll()">Reiniciar</button>
+    </div>
+    <p class="hint" style="margin-top:8px">En móvil: 1 dedo marca/mueve puntos. 2 dedos hacen zoom y mueven la imagen.</p>
+  </div>
 
-<div class="tools">
+  <div id="viewerCard" class="viewerCard hidden">
+    <div class="viewerHead">
+      <button id="toolPan" class="tool active" onclick="setMode('pan')">Mover</button>
+      <button id="toolCrop" class="tool orange" onclick="setMode('crop')">Recortar</button>
+      <button id="toolMeasure" class="tool green" onclick="setMode('measure')">Medir</button>
+      <button class="tool" onclick="centerImage()">Centrar</button>
+      <button class="tool" onclick="fitCropToView()">Ver recorte</button>
+    </div>
 
-<input type="file" id="file">
+    <div class="viewerStageWrap">
+      <div id="viewerStage" class="viewerStage">
+        <canvas id="canvas"></canvas>
+        <div id="badge" class="badge">Carga una imagen</div>
+        <div id="zoomBadge" class="zoomBadge">100%</div>
+      </div>
+    </div>
+  </div>
 
-<input type="number" id="realWidth" placeholder="Ancho real cm">
+  <div class="panelGrid">
+    <div id="cropCard" class="card hidden">
+      <h2>1) Recorte</h2>
+      <p class="hint">Arrastra las esquinas naranjas hasta el borde del logo. Luego aplica el recorte.</p>
 
-<button onclick="applyScale()">Aplicar escala</button>
+      <div class="infoGrid" style="margin-top:10px">
+        <div class="info"><span>X</span><b id="cropX">—</b></div>
+        <div class="info"><span>Y</span><b id="cropY">—</b></div>
+        <div class="info"><span>Ancho</span><b id="cropW">—</b></div>
+        <div class="info"><span>Alto</span><b id="cropH">—</b></div>
+      </div>
 
-<button onclick="enableMeasure()">Medir</button>
+      <div class="actions">
+        <button class="btn gray" onclick="resetCrop()">Reset</button>
+        <button class="btn orange" onclick="applyCrop()">Aplicar recorte</button>
+      </div>
+    </div>
+
+    <div id="scaleCard" class="card hidden">
+      <h2>2) Escalar</h2>
+      <p class="hint">Coloca una medida real. Puede ser ancho o alto.</p>
+
+      <div class="grid2" style="margin-top:10px">
+        <div>
+          <label>Escalar por</label>
+          <select id="scaleMode" onchange="syncScaleInputs()">
+            <option value="width">Ancho</option>
+            <option value="height">Alto</option>
+          </select>
+        </div>
+        <div>
+          <label>Medida cm</label>
+          <input id="scaleValue" type="number" inputmode="decimal" step="0.01" placeholder="Ej: 60" oninput="calcScaleLive()">
+        </div>
+      </div>
+
+      <div class="resultBig">
+        <span>Tamaño real</span>
+        <b id="realSize">—</b>
+      </div>
+
+      <div class="actions">
+        <button class="btn gray" onclick="useWidthPreset()">Usar ancho</button>
+        <button class="btn green" onclick="confirmScale()">Confirmar escala</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="measureCard" class="card hidden">
+    <h2>3) Medición por 2 puntos</h2>
+    <p class="hint">Pulsa Punto 1 y toca la imagen. Luego Punto 2 y toca la imagen. La medida sale en cm.</p>
+
+    <div class="measureTools">
+      <button id="btnP1" class="btn active" onclick="setActivePoint(1)">Punto 1</button>
+      <button id="btnP2" class="btn gray" onclick="setActivePoint(2)">Punto 2</button>
+    </div>
+
+    <div class="resultBig">
+      <span>Distancia</span>
+      <b id="measureResult">—</b>
+    </div>
+
+    <div class="infoGrid" style="margin-top:10px">
+      <div class="info"><span>P1 X</span><b id="p1x">—</b></div>
+      <div class="info"><span>P1 Y</span><b id="p1y">—</b></div>
+      <div class="info"><span>P2 X</span><b id="p2x">—</b></div>
+      <div class="info"><span>P2 Y</span><b id="p2y">—</b></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn gray" onclick="clearMeasure()">Limpiar puntos</button>
+      <button class="btn" onclick="copyMeasure()">Copiar medida</button>
+    </div>
+  </div>
 
 </div>
 
-</div>
-
-<!-- VIEWER -->
-
-<div class="viewer">
-
-<div class="canvasWrap" id="wrap">
-
-<img id="img">
-
-<div id="cropBox"></div>
-
-<div class="corner" id="c1"></div>
-<div class="corner" id="c2"></div>
-<div class="corner" id="c3"></div>
-<div class="corner" id="c4"></div>
-
-<div class="measurePoint" id="m1"></div>
-<div class="measurePoint" id="m2"></div>
-
-<div id="measureLine"></div>
-
-</div>
-
-</div>
-
-<!-- BOTTOM -->
-
-<div class="bottom">
-
-<div class="info" id="info">
-Sin imagen
-</div>
-
-<div class="bottomBtns">
-
-<button onclick="cropImage()">
-Cortar
-</button>
-
-<button onclick="resetView()">
-Centrar
-</button>
-
-<button onclick="enableMeasure()">
-Medir
-</button>
-
-</div>
-
-</div>
+<div id="toast" class="toast">Listo</div>
 
 <script>
+const $ = id => document.getElementById(id);
+const canvas = $("canvas");
+const ctx = canvas.getContext("2d");
 
-const wrap = document.getElementById("wrap")
-const img = document.getElementById("img")
-const info = document.getElementById("info")
+const S = {
+  img:null,
+  imgName:"",
+  iw:0,
+  ih:0,
+  viewSize:420,
+  ox:0,
+  oy:0,
+  scale:1,
+  mode:"pan",
+  dragging:false,
+  dragCorner:-1,
+  last:null,
+  crop:null,
+  cmPerPx:null,
+  realW:0,
+  realH:0,
+  activePoint:1,
+  p1:null,
+  p2:null,
+  pinch:null
+};
 
-let scale = 1
-let posX = 0
-let posY = 0
-
-let startX = 0
-let startY = 0
-
-let moving = false
-
-let realCm = 0
-let pxToCm = 1
-
-let measuring = false
-let measurePoints = []
-
-/* =========================
-   CARGAR IMAGEN
-========================= */
-
-document.getElementById("file").addEventListener("change",e=>{
-
-  const file = e.target.files[0]
-
-  if(!file)return
-
-  img.src = URL.createObjectURL(file)
-
-  img.onload = ()=>{
-
-    resetView()
-
-    createCrop()
-
-    info.innerHTML = "Imagen cargada"
-
-  }
-
-})
-
-/* =========================
-   CENTRAR
-========================= */
-
-function resetView(){
-
-  const wrapW = wrap.clientWidth
-  const wrapH = wrap.clientHeight
-
-  const imgW = img.naturalWidth
-  const imgH = img.naturalHeight
-
-  const fit = Math.min(
-    wrapW / imgW,
-    wrapH / imgH
-  )
-
-  scale = fit
-
-  posX = 0
-  posY = 0
-
-  updateTransform()
-
+function toast(msg){
+  const t=$("toast");
+  t.textContent=msg;
+  t.classList.add("show");
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.classList.remove("show"),1800);
 }
 
-/* =========================
-   TRANSFORM
-========================= */
-
-function updateTransform(){
-
-  img.style.transform =
-  `
-  translate(-50%,-50%)
-  translate(${posX}px,${posY}px)
-  scale(${scale})
-  `
-
+function updateCanvasSize(){
+  const stage=$("viewerStage");
+  const r=stage.getBoundingClientRect();
+  const dpr=window.devicePixelRatio || 1;
+  canvas.width=Math.round(r.width*dpr);
+  canvas.height=Math.round(r.height*dpr);
+  canvas.style.width=r.width+"px";
+  canvas.style.height=r.height+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  S.viewSize=r.width;
+  draw();
 }
 
-/* =========================
-   MOVER IMAGEN
-========================= */
+window.addEventListener("resize",()=>setTimeout(updateCanvasSize,80));
 
-wrap.addEventListener("touchstart",e=>{
+$("fileInput").addEventListener("change", e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const img=new Image();
+  img.onload=()=>{
+    S.img=img;
+    S.imgName=file.name;
+    S.iw=img.naturalWidth;
+    S.ih=img.naturalHeight;
+    $("viewerCard").classList.remove("hidden");
+    $("cropCard").classList.remove("hidden");
+    $("scaleCard").classList.remove("hidden");
+    $("measureCard").classList.remove("hidden");
+    updateCanvasSize();
+    resetCrop();
+    centerImage();
+    setMode("crop");
+    setStep(1);
+    toast("Imagen cargada");
+  };
+  img.onerror=()=>toast("No se pudo abrir la imagen");
+  img.src=URL.createObjectURL(file);
+  e.target.value="";
+});
 
-  if(e.touches.length===1){
+function setStep(n){
+  $("step1").className="step"+(n===1?" active":n>1?" done":"");
+  $("step2").className="step"+(n===2?" active":n>2?" done":"");
+  $("step3").className="step"+(n===3?" active":"");
+}
 
-    moving = true
+function setMode(m){
+  S.mode=m;
+  $("toolPan").classList.toggle("active",m==="pan");
+  $("toolCrop").classList.toggle("active",m==="crop");
+  $("toolMeasure").classList.toggle("active",m==="measure");
+  $("badge").textContent = m==="pan" ? "Mover / Zoom" : m==="crop" ? "Recortar" : "Medir con 2 puntos";
+  draw();
+}
 
-    startX = e.touches[0].clientX - posX
-    startY = e.touches[0].clientY - posY
+function centerImage(){
+  if(!S.img)return;
+  const fit=Math.min(S.viewSize/S.iw,S.viewSize/S.ih)*0.92;
+  S.scale=fit;
+  S.ox=(S.viewSize-S.iw*S.scale)/2;
+  S.oy=(S.viewSize-S.ih*S.scale)/2;
+  draw();
+}
 
+function resetAll(){
+  S.img=null;
+  S.crop=null;
+  S.cmPerPx=null;
+  S.p1=null;
+  S.p2=null;
+  $("viewerCard").classList.add("hidden");
+  $("cropCard").classList.add("hidden");
+  $("scaleCard").classList.add("hidden");
+  $("measureCard").classList.add("hidden");
+  $("realSize").textContent="—";
+  $("measureResult").textContent="—";
+  $("fileInput").value="";
+  setStep(1);
+}
+
+function imgToScreen(p){
+  return {x:p.x*S.scale+S.ox,y:p.y*S.scale+S.oy};
+}
+function screenToImg(x,y){
+  return {x:(x-S.ox)/S.scale,y:(y-S.oy)/S.scale};
+}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+
+function resetCrop(){
+  if(!S.img)return;
+  const pad=Math.min(S.iw,S.ih)*0.08;
+  S.crop=[
+    {x:pad,y:pad},
+    {x:S.iw-pad,y:pad},
+    {x:S.iw-pad,y:S.ih-pad},
+    {x:pad,y:S.ih-pad}
+  ];
+  updateCropInfo();
+  draw();
+}
+
+function cropBox(){
+  if(!S.crop)return null;
+  const xs=S.crop.map(p=>p.x);
+  const ys=S.crop.map(p=>p.y);
+  const x=Math.min(...xs), y=Math.min(...ys);
+  const w=Math.max(...xs)-x, h=Math.max(...ys)-y;
+  return {x,y,w,h};
+}
+
+function updateCropInfo(){
+  const b=cropBox();
+  if(!b)return;
+  $("cropX").textContent=Math.round(b.x);
+  $("cropY").textContent=Math.round(b.y);
+  $("cropW").textContent=Math.round(b.w);
+  $("cropH").textContent=Math.round(b.h);
+}
+
+function applyCrop(){
+  if(!S.img || !S.crop)return;
+  const b=cropBox();
+  if(b.w<5 || b.h<5){toast("Recorte muy pequeño");return;}
+  const c=document.createElement("canvas");
+  c.width=Math.round(b.w);
+  c.height=Math.round(b.h);
+  c.getContext("2d").drawImage(S.img,b.x,b.y,b.w,b.h,0,0,c.width,c.height);
+  const img=new Image();
+  img.onload=()=>{
+    S.img=img;
+    S.iw=img.naturalWidth;
+    S.ih=img.naturalHeight;
+    S.crop=null;
+    S.p1=null;
+    S.p2=null;
+    S.cmPerPx=null;
+    resetCrop();
+    centerImage();
+    setStep(2);
+    setMode("pan");
+    $("realSize").textContent="—";
+    $("measureResult").textContent="—";
+    toast("Recorte aplicado");
+  };
+  img.src=c.toDataURL("image/png");
+}
+
+function fitCropToView(){
+  const b=cropBox();
+  if(!b)return;
+  const fit=Math.min(S.viewSize/b.w,S.viewSize/b.h)*0.82;
+  S.scale=fit;
+  S.ox=(S.viewSize-b.w*S.scale)/2-b.x*S.scale;
+  S.oy=(S.viewSize-b.h*S.scale)/2-b.y*S.scale;
+  draw();
+}
+
+function calcScaleLive(){
+  if(!S.img)return;
+  const val=Number($("scaleValue").value||0);
+  if(!val || val<=0){$("realSize").textContent="—";return;}
+  const mode=$("scaleMode").value;
+  if(mode==="width"){
+    S.cmPerPx=val/S.iw;
+  }else{
+    S.cmPerPx=val/S.ih;
   }
+  S.realW=S.iw*S.cmPerPx;
+  S.realH=S.ih*S.cmPerPx;
+  $("realSize").textContent=S.realW.toFixed(2)+" × "+S.realH.toFixed(2)+" cm";
+  updateMeasureResult();
+}
 
-})
-
-wrap.addEventListener("touchmove",e=>{
-
-  e.preventDefault()
-
-  /* 1 dedo mover */
-
-  if(e.touches.length===1 && moving){
-
-    posX =
-    e.touches[0].clientX - startX
-
-    posY =
-    e.touches[0].clientY - startY
-
-    updateTransform()
-
+function syncScaleInputs(){
+  if(S.cmPerPx){
+    if($("scaleMode").value==="width") $("scaleValue").value=S.realW.toFixed(2);
+    else $("scaleValue").value=S.realH.toFixed(2);
   }
+  calcScaleLive();
+}
 
-  /* 2 dedos zoom */
+function useWidthPreset(){
+  $("scaleMode").value="width";
+  if(S.realW) $("scaleValue").value=S.realW.toFixed(2);
+  calcScaleLive();
+}
 
-  if(e.touches.length===2){
+function confirmScale(){
+  calcScaleLive();
+  if(!S.cmPerPx){toast("Coloca una medida válida");return;}
+  setStep(3);
+  setMode("measure");
+  toast("Escala confirmada");
+}
 
-    const dx =
-    e.touches[0].clientX -
-    e.touches[1].clientX
+function setActivePoint(n){
+  S.activePoint=n===2?2:1;
+  $("btnP1").classList.toggle("active",S.activePoint===1);
+  $("btnP1").classList.toggle("gray",S.activePoint!==1);
+  $("btnP2").classList.toggle("active",S.activePoint===2);
+  $("btnP2").classList.toggle("gray",S.activePoint!==2);
+}
 
-    const dy =
-    e.touches[0].clientY -
-    e.touches[1].clientY
+function clearMeasure(){
+  S.p1=null; S.p2=null;
+  updateMeasureResult();
+  draw();
+}
 
-    const dist =
-    Math.sqrt(dx*dx + dy*dy)
+function placeMeasurePoint(imgPoint){
+  const p={x:clamp(imgPoint.x,0,S.iw),y:clamp(imgPoint.y,0,S.ih)};
+  if(S.activePoint===1){S.p1=p;setActivePoint(2);}
+  else{S.p2=p;setActivePoint(1);}
+  updateMeasureResult();
+  draw();
+}
 
-    if(!window.lastDist){
+function updateMeasureResult(){
+  $("p1x").textContent=S.p1?Math.round(S.p1.x):"—";
+  $("p1y").textContent=S.p1?Math.round(S.p1.y):"—";
+  $("p2x").textContent=S.p2?Math.round(S.p2.x):"—";
+  $("p2y").textContent=S.p2?Math.round(S.p2.y):"—";
 
-      window.lastDist = dist
-
+  if(S.p1 && S.p2){
+    const dx=S.p2.x-S.p1.x, dy=S.p2.y-S.p1.y;
+    const px=Math.hypot(dx,dy);
+    if(S.cmPerPx){
+      $("measureResult").textContent=(px*S.cmPerPx).toFixed(2)+" cm";
+    }else{
+      $("measureResult").textContent=px.toFixed(1)+" px";
     }
-
-    const delta = dist - window.lastDist
-
-    scale += delta * 0.003
-
-    if(scale<0.1)scale=0.1
-    if(scale>20)scale=20
-
-    updateTransform()
-
-    window.lastDist = dist
-
+  }else{
+    $("measureResult").textContent="—";
   }
-
-})
-
-wrap.addEventListener("touchend",()=>{
-
-  moving = false
-
-  window.lastDist = null
-
-})
-
-/* =========================
-   CROP
-========================= */
-
-function createCrop(){
-
-  const size = wrap.clientWidth * .75
-
-  const left =
-  (wrap.clientWidth-size)/2
-
-  const top =
-  (wrap.clientHeight-size)/2
-
-  setCorner("c1",left,top)
-  setCorner("c2",left+size,top)
-  setCorner("c3",left+size,top+size)
-  setCorner("c4",left,top+size)
-
-  updateCrop()
-
 }
 
-function setCorner(id,x,y){
-
-  const el =
-  document.getElementById(id)
-
-  el.style.left = (x-14)+"px"
-  el.style.top  = (y-14)+"px"
-
+async function copyMeasure(){
+  const txt=$("measureResult").textContent;
+  if(txt==="—"){toast("No hay medida");return;}
+  try{await navigator.clipboard.writeText(txt);toast("Medida copiada");}
+  catch(e){toast(txt);}
 }
 
-function getCorner(id){
-
-  const el =
-  document.getElementById(id)
-
-  return{
-    x:parseFloat(el.style.left)+14,
-    y:parseFloat(el.style.top)+14
-  }
-
+function nearCorner(x,y){
+  if(!S.crop)return -1;
+  let best=-1, dist=28;
+  S.crop.forEach((p,i)=>{
+    const s=imgToScreen(p);
+    const d=Math.hypot(x-s.x,y-s.y);
+    if(d<dist){dist=d;best=i;}
+  });
+  return best;
 }
 
-function updateCrop(){
+function draw(){
+  if(!canvas.width)return;
+  const w=S.viewSize, h=S.viewSize;
+  ctx.clearRect(0,0,w,h);
 
-  const p1 = getCorner("c1")
-  const p3 = getCorner("c3")
+  if(!S.img)return;
 
-  const box =
-  document.getElementById("cropBox")
+  ctx.save();
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality="high";
+  ctx.drawImage(S.img,S.ox,S.oy,S.iw*S.scale,S.ih*S.scale);
+  ctx.restore();
 
-  box.style.left = p1.x+"px"
-  box.style.top = p1.y+"px"
+  if(S.mode==="crop" && S.crop) drawCrop();
+  if(S.p1 || S.p2) drawMeasure();
 
-  box.style.width =
-  (p3.x-p1.x)+"px"
-
-  box.style.height =
-  (p3.y-p1.y)+"px"
-
+  $("zoomBadge").textContent=Math.round(S.scale*100)+"%";
+  updateCropInfo();
 }
 
-;["c1","c2","c3","c4"].forEach(id=>{
-
-  const el =
-  document.getElementById(id)
-
-  let dragging = false
-
-  el.addEventListener("touchstart",e=>{
-
-    dragging = true
-
-    e.stopPropagation()
-
-  })
-
-  el.addEventListener("touchmove",e=>{
-
-    if(!dragging)return
-
-    e.preventDefault()
-
-    const x =
-    e.touches[0].clientX -
-    wrap.getBoundingClientRect().left
-
-    const y =
-    e.touches[0].clientY -
-    wrap.getBoundingClientRect().top
-
-    setCorner(id,x,y)
-
-    syncCorners(id,x,y)
-
-    updateCrop()
-
-  })
-
-  el.addEventListener("touchend",()=>{
-
-    dragging = false
-
-  })
-
-})
-
-function syncCorners(id,x,y){
-
-  if(id==="c1"){
-
-    setCorner("c2",
-    getCorner("c2").x,y)
-
-    setCorner("c4",
-    x,getCorner("c4").y)
-
-  }
-
-  if(id==="c2"){
-
-    setCorner("c1",
-    getCorner("c1").x,y)
-
-    setCorner("c3",
-    x,getCorner("c3").y)
-
-  }
-
-  if(id==="c3"){
-
-    setCorner("c2",
-    x,getCorner("c2").y)
-
-    setCorner("c4",
-    getCorner("c4").x,y)
-
-  }
-
-  if(id==="c4"){
-
-    setCorner("c1",
-    x,getCorner("c1").y)
-
-    setCorner("c3",
-    getCorner("c3").x,y)
-
-  }
-
-}
-
-/* =========================
-   ESCALA REAL
-========================= */
-
-function applyScale(){
-
-  realCm =
-  parseFloat(
-    document.getElementById("realWidth").value
-  )
-
-  if(!realCm)return
-
-  const p1 = getCorner("c1")
-  const p2 = getCorner("c2")
-
-  const px =
-  Math.abs(p2.x-p1.x)
-
-  pxToCm = realCm / px
-
-  info.innerHTML =
-  pxToCm.toFixed(4)+
-  " cm por pixel"
-
-}
-
-/* =========================
-   MEDIR
-========================= */
-
-function enableMeasure(){
-
-  measuring = true
-
-  measurePoints = []
-
-  document.getElementById("m1").style.display="none"
-  document.getElementById("m2").style.display="none"
-  document.getElementById("measureLine").style.display="none"
-
-  info.innerHTML =
-  "Toca 2 puntos"
-
-}
-
-wrap.addEventListener("click",e=>{
-
-  if(!measuring)return
-
-  const rect =
-  wrap.getBoundingClientRect()
-
-  const x =
-  e.clientX - rect.left
-
-  const y =
-  e.clientY - rect.top
-
-  measurePoints.push({x,y})
-
-  if(measurePoints.length===1){
-
-    showPoint("m1",x,y)
-
-  }
-
-  if(measurePoints.length===2){
-
-    showPoint("m2",x,y)
-
-    drawMeasure()
-
-    measuring = false
-
-  }
-
-})
-
-function showPoint(id,x,y){
-
-  const p =
-  document.getElementById(id)
-
-  p.style.display="block"
-
-  p.style.left=(x-11)+"px"
-  p.style.top=(y-11)+"px"
-
+function drawCrop(){
+  const pts=S.crop.map(imgToScreen);
+  const w=S.viewSize, h=S.viewSize;
+  ctx.save();
+
+  ctx.fillStyle="rgba(255,255,255,.62)";
+  ctx.fillRect(0,0,w,h);
+
+  ctx.globalCompositeOperation="destination-out";
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<4;i++)ctx.lineTo(pts[i].x,pts[i].y);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.globalCompositeOperation="source-over";
+  ctx.strokeStyle="#111";
+  ctx.lineWidth=1.2;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<4;i++)ctx.lineTo(pts[i].x,pts[i].y);
+  ctx.closePath();
+  ctx.stroke();
+
+  pts.forEach((p,i)=>{
+    const L=18;
+    const dir=[[-1,-1],[1,-1],[1,1],[-1,1]][i];
+    ctx.strokeStyle="#111";
+    ctx.lineWidth=3;
+    ctx.lineCap="square";
+    ctx.beginPath();
+    ctx.moveTo(p.x+dir[0]*L,p.y);
+    ctx.lineTo(p.x,p.y);
+    ctx.lineTo(p.x,p.y+dir[1]*L);
+    ctx.stroke();
+
+    ctx.fillStyle="#ff8616";
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,5,0,Math.PI*2);
+    ctx.fill();
+  });
+
+  ctx.restore();
 }
 
 function drawMeasure(){
+  ctx.save();
 
-  const a = measurePoints[0]
-  const b = measurePoints[1]
+  const p1=S.p1?imgToScreen(S.p1):null;
+  const p2=S.p2?imgToScreen(S.p2):null;
 
-  const dx = b.x-a.x
-  const dy = b.y-a.y
-
-  const distPx =
-  Math.sqrt(dx*dx+dy*dy)
-
-  const distCm =
-  distPx * pxToCm
-
-  const line =
-  document.getElementById("measureLine")
-
-  line.style.display="block"
-
-  line.style.left = a.x+"px"
-  line.style.top = a.y+"px"
-
-  line.style.width =
-  distPx+"px"
-
-  const angle =
-  Math.atan2(dy,dx)*180/Math.PI
-
-  line.style.transform =
-  `rotate(${angle}deg)`
-
-  info.innerHTML =
-  "Distancia: "+
-  distCm.toFixed(2)+
-  " cm"
-
-}
-
-/* =========================
-   CORTAR
-========================= */
-
-function cropImage(){
-
-  const p1 = getCorner("c1")
-  const p3 = getCorner("c3")
-
-  const canvas =
-  document.createElement("canvas")
-
-  const ctx =
-  canvas.getContext("2d")
-
-  const rect =
-  wrap.getBoundingClientRect()
-
-  const sx =
-  (p1.x - wrap.clientWidth/2 - posX)
-  / scale +
-  img.naturalWidth/2
-
-  const sy =
-  (p1.y - wrap.clientHeight/2 - posY)
-  / scale +
-  img.naturalHeight/2
-
-  const sw =
-  (p3.x-p1.x)/scale
-
-  const sh =
-  (p3.y-p1.y)/scale
-
-  canvas.width = sw
-  canvas.height = sh
-
-  ctx.drawImage(
-    img,
-    sx,
-    sy,
-    sw,
-    sh,
-    0,
-    0,
-    sw,
-    sh
-  )
-
-  img.src =
-  canvas.toDataURL("image/png")
-
-  img.onload=()=>{
-
-    resetView()
-
-    createCrop()
-
+  if(p1 && p2){
+    ctx.strokeStyle="#153bff";
+    ctx.lineWidth=1.2;
+    ctx.setLineDash([5,4]);
+    ctx.beginPath();
+    ctx.moveTo(p1.x,p1.y);
+    ctx.lineTo(p2.x,p2.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
   }
 
-  info.innerHTML =
-  "Imagen cortada"
+  [[p1,"1","#ff8616"],[p2,"2","#153bff"]].forEach(([p,t,c])=>{
+    if(!p)return;
+    ctx.fillStyle=c;
+    ctx.strokeStyle="#fff";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,5,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
 
+    ctx.font="900 12px Montserrat";
+    ctx.fillStyle=c;
+    ctx.fillText("P"+t,p.x+8,p.y-8);
+  });
+
+  ctx.restore();
 }
 
-</script>
+/* POINTERS */
+function getCanvasPosFromEvent(e){
+  const rect=canvas.getBoundingClientRect();
+  const t=e.touches ? e.touches[0] : e;
+  return {x:t.clientX-rect.left,y:t.clientY-rect.top};
+}
+function distTouch(t1,t2){return Math.hypot(t2.clientX-t1.clientX,t2.clientY-t1.clientY)}
+function midTouch(t1,t2){return {x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2}}
 
+canvas.addEventListener("touchstart",e=>{
+  if(!S.img)return;
+  e.preventDefault();
+
+  if(e.touches.length===2){
+    const m=midTouch(e.touches[0],e.touches[1]);
+    const r=canvas.getBoundingClientRect();
+    S.pinch={dist:distTouch(e.touches[0],e.touches[1]),x:m.x-r.left,y:m.y-r.top,ox:S.ox,oy:S.oy,scale:S.scale};
+    S.dragging=false;
+    return;
+  }
+
+  const pos=getCanvasPosFromEvent(e);
+
+  if(S.mode==="crop"){
+    const c=nearCorner(pos.x,pos.y);
+    if(c>=0){S.dragCorner=c;S.dragging=true;return;}
+  }
+
+  if(S.mode==="measure"){
+    placeMeasurePoint(screenToImg(pos.x,pos.y));
+    return;
+  }
+
+  S.dragging=true;
+  S.last=pos;
+},{passive:false});
+
+canvas.addEventListener("touchmove",e=>{
+  if(!S.img)return;
+  e.preventDefault();
+
+  if(e.touches.length===2 && S.pinch){
+    const d=distTouch(e.touches[0],e.touches[1]);
+    const m=midTouch(e.touches[0],e.touches[1]);
+    const r=canvas.getBoundingClientRect();
+    const mx=m.x-r.left, my=m.y-r.top;
+    const factor=d/S.pinch.dist;
+    const newScale=clamp(S.pinch.scale*factor,0.02,30);
+    S.ox=mx-(S.pinch.x-S.pinch.ox)*(newScale/S.pinch.scale);
+    S.oy=my-(S.pinch.y-S.pinch.oy)*(newScale/S.pinch.scale);
+    draw();
+    S.scale=newScale;
+    S.ox=mx-(S.pinch.x-S.pinch.ox)*(S.scale/S.pinch.scale);
+    S.oy=my-(S.pinch.y-S.pinch.oy)*(S.scale/S.pinch.scale);
+    draw();
+    return;
+  }
+
+  const pos=getCanvasPosFromEvent(e);
+
+  if(S.mode==="crop" && S.dragging && S.dragCorner>=0){
+    const ip=screenToImg(pos.x,pos.y);
+    S.crop[S.dragCorner]={x:clamp(ip.x,0,S.iw),y:clamp(ip.y,0,S.ih)};
+    draw();
+    return;
+  }
+
+  if(S.mode==="pan" && S.dragging && S.last){
+    S.ox += pos.x-S.last.x;
+    S.oy += pos.y-S.last.y;
+    S.last=pos;
+    draw();
+  }
+},{passive:false});
+
+canvas.addEventListener("touchend",e=>{
+  if(e.touches.length<2)S.pinch=null;
+  S.dragging=false;
+  S.dragCorner=-1;
+  S.last=null;
+},{passive:false});
+
+canvas.addEventListener("mousedown",e=>{
+  if(!S.img)return;
+  const rect=canvas.getBoundingClientRect();
+  const pos={x:e.clientX-rect.left,y:e.clientY-rect.top};
+
+  if(S.mode==="crop"){
+    const c=nearCorner(pos.x,pos.y);
+    if(c>=0){S.dragCorner=c;S.dragging=true;return;}
+  }
+
+  if(S.mode==="measure"){
+    placeMeasurePoint(screenToImg(pos.x,pos.y));
+    return;
+  }
+
+  S.dragging=true;
+  S.last=pos;
+});
+
+window.addEventListener("mousemove",e=>{
+  if(!S.img || !S.dragging)return;
+  const rect=canvas.getBoundingClientRect();
+  const pos={x:e.clientX-rect.left,y:e.clientY-rect.top};
+
+  if(S.mode==="crop" && S.dragCorner>=0){
+    const ip=screenToImg(pos.x,pos.y);
+    S.crop[S.dragCorner]={x:clamp(ip.x,0,S.iw),y:clamp(ip.y,0,S.ih)};
+    draw();
+    return;
+  }
+
+  if(S.mode==="pan" && S.last){
+    S.ox += pos.x-S.last.x;
+    S.oy += pos.y-S.last.y;
+    S.last=pos;
+    draw();
+  }
+});
+
+window.addEventListener("mouseup",()=>{
+  S.dragging=false;
+  S.dragCorner=-1;
+  S.last=null;
+});
+
+canvas.addEventListener("wheel",e=>{
+  if(!S.img)return;
+  e.preventDefault();
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const factor=e.deltaY<0?1.12:0.88;
+  const newScale=clamp(S.scale*factor,0.02,30);
+  S.ox=mx-(mx-S.ox)*(newScale/S.scale);
+  S.oy=my-(my-S.oy)*(newScale/S.scale);
+  S.scale=newScale;
+  draw();
+},{passive:false});
+
+setActivePoint(1);
+</script>
 </body>
 </html>
