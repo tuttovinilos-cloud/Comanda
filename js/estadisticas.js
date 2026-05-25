@@ -1,4 +1,4 @@
-console.log('ESTADISTICAS v40 metodo preferido corregido');
+console.log('ESTADISTICAS v41 barras pequeñas');
 
 let pedidosStats = [];
 const $ = id => document.getElementById(id);
@@ -174,6 +174,7 @@ function groupBy(rows, keyFn){
   return [...map.values()];
 }
 
+
 function renderList(id, rows, mode='metros'){
   const el = $(id);
   if(!el) return;
@@ -183,21 +184,27 @@ function renderList(id, rows, mode='metros'){
     return;
   }
 
-  const max = Math.max(...rows.map(r => mode === 'pedidos' ? r.pedidos : r.metros), 1);
+  const ordenados = rows.slice(0,10);
+  const max = Math.max(...ordenados.map(r => mode === 'pedidos' ? r.pedidos : r.metros), 1);
 
-  el.innerHTML = rows.slice(0,10).map(r => {
+  el.innerHTML = ordenados.map((r, i) => {
     const val = mode === 'pedidos' ? r.pedidos : r.metros;
     const label = mode === 'pedidos' ? `${fmt(r.pedidos)} pedidos` : `${fmt(r.metros)} m`;
-    const pct = Math.max(2, (val / max) * 100);
+    const pct = Math.max(3, (val / max) * 100);
 
-    return `<div class="row">
-      <div class="row-title" title="${escapeHtml(r.key)}">${escapeHtml(r.key)}</div>
-      <div class="row-val">${escapeHtml(label)}</div>
-      <div class="bar-wrap"><div class="bar" style="width:${pct}%"></div></div>
-      <div class="row-sub">${fmt(r.pedidos)} pedido${r.pedidos===1?'':'s'} · Listos: ${fmt(r.listos)} · Pagados: ${fmt(r.pagados)}</div>
+    return `<div class="stat-mini">
+      <div class="stat-mini-top">
+        <div class="stat-mini-name">${i + 1}. ${escapeHtml(r.key)}</div>
+        <div class="stat-mini-value">${escapeHtml(label)}</div>
+      </div>
+      <div class="stat-mini-meta">${fmt(r.pedidos)} pedido${r.pedidos===1?'':'s'} · Listos: ${fmt(r.listos)} · Pagados: ${fmt(r.pagados)}</div>
+      <div class="stat-mini-track">
+        <div class="stat-mini-fill" style="width:${pct}%"></div>
+      </div>
     </div>`;
   }).join('');
 }
+
 
 function renderMeses(rows){
   const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
