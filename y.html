@@ -760,13 +760,36 @@ function editCompound(id){
 }
 
 function duplicateCompound(id){
-  const c=compounds.find(x=>Number(x.id)===Number(id)); if(!c) return;
+  const c=compounds.find(x=>Number(x.id)===Number(id));
+  if(!c){
+    toast("Compuesto no encontrado");
+    return;
+  }
+
   currentEditCompoundId=null;
-  $("compoundName").value=(c.nombre||"")+" COPIA";
-  $("compoundDesc").value=c.descripcion||"";
+  $("compoundName").value=(c.nombre || "COMPUESTO") + " COPIA";
+  $("compoundDesc").value=c.descripcion || "";
   $("componentLines").innerHTML="";
-  c.componentes.forEach(x=>addComponentLine(x));
+
+  (c.componentes || []).forEach(x=>{
+    addComponentLine({
+      tipo_componente:x.tipo_componente || "MATERIAL",
+      material_id:x.material_id,
+      base_parametro:x.base_parametro,
+      factor_consumo:x.factor_consumo,
+      fee:x.fee ?? x.extra ?? 0,
+      redondear:x.redondear,
+      factor_venta:x.factor_venta
+    });
+  });
+
+  if(!(c.componentes || []).length){
+    addComponentLine();
+  }
+
   switchTab("materials");
+  updateCompoundPreview();
+  toast("Compuesto duplicado listo para guardar");
 }
 
 async function deleteCompound(id){
