@@ -36,6 +36,9 @@ button{cursor:pointer}
 .item{background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(15,23,42,.04)}
 .item-main{width:100%;border:0;background:white;display:grid;grid-template-columns:92px 1fr 118px 110px 28px;align-items:center;gap:8px;padding:8px 11px;text-align:left}
 .badge{display:inline-flex;align-items:center;justify-content:center;background:#eef1ff;color:var(--accent);border:1px solid #c7d2fe;border-radius:999px;padding:5px 8px;font-size:9.5px;font-family:var(--head);font-weight:900;white-space:nowrap}
+.badge-wrap{display:flex;align-items:center;gap:6px;min-width:0}
+.usage-dot{width:10px;height:10px;border-radius:50%;background:#d1d5db;border:1px solid #cbd5e1;box-shadow:0 0 0 3px rgba(203,213,225,.18);flex:0 0 auto}
+.usage-dot.used{background:#16a34a;border-color:#15803d;box-shadow:0 0 0 3px rgba(22,163,74,.18)}
 .name{min-width:0}
 .name strong{display:block;font-family:var(--head);font-size:15px;font-weight:900;color:var(--accent2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .name small{display:block;margin-top:2px;color:var(--muted);font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -247,6 +250,7 @@ button{cursor:pointer}
 <script>
 let categorias = [];
 let materiales = [];
+let materialUsageMap = {};
 let categoriaActual = "TODOS";
 let editId = null;
 
@@ -646,6 +650,39 @@ function toggleItem(id){
   if(item) item.classList.toggle("open");
 }
 
+
+async function loadMaterialUsage(){
+  materialUsageMap = {};
+  const client = sb();
+  if(!client) return;
+
+  const { data, error } = await client
+    .from("materia_compuesto_componentes")
+    .select("material_id, activo")
+    .eq("activo", true);
+
+  if(error){
+    console.warn("No se pudo cargar uso de materiales", error);
+    return;
+  }
+
+  (data || []).forEach(row => {
+    const id = Number(row.material_id || 0);
+    if(!id) return;
+    materialUsageMap[id] = (materialUsageMap[id] || 0) + 1;
+  });
+}
+
+function materialEstaEnUso(id){
+  return Number(materialUsageMap[Number(id)] || 0) > 0;
+}
+
+function textoUsoMaterial(id){
+  const n = Number(materialUsageMap[Number(id)] || 0);
+  if(!n) return "Sin enlaces activos";
+  return n === 1 ? "Usado en 1 componente del cotizador" : `Usado en ${n} componentes del cotizador`;
+}
+
 async function loadAll(){
   const client = sb();
   if(!client){
@@ -696,6 +733,7 @@ async function loadAll(){
     proveedores:(m.proveedores || []).map(p => ({...p, proveedor:String(p.proveedor || "").toUpperCase()}))
   }));
 
+  await loadMaterialUsage();
   render();
 }
 
@@ -935,7 +973,15 @@ async function saveMaterial(){
 }
 
 async function deleteMaterial(id){
-  if(!confirm("¿Eliminar este material?")) return;
+  const usado = materialEstaEnUso(id);
+
+  if(usado){
+    const msg = `${textoUsoMaterial(id)}.\n\nSi lo eliminas, puede afectar Y.html / cotizador / compuestos.\n\n¿Seguro que quieres eliminarlo?`;
+    if(!confirm(msg)) return;
+  }else{
+    if(!confirm("¿Eliminar este material?")) return;
+  }
+
   const client = sb();
   const { error } = await client
     .from("materia_materiales")
@@ -1066,7 +1112,10 @@ function render(){
     return `
       <article class="item" id="item_${item.id}">
         <button class="item-main" type="button" onclick="toggleItem(${item.id})">
-          <span class="badge">${item.categoria}</span>
+          <span class="badge-wrap" title="${textoUsoMaterial(item.id)}">
+            <span class="usage-dot ${materialEstaEnUso(item.id) ? "used" : ""}"></span>
+            <span class="badge">${item.categoria}</span>
+          </span>
 
           <span class="name">
             <strong>${item.nombre}</strong>
@@ -1105,6 +1154,7 @@ function render(){
             `).join("")}
           </div>
 
+          ${materialEstaEnUso(item.id) ? `<div class="detail-note">🟢 ${textoUsoMaterial(item.id)}. Cuidado: este material está enlazado al cotizador/compuestos.</div>` : ""}
           ${item.nota ? `<div class="detail-note">${item.nota}</div>` : ""}
 
           <div class="detail-actions">
