@@ -1,4 +1,4 @@
-console.log("NOTIFICACIONES conectado v34 visto/leida");
+console.log("NOTIFICACIONES conectado v35 robusto visto/leida");
 
 /* =========================================================
    NOTIFICACIONES · TUTTOVINILOS v34
@@ -28,6 +28,7 @@ console.log("NOTIFICACIONES conectado v34 visto/leida");
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g,"")
+      .replace(/[^a-z0-9]+/g," ")
       .replace(/\s+/g," ")
       .trim();
   }
@@ -54,7 +55,8 @@ console.log("NOTIFICACIONES conectado v34 visto/leida");
       "operadorActual",
       "tutto_operador",
       "usuario_actual",
-      "user"
+      "user",
+      "operador"
     ];
 
     for(const key of keys){
@@ -291,6 +293,8 @@ console.log("NOTIFICACIONES conectado v34 visto/leida");
       leyendo = false;
     }
   }
+
+  window.leerNotificaciones = leerNotificaciones;
 
   function renderNotificaciones(){
     const box = document.getElementById("notiList");
