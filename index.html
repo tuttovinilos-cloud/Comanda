@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>COMANDA · Producción · Prueba color seguro</title>
+<title>COMANDA · Producción · Tuttovinilos</title>
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -2147,15 +2147,13 @@ table{
     </div>
   </div>
 </div>
-  </div>
-</div>
 
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=24"></script>
 <script src="js/auth.js?v=24"></script>
 <script src="js/menu.js?v=11"></script>
-<script src="js/app.js?v=34"></script>
+<script src="js/app.js?v=35"></script>
 
 <script>
 window.bdClick = window.bdClick || function(e,id){
@@ -2171,7 +2169,7 @@ window.closeModal = window.closeModal || function(id){
 };
 </script>
 
-<script src="js/notificaciones.js?v=34"></script>
+<script src="js/notificaciones.js?v=35"></script>
 
 <script>
 (function(){
@@ -2487,91 +2485,6 @@ window.closeModal = window.closeModal || function(id){
 })();
 </script>
 
-<script>
-(function(){
-  const SUPABASE_URL_FALLBACK = "https://ujfdsabypflseijatxba.supabase.co";
-  const SUPABASE_KEY_FALLBACK = "sb_publishable_CiZo8xFKkaT7mdRrQUYxuQ_48F6Vx3w";
-
-  function esc(v){
-    return String(v ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  async function fallbackCargarPedidosSiVacio(){
-    const tbody = document.getElementById("orderTableBody");
-    const empty = document.getElementById("emptyState");
-    if(!tbody) return;
-
-    const yaHayFilas = tbody.querySelector("tr td");
-    if(yaHayFilas) return;
-
-    try{
-      const res = await fetch(
-        `${SUPABASE_URL_FALLBACK}/rest/v1/pedidos?select=*&order=id.desc&limit=500`,
-        {
-          headers:{
-            apikey: SUPABASE_KEY_FALLBACK,
-            Authorization: `Bearer ${SUPABASE_KEY_FALLBACK}`
-          }
-        }
-      );
-
-      if(!res.ok){
-        throw new Error(`HTTP ${res.status}`);
-      }
-
-      const data = await res.json();
-      tbody.innerHTML = "";
-
-      if(!Array.isArray(data) || !data.length){
-        if(empty) empty.style.display = "block";
-        return;
-      }
-
-      if(empty) empty.style.display = "none";
-
-      data.forEach(p => {
-        const archivo = p.archivo_url
-          ? `<a class="file-link-chip" href="${esc(p.archivo_url)}" target="_blank">📎 ${esc(p.archivo_nombre || "Archivo")}</a>`
-          : "—";
-
-        tbody.insertAdjacentHTML("beforeend", `
-          <tr>
-            <td>${esc(p.id)}</td>
-            <td>${esc(p.fecha)}</td>
-            <td>${esc(p.operador)}</td>
-            <td>${esc(p.cliente)}</td>
-            <td>${esc(p.descripcion)}</td>
-            <td>${esc(p.cantidad)}</td>
-            <td>${esc(p.material)}</td>
-            <td>${esc(p.tipo_impresion)}</td>
-            <td>${esc(p.precio)}</td>
-            <td class="estado-${esc(String(p.estatus_trabajo || '').toLowerCase().replaceAll(' ', '-'))}">${esc(p.estatus_trabajo)}</td>
-            <td class="pago-${esc(String(p.estatus_pago || '').toLowerCase().replaceAll(' ', '-'))}">${esc(p.estatus_pago)}</td>
-            <td class="abono-cell"><input class="cell-edit abono-edit ${Number(p.monto_abonado || 0) > 0 ? 'abono-pos' : (Number(p.monto_abonado || 0) < 0 ? 'abono-neg' : 'abono-zero')}" data-abono-id="${esc(p.id)}" type="number" step="0.01" value="${Number(p.monto_abonado || 0).toFixed(2)}" title="Editar abono"/></td>
-            <td>${esc(p.fecha_entrega || "—")}</td>
-            <td>${archivo}</td>
-          </tr>
-        `);
-      });
-    }catch(err){
-      console.error("Fallback pedidos error:", err);
-      if(empty){
-        empty.style.display = "block";
-        empty.textContent = "NO SE PUDIERON CARGAR PEDIDOS";
-      }
-    }
-  }
-
-  window.addEventListener("load", function(){
-    setTimeout(fallbackCargarPedidosSiVacio, 1200);
-  });
-})();
-</script>
 
 <script>
 /* V9 · Comportamiento seguro de tabla:
