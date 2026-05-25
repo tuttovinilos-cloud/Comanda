@@ -1,505 +1,212 @@
-console.log("Estadísticas JS conectado");
+console.log('ESTADISTICAS v39 metodo preferido adaptado');
+let pedidosStats = [];
+const $ = id => document.getElementById(id);
 
-let pedidosStatsDB = [];
-
-// ===========================
-// SUPABASE SEGURO
-// ===========================
-function dbStats() {
-  return window.supabaseClient;
-}
-
-function validarSupabaseStats() {
-  if (!dbStats()) {
-    console.error("No existe window.supabaseClient. Revisa js/supabase.js");
-    toast("No existe conexión Supabase");
-    return false;
-  }
-
-  return true;
-}
-
-// ===========================
-// TOAST
-// ===========================
-function toast(msg) {
-  const el = document.getElementById("toast");
-
-  if (!el) {
-    console.log(msg);
-    return;
-  }
-
-  el.textContent = msg;
-  el.style.display = "block";
-
-  setTimeout(() => {
-    el.style.display = "none";
-  }, 1800);
-}
-
-// ===========================
-// UTILIDADES
-// ===========================
-function normalizar(valor) {
-  return String(valor || "")
-    .trim()
+function db(){ return window.supabaseClient; }
+function normalizar(v){
+  return String(v || '')
     .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
 }
-
-function textoBonito(valor, fallback = "Sin dato") {
-  const txt = String(valor || "").trim();
-  return txt || fallback;
+function fmt(n){
+  const x = Number(n || 0);
+  if(!Number.isFinite(x)) return '0';
+  return x.toLocaleString('es-VE',{maximumFractionDigits:2});
 }
+function showToast(msg){ const t=$('toast'); if(!t) return; t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2200); }
 
-function escapeHtml(valor) {
-  return String(valor ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+async function cargarPedidosStats(){
+  if(!db()){ showToast('No existe conexión Supabase'); return; }
+  setEmptyAll('Cargando estadísticas...');
+  let res = await db()
+    .from('pedidos')
+    .select('id,fecha,operador,cliente,descripcion,cantidad,material,tipo_impresion,estatus_trabajo,estatus_pago,fecha_entrega')
+    .order('fecha', { ascending:false });
 
-function parseCantidad(valor) {
-  if (valor === null || valor === undefined) return 0;
-
-  const texto = String(valor)
-    .replace(",", ".")
-    .replace(/[^\d.]/g, "");
-
-  const num = Number(texto);
-  return Number.isFinite(num) ? num : 0;
-}
-
-function fmt(num) {
-  const n = Number(num || 0);
-
-  return n.toLocaleString("es-VE", {
-    maximumFractionDigits: 2
-  });
-}
-
-function fechaValida(valor) {
-  const fecha = String(valor || "").trim();
-
-  if (!/^\d{4}-\d{2}-\d{2}/.test(fecha)) return null;
-
-  const d = new Date(fecha + "T00:00:00");
-
-  if (Number.isNaN(d.getTime())) return null;
-
-  return d;
-}
-
-function fechaCorta(valor) {
-  const fecha = String(valor || "").slice(0, 10);
-  return fecha || "—";
-}
-
-function diasEntre(fechaA, fechaB) {
-  const a = fechaValida(fechaA);
-  const b = fechaValida(fechaB);
-
-  if (!a || !b) return null;
-
-  const diff = Math.abs(b.getTime() - a.getTime());
-  return Math.round(diff / 86400000);
-}
-
-function textoFrecuencia(dias) {
-  if (dias === null || dias === undefined || !Number.isFinite(Number(dias))) {
-    return "Sin recurrencia";
+  // Fallback: si Supabase rechaza alguna columna/orden por caché o esquema, intenta una consulta más simple.
+  if(res.error){
+    console.warn('Consulta principal de estadísticas falló. Probando fallback:', res.error);
+    res = await db()
+      .from('pedidos')
+      .select('*')
+      .order('id', { ascending:false });
   }
 
-  const d = Math.round(Number(dias));
-
-  if (d <= 0) return "Mismo día";
-  if (d === 1) return "Cada 1 día";
-  if (d < 30) return `Cada ${d} días`;
-
-  const meses = d / 30;
-
-  if (meses < 12) {
-    return `Cada ${meses.toFixed(1)} meses`;
-  }
-
-  const años = d / 365;
-  return `Cada ${años.toFixed(1)} años`;
-}
-
-// ===========================
-// CARGAR PEDIDOS
-// ===========================
-async function cargarPedidosStats() {
-  if (!validarSupabaseStats()) return;
-
-  const { data, error } = await dbStats()
-    .from("pedidos")
-    .select("*")
-    .order("fecha", { ascending: true });
-
-  if (error) {
-    console.error("Error cargando estadísticas:", error);
-    toast("Error cargando estadísticas");
+  if(res.error){
+    console.error('Error cargando estadísticas:', res.error);
+    showToast('Error cargando estadísticas: ' + (res.error.message || 'revisa consola'));
+    setEmptyAll('Error cargando datos: ' + (res.error.message || 'revisa consola'));
     return;
   }
-
-  pedidosStatsDB = data || [];
-
-  llenarAnios();
-  llenarClientesFiltro();
+  pedidosStats = res.data || [];
+  llenarFiltros();
   renderEstadisticas();
-
-  toast("Estadísticas actualizadas");
 }
 
-// ===========================
-// LLENAR AÑOS
-// ===========================
-function llenarAnios() {
-  const select = document.getElementById("filterYear");
-  if (!select) return;
+function llenarFiltros(){
+  const years = [...new Set(pedidosStats.map(p => String(p.fecha || '').slice(0,4)).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+  const ySel = $('filterYear');
+  const oldY = ySel.value || 'all';
+  ySel.innerHTML = '<option value="all">Todos los años</option>' + years.map(y => `<option value="${escapeHtml(y)}">${escapeHtml(y)}</option>`).join('');
+  ySel.value = years.includes(oldY) ? oldY : 'all';
 
-  const actual = select.value || "all";
-
-  const anios = [...new Set(
-    pedidosStatsDB
-      .map(p => String(p.fecha || "").slice(0, 4))
-      .filter(a => /^\d{4}$/.test(a))
-  )].sort((a, b) => Number(b) - Number(a));
-
-  select.innerHTML = `<option value="all">Todos los años</option>`;
-
-  anios.forEach(anio => {
-    select.insertAdjacentHTML(
-      "beforeend",
-      `<option value="${escapeHtml(anio)}">${escapeHtml(anio)}</option>`
-    );
+  const clientesMap = new Map();
+  pedidosStats.forEach(p => {
+    const nombre = limpiarTexto(p.cliente, '');
+    const key = normalizar(nombre);
+    if(key && !clientesMap.has(key)) clientesMap.set(key, nombre);
   });
-
-  if (actual && [...select.options].some(o => o.value === actual)) {
-    select.value = actual;
-  }
+  const clientes = [...clientesMap.values()].sort((a,b)=>a.localeCompare(b,'es'));
+  $('clientesStatsList').innerHTML = clientes.map(c => `<option value="${escapeHtml(c)}"></option>`).join('');
 }
 
-// ===========================
-// LLENAR CLIENTES
-// ===========================
-function llenarClientesFiltro() {
-  const select = document.getElementById("filterCliente");
-  if (!select) return;
+function filtrarPedidos(){
+  const year = $('filterYear').value;
+  const month = $('filterMonth').value;
+  const clienteQ = normalizar($('filterClienteSearch').value);
 
-  const actual = select.value || "all";
-
-  const clientes = [...new Map(
-    pedidosStatsDB
-      .map(p => String(p.cliente || "").trim())
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b, "es"))
-      .map(nombre => [normalizar(nombre), nombre])
-  ).entries()].map(([key, nombre]) => ({ key, nombre }));
-
-  select.innerHTML = `<option value="all">Todos los clientes</option>`;
-
-  clientes.forEach(c => {
-    select.insertAdjacentHTML(
-      "beforeend",
-      `<option value="${escapeHtml(c.key)}">${escapeHtml(c.nombre)}</option>`
-    );
-  });
-
-  if (actual && [...select.options].some(o => o.value === actual)) {
-    select.value = actual;
-  }
-}
-
-// ===========================
-// FILTROS
-// ===========================
-function pedidosFiltrados() {
-  const year = document.getElementById("filterYear")?.value || "all";
-  const month = document.getElementById("filterMonth")?.value || "all";
-  const cliente = document.getElementById("filterCliente")?.value || "all";
-
-  return pedidosStatsDB.filter(p => {
-    const fecha = String(p.fecha || "");
-
-    if (year !== "all" && !fecha.startsWith(year)) return false;
-
-    if (month !== "all") {
-      const mes = fecha.slice(5, 7);
-      if (mes !== month) return false;
-    }
-
-    if (cliente !== "all" && normalizar(p.cliente) !== cliente) return false;
-
+  return pedidosStats.filter(p => {
+    const fecha = String(p.fecha || '');
+    if(year !== 'all' && fecha.slice(0,4) !== year) return false;
+    if(month !== 'all' && fecha.slice(5,7) !== month) return false;
+    if(clienteQ && !normalizar(p.cliente).includes(clienteQ)) return false;
     return true;
   });
 }
 
-// ===========================
-// AGRUPAR
-// ===========================
-function agrupar(lista, getKey, getValue = p => parseCantidad(p.cantidad)) {
-  const mapa = {};
+function groupBy(rows, keyFn){
+  const map = new Map();
 
-  lista.forEach(p => {
-    const rawKey = getKey(p);
-    const keyNorm = normalizar(rawKey);
-    const keyShow = textoBonito(rawKey);
+  rows.forEach(p => {
+    const raw = keyFn(p);
+    const show = limpiarTexto(raw, 'Sin dato');
+    const key = normalizar(show) || 'sin dato';
 
-    if (!keyNorm) return;
-
-    if (!mapa[keyNorm]) {
-      mapa[keyNorm] = {
-        key: keyNorm,
-        nombre: keyShow,
-        total: 0,
-        pedidos: 0,
-        listos: 0,
-        pagados: 0,
-        pendientes: 0,
-        fechas: []
-      };
+    if(!map.has(key)){
+      map.set(key, {
+        key: show,
+        pedidos:0,
+        metros:0,
+        listos:0,
+        pagados:0,
+        pendientes:0,
+        primero:null,
+        ultimo:null,
+        items:[]
+      });
     }
 
-    mapa[keyNorm].total += getValue(p);
-    mapa[keyNorm].pedidos += 1;
+    const g = map.get(key);
+    g.pedidos += 1;
+    g.metros += numero(p.cantidad);
 
-    if (p.estatus_trabajo === "Listo") mapa[keyNorm].listos += 1;
-    if (p.estatus_pago === "Pagado") mapa[keyNorm].pagados += 1;
-    if (p.estatus_pago !== "Pagado") mapa[keyNorm].pendientes += 1;
+    if(normalizar(p.estatus_trabajo) === 'listo') g.listos += 1;
+    if(normalizar(p.estatus_pago) === 'pagado') g.pagados += 1;
+    if(normalizar(p.estatus_pago) !== 'pagado') g.pendientes += 1;
 
-    const fecha = String(p.fecha || "").slice(0, 10);
-    if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-      mapa[keyNorm].fechas.push(fecha);
+    const f = String(p.fecha || '').slice(0,10);
+    if(f){
+      if(!g.primero || f < g.primero) g.primero = f;
+      if(!g.ultimo || f > g.ultimo) g.ultimo = f;
     }
+
+    g.items.push(p);
   });
 
-  return Object.values(mapa).map(item => {
-    item.fechas = [...new Set(item.fechas)].sort();
-
-    item.primeraFecha = item.fechas[0] || "";
-    item.ultimaFecha = item.fechas[item.fechas.length - 1] || "";
-
-    item.frecuenciaDias = calcularFrecuenciaPromedio(item.fechas);
-    item.frecuenciaTexto = textoFrecuencia(item.frecuenciaDias);
-
-    return item;
-  });
+  return [...map.values()];
 }
 
-function calcularFrecuenciaPromedio(fechas) {
-  const limpias = [...new Set(fechas || [])]
-    .filter(f => /^\d{4}-\d{2}-\d{2}$/.test(f))
-    .sort();
-
-  if (limpias.length < 2) return null;
-
-  let totalDias = 0;
-  let conteo = 0;
-
-  for (let i = 1; i < limpias.length; i++) {
-    const dias = diasEntre(limpias[i - 1], limpias[i]);
-
-    if (dias !== null) {
-      totalDias += dias;
-      conteo++;
-    }
-  }
-
-  if (!conteo) return null;
-
-  return totalDias / conteo;
+function renderList(id, rows, mode='metros'){
+  const el = $(id);
+  if(!el) return;
+  if(!rows.length){ el.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+  const max = Math.max(...rows.map(r => mode === 'pedidos' ? r.pedidos : r.metros), 1);
+  el.innerHTML = rows.slice(0,10).map(r => {
+    const val = mode === 'pedidos' ? r.pedidos : r.metros;
+    const label = mode === 'pedidos' ? `${r.pedidos} pedidos` : `${fmt(r.metros)} m`;
+    const pct = Math.max(2, (val / max) * 100);
+    return `<div class="row">
+      <div class="row-title" title="${escapeHtml(r.key)}">${escapeHtml(r.key)}</div>
+      <div class="row-val">${escapeHtml(label)}</div>
+      <div class="bar-wrap"><div class="bar" style="width:${pct}%"></div></div>
+      <div class="row-sub">${r.pedidos} pedido${r.pedidos===1?'':'s'} · Listos: ${r.listos} · Pagados: ${r.pagados}</div>
+    </div>`;
+  }).join('');
 }
 
-// ===========================
-// RENDER RANKING
-// ===========================
-function renderRanking(containerId, datos, tipo = "metros", limit = 10) {
-  const cont = document.getElementById(containerId);
-  if (!cont) return;
-
-  if (!datos.length) {
-    cont.innerHTML = `<div class="empty">Sin datos</div>`;
-    return;
-  }
-
-  const ordenados = [...datos]
-    .sort((a, b) => {
-      const va = tipo === "pedidos" ? a.pedidos : a.total;
-      const vb = tipo === "pedidos" ? b.pedidos : b.total;
-      return vb - va;
-    })
-    .slice(0, limit);
-
-  const max = Math.max(
-    ...ordenados.map(x => tipo === "pedidos" ? x.pedidos : x.total),
-    1
-  );
-
-  cont.innerHTML = "";
-
-  ordenados.forEach(item => {
-    const valor = tipo === "pedidos" ? item.pedidos : item.total;
-    const pct = Math.max((valor / max) * 100, 2);
-
-    const row = `
-      <div class="row">
-        <div class="row-title" title="${escapeHtml(item.nombre)}">${escapeHtml(item.nombre)}</div>
-        <div class="row-val">${tipo === "pedidos" ? fmt(valor) + " pedidos" : fmt(valor)}</div>
-        <div class="bar-wrap">
-          <div class="bar" style="width:${pct}%"></div>
-        </div>
-      </div>
-    `;
-
-    cont.insertAdjacentHTML("beforeend", row);
+function renderMeses(rows){
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const data = meses.map((nombre, i) => ({ key:nombre, pedidos:0, metros:0, listos:0, pagados:0, pendientes:0 }));
+  rows.forEach(p => {
+    const m = Number(String(p.fecha || '').slice(5,7));
+    if(m >= 1 && m <= 12){ data[m-1].pedidos++; data[m-1].metros += numero(p.cantidad); }
   });
+  renderList('metrosPorMes', data, 'metros');
 }
 
-// ===========================
-// METROS POR MES
-// ===========================
-function renderMetrosPorMes(lista) {
-  const meses = [
-    ["01", "Enero"],
-    ["02", "Febrero"],
-    ["03", "Marzo"],
-    ["04", "Abril"],
-    ["05", "Mayo"],
-    ["06", "Junio"],
-    ["07", "Julio"],
-    ["08", "Agosto"],
-    ["09", "Septiembre"],
-    ["10", "Octubre"],
-    ["11", "Noviembre"],
-    ["12", "Diciembre"]
-  ];
-
-  const mapa = {};
-
-  meses.forEach(([key, nombre]) => {
-    mapa[key] = { key, nombre, total: 0, pedidos: 0 };
-  });
-
-  lista.forEach(p => {
-    const mes = String(p.fecha || "").slice(5, 7);
-    if (!mapa[mes]) return;
-
-    mapa[mes].total += parseCantidad(p.cantidad);
-    mapa[mes].pedidos += 1;
-  });
-
-  const datos = meses.map(([key]) => mapa[key]);
-  const cont = document.getElementById("metrosPorMes");
-  if (!cont) return;
-
-  const max = Math.max(...datos.map(x => x.total), 1);
-  cont.innerHTML = "";
-
-  datos.forEach(item => {
-    const pct = Math.max((item.total / max) * 100, item.total > 0 ? 2 : 0);
-
-    cont.insertAdjacentHTML("beforeend", `
-      <div class="row">
-        <div class="row-title">${escapeHtml(item.nombre)}</div>
-        <div class="row-val">${fmt(item.total)}</div>
-        <div class="row-sub">${fmt(item.pedidos)} pedido${item.pedidos === 1 ? "" : "s"}</div>
-        <div class="bar-wrap">
-          <div class="bar" style="width:${pct}%"></div>
-        </div>
-      </div>
-    `);
-  });
+function renderTablaClientes(grupos){
+  const tbody = $('tablaClientes');
+  if(!grupos.length){ tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin clientes</td></tr>'; return; }
+  tbody.innerHTML = grupos.map(g => `
+    <tr>
+      <td><b>${escapeHtml(g.key)}</b></td>
+      <td>${g.pedidos}</td>
+      <td><b>${fmt(g.metros)}</b></td>
+      <td>${escapeHtml(g.primero || '—')}</td>
+      <td>${escapeHtml(g.ultimo || '—')}</td>
+      <td><span class="pill green">${g.listos}</span></td>
+      <td><span class="pill blue">${g.pagados}</span></td>
+      <td><span class="pill red">${g.pendientes}</span></td>
+    </tr>`).join('');
 }
 
-// ===========================
-// TABLA CLIENTES
-// ===========================
-function renderTablaClientes(datosClientes) {
-  const tbody = document.getElementById("tablaClientes");
-  if (!tbody) return;
+function renderEstadisticas(){
+  const rows = filtrarPedidos();
+  const clientes = groupBy(rows, p => String(p.cliente || '').trim()).sort((a,b)=>b.metros-a.metros);
+  const recurrentes = [...clientes].sort((a,b)=>b.pedidos-a.pedidos);
+  const materiales = groupBy(rows, p => String(p.material || '').trim()).sort((a,b)=>b.metros-a.metros);
+  const impresiones = groupBy(rows, p => String(p.tipo_impresion || '').trim()).sort((a,b)=>b.metros-a.metros);
+  const operadores = groupBy(rows, p => String(p.operador || '').trim()).sort((a,b)=>b.pedidos-a.pedidos);
 
-  const ordenados = [...datosClientes]
-    .sort((a, b) => {
-      if (b.pedidos !== a.pedidos) return b.pedidos - a.pedidos;
-      return b.total - a.total;
-    })
-    .slice(0, 80);
+  $('kpiPedidos').textContent = fmt(rows.length);
+  $('kpiMetros').textContent = fmt(rows.reduce((a,p)=>a+numero(p.cantidad),0));
+  $('kpiClientes').textContent = fmt(clientes.length);
+  $('kpiListos').textContent = fmt(rows.filter(p => normalizar(p.estatus_trabajo) === 'listo').length);
+  $('kpiPagados').textContent = fmt(rows.filter(p => normalizar(p.estatus_pago) === 'pagado').length);
 
-  if (!ordenados.length) {
-    tbody.innerHTML = `<tr><td colspan="8" class="empty">Sin clientes</td></tr>`;
-    return;
-  }
+  const q = $('filterClienteSearch').value.trim();
+  $('filterInfo').innerHTML = `<span>Viendo estadísticas de <strong>${q ? escapeHtml(q) : 'todos los clientes'}</strong>.</span><span id="filterCount">${rows.length} pedido${rows.length===1?'':'s'} · ${fmt(rows.reduce((a,p)=>a+numero(p.cantidad),0))} m</span>`;
 
-  tbody.innerHTML = "";
-
-  ordenados.forEach(c => {
-    const row = `
-      <tr>
-        <td>${escapeHtml(c.nombre)}</td>
-        <td>${fmt(c.pedidos)}</td>
-        <td>${fmt(c.total)}</td>
-        <td>${escapeHtml(fechaCorta(c.primeraFecha))}</td>
-        <td>${escapeHtml(fechaCorta(c.ultimaFecha))}</td>
-        <td><span class="pill green">${fmt(c.listos)}</span></td>
-        <td><span class="pill green">${fmt(c.pagados)}</span></td>
-        <td><span class="pill red">${fmt(c.pendientes)}</span></td>
-      </tr>
-    `;
-
-    tbody.insertAdjacentHTML("beforeend", row);
-  });
+  renderList('topClientes', clientes, 'metros');
+  renderList('clientesRecurrentes', recurrentes, 'pedidos');
+  renderList('materialesUsados', materiales, 'metros');
+  renderList('impresionesUsadas', impresiones, 'metros');
+  renderList('operadoresUsados', operadores, 'pedidos');
+  renderMeses(rows);
+  renderTablaClientes(clientes);
 }
 
-// ===========================
-// RENDER PRINCIPAL
-// ===========================
-function renderEstadisticas() {
-  const lista = pedidosFiltrados();
-
-  const totalPedidos = lista.length;
-  const totalMetros = lista.reduce((acc, p) => acc + parseCantidad(p.cantidad), 0);
-  const clientesUnicos = new Set(lista.map(p => normalizar(p.cliente)).filter(Boolean)).size;
-  const listos = lista.filter(p => p.estatus_trabajo === "Listo").length;
-  const pagados = lista.filter(p => p.estatus_pago === "Pagado").length;
-
-  const porCliente = agrupar(lista, p => p.cliente);
-  const porMaterial = agrupar(lista, p => p.material);
-  const porImpresion = agrupar(lista, p => p.tipo_impresion);
-  const porOperador = agrupar(lista, p => p.operador, p => 1);
-
-  const kpiPedidos = document.getElementById("kpiPedidos");
-  const kpiMetros = document.getElementById("kpiMetros");
-  const kpiClientes = document.getElementById("kpiClientes");
-  const kpiListos = document.getElementById("kpiListos");
-  const kpiPagados = document.getElementById("kpiPagados");
-
-  if (kpiPedidos) kpiPedidos.textContent = fmt(totalPedidos);
-  if (kpiMetros) kpiMetros.textContent = fmt(totalMetros);
-  if (kpiClientes) kpiClientes.textContent = fmt(clientesUnicos);
-  if (kpiListos) kpiListos.textContent = fmt(listos);
-  if (kpiPagados) kpiPagados.textContent = fmt(pagados);
-
-  renderRanking("topClientes", porCliente, "metros", 10);
-  renderRanking("clientesRecurrentes", porCliente, "pedidos", 10);
-  renderRanking("materialesUsados", porMaterial, "metros", 10);
-  renderRanking("impresionesUsadas", porImpresion, "metros", 10);
-  renderRanking("operadoresUsados", porOperador, "pedidos", 10);
-  renderMetrosPorMes(lista);
-  renderTablaClientes(porCliente);
+function limpiarClienteStats(){
+  $('filterClienteSearch').value = '';
+  renderEstadisticas();
 }
 
-// ===========================
-// INICIO
-// ===========================
-window.addEventListener("DOMContentLoaded", cargarPedidosStats);
+function setEmptyAll(msg){
+  ['topClientes','clientesRecurrentes','materialesUsados','impresionesUsadas','operadoresUsados','metrosPorMes'].forEach(id => { const el=$(id); if(el) el.innerHTML = `<div class="empty">${escapeHtml(msg)}</div>`; });
+  $('tablaClientes').innerHTML = `<tr><td colspan="8" class="empty">${escapeHtml(msg)}</td></tr>`;
+}
 
-window.cargarDatos = cargarDatos;
-window.aplicarFiltros = aplicarFiltros;
-window.limpiarFiltros = limpiarFiltros;
+document.addEventListener('DOMContentLoaded', function(){
+  const btn = $('mobileMenuBtn');
+  const menu = $('authMenu');
+  if(btn && menu){ btn.addEventListener('click', () => menu.classList.toggle('open')); }
+  cargarPedidosStats();
+});
 
+window.cargarPedidosStats = cargarPedidosStats;
+window.renderEstadisticas = renderEstadisticas;
+window.limpiarClienteStats = limpiarClienteStats;
