@@ -1,4 +1,4 @@
-console.log('ESTADISTICAS conectado v35 limpio');
+console.log('ESTADISTICAS conectado v36 graficas');
 
 let pedidosStats = [];
 const $ = id => document.getElementById(id);
@@ -207,6 +207,80 @@ function renderList(id, rows, mode='metros'){
   }).join('');
 }
 
+
+function renderGraficaMeses(data){
+  const cont = $('graficaMeses');
+  if(!cont) return;
+
+  const valores = data.map(x => Number(x.metros || 0));
+  const hayDatos = valores.some(v => v > 0);
+
+  if(!hayDatos){
+    cont.innerHTML = '<div class="chart-empty">Sin datos para graficar</div>';
+    return;
+  }
+
+  const w = 720;
+  const h = 230;
+  const padL = 42;
+  const padR = 20;
+  const padT = 22;
+  const padB = 42;
+  const innerW = w - padL - padR;
+  const innerH = h - padT - padB;
+  const max = Math.max(...valores, 1);
+
+  const pts = data.map((d, i) => {
+    const x = padL + (innerW * i / Math.max(data.length - 1, 1));
+    const y = padT + innerH - ((Number(d.metros || 0) / max) * innerH);
+    return { x, y, ...d };
+  });
+
+  const line = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const area = `${line} L ${pts[pts.length - 1].x.toFixed(1)} ${padT + innerH} L ${pts[0].x.toFixed(1)} ${padT + innerH} Z`;
+
+  const grid = [0, .25, .5, .75, 1].map(t => {
+    const y = padT + innerH - (t * innerH);
+    const val = max * t;
+    return `
+      <line class="chart-grid" x1="${padL}" y1="${y}" x2="${w - padR}" y2="${y}"></line>
+      <text class="chart-label" x="8" y="${y + 4}">${fmt(val)}</text>
+    `;
+  }).join('');
+
+  const labels = pts.map((p, i) => {
+    const mes = String(p.key || '').slice(0,3);
+    return `<text class="chart-label" x="${p.x}" y="${h - 15}" text-anchor="middle">${escapeHtml(mes)}</text>`;
+  }).join('');
+
+  const dots = pts.map(p => {
+    const valueLabel = Number(p.metros || 0) > 0
+      ? `<text class="chart-value" x="${p.x}" y="${p.y - 10}" text-anchor="middle">${fmt(p.metros)}</text>`
+      : '';
+    return `
+      ${valueLabel}
+      <circle class="chart-dot" cx="${p.x}" cy="${p.y}" r="5"></circle>
+    `;
+  }).join('');
+
+  cont.innerHTML = `
+    <svg class="svg-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="Producción por mes">
+      <defs>
+        <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#153bff" stop-opacity="0.22"/>
+          <stop offset="100%" stop-color="#153bff" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      ${grid}
+      <line class="chart-axis" x1="${padL}" y1="${padT + innerH}" x2="${w - padR}" y2="${padT + innerH}"></line>
+      <path class="chart-area" d="${area}"></path>
+      <path class="chart-line" d="${line}"></path>
+      ${dots}
+      ${labels}
+    </svg>
+  `;
+}
+
 function renderMeses(rows){
   const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
@@ -222,13 +296,19 @@ function renderMeses(rows){
   rows.forEach(p => {
     const m = Number(String(p.fecha || '').slice(5,7));
     if(m >= 1 && m <= 12){
-      data[m-1].pedidos++;
-      data[m-1].metros += numero(p.cantidad);
+      const item = data[m-1];
+      item.pedidos++;
+      item.metros += numero(p.cantidad);
+      if(normalizar(p.estatus_trabajo) === 'listo') item.listos++;
+      if(normalizar(p.estatus_pago) === 'pagado') item.pagados++;
+      if(normalizar(p.estatus_pago) !== 'pagado') item.pendientes++;
     }
   });
 
+  renderGraficaMeses(data);
   renderList('metrosPorMes', data, 'metros');
 }
+
 
 function renderTablaClientes(grupos){
   const tbody = $('tablaClientes');
