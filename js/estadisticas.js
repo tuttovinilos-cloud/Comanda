@@ -502,3 +502,4 @@ window.addEventListener("DOMContentLoaded", cargarPedidosStats);
 window.cargarDatos = cargarDatos;
 window.aplicarFiltros = aplicarFiltros;
 window.limpiarFiltros = limpiarFiltros;
+
