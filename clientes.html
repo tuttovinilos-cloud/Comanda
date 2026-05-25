@@ -1042,7 +1042,7 @@ html.menu-ready .header-tabs,
 <div class="layout">
 
   <div class="note">
-    <strong>Clientes:</strong> marca varios clientes con la casilla y usa “Fusionar seleccionados� para unir nombres duplicados sin cambiar el diseño.
+    <strong>Clientes:</strong> marca varios clientes con la casilla y usa “Fusionar seleccionados para unir nombres duplicados sin cambiar el diseño.
   </div>
 
   <section class="card">
@@ -1120,6 +1120,21 @@ html.menu-ready .header-tabs,
         <div class="field">
           <label>Correo</label>
           <input id="clienteCorreo" type="email" placeholder="correo@ejemplo.com"/>
+        </div>
+
+        <div class="field">
+          <label>RIF / Cédula</label>
+          <input id="clienteRifCedula" type="text" placeholder="J-00000000-0 / V-00000000"/>
+        </div>
+
+        <div class="field">
+          <label>Precio especial</label>
+          <input id="clientePrecioEspecial" type="number" step="0.01" placeholder="0.00"/>
+        </div>
+
+        <div class="field form-full">
+          <label>Dirección</label>
+          <input id="clienteDireccion" type="text" placeholder="Dirección fiscal o de entrega"/>
         </div>
 
         <div class="field form-full">
@@ -1218,6 +1233,19 @@ function nombreBonito(valor){
     .join(" ");
 }
 
+function limpiarDatoCliente(valor){
+  const v = String(valor ?? "").trim();
+  if(!v) return "";
+  if(normalizar(v) === "empty") return "";
+  if(normalizar(v) === "null") return "";
+  return v;
+}
+
+function numeroCliente(valor){
+  const n = Number(String(valor ?? "").replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+
 function escapeHtml(valor){
   return String(valor ?? "")
     .replaceAll("&","&amp;")
@@ -1281,9 +1309,12 @@ async function crearClientesDesdePedidos(){
     .map(nombre => ({
       nombre,
       tipo_cliente:"Cliente Standar",
+      precio_especial:null,
       telefono:"",
       correo:"",
       notas:"",
+      rif_cedula:"",
+      direccion:"",
       activo:true
     }));
 
@@ -1306,7 +1337,7 @@ async function cargarClientes(){
 
   const { data, error } = await db()
     .from("clientes")
-    .select("id, nombre, tipo_cliente, telefono, correo, notas, activo")
+    .select("id, nombre, tipo_cliente, precio_especial, telefono, correo, notas, activo, rif_cedula, direccion")
     .order("nombre", { ascending:true });
 
   if(error){
@@ -1555,9 +1586,12 @@ function renderClientes(lista){
       ? `<span class="badge ok">Activo</span>`
       : `<span class="badge off">Inactivo</span>`;
 
-    const tipo = c.tipo_cliente || "Cliente Standar";
-    const telefono = c.telefono || "Sin teléfono";
-    const correo = c.correo || "Sin correo";
+    const tipo = limpiarDatoCliente(c.tipo_cliente) || "Cliente Standar";
+    const telefono = limpiarDatoCliente(c.telefono) || "Sin teléfono";
+    const correo = limpiarDatoCliente(c.correo) || "Sin correo";
+    const rif = limpiarDatoCliente(c.rif_cedula);
+    const direccion = limpiarDatoCliente(c.direccion);
+    const precioEspecial = c.precio_especial !== null && c.precio_especial !== undefined && String(c.precio_especial) !== "" ? Number(c.precio_especial) : null;
 
     return `
       <tr>
@@ -1569,7 +1603,10 @@ function renderClientes(lista){
           <div class="client-meta">
             <span>${escapeHtml(tipo)}</span>
             <span>📞 ${escapeHtml(telefono)}</span>
-            <span>✉� ${escapeHtml(correo)}</span>
+            <span>✉️ ${escapeHtml(correo)}</span>
+            ${rif ? `<span>🧾 ${escapeHtml(rif)}</span>` : ""}
+            ${precioEspecial !== null && precioEspecial > 0 ? `<span>💲 Especial: ${escapeHtml(precioEspecial.toFixed(2))}</span>` : ""}
+            ${direccion ? `<span>📍 ${escapeHtml(direccion)}</span>` : ""}
           </div>
         </td>
 
@@ -1662,6 +1699,9 @@ function nuevoCliente(){
   document.getElementById("clienteTipo").value = "Cliente Standar";
   document.getElementById("clienteTelefono").value = "";
   document.getElementById("clienteCorreo").value = "";
+  document.getElementById("clienteRifCedula").value = "";
+  document.getElementById("clienteDireccion").value = "";
+  document.getElementById("clientePrecioEspecial").value = "";
   document.getElementById("clienteNotas").value = "";
   document.getElementById("clienteActivo").value = "true";
 
@@ -1684,9 +1724,12 @@ function editarCliente(id){
   document.getElementById("clienteId").value = cliente.id;
   document.getElementById("clienteNombre").value = cliente.nombre || "";
   document.getElementById("clienteTipo").value = cliente.tipo_cliente || "Cliente Standar";
-  document.getElementById("clienteTelefono").value = cliente.telefono || "";
-  document.getElementById("clienteCorreo").value = cliente.correo || "";
-  document.getElementById("clienteNotas").value = cliente.notas || "";
+  document.getElementById("clienteTelefono").value = limpiarDatoCliente(cliente.telefono);
+  document.getElementById("clienteCorreo").value = limpiarDatoCliente(cliente.correo);
+  document.getElementById("clienteRifCedula").value = limpiarDatoCliente(cliente.rif_cedula);
+  document.getElementById("clienteDireccion").value = limpiarDatoCliente(cliente.direccion);
+  document.getElementById("clientePrecioEspecial").value = cliente.precio_especial ?? "";
+  document.getElementById("clienteNotas").value = limpiarDatoCliente(cliente.notas);
   document.getElementById("clienteActivo").value = cliente.activo === true ? "true" : "false";
 
   document.getElementById("clienteBackdrop").style.display = "flex";
@@ -1755,10 +1798,13 @@ function mezclarDatosCliente(base, nuevo, preguntarConflictos = false){
 
   return {
     nombre: nuevo.nombre || base.nombre || "",
-    tipo_cliente: nuevo.tipo_cliente || base.tipo_cliente || "Cliente Standar",
-    telefono,
-    correo,
-    notas: unirNotas(base.notas, nuevo.notas),
+    tipo_cliente: limpiarDatoCliente(nuevo.tipo_cliente) || limpiarDatoCliente(base.tipo_cliente) || "Cliente Standar",
+    precio_especial: numeroCliente(nuevo.precio_especial) ?? numeroCliente(base.precio_especial),
+    telefono: limpiarDatoCliente(telefono),
+    correo: limpiarDatoCliente(correo),
+    rif_cedula: limpiarDatoCliente(nuevo.rif_cedula) || limpiarDatoCliente(base.rif_cedula),
+    direccion: limpiarDatoCliente(nuevo.direccion) || limpiarDatoCliente(base.direccion),
+    notas: unirNotas(limpiarDatoCliente(base.notas), limpiarDatoCliente(nuevo.notas)),
     activo: true
   };
 }
@@ -1811,14 +1857,47 @@ async function fusionarDuplicadosExactosCliente(nombreFinal, idPrincipal){
   const clave = normalizar(nombreFinal);
   if(!clave || !idPrincipal) return 0;
 
+  await cargarClientes();
+  await cargarPedidos();
+
   const duplicados = clientesDB.filter(c => {
     return normalizar(c.nombre) === clave && Number(c.id) !== Number(idPrincipal);
   });
 
   if(!duplicados.length) return 0;
 
+  const principal = clientesDB.find(c => Number(c.id) === Number(idPrincipal));
+  let datosFusionados = {
+    nombre:nombreFinal,
+    tipo_cliente:'Cliente Standar',
+    precio_especial:null,
+    telefono:'',
+    correo:'',
+    rif_cedula:'',
+    direccion:'',
+    notas:'',
+    activo:true
+  };
+
+  if(principal){
+    datosFusionados = mezclarDatosCliente(datosFusionados, principal, false);
+  }
+
   for(const dup of duplicados){
+    datosFusionados = mezclarDatosCliente(datosFusionados, dup, false);
     await actualizarPedidosDeCliente(dup.nombre, nombreFinal);
+  }
+
+  datosFusionados.nombre = nombreFinal;
+
+  const { error:updatePrincipalError } = await db()
+    .from("clientes")
+    .update(datosFusionados)
+    .eq("id", idPrincipal);
+
+  if(updatePrincipalError) throw updatePrincipalError;
+
+  for(const dup of duplicados){
     await eliminarClienteFisicoOOcultar(dup.id, nombreFinal);
   }
 
@@ -1836,12 +1915,17 @@ async function guardarClienteModal(){
     return;
   }
 
+  const precioEspecialInput = document.getElementById("clientePrecioEspecial").value;
+
   const datos = {
     nombre,
-    tipo_cliente: document.getElementById("clienteTipo").value || "Cliente Standar",
-    telefono: document.getElementById("clienteTelefono").value.trim(),
-    correo: document.getElementById("clienteCorreo").value.trim(),
-    notas: document.getElementById("clienteNotas").value.trim(),
+    tipo_cliente: limpiarDatoCliente(document.getElementById("clienteTipo").value) || "Cliente Standar",
+    precio_especial: precioEspecialInput === "" ? null : numeroCliente(precioEspecialInput),
+    telefono: limpiarDatoCliente(document.getElementById("clienteTelefono").value),
+    correo: limpiarDatoCliente(document.getElementById("clienteCorreo").value),
+    rif_cedula: limpiarDatoCliente(document.getElementById("clienteRifCedula").value),
+    direccion: limpiarDatoCliente(document.getElementById("clienteDireccion").value),
+    notas: limpiarDatoCliente(document.getElementById("clienteNotas").value),
     activo: document.getElementById("clienteActivo").value === "true"
   };
 
@@ -1991,8 +2075,11 @@ async function fusionarClientesSeleccionados(){
     let datosFusionados = {
       nombre:nombreFinal,
       tipo_cliente:'Cliente Standar',
+      precio_especial:null,
       telefono:'',
       correo:'',
+      rif_cedula:'',
+      direccion:'',
       notas:'',
       activo:true
     };
