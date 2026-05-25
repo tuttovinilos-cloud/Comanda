@@ -144,7 +144,7 @@ console.log("NOTIFICACIONES conectado v35 robusto visto/leida");
 
       const master = audioCtx.createGain();
       master.gain.setValueAtTime(0.0001, now);
-      master.gain.exponentialRampToValueAtTime(1.2, now + 0.018);
+      master.gain.exponentialRampToValueAtTime(0.9, now + 0.018);
       master.gain.exponentialRampToValueAtTime(0.0001, now + 1.05);
       master.connect(audioCtx.destination);
 
