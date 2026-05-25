@@ -43,11 +43,21 @@ console.log("NOTIFICACIONES conectado v35 robusto visto/leida");
     return v.nombre || v.operador || v.name || v.usuario || v.user || "";
   }
 
-  function getOperador(){
-    if(typeof window.getSesionOperador === "function"){
-      const op = window.getSesionOperador();
-      if(op && nombreOperador(op)) return nombreOperador(op);
+  function getSesionOperadorLocal(){
+    try{
+      if(typeof window.getSesionOperador === "function"){
+        const op = window.getSesionOperador();
+        if(op) return op;
+      }
+      return JSON.parse(localStorage.getItem("comanda_operador_actual") || "null");
+    }catch(e){
+      return null;
     }
+  }
+
+  function getOperador(){
+    const opSesion = getSesionOperadorLocal();
+    if(opSesion && nombreOperador(opSesion)) return nombreOperador(opSesion);
 
     const keys = [
       "comanda_operador_actual",
@@ -75,6 +85,12 @@ console.log("NOTIFICACIONES conectado v35 robusto visto/leida");
     return "";
   }
 
+  function getOperadorId(){
+    const op = getSesionOperadorLocal();
+    const id = Number(op && op.id ? op.id : 0);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  }
+
   function esc(v){
     return String(v ?? "")
       .replaceAll("&","&amp;")
@@ -85,6 +101,15 @@ console.log("NOTIFICACIONES conectado v35 robusto visto/leida");
   }
 
   function perteneceAlOperador(noti, operadorActual){
+    const operadorId = getOperadorId();
+
+    if(operadorId){
+      const destId = Number(noti.destinatario_id || 0);
+      const paraId = Number(noti.para_operador_id || 0);
+      if(destId === operadorId || paraId === operadorId) return true;
+    }
+
+    // Respaldo para notificaciones viejas que todavía no tengan ID.
     const op = normalizar(operadorActual);
     const op1 = primerNombre(operadorActual);
 
@@ -274,7 +299,7 @@ console.log("NOTIFICACIONES conectado v35 robusto visto/leida");
     try{
       const { data, error } = await db()
         .from("notificaciones")
-        .select("id, pedido_id, tipo, para_operador, destinatario, titulo, mensaje, leida, visto, created_at")
+        .select("id, pedido_id, tipo, para_operador_id, destinatario_id, para_operador, destinatario, titulo, mensaje, leida, visto, created_at")
         .or("leida.eq.false,visto.eq.false")
         .order("created_at", { ascending:false })
         .limit(200);
