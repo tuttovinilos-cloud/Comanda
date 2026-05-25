@@ -1928,6 +1928,8 @@ table{
     🔔 <span class="noti-count empty" id="notiCount">0</span>
   </button>
 
+  <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menú">☰ Menú</button>
+
   <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
 </header>
 <div class="toolbar">
@@ -2980,6 +2982,247 @@ table{
    antes de renderizar la tabla. Se eliminó el repaint posterior que causaba flash.
 ========================================================= */
 window.refrescarColoresCatalogos = window.refrescarColoresCatalogos || function(){};
+</script>
+
+
+<style>
+/* =========================================================
+   FIX FINAL MENU + BUSCADOR + FILTROS · v35
+   Limpia conflictos visuales sin tocar Supabase ni app.js
+========================================================= */
+html,body{
+  background:#f0f2f9!important;
+  color-scheme:light!important;
+}
+.header{
+  position:sticky!important;
+  top:0!important;
+  z-index:500!important;
+  min-height:64px!important;
+  height:auto!important;
+  overflow:visible!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:14px!important;
+  padding:12px 18px!important;
+  background:#172bd8!important;
+  box-shadow:0 8px 20px rgba(21,59,255,.18)!important;
+  border-bottom:0!important;
+  flex-wrap:nowrap!important;
+}
+.header .logo{
+  flex:0 0 auto!important;
+  min-width:auto!important;
+  width:auto!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  border:0!important;
+  padding:0!important;
+  margin:0!important;
+}
+.header .logo img{
+  display:block!important;
+  height:36px!important;
+  width:auto!important;
+  max-width:130px!important;
+  object-fit:contain!important;
+}
+.header .logo small{
+  display:inline!important;
+  color:#fff!important;
+  font-family:var(--head)!important;
+  font-weight:900!important;
+  font-size:12px!important;
+  letter-spacing:1.2px!important;
+}
+.mobile-menu-btn{
+  display:none!important;
+  margin-left:auto!important;
+  min-height:36px!important;
+  padding:8px 14px!important;
+  border-radius:999px!important;
+  border:1px solid rgba(255,255,255,.30)!important;
+  background:rgba(255,255,255,.12)!important;
+  color:#fff!important;
+  font-family:var(--head)!important;
+  font-size:12px!important;
+  font-weight:900!important;
+  letter-spacing:.4px!important;
+  text-transform:uppercase!important;
+  cursor:pointer!important;
+}
+.header-tabs{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:6px!important;
+  margin-left:auto!important;
+  width:auto!important;
+  padding:0!important;
+  border:0!important;
+  opacity:1!important;
+  visibility:visible!important;
+  flex-wrap:nowrap!important;
+}
+.header-tabs .tab-btn,
+.header-tabs .storage-pill{
+  height:32px!important;
+  min-height:32px!important;
+  padding:0 10px!important;
+  border-radius:999px!important;
+  border:1px solid rgba(255,255,255,.28)!important;
+  background:rgba(255,255,255,.10)!important;
+  color:#fff!important;
+  font-family:var(--head)!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  letter-spacing:.25px!important;
+  text-transform:uppercase!important;
+  white-space:nowrap!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-shadow:none!important;
+}
+.header-tabs .tab-btn.active{
+  background:#fff!important;
+  color:#153bff!important;
+  border-color:#fff!important;
+}
+.toolbar{
+  position:sticky!important;
+  top:64px!important;
+  z-index:250!important;
+  display:grid!important;
+  grid-template-columns:minmax(280px,1fr) repeat(5, minmax(118px, auto));
+  gap:8px!important;
+  align-items:center!important;
+  padding:10px 14px!important;
+  background:#fff!important;
+  border-bottom:1px solid #d9deea!important;
+  box-shadow:0 4px 18px rgba(0,0,0,.045)!important;
+}
+.search-wrap{
+  min-width:0!important;
+  width:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  min-height:42px!important;
+  border-radius:14px!important;
+  background:#fff!important;
+  border:1px solid #d9deea!important;
+  padding:9px 12px!important;
+  box-shadow:none!important;
+}
+.search-wrap input{
+  width:100%!important;
+  min-width:0!important;
+  color:#111827!important;
+}
+.filter-sel{
+  width:100%!important;
+  min-width:0!important;
+  min-height:42px!important;
+  border-radius:12px!important;
+  border:1px solid #d9deea!important;
+  background:#fff!important;
+  color:#153bff!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  padding:8px 10px!important;
+}
+.toolbar > #storageBadge{
+  display:none!important;
+}
+.table-wrap{
+  position:relative!important;
+  z-index:1!important;
+}
+@media(max-width:1180px){
+  .header{padding:12px 14px!important;gap:10px!important;}
+  .header .logo img{height:32px!important;max-width:110px!important;}
+  .header .logo small{display:none!important;}
+  .header-tabs{gap:4px!important;}
+  .header-tabs .tab-btn,
+  .header-tabs .storage-pill{font-size:9px!important;padding:0 7px!important;}
+}
+@media(max-width:980px){
+  .header{
+    min-height:60px!important;
+    flex-wrap:wrap!important;
+    padding:10px 12px!important;
+  }
+  .header .logo img{height:34px!important;max-width:125px!important;}
+  .mobile-menu-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;}
+  .header-tabs{
+    display:none!important;
+    flex:1 1 100%!important;
+    width:100%!important;
+    margin-left:0!important;
+    padding-top:10px!important;
+    border-top:1px solid rgba(255,255,255,.22)!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+  }
+  .header-tabs.open{display:grid!important;}
+  .header-tabs .tab-btn,
+  .header-tabs .storage-pill{
+    width:100%!important;
+    min-height:40px!important;
+    height:40px!important;
+    font-size:11px!important;
+  }
+  .toolbar{
+    position:relative!important;
+    top:auto!important;
+    grid-template-columns:1fr 1fr!important;
+    padding:10px!important;
+    gap:8px!important;
+  }
+  .search-wrap{grid-column:1 / -1!important;}
+  #filterStatus,
+  #filterPago,
+  #filterFechaDesde,
+  #filterFechaHasta,
+  #filterOperador{
+    flex:none!important;
+    min-width:0!important;
+    font-size:11px!important;
+    padding:8px 9px!important;
+  }
+  #filterOperador{grid-column:1 / -1!important;}
+}
+@media(max-width:430px){
+  .toolbar{grid-template-columns:1fr 1fr!important;}
+  .filter-sel{font-size:10px!important;padding:8px 7px!important;}
+  .search-wrap input{font-size:13px!important;}
+}
+</style>
+<script>
+/* FIX FINAL MENU v35 */
+(function(){
+  function readyMenu(){
+    document.documentElement.classList.remove('loading-menu');
+    document.documentElement.classList.add('menu-ready');
+    var h=document.querySelector('.header');
+    if(h) h.classList.add('menu-ready');
+  }
+  function bindMenu(){
+    var btn=document.getElementById('mobileMenuBtn');
+    var menu=document.getElementById('authMenu');
+    if(btn && menu && !btn.dataset.bound){
+      btn.dataset.bound='1';
+      btn.addEventListener('click', function(){ menu.classList.toggle('open'); });
+    }
+    readyMenu();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', bindMenu);
+  else bindMenu();
+  window.addEventListener('load', bindMenu);
+})();
 </script>
 
 </body>
