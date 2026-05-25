@@ -1,12 +1,12 @@
-console.log("NOTIFICACIONES conectado v33");
+console.log("NOTIFICACIONES conectado v34 visto/leida");
 
 /* =========================================================
-   NOTIFICACIONES · TUTTOVINILOS v33
+   NOTIFICACIONES · TUTTOVINILOS v34
    Sistema único de campana:
    - Lee SOLO la tabla public.notificaciones.
    - Solicitud -> notificación persistente para Ruben.
    - Listo -> notificación persistente para operador creador.
-   - La notificación solo desaparece si leida = true.
+   - La notificación solo desaparece si leida = true y visto = true.
    - Sonido cuando llega una nueva.
    - Realtime + respaldo cada 30s.
 ========================================================= */
@@ -272,8 +272,8 @@ console.log("NOTIFICACIONES conectado v33");
     try{
       const { data, error } = await db()
         .from("notificaciones")
-        .select("id, pedido_id, tipo, para_operador, destinatario, titulo, mensaje, leida, created_at")
-        .eq("leida", false)
+        .select("id, pedido_id, tipo, para_operador, destinatario, titulo, mensaje, leida, visto, created_at")
+        .or("leida.eq.false,visto.eq.false")
         .order("created_at", { ascending:false })
         .limit(200);
 
@@ -346,7 +346,7 @@ console.log("NOTIFICACIONES conectado v33");
 
     const { error } = await db()
       .from("notificaciones")
-      .update({ leida:true })
+      .update({ leida:true, visto:true })
       .eq("id", id);
 
     if(error){
@@ -373,7 +373,7 @@ console.log("NOTIFICACIONES conectado v33");
 
     const { error } = await db()
       .from("notificaciones")
-      .update({ leida:true })
+      .update({ leida:true, visto:true })
       .in("id", ids);
 
     if(error){
@@ -442,7 +442,7 @@ console.log("NOTIFICACIONES conectado v33");
     }
 
     const canal = db()
-      .channel("comanda_realtime_notificaciones_v33")
+      .channel("comanda_realtime_notificaciones_v34")
       .on("postgres_changes", { event:"*", schema:"public", table:"pedidos" }, payload => {
         refrescarPorRealtime({ tabla:"pedidos", evento:payload.eventType, id:payload.new?.id || payload.old?.id });
       })
