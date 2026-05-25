@@ -1,504 +1,622 @@
-console.log("Estadísticas JS conectado");
+<!DOCTYPE html>
+<html lang="es" class="loading-menu">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Estadísticas · Comanda</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800;900&family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f2f9;
+  --panel:#ffffff;
+  --panel2:#f8f9ff;
+  --border:#d9deea;
+  --border2:#cbd3e6;
+  --text:#111827;
+  --muted:#6b7280;
+  --muted2:#475569;
+  --accent:#153bff;
+  --accent2:#0b1f7a;
+  --green:#16a34a;
+  --red:#dc2626;
+  --yellow:#f59e0b;
+  --orange:#ff8616;
+  --mono:'Roboto Mono',monospace;
+  --head:'Montserrat',Arial,sans-serif;
+  --body:'Inter',Arial,sans-serif;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  min-height:100vh;
+  padding-bottom:90px;
+  -webkit-tap-highlight-color:transparent;
+}
+button,input,select{font:inherit}
+button{touch-action:manipulation}
+#authTopbar{display:none!important}
+.header{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;
+  padding:10px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-height:58px;
+  position:sticky;
+  top:0;
+  z-index:300;
+  box-shadow:0 8px 24px rgba(21,59,255,.24);
+  flex-wrap:wrap;
+}
+.logo{
+  font-family:var(--head);
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:2.6px;
+  color:#fff;
+  text-transform:uppercase;
+  white-space:nowrap;
+  border:1px dashed rgba(255,255,255,.55);
+  border-radius:10px;
+  padding:8px 12px;
+}
+.logo small{color:rgba(255,255,255,.72);font-weight:700;font-size:10px;letter-spacing:1.4px;margin-left:6px}
+.mobile-menu-btn{
+  display:none;
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:8px 12px;
+  border:1px solid rgba(255,255,255,.22);
+  background:rgba(255,255,255,.09);
+  color:#fff;
+  border-radius:999px;
+  cursor:pointer;
+  margin-left:auto;
+}
+.header-tabs{display:flex;gap:6px;margin-left:auto;align-items:center;flex-wrap:wrap}
+.tab-btn,.menu-status{
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.7px;
+  text-transform:uppercase;
+  padding:8px 13px;
+  border:1px solid rgba(255,255,255,.22);
+  background:rgba(255,255,255,.08);
+  color:rgba(255,255,255,.84);
+  cursor:pointer;
+  border-radius:999px;
+  transition:all .2s;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:38px;
+}
+.tab-btn:hover{background:rgba(255,255,255,.16);color:#fff}
+.tab-btn.active{background:#fff;color:var(--accent);border-color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.14)}
+.menu-status{cursor:default}
+.status-dot{width:9px;height:9px;border-radius:50%;background:#22c55e;display:inline-block}
+.menu-extra{display:flex;align-items:center;gap:8px}
+.toolbar{
+  display:grid;
+  grid-template-columns:150px 150px minmax(260px,1fr) auto auto;
+  gap:10px;
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  align-items:center;
+  position:sticky;
+  top:58px;
+  z-index:260;
+  background:rgba(255,255,255,.96);
+  backdrop-filter:blur(10px);
+  box-shadow:0 8px 22px rgba(15,23,42,.08);
+}
+.search-wrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#fff;
+  border:1.5px solid var(--border);
+  border-radius:999px;
+  padding:9px 13px;
+  min-height:42px;
+}
+.search-wrap input{
+  border:0;
+  outline:0;
+  background:transparent;
+  width:100%;
+  min-height:auto;
+  padding:0;
+  font-family:var(--body);
+  font-size:14px;
+  color:var(--text);
+}
+input,select{
+  background:#fff;
+  border:1.5px solid var(--border);
+  color:var(--text);
+  border-radius:999px;
+  padding:9px 12px;
+  outline:none;
+  font-family:var(--body);
+  font-size:13px;
+  font-weight:700;
+  min-height:42px;
+}
+input:focus,select:focus,.search-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(21,59,255,.10)}
+.btn{
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.6px;
+  text-transform:uppercase;
+  padding:11px 15px;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:999px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  transition:.2s;
+  white-space:nowrap;
+  min-height:42px;
+}
+.btn:hover{filter:brightness(1.06)}
+.btn.secondary{background:#fff;color:var(--accent);border:1.5px solid var(--border)}
+.btn.danger{background:#fee2e2;color:#dc2626;border:1px solid #fecaca}
+.layout{padding:16px;display:grid;gap:16px}
+.filter-info{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px 14px;
+  color:var(--muted2);
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.filter-info strong{color:var(--accent2)}
+.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.stat-card{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 4px 18px rgba(0,0,0,.055);
+}
+.stat-label{font-family:var(--head);font-size:11px;font-weight:900;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.stat-num{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--text)}
+.stat-sub{color:var(--muted2);font-size:12px;margin-top:6px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 4px 18px rgba(0,0,0,.055);
+}
+.card-header{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:#fff}
+.card-title{font-family:var(--head);font-size:18px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;color:var(--accent2)}
+.card-sub{font-size:12px;color:var(--muted2);margin-top:3px}
+.list{padding:12px 16px 16px;display:flex;flex-direction:column;gap:10px}
+.row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.row-title{font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row-val{font-family:var(--mono);font-size:13px;color:var(--accent);white-space:nowrap;font-weight:700}
+.row-sub{grid-column:1/-1;color:var(--muted2);font-size:11px;line-height:1.35}
+.bar-wrap{grid-column:1/-1;height:8px;background:#eef1ff;border:1px solid var(--border);border-radius:999px;overflow:hidden}
+.bar{height:100%;background:linear-gradient(90deg,var(--accent),#60a5fa);border-radius:999px;min-width:2px}
+.empty{color:var(--muted);padding:28px;text-align:center;font-family:var(--head);font-weight:900;letter-spacing:.8px;text-transform:uppercase}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:920px}
+th{background:#eef1ff;color:var(--muted);font-family:var(--head);font-size:11px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;text-align:left;padding:11px 10px;border-bottom:1px solid var(--border)}
+td{padding:10px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text)}
+tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font-weight:900;letter-spacing:.7px;padding:5px 9px;border-radius:999px;text-transform:uppercase;display:inline-flex;align-items:center;gap:4px}.pill.green{color:var(--green);border:1px solid #86efac;background:#dcfce7}.pill.red{color:var(--red);border:1px solid #fecaca;background:#fee2e2}.pill.yellow{color:#a16207;border:1px solid #fde68a;background:#fef3c7}.pill.blue{color:var(--accent);border:1px solid #bfdbfe;background:#dbeafe}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 18px;border-radius:10px;box-shadow:0 10px 35px #0004;z-index:1000;font-family:var(--head);font-size:13px;font-weight:900;letter-spacing:.5px;display:none;text-align:center}
+@media(max-width:1200px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}.toolbar{grid-template-columns:150px 150px minmax(220px,1fr) auto}}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr 1fr}.toolbar .search-wrap{grid-column:1/-1}.toolbar .btn{width:100%}}
+@media(max-width:760px){.header{padding:10px 12px}.logo{font-size:19px}.logo small{display:none}.mobile-menu-btn{display:inline-flex}.header-tabs{display:none;width:100%;margin-left:0;padding-top:14px;border-top:1px solid rgba(255,255,255,.18)}.header-tabs.open{display:grid;grid-template-columns:1fr;gap:8px}.tab-btn,.menu-status{width:100%;justify-content:center;font-size:11px;min-height:42px;padding:9px 8px;border-radius:8px}.menu-extra{display:flex;flex-direction:column;gap:8px}.toolbar{position:relative;top:0;padding:10px;grid-template-columns:1fr}.layout{padding:10px}.cards{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.cards{grid-template-columns:1fr}input,select{width:100%}}
+</style>
 
-let pedidosStatsDB = [];
+<link rel="stylesheet" href="css/menu.css?v=34">
 
-// ===========================
-// SUPABASE SEGURO
-// ===========================
-function dbStats() {
-  return window.supabaseClient;
+<style>
+/* PATCH MENU UNIFICADO v30 · estas páginas usan el mismo header que index/clientes */
+#authTopbar{display:none!important}
+.header .logo img{display:block!important;width:112px!important;max-width:112px!important;height:auto!important;object-fit:contain!important}
+.header .logo small{display:none!important}
+.header-tabs[data-auth-menu]{margin-left:auto!important}
+@media(max-width:980px){.header .logo img{width:118px!important;max-width:118px!important}}
+</style>
+
+<style>
+/* =========================================================
+   ESTADÍSTICAS · MENÚ GLOBAL v34
+   Evita conflicto entre CSS local y css/menu.css.
+========================================================= */
+.header{
+  background:#172bd8!important;
+  border-bottom:0!important;
+  box-shadow:0 8px 20px rgba(21,59,255,.18)!important;
+  min-height:64px!important;
+  height:64px!important;
+  padding:14px 18px!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:14px!important;
+  position:sticky!important;
+  top:0!important;
+  z-index:300!important;
+  flex-wrap:nowrap!important;
+  overflow:hidden!important;
 }
 
-function validarSupabaseStats() {
-  if (!dbStats()) {
-    console.error("No existe window.supabaseClient. Revisa js/supabase.js");
-    toast("No existe conexión Supabase");
-    return false;
+.header .logo{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:190px!important;
+  color:#fff!important;
+  border:0!important;
+  padding:0!important;
+  margin:0!important;
+}
+
+.header .logo img{
+  display:block!important;
+  width:112px!important;
+  max-width:112px!important;
+  height:auto!important;
+  object-fit:contain!important;
+}
+
+.header .logo small{
+  display:none!important;
+}
+
+.header-tabs[data-auth-menu]{
+  margin-left:auto!important;
+}
+
+.toolbar{
+  top:64px!important;
+}
+
+@media(max-width:980px){
+  .header{
+    flex-wrap:wrap!important;
+    height:auto!important;
+    min-height:58px!important;
+    overflow:visible!important;
   }
 
-  return true;
+  .header .logo{
+    min-width:120px!important;
+  }
+
+  .header .logo img{
+    width:118px!important;
+    max-width:118px!important;
+  }
+
+  .toolbar{
+    top:0!important;
+  }
 }
+</style>
 
-// ===========================
-// TOAST
-// ===========================
-function toast(msg) {
-  const el = document.getElementById("toast");
 
-  if (!el) {
-    console.log(msg);
+<style>
+/* ESTADÍSTICAS v38 · modelo clásico mejorado */
+.toolbar{
+  position:sticky!important;
+  top:64px!important;
+  z-index:250!important;
+}
+.kpi-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+}
+.kpi{
+  border-radius:18px!important;
+  box-shadow:0 8px 24px rgba(15,23,42,.07)!important;
+}
+.kpi-value{
+  color:#153bff!important;
+  font-size:32px!important;
+}
+.cards-grid{
+  grid-template-columns:1fr 1fr!important;
+  align-items:start!important;
+}
+.card{
+  border-radius:18px!important;
+  box-shadow:0 8px 24px rgba(15,23,42,.07)!important;
+}
+.card-title{
+  color:#153bff!important;
+}
+.bar-track{
+  height:14px!important;
+  background:#e8edff!important;
+  border-color:#d4dcff!important;
+}
+.bar-fill{
+  background:linear-gradient(90deg,#153bff,#60a5fa)!important;
+}
+.stat-row{
+  padding:11px 0!important;
+}
+.stat-num{
+  color:#153bff!important;
+}
+@media(max-width:980px){
+  .toolbar{position:relative!important;top:auto!important}
+  .cards-grid{grid-template-columns:1fr!important}
+}
+@media(max-width:760px){
+  .kpi-grid{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:430px){
+  .kpi-grid{grid-template-columns:1fr!important}
+}
+</style>
+
+</head>
+<body>
+<header class="header">
+  <div class="logo">
+    <img src="Logo tutto1.svg" alt="Tutto Vinilos">
+    <small>COMANDA</small>
+  </div>
+
+  <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
+</header>
+
+<div class="toolbar">
+  <select id="filterYear" onchange="renderEstadisticas()"><option value="all">Todos los años</option></select>
+  <select id="filterMonth" onchange="renderEstadisticas()">
+    <option value="all">Todo el año</option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+  </select>
+  <div class="search-wrap" title="Escribe parte del nombre del cliente">
+    🔎 <input id="filterClienteSearch" type="text" list="clientesStatsList" placeholder="Buscar cliente específico..." oninput="renderEstadisticas()" autocomplete="off">
+    <datalist id="clientesStatsList"></datalist>
+  </div>
+  <button class="btn danger" type="button" onclick="limpiarClienteStats()">Limpiar cliente</button>
+  <button class="btn secondary" type="button" onclick="cargarPedidosStats()">⟳ Recargar</button>
+</div>
+
+<div class="layout">
+  <div class="filter-info" id="filterInfo">
+    <span>Viendo estadísticas de <strong>todos los clientes</strong>.</span>
+    <span id="filterCount">0 pedidos filtrados</span>
+  </div>
+
+  <section class="cards">
+    <div class="stat-card"><div class="stat-label">Pedidos</div><div class="stat-num" id="kpiPedidos">0</div><div class="stat-sub">Total filtrado</div></div>
+    <div class="stat-card"><div class="stat-label">Metros</div><div class="stat-num" id="kpiMetros">0</div><div class="stat-sub">Cantidad sumada</div></div>
+    <div class="stat-card"><div class="stat-label">Clientes</div><div class="stat-num" id="kpiClientes">0</div><div class="stat-sub">Clientes únicos</div></div>
+    <div class="stat-card"><div class="stat-label">Listos</div><div class="stat-num" id="kpiListos">0</div><div class="stat-sub">Trabajos terminados</div></div>
+    <div class="stat-card"><div class="stat-label">Pagados</div><div class="stat-num" id="kpiPagados">0</div><div class="stat-sub">Pagos cerrados</div></div>
+  </section>
+
+  <section class="grid">
+    <div class="card"><div class="card-header"><div><div class="card-title">Clientes top por metros</div><div class="card-sub">Clientes que más cantidad/metraje han generado.</div></div></div><div class="list" id="topClientes"></div></div>
+    <div class="card"><div class="card-header"><div><div class="card-title">Clientes recurrentes</div><div class="card-sub">Clientes con más pedidos.</div></div></div><div class="list" id="clientesRecurrentes"></div></div>
+    <div class="card"><div class="card-header"><div><div class="card-title">Materiales usados</div><div class="card-sub">Suma de cantidad por material.</div></div></div><div class="list" id="materialesUsados"></div></div>
+    <div class="card"><div class="card-header"><div><div class="card-title">Tipos de impresión</div><div class="card-sub">Suma de cantidad por tipo de impresión.</div></div></div><div class="list" id="impresionesUsadas"></div></div>
+    <div class="card"><div class="card-header"><div><div class="card-title">Operadores</div><div class="card-sub">Pedidos registrados por operador.</div></div></div><div class="list" id="operadoresUsados"></div></div>
+    <div class="card"><div class="card-header"><div><div class="card-title">Producción por mes</div><div class="card-sub">Orden fijo: enero, febrero, marzo, abril...</div></div></div><div class="list" id="metrosPorMes"></div></div>
+  </section>
+
+  <section class="card">
+    <div class="card-header"><div><div class="card-title">Resumen por cliente</div><div class="card-sub">Pedidos, cantidad, listos, pagos y pendientes por cliente.</div></div></div>
+    <div class="table-scroll"><table><thead><tr><th>Cliente</th><th>Pedidos</th><th>Metros</th><th>Primer pedido</th><th>Último pedido</th><th>Listos</th><th>Pagados</th><th>Pendientes</th></tr></thead><tbody id="tablaClientes"><tr><td colspan="8" class="empty">Cargando clientes...</td></tr></tbody></table></div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=29"></script>
+<script src="js/auth.js?v=24"></script>
+<script src="js/menu.js?v=11"></script>
+
+<script>
+console.log('ESTADISTICAS conectado v34 menu corregido');
+let pedidosStats = [];
+const $ = id => document.getElementById(id);
+
+function db(){ return window.supabaseClient; }
+function normalizar(v){ return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim(); }
+function escapeHtml(v){ return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'); }
+function numero(v){
+  if(typeof v === 'number') return Number.isFinite(v) ? v : 0;
+  const m = String(v ?? '').replace(',', '.').match(/-?\d+(\.\d+)?/);
+  return m ? Number(m[0]) : 0;
+}
+function fmt(n){
+  const x = Number(n || 0);
+  if(!Number.isFinite(x)) return '0';
+  return x.toLocaleString('es-VE',{maximumFractionDigits:2});
+}
+function showToast(msg){ const t=$('toast'); if(!t) return; t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2200); }
+
+async function cargarPedidosStats(){
+  if(!db()){ showToast('No existe conexión Supabase. Revisa js/supabase.js'); return; }
+  setEmptyAll('Cargando estadísticas...');
+  let res = await db()
+    .from('pedidos')
+    .select('id,fecha,operador,cliente,descripcion,cantidad,material,tipo_impresion,estatus_trabajo,estatus_pago,fecha_entrega')
+    .order('fecha', { ascending:false });
+
+  // Fallback: si Supabase rechaza alguna columna/orden por caché o esquema, intenta una consulta más simple.
+  if(res.error){
+    console.warn('Consulta principal de estadísticas falló. Probando fallback:', res.error);
+    res = await db()
+      .from('pedidos')
+      .select('*')
+      .order('id', { ascending:false });
+  }
+
+  if(res.error){
+    console.error('Error cargando estadísticas:', res.error);
+    showToast('Error cargando estadísticas: ' + (res.error.message || 'revisa consola'));
+    setEmptyAll('Error cargando datos: ' + (res.error.message || 'revisa consola'));
     return;
   }
-
-  el.textContent = msg;
-  el.style.display = "block";
-
-  setTimeout(() => {
-    el.style.display = "none";
-  }, 1800);
-}
-
-// ===========================
-// UTILIDADES
-// ===========================
-function normalizar(valor) {
-  return String(valor || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-function textoBonito(valor, fallback = "Sin dato") {
-  const txt = String(valor || "").trim();
-  return txt || fallback;
-}
-
-function escapeHtml(valor) {
-  return String(valor ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function parseCantidad(valor) {
-  if (valor === null || valor === undefined) return 0;
-
-  const texto = String(valor)
-    .replace(",", ".")
-    .replace(/[^\d.]/g, "");
-
-  const num = Number(texto);
-  return Number.isFinite(num) ? num : 0;
-}
-
-function fmt(num) {
-  const n = Number(num || 0);
-
-  return n.toLocaleString("es-VE", {
-    maximumFractionDigits: 2
-  });
-}
-
-function fechaValida(valor) {
-  const fecha = String(valor || "").trim();
-
-  if (!/^\d{4}-\d{2}-\d{2}/.test(fecha)) return null;
-
-  const d = new Date(fecha + "T00:00:00");
-
-  if (Number.isNaN(d.getTime())) return null;
-
-  return d;
-}
-
-function fechaCorta(valor) {
-  const fecha = String(valor || "").slice(0, 10);
-  return fecha || "—";
-}
-
-function diasEntre(fechaA, fechaB) {
-  const a = fechaValida(fechaA);
-  const b = fechaValida(fechaB);
-
-  if (!a || !b) return null;
-
-  const diff = Math.abs(b.getTime() - a.getTime());
-  return Math.round(diff / 86400000);
-}
-
-function textoFrecuencia(dias) {
-  if (dias === null || dias === undefined || !Number.isFinite(Number(dias))) {
-    return "Sin recurrencia";
-  }
-
-  const d = Math.round(Number(dias));
-
-  if (d <= 0) return "Mismo día";
-  if (d === 1) return "Cada 1 día";
-  if (d < 30) return `Cada ${d} días`;
-
-  const meses = d / 30;
-
-  if (meses < 12) {
-    return `Cada ${meses.toFixed(1)} meses`;
-  }
-
-  const años = d / 365;
-  return `Cada ${años.toFixed(1)} años`;
-}
-
-// ===========================
-// CARGAR PEDIDOS
-// ===========================
-async function cargarPedidosStats() {
-  if (!validarSupabaseStats()) return;
-
-  const { data, error } = await dbStats()
-    .from("pedidos")
-    .select("*")
-    .order("fecha", { ascending: true });
-
-  if (error) {
-    console.error("Error cargando estadísticas:", error);
-    toast("Error cargando estadísticas");
-    return;
-  }
-
-  pedidosStatsDB = data || [];
-
-  llenarAnios();
-  llenarClientesFiltro();
+  pedidosStats = res.data || [];
+  llenarFiltros();
   renderEstadisticas();
-
-  toast("Estadísticas actualizadas");
 }
 
-// ===========================
-// LLENAR AÑOS
-// ===========================
-function llenarAnios() {
-  const select = document.getElementById("filterYear");
-  if (!select) return;
+function llenarFiltros(){
+  const years = [...new Set(pedidosStats.map(p => String(p.fecha || '').slice(0,4)).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+  const ySel = $('filterYear');
+  const oldY = ySel.value || 'all';
+  ySel.innerHTML = '<option value="all">Todos los años</option>' + years.map(y => `<option value="${escapeHtml(y)}">${escapeHtml(y)}</option>`).join('');
+  ySel.value = years.includes(oldY) ? oldY : 'all';
 
-  const actual = select.value || "all";
-
-  const anios = [...new Set(
-    pedidosStatsDB
-      .map(p => String(p.fecha || "").slice(0, 4))
-      .filter(a => /^\d{4}$/.test(a))
-  )].sort((a, b) => Number(b) - Number(a));
-
-  select.innerHTML = `<option value="all">Todos los años</option>`;
-
-  anios.forEach(anio => {
-    select.insertAdjacentHTML(
-      "beforeend",
-      `<option value="${escapeHtml(anio)}">${escapeHtml(anio)}</option>`
-    );
-  });
-
-  if (actual && [...select.options].some(o => o.value === actual)) {
-    select.value = actual;
-  }
+  const clientes = [...new Set(pedidosStats.map(p => String(p.cliente || '').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  $('clientesStatsList').innerHTML = clientes.map(c => `<option value="${escapeHtml(c)}"></option>`).join('');
 }
 
-// ===========================
-// LLENAR CLIENTES
-// ===========================
-function llenarClientesFiltro() {
-  const select = document.getElementById("filterCliente");
-  if (!select) return;
+function filtrarPedidos(){
+  const year = $('filterYear').value;
+  const month = $('filterMonth').value;
+  const clienteQ = normalizar($('filterClienteSearch').value);
 
-  const actual = select.value || "all";
-
-  const clientes = [...new Map(
-    pedidosStatsDB
-      .map(p => String(p.cliente || "").trim())
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b, "es"))
-      .map(nombre => [normalizar(nombre), nombre])
-  ).entries()].map(([key, nombre]) => ({ key, nombre }));
-
-  select.innerHTML = `<option value="all">Todos los clientes</option>`;
-
-  clientes.forEach(c => {
-    select.insertAdjacentHTML(
-      "beforeend",
-      `<option value="${escapeHtml(c.key)}">${escapeHtml(c.nombre)}</option>`
-    );
-  });
-
-  if (actual && [...select.options].some(o => o.value === actual)) {
-    select.value = actual;
-  }
-}
-
-// ===========================
-// FILTROS
-// ===========================
-function pedidosFiltrados() {
-  const year = document.getElementById("filterYear")?.value || "all";
-  const month = document.getElementById("filterMonth")?.value || "all";
-  const cliente = document.getElementById("filterCliente")?.value || "all";
-
-  return pedidosStatsDB.filter(p => {
-    const fecha = String(p.fecha || "");
-
-    if (year !== "all" && !fecha.startsWith(year)) return false;
-
-    if (month !== "all") {
-      const mes = fecha.slice(5, 7);
-      if (mes !== month) return false;
-    }
-
-    if (cliente !== "all" && normalizar(p.cliente) !== cliente) return false;
-
+  return pedidosStats.filter(p => {
+    const fecha = String(p.fecha || '');
+    if(year !== 'all' && fecha.slice(0,4) !== year) return false;
+    if(month !== 'all' && fecha.slice(5,7) !== month) return false;
+    if(clienteQ && !normalizar(p.cliente).includes(clienteQ)) return false;
     return true;
   });
 }
 
-// ===========================
-// AGRUPAR
-// ===========================
-function agrupar(lista, getKey, getValue = p => parseCantidad(p.cantidad)) {
-  const mapa = {};
-
-  lista.forEach(p => {
-    const rawKey = getKey(p);
-    const keyNorm = normalizar(rawKey);
-    const keyShow = textoBonito(rawKey);
-
-    if (!keyNorm) return;
-
-    if (!mapa[keyNorm]) {
-      mapa[keyNorm] = {
-        key: keyNorm,
-        nombre: keyShow,
-        total: 0,
-        pedidos: 0,
-        listos: 0,
-        pagados: 0,
-        pendientes: 0,
-        fechas: []
-      };
+function groupBy(rows, keyFn){
+  const map = new Map();
+  rows.forEach(p => {
+    const key = keyFn(p) || 'Sin dato';
+    if(!map.has(key)) map.set(key, { key, pedidos:0, metros:0, listos:0, pagados:0, pendientes:0, primero:null, ultimo:null, items:[] });
+    const g = map.get(key);
+    g.pedidos += 1;
+    g.metros += numero(p.cantidad);
+    if(normalizar(p.estatus_trabajo) === 'listo') g.listos += 1;
+    if(normalizar(p.estatus_pago) === 'pagado') g.pagados += 1;
+    if(normalizar(p.estatus_pago) === 'pendiente') g.pendientes += 1;
+    const f = String(p.fecha || '');
+    if(f){
+      if(!g.primero || f < g.primero) g.primero = f;
+      if(!g.ultimo || f > g.ultimo) g.ultimo = f;
     }
-
-    mapa[keyNorm].total += getValue(p);
-    mapa[keyNorm].pedidos += 1;
-
-    if (p.estatus_trabajo === "Listo") mapa[keyNorm].listos += 1;
-    if (p.estatus_pago === "Pagado") mapa[keyNorm].pagados += 1;
-    if (p.estatus_pago !== "Pagado") mapa[keyNorm].pendientes += 1;
-
-    const fecha = String(p.fecha || "").slice(0, 10);
-    if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-      mapa[keyNorm].fechas.push(fecha);
-    }
+    g.items.push(p);
   });
-
-  return Object.values(mapa).map(item => {
-    item.fechas = [...new Set(item.fechas)].sort();
-
-    item.primeraFecha = item.fechas[0] || "";
-    item.ultimaFecha = item.fechas[item.fechas.length - 1] || "";
-
-    item.frecuenciaDias = calcularFrecuenciaPromedio(item.fechas);
-    item.frecuenciaTexto = textoFrecuencia(item.frecuenciaDias);
-
-    return item;
-  });
+  return [...map.values()];
 }
 
-function calcularFrecuenciaPromedio(fechas) {
-  const limpias = [...new Set(fechas || [])]
-    .filter(f => /^\d{4}-\d{2}-\d{2}$/.test(f))
-    .sort();
-
-  if (limpias.length < 2) return null;
-
-  let totalDias = 0;
-  let conteo = 0;
-
-  for (let i = 1; i < limpias.length; i++) {
-    const dias = diasEntre(limpias[i - 1], limpias[i]);
-
-    if (dias !== null) {
-      totalDias += dias;
-      conteo++;
-    }
-  }
-
-  if (!conteo) return null;
-
-  return totalDias / conteo;
+function renderList(id, rows, mode='metros'){
+  const el = $(id);
+  if(!el) return;
+  if(!rows.length){ el.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+  const max = Math.max(...rows.map(r => mode === 'pedidos' ? r.pedidos : r.metros), 1);
+  el.innerHTML = rows.slice(0,10).map(r => {
+    const val = mode === 'pedidos' ? r.pedidos : r.metros;
+    const label = mode === 'pedidos' ? `${r.pedidos} pedidos` : `${fmt(r.metros)} m`;
+    const pct = Math.max(2, (val / max) * 100);
+    return `<div class="row">
+      <div class="row-title" title="${escapeHtml(r.key)}">${escapeHtml(r.key)}</div>
+      <div class="row-val">${escapeHtml(label)}</div>
+      <div class="bar-wrap"><div class="bar" style="width:${pct}%"></div></div>
+      <div class="row-sub">${r.pedidos} pedido${r.pedidos===1?'':'s'} · Listos: ${r.listos} · Pagados: ${r.pagados}</div>
+    </div>`;
+  }).join('');
 }
 
-// ===========================
-// RENDER RANKING
-// ===========================
-function renderRanking(containerId, datos, tipo = "metros", limit = 10) {
-  const cont = document.getElementById(containerId);
-  if (!cont) return;
-
-  if (!datos.length) {
-    cont.innerHTML = `<div class="empty">Sin datos</div>`;
-    return;
-  }
-
-  const ordenados = [...datos]
-    .sort((a, b) => {
-      const va = tipo === "pedidos" ? a.pedidos : a.total;
-      const vb = tipo === "pedidos" ? b.pedidos : b.total;
-      return vb - va;
-    })
-    .slice(0, limit);
-
-  const max = Math.max(
-    ...ordenados.map(x => tipo === "pedidos" ? x.pedidos : x.total),
-    1
-  );
-
-  cont.innerHTML = "";
-
-  ordenados.forEach(item => {
-    const valor = tipo === "pedidos" ? item.pedidos : item.total;
-    const pct = Math.max((valor / max) * 100, 2);
-
-    const row = `
-      <div class="row">
-        <div class="row-title" title="${escapeHtml(item.nombre)}">${escapeHtml(item.nombre)}</div>
-        <div class="row-val">${tipo === "pedidos" ? fmt(valor) + " pedidos" : fmt(valor)}</div>
-        <div class="bar-wrap">
-          <div class="bar" style="width:${pct}%"></div>
-        </div>
-      </div>
-    `;
-
-    cont.insertAdjacentHTML("beforeend", row);
+function renderMeses(rows){
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const data = meses.map((nombre, i) => ({ key:nombre, pedidos:0, metros:0, listos:0, pagados:0, pendientes:0 }));
+  rows.forEach(p => {
+    const m = Number(String(p.fecha || '').slice(5,7));
+    if(m >= 1 && m <= 12){ data[m-1].pedidos++; data[m-1].metros += numero(p.cantidad); }
   });
+  renderList('metrosPorMes', data, 'metros');
 }
 
-// ===========================
-// METROS POR MES
-// ===========================
-function renderMetrosPorMes(lista) {
-  const meses = [
-    ["01", "Enero"],
-    ["02", "Febrero"],
-    ["03", "Marzo"],
-    ["04", "Abril"],
-    ["05", "Mayo"],
-    ["06", "Junio"],
-    ["07", "Julio"],
-    ["08", "Agosto"],
-    ["09", "Septiembre"],
-    ["10", "Octubre"],
-    ["11", "Noviembre"],
-    ["12", "Diciembre"]
-  ];
-
-  const mapa = {};
-
-  meses.forEach(([key, nombre]) => {
-    mapa[key] = { key, nombre, total: 0, pedidos: 0 };
-  });
-
-  lista.forEach(p => {
-    const mes = String(p.fecha || "").slice(5, 7);
-    if (!mapa[mes]) return;
-
-    mapa[mes].total += parseCantidad(p.cantidad);
-    mapa[mes].pedidos += 1;
-  });
-
-  const datos = meses.map(([key]) => mapa[key]);
-  const cont = document.getElementById("metrosPorMes");
-  if (!cont) return;
-
-  const max = Math.max(...datos.map(x => x.total), 1);
-  cont.innerHTML = "";
-
-  datos.forEach(item => {
-    const pct = Math.max((item.total / max) * 100, item.total > 0 ? 2 : 0);
-
-    cont.insertAdjacentHTML("beforeend", `
-      <div class="row">
-        <div class="row-title">${escapeHtml(item.nombre)}</div>
-        <div class="row-val">${fmt(item.total)}</div>
-        <div class="row-sub">${fmt(item.pedidos)} pedido${item.pedidos === 1 ? "" : "s"}</div>
-        <div class="bar-wrap">
-          <div class="bar" style="width:${pct}%"></div>
-        </div>
-      </div>
-    `);
-  });
+function renderTablaClientes(grupos){
+  const tbody = $('tablaClientes');
+  if(!grupos.length){ tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin clientes</td></tr>'; return; }
+  tbody.innerHTML = grupos.map(g => `
+    <tr>
+      <td><b>${escapeHtml(g.key)}</b></td>
+      <td>${g.pedidos}</td>
+      <td><b>${fmt(g.metros)}</b></td>
+      <td>${escapeHtml(g.primero || '—')}</td>
+      <td>${escapeHtml(g.ultimo || '—')}</td>
+      <td><span class="pill green">${g.listos}</span></td>
+      <td><span class="pill blue">${g.pagados}</span></td>
+      <td><span class="pill red">${g.pendientes}</span></td>
+    </tr>`).join('');
 }
 
-// ===========================
-// TABLA CLIENTES
-// ===========================
-function renderTablaClientes(datosClientes) {
-  const tbody = document.getElementById("tablaClientes");
-  if (!tbody) return;
+function renderEstadisticas(){
+  const rows = filtrarPedidos();
+  const clientes = groupBy(rows, p => String(p.cliente || '').trim()).sort((a,b)=>b.metros-a.metros);
+  const recurrentes = [...clientes].sort((a,b)=>b.pedidos-a.pedidos);
+  const materiales = groupBy(rows, p => String(p.material || '').trim()).sort((a,b)=>b.metros-a.metros);
+  const impresiones = groupBy(rows, p => String(p.tipo_impresion || '').trim()).sort((a,b)=>b.metros-a.metros);
+  const operadores = groupBy(rows, p => String(p.operador || '').trim()).sort((a,b)=>b.pedidos-a.pedidos);
 
-  const ordenados = [...datosClientes]
-    .sort((a, b) => {
-      if (b.pedidos !== a.pedidos) return b.pedidos - a.pedidos;
-      return b.total - a.total;
-    })
-    .slice(0, 80);
+  $('kpiPedidos').textContent = fmt(rows.length);
+  $('kpiMetros').textContent = fmt(rows.reduce((a,p)=>a+numero(p.cantidad),0));
+  $('kpiClientes').textContent = fmt(clientes.length);
+  $('kpiListos').textContent = fmt(rows.filter(p => normalizar(p.estatus_trabajo) === 'listo').length);
+  $('kpiPagados').textContent = fmt(rows.filter(p => normalizar(p.estatus_pago) === 'pagado').length);
 
-  if (!ordenados.length) {
-    tbody.innerHTML = `<tr><td colspan="8" class="empty">Sin clientes</td></tr>`;
-    return;
-  }
+  const q = $('filterClienteSearch').value.trim();
+  $('filterInfo').innerHTML = `<span>Viendo estadísticas de <strong>${q ? escapeHtml(q) : 'todos los clientes'}</strong>.</span><span id="filterCount">${rows.length} pedido${rows.length===1?'':'s'} filtrado${rows.length===1?'':'s'}</span>`;
 
-  tbody.innerHTML = "";
-
-  ordenados.forEach(c => {
-    const row = `
-      <tr>
-        <td>${escapeHtml(c.nombre)}</td>
-        <td>${fmt(c.pedidos)}</td>
-        <td>${fmt(c.total)}</td>
-        <td>${escapeHtml(fechaCorta(c.primeraFecha))}</td>
-        <td>${escapeHtml(fechaCorta(c.ultimaFecha))}</td>
-        <td><span class="pill green">${fmt(c.listos)}</span></td>
-        <td><span class="pill green">${fmt(c.pagados)}</span></td>
-        <td><span class="pill red">${fmt(c.pendientes)}</span></td>
-      </tr>
-    `;
-
-    tbody.insertAdjacentHTML("beforeend", row);
-  });
+  renderList('topClientes', clientes, 'metros');
+  renderList('clientesRecurrentes', recurrentes, 'pedidos');
+  renderList('materialesUsados', materiales, 'metros');
+  renderList('impresionesUsadas', impresiones, 'metros');
+  renderList('operadoresUsados', operadores, 'pedidos');
+  renderMeses(rows);
+  renderTablaClientes(clientes);
 }
 
-// ===========================
-// RENDER PRINCIPAL
-// ===========================
-function renderEstadisticas() {
-  const lista = pedidosFiltrados();
-
-  const totalPedidos = lista.length;
-  const totalMetros = lista.reduce((acc, p) => acc + parseCantidad(p.cantidad), 0);
-  const clientesUnicos = new Set(lista.map(p => normalizar(p.cliente)).filter(Boolean)).size;
-  const listos = lista.filter(p => p.estatus_trabajo === "Listo").length;
-  const pagados = lista.filter(p => p.estatus_pago === "Pagado").length;
-
-  const porCliente = agrupar(lista, p => p.cliente);
-  const porMaterial = agrupar(lista, p => p.material);
-  const porImpresion = agrupar(lista, p => p.tipo_impresion);
-  const porOperador = agrupar(lista, p => p.operador, p => 1);
-
-  const kpiPedidos = document.getElementById("kpiPedidos");
-  const kpiMetros = document.getElementById("kpiMetros");
-  const kpiClientes = document.getElementById("kpiClientes");
-  const kpiListos = document.getElementById("kpiListos");
-  const kpiPagados = document.getElementById("kpiPagados");
-
-  if (kpiPedidos) kpiPedidos.textContent = fmt(totalPedidos);
-  if (kpiMetros) kpiMetros.textContent = fmt(totalMetros);
-  if (kpiClientes) kpiClientes.textContent = fmt(clientesUnicos);
-  if (kpiListos) kpiListos.textContent = fmt(listos);
-  if (kpiPagados) kpiPagados.textContent = fmt(pagados);
-
-  renderRanking("topClientes", porCliente, "metros", 10);
-  renderRanking("clientesRecurrentes", porCliente, "pedidos", 10);
-  renderRanking("materialesUsados", porMaterial, "metros", 10);
-  renderRanking("impresionesUsadas", porImpresion, "metros", 10);
-  renderRanking("operadoresUsados", porOperador, "pedidos", 10);
-  renderMetrosPorMes(lista);
-  renderTablaClientes(porCliente);
+function limpiarClienteStats(){
+  $('filterClienteSearch').value = '';
+  renderEstadisticas();
 }
 
-// ===========================
-// INICIO
-// ===========================
-window.addEventListener("DOMContentLoaded", cargarPedidosStats);
+function setEmptyAll(msg){
+  ['topClientes','clientesRecurrentes','materialesUsados','impresionesUsadas','operadoresUsados','metrosPorMes'].forEach(id => { const el=$(id); if(el) el.innerHTML = `<div class="empty">${escapeHtml(msg)}</div>`; });
+  $('tablaClientes').innerHTML = `<tr><td colspan="8" class="empty">${escapeHtml(msg)}</td></tr>`;
+}
 
-window.cargarDatos = cargarDatos;
-window.aplicarFiltros = aplicarFiltros;
-window.limpiarFiltros = limpiarFiltros;
+document.addEventListener('DOMContentLoaded', function(){
+  cargarPedidosStats();
+});
+</script>
+</body>
+</html>
