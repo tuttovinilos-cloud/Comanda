@@ -614,6 +614,80 @@ function clasePago(valor) {
 // Supabase trigger crea los avisos cuando un pedido entra a Listo.
 // ===========================
 
+
+function normalizarEstadoNotificacion(valor) {
+  return String(valor || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function esEstadoListo(valor) {
+  return normalizarEstadoNotificacion(valor) === "listo";
+}
+
+async function crearNotificacionPedidoListoFallback(id, pedidoBase, estadoAnterior, estadoNuevo) {
+  if (!db()) return;
+  if (!esEstadoListo(estadoNuevo)) return;
+  if (esEstadoListo(estadoAnterior)) return;
+
+  const pedido = pedidoBase || pedidosDB.find(p => Number(p.id) === Number(id)) || {};
+  const operadorDestino = String(pedido.operador || "").trim();
+
+  if (!operadorDestino) {
+    console.warn("No se creó notificación: pedido sin operador", id);
+    return;
+  }
+
+  try {
+    const { data: existente, error: errorBuscar } = await db()
+      .from("notificaciones")
+      .select("id")
+      .eq("pedido_id", id)
+      .eq("tipo", "pedido_listo")
+      .limit(1);
+
+    if (errorBuscar) {
+      console.warn("No se pudo verificar notificación existente:", errorBuscar);
+    }
+
+    if (Array.isArray(existente) && existente.length) return;
+
+    const cliente = String(pedido.cliente || "").trim();
+    const descripcion = String(pedido.descripcion || "").trim();
+
+    const { error } = await db()
+      .from("notificaciones")
+      .insert([{
+        pedido_id: id,
+        destinatario: operadorDestino,
+        para_operador: operadorDestino,
+        cliente: cliente || null,
+        descripcion: descripcion || null,
+        mensaje: "El pedido de " + (cliente || "cliente sin nombre") + " ya está listo.",
+        visto: false,
+        leida: false,
+        tipo: "pedido_listo",
+        titulo: "Pedido listo"
+      }]);
+
+    if (error) {
+      console.error("No se pudo crear notificación de pedido listo:", error);
+      return;
+    }
+
+    console.log("Notificación pedido_listo creada por fallback app.js:", id, operadorDestino);
+
+    if (typeof window.leerNotificaciones === "function") {
+      setTimeout(() => window.leerNotificaciones(true), 300);
+    }
+  } catch (e) {
+    console.error("Error creando notificación fallback:", e);
+  }
+}
+
 // ===========================
 // CARGAR PEDIDOS
 // ===========================
@@ -1012,6 +1086,7 @@ async function actualizarCampoPedido(id, campo, valor) {
   if (!validarSupabase()) return;
 
   const pedidoOriginal = pedidosDB.find(p => Number(p.id) === Number(id));
+  const valorAnteriorPedidoOriginal = pedidoOriginal ? pedidoOriginal[campo] : undefined;
 
   if (campo === "cantidad" && !puedeModificarCantidadLocal()) {
     alert("No tienes permiso para modificar cantidad.");
@@ -1062,6 +1137,10 @@ async function actualizarCampoPedido(id, campo, valor) {
   }
 
   console.log(`Pedido ${id} actualizado limpio: ${campo} = ${valor}`);
+
+  if (campo === "estatus_trabajo") {
+    await crearNotificacionPedidoListoFallback(id, pedidoOriginal, valorAnteriorPedidoOriginal, valor);
+  }
 }
 
 // ===========================
