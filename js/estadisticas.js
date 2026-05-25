@@ -1,4 +1,4 @@
-console.log('ESTADISTICAS conectado v36 graficas');
+console.log('ESTADISTICAS conectado v37 visual pro');
 
 let pedidosStats = [];
 const $ = id => document.getElementById(id);
