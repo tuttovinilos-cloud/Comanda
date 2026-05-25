@@ -2171,7 +2171,7 @@ window.closeModal = window.closeModal || function(id){
 };
 </script>
 
-<script src="js/notificaciones.js?v=33"></script>
+<script src="js/notificaciones.js?v=34"></script>
 
 <script>
 (function(){
@@ -3609,147 +3609,7 @@ html,body{background:#f0f2f9!important;color-scheme:light!important;}
 </style>
 
 
-<script>
-/* =========================================================
-   FIX CAMPANA SONORA v38
-   - Desbloquea audio con el primer clic/toque/tecla.
-   - Suena cuando sube el contador de notificaciones.
-   - Suena cuando un estatus cambia a LISTO en esta pantalla.
-   - No toca SQL, Supabase ni estructura de pedidos.
-========================================================= */
-(function(){
-  if(window.__tuttoBellFixV38) return;
-  window.__tuttoBellFixV38 = true;
 
-  var audioCtx = null;
-  var audioUnlocked = false;
-  var pendingBell = false;
-  var lastCount = null;
-  var lastReadyAt = 0;
-
-  function getCount(){
-    var el = document.getElementById('notiCount');
-    if(!el) return 0;
-    var n = parseInt(String(el.textContent || '0').replace(/[^0-9]/g,''),10);
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  function ensureAudio(){
-    try{
-      var AC = window.AudioContext || window.webkitAudioContext;
-      if(!AC) return null;
-      if(!audioCtx) audioCtx = new AC();
-      if(audioCtx.state === 'suspended') audioCtx.resume();
-      audioUnlocked = true;
-      return audioCtx;
-    }catch(e){
-      return null;
-    }
-  }
-
-  function bell(){
-    var ctx = ensureAudio();
-    if(!ctx){ pendingBell = true; return; }
-    if(ctx.state === 'suspended'){
-      pendingBell = true;
-      ctx.resume().catch(function(){});
-      return;
-    }
-
-    try{
-      var now = ctx.currentTime;
-      var master = ctx.createGain();
-      master.gain.setValueAtTime(0.0001, now);
-      master.gain.exponentialRampToValueAtTime(0.90, now + 0.015);
-      master.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
-      master.connect(ctx.destination);
-
-      function tone(freq, start, duration, gain){
-        var osc = ctx.createOscillator();
-        var g = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now + start);
-        g.gain.setValueAtTime(0.0001, now + start);
-        g.gain.exponentialRampToValueAtTime(gain, now + start + 0.015);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + start + duration);
-        osc.connect(g);
-        g.connect(master);
-        osc.start(now + start);
-        osc.stop(now + start + duration + 0.05);
-      }
-
-      tone(880, 0.00, 0.22, 0.75);
-      tone(1320, 0.10, 0.28, 0.55);
-      if(navigator.vibrate) navigator.vibrate([80,40,80]);
-      pendingBell = false;
-    }catch(e){
-      pendingBell = true;
-    }
-  }
-
-  function unlockAndFlush(){
-    ensureAudio();
-    if(pendingBell) setTimeout(bell, 60);
-  }
-
-  ['click','touchstart','keydown','pointerdown'].forEach(function(ev){
-    document.addEventListener(ev, unlockAndFlush, {passive:true, once:false});
-  });
-
-  function checkCounter(){
-    var c = getCount();
-    if(lastCount === null){ lastCount = c; return; }
-    if(c > lastCount){ bell(); }
-    lastCount = c;
-  }
-
-  function watchCounter(){
-    var el = document.getElementById('notiCount');
-    if(!el) return false;
-    lastCount = getCount();
-    if(window.MutationObserver){
-      var obs = new MutationObserver(function(){ setTimeout(checkCounter, 30); });
-      obs.observe(el, {childList:true, characterData:true, subtree:true, attributes:true});
-    }
-    setInterval(checkCounter, 2500);
-    return true;
-  }
-
-  function isListo(v){
-    return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim() === 'listo';
-  }
-
-  document.addEventListener('change', function(e){
-    var t = e.target;
-    if(!t) return;
-    var id = t.id || '';
-    var txt = String(t.value || '');
-    var looksStatus = id.indexOf('estatus_trabajo') >= 0 || t.closest('#orderTableBody');
-    if(looksStatus && isListo(txt)){
-      var now = Date.now();
-      if(now - lastReadyAt > 1200){
-        lastReadyAt = now;
-        bell();
-      }
-    }
-  }, true);
-
-  window.tuttoPlayBell = bell;
-
-  function init(){
-    watchCounter();
-    var btn = document.getElementById('notiBtnGlobal');
-    if(btn && !btn.dataset.soundBound){
-      btn.dataset.soundBound = '1';
-      btn.addEventListener('click', unlockAndFlush, true);
-    }
-  }
-
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
-  window.addEventListener('load', init);
-})();
-</script>
 
 </body>
 </html>
