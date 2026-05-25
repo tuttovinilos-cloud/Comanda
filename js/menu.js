@@ -165,8 +165,14 @@ console.log("MENU GLOBAL conectado v12");
       header.insertBefore(btn, menu);
     }
 
-    btn.onclick = function(){
-      menu.classList.toggle("open");
+    btn.onclick = function(e){
+      e.preventDefault();
+      e.stopPropagation();
+
+      const isOpen = menu.classList.toggle("open");
+      btn.classList.toggle("active", isOpen);
+      btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      btn.textContent = isOpen ? "✕ Cerrar" : "☰ Menú";
 
       if(typeof window.updateStickyOffsets === "function"){
         window.updateStickyOffsets();
