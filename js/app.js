@@ -315,7 +315,7 @@ async function cargarOperadoresComandaDesdeSupabase() {
   try {
     const { data, error } = await db()
       .from("operadores")
-      .select("nombre, activo")
+      .select("id, nombre, activo")
       .eq("activo", true)
       .order("nombre", { ascending: true });
 
@@ -628,6 +628,32 @@ function esEstadoListo(valor) {
   return normalizarEstadoNotificacion(valor) === "listo";
 }
 
+async function resolverOperadorIdPorNombre(nombre){
+  const nombreBuscado = normalizarEstadoNotificacion(nombre);
+  if(!nombreBuscado || !db()) return null;
+
+  try{
+    const { data, error } = await db()
+      .from("operadores")
+      .select("id,nombre")
+      .eq("activo", true);
+
+    if(error) throw error;
+
+    const encontrado = (data || []).find(op => {
+      const n = normalizarEstadoNotificacion(op.nombre);
+      const primero = n.split(" ")[0];
+      const buscadoPrimero = nombreBuscado.split(" ")[0];
+      return n === nombreBuscado || (primero && buscadoPrimero && primero === buscadoPrimero);
+    });
+
+    return encontrado ? Number(encontrado.id) : null;
+  }catch(e){
+    console.warn("No se pudo resolver operador_id:", e);
+    return null;
+  }
+}
+
 async function crearNotificacionPedidoListoFallback(id, pedidoBase, estadoAnterior, estadoNuevo) {
   if (!db()) return;
   if (!esEstadoListo(estadoNuevo)) return;
@@ -658,10 +684,14 @@ async function crearNotificacionPedidoListoFallback(id, pedidoBase, estadoAnteri
     const cliente = String(pedido.cliente || "").trim();
     const descripcion = String(pedido.descripcion || "").trim();
 
+    const operadorDestinoId = await resolverOperadorIdPorNombre(operadorDestino);
+
     const { error } = await db()
       .from("notificaciones")
       .insert([{
         pedido_id: id,
+        destinatario_id: operadorDestinoId,
+        para_operador_id: operadorDestinoId,
         destinatario: operadorDestino,
         para_operador: operadorDestino,
         cliente: cliente || null,
