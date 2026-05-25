@@ -1,4 +1,4 @@
-console.log('ESTADISTICAS v42 avisos clientes');
+console.log('ESTADISTICAS v41 barras pequeñas');
 
 let pedidosStats = [];
 const $ = id => document.getElementById(id);
@@ -255,124 +255,6 @@ function renderTablaClientes(grupos){
     </tr>`).join('');
 }
 
-
-const AVISOS_CLIENTES_FREQ_KEY = "tutto_avisos_clientes_frecuencias_v1";
-
-function hoyLocal(){
-  const d = new Date();
-  d.setHours(0,0,0,0);
-  return d;
-}
-
-function fechaPedidoValida(valor){
-  const f = String(valor || "").slice(0,10);
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(f)) return null;
-  const d = new Date(f + "T00:00:00");
-  if(Number.isNaN(d.getTime())) return null;
-  return d;
-}
-
-function diasDesdeFecha(fecha){
-  if(!fecha) return null;
-  const diff = hoyLocal().getTime() - fecha.getTime();
-  return Math.max(0, Math.floor(diff / 86400000));
-}
-
-function leerFrecuenciasClientes(){
-  try{
-    return JSON.parse(localStorage.getItem(AVISOS_CLIENTES_FREQ_KEY) || "{}");
-  }catch(e){
-    return {};
-  }
-}
-
-function guardarFrecuenciaCliente(clienteKey, dias){
-  const freqs = leerFrecuenciasClientes();
-  const n = Math.max(1, Number(dias || 30));
-  freqs[clienteKey] = n;
-  localStorage.setItem(AVISOS_CLIENTES_FREQ_KEY, JSON.stringify(freqs));
-  renderAvisosClientes(filtrarPedidos());
-}
-
-function obtenerUltimaFechaPorCliente(rows){
-  const map = new Map();
-
-  rows.forEach(p => {
-    const cliente = limpiarTexto(p.cliente, "");
-    const key = normalizar(cliente);
-    if(!key) return;
-
-    const fecha = fechaPedidoValida(p.fecha);
-    if(!fecha) return;
-
-    const actual = map.get(key);
-    if(!actual || fecha > actual.fecha){
-      map.set(key, {
-        key,
-        cliente,
-        fecha,
-        fechaTexto: String(p.fecha || "").slice(0,10)
-      });
-    }
-  });
-
-  return [...map.values()];
-}
-
-function renderAvisosClientes(rows){
-  const tbody = $("avisosClientesBody");
-  const badge = $("avisosCount");
-  if(!tbody) return;
-
-  const freqs = leerFrecuenciasClientes();
-  const clientes = obtenerUltimaFechaPorCliente(rows);
-
-  if(!clientes.length){
-    tbody.innerHTML = '<tr><td colspan="5" class="empty">Sin clientes para avisar</td></tr>';
-    if(badge) badge.textContent = "0 verificar";
-    return;
-  }
-
-  const data = clientes.map(c => {
-    const frecuencia = Number(freqs[c.key] || 30);
-    const dias = diasDesdeFecha(c.fecha);
-    const verificar = dias !== null && dias >= frecuencia;
-
-    return {
-      ...c,
-      frecuencia,
-      dias,
-      verificar
-    };
-  }).sort((a,b) => {
-    if(a.verificar !== b.verificar) return a.verificar ? -1 : 1;
-    return (b.dias || 0) - (a.dias || 0);
-  });
-
-  const totalVerificar = data.filter(x => x.verificar).length;
-  if(badge) badge.textContent = `${totalVerificar} verificar`;
-
-  tbody.innerHTML = data.slice(0,80).map(x => `
-    <tr class="${x.verificar ? "alert-row" : "ok-row"}">
-      <td><b>${escapeHtml(x.cliente)}</b></td>
-      <td>${escapeHtml(x.fechaTexto || "—")}</td>
-      <td>${x.dias === null ? "—" : fmt(x.dias)}</td>
-      <td>
-        <input class="freq-input" type="number" min="1" value="${escapeHtml(x.frecuencia)}"
-          onchange="guardarFrecuenciaCliente('${escapeHtml(x.key)}', this.value)">
-        días
-      </td>
-      <td>
-        <span class="pill ${x.verificar ? "warn" : "ok"}">
-          ${x.verificar ? "Verificar" : "OK"}
-        </span>
-      </td>
-    </tr>
-  `).join('');
-}
-
-window.guardarFrecuenciaCliente = guardarFrecuenciaCliente;
-
 function renderEstadisticas(){
   const rows = filtrarPedidos();
 
@@ -402,7 +284,6 @@ function renderEstadisticas(){
   renderList('impresionesUsadas', impresiones, 'metros');
   renderList('operadoresUsados', operadores, 'pedidos');
   renderMeses(rows);
-  renderAvisosClientes(rows);
   renderTablaClientes(clientes);
 }
 
