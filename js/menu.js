@@ -326,4 +326,3 @@ console.log("MENU GLOBAL conectado v12");
     window.__MENU_STORAGE_TIMER__ = setInterval(syncStorageBadge, 1500);
   });
 })();
-
