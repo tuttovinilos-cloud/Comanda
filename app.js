@@ -4,7 +4,7 @@ console.log("Supabase window:", window.supabaseClient);
 let pedidoEditandoId = null;
 let pedidosDB = [];
 let paginaActualPedidos = 1;
-let pedidosPorPagina = 20;
+let pedidosPorPagina = 40;
 let archivoSeleccionado = null;
 let materialesDB = [];
 let tiposImpresionDB = [];
@@ -846,9 +846,9 @@ function renderPaginacionPedidos(total, paginas, inicio, fin){
     <span class="page-info">Página ${paginaActualPedidos} / ${paginas}</span>
     <button class="page-btn" type="button" onclick="cambiarPaginaPedidos(1)" ${paginaActualPedidos >= paginas ? "disabled" : ""}>Siguiente →</button>
     <select class="page-select" onchange="cambiarTamanoPaginaPedidos(this.value)">
-      <option value="20" ${pedidosPorPagina === 20 ? "selected" : ""}>1-20 por página</option>
       <option value="40" ${pedidosPorPagina === 40 ? "selected" : ""}>1-40 por página</option>
-      <option value="100" ${pedidosPorPagina === 100 ? "selected" : ""}>1-100 por página</option>
+      <option value="60" ${pedidosPorPagina === 60 ? "selected" : ""}>1-60 por página</option>
+      <option value="200" ${pedidosPorPagina === 200 ? "selected" : ""}>1-200 por página</option>
     </select>
   `;
 }
@@ -909,7 +909,7 @@ function cambiarPaginaPedidos(delta){
 }
 
 function cambiarTamanoPaginaPedidos(valor){
-  pedidosPorPagina = Number(valor || 20);
+  pedidosPorPagina = Number(valor || 40);
   paginaActualPedidos = 1;
   renderPedidosPaginados(false);
 }
