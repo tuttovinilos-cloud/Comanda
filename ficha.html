@@ -2206,83 +2206,86 @@ html,body{
 }
 
 .pdf-export-wrapper{
-  position:fixed;
-  left:-100000px;
+  /* IMPORTANTE: no se manda fuera de pantalla.
+     Html2canvas estaba capturando un área gigante y por eso el PDF salía miniatura a la izquierda. */
+  position:absolute;
+  left:0;
   top:0;
-  width:216mm;
+  width:816px;
   background:#fff;
   pointer-events:none;
   opacity:1;
-  z-index:-1;
+  z-index:-9999;
+  overflow:visible;
 }
 .pdf-export-wrapper .paper{
-  width:199mm!important;
-  max-width:199mm!important;
-  min-width:0!important;
+  width:816px!important;
+  max-width:816px!important;
+  min-width:816px!important;
   min-height:auto!important;
   margin:0!important;
-  padding:6mm!important;
+  padding:32px!important;
   border:0!important;
   box-shadow:none!important;
   transform:none!important;
   overflow:visible!important;
   background:#fff!important;
   color:#111827!important;
-  font-size:10.5px!important;
-  line-height:1.22!important;
+  font-size:11px!important;
+  line-height:1.24!important;
 }
 .pdf-export-wrapper .paper-header{
-  grid-template-columns:1fr 35mm!important;
-  gap:6mm!important;
-  padding-bottom:4mm!important;
-  border-bottom:1.2mm solid #172bd8!important;
+  grid-template-columns:1fr 140px!important;
+  gap:20px!important;
+  padding-bottom:14px!important;
+  border-bottom:4px solid #172bd8!important;
 }
 .pdf-export-wrapper .paper-brand img{
-  max-width:38mm!important;
-  max-height:12mm!important;
+  max-width:145px!important;
+  max-height:42px!important;
 }
 .pdf-export-wrapper .paper-brand h3{
   font-size:15px!important;
 }
 .pdf-export-wrapper .paper-title{
-  margin:4mm 0 3mm!important;
+  margin:14px 0 10px!important;
 }
 .pdf-export-wrapper .paper-title h2{
   font-size:17px!important;
   line-height:1.08!important;
 }
 .pdf-export-wrapper .paper-hero-image{
-  grid-template-columns:52mm 1fr!important;
-  gap:4mm!important;
-  margin:4mm 0!important;
-  padding:3mm!important;
-  border-width:.6mm!important;
+  grid-template-columns:210px 1fr!important;
+  gap:14px!important;
+  margin:14px 0!important;
+  padding:10px!important;
+  border-width:2px!important;
 }
 .pdf-export-wrapper .paper-hero-image img{
-  max-height:42mm!important;
+  max-height:165px!important;
   width:100%!important;
   object-fit:contain!important;
 }
 .pdf-export-wrapper .paper-image-strip{
   grid-template-columns:repeat(3,1fr)!important;
-  gap:3mm!important;
-  margin:3mm 0 4mm!important;
+  gap:10px!important;
+  margin:10px 0 14px!important;
 }
 .pdf-export-wrapper .paper-image-card img{
-  height:25mm!important;
+  height:95px!important;
   object-fit:contain!important;
 }
 .pdf-export-wrapper .paper-grid{
   grid-template-columns:repeat(5,1fr)!important;
-  margin:3mm 0!important;
+  margin:12px 0!important;
 }
 .pdf-export-wrapper .info-box{
   min-height:11mm!important;
   padding:2mm!important;
 }
 .pdf-export-wrapper .critical{
-  margin:3mm 0!important;
-  padding:3mm!important;
+  margin:12px 0!important;
+  padding:10px!important;
 }
 .pdf-export-wrapper .paper-section{
   margin-top:3.5mm!important;
@@ -3480,6 +3483,7 @@ function crearPDF(){
 
   const wrapper = document.createElement("div");
   wrapper.className = "pdf-export-wrapper";
+  wrapper.setAttribute("aria-hidden", "true");
 
   const clone = original.cloneNode(true);
   clone.id = "paperPDFExport";
@@ -3487,11 +3491,18 @@ function crearPDF(){
   wrapper.appendChild(clone);
   document.body.appendChild(wrapper);
 
+  // Forzar medidas reales antes de capturar. Esto evita que el PDF salga como miniatura.
+  clone.style.width = "816px";
+  clone.style.maxWidth = "816px";
+  clone.style.minWidth = "816px";
+  clone.style.transform = "none";
+  clone.style.margin = "0";
+
   showToast("Preparando PDF limpio...", "info");
 
   esperarImagenesPDF(clone).then(() => {
     const opt = {
-      margin: 8,
+      margin: 0,
       filename: `${codigo}_${cliente}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: {
@@ -3502,18 +3513,23 @@ function crearPDF(){
         logging: false,
         scrollX: 0,
         scrollY: 0,
-        windowWidth: 900
+        x: 0,
+        y: 0,
+        width: 816,
+        windowWidth: 816,
+        windowHeight: Math.max(clone.scrollHeight, 1056)
       },
       jsPDF: {
-        unit: "mm",
-        format: "letter",
+        unit: "px",
+        format: [816, 1056],
         orientation: "portrait",
-        compress: true
+        compress: true,
+        hotfixes: ["px_scaling"]
       },
       pagebreak: {
         mode: ["css", "legacy"],
         before: ".pdf-page-break",
-        avoid: [".paper-item-card", ".paper-hero-image", ".paper-image-card", ".critical"]
+        avoid: [".paper-hero-image", ".critical"]
       }
     };
 
