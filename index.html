@@ -1572,11 +1572,28 @@ window.closeModal = window.closeModal || function(id){
 
 <script>
 (function(){
+  // ===========================
+  // CONTADOR TIEMPO ACTIVO V3
+  // Calcula desde Supabase, no desde la tabla visible.
+  // ===========================
   const CAMBIO_MINUTOS = 10;
+  const REFRESCO_MS = 8000;
+  const PAGE_SIZE = 1000;
+
   let cacheMateriales = [];
   let cacheTiposImpresion = [];
+  let cargandoContador = false;
+
+  if(window.__COMANDA_TIEMPO_ACTIVO_TIMER){
+    clearInterval(window.__COMANDA_TIEMPO_ACTIVO_TIMER);
+    window.__COMANDA_TIEMPO_ACTIVO_TIMER = null;
+  }
 
   function $(id){ return document.getElementById(id); }
+
+  function db(){
+    return window.supabaseClient || null;
+  }
 
   function norm(v){
     return String(v || '')
@@ -1607,178 +1624,195 @@ window.closeModal = window.closeModal || function(id){
     return lista.find(x => norm(x.nombre) === n) || null;
   }
 
+  function velocidadFallbackImpresion(nombre){
+    const n = norm(nombre);
+    if(n === 'normal') return 10;
+    if(n === 'barniz') return 5;
+    if(n === 'placa especial') return 5;
+    if(n === 'sobre impresion' || n === 'sobreimpresion') return 5;
+    if(n === 'cbc') return 7;
+    if(n === '5 capas' || n === '5capas') return 2;
+    return 0;
+  }
+
   function velocidadFallbackMaterial(nombre){
     const n = norm(nombre);
     if(n === 'glasse' || n === 'glass' || n === 'glase' || n === 'glasee') return 5;
     return 0;
   }
 
-  function velocidadFallbackImpresion(nombre){
-    const n = norm(nombre);
-    if(n === 'normal') return 10;
-    if(n === 'barniz') return 5;
-    if(n === '5 capas') return 2;
-    if(n === 'cbc') return 7;
-    if(n === 'placa especial') return 5;
-    if(n === 'sobre impresion' || n === 'sobre impresion') return 5;
-    if(n === 'base blanco' || n === 'base blanca') return 0;
-    return 0;
-  }
-
-  function catalogosGlobales(){
-    let mats = cacheMateriales;
-    let imps = cacheTiposImpresion;
-
-    try{
-      if(!mats.length && typeof materialesDB !== 'undefined' && Array.isArray(materialesDB)) mats = materialesDB;
-    }catch(e){}
-
-    try{
-      if(!imps.length && typeof tiposImpresionDB !== 'undefined' && Array.isArray(tiposImpresionDB)) imps = tiposImpresionDB;
-    }catch(e){}
-
-    return { mats, imps };
-  }
-
   function velocidadPedido(material, impresion){
-    const { mats, imps } = catalogosGlobales();
-    const imp = buscarCatalogo(imps, impresion);
-    const mat = buscarCatalogo(mats, material);
+    const imp = buscarCatalogo(cacheTiposImpresion, impresion);
+    const mat = buscarCatalogo(cacheMateriales, material);
 
+    // Prioridad real: la velocidad principal viene del tipo de impresión.
     const vImpresion = Number(imp?.velocidad_m2_h || 0) || velocidadFallbackImpresion(impresion);
     if(vImpresion > 0) return vImpresion;
 
+    // Material solo como respaldo si no hay velocidad de impresión.
     const vMaterial = Number(mat?.velocidad_m2_h || 0) || velocidadFallbackMaterial(material);
     if(vMaterial > 0) return vMaterial;
 
     return 0;
   }
 
-  function pedidoActivo(estatusTrabajo, estatusPago){
-    const trabajo = norm(estatusTrabajo);
-    const pago = norm(estatusPago);
+  function pedidoActivo(p){
+    const trabajo = norm(p?.estatus_trabajo);
+    const pago = norm(p?.estatus_pago);
 
     if(trabajo === 'listo') return false;
 
     return trabajo === 'solicitud' ||
            trabajo === 'en curso' ||
            trabajo === 'encurso' ||
+           trabajo === 'revisado' ||
            pago === 'pendiente';
   }
 
-  function pedidosFuente(){
-    try{
-      if(typeof pedidosDB !== 'undefined' && Array.isArray(pedidosDB)) return pedidosDB;
-    }catch(e){}
-
-    return Array.from(document.querySelectorAll('#orderTableBody tr')).map(tr => {
-      const c = tr.children;
-      const leer = td => {
-        if(!td) return '';
-        const control = td.querySelector('input,select,textarea');
-        return control ? control.value : td.textContent;
-      };
-
-      return {
-        cantidad: leer(c[5]),
-        material: leer(c[6]),
-        tipo_impresion: leer(c[7]),
-        estatus_trabajo: leer(c[9]),
-        estatus_pago: leer(c[10])
-      };
-    });
-  }
-
-  function calcularContador(){
-    const pedidos = pedidosFuente();
-    let totalActivos = 0;
-    let pendientes = 0;
-    let enCurso = 0;
-    let revisados = 0;
-    let horasTotal = 0;
-
-    pedidos.forEach(p => {
-      const estatusTrabajo = p.estatus_trabajo || p.estatusTrabajo || '';
-      const estatusPago = p.estatus_pago || p.estatusPago || '';
-
-      if(!pedidoActivo(estatusTrabajo, estatusPago)) return;
-
-      const trabajoNorm = norm(estatusTrabajo);
-      totalActivos++;
-
-      if(trabajoNorm === 'solicitud') pendientes++;
-      else if(trabajoNorm === 'en curso' || trabajoNorm === 'encurso') enCurso++;
-      else if(trabajoNorm === 'revisado') revisados++;
-
-      const metros = numero(p.cantidad);
-      const velocidad = velocidadPedido(p.material, p.tipo_impresion || p.impresion);
-
-      if(metros > 0 && velocidad > 0){
-        horasTotal += (metros / velocidad) + (CAMBIO_MINUTOS / 60);
-      }
-    });
-
+  function pintarContador({horasTotal, pedidos, solicitud, curso, revisado, pendientePago, sinVelocidad}){
     const value = $('tiempoBoxValue');
     const info = $('tiempoBoxInfo');
     const sub = document.querySelector('.tiempo-box-sub');
 
     if(value) value.textContent = formatoHoraMin(horasTotal);
-    if(info) info.textContent = `${totalActivos} pedido${totalActivos === 1 ? '' : 's'}`;
-    if(sub) sub.textContent = `Solicitud: ${pendientes} · En curso: ${enCurso} · Revisado: ${revisados}`;
+    if(info) info.textContent = `${pedidos} pedido${pedidos === 1 ? '' : 's'}`;
+
+    if(sub){
+      let texto = `Solicitud ${solicitud} · En curso ${curso} · Revisado ${revisado} · Pago pendiente ${pendientePago}`;
+      if(sinVelocidad > 0) texto += ` · ${sinVelocidad} sin velocidad`;
+      sub.textContent = texto;
+    }
+  }
+
+  async function cargarTablaCompleta(tabla, columnas){
+    if(!db()) return [];
+
+    let desde = 0;
+    let todos = [];
+
+    while(true){
+      const hasta = desde + PAGE_SIZE - 1;
+      const { data, error } = await db()
+        .from(tabla)
+        .select(columnas)
+        .range(desde, hasta);
+
+      if(error){
+        console.warn(`No se pudo cargar ${tabla}:`, error);
+        return todos;
+      }
+
+      const lote = data || [];
+      todos = todos.concat(lote);
+
+      if(lote.length < PAGE_SIZE) break;
+      desde += PAGE_SIZE;
+    }
+
+    return todos;
   }
 
   async function cargarVelocidades(){
-    if(!window.supabaseClient) return;
+    const [mat, imp] = await Promise.all([
+      cargarTablaCompleta('materiales', 'nombre,velocidad_m2_h,activo'),
+      cargarTablaCompleta('tipos_impresion', 'nombre,velocidad_m2_h,activo')
+    ]);
 
-    try{
-      const [mat, imp] = await Promise.all([
-        window.supabaseClient.from('materiales').select('nombre,velocidad_m2_h,activo').eq('activo', true),
-        window.supabaseClient.from('tipos_impresion').select('nombre,velocidad_m2_h,activo').eq('activo', true)
-      ]);
-
-      if(!mat.error) cacheMateriales = mat.data || [];
-      if(!imp.error) cacheTiposImpresion = imp.data || [];
-    }catch(error){
-      console.warn('No se pudieron cargar velocidades para el contador', error);
-    }
+    cacheMateriales = mat.filter(x => x.activo !== false);
+    cacheTiposImpresion = imp.filter(x => x.activo !== false);
   }
 
-  function engancharRenderPedidos(){
-    if(window.__contadorTiempoRenderHook) return;
+  async function cargarPedidosParaContador(){
+    // Se carga todo y se filtra en JS para evitar errores con OR/NEQ/null en Supabase.
+    const pedidos = await cargarTablaCompleta(
+      'pedidos',
+      'id,cantidad,material,tipo_impresion,estatus_trabajo,estatus_pago'
+    );
 
-    if(typeof window.renderPedidosPaginados !== 'function'){
-      setTimeout(engancharRenderPedidos, 400);
-      return;
+    return pedidos;
+  }
+
+  async function calcularContador(){
+    if(cargandoContador) return;
+    if(!db()) return;
+
+    cargandoContador = true;
+
+    try{
+      if(!cacheTiposImpresion.length && !cacheMateriales.length){
+        await cargarVelocidades();
+      }
+
+      const pedidos = await cargarPedidosParaContador();
+
+      let totalPedidosCalculados = 0;
+      let horasTotal = 0;
+      let solicitud = 0;
+      let curso = 0;
+      let revisado = 0;
+      let pendientePago = 0;
+      let sinVelocidad = 0;
+
+      pedidos.forEach(p => {
+        if(!pedidoActivo(p)) return;
+
+        const trabajo = norm(p.estatus_trabajo);
+        const pago = norm(p.estatus_pago);
+
+        if(trabajo === 'solicitud') solicitud++;
+        else if(trabajo === 'en curso' || trabajo === 'encurso') curso++;
+        else if(trabajo === 'revisado') revisado++;
+
+        if(pago === 'pendiente') pendientePago++;
+
+        const metros = numero(p.cantidad);
+        const velocidad = velocidadPedido(p.material, p.tipo_impresion);
+
+        if(metros <= 0 || velocidad <= 0){
+          sinVelocidad++;
+          return;
+        }
+
+        totalPedidosCalculados++;
+        horasTotal += (metros / velocidad) + (CAMBIO_MINUTOS / 60);
+      });
+
+      pintarContador({
+        horasTotal,
+        pedidos: totalPedidosCalculados,
+        solicitud,
+        curso,
+        revisado,
+        pendientePago,
+        sinVelocidad
+      });
+
+      console.log('Tiempo activo recalculado:', {
+        horas: horasTotal,
+        pedidosCalculados: totalPedidosCalculados,
+        solicitud,
+        curso,
+        revisado,
+        pendientePago,
+        sinVelocidad
+      });
+    }catch(error){
+      console.warn('Error calculando tiempo activo:', error);
+    }finally{
+      cargandoContador = false;
     }
-
-    window.__contadorTiempoRenderHook = true;
-    const original = window.renderPedidosPaginados;
-
-    window.renderPedidosPaginados = function(){
-      const r = original.apply(this, arguments);
-      setTimeout(calcularContador, 80);
-      return r;
-    };
   }
 
   async function initContadorTiempo(){
     await cargarVelocidades();
-    calcularContador();
-    engancharRenderPedidos();
+    await calcularContador();
 
-    const tbody = $('orderTableBody');
-    if(tbody && window.MutationObserver){
-      new MutationObserver(function(){
-        setTimeout(calcularContador, 80);
-      }).observe(tbody, { childList:true, subtree:true, characterData:true });
-    }
+    document.addEventListener('input', function(){ setTimeout(calcularContador, 500); });
+    document.addEventListener('change', function(){ setTimeout(calcularContador, 500); });
 
-    document.addEventListener('input', function(){ setTimeout(calcularContador, 80); });
-    document.addEventListener('change', function(){ setTimeout(calcularContador, 80); });
-    setInterval(calcularContador, 1500);
+    window.__COMANDA_TIEMPO_ACTIVO_TIMER = setInterval(calcularContador, REFRESCO_MS);
+    window.recalcularTiempoActivo = calcularContador;
   }
-
-  window.calcularContadorTiempoActivo = calcularContador;
 
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', initContadorTiempo);
@@ -1787,7 +1821,6 @@ window.closeModal = window.closeModal || function(id){
   }
 })();
 </script>
-
 </body>
 </html>
 
