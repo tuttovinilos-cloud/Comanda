@@ -4,7 +4,7 @@ console.log("Supabase window:", window.supabaseClient);
 let pedidoEditandoId = null;
 let pedidosDB = [];
 let paginaActualPedidos = 1;
-let pedidosPorPagina = 20;
+let pedidosPorPagina = 40;
 let archivoSeleccionado = null;
 let materialesDB = [];
 let tiposImpresionDB = [];
