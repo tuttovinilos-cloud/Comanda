@@ -3,548 +3,1339 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>Ficha · Producción · Tuttovinilos</title>
+<title>FICHA · Producción · Tuttovinilos</title>
 <link rel="icon" href="data:,">
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/menu.css?v=34">
 
 <style>
-/* ==========================================================
-   FICHA · TUTTOVINILOS
-   Primera versión completa:
-   - Ficha editable
-   - Componentes dinámicos
-   - Materiales principales
-   - Iluminación condicional
-   - Instalación condicional
-   - Datos faltantes
-   - Vista carta imprimible
-   - Guardado local
-========================================================== */
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
 :root{
   --bg:#f0f2f9;
   --panel:#ffffff;
   --panel2:#f8f9ff;
-  --panel3:#eef2ff;
   --border:#d9deea;
   --border2:#cbd3e6;
   --text:#111827;
   --muted:#6b7280;
   --muted2:#475569;
-  --brand:#111827;
-  --blue:#2563eb;
-  --blue2:#1d4ed8;
-  --green:#16a34a;
+  --accent:#153bff;
+  --accent2:#0b1f7a;
   --red:#dc2626;
   --yellow:#f59e0b;
-  --shadow:0 18px 50px rgba(15,23,42,.10);
-  --radius:18px;
+  --green:#16a34a;
+  --orange:#ff8616;
+  --mono:'Roboto Mono',monospace;
+  --head:'Montserrat',Arial,sans-serif;
+  --body:'Inter',Arial,sans-serif;
 }
-
-html,body{
-  width:100%;
-  min-height:100%;
+html{scroll-behavior:smooth;background:var(--bg);color-scheme:light}
+body{
   background:var(--bg);
   color:var(--text);
-  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  font-size:15px;
+  font-family:var(--body);
+  min-height:100vh;
+  -webkit-tap-highlight-color:transparent;
+  padding-bottom:110px;
+  font-size:14px;
+  line-height:1.35;
 }
+button,input,select,textarea{font:inherit;color-scheme:light}
+button{touch-action:manipulation}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#eef1ff}
+::-webkit-scrollbar-thumb{background:#cbd3e6;border-radius:4px}
 
-body{
-  padding-bottom:40px;
-}
-
-/* ===========================
-   MENU / TOP
-=========================== */
-.topbar{
+/* HEADER LIMPIO */
+.header{
   position:sticky;
   top:0;
-  z-index:50;
-  background:rgba(240,242,249,.92);
-  backdrop-filter:blur(14px);
-  border-bottom:1px solid var(--border);
-}
-
-.topbar-inner{
-  max-width:1440px;
-  margin:0 auto;
-  padding:12px 16px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:14px;
-}
-
-.brandbox{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  min-width:0;
-}
-
-.logo-mark{
-  width:42px;
-  height:42px;
-  border-radius:14px;
-  background:#111827;
-  color:#fff;
+  z-index:900;
   display:grid;
-  place-items:center;
-  font-family:Montserrat,sans-serif;
-  font-weight:900;
-  letter-spacing:-1px;
-  box-shadow:0 8px 20px rgba(15,23,42,.2);
+  grid-template-columns:155px 44px minmax(0,1fr);
+  align-items:center;
+  gap:8px;
+  width:100%;
+  min-height:58px;
+  height:58px;
+  padding:10px 16px;
+  overflow:hidden;
+  background:#172bd8;
+  border-bottom:0;
+  box-shadow:0 8px 20px rgba(21,59,255,.18);
 }
-
-.brandtext{
-  display:flex;
-  flex-direction:column;
-  min-width:0;
-}
-
-.brandtext strong{
-  font-family:Montserrat,sans-serif;
-  font-weight:900;
-  font-size:16px;
-  line-height:1;
-}
-
-.brandtext span{
-  color:var(--muted);
-  font-size:12px;
-  margin-top:3px;
-  white-space:nowrap;
-}
-
-.menu-toggle{
-  display:none;
-  border:1px solid var(--border2);
-  background:var(--panel);
-  border-radius:12px;
-  padding:10px 12px;
-  font-weight:900;
-  cursor:pointer;
-}
-
-.nav{
+.logo{
+  grid-column:1;
+  grid-row:1;
+  width:155px;
+  min-width:155px;
+  max-width:155px;
+  height:38px;
   display:flex;
   align-items:center;
-  gap:7px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
-
-.nav a{
-  text-decoration:none;
-  color:#334155;
-  background:#fff;
-  border:1px solid var(--border);
-  padding:9px 12px;
-  border-radius:999px;
-  font-size:13px;
-  font-weight:800;
-  transition:.15s ease;
-}
-
-.nav a:hover{
-  transform:translateY(-1px);
-  border-color:#94a3b8;
-}
-
-.nav a.active{
-  background:#111827;
-  color:#fff;
-  border-color:#111827;
-}
-
-/* ===========================
-   LAYOUT
-=========================== */
-.wrap{
-  max-width:1440px;
-  margin:0 auto;
-  padding:18px 16px 40px;
-}
-
-.hero{
-  display:flex;
-  justify-content:space-between;
-  gap:14px;
-  align-items:flex-start;
-  margin-bottom:16px;
-}
-
-.title h1{
-  font-family:Montserrat,sans-serif;
-  font-size:30px;
-  line-height:1;
-  letter-spacing:-1.2px;
-  font-weight:900;
-}
-
-.title p{
-  color:var(--muted2);
-  margin-top:7px;
-  max-width:760px;
-}
-
-.actions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
-
-.btn{
+  justify-content:flex-start;
+  padding:0;
+  margin:0;
   border:0;
-  border-radius:13px;
-  padding:11px 14px;
+  overflow:hidden;
+  font-family:var(--head);
   font-weight:900;
-  cursor:pointer;
-  background:#111827;
+  text-transform:uppercase;
+}
+.logo img{
+  display:block;
+  width:auto;
+  height:34px;
+  max-width:138px;
+  max-height:34px;
+  object-fit:contain;
+}
+.logo small{display:none}
+.noti-btn,#notiBtnGlobal{
+  grid-column:2;
+  grid-row:1;
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:38px;
+  min-width:38px;
+  max-width:38px;
+  height:34px;
+  min-height:34px;
+  max-height:34px;
+  padding:0;
+  margin:0;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.30);
+  background:rgba(255,255,255,.12);
   color:#fff;
-  box-shadow:0 8px 18px rgba(15,23,42,.12);
-  transition:.12s ease;
-  font-family:Inter,sans-serif;
+  font-size:13px;
+  box-shadow:none;
+  cursor:pointer;
+}
+.noti-btn:hover{background:rgba(255,255,255,.18)}
+.noti-count{
+  min-width:22px;
+  height:22px;
+  padding:0 6px;
+  border-radius:999px;
+  background:var(--red);
+  color:#fff;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-family:var(--mono);
+  font-size:11px;
+}
+#notiBtnGlobal .noti-count{
+  position:absolute;
+  right:-4px;
+  top:-5px;
+  transform:none;
+  min-width:16px;
+  height:16px;
+  padding:0 4px;
+  background:#e5e7eb;
+  color:#64748b;
+  font-size:8px;
+  font-weight:900;
+  border:1px solid rgba(255,255,255,.45);
+}
+#notiBtnGlobal .noti-count:not(.empty){background:#dc2626;color:#fff}
+.noti-count.empty{background:#e5e7eb;color:#64748b}
+.header-tabs{
+  grid-column:3;
+  grid-row:1;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:5px;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  height:36px;
+  padding:0;
+  margin:0;
+  border:0;
+  overflow:hidden;
+  opacity:1;
+  visibility:visible;
+  flex-wrap:nowrap;
+}
+html.loading-menu .header-tabs{opacity:0;visibility:hidden}
+html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1;visibility:visible}
+.tab-btn,.header-tabs .tab-btn,.header-tabs .storage-pill{
+  flex:0 1 auto;
+  height:30px;
+  min-height:30px;
+  max-height:30px;
+  padding:0 9px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.28);
+  background:rgba(255,255,255,.10);
+  color:#fff;
+  font-family:var(--head);
+  font-size:9.5px;
+  font-weight:900;
+  letter-spacing:.25px;
+  line-height:1;
+  text-transform:uppercase;
+  text-decoration:none;
+  white-space:nowrap;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  box-shadow:none;
+  overflow:hidden;
+  cursor:pointer;
+}
+.tab-btn:hover,.header-tabs .tab-btn:hover{
+  background:rgba(255,255,255,.18);
+  border-color:rgba(255,255,255,.45);
+  color:#fff;
+}
+.tab-btn.active,.header-tabs .tab-btn.active{
+  background:#fff;
+  color:#153bff;
+  border-color:#fff;
+}
+.mobile-menu-btn{
+  display:none;
+  margin-left:auto;
+  min-height:31px;
+  height:31px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.30);
+  background:rgba(255,255,255,.12);
+  color:#fff;
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  cursor:pointer;
 }
 
-.btn:hover{transform:translateY(-1px)}
-.btn.secondary{
+/* TOOLBAR */
+.toolbar{
+  position:sticky;
+  top:58px;
+  z-index:700;
+  display:grid;
+  grid-template-columns:minmax(340px,1fr) 120px 120px 135px 135px 120px;
+  gap:8px;
+  align-items:center;
+  width:100%;
+  padding:10px 14px;
   background:#fff;
-  color:#111827;
-  border:1px solid var(--border2);
+  border-bottom:1px solid #d9deea;
+  box-shadow:0 4px 18px rgba(0,0,0,.045);
+  margin:0;
+}
+.search-wrap{
+  width:100%;
+  min-width:0;
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border-radius:14px;
+  background:#fff;
+  border:1px solid #d9deea;
+  padding:9px 12px;
   box-shadow:none;
 }
-.btn.blue{background:var(--blue)}
-.btn.green{background:var(--green)}
-.btn.red{background:var(--red)}
-.btn.small{
+.search-wrap input{
+  width:100%;
+  min-width:0;
+  background:none;
+  border:none;
+  outline:none;
+  color:#111827;
+  font-family:var(--mono);
+  font-size:13px;
+}
+.search-wrap input::placeholder{color:#8a94a6}
+.filter-sel,#filterStatus,#filterPago,#filterFechaDesde,#filterFechaHasta,#filterOperador{
+  width:100%;
+  min-width:0;
+  max-width:none;
+  min-height:42px;
+  height:42px;
+  border-radius:12px;
+  border:1px solid #d9deea;
+  background:#fff;
+  color:#153bff;
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:900;
   padding:8px 10px;
-  font-size:12px;
-  border-radius:10px;
+  outline:none;
+  cursor:pointer;
+  flex:none;
 }
-
-.grid{
-  display:grid;
-  grid-template-columns:minmax(0,1.04fr) minmax(390px,.96fr);
-  gap:16px;
-  align-items:start;
-}
-
-.card{
+.toolbar > #storageBadge{display:none}
+.storage-badge{
+  display:flex;
+  align-items:center;
+  gap:6px;
   background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  overflow:hidden;
+  border:1px solid var(--border2);
+  border-radius:7px;
+  padding:8px 10px;
+  white-space:nowrap;
+  min-height:40px;
+}
+.storage-dot{width:8px;height:8px;border-radius:50%;background:var(--yellow)}
+.storage-badge.ok .storage-dot{background:var(--green)}
+.storage-badge span{
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1px;
+  color:var(--muted2);
+  text-transform:uppercase;
 }
 
-.card-head{
-  padding:15px 16px;
-  border-bottom:1px solid var(--border);
+/* TABLE */
+.table-wrap{
+  overflow-x:auto;
+  margin-top:0;
+  padding:0 0 130px;
+  -webkit-overflow-scrolling:touch;
+  background:#f0f2f9;
+  position:relative;
+  z-index:1;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+  min-width:1320px;
+  background:#fff;
+}
+thead tr{border-bottom:1px solid #d9deea;background:#eef1ff}
+th{
+  position:static;
+  z-index:40;
+  background:#eef1ff;
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+  color:#5b6474;
+  padding:10px;
+  text-align:left;
+  white-space:nowrap;
+}
+td{
+  padding:10px;
+  font-size:12px;
+  line-height:1.25;
+  vertical-align:middle;
+  border-bottom:1px solid #e4e8f2;
+  color:#111827;
+  background:#fff;
+}
+tbody tr{transition:none;cursor:pointer}
+tbody tr:nth-child(even) td{background:#fbfcff}
+tbody tr:hover td{background:#f3f6ff}
+tbody::before{content:"";display:block;height:6px}
+th:nth-child(1),td:nth-child(1){width:44px;min-width:44px;text-align:center}
+th:nth-child(2),td:nth-child(2){width:90px;min-width:90px}
+th:nth-child(3),td:nth-child(3){width:110px;min-width:110px}
+th:nth-child(4),td:nth-child(4){width:145px;min-width:145px}
+th:nth-child(5),td:nth-child(5){width:225px;min-width:225px;max-width:225px}
+th:nth-child(6),td:nth-child(6){width:105px;min-width:105px}
+th:nth-child(7),td:nth-child(7){width:130px;min-width:130px}
+th:nth-child(8),td:nth-child(8){width:130px;min-width:130px}
+th:nth-child(9),td:nth-child(9){display:none}
+th:nth-child(10),td:nth-child(10){width:110px;min-width:110px}
+th:nth-child(11),td:nth-child(11){width:110px;min-width:110px}
+th:nth-child(12),td:nth-child(12){width:90px;min-width:90px;text-align:center}
+th:nth-child(13),td:nth-child(13){width:105px;min-width:105px}
+th:nth-child(14),td:nth-child(14){width:90px;min-width:90px;text-align:center}
+#orderTableBody td:nth-child(2){color:#4b5563;font-size:11px;font-family:var(--mono)}
+#orderTableBody td:nth-child(3){font-family:var(--body);font-size:12px;color:#111827;font-weight:700}
+#orderTableBody td:nth-child(4){font-size:12px;color:#0b1f7a;font-weight:800}
+#orderTableBody td:nth-child(5){
+  font-size:12px;
+  color:#111827;
+  line-height:1.3;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  cursor:help;
+}
+#orderTableBody td:nth-child(5):hover{
+  white-space:normal;
+  overflow:visible;
+  position:relative;
+  z-index:20;
+  box-shadow:0 8px 24px rgba(0,0,0,.16);
+  border-radius:8px;
+}
+
+/* CONTROLS */
+.cell-edit,.cell-select,.quick-input,.quick-select,.quick-btn{
+  width:100%;
+  background:#fff;
+  border:1px solid #d9deea;
+  color:#111827;
+  border-radius:10px;
+  padding:7px 8px;
+  font-family:var(--body);
+  font-size:12px;
+  outline:none;
+  transition:none;
+}
+.cell-edit:focus,.cell-select:focus,.quick-input:focus,.quick-select:focus{
+  border-color:#153bff;
+  box-shadow:0 0 0 3px rgba(21,59,255,.10);
+}
+.cell-select option,.quick-select option,.filter-sel option,select option,select optgroup{background:#fff;color:#111827}
+.cell-edit:disabled,.quick-input:disabled,.quick-select:disabled{opacity:.55;cursor:not-allowed}
+.quick-entry-row th{
+  background:#f8f9ff;
+  padding:6px;
+  border-bottom:1px solid #d9deea;
+  position:static;
+  z-index:20;
+}
+.quick-btn,.btn-add{
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+  background:#153bff;
+  border-color:#153bff;
+  cursor:pointer;
+  color:#fff;
+  min-height:34px;
+  border-radius:12px;
+  border:1px solid #153bff;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  text-decoration:none;
+}
+.quick-btn.secondary,.btn-add.secondary,.quick-mini-btn,.modal-close{
+  background:#fff;
+  color:#153bff;
+  border-color:#cbd3e6;
+  box-shadow:none;
+}
+.quick-textarea{min-height:38px;max-height:54px;resize:vertical;line-height:1.25}
+.quick-textarea:focus{min-height:78px;max-height:120px}
+.quick-hint{font-size:10px;color:#6b7280;margin-top:2px;text-align:left}
+.quick-mini-btn{
+  width:34px;
+  min-width:34px;
+  height:34px;
+  border-radius:7px;
+  border:1px dashed #cbd3e6;
+  background:#fff;
+  color:#153bff;
+  cursor:pointer;
+  font-weight:700;
+}
+.quick-mini-btn:hover{border-color:#153bff;background:#eef1ff}
+.add-symbol-btn{
+  width:52px;
+  min-width:52px;
+  height:38px;
+  min-height:38px;
+  font-size:25px;
+  font-weight:900;
+  line-height:1;
+  padding:4px 8px;
+  border-radius:14px;
+  margin-inline:auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.add-symbol-btn:active{transform:scale(.94);filter:brightness(.92)}
+.quick-entry-row.guardando th{background:#eef1ff}
+.quick-entry-row.guardado th{background:#dcfce7;transition:background .25s ease}
+.quick-entry-row.error-guardado th{background:#fee2e2;transition:background .25s ease}
+
+/* STATUS */
+.status-solicitud,.estado-solicitud,td.estado-solicitud,select.estado-solicitud{
+  color:#dc2626!important;border-color:#fecaca!important;background:#fee2e2!important;font-weight:800!important;
+}
+.status-en-curso,.status-encurso,.estado-en-curso,td.estado-en-curso,select.estado-en-curso{
+  color:#ffffff!important;border-color:#111827!important;background:#111827!important;font-weight:800!important;
+}
+.status-revisado,.estado-revisado,td.estado-revisado,select.estado-revisado{
+  color:#92400e!important;border-color:#fde68a!important;background:#fef3c7!important;font-weight:800!important;
+}
+.status-listo,.estado-listo,td.estado-listo,select.estado-listo{
+  color:#166534!important;border-color:#86efac!important;background:#dcfce7!important;font-weight:800!important;
+}
+.pago-pendiente,td.pago-pendiente,select.pago-pendiente{
+  color:#dc2626!important;border-color:#fecaca!important;background:#fee2e2!important;font-weight:800!important;
+}
+.pago-abonado,td.pago-abonado,select.pago-abonado{
+  color:#92400e!important;border-color:#fde68a!important;background:#fef3c7!important;font-weight:800!important;
+}
+.pago-pagado,td.pago-pagado,select.pago-pagado{
+  color:#166534!important;border-color:#86efac!important;background:#dcfce7!important;font-weight:800!important;
+}
+#orderTableBody td.estado-solicitud,#orderTableBody td.estado-en-curso,#orderTableBody td.estado-revisado,#orderTableBody td.estado-listo,#orderTableBody td.pago-pendiente,#orderTableBody td.pago-abonado,#orderTableBody td.pago-pagado{
+  background:inherit!important;
+  border-color:#e4e8f2!important;
+}
+#orderTableBody td select.estado-solicitud,#orderTableBody td select.estado-en-curso,#orderTableBody td select.estado-revisado,#orderTableBody td select.estado-listo,#orderTableBody td select.pago-pendiente,#orderTableBody td select.pago-abonado,#orderTableBody td select.pago-pagado{
+  border-radius:999px!important;
+  min-height:34px!important;
+  text-align:center!important;
+  text-align-last:center!important;
+  padding-left:10px!important;
+  padding-right:26px!important;
+  box-shadow:none!important;
+}
+.abono-cell{font-weight:900!important;text-align:center!important;font-variant-numeric:tabular-nums!important}
+.abono-pos{color:#16a34a!important;background:#dcfce7!important}
+.abono-neg{color:#dc2626!important;background:#fee2e2!important}
+.abono-zero{color:#6b7280!important;background:#f8f9ff!important}
+.abono-edit{
+  width:92px!important;
+  min-height:32px!important;
+  text-align:center!important;
+  font-weight:900!important;
+  border-radius:10px!important;
+  padding:6px 8px!important;
+  font-variant-numeric:tabular-nums!important;
+}
+.abono-edit.abono-pos{color:#16a34a!important;border-color:#86efac!important;background:#f0fdf4!important}
+.abono-edit.abono-neg{color:#dc2626!important;border-color:#fecaca!important;background:#fef2f2!important}
+.abono-edit.abono-zero{color:#6b7280!important;border-color:#d9deea!important;background:#f8f9ff!important}
+#q_monto_abonado.abono-pos,#f_monto_abonado.abono-pos{color:#16a34a!important;border-color:#86efac!important;background:#f0fdf4!important}
+#q_monto_abonado.abono-neg,#f_monto_abonado.abono-neg{color:#dc2626!important;border-color:#fecaca!important;background:#fef2f2!important}
+
+/* CATALOG */
+.catalog-pill{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:999px!important;
+  padding:5px 9px!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  line-height:1!important;
+  min-width:54px!important;
+  min-height:24px!important;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)!important;
+  white-space:nowrap!important;
+  transition:none!important;
+  animation:none!important;
+}
+.catalog-select-colored{font-weight:800!important;border-radius:10px!important;transition:none!important;animation:none!important}
+
+/* FILES / MODAL / TOAST */
+.empty{text-align:center;padding:60px 20px;color:#6b7280;font-family:var(--head);font-size:15px;letter-spacing:2px}
+.file-link-chip,.quick-attach-link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border:1px solid #cbd3e6;
+  border-radius:999px;
+  background:#eef1ff;
+  color:#153bff;
+  cursor:pointer;
+  font-family:var(--head);
+  font-size:11px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  text-decoration:none;
+  transition:none;
+}
+.file-link-chip:hover,.quick-attach-link:hover{border-color:#153bff;background:#e4e9ff}
+.backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(17,24,39,.35);
+  z-index:1000;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  backdrop-filter:blur(3px);
+  padding:0;
+}
+.modal{
+  background:#fff;
+  border:1px solid #d9deea;
+  width:100%;
+  max-width:560px;
+  max-height:94vh;
+  overflow-y:auto;
+  border-radius:14px 14px 0 0;
+  box-shadow:0 24px 80px rgba(17,24,39,.22);
+  animation:slideUp .22s ease;
+}
+@keyframes slideUp{from{transform:translateY(50px);opacity:0}to{transform:none;opacity:1}}
+.modal-handle{width:36px;height:4px;background:#cbd3e6;border-radius:2px;margin:10px auto 0}
+.modal-header{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:12px;
-  background:linear-gradient(180deg,#fff,#f8f9ff);
+  padding:16px 20px;
+  border-bottom:1px solid #d9deea;
+  background:#fff;
 }
-
-.card-head h2{
-  font-family:Montserrat,sans-serif;
+.modal-title{font-family:var(--head);font-size:18px;font-weight:900;letter-spacing:.35px;color:#153bff;text-transform:uppercase}
+.modal-close{
+  width:32px;
+  height:32px;
+  border-radius:7px;
+  border:1px solid #cbd3e6;
+  background:#fff;
+  color:#153bff;
+  cursor:pointer;
   font-size:16px;
-  font-weight:900;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.modal-close:hover{border-color:#dc2626;color:#dc2626}
+.modal-body{padding:20px;display:flex;flex-direction:column;gap:14px}
+.modal-footer{
+  padding:14px 20px;
+  border-top:1px solid #d9deea;
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  background:#fff;
+}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.35px;
+  color:#6b7280;
+  text-transform:uppercase;
+}
+.field input,.field select,.field textarea{
+  background:#fff;
+  border:1px solid #d9deea;
+  color:#111827;
+  border-radius:8px;
+  padding:10px 12px;
+  font-family:var(--body);
+  font-size:14px;
+  outline:none;
+  width:100%;
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:#153bff;
+  box-shadow:0 0 0 3px rgba(21,59,255,.10);
+}
+.field input:disabled,.field select:disabled,.field textarea:disabled{opacity:.55;cursor:not-allowed}
+.field textarea{resize:vertical;min-height:76px}
+.file-drop{
+  border:2px dashed #cbd3e6;
+  border-radius:10px;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:90px;
+  background:#f8f9ff;
+}
+.file-drop:hover{border-color:#153bff;background:#eef1ff}
+.file-preview-box{
+  border:1px solid #d9deea;
+  border-radius:10px;
+  overflow:hidden;
+  position:relative;
+  background:#f8f9ff;
+  min-height:90px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.file-remove-btn{
+  position:absolute;
+  top:6px;
+  right:6px;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:#0009;
+  border:1px solid #ffffff22;
+  color:#fff;
+  font-size:12px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.file-remove-btn:hover{background:#dc2626}
+#rowFileInput{display:none}
+.noti-list{display:grid;gap:10px}
+.noti-item{
+  border:1px solid #d9deea;
+  background:#f8f9ff;
+  border-radius:10px;
+  padding:12px;
+  display:grid;
+  gap:6px;
+}
+.noti-item-title{font-family:var(--head);font-size:16px;font-weight:900;letter-spacing:1px;color:#153bff;text-transform:uppercase}
+.noti-item-msg{color:#111827;line-height:1.35;font-size:13px}
+.noti-item-meta{color:#6b7280;font-family:var(--mono);font-size:11px}
+.noti-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:84px;
+  transform:translateX(-50%);
+  background:#111827;
+  color:#fff;
+  border:1px solid #111827;
+  border-radius:10px;
+  padding:10px 16px;
+  z-index:999999;
+  display:none;
+  box-shadow:0 12px 35px #0008;
+  font-family:var(--head);
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+  max-width:90vw;
+  text-align:center;
 }
 
-.card-body{padding:16px}
-
-.section-title{
-  font-family:Montserrat,sans-serif;
-  font-size:13px;
+/* PAGINATION */
+.pagination-bar{
+  position:sticky;
+  left:0;
+  bottom:0;
+  z-index:120;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+  padding:12px 14px;
+  background:rgba(255,255,255,.96);
+  border-top:1px solid #d9deea;
+  box-shadow:0 -8px 24px rgba(15,23,42,.08);
+  backdrop-filter:blur(8px);
+}
+.page-btn,.page-select,.page-info{
+  min-height:36px;
+  border-radius:999px;
+  border:1px solid #cbd3e6;
+  background:#fff;
+  color:#153bff;
+  font-family:var(--head);
+  font-size:11px;
   font-weight:900;
-  color:#0f172a;
+  letter-spacing:.45px;
   text-transform:uppercase;
-  letter-spacing:.05em;
-  margin:20px 0 10px;
+  padding:8px 12px;
+  white-space:nowrap;
+}
+.page-btn,.page-select{cursor:pointer}
+.page-btn:hover{background:#eef1ff;border-color:#153bff}
+.page-btn:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(1)}
+.page-info{background:#eef1ff;color:#0b1f7a;border-color:#c7d2fe}
+
+/* RESPONSIVE */
+@media(min-width:600px){
+  .backdrop{align-items:center;padding:16px}
+  .modal{border-radius:12px;animation:popIn .18s ease}
+  @keyframes popIn{from{transform:scale(.96) translateY(10px);opacity:0}to{transform:none;opacity:1}}
+}
+@media(max-width:1280px){
+  .header{grid-template-columns:130px 42px minmax(0,1fr);padding:10px 12px}
+  .logo{width:130px;min-width:130px;max-width:130px}
+  .logo img{max-width:118px;height:31px}
+  .header-tabs{gap:4px}
+  .header-tabs .tab-btn,.header-tabs .storage-pill{font-size:8.7px;padding:0 7px;gap:3px}
+  .toolbar{grid-template-columns:minmax(300px,1fr) 112px 112px 128px 128px 112px}
+}
+@media(max-width:980px){
+  body{padding-bottom:92px}
+  .header{
+    grid-template-columns:1fr 36px auto;
+    height:auto;
+    min-height:48px;
+    overflow:visible;
+    padding:7px 9px;
+    gap:6px;
+  }
+  .logo{grid-column:1;grid-row:1;width:118px;min-width:118px;max-width:118px;height:31px}
+  .logo img{height:26px;max-width:112px}
+  .noti-btn,#notiBtnGlobal{
+    grid-column:2;
+    grid-row:1;
+    width:32px;
+    min-width:32px;
+    max-width:32px;
+    height:31px;
+    min-height:31px;
+    max-height:31px;
+    font-size:12px;
+  }
+  .mobile-menu-btn{
+    grid-column:3;
+    grid-row:1;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .header-tabs{
+    grid-column:1 / -1;
+    grid-row:2;
+    display:none;
+    width:100%;
+    height:auto;
+    margin-top:7px;
+    padding-top:7px;
+    border-top:1px solid rgba(255,255,255,.22);
+    overflow:visible;
+    grid-template-columns:1fr 1fr;
+    gap:6px;
+  }
+  .header-tabs.open{display:grid}
+  .header-tabs .tab-btn,.header-tabs .storage-pill,.tab-btn{
+    width:100%;
+    min-height:31px;
+    height:31px;
+    font-size:8.5px;
+    padding:0 7px;
+    border-radius:7px;
+    letter-spacing:.8px;
+  }
+  .toolbar{
+    position:relative;
+    top:auto;
+    z-index:500;
+    grid-template-columns:1fr 1fr;
+    padding:7px 9px;
+    gap:6px;
+  }
+  .search-wrap{grid-column:1 / -1;min-height:32px;height:32px;padding:5px 8px;border-radius:10px}
+  .search-wrap input{font-size:10px}
+  #filterFechaDesde,#filterFechaHasta{display:none}
+  .filter-sel,#filterStatus,#filterPago,#filterOperador{
+    min-height:32px;
+    height:32px;
+    font-size:9px;
+    padding:5px 7px;
+    border-radius:9px;
+  }
+  #filterOperador{grid-column:auto}
+  .table-wrap{margin:0 7px;border-radius:8px;padding-bottom:95px}
+  table{min-width:890px;font-size:9px}
+  table th:nth-child(1),table td:nth-child(1),
+  table th:nth-child(2),table td:nth-child(2),
+  table th:nth-child(3),table td:nth-child(3),
+  .quick-entry-row th:nth-child(1),
+  .quick-entry-row th:nth-child(2),
+  .quick-entry-row th:nth-child(3){display:none}
+  table th:nth-child(4),table td:nth-child(4){width:210px;min-width:210px;padding-left:22px}
+  table th:nth-child(5),table td:nth-child(5){width:330px;min-width:330px}
+  th{font-size:7.5px;padding:4px 4px;height:25px}
+  td{font-size:8.8px;padding:4px 4px;height:28px}
+  .quick-input,.quick-select,.quick-btn,.cell-edit,.cell-select{
+    min-height:27px;
+    height:27px;
+    font-size:8.8px;
+    padding:3px 5px;
+    border-radius:6px;
+  }
+  .quick-textarea{min-height:27px;max-height:38px}
+  .add-symbol-btn{width:58px;min-width:58px;height:34px;min-height:34px;font-size:24px}
+  .pagination-bar{position:relative;bottom:auto;padding:10px;gap:6px}
+  .page-btn,.page-info,.page-select{flex:1 1 calc(50% - 6px);font-size:10px;padding:8px 8px}
+}
+@media(max-width:430px){
+  .logo{width:108px;min-width:108px;max-width:108px}
+  .logo img{height:24px;max-width:104px}
+  .mobile-menu-btn{min-height:30px;height:30px;padding:5px 9px;font-size:9.5px}
+  .toolbar{padding:6px 8px;gap:5px}
+  .filter-sel,#filterStatus,#filterPago,#filterOperador{font-size:8.5px;padding:5px 6px}
+  .modal-body{padding:16px}
+  .form-grid{grid-template-columns:1fr}
+}
+
+
+
+/* =========================================================
+   FICHA.HTML · estilos propios
+   Mantiene base visual de index.html / Comanda
+========================================================= */
+.main{
+  max-width:1440px;
+  margin:0 auto;
+  padding:14px 16px 50px;
+}
+.page-hero{
+  background:linear-gradient(135deg,#ffffff,#eef1ff);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:16px;
+  margin-bottom:12px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  box-shadow:0 8px 24px rgba(15,23,42,.055);
+}
+.page-hero h1{
+  margin:0;
+  font-family:var(--head);
+  font-size:24px;
+  font-weight:900;
+  color:var(--accent2);
+  text-transform:uppercase;
+  letter-spacing:.4px;
+}
+.page-hero p{
+  margin:5px 0 0;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:700;
+  max-width:780px;
+}
+.hero-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.btn-ficha{
+  min-height:38px;
+  border-radius:999px;
+  border:1px solid #153bff;
+  background:#153bff;
+  color:#fff;
+  padding:8px 14px;
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.4px;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+.btn-ficha:hover{filter:brightness(.96)}
+.btn-ficha.light{
+  background:#fff;
+  color:#153bff;
+  border-color:#c7d2fe;
+}
+.btn-ficha.green{
+  background:#16a34a;
+  border-color:#16a34a;
+}
+.btn-ficha.red{
+  background:#dc2626;
+  border-color:#dc2626;
+}
+.btn-ficha.small{
+  min-height:30px;
+  padding:6px 10px;
+  font-size:9.5px;
+}
+.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:12px;
+}
+.kpi-card{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  min-height:78px;
+  padding:12px 14px;
+  box-shadow:0 8px 24px rgba(15,23,42,.055);
+  position:relative;
+  overflow:hidden;
+}
+.kpi-card::before{
+  content:"";
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:0;
+  width:5px;
+  background:#153bff;
+}
+.kpi-card.red::before{background:#dc2626}
+.kpi-card.green::before{background:#16a34a}
+.kpi-card.yellow::before{background:#f59e0b}
+.kpi-card.orange::before{background:#ff8616}
+.kpi-card.black::before{background:#111827}
+.kpi-card span{
+  display:block;
+  color:var(--muted);
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+}
+.kpi-card strong{
+  display:block;
+  margin-top:5px;
+  font-family:var(--head);
+  font-size:26px;
+  font-weight:900;
+  color:var(--accent2);
+}
+.ficha-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.02fr) minmax(410px,.98fr);
+  gap:12px;
+  align-items:start;
+}
+.ficha-card{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:0 8px 24px rgba(15,23,42,.055);
+  overflow:hidden;
+}
+.ficha-card-head{
+  padding:13px 14px;
+  border-bottom:1px solid var(--border);
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.ficha-card-title{
+  font-family:var(--head);
+  font-size:14px;
+  font-weight:900;
+  color:var(--accent2);
+  text-transform:uppercase;
+  letter-spacing:.35px;
+}
+.ficha-card-body{padding:14px}
+.ficha-section{
+  font-family:var(--head);
+  font-weight:900;
+  font-size:12px;
+  color:var(--accent2);
+  text-transform:uppercase;
+  letter-spacing:.35px;
+  margin:16px 0 10px;
   display:flex;
   align-items:center;
   gap:8px;
 }
-
-.section-title:first-child{margin-top:0}
-
-.section-title::before{
+.ficha-section:first-child{margin-top:0}
+.ficha-section::before{
   content:"";
   width:8px;
   height:8px;
+  background:var(--orange);
   border-radius:999px;
-  background:#111827;
 }
-
-.form-grid{
+.ficha-form-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:10px;
 }
-
-.form-grid.three{
+.ficha-form-grid.three{
   grid-template-columns:repeat(3,minmax(0,1fr));
 }
-
-.field{
+.ficha-field{
   display:flex;
   flex-direction:column;
-  gap:6px;
+  gap:5px;
 }
-
-.field label{
-  font-size:12px;
-  font-weight:900;
-  color:#334155;
+.ficha-field label{
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.35px;
+  color:var(--muted);
+  text-transform:uppercase;
 }
-
-input,select,textarea{
-  width:100%;
-  border:1px solid var(--border2);
+.ficha-field input,
+.ficha-field select,
+.ficha-field textarea{
   background:#fff;
-  border-radius:12px;
-  padding:10px 11px;
-  font:inherit;
-  color:var(--text);
+  border:1px solid var(--border);
+  color:#111827;
+  border-radius:8px;
+  padding:10px 12px;
+  font-family:var(--body);
+  font-size:14px;
   outline:none;
+  width:100%;
+  min-height:40px;
 }
-
-textarea{
-  min-height:82px;
+.ficha-field textarea{
   resize:vertical;
+  min-height:78px;
 }
-
-input:focus,select:focus,textarea:focus{
-  border-color:#64748b;
-  box-shadow:0 0 0 3px rgba(37,99,235,.08);
+.ficha-field input:focus,
+.ficha-field select:focus,
+.ficha-field textarea:focus{
+  border-color:#153bff;
+  box-shadow:0 0 0 3px rgba(21,59,255,.10);
 }
-
+.ficha-muted{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+}
+.item-box{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  margin-bottom:10px;
+  box-shadow:0 6px 18px rgba(15,23,42,.04);
+}
+.item-head{
+  background:#f8f9ff;
+  border-bottom:1px solid var(--border);
+  padding:10px 12px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+}
+.item-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+.item-num{
+  width:28px;
+  height:28px;
+  border-radius:8px;
+  background:#153bff;
+  color:#fff;
+  display:grid;
+  place-items:center;
+  font-family:var(--head);
+  font-weight:900;
+  font-size:12px;
+}
+.item-title strong{
+  font-family:var(--head);
+  color:#111827;
+  font-size:13px;
+  text-transform:uppercase;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.item-body{padding:12px}
 .switch-row{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:10px;
+  gap:8px;
+  margin:10px 0;
 }
-
 .switch-card{
-  border:1px solid var(--border2);
-  background:var(--panel2);
-  border-radius:14px;
-  padding:12px;
+  border:1px solid var(--border);
+  background:#f8f9ff;
+  border-radius:12px;
+  padding:11px;
 }
-
 .switch-card label{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:10px;
+  font-family:var(--head);
+  font-size:11px;
   font-weight:900;
-  cursor:pointer;
+  text-transform:uppercase;
+  color:var(--accent2);
 }
-
 .switch-card input{
   width:20px;
   height:20px;
-  accent-color:#111827;
+  accent-color:#153bff;
 }
-
-.muted{
-  color:var(--muted);
-  font-size:12px;
-  margin-top:4px;
-}
-
-.conditional{
-  display:none;
-}
-
-.conditional.show{
-  display:block;
-}
-
-/* ===========================
-   COMPONENTES
-=========================== */
-.component{
-  border:1px solid var(--border);
-  background:#fff;
-  border-radius:16px;
-  padding:13px;
-  margin-bottom:12px;
-  box-shadow:0 6px 15px rgba(15,23,42,.04);
-}
-
-.component-top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  margin-bottom:10px;
-}
-
-.component-title{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  font-weight:900;
-  font-family:Montserrat,sans-serif;
-}
-
-.badge{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-height:24px;
-  padding:3px 8px;
-  border-radius:999px;
-  font-size:11px;
-  font-weight:900;
-  border:1px solid var(--border2);
-  background:#f8fafc;
-  color:#334155;
-}
-
-.badge.dark{
-  background:#111827;
-  color:#fff;
-  border-color:#111827;
-}
-
-.check-editor{
-  display:grid;
-  gap:7px;
-  margin-top:10px;
-}
-
-.check-line{
+.conditional{display:none}
+.conditional.show{display:block}
+.check-line,
+.simple-row{
   display:grid;
   grid-template-columns:1fr auto;
   gap:8px;
   align-items:center;
-}
-
-.check-line input{padding:8px 10px}
-
-/* ===========================
-   MATERIALS
-=========================== */
-.material-row{
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:8px;
   margin-bottom:8px;
 }
-
-/* ===========================
-   PRINT PREVIEW
-=========================== */
-.preview-wrap{
-  position:sticky;
-  top:88px;
+.check-line input,
+.simple-row input{
+  background:#fff;
+  border:1px solid var(--border);
+  color:#111827;
+  border-radius:8px;
+  padding:9px 12px;
+  font-family:var(--body);
+  font-size:14px;
+  outline:none;
+  width:100%;
+}
+.add-item-zone{
+  border:2px dashed #c7d2fe;
+  background:#f8f9ff;
+  border-radius:16px;
+  padding:14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.add-item-zone strong{
+  font-family:var(--head);
+  color:var(--accent2);
+  text-transform:uppercase;
+  letter-spacing:.35px;
+}
+.img-preview{
+  margin-top:8px;
+  max-width:100%;
+  max-height:170px;
+  object-fit:contain;
+  border-radius:10px;
+  border:1px solid var(--border);
+  display:none;
+  background:#fff;
+}
+.saved-list{display:grid;gap:8px}
+.saved-item{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  align-items:center;
+}
+.saved-item strong{
+  display:block;
+  font-family:var(--head);
+  font-size:12px;
+  color:#111827;
+  text-transform:uppercase;
+}
+.saved-item span{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin-top:2px;
+  font-weight:700;
 }
 
+/* VISTA CARTA */
+.preview-wrap{position:sticky;top:70px}
 .paper{
   background:#fff;
   width:100%;
   max-width:816px;
   min-height:1056px;
   margin:0 auto;
-  border:1px solid #d4d4d8;
+  border:1px solid #cbd3e6;
   box-shadow:0 20px 60px rgba(15,23,42,.18);
   padding:28px;
   color:#111827;
 }
-
 .paper-header{
   display:grid;
   grid-template-columns:1fr auto;
   gap:18px;
   align-items:start;
-  padding-bottom:14px;
-  border-bottom:3px solid #111827;
+  padding-bottom:13px;
+  border-bottom:4px solid #172bd8;
 }
-
 .paper-brand{
   display:flex;
-  gap:12px;
   align-items:center;
+  gap:12px;
 }
-
-.paper-logo{
-  width:45px;
-  height:45px;
-  border-radius:13px;
-  background:#111827;
-  color:#fff;
-  display:grid;
-  place-items:center;
-  font-family:Montserrat,sans-serif;
-  font-weight:900;
+.paper-brand img{
+  max-width:145px;
+  max-height:42px;
+  object-fit:contain;
 }
-
 .paper-brand h3{
-  font-family:Montserrat,sans-serif;
-  font-size:20px;
+  font-family:var(--head);
+  font-size:19px;
+  color:#172bd8;
   line-height:1;
 }
-
 .paper-brand p{
-  font-size:11px;
   color:#475569;
-  margin-top:4px;
+  font-size:11px;
+  font-weight:800;
+  margin-top:3px;
 }
-
 .paper-code{
   text-align:right;
-  font-family:Roboto Mono,monospace;
-  font-size:12px;
+  font-family:var(--mono);
+  font-size:11px;
+  color:#111827;
 }
-
 .paper-code strong{
-  font-family:Montserrat,sans-serif;
   display:block;
+  font-family:var(--head);
   font-size:18px;
+  color:#172bd8;
 }
-
 .paper-title{
   margin:14px 0 10px;
 }
-
 .paper-title h2{
-  font-family:Montserrat,sans-serif;
+  font-family:var(--head);
   font-size:22px;
   font-weight:900;
-  letter-spacing:-.5px;
+  color:#111827;
+  text-transform:uppercase;
+  line-height:1.05;
 }
-
 .paper-title p{
   color:#475569;
   font-size:12px;
   margin-top:3px;
+  font-weight:800;
 }
-
 .paper-grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   border:1px solid #111827;
   margin:12px 0;
 }
-
 .info-box{
   padding:7px 8px;
   border-right:1px solid #111827;
   border-bottom:1px solid #111827;
   min-height:43px;
 }
-
 .info-box:nth-child(4n){border-right:0}
 .info-box label{
   display:block;
@@ -552,67 +1343,64 @@ input:focus,select:focus,textarea:focus{
   text-transform:uppercase;
   letter-spacing:.06em;
   color:#475569;
+  font-family:var(--head);
   font-weight:900;
   margin-bottom:2px;
 }
 .info-box strong{
   font-size:12px;
   line-height:1.1;
+  font-weight:900;
 }
-
 .critical{
-  border:2px solid #111827;
-  background:#fef3c7;
+  border:2px solid #172bd8;
+  background:#eef1ff;
   padding:10px 12px;
   margin:12px 0;
 }
-
 .critical h4{
-  font-family:Montserrat,sans-serif;
+  font-family:var(--head);
+  color:#172bd8;
   font-size:12px;
   text-transform:uppercase;
   margin-bottom:4px;
 }
-
 .critical p{
   font-size:12px;
   white-space:pre-wrap;
+  font-weight:700;
 }
-
-.paper-section{
-  margin-top:13px;
-}
-
+.paper-section{margin-top:13px}
 .paper-section h4{
-  font-family:Montserrat,sans-serif;
-  background:#111827;
+  font-family:var(--head);
+  background:#172bd8;
   color:#fff;
   padding:6px 8px;
   font-size:11px;
   text-transform:uppercase;
   letter-spacing:.05em;
 }
-
+.paper-section.missing h4{background:#991b1b}
+.paper-section.missing{border:2px solid #991b1b;background:#fee2e2}
 .paper-table{
   width:100%;
   border-collapse:collapse;
   font-size:11px;
 }
-
 .paper-table th{
   background:#f1f5f9;
   text-align:left;
-  font-size:9px;
+  font-size:8.5px;
   text-transform:uppercase;
   letter-spacing:.04em;
+  font-family:var(--head);
 }
-
-.paper-table th,.paper-table td{
+.paper-table th,
+.paper-table td{
   border:1px solid #111827;
   padding:6px 7px;
   vertical-align:top;
 }
-
 .paper-list{
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -620,7 +1408,6 @@ input:focus,select:focus,textarea:focus{
   border:1px solid #111827;
   border-top:0;
 }
-
 .paper-check{
   border-top:1px solid #111827;
   padding:6px 8px;
@@ -629,107 +1416,49 @@ input:focus,select:focus,textarea:focus{
   display:flex;
   gap:7px;
   align-items:flex-start;
+  font-weight:700;
 }
-
 .paper-check:nth-child(1),
-.paper-check:nth-child(2){
-  border-top:0;
+.paper-check:nth-child(2){border-top:0}
+.paper-check:nth-child(odd){border-right:1px solid #111827}
+.box{font-family:var(--mono);font-weight:900}
+.paper-img{
+  max-width:130px;
+  max-height:95px;
+  object-fit:contain;
+  border:1px solid #111827;
+  border-radius:7px;
+  background:#fff;
 }
-
-.paper-check:nth-child(odd){
-  border-right:1px solid #111827;
-}
-
-.box{
-  font-family:Roboto Mono,monospace;
-  font-weight:900;
-}
-
-.missing{
-  background:#fee2e2;
-  border:2px solid #991b1b;
-}
-
-.missing h4{
-  background:#991b1b;
-}
-
 .footer-note{
   margin-top:16px;
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:12px;
   font-size:11px;
+  font-weight:800;
 }
-
 .sign-box{
   border-top:1px solid #111827;
   padding-top:5px;
   margin-top:22px;
 }
 
-/* ===========================
-   LISTADO GUARDADO
-=========================== */
-.saved-list{
-  display:grid;
-  gap:8px;
-}
-
-.saved-item{
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:8px;
-  align-items:center;
-  border:1px solid var(--border);
-  border-radius:13px;
-  padding:10px;
-  background:#fff;
-}
-
-.saved-item strong{
-  display:block;
-  font-size:13px;
-}
-
-.saved-item span{
-  display:block;
-  color:var(--muted);
-  font-size:12px;
-  margin-top:2px;
-}
-
-/* ===========================
-   PRINT
-=========================== */
+/* PRINT */
 @media print{
-  body{
-    background:#fff;
-    padding:0;
+  body{background:#fff;padding:0}
+  .header,
+  .page-hero,
+  .kpi-grid,
+  .editor-panel{
+    display:none!important;
   }
-  .topbar,.hero,.editor-panel,.saved-panel{
-    display:none !important;
-  }
-  .wrap{
-    padding:0;
-    max-width:none;
-  }
-  .grid{
-    display:block;
-  }
-  .preview-wrap{
-    position:static;
-  }
-  .preview-card{
-    border:0;
-    box-shadow:none;
-  }
-  .preview-card .card-head{
-    display:none;
-  }
-  .preview-card .card-body{
-    padding:0;
-  }
+  .main{padding:0;max-width:none}
+  .ficha-grid{display:block}
+  .preview-wrap{position:static}
+  .preview-card{border:0;box-shadow:none}
+  .preview-card .ficha-card-head{display:none}
+  .preview-card .ficha-card-body{padding:0}
   .paper{
     width:8.5in;
     min-height:11in;
@@ -741,159 +1470,102 @@ input:focus,select:focus,textarea:focus{
   }
 }
 
-/* ===========================
-   RESPONSIVE
-=========================== */
-@media (max-width:1080px){
-  .grid{
-    grid-template-columns:1fr;
-  }
-  .preview-wrap{
-    position:static;
-  }
+@media(max-width:1120px){
+  .ficha-grid{grid-template-columns:1fr}
+  .preview-wrap{position:static}
+}
+@media(max-width:760px){
+  .main{padding:10px 10px 40px}
+  .page-hero{flex-direction:column}
+  .hero-actions{width:100%;display:grid;grid-template-columns:repeat(3,1fr)}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .ficha-form-grid,
+  .ficha-form-grid.three,
+  .switch-row{grid-template-columns:1fr}
+  .paper{padding:18px;min-height:auto}
+  .paper-grid{grid-template-columns:repeat(2,1fr)}
+  .info-box:nth-child(2n){border-right:0}
+  .paper-list{grid-template-columns:1fr}
+  .paper-check:nth-child(odd){border-right:0}
+  .paper-check:nth-child(2){border-top:1px solid #111827}
+  .add-item-zone{flex-direction:column;align-items:stretch}
 }
 
-@media (max-width:780px){
-  .topbar-inner{
-    align-items:flex-start;
-  }
-  .menu-toggle{
-    display:block;
-  }
-  .nav{
-    display:none;
-    position:absolute;
-    top:67px;
-    left:10px;
-    right:10px;
-    background:#fff;
-    border:1px solid var(--border);
-    border-radius:18px;
-    padding:10px;
-    box-shadow:var(--shadow);
-    justify-content:flex-start;
-  }
-  .nav.open{display:flex}
-  .nav a{
-    width:calc(50% - 4px);
-    text-align:center;
-  }
-  .hero{
-    flex-direction:column;
-  }
-  .actions{
-    width:100%;
-    justify-content:stretch;
-  }
-  .actions .btn{
-    flex:1;
-  }
-  .form-grid,.form-grid.three,.switch-row{
-    grid-template-columns:1fr;
-  }
-  .paper{
-    padding:18px;
-    min-height:auto;
-  }
-  .paper-grid{
-    grid-template-columns:repeat(2,1fr);
-  }
-  .info-box:nth-child(2n){border-right:0}
-  .info-box:nth-child(4n){border-right:0}
-  .paper-list{
-    grid-template-columns:1fr;
-  }
-  .paper-check:nth-child(odd){
-    border-right:0;
-  }
-  .paper-check:nth-child(2){
-    border-top:1px solid #111827;
-  }
-}
 </style>
 </head>
 
 <body>
-
-<header class="topbar">
-  <div class="topbar-inner">
-    <div class="brandbox">
-      <div class="logo-mark">TV</div>
-      <div class="brandtext">
-        <strong>Tuttovinilos</strong>
-        <span>Ficha de producción</span>
-      </div>
-    </div>
-
-    <button class="menu-toggle" onclick="toggleMenu()">☰ Menú</button>
-
-    <nav class="nav" id="mainNav">
-      <a href="index.html">Pedidos</a>
-      <a href="cotizador.html">Cotizador</a>
-      <a href="ficha.html" class="active">Ficha</a>
-      <a href="estadisticas.html">Estadísticas</a>
-      <a href="materiales.html">Materiales</a>
-      <a href="marketing.html">Marketing</a>
-      <a href="label.html">Label</a>
-      <a href="configuracion.html">Configuración</a>
-    </nav>
+<header class="header">
+  <div class="logo">
+    <img src="Logo tutto1.svg" alt="Tutto Vinilos">
+    <small>FICHA</small>
   </div>
+
+  <button class="noti-btn" id="notiBtnGlobal" type="button" onclick="abrirNotificaciones()">
+    🔔 <span class="noti-count empty" id="notiCount">0</span>
+  </button>
+
+  <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menú">☰ Menú</button>
+
+  <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
 </header>
 
-<main class="wrap">
+<main class="main">
 
-  <section class="hero">
-    <div class="title">
-      <h1>Ficha</h1>
-      <p>Ficha de producción imprimible en hoja carta. Roberto arma la ficha; producción trabaja con checklist físico o visual en cartelera.</p>
+  <section class="page-hero">
+    <div>
+      <h1>Ficha de producción</h1>
+      <p>Datos del proyecto arriba. Cada ítem maneja material, medida, acabado, luz, instalación, ambiente e imagen opcional.</p>
     </div>
 
-    <div class="actions">
-      <button class="btn secondary" onclick="nuevaFicha()">Nueva</button>
-      <button class="btn blue" onclick="guardarFicha()">Guardar</button>
-      <button class="btn green" onclick="window.print()">Imprimir</button>
+    <div class="hero-actions">
+      <button class="btn-ficha light" type="button" onclick="nuevaFicha()">Nueva</button>
+      <button class="btn-ficha" type="button" onclick="guardarFicha()">Guardar</button>
+      <button class="btn-ficha green" type="button" onclick="window.print()">Imprimir</button>
     </div>
   </section>
 
-  <section class="grid">
+  <section class="kpi-grid" id="resumenPendientes"></section>
 
-    <!-- ===========================
-         EDITOR
-    ============================ -->
-    <div class="card editor-panel">
-      <div class="card-head">
-        <h2>Editor de ficha</h2>
-        <span class="badge dark" id="codigoBadge">FT</span>
+  <section class="ficha-grid">
+
+    <div class="ficha-card editor-panel">
+      <div class="ficha-card-head">
+        <div class="ficha-card-title">Editor</div>
+        <div class="storage-pill menu-status" style="color:#0b1f7a;background:#f8f9ff;border-color:#d9deea">
+          <span class="status-dot"></span>
+          <span id="codigoBadge">FT</span>
+        </div>
       </div>
 
-      <div class="card-body">
+      <div class="ficha-card-body">
 
-        <div class="section-title">Datos generales</div>
+        <div class="ficha-section">Datos del proyecto</div>
 
-        <div class="form-grid three">
-          <div class="field">
+        <div class="ficha-form-grid three">
+          <div class="ficha-field">
             <label>Código</label>
             <input id="codigo" readonly>
           </div>
 
-          <div class="field">
-            <label>Cliente</label>
+          <div class="ficha-field">
+            <label>Nombre del cliente / empresa</label>
             <input id="cliente" placeholder="Ej: Riques, Bigot, Framed">
           </div>
 
-          <div class="field">
+          <div class="ficha-field">
             <label>Fecha de entrega</label>
             <input id="fechaEntrega" type="date">
           </div>
         </div>
 
-        <div class="form-grid">
-          <div class="field">
-            <label>Proyecto</label>
+        <div class="ficha-form-grid">
+          <div class="ficha-field">
+            <label>Nombre del proyecto</label>
             <input id="proyecto" placeholder="Ej: Neones + logo circular">
           </div>
 
-          <div class="field">
+          <div class="ficha-field">
             <label>Estado</label>
             <select id="estado">
               <option>Pendiente</option>
@@ -905,367 +1577,169 @@ input:focus,select:focus,textarea:focus{
           </div>
         </div>
 
-        <div class="form-grid">
-          <div class="field">
-            <label>Sede / lugar</label>
-            <input id="sede" placeholder="Ej: San Diego, Local X, Centro Comercial">
-          </div>
-
-          <div class="field">
-            <label>Interior / exterior</label>
-            <select id="ambiente">
-              <option value="">Pendiente por definir</option>
-              <option>Interior</option>
-              <option>Exterior</option>
-              <option>Interior y exterior</option>
-            </select>
-          </div>
+        <div class="ficha-field">
+          <label>Sede o lugar</label>
+          <input id="sede" placeholder="Ej: San Diego, local principal, centro comercial">
         </div>
 
-        <div class="switch-row">
-          <div class="switch-card">
-            <label>
-              Lleva instalación
-              <input id="llevaInstalacion" type="checkbox">
-            </label>
-            <div class="muted">Activa superficie, altura, fijación y plantilla.</div>
-          </div>
-
-          <div class="switch-card">
-            <label>
-              Lleva luz
-              <input id="llevaLuz" type="checkbox">
-            </label>
-            <div class="muted">Activa sistema eléctrico general.</div>
-          </div>
+        <div class="ficha-field">
+          <label>Observaciones generales del proyecto</label>
+          <textarea id="observacionesCriticas" placeholder="Ej: Esconder transformador detrás del letrero. Confirmar punto eléctrico."></textarea>
         </div>
 
-        <div class="section-title">Observaciones críticas</div>
-        <div class="field">
-          <label>Debe verse arriba en la hoja</label>
-          <textarea id="observacionesCriticas" placeholder="Ej: Pared drywall. No usar fijación pesada. Confirmar punto eléctrico antes de instalar."></textarea>
+        <div class="ficha-section">Proyecto / Ítems</div>
+        <div id="items"></div>
+
+        <div class="add-item-zone">
+          <div>
+            <strong>Agregar otro ítem</strong>
+            <div class="ficha-muted">Ejemplo: Ítem 1 neón, Ítem 2 caja de luz circular, Ítem 3 acrílicos de baño.</div>
+          </div>
+          <button class="btn-ficha light" type="button" onclick="agregarItem()">+ Agregar ítem</button>
         </div>
 
-        <div class="section-title">Componentes del proyecto</div>
-        <div id="componentes"></div>
-
-        <button class="btn secondary" onclick="agregarComponente()">+ Agregar componente</button>
-
-        <div class="section-title">Materiales principales</div>
-        <div id="materiales"></div>
-
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input id="materialNuevo" placeholder="Ej: PVC 15mm, acrílico 3mm, transformador 30A" style="flex:1;min-width:220px">
-          <button class="btn secondary" onclick="agregarMaterial()">+ Material</button>
-        </div>
-
-        <div class="conditional" id="bloqueLuz">
-          <div class="section-title">Sistema eléctrico / iluminación</div>
-
-          <div class="form-grid">
-            <div class="field">
-              <label>Tipo de luz general</label>
-              <select id="tipoLuz">
-                <option value="">Pendiente por definir</option>
-                <option>Frontal</option>
-                <option>Posterior</option>
-                <option>Directa</option>
-                <option>Neón LED</option>
-                <option>Mixta</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label>Sistema LED</label>
-              <select id="sistemaLed">
-                <option value="">Pendiente por definir</option>
-                <option>Módulos LED</option>
-                <option>Cinta LED</option>
-                <option>Neón LED</option>
-                <option>Módulos + cinta</option>
-                <option>Otro</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-grid three">
-            <div class="field">
-              <label>Color de luz</label>
-              <select id="colorLuz">
-                <option value="">Pendiente</option>
-                <option>Cálida</option>
-                <option>Media / neutra</option>
-                <option>Blanca fría</option>
-                <option>RGB</option>
-                <option>Otro</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label>Transformador</label>
-              <input id="transformador" placeholder="Ej: 12V 30A">
-            </div>
-
-            <div class="field">
-              <label>Transformador compartido</label>
-              <select id="transformadorCompartido">
-                <option>No</option>
-                <option>Sí</option>
-                <option>Pendiente</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-grid">
-            <div class="field">
-              <label>Ubicación del transformador</label>
-              <input id="ubicacionTransformador" placeholder="Ej: detrás del letrero, dentro de caja, por definir">
-            </div>
-
-            <div class="field">
-              <label>Punto eléctrico</label>
-              <select id="puntoElectrico">
-                <option value="">Pendiente por confirmar</option>
-                <option>Disponible</option>
-                <option>No disponible</option>
-                <option>Debe instalarlo el cliente</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>Observaciones eléctricas</label>
-            <textarea id="obsElectricas" placeholder="Ej: 2 neones conectados a 1 transformador de 30A."></textarea>
-          </div>
-        </div>
-
-        <div class="conditional" id="bloqueInstalacion">
-          <div class="section-title">Instalación</div>
-
-          <div class="form-grid">
-            <div class="field">
-              <label>Tipo de superficie / fachada</label>
-              <select id="superficie">
-                <option value="">Pendiente por confirmar</option>
-                <option>Pared de bloque</option>
-                <option>Drywall</option>
-                <option>Vidrio</option>
-                <option>ACM / Alucobond</option>
-                <option>Cerámica</option>
-                <option>Madera</option>
-                <option>Metal</option>
-                <option>Wall panel</option>
-                <option>Concreto</option>
-                <option>Otro</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label>Altura de instalación</label>
-              <input id="altura" placeholder="Ej: 2.5m, 4m, pendiente">
-            </div>
-          </div>
-
-          <div class="form-grid three">
-            <div class="field">
-              <label>Acceso</label>
-              <select id="acceso">
-                <option value="">Pendiente</option>
-                <option>Sin equipo especial</option>
-                <option>Escalera</option>
-                <option>Andamio</option>
-                <option>Grúa</option>
-                <option>Por definir</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label>Sistema de fijación</label>
-              <select id="fijacion">
-                <option value="">Pendiente</option>
-                <option>Doble faz</option>
-                <option>Chupones</option>
-                <option>Tornillos</option>
-                <option>Ganchos</option>
-                <option>Pernos</option>
-                <option>Mixto</option>
-                <option>Otro</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label>Plantilla</label>
-              <select id="plantilla">
-                <option value="">Pendiente por definir</option>
-                <option>Sin plantilla</option>
-                <option>Plantilla impresa</option>
-                <option>Plantilla cortada en cartón</option>
-                <option>Plantilla mixta</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>Observaciones de instalación</label>
-            <textarea id="obsInstalacion" placeholder="Ej: Acrílicos con cinta doble faz. Hacer plantilla para instalación."></textarea>
-          </div>
-        </div>
-
-        <div class="section-title">Datos faltantes / por confirmar</div>
-
+        <div class="ficha-section">Datos faltantes / por confirmar</div>
         <div id="faltantes"></div>
 
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
           <input id="faltanteNuevo" placeholder="Ej: Medida exacta, tipo de pared, color de luz" style="flex:1;min-width:220px">
-          <button class="btn secondary" onclick="agregarFaltante()">+ Faltante</button>
+          <button class="btn-ficha light" type="button" onclick="agregarFaltante()">+ Faltante</button>
         </div>
 
-        <div class="section-title">Fichas guardadas</div>
+        <div class="ficha-section">Fichas guardadas</div>
         <div class="saved-list" id="savedList"></div>
 
       </div>
     </div>
 
-    <!-- ===========================
-         PREVIEW
-    ============================ -->
     <div class="preview-wrap">
-      <div class="card preview-card">
-        <div class="card-head">
-          <h2>Vista hoja carta</h2>
-          <button class="btn small green" onclick="window.print()">Imprimir</button>
+      <div class="ficha-card preview-card">
+        <div class="ficha-card-head">
+          <div class="ficha-card-title">Vista hoja carta</div>
+          <button class="btn-ficha small green" type="button" onclick="window.print()">Imprimir</button>
         </div>
-        <div class="card-body">
+
+        <div class="ficha-card-body">
           <div class="paper" id="paper"></div>
         </div>
       </div>
     </div>
 
   </section>
-
 </main>
 
-<script>
-/* ==========================================================
-   DATA
-========================================================== */
+<div class="backdrop" id="notiBackdrop" style="display:none" onclick="bdClick(event,'notiBackdrop')">
+  <div class="modal" style="max-width:660px">
+    <div class="modal-handle"></div>
 
-let ficha = {
-  componentes: [],
-  materiales: [],
-  faltantes: []
+    <div class="modal-header">
+      <span class="modal-title">NOTIFICACIONES</span>
+      <button class="modal-close" type="button" onclick="closeModal('notiBackdrop')">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="noti-list" id="notiList">
+        <div class="empty">Cargando notificaciones...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=24"></script>
+<script src="js/auth.js?v=24"></script>
+<script src="js/menu.js?v=40"></script>
+
+<script>
+window.bdClick = window.bdClick || function(e,id){
+  if(e && e.target && e.target.id === id){
+    const el = document.getElementById(id);
+    if(el) el.style.display = "none";
+  }
 };
 
+window.closeModal = window.closeModal || function(id){
+  const el = document.getElementById(id);
+  if(el) el.style.display = "none";
+};
+
+// Añade Ficha al menú dinámico real sin modificar js/menu.js.
+// Así mantiene el mismo menú/estilo del proyecto y esta página queda activa.
+(function(){
+  function insertarFichaMenu(){
+    const menu = document.getElementById("authMenu");
+    if(!menu) return;
+
+    if(menu.querySelector('a[href="ficha.html"]')) return;
+
+    const a = document.createElement("a");
+    a.href = "ficha.html";
+    a.textContent = "▤ Ficha";
+    a.className = "tab-btn active";
+
+    const config = Array.from(menu.querySelectorAll("a")).find(x => (x.getAttribute("href") || "").toLowerCase() === "configuracion.html");
+    if(config) menu.insertBefore(a, config);
+    else menu.insertBefore(a, menu.lastElementChild);
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    setTimeout(insertarFichaMenu, 80);
+    setTimeout(insertarFichaMenu, 350);
+  });
+})();
+</script>
+
+<script src="js/notificaciones.js?v=35"></script>
+
+<script>
+let ficha = { items:[], faltantes:[] };
 const $ = id => document.getElementById(id);
-
-const campos = [
-  "codigo","cliente","fechaEntrega","proyecto","estado","sede","ambiente",
-  "observacionesCriticas","tipoLuz","sistemaLed","colorLuz","transformador",
-  "transformadorCompartido","ubicacionTransformador","puntoElectrico","obsElectricas",
-  "superficie","altura","acceso","fijacion","plantilla","obsInstalacion"
-];
-
-function toggleMenu(){
-  $("mainNav").classList.toggle("open");
-}
+const campos = ["codigo","cliente","fechaEntrega","proyecto","estado","sede","observacionesCriticas"];
 
 function hoyCodigo(){
   const d = new Date();
-  const dd = String(d.getDate()).padStart(2,"0");
-  const mm = String(d.getMonth()+1).padStart(2,"0");
-  const yy = String(d.getFullYear()).slice(-2);
-  return `${dd}${mm}${yy}`;
+  return `${String(d.getDate()).padStart(2,"0")}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getFullYear()).slice(-2)}`;
 }
 
 function generarCodigo(){
   const prefix = `FT-${hoyCodigo()}`;
   const saved = JSON.parse(localStorage.getItem("fichasTV") || "[]");
-  const countToday = saved.filter(f => (f.codigo || "").startsWith(prefix)).length + 1;
-  return `${prefix}-${String(countToday).padStart(3,"0")}`;
+  const count = saved.filter(f => (f.codigo || "").startsWith(prefix)).length + 1;
+  return `${prefix}-${String(count).padStart(3,"0")}`;
 }
 
 function nuevaFicha(){
-  if(!confirm("¿Crear una ficha nueva? Se limpiará el formulario actual.")) return;
+  if(!confirm("¿Crear una ficha nueva?")) return;
 
-  campos.forEach(id => {
-    if($(id)) $(id).value = "";
-  });
-
+  campos.forEach(id => $(id).value = "");
   $("estado").value = "Pendiente";
-  $("llevaInstalacion").checked = false;
-  $("llevaLuz").checked = false;
   $("codigo").value = generarCodigo();
-  ficha.componentes = [];
-  ficha.materiales = [];
-  ficha.faltantes = [
-    "Fecha de entrega",
-    "Medidas completas",
-    "Interior / exterior",
-    "Tipo de superficie si lleva instalación",
-    "Altura de instalación si aplica",
-    "Punto eléctrico si lleva luz"
-  ];
 
-  agregarComponente({
-    nombre:"Componente principal",
-    tipo:"",
-    material:"",
-    espesor:"",
-    medidas:"",
-    cantidad:"",
-    acabado:"",
-    luz:"No",
-    observaciones:"",
-    checks:["Material preparado","Corte / fabricación","Acabado aplicado","Revisión final"]
+  ficha.items = [];
+  ficha.faltantes = ["Fecha de entrega", "Sede o lugar"];
+
+  agregarItem({
+    nombre:"Ítem 1",
+    checks:["Medida revisada","Material listo","Fabricación / corte","Acabado","Revisión final"]
   });
 
   renderAll();
 }
 
 function recolectar(){
-  ficha.codigo = $("codigo").value;
-  ficha.cliente = $("cliente").value.trim();
-  ficha.fechaEntrega = $("fechaEntrega").value;
-  ficha.proyecto = $("proyecto").value.trim();
-  ficha.estado = $("estado").value;
-  ficha.sede = $("sede").value.trim();
-  ficha.ambiente = $("ambiente").value;
-  ficha.llevaInstalacion = $("llevaInstalacion").checked;
-  ficha.llevaLuz = $("llevaLuz").checked;
-  ficha.observacionesCriticas = $("observacionesCriticas").value.trim();
-
-  ficha.tipoLuz = $("tipoLuz").value;
-  ficha.sistemaLed = $("sistemaLed").value;
-  ficha.colorLuz = $("colorLuz").value;
-  ficha.transformador = $("transformador").value.trim();
-  ficha.transformadorCompartido = $("transformadorCompartido").value;
-  ficha.ubicacionTransformador = $("ubicacionTransformador").value.trim();
-  ficha.puntoElectrico = $("puntoElectrico").value;
-  ficha.obsElectricas = $("obsElectricas").value.trim();
-
-  ficha.superficie = $("superficie").value;
-  ficha.altura = $("altura").value.trim();
-  ficha.acceso = $("acceso").value;
-  ficha.fijacion = $("fijacion").value;
-  ficha.plantilla = $("plantilla").value;
-  ficha.obsInstalacion = $("obsInstalacion").value.trim();
-
+  campos.forEach(id => {
+    ficha[id] = $(id).value.trim ? $(id).value.trim() : $(id).value;
+  });
   return ficha;
 }
 
 function llenarFormulario(data){
-  campos.forEach(id => {
-    if($(id)) $(id).value = data[id] || "";
-  });
-
-  $("llevaInstalacion").checked = !!data.llevaInstalacion;
-  $("llevaLuz").checked = !!data.llevaLuz;
-
+  campos.forEach(id => $(id).value = data[id] || "");
   ficha = JSON.parse(JSON.stringify(data));
-  ficha.componentes ||= [];
-  ficha.materiales ||= [];
+  ficha.items ||= [];
   ficha.faltantes ||= [];
-
   renderAll();
 }
 
@@ -1283,183 +1757,316 @@ function guardarFicha(){
   else saved.unshift(ficha);
 
   localStorage.setItem("fichasTV", JSON.stringify(saved));
-
   renderSaved();
   alert("Ficha guardada en este navegador.");
 }
 
-/* ==========================================================
-   COMPONENTES
-========================================================== */
-
-function agregarComponente(data={}){
-  ficha.componentes.push({
-    nombre:data.nombre || "",
+function agregarItem(data={}){
+  ficha.items.push({
+    nombre:data.nombre || `Ítem ${ficha.items.length+1}`,
     tipo:data.tipo || "",
     material:data.material || "",
     espesor:data.espesor || "",
     medidas:data.medidas || "",
     cantidad:data.cantidad || "",
     acabado:data.acabado || "",
-    luz:data.luz || "No",
+    ambiente:data.ambiente || "",
     observaciones:data.observaciones || "",
-    checks:data.checks || ["Archivo / medida revisada","Material listo","Fabricación / corte","Acabado","Revisión final"]
+    imagen:data.imagen || "",
+
+    llevaLuz:!!data.llevaLuz,
+    tipoLuz:data.tipoLuz || "",
+    sistemaLed:data.sistemaLed || "",
+    colorLuz:data.colorLuz || "",
+    transformador:data.transformador || "",
+    transformadorCompartido:data.transformadorCompartido || "No",
+    ubicacionTransformador:data.ubicacionTransformador || "",
+    puntoElectrico:data.puntoElectrico || "",
+    obsElectricas:data.obsElectricas || "",
+
+    llevaInstalacion:!!data.llevaInstalacion,
+    superficie:data.superficie || "",
+    altura:data.altura || "",
+    acceso:data.acceso || "",
+    fijacion:data.fijacion || "",
+    plantilla:data.plantilla || "",
+    obsInstalacion:data.obsInstalacion || "",
+
+    checks:data.checks || ["Medida revisada","Material listo","Fabricación / corte","Acabado","Revisión final"]
   });
-  renderComponentes();
+
+  renderItems();
   renderPaper();
 }
 
-function eliminarComponente(i){
-  if(!confirm("¿Eliminar este componente?")) return;
-  ficha.componentes.splice(i,1);
-  renderComponentes();
+function eliminarItem(i){
+  if(confirm("¿Eliminar este ítem?")){
+    ficha.items.splice(i,1);
+    renderItems();
+    renderPaper();
+  }
+}
+
+function updateItem(i,key,val){
+  ficha.items[i][key] = val;
   renderPaper();
 }
 
-function updateComp(i,key,val){
-  ficha.componentes[i][key] = val;
+function toggleItem(i,key,checked){
+  ficha.items[i][key] = checked;
+  renderItems();
   renderPaper();
 }
 
 function agregarCheck(i){
-  ficha.componentes[i].checks.push("Nuevo check");
-  renderComponentes();
+  ficha.items[i].checks.push("Nuevo check");
+  renderItems();
   renderPaper();
 }
 
 function updateCheck(i,j,val){
-  ficha.componentes[i].checks[j] = val;
+  ficha.items[i].checks[j] = val;
   renderPaper();
 }
 
 function eliminarCheck(i,j){
-  ficha.componentes[i].checks.splice(j,1);
-  renderComponentes();
+  ficha.items[i].checks.splice(j,1);
+  renderItems();
   renderPaper();
 }
 
-function renderComponentes(){
-  const cont = $("componentes");
+function cargarImagen(i,input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    ficha.items[i].imagen = e.target.result;
+    renderItems();
+    renderPaper();
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderItems(){
+  const cont = $("items");
   cont.innerHTML = "";
 
-  ficha.componentes.forEach((c,i) => {
+  ficha.items.forEach((it,i) => {
     const div = document.createElement("div");
-    div.className = "component";
+    div.className = "item-box";
 
     div.innerHTML = `
-      <div class="component-top">
-        <div class="component-title">
-          <span class="badge dark">${i+1}</span>
-          <span>${escapeHtml(c.nombre || "Componente sin nombre")}</span>
+      <div class="item-head">
+        <div class="item-title">
+          <div class="item-num">${i+1}</div>
+          <strong>${safe(it.nombre || "Ítem")}</strong>
         </div>
-        <button class="btn small red" onclick="eliminarComponente(${i})">Eliminar</button>
+        <button class="btn-ficha small red" type="button" onclick="eliminarItem(${i})">Eliminar</button>
       </div>
 
-      <div class="form-grid">
-        <div class="field">
-          <label>Nombre del componente</label>
-          <input value="${escapeAttr(c.nombre)}" oninput="updateComp(${i},'nombre',this.value)" placeholder="Ej: Logo principal, Letras baño">
-        </div>
-        <div class="field">
-          <label>Tipo</label>
-          <select onchange="updateComp(${i},'tipo',this.value)">
-            ${optionList(["","Acrílico","PVC","PVC laminado","PVC + acrílico","Automotriz","Caja de luz","FrontLit","Neón LED","Galvanizado sólido","Galvanizado con riel","SS / Acero inoxidable","Base","Personalizado"], c.tipo)}
-          </select>
-        </div>
-      </div>
-
-      <div class="form-grid three">
-        <div class="field">
-          <label>Material</label>
-          <input value="${escapeAttr(c.material)}" oninput="updateComp(${i},'material',this.value)" placeholder="Ej: Acrílico, PVC, Alucobond">
-        </div>
-        <div class="field">
-          <label>Espesor</label>
-          <input value="${escapeAttr(c.espesor)}" oninput="updateComp(${i},'espesor',this.value)" placeholder="Ej: 3mm, 15mm, 30mm">
-        </div>
-        <div class="field">
-          <label>Cantidad</label>
-          <input value="${escapeAttr(c.cantidad)}" oninput="updateComp(${i},'cantidad',this.value)" placeholder="Ej: 1, 30 unidades">
-        </div>
-      </div>
-
-      <div class="form-grid">
-        <div class="field">
-          <label>Medidas</label>
-          <input value="${escapeAttr(c.medidas)}" oninput="updateComp(${i},'medidas',this.value)" placeholder="Ej: 61x43cm">
-        </div>
-        <div class="field">
-          <label>Acabado</label>
-          <input value="${escapeAttr(c.acabado)}" oninput="updateComp(${i},'acabado',this.value)" placeholder="Ej: pintura automotriz, vinil negro mate, retrolaminado">
-        </div>
-      </div>
-
-      <div class="form-grid">
-        <div class="field">
-          <label>Luz en este componente</label>
-          <select onchange="updateComp(${i},'luz',this.value)">
-            ${optionList(["No","Sí","Compartida","Pendiente"], c.luz)}
-          </select>
-        </div>
-        <div class="field">
-          <label>Observaciones</label>
-          <input value="${escapeAttr(c.observaciones)}" oninput="updateComp(${i},'observaciones',this.value)" placeholder="Observación corta del componente">
-        </div>
-      </div>
-
-      <div class="section-title">Checklist del componente</div>
-      <div class="check-editor">
-        ${(c.checks || []).map((ch,j)=>`
-          <div class="check-line">
-            <input value="${escapeAttr(ch)}" oninput="updateCheck(${i},${j},this.value)">
-            <button class="btn small secondary" onclick="eliminarCheck(${i},${j})">x</button>
+      <div class="item-body">
+        <div class="ficha-form-grid">
+          <div class="ficha-field">
+            <label>Nombre del ítem</label>
+            <input value="${attr(it.nombre)}" oninput="updateItem(${i},'nombre',this.value)" placeholder="Ej: Neón 1, Caja de luz circular">
           </div>
-        `).join("")}
+
+          <div class="ficha-field">
+            <label>Tipo de ítem</label>
+            <select onchange="updateItem(${i},'tipo',this.value)">
+              ${optionList(["","Acrílico","PVC","PVC laminado","PVC + acrílico","Automotriz","Caja de luz","FrontLit","Neón","Neón LED","Galvanizado sólido","Galvanizado con riel","SS / Acero inoxidable","Base","Personalizado"], it.tipo)}
+            </select>
+          </div>
+        </div>
+
+        <div class="ficha-form-grid three">
+          <div class="ficha-field">
+            <label>Material</label>
+            <input value="${attr(it.material)}" oninput="updateItem(${i},'material',this.value)" placeholder="Ej: Acrílico">
+          </div>
+
+          <div class="ficha-field">
+            <label>Espesor</label>
+            <input value="${attr(it.espesor)}" oninput="updateItem(${i},'espesor',this.value)" placeholder="Ej: 8mm">
+          </div>
+
+          <div class="ficha-field">
+            <label>Cantidad</label>
+            <input value="${attr(it.cantidad)}" oninput="updateItem(${i},'cantidad',this.value)" placeholder="Ej: 1, 2, 30 unidades">
+          </div>
+        </div>
+
+        <div class="ficha-form-grid three">
+          <div class="ficha-field">
+            <label>Medida</label>
+            <input value="${attr(it.medidas)}" oninput="updateItem(${i},'medidas',this.value)" placeholder="Ej: Neón 1: 120x240 / 3: 80x65">
+          </div>
+
+          <div class="ficha-field">
+            <label>Acabado</label>
+            <input value="${attr(it.acabado)}" oninput="updateItem(${i},'acabado',this.value)" placeholder="Ej: Acrílico natural, vinil, pintura">
+          </div>
+
+          <div class="ficha-field">
+            <label>Interior / exterior</label>
+            <select onchange="updateItem(${i},'ambiente',this.value)">
+              ${optionList(["","Interior","Exterior","Interior y exterior"], it.ambiente)}
+            </select>
+          </div>
+        </div>
+
+        <div class="ficha-field">
+          <label>Observaciones del ítem</label>
+          <textarea oninput="updateItem(${i},'observaciones',this.value)" placeholder="Ej: A ras de piso en pared de bloque">${safe(it.observaciones)}</textarea>
+        </div>
+
+        <div class="ficha-field">
+          <label>Imagen opcional del ítem</label>
+          <input type="file" accept="image/*" onchange="cargarImagen(${i},this)">
+          ${it.imagen ? `<img class="img-preview" style="display:block" src="${it.imagen}">` : `<div class="ficha-muted">Opcional. Sirve como referencia visual en la ficha.</div>`}
+        </div>
+
+        <div class="switch-row">
+          <div class="switch-card">
+            <label>Con luz <input type="checkbox" ${it.llevaLuz ? "checked" : ""} onchange="toggleItem(${i},'llevaLuz',this.checked)"></label>
+            <div class="ficha-muted">Activa preguntas de luz solo para este ítem.</div>
+          </div>
+
+          <div class="switch-card">
+            <label>Con instalación <input type="checkbox" ${it.llevaInstalacion ? "checked" : ""} onchange="toggleItem(${i},'llevaInstalacion',this.checked)"></label>
+            <div class="ficha-muted">Activa preguntas de instalación solo para este ítem.</div>
+          </div>
+        </div>
+
+        <div class="conditional ${it.llevaLuz ? "show" : ""}">
+          <div class="ficha-section">Luz del ítem</div>
+
+          <div class="ficha-form-grid">
+            <div class="ficha-field">
+              <label>Tipo de luz</label>
+              <select onchange="updateItem(${i},'tipoLuz',this.value)">
+                ${optionList(["","Frontal","Posterior","Directa","Neón","Neón LED","Caja de luz","Mixta"], it.tipoLuz)}
+              </select>
+            </div>
+
+            <div class="ficha-field">
+              <label>Sistema LED</label>
+              <select onchange="updateItem(${i},'sistemaLed',this.value)">
+                ${optionList(["","Módulos LED","Cinta LED","Neón","Neón LED","Módulos + cinta","Otro"], it.sistemaLed)}
+              </select>
+            </div>
+          </div>
+
+          <div class="ficha-form-grid three">
+            <div class="ficha-field">
+              <label>Color de luz</label>
+              <select onchange="updateItem(${i},'colorLuz',this.value)">
+                ${optionList(["","Cálida","Media / neutra","Blanca fría","RGB","Otro"], it.colorLuz)}
+              </select>
+            </div>
+
+            <div class="ficha-field">
+              <label>Transformador</label>
+              <input value="${attr(it.transformador)}" oninput="updateItem(${i},'transformador',this.value)" placeholder="Ej: 12V 30A">
+            </div>
+
+            <div class="ficha-field">
+              <label>Transformador compartido</label>
+              <select onchange="updateItem(${i},'transformadorCompartido',this.value)">
+                ${optionList(["No","Sí","Pendiente"], it.transformadorCompartido)}
+              </select>
+            </div>
+          </div>
+
+          <div class="ficha-form-grid">
+            <div class="ficha-field">
+              <label>Ubicación transformador</label>
+              <input value="${attr(it.ubicacionTransformador)}" oninput="updateItem(${i},'ubicacionTransformador',this.value)" placeholder="Ej: detrás del letrero">
+            </div>
+
+            <div class="ficha-field">
+              <label>Punto eléctrico</label>
+              <select onchange="updateItem(${i},'puntoElectrico',this.value)">
+                ${optionList(["","Pendiente por confirmar","Disponible","No disponible","Debe instalarlo el cliente"], it.puntoElectrico)}
+              </select>
+            </div>
+          </div>
+
+          <div class="ficha-field">
+            <label>Observaciones de luz</label>
+            <textarea oninput="updateItem(${i},'obsElectricas',this.value)">${safe(it.obsElectricas)}</textarea>
+          </div>
+        </div>
+
+        <div class="conditional ${it.llevaInstalacion ? "show" : ""}">
+          <div class="ficha-section">Instalación del ítem</div>
+
+          <div class="ficha-form-grid">
+            <div class="ficha-field">
+              <label>Tipo de superficie / pared</label>
+              <select onchange="updateItem(${i},'superficie',this.value)">
+                ${optionList(["","Pendiente por confirmar","Pared de bloque","Drywall","Vidrio","ACM / Alucobond","Cerámica","Madera","Metal","Wall panel","Concreto","Otro"], it.superficie)}
+              </select>
+            </div>
+
+            <div class="ficha-field">
+              <label>Altura / ubicación</label>
+              <input value="${attr(it.altura)}" oninput="updateItem(${i},'altura',this.value)" placeholder="Ej: a ras de piso, 2.5m, 4m">
+            </div>
+          </div>
+
+          <div class="ficha-form-grid three">
+            <div class="ficha-field">
+              <label>Acceso</label>
+              <select onchange="updateItem(${i},'acceso',this.value)">
+                ${optionList(["","Pendiente","Sin equipo especial","Escalera","Andamio","Grúa","Por definir"], it.acceso)}
+              </select>
+            </div>
+
+            <div class="ficha-field">
+              <label>Fijación</label>
+              <select onchange="updateItem(${i},'fijacion',this.value)">
+                ${optionList(["","Pendiente","Doble faz","Chupones","Tornillos","Ganchos","Pernos","Mixto","Otro"], it.fijacion)}
+              </select>
+            </div>
+
+            <div class="ficha-field">
+              <label>Plantilla</label>
+              <select onchange="updateItem(${i},'plantilla',this.value)">
+                ${optionList(["","Pendiente por definir","Sin plantilla","Plantilla impresa","Plantilla cortada en cartón","Plantilla mixta"], it.plantilla)}
+              </select>
+            </div>
+          </div>
+
+          <div class="ficha-field">
+            <label>Observaciones instalación</label>
+            <textarea oninput="updateItem(${i},'obsInstalacion',this.value)">${safe(it.obsInstalacion)}</textarea>
+          </div>
+        </div>
+
+        <div class="ficha-section">Checklist del ítem</div>
+        <div class="check-editor">
+          ${(it.checks || []).map((ch,j) => `
+            <div class="check-line">
+              <input value="${attr(ch)}" oninput="updateCheck(${i},${j},this.value)">
+              <button class="btn-ficha small light" type="button" onclick="eliminarCheck(${i},${j})">x</button>
+            </div>
+          `).join("")}
+        </div>
+
+        <button class="btn-ficha small light" type="button" style="margin-top:8px" onclick="agregarCheck(${i})">+ Check</button>
       </div>
-      <button class="btn small secondary" style="margin-top:8px" onclick="agregarCheck(${i})">+ Check</button>
     `;
 
     cont.appendChild(div);
   });
 }
 
-/* ==========================================================
-   MATERIALES / FALTANTES
-========================================================== */
-
-function agregarMaterial(txt){
-  const val = txt || $("materialNuevo").value.trim();
-  if(!val) return;
-  ficha.materiales.push(val);
-  $("materialNuevo").value = "";
-  renderMateriales();
-  renderPaper();
-}
-
-function eliminarMaterial(i){
-  ficha.materiales.splice(i,1);
-  renderMateriales();
-  renderPaper();
-}
-
-function renderMateriales(){
-  const cont = $("materiales");
-  cont.innerHTML = "";
-
-  ficha.materiales.forEach((m,i)=>{
-    const row = document.createElement("div");
-    row.className = "material-row";
-    row.innerHTML = `
-      <input value="${escapeAttr(m)}" oninput="ficha.materiales[${i}]=this.value;renderPaper()">
-      <button class="btn small secondary" onclick="eliminarMaterial(${i})">x</button>
-    `;
-    cont.appendChild(row);
-  });
-}
-
 function agregarFaltante(txt){
   const val = txt || $("faltanteNuevo").value.trim();
   if(!val) return;
+
   ficha.faltantes.push(val);
   $("faltanteNuevo").value = "";
   renderFaltantes();
@@ -1476,103 +2083,114 @@ function renderFaltantes(){
   const cont = $("faltantes");
   cont.innerHTML = "";
 
-  ficha.faltantes.forEach((m,i)=>{
+  ficha.faltantes.forEach((m,i) => {
     const row = document.createElement("div");
-    row.className = "material-row";
+    row.className = "simple-row";
     row.innerHTML = `
-      <input value="${escapeAttr(m)}" oninput="ficha.faltantes[${i}]=this.value;renderPaper()">
-      <button class="btn small secondary" onclick="eliminarFaltante(${i})">x</button>
+      <input value="${attr(m)}" oninput="ficha.faltantes[${i}]=this.value;renderPaper()">
+      <button class="btn-ficha small light" type="button" onclick="eliminarFaltante(${i})">x</button>
     `;
     cont.appendChild(row);
   });
 }
 
-/* ==========================================================
-   PREVIEW
-========================================================== */
+function renderResumen(faltantes){
+  const items = ficha.items || [];
+  const conLuz = items.filter(x => x.llevaLuz).length;
+  const conInst = items.filter(x => x.llevaInstalacion).length;
+  const sinImagen = items.filter(x => !x.imagen).length;
+
+  $("resumenPendientes").innerHTML = `
+    <div class="kpi-card ${faltantes.length ? 'red' : 'green'}">
+      <span>Pendientes</span>
+      <strong>${faltantes.length}</strong>
+    </div>
+
+    <div class="kpi-card black">
+      <span>Ítems</span>
+      <strong>${items.length}</strong>
+    </div>
+
+    <div class="kpi-card ${conLuz ? 'yellow' : 'green'}">
+      <span>Con luz</span>
+      <strong>${conLuz}</strong>
+    </div>
+
+    <div class="kpi-card ${conInst ? 'orange' : 'green'}">
+      <span>Instalación</span>
+      <strong>${conInst}</strong>
+    </div>
+
+    <div class="kpi-card ${sinImagen ? 'yellow' : 'green'}">
+      <span>Sin imagen</span>
+      <strong>${sinImagen}</strong>
+    </div>
+  `;
+}
 
 function renderPaper(){
   recolectar();
 
   $("codigoBadge").textContent = ficha.codigo || "FT";
 
-  $("bloqueLuz").classList.toggle("show", ficha.llevaLuz);
-  $("bloqueInstalacion").classList.toggle("show", ficha.llevaInstalacion);
-
-  const comps = ficha.componentes || [];
-  const mats = ficha.materiales || [];
+  const items = ficha.items || [];
   const falt = detectarFaltantes();
 
-  const compRows = comps.map((c,i)=>`
+  renderResumen(falt);
+
+  const itemRows = items.map((it,i) => `
     <tr>
-      <td><strong>${i+1}. ${safe(c.nombre || "Componente")}</strong><br>${small(c.observaciones)}</td>
-      <td>${safe(c.tipo || "-")}</td>
-      <td>${safe(c.material || "-")} ${safe(c.espesor || "")}</td>
-      <td>${safe(c.medidas || "-")}</td>
-      <td>${safe(c.cantidad || "-")}</td>
-      <td>${safe(c.acabado || "-")}</td>
-      <td>${safe(c.luz || "No")}</td>
+      <td><strong>${i+1}. ${safe(it.nombre || "Ítem")}</strong><br>${small(it.observaciones)}</td>
+      <td>${safe(it.tipo || "-")}</td>
+      <td>${safe(it.material || "-")} ${safe(it.espesor || "")}</td>
+      <td>${safe(it.medidas || "-")}</td>
+      <td>${safe(it.cantidad || "-")}</td>
+      <td>${safe(it.acabado || "-")}</td>
+      <td>${safe(it.ambiente || "-")}</td>
+      <td>${it.imagen ? `<img class="paper-img" src="${it.imagen}">` : "-"}</td>
     </tr>
   `).join("");
 
-  const checkList = [];
-  comps.forEach((c,i)=>{
-    (c.checks || []).forEach(ch=>{
-      if(ch && ch.trim()){
-        checkList.push(`${c.nombre || "Componente " + (i+1)} — ${ch}`);
-      }
+  const luzRows = items.filter(x => x.llevaLuz).map(it => `
+    <tr>
+      <td>${safe(it.nombre || "Ítem")}</td>
+      <td>${safe(it.tipoLuz || "Pendiente")}</td>
+      <td>${safe(it.sistemaLed || "Pendiente")}</td>
+      <td>${safe(it.colorLuz || "Pendiente")}</td>
+      <td>${safe(it.transformador || "Pendiente")}</td>
+      <td>${safe(it.transformadorCompartido || "No")}</td>
+      <td>${safe(it.puntoElectrico || "Pendiente")}</td>
+    </tr>
+  `).join("");
+
+  const instRows = items.filter(x => x.llevaInstalacion).map(it => `
+    <tr>
+      <td>${safe(it.nombre || "Ítem")}</td>
+      <td>${safe(it.superficie || "Pendiente")}</td>
+      <td>${safe(it.altura || "Pendiente")}</td>
+      <td>${safe(it.acceso || "Pendiente")}</td>
+      <td>${safe(it.fijacion || "Pendiente")}</td>
+      <td>${safe(it.plantilla || "Pendiente")}</td>
+    </tr>
+  `).join("");
+
+  const checks = [];
+  items.forEach((it,i) => {
+    (it.checks || []).forEach(ch => {
+      if(ch && ch.trim()) checks.push(`${it.nombre || "Ítem " + (i+1)} — ${ch}`);
     });
   });
-
-  const instalacion = ficha.llevaInstalacion ? `
-    <div class="paper-section">
-      <h4>Instalación</h4>
-      <table class="paper-table">
-        <tr>
-          <th>Superficie</th><th>Altura</th><th>Acceso</th><th>Fijación</th><th>Plantilla</th>
-        </tr>
-        <tr>
-          <td>${safe(ficha.superficie || "Pendiente")}</td>
-          <td>${safe(ficha.altura || "Pendiente")}</td>
-          <td>${safe(ficha.acceso || "Pendiente")}</td>
-          <td>${safe(ficha.fijacion || "Pendiente")}</td>
-          <td>${safe(ficha.plantilla || "Pendiente")}</td>
-        </tr>
-      </table>
-      ${ficha.obsInstalacion ? `<div class="paper-check"><span class="box">□</span><span>${safe(ficha.obsInstalacion)}</span></div>` : ""}
-    </div>
-  ` : "";
-
-  const luz = ficha.llevaLuz ? `
-    <div class="paper-section">
-      <h4>Sistema eléctrico / iluminación</h4>
-      <table class="paper-table">
-        <tr>
-          <th>Tipo luz</th><th>Sistema</th><th>Color</th><th>Transformador</th><th>Compartido</th><th>Punto eléctrico</th>
-        </tr>
-        <tr>
-          <td>${safe(ficha.tipoLuz || "Pendiente")}</td>
-          <td>${safe(ficha.sistemaLed || "Pendiente")}</td>
-          <td>${safe(ficha.colorLuz || "Pendiente")}</td>
-          <td>${safe(ficha.transformador || "Pendiente")}</td>
-          <td>${safe(ficha.transformadorCompartido || "No")}</td>
-          <td>${safe(ficha.puntoElectrico || "Pendiente")}</td>
-        </tr>
-      </table>
-      ${ficha.ubicacionTransformador ? `<div class="paper-check"><span class="box">□</span><span>Ubicación transformador: ${safe(ficha.ubicacionTransformador)}</span></div>` : ""}
-      ${ficha.obsElectricas ? `<div class="paper-check"><span class="box">□</span><span>${safe(ficha.obsElectricas)}</span></div>` : ""}
-    </div>
-  ` : "";
 
   $("paper").innerHTML = `
     <div class="paper-header">
       <div class="paper-brand">
-        <div class="paper-logo">TV</div>
+        <img src="Logo tutto1.svg" alt="Tutto Vinilos">
         <div>
-          <h3>TUTTOVINILOS</h3>
-          <p>Ficha de producción · Hoja para cartelera / taller</p>
+          <h3>FICHA DE PRODUCCIÓN</h3>
+          <p>Hoja para cartelera / taller</p>
         </div>
       </div>
+
       <div class="paper-code">
         <span>CÓDIGO</span>
         <strong>${safe(ficha.codigo || "FT")}</strong>
@@ -1586,63 +2204,87 @@ function renderPaper(){
     </div>
 
     <div class="paper-grid">
-      <div class="info-box"><label>Cliente</label><strong>${safe(ficha.cliente || "Pendiente")}</strong></div>
+      <div class="info-box"><label>Cliente / empresa</label><strong>${safe(ficha.cliente || "Pendiente")}</strong></div>
       <div class="info-box"><label>Entrega</label><strong>${safe(formatInputDate(ficha.fechaEntrega) || "Pendiente")}</strong></div>
       <div class="info-box"><label>Sede / lugar</label><strong>${safe(ficha.sede || "Pendiente")}</strong></div>
-      <div class="info-box"><label>Ambiente</label><strong>${safe(ficha.ambiente || "Pendiente")}</strong></div>
+      <div class="info-box"><label>Ítems</label><strong>${items.length}</strong></div>
 
-      <div class="info-box"><label>Instalación</label><strong>${ficha.llevaInstalacion ? "Sí" : "No"}</strong></div>
-      <div class="info-box"><label>Luz</label><strong>${ficha.llevaLuz ? "Sí" : "No"}</strong></div>
-      <div class="info-box"><label>Componentes</label><strong>${comps.length}</strong></div>
-      <div class="info-box"><label>Materiales</label><strong>${mats.length}</strong></div>
+      <div class="info-box"><label>Pendientes</label><strong>${falt.length}</strong></div>
+      <div class="info-box"><label>Con luz</label><strong>${items.filter(x => x.llevaLuz).length}</strong></div>
+      <div class="info-box"><label>Con instalación</label><strong>${items.filter(x => x.llevaInstalacion).length}</strong></div>
+      <div class="info-box"><label>Estado</label><strong>${safe(ficha.estado || "Pendiente")}</strong></div>
     </div>
 
     <div class="critical">
-      <h4>Observaciones críticas</h4>
-      <p>${safe(ficha.observacionesCriticas || "Sin observaciones críticas registradas.")}</p>
+      <h4>Observaciones generales</h4>
+      <p>${safe(ficha.observacionesCriticas || "Sin observaciones generales registradas.")}</p>
     </div>
 
-    <div class="paper-section">
-      <h4>Componentes</h4>
-      <table class="paper-table">
-        <tr>
-          <th>Componente</th>
-          <th>Tipo</th>
-          <th>Material</th>
-          <th>Medidas</th>
-          <th>Cant.</th>
-          <th>Acabado</th>
-          <th>Luz</th>
-        </tr>
-        ${compRows || `<tr><td colspan="7">Sin componentes registrados.</td></tr>`}
-      </table>
-    </div>
-
-    ${luz}
-    ${instalacion}
-
-    <div class="paper-section">
-      <h4>Materiales principales</h4>
+    <div class="paper-section missing">
+      <h4>Resumen previo de pendientes</h4>
       <div class="paper-list">
-        ${(mats.length ? mats : ["Pendiente por definir"]).map(m=>`
-          <div class="paper-check"><span class="box">□</span><span>${safe(m)}</span></div>
-        `).join("")}
-      </div>
-    </div>
-
-    <div class="paper-section">
-      <h4>Checklist de producción</h4>
-      <div class="paper-list">
-        ${(checkList.length ? checkList : ["Materiales preparados","Fabricación realizada","Revisión final"]).map(ch=>`
+        ${(falt.length ? falt : ["Sin datos faltantes detectados"]).map(ch => `
           <div class="paper-check"><span class="box">□</span><span>${safe(ch)}</span></div>
         `).join("")}
       </div>
     </div>
 
-    <div class="paper-section missing">
-      <h4>Datos faltantes / por confirmar</h4>
+    <div class="paper-section">
+      <h4>Proyecto / Ítems</h4>
+      <table class="paper-table">
+        <tr>
+          <th>Ítem</th>
+          <th>Tipo</th>
+          <th>Material</th>
+          <th>Medida</th>
+          <th>Cant.</th>
+          <th>Acabado</th>
+          <th>Ambiente</th>
+          <th>Imagen</th>
+        </tr>
+        ${itemRows || `<tr><td colspan="8">Sin ítems registrados.</td></tr>`}
+      </table>
+    </div>
+
+    ${luzRows ? `
+      <div class="paper-section">
+        <h4>Luz por ítem</h4>
+        <table class="paper-table">
+          <tr>
+            <th>Ítem</th>
+            <th>Tipo luz</th>
+            <th>Sistema LED</th>
+            <th>Color</th>
+            <th>Transformador</th>
+            <th>Compartido</th>
+            <th>Punto eléctrico</th>
+          </tr>
+          ${luzRows}
+        </table>
+      </div>
+    ` : ""}
+
+    ${instRows ? `
+      <div class="paper-section">
+        <h4>Instalación por ítem</h4>
+        <table class="paper-table">
+          <tr>
+            <th>Ítem</th>
+            <th>Superficie</th>
+            <th>Altura / ubicación</th>
+            <th>Acceso</th>
+            <th>Fijación</th>
+            <th>Plantilla</th>
+          </tr>
+          ${instRows}
+        </table>
+      </div>
+    ` : ""}
+
+    <div class="paper-section">
+      <h4>Checklist de producción</h4>
       <div class="paper-list">
-        ${(falt.length ? falt : ["Sin datos faltantes detectados"]).map(ch=>`
+        ${(checks.length ? checks : ["Medida revisada","Material listo","Fabricación / corte","Acabado","Revisión final"]).map(ch => `
           <div class="paper-check"><span class="box">□</span><span>${safe(ch)}</span></div>
         `).join("")}
       </div>
@@ -1656,61 +2298,63 @@ function renderPaper(){
 }
 
 function detectarFaltantes(){
-  const faltantes = [...(ficha.faltantes || [])].filter(Boolean);
+  const falt = [...(ficha.faltantes || [])].filter(Boolean);
 
-  if(!ficha.cliente) faltantes.push("Cliente");
-  if(!ficha.proyecto) faltantes.push("Nombre del proyecto");
-  if(!ficha.fechaEntrega) faltantes.push("Fecha de entrega");
-  if(!ficha.ambiente) faltantes.push("Interior / exterior");
-  if(ficha.componentes.length === 0) faltantes.push("Componentes del proyecto");
+  if(!ficha.cliente) falt.push("Nombre del cliente / empresa");
+  if(!ficha.proyecto) falt.push("Nombre del proyecto");
+  if(!ficha.fechaEntrega) falt.push("Fecha de entrega");
+  if(!ficha.sede) falt.push("Sede o lugar");
+  if(!ficha.items.length) falt.push("Agregar al menos un ítem");
 
-  ficha.componentes.forEach((c,i)=>{
-    const n = c.nombre || `Componente ${i+1}`;
-    if(!c.medidas) faltantes.push(`Medidas de ${n}`);
-    if(!c.material) faltantes.push(`Material de ${n}`);
-    if(!c.cantidad) faltantes.push(`Cantidad de ${n}`);
+  ficha.items.forEach((it,i) => {
+    const n = it.nombre || `Ítem ${i+1}`;
+
+    if(!it.tipo) falt.push(`Tipo de ${n}`);
+    if(!it.material) falt.push(`Material de ${n}`);
+    if(!it.espesor) falt.push(`Espesor de ${n}`);
+    if(!it.medidas) falt.push(`Medida de ${n}`);
+    if(!it.cantidad) falt.push(`Cantidad de ${n}`);
+    if(!it.acabado) falt.push(`Acabado de ${n}`);
+    if(!it.ambiente) falt.push(`Interior / exterior de ${n}`);
+
+    if(it.llevaLuz){
+      if(!it.tipoLuz) falt.push(`Tipo de luz de ${n}`);
+      if(!it.sistemaLed) falt.push(`Sistema LED de ${n}`);
+      if(!it.colorLuz) falt.push(`Color de luz de ${n}`);
+      if(!it.transformador) falt.push(`Transformador de ${n}`);
+      if(!it.puntoElectrico) falt.push(`Punto eléctrico de ${n}`);
+    }
+
+    if(it.llevaInstalacion){
+      if(!it.superficie) falt.push(`Tipo de pared/superficie de ${n}`);
+      if(!it.altura) falt.push(`Altura o ubicación de ${n}`);
+      if(!it.fijacion) falt.push(`Fijación de ${n}`);
+      if(!it.plantilla) falt.push(`Plantilla de ${n}`);
+    }
   });
 
-  if(ficha.llevaInstalacion){
-    if(!ficha.superficie) faltantes.push("Tipo de superficie / fachada");
-    if(!ficha.altura) faltantes.push("Altura de instalación");
-    if(!ficha.fijacion) faltantes.push("Sistema de fijación");
-    if(!ficha.plantilla) faltantes.push("Tipo de plantilla");
-  }
-
-  if(ficha.llevaLuz){
-    if(!ficha.tipoLuz) faltantes.push("Tipo de luz");
-    if(!ficha.sistemaLed) faltantes.push("Sistema LED");
-    if(!ficha.colorLuz) faltantes.push("Color de luz");
-    if(!ficha.transformador) faltantes.push("Transformador");
-    if(!ficha.puntoElectrico) faltantes.push("Punto eléctrico");
-  }
-
-  return [...new Set(faltantes)];
+  return [...new Set(falt)];
 }
-
-/* ==========================================================
-   SAVED
-========================================================== */
 
 function renderSaved(){
   const cont = $("savedList");
   const saved = JSON.parse(localStorage.getItem("fichasTV") || "[]");
 
   if(!saved.length){
-    cont.innerHTML = `<div class="muted">No hay fichas guardadas todavía.</div>`;
+    cont.innerHTML = `<div class="ficha-muted">No hay fichas guardadas todavía.</div>`;
     return;
   }
 
-  cont.innerHTML = saved.slice(0,12).map((f,i)=>`
+  cont.innerHTML = saved.slice(0,12).map(f => `
     <div class="saved-item">
       <div>
         <strong>${safe(f.codigo || "Sin código")} · ${safe(f.cliente || "Sin cliente")}</strong>
         <span>${safe(f.proyecto || "Sin proyecto")} · Entrega: ${safe(formatInputDate(f.fechaEntrega) || "Pendiente")}</span>
       </div>
+
       <div style="display:flex;gap:6px">
-        <button class="btn small secondary" onclick="cargarGuardada('${safeAttr(f.codigo)}')">Abrir</button>
-        <button class="btn small red" onclick="borrarGuardada('${safeAttr(f.codigo)}')">x</button>
+        <button class="btn-ficha small light" type="button" onclick="cargarGuardada('${safeAttr(f.codigo)}')">Abrir</button>
+        <button class="btn-ficha small red" type="button" onclick="borrarGuardada('${safeAttr(f.codigo)}')">x</button>
       </div>
     </div>
   `).join("");
@@ -1724,51 +2368,37 @@ function cargarGuardada(codigo){
 
 function borrarGuardada(codigo){
   if(!confirm("¿Eliminar ficha guardada?")) return;
+
   let saved = JSON.parse(localStorage.getItem("fichasTV") || "[]");
   saved = saved.filter(x => x.codigo !== codigo);
   localStorage.setItem("fichasTV", JSON.stringify(saved));
+
   renderSaved();
 }
 
-/* ==========================================================
-   HELPERS
-========================================================== */
-
 function renderAll(){
-  renderComponentes();
-  renderMateriales();
+  renderItems();
   renderFaltantes();
   renderSaved();
   renderPaper();
 }
 
 function bindInputs(){
-  [...campos,"llevaInstalacion","llevaLuz"].forEach(id=>{
+  campos.forEach(id => {
     const el = $(id);
-    if(!el) return;
     el.addEventListener("input", renderPaper);
     el.addEventListener("change", renderPaper);
   });
 }
 
-function optionList(list, selected){
-  return list.map(v=>{
-    const label = v || "Pendiente / personalizado";
-    return `<option value="${escapeAttr(v)}" ${v===selected ? "selected" : ""}>${label}</option>`;
-  }).join("");
+function optionList(list,selected){
+  return list.map(v => `<option value="${attr(v)}" ${v===selected ? "selected" : ""}>${v || "Pendiente / personalizado"}</option>`).join("");
 }
 
-function safe(v){
-  return escapeHtml(String(v ?? ""));
-}
-
-function safeAttr(v){
-  return String(v ?? "").replace(/'/g,"&#39;").replace(/"/g,"&quot;");
-}
-
-function small(v){
-  return v ? `<span style="font-size:10px;color:#475569">${safe(v)}</span>` : "";
-}
+function safe(v){ return escapeHtml(String(v ?? "")); }
+function attr(v){ return escapeHtml(String(v ?? "")); }
+function safeAttr(v){ return String(v ?? "").replace(/'/g,"&#39;").replace(/"/g,"&quot;"); }
+function small(v){ return v ? `<span style="font-size:10px;color:#475569">${safe(v)}</span>` : ""; }
 
 function escapeHtml(str){
   return String(str ?? "")
@@ -1779,52 +2409,51 @@ function escapeHtml(str){
     .replace(/'/g,"&#039;");
 }
 
-function escapeAttr(str){
-  return escapeHtml(str);
-}
-
 function formatInputDate(v){
   if(!v) return "";
-  const parts = v.split("-");
-  if(parts.length !== 3) return v;
-  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  const p = v.split("-");
+  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : v;
 }
 
 function formatDate(d){
-  const dd = String(d.getDate()).padStart(2,"0");
-  const mm = String(d.getMonth()+1).padStart(2,"0");
-  const yyyy = d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
+  return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
 }
-
-/* ==========================================================
-   INIT
-========================================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
   bindInputs();
 
   $("codigo").value = generarCodigo();
 
-  ficha.materiales = ["PVC / Acrílico / material principal","Doble faz / fijación","Material de plantilla si aplica"];
-  ficha.faltantes = [
-    "Fecha de entrega",
-    "Medidas completas",
-    "Interior / exterior",
-    "Tipo de superficie si lleva instalación"
-  ];
+  ficha.faltantes = ["Fecha de entrega", "Sede o lugar"];
 
-  ficha.componentes = [{
-    nombre:"Componente principal",
+  ficha.items = [{
+    nombre:"Ítem 1",
     tipo:"",
     material:"",
     espesor:"",
     medidas:"",
     cantidad:"",
     acabado:"",
-    luz:"No",
+    ambiente:"",
     observaciones:"",
-    checks:["Material preparado","Corte / fabricación","Acabado aplicado","Revisión final"]
+    imagen:"",
+    llevaLuz:false,
+    tipoLuz:"",
+    sistemaLed:"",
+    colorLuz:"",
+    transformador:"",
+    transformadorCompartido:"No",
+    ubicacionTransformador:"",
+    puntoElectrico:"",
+    obsElectricas:"",
+    llevaInstalacion:false,
+    superficie:"",
+    altura:"",
+    acceso:"",
+    fijacion:"",
+    plantilla:"",
+    obsInstalacion:"",
+    checks:["Medida revisada","Material listo","Fabricación / corte","Acabado","Revisión final"]
   }];
 
   renderAll();
@@ -1833,4 +2462,3 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
- 
