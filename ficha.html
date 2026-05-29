@@ -2157,6 +2157,206 @@ html,body{
   }
 }
 
+
+
+/* =========================================================
+   FIX EXPORTACIÓN PDF LIMPIA
+   - No usa el layout responsive visible.
+   - Evita solapes de imágenes/cards/tablas.
+   - Prepara una hoja carta estable para html2pdf.
+========================================================= */
+.paper,
+.paper *{
+  box-sizing:border-box;
+}
+.paper{
+  overflow:visible!important;
+}
+.paper h1,
+.paper h2,
+.paper h3,
+.paper h4,
+.paper p,
+.paper td,
+.paper th,
+.paper strong,
+.paper span{
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+.paper img{
+  display:block;
+  max-width:100%;
+}
+.paper-section,
+.paper-item-card,
+.paper-hero-image,
+.paper-image-card,
+.critical{
+  page-break-inside:avoid;
+  break-inside:avoid;
+}
+.paper-subtable{
+  table-layout:fixed;
+}
+.paper-subtable th,
+.paper-subtable td{
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+
+.pdf-export-wrapper{
+  position:fixed;
+  left:-100000px;
+  top:0;
+  width:216mm;
+  background:#fff;
+  pointer-events:none;
+  opacity:1;
+  z-index:-1;
+}
+.pdf-export-wrapper .paper{
+  width:199mm!important;
+  max-width:199mm!important;
+  min-width:0!important;
+  min-height:auto!important;
+  margin:0!important;
+  padding:6mm!important;
+  border:0!important;
+  box-shadow:none!important;
+  transform:none!important;
+  overflow:visible!important;
+  background:#fff!important;
+  color:#111827!important;
+  font-size:10.5px!important;
+  line-height:1.22!important;
+}
+.pdf-export-wrapper .paper-header{
+  grid-template-columns:1fr 35mm!important;
+  gap:6mm!important;
+  padding-bottom:4mm!important;
+  border-bottom:1.2mm solid #172bd8!important;
+}
+.pdf-export-wrapper .paper-brand img{
+  max-width:38mm!important;
+  max-height:12mm!important;
+}
+.pdf-export-wrapper .paper-brand h3{
+  font-size:15px!important;
+}
+.pdf-export-wrapper .paper-title{
+  margin:4mm 0 3mm!important;
+}
+.pdf-export-wrapper .paper-title h2{
+  font-size:17px!important;
+  line-height:1.08!important;
+}
+.pdf-export-wrapper .paper-hero-image{
+  grid-template-columns:52mm 1fr!important;
+  gap:4mm!important;
+  margin:4mm 0!important;
+  padding:3mm!important;
+  border-width:.6mm!important;
+}
+.pdf-export-wrapper .paper-hero-image img{
+  max-height:42mm!important;
+  width:100%!important;
+  object-fit:contain!important;
+}
+.pdf-export-wrapper .paper-image-strip{
+  grid-template-columns:repeat(3,1fr)!important;
+  gap:3mm!important;
+  margin:3mm 0 4mm!important;
+}
+.pdf-export-wrapper .paper-image-card img{
+  height:25mm!important;
+  object-fit:contain!important;
+}
+.pdf-export-wrapper .paper-grid{
+  grid-template-columns:repeat(5,1fr)!important;
+  margin:3mm 0!important;
+}
+.pdf-export-wrapper .info-box{
+  min-height:11mm!important;
+  padding:2mm!important;
+}
+.pdf-export-wrapper .critical{
+  margin:3mm 0!important;
+  padding:3mm!important;
+}
+.pdf-export-wrapper .paper-section{
+  margin-top:3.5mm!important;
+}
+.pdf-export-wrapper .paper-section h4{
+  font-size:9.5px!important;
+  padding:2mm!important;
+}
+.pdf-export-wrapper .paper-list,
+.pdf-export-wrapper .paper-checklist-columns{
+  grid-template-columns:repeat(2,1fr)!important;
+}
+.pdf-export-wrapper .paper-check{
+  min-height:7mm!important;
+  padding:1.8mm 2mm!important;
+  font-size:9px!important;
+}
+.pdf-export-wrapper .paper-item-card{
+  margin-top:3mm!important;
+  page-break-inside:avoid!important;
+  break-inside:avoid!important;
+}
+.pdf-export-wrapper .paper-item-head{
+  padding:2mm!important;
+  font-size:9.5px!important;
+}
+.pdf-export-wrapper .paper-item-body{
+  grid-template-columns:1fr 34mm!important;
+}
+.pdf-export-wrapper .paper-item-info{
+  grid-template-columns:repeat(3,1fr)!important;
+}
+.pdf-export-wrapper .paper-item-field{
+  min-height:9mm!important;
+  padding:1.6mm 2mm!important;
+}
+.pdf-export-wrapper .paper-item-field label{
+  font-size:6.7px!important;
+}
+.pdf-export-wrapper .paper-item-field strong{
+  font-size:8.8px!important;
+  line-height:1.16!important;
+}
+.pdf-export-wrapper .paper-item-img{
+  min-height:30mm!important;
+  padding:2mm!important;
+}
+.pdf-export-wrapper .paper-item-img img{
+  max-height:32mm!important;
+  object-fit:contain!important;
+}
+.pdf-export-wrapper .paper-subtable{
+  font-size:8.6px!important;
+  table-layout:fixed!important;
+  width:100%!important;
+}
+.pdf-export-wrapper .paper-subtable th,
+.pdf-export-wrapper .paper-subtable td{
+  padding:1.5mm!important;
+  overflow-wrap:anywhere!important;
+}
+.pdf-export-wrapper .footer-note{
+  margin-top:5mm!important;
+  font-size:9px!important;
+}
+@media(max-width:430px){
+  .ficha-paper-shell{
+    overflow-x:auto;
+  }
+  .paper{
+    min-width:720px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -3238,32 +3438,39 @@ function borrarGuardada(codigo){
   showToast("Ficha eliminada", "info");
 }
 
+function esperarImagenesPDF(root){
+  const imgs = Array.from(root.querySelectorAll("img"));
+
+  if(!imgs.length){
+    return Promise.resolve();
+  }
+
+  return Promise.all(imgs.map(img => {
+    if(img.complete && img.naturalWidth > 0){
+      return Promise.resolve();
+    }
+
+    return new Promise(resolve => {
+      img.onload = resolve;
+      img.onerror = resolve;
+      setTimeout(resolve, 1800);
+    });
+  }));
+}
+
 function crearPDF(){
   recolectar();
   renderPaper();
 
-  const element = $("paper");
+  const original = $("paper");
+
+  if(!original){
+    showToast("No existe la vista PDF.", "error");
+    return;
+  }
+
   const codigo = safeFileName(ficha.codigo || "ficha");
   const cliente = safeFileName(ficha.cliente || "cliente");
-
-  const opt = {
-    margin: 8,
-    filename: `${codigo}_${cliente}.pdf`,
-    image: { type: "jpeg", quality: 0.98 },
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      logging: false
-    },
-    jsPDF: {
-      unit: "mm",
-      format: "letter",
-      orientation: "portrait"
-    },
-    pagebreak: {
-      mode: ["avoid-all", "css", "legacy"]
-    }
-  };
 
   if(typeof html2pdf === "undefined"){
     showToast("No cargó html2pdf. Usa imprimir > guardar PDF.", "error");
@@ -3271,12 +3478,53 @@ function crearPDF(){
     return;
   }
 
-  showToast("Generando PDF...", "info");
+  const wrapper = document.createElement("div");
+  wrapper.className = "pdf-export-wrapper";
 
-  html2pdf().set(opt).from(element).save().then(() => {
-    showToast("PDF creado", "success");
-  }).catch(() => {
+  const clone = original.cloneNode(true);
+  clone.id = "paperPDFExport";
+
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
+
+  showToast("Preparando PDF limpio...", "info");
+
+  esperarImagenesPDF(clone).then(() => {
+    const opt = {
+      margin: 8,
+      filename: `${codigo}_${cliente}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 900
+      },
+      jsPDF: {
+        unit: "mm",
+        format: "letter",
+        orientation: "portrait",
+        compress: true
+      },
+      pagebreak: {
+        mode: ["css", "legacy"],
+        before: ".pdf-page-break",
+        avoid: [".paper-item-card", ".paper-hero-image", ".paper-image-card", ".critical"]
+      }
+    };
+
+    return html2pdf().set(opt).from(clone).save();
+  }).then(() => {
+    showToast("PDF creado correctamente", "success");
+  }).catch(err => {
+    console.error(err);
     showToast("Error al crear PDF. Usa imprimir.", "error");
+  }).finally(() => {
+    wrapper.remove();
   });
 }
 
