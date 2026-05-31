@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Registro con Foto · Tuttovinilos</title>
+<title>Reconocimiento Facial · Tuttovinilos</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-
 :root{
   --bg:#f1f4f9;
-  --card:#ffffff;
+  --card:#fff;
   --text:#111827;
   --muted:#6b7280;
   --border:#d7ddea;
@@ -22,44 +22,43 @@
   --yellow:#f59e0b;
   --dark:#111827;
 }
-
 body{
-  font-family:Arial, Helvetica, sans-serif;
+  font-family:Arial,Helvetica,sans-serif;
   background:var(--bg);
   color:var(--text);
-  padding:18px;
+  padding:14px;
 }
-
-.wrap{
-  max-width:980px;
-  margin:auto;
-}
-
+.wrap{max-width:1100px;margin:auto}
 .header{
   background:linear-gradient(135deg,#111827,#1f3aff);
   color:white;
   border-radius:18px;
   padding:20px;
-  margin-bottom:16px;
+  margin-bottom:14px;
   box-shadow:0 10px 25px rgba(0,0,0,.15);
 }
-
-.header h1{
-  font-size:24px;
-  margin-bottom:6px;
+.header h1{font-size:24px;margin-bottom:5px}
+.header p{font-size:14px;color:#dbe3ff}
+.tabs{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
 }
-
-.header p{
-  color:#dbe3ff;
-  font-size:14px;
+.tab{
+  border:1px solid var(--border);
+  background:white;
+  color:#111827;
+  border-radius:999px;
+  padding:11px 16px;
+  font-weight:900;
 }
-
+.tab.active{background:#153bff;color:white}
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:16px;
+  gap:14px;
 }
-
 .card{
   background:var(--card);
   border:1px solid var(--border);
@@ -67,19 +66,14 @@ body{
   padding:16px;
   box-shadow:0 8px 18px rgba(15,23,42,.08);
 }
-
-.card h2{
-  font-size:17px;
-  margin-bottom:12px;
-}
-
+.card.full{grid-column:1/-1}
+.card h2{font-size:18px;margin-bottom:12px}
 label{
   display:block;
   font-size:13px;
-  font-weight:700;
+  font-weight:800;
   margin:10px 0 6px;
 }
-
 input,select,textarea{
   width:100%;
   border:1px solid var(--border);
@@ -88,135 +82,100 @@ input,select,textarea{
   font-size:15px;
   background:white;
 }
-
-textarea{
-  resize:vertical;
-  min-height:80px;
-}
-
+textarea{min-height:72px;resize:vertical}
 button{
   border:0;
   border-radius:12px;
   padding:12px 14px;
   font-size:15px;
-  font-weight:800;
+  font-weight:900;
   cursor:pointer;
 }
-
-button:active{
-  transform:scale(.98);
-}
-
+button:active{transform:scale(.98)}
 .btn-blue{background:var(--blue);color:white}
 .btn-green{background:var(--green);color:white}
 .btn-gray{background:#e5e7eb;color:#111827}
 .btn-red{background:var(--red);color:white}
-
+.btn-yellow{background:#f59e0b;color:#111827}
 .btn-row{
   display:flex;
-  gap:10px;
+  gap:9px;
   flex-wrap:wrap;
   margin-top:12px;
 }
-
 video,canvas,img{
   width:100%;
   border-radius:14px;
   border:1px solid var(--border);
   background:#111827;
 }
-
 video{
-  min-height:260px;
+  min-height:280px;
   object-fit:cover;
 }
-
 canvas{display:none}
-
-.preview-box{
-  margin-top:12px;
-}
-
+.preview{margin-top:12px}
+.preview img{display:none}
 .status{
   margin-top:12px;
   padding:12px;
   border-radius:12px;
   font-size:14px;
+  line-height:1.45;
   background:#eef2ff;
   border:1px solid #c7d2fe;
   color:#1e3a8a;
-  line-height:1.45;
 }
-
-.status.ok{
-  background:#ecfdf5;
-  border-color:#bbf7d0;
-  color:#166534;
+.status.ok{background:#ecfdf5;border-color:#bbf7d0;color:#166534}
+.status.err{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+.status.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.hidden{display:none!important}
+.result-box{
+  background:#f8fafc;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:16px;
+  margin-top:12px;
 }
-
-.status.err{
-  background:#fef2f2;
-  border-color:#fecaca;
-  color:#991b1b;
+.result-name{
+  font-size:34px;
+  font-weight:1000;
+  letter-spacing:-1px;
 }
-
-.status.warn{
-  background:#fffbeb;
-  border-color:#fde68a;
-  color:#92400e;
+.result-sub{
+  color:#64748b;
+  font-weight:800;
+  margin-top:4px;
 }
-
-.resultado{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-
 .badge{
   display:inline-block;
   padding:6px 10px;
   border-radius:999px;
-  font-weight:800;
+  font-weight:900;
   font-size:13px;
 }
-
 .badge-green{background:#dcfce7;color:#166534}
+.badge-red{background:#fee2e2;color:#991b1b}
 .badge-yellow{background:#fef3c7;color:#92400e}
-
-.table-wrap{
-  overflow:auto;
-}
-
+.table-wrap{overflow:auto}
 table{
   width:100%;
   border-collapse:collapse;
   margin-top:10px;
-  min-width:640px;
+  min-width:760px;
 }
-
 th,td{
   border-bottom:1px solid var(--border);
   text-align:left;
   padding:10px;
   font-size:13px;
 }
-
-th{
-  background:#f8fafc;
-}
-
+th{background:#f8fafc}
 .small{
   color:var(--muted);
   font-size:12px;
   line-height:1.45;
 }
-
-code{
-  background:#f3f4f6;
-  padding:2px 5px;
-  border-radius:5px;
-}
-
 .sql-box{
   background:#0f172a;
   color:#e5e7eb;
@@ -226,17 +185,27 @@ code{
   font-size:12px;
   margin-top:10px;
   white-space:pre;
+  max-height:420px;
 }
-
-.hidden{
-  display:none!important;
+.counter{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#eef2ff;
+  border:1px solid #c7d2fe;
+  color:#1e3a8a;
+  font-size:42px;
+  font-weight:1000;
+  border-radius:18px;
+  height:100px;
+  margin-top:10px;
 }
-
-@media(max-width:760px){
+@media(max-width:800px){
   body{padding:10px}
   .grid{grid-template-columns:1fr}
   .header h1{font-size:20px}
-  video{min-height:220px}
+  video{min-height:230px}
+  .result-name{font-size:28px}
 }
 </style>
 </head>
@@ -245,142 +214,64 @@ code{
 <div class="wrap">
 
   <div class="header">
-    <h1>Registro con Foto + Supabase</h1>
-    <p>Toma una foto, guárdala en Supabase Storage y registra quién aparece.</p>
+    <h1>Reconocimiento Facial · Tuttovinilos</h1>
+    <p>Entrena rostros con varias fotos y luego reconoce automáticamente a la persona.</p>
   </div>
 
-  <div class="grid">
+  <div class="tabs">
+    <button class="tab active" id="tabConfig" onclick="mostrarVista('config')">1. Configuración</button>
+    <button class="tab" id="tabEntrenar" onclick="mostrarVista('entrenar')">2. Entrenar rostro</button>
+    <button class="tab" id="tabReconocer" onclick="mostrarVista('reconocer')">3. Reconocer persona</button>
+    <button class="tab" id="tabRegistros" onclick="mostrarVista('registros')">4. Registros</button>
+  </div>
 
-    <div class="card">
-      <h2>1. Configuración Supabase</h2>
+  <!-- CONFIG -->
+  <section id="vistaConfig">
+    <div class="grid">
+      <div class="card">
+        <h2>Supabase</h2>
 
-      <label>SUPABASE URL</label>
-      <input id="supabaseUrl" value="https://ujfdsabypflseijatxba.supabase.co">
+        <label>SUPABASE URL</label>
+        <input id="supabaseUrl" value="https://ujfdsabypflseijatxba.supabase.co">
 
-      <label>SUPABASE ANON KEY</label>
-      <input id="supabaseKey" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZmRzYWJ5cGZsc2VpamF0eGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNjcxNTIsImV4cCI6MjA5MTg0MzE1Mn0.Tyi_TeKaVG0PMA4R-aO8GPgP525GLZcqipB-tXmFq5c" type="password">
+        <label>SUPABASE ANON / PUBLISHABLE KEY</label>
+        <input id="supabaseKey" type="password" placeholder="Pega aquí tu key de Supabase">
 
-      <label>Bucket de Storage</label>
-      <input id="bucketName" value="fotos-registro">
+        <label>Bucket Storage</label>
+        <input id="bucketName" value="fotos-registro">
 
-      <div class="btn-row">
-        <button class="btn-blue" onclick="conectarSupabase()">Conectar</button>
-        <button class="btn-gray" onclick="guardarConfigLocal()">Guardar config</button>
-        <button class="btn-gray" onclick="mostrarOcultarKey()">Ver/Ocultar key</button>
-      </div>
-
-      <div id="estadoSupabase" class="status warn">
-        Supabase no conectado.
-      </div>
-
-      <p class="small" style="margin-top:12px">
-        Necesitas tener creado:
-        <br><code>Bucket: fotos-registro</code>
-        <br><code>Tabla: personas</code>
-        <br><code>Tabla: fotos_registro</code>
-      </p>
-    </div>
-
-    <div class="card">
-      <h2>2. Cámara</h2>
-
-      <video id="video" autoplay playsinline muted></video>
-      <canvas id="canvas"></canvas>
-
-      <div class="btn-row">
-        <button class="btn-blue" onclick="iniciarCamara()">Abrir cámara</button>
-        <button class="btn-green" onclick="tomarFoto()">Tomar foto</button>
-        <button class="btn-gray" onclick="detenerCamara()">Cerrar cámara</button>
-      </div>
-
-      <div class="preview-box">
-        <img id="preview" alt="Vista previa" style="display:none">
-      </div>
-
-      <div id="estadoCamara" class="status">
-        Cámara lista para iniciar.
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>3. Persona detectada / asignada</h2>
-
-      <label>Persona</label>
-      <select id="personaSelect">
-        <option value="">Primero conecta Supabase</option>
-      </select>
-
-      <div class="btn-row">
-        <button class="btn-blue" onclick="cargarPersonas()">Cargar personas</button>
-        <button class="btn-gray" onclick="deteccionManual()">Usar persona seleccionada</button>
-      </div>
-
-      <div style="margin-top:14px" class="resultado">
-        <div>
-          <label>Detectado</label>
-          <input id="personaDetectada" placeholder="Ej: Rubén">
+        <div class="btn-row">
+          <button class="btn-blue" onclick="conectarSupabase()">Conectar</button>
+          <button class="btn-gray" onclick="guardarConfigLocal()">Guardar config</button>
+          <button class="btn-gray" onclick="mostrarOcultarKey()">Ver/Ocultar key</button>
         </div>
-        <div>
-          <label>Confianza %</label>
-          <input id="confianza" type="number" value="100">
+
+        <div id="estadoSupabase" class="status warn">Supabase no conectado.</div>
+      </div>
+
+      <div class="card">
+        <h2>Modelos de reconocimiento</h2>
+
+        <label>Ruta de modelos face-api.js</label>
+        <input id="modelUrl" value="./models">
+
+        <p class="small">
+          Debes tener una carpeta <b>models</b> junto a este HTML con los modelos de face-api.js.
+          Sin esos modelos, el reconocimiento no puede funcionar.
+        </p>
+
+        <div class="btn-row">
+          <button class="btn-blue" onclick="cargarModelos()">Cargar modelos</button>
         </div>
+
+        <div id="estadoModelos" class="status warn">Modelos no cargados.</div>
       </div>
 
-      <label>Tipo de registro</label>
-      <select id="tipoRegistro">
-        <option value="asistencia">Asistencia</option>
-        <option value="produccion">Producción</option>
-        <option value="entrega">Entrega</option>
-        <option value="pedido">Pedido</option>
-        <option value="otro">Otro</option>
-      </select>
+      <div class="card full">
+        <h2>SQL necesario</h2>
+        <p class="small">Ejecuta esto una sola vez en Supabase → SQL Editor.</p>
 
-      <label>Nota</label>
-      <textarea id="nota" placeholder="Ej: llegó a imprimir pedido de stickers..."></textarea>
-
-      <div id="estadoDeteccion" class="status warn">
-        Esta versión guarda la foto y asigna la persona manualmente. Luego se puede conectar reconocimiento facial automático.
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>4. Guardar registro</h2>
-
-      <button class="btn-green" style="width:100%" onclick="subirYGuardar()">
-        Subir foto y guardar en Supabase
-      </button>
-
-      <div id="estadoGuardado" class="status">
-        Esperando foto.
-      </div>
-
-      <div class="btn-row">
-        <button class="btn-gray" onclick="cargarUltimosRegistros()">Ver últimos registros</button>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Persona</th>
-              <th>Confianza</th>
-              <th>Tipo</th>
-              <th>Foto</th>
-            </tr>
-          </thead>
-          <tbody id="tablaRegistros">
-            <tr><td colspan="5">Sin datos.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card" style="grid-column:1/-1">
-      <h2>SQL necesario si aún no creaste las tablas</h2>
-      <p class="small">Copia esto en Supabase → SQL Editor. Si ya lo hiciste, ignora esta parte.</p>
-
-      <div class="sql-box">create table if not exists personas (
+        <div class="sql-box">create table if not exists personas (
   id uuid primary key default gen_random_uuid(),
   nombre text not null,
   cargo text,
@@ -408,6 +299,16 @@ insert into personas (nombre, cargo)
 select 'Carlos', 'Ayudante'
 where not exists (select 1 from personas where nombre = 'Carlos');
 
+create table if not exists rostros_referencia (
+  id uuid primary key default gen_random_uuid(),
+  persona_id uuid references personas(id) on delete cascade,
+  persona_nombre text,
+  foto_url text,
+  descriptor jsonb not null,
+  distancia_base numeric,
+  created_at timestamp with time zone default now()
+);
+
 create table if not exists fotos_registro (
   id uuid primary key default gen_random_uuid(),
   fecha timestamp with time zone default now(),
@@ -415,75 +316,277 @@ create table if not exists fotos_registro (
   persona_id uuid references personas(id),
   persona_detectada text,
   confianza numeric,
+  distancia numeric,
   tipo_registro text,
   nota text,
   created_at timestamp with time zone default now()
 );
 
 alter table personas enable row level security;
+alter table rostros_referencia enable row level security;
 alter table fotos_registro enable row level security;
 
 drop policy if exists "leer personas" on personas;
 create policy "leer personas"
 on personas for select
+to anon
 using (true);
+
+drop policy if exists "leer rostros referencia" on rostros_referencia;
+create policy "leer rostros referencia"
+on rostros_referencia for select
+to anon
+using (true);
+
+drop policy if exists "insertar rostros referencia" on rostros_referencia;
+create policy "insertar rostros referencia"
+on rostros_referencia for insert
+to anon
+with check (true);
 
 drop policy if exists "leer fotos registro" on fotos_registro;
 create policy "leer fotos registro"
 on fotos_registro for select
+to anon
 using (true);
 
 drop policy if exists "insertar fotos registro" on fotos_registro;
 create policy "insertar fotos registro"
 on fotos_registro for insert
+to anon
 with check (true);
 
 drop policy if exists "subir fotos publicas" on storage.objects;
 create policy "subir fotos publicas"
 on storage.objects for insert
+to anon
 with check (bucket_id = 'fotos-registro');
 
 drop policy if exists "leer fotos publicas" on storage.objects;
 create policy "leer fotos publicas"
 on storage.objects for select
+to anon
 using (bucket_id = 'fotos-registro');</div>
+      </div>
     </div>
+  </section>
 
-  </div>
+  <!-- ENTRENAR -->
+  <section id="vistaEntrenar" class="hidden">
+    <div class="grid">
+      <div class="card">
+        <h2>Entrenar persona</h2>
+
+        <label>Persona</label>
+        <select id="personaEntrenar">
+          <option value="">Primero conecta Supabase</option>
+        </select>
+
+        <div class="btn-row">
+          <button class="btn-blue" onclick="cargarPersonas()">Cargar personas</button>
+        </div>
+
+        <div class="counter" id="contadorEntrenamiento">0/5</div>
+
+        <p class="small" style="margin-top:10px">
+          Recomendado: mínimo 5 fotos por persona. Mejor 8 a 12 fotos.
+          Toma fotos de frente, un poco de lado, con luz normal y sin tapar la cara.
+        </p>
+
+        <div id="estadoEntrenamiento" class="status warn">Selecciona persona y carga modelos.</div>
+      </div>
+
+      <div class="card">
+        <h2>Cámara entrenamiento</h2>
+
+        <video id="videoEntrenar" autoplay playsinline muted></video>
+        <canvas id="canvasEntrenar"></canvas>
+
+        <div class="btn-row">
+          <button class="btn-blue" onclick="iniciarCamara('entrenar')">Abrir cámara</button>
+          <button class="btn-green" onclick="capturarEntrenamiento()">Capturar rostro</button>
+          <button class="btn-gray" onclick="detenerCamara()">Cerrar cámara</button>
+        </div>
+
+        <div class="preview">
+          <img id="previewEntrenar">
+        </div>
+      </div>
+
+      <div class="card full">
+        <h2>Rostros guardados</h2>
+        <button class="btn-gray" onclick="cargarResumenRostros()">Actualizar resumen</button>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Persona</th>
+                <th>Fotos entrenadas</th>
+                <th>Último entrenamiento</th>
+              </tr>
+            </thead>
+            <tbody id="tablaRostros">
+              <tr><td colspan="3">Sin datos.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECONOCER -->
+  <section id="vistaReconocer" class="hidden">
+    <div class="grid">
+      <div class="card">
+        <h2>Reconocer persona</h2>
+
+        <video id="videoReconocer" autoplay playsinline muted></video>
+        <canvas id="canvasReconocer"></canvas>
+
+        <div class="btn-row">
+          <button class="btn-blue" onclick="iniciarCamara('reconocer')">Abrir cámara</button>
+          <button class="btn-green" onclick="reconocerPersona()">Reconocer</button>
+          <button class="btn-gray" onclick="detenerCamara()">Cerrar cámara</button>
+        </div>
+
+        <div class="preview">
+          <img id="previewReconocer">
+        </div>
+
+        <div id="estadoReconocimiento" class="status warn">Cargue modelos y rostros de referencia.</div>
+      </div>
+
+      <div class="card">
+        <h2>Resultado</h2>
+
+        <div class="result-box">
+          <div class="result-name" id="resultadoNombre">---</div>
+          <div class="result-sub" id="resultadoDetalle">Sin reconocimiento todavía</div>
+        </div>
+
+        <label>Tipo de registro</label>
+        <select id="tipoRegistro">
+          <option value="asistencia">Asistencia</option>
+          <option value="produccion">Producción</option>
+          <option value="entrega">Entrega</option>
+          <option value="pedido">Pedido</option>
+          <option value="otro">Otro</option>
+        </select>
+
+        <label>Nota</label>
+        <textarea id="notaRegistro" placeholder="Ej: entrada a producción, entrega, asistencia..."></textarea>
+
+        <div class="btn-row">
+          <button class="btn-green" onclick="guardarUltimoReconocimiento()">Guardar resultado</button>
+          <button class="btn-gray" onclick="cargarRostrosReferencia()">Recargar rostros</button>
+        </div>
+
+        <div id="estadoGuardarReconocimiento" class="status">Esperando reconocimiento.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REGISTROS -->
+  <section id="vistaRegistros" class="hidden">
+    <div class="card full">
+      <h2>Últimos registros</h2>
+      <button class="btn-gray" onclick="cargarUltimosRegistros()">Actualizar</button>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Persona</th>
+              <th>Confianza</th>
+              <th>Distancia</th>
+              <th>Tipo</th>
+              <th>Foto</th>
+            </tr>
+          </thead>
+          <tbody id="tablaRegistros">
+            <tr><td colspan="6">Sin datos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
 </div>
 
 <script>
 let supabaseClient = null;
-let stream = null;
-let fotoBlob = null;
-let fotoDataUrl = null;
-let personaSeleccionadaId = null;
+let streamActual = null;
+let vistaCamaraActual = null;
+let modelosCargados = false;
+let rostrosReferencia = [];
+let ultimoReconocimiento = null;
+let ultimaFotoReconocimientoBlob = null;
 
 // ===============================
-// AUTO CONEXION
+// INICIO
 // ===============================
 window.addEventListener("load", () => {
-  const cfg = JSON.parse(localStorage.getItem("supabase_foto_config") || "{}");
+  const cfg = JSON.parse(localStorage.getItem("face_supabase_config") || "{}");
 
   if(cfg.url) document.getElementById("supabaseUrl").value = cfg.url;
   if(cfg.key) document.getElementById("supabaseKey").value = cfg.key;
   if(cfg.bucket) document.getElementById("bucketName").value = cfg.bucket;
+  if(cfg.modelUrl) document.getElementById("modelUrl").value = cfg.modelUrl;
 
-  conectarSupabase();
+  if(document.getElementById("supabaseKey").value.trim()){
+    conectarSupabase();
+  }
 });
 
 // ===============================
-// CONFIG LOCAL
+// VISTAS
+// ===============================
+function mostrarVista(nombre){
+  document.getElementById("vistaConfig").classList.add("hidden");
+  document.getElementById("vistaEntrenar").classList.add("hidden");
+  document.getElementById("vistaReconocer").classList.add("hidden");
+  document.getElementById("vistaRegistros").classList.add("hidden");
+
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+
+  if(nombre === "config"){
+    document.getElementById("vistaConfig").classList.remove("hidden");
+    document.getElementById("tabConfig").classList.add("active");
+  }
+
+  if(nombre === "entrenar"){
+    document.getElementById("vistaEntrenar").classList.remove("hidden");
+    document.getElementById("tabEntrenar").classList.add("active");
+    cargarPersonas();
+    cargarResumenRostros();
+  }
+
+  if(nombre === "reconocer"){
+    document.getElementById("vistaReconocer").classList.remove("hidden");
+    document.getElementById("tabReconocer").classList.add("active");
+    cargarRostrosReferencia();
+  }
+
+  if(nombre === "registros"){
+    document.getElementById("vistaRegistros").classList.remove("hidden");
+    document.getElementById("tabRegistros").classList.add("active");
+    cargarUltimosRegistros();
+  }
+}
+
+// ===============================
+// SUPABASE
 // ===============================
 function guardarConfigLocal(){
   const cfg = {
     url: document.getElementById("supabaseUrl").value.trim(),
     key: document.getElementById("supabaseKey").value.trim(),
-    bucket: document.getElementById("bucketName").value.trim()
+    bucket: document.getElementById("bucketName").value.trim(),
+    modelUrl: document.getElementById("modelUrl").value.trim()
   };
-
-  localStorage.setItem("supabase_foto_config", JSON.stringify(cfg));
-  setStatus("estadoSupabase", "Configuración guardada en este navegador.", "ok");
+  localStorage.setItem("face_supabase_config", JSON.stringify(cfg));
+  setStatus("estadoSupabase","Configuración guardada.","ok");
 }
 
 function mostrarOcultarKey(){
@@ -496,267 +599,515 @@ function conectarSupabase(){
   const key = document.getElementById("supabaseKey").value.trim();
 
   if(!url || !key){
-    setStatus("estadoSupabase", "Falta SUPABASE URL o ANON KEY.", "err");
+    setStatus("estadoSupabase","Falta URL o key.","err");
     return;
   }
 
   try{
     supabaseClient = supabase.createClient(url, key);
-    setStatus("estadoSupabase", "Supabase conectado correctamente.", "ok");
     guardarConfigLocal();
+    setStatus("estadoSupabase","Supabase conectado.","ok");
     cargarPersonas();
   }catch(err){
     console.error(err);
-    setStatus("estadoSupabase", "Error conectando Supabase.", "err");
+    setStatus("estadoSupabase","Error conectando Supabase.","err");
+  }
+}
+
+// ===============================
+// MODELOS FACE API
+// ===============================
+async function cargarModelos(){
+  const modelUrl = document.getElementById("modelUrl").value.trim() || "./models";
+  guardarConfigLocal();
+
+  try{
+    setStatus("estadoModelos","Cargando modelos face-api.js...","warn");
+
+    await faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(modelUrl);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(modelUrl);
+
+    modelosCargados = true;
+    setStatus("estadoModelos","Modelos cargados correctamente.","ok");
+  }catch(err){
+    console.error(err);
+    modelosCargados = false;
+    setStatus("estadoModelos","No se pudieron cargar los modelos. Revisa que exista la carpeta /models con los archivos de face-api.js.","err");
   }
 }
 
 // ===============================
 // CAMARA
 // ===============================
-async function iniciarCamara(){
+async function iniciarCamara(tipo){
   try{
-    if(stream){
-      detenerCamara();
-    }
+    detenerCamara();
 
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" },
-      audio: false
+    vistaCamaraActual = tipo;
+
+    streamActual = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode:"user" },
+      audio:false
     });
 
-    const video = document.getElementById("video");
-    video.srcObject = stream;
+    const video = tipo === "entrenar" ? document.getElementById("videoEntrenar") : document.getElementById("videoReconocer");
+    video.srcObject = streamActual;
 
-    setStatus("estadoCamara", "Cámara activa.", "ok");
+    if(tipo === "entrenar"){
+      setStatus("estadoEntrenamiento","Cámara activa. Coloca el rostro de frente.","ok");
+    }else{
+      setStatus("estadoReconocimiento","Cámara activa. Presiona Reconocer.","ok");
+    }
+
   }catch(err){
     console.error(err);
-    setStatus("estadoCamara", "No se pudo abrir la cámara. Revisa permisos del navegador. En iPhone debe abrirse desde https o localhost.", "err");
+    const msg = "No se pudo abrir la cámara. En iPhone debe usarse HTTPS.";
+    if(tipo === "entrenar") setStatus("estadoEntrenamiento",msg,"err");
+    if(tipo === "reconocer") setStatus("estadoReconocimiento",msg,"err");
   }
 }
 
 function detenerCamara(){
-  if(stream){
-    stream.getTracks().forEach(track => track.stop());
-    stream = null;
+  if(streamActual){
+    streamActual.getTracks().forEach(t => t.stop());
+    streamActual = null;
   }
 
-  document.getElementById("video").srcObject = null;
-  setStatus("estadoCamara", "Cámara cerrada.", "warn");
-}
+  const v1 = document.getElementById("videoEntrenar");
+  const v2 = document.getElementById("videoReconocer");
 
-function tomarFoto(){
-  const video = document.getElementById("video");
-  const canvas = document.getElementById("canvas");
-  const preview = document.getElementById("preview");
-
-  if(!video.videoWidth){
-    setStatus("estadoCamara", "Primero abre la cámara.", "err");
-    return;
-  }
-
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  fotoDataUrl = canvas.toDataURL("image/jpeg", 0.88);
-  preview.src = fotoDataUrl;
-  preview.style.display = "block";
-
-  canvas.toBlob(blob => {
-    fotoBlob = blob;
-    setStatus("estadoCamara", "Foto tomada correctamente.", "ok");
-    setStatus("estadoGuardado", "Foto lista para subir.", "ok");
-  }, "image/jpeg", 0.88);
+  if(v1) v1.srcObject = null;
+  if(v2) v2.srcObject = null;
 }
 
 // ===============================
 // PERSONAS
 // ===============================
 async function cargarPersonas(){
-  if(!supabaseClient){
-    setStatus("estadoDeteccion", "Primero conecta Supabase.", "err");
-    return;
-  }
+  if(!supabaseClient) return;
 
-  const select = document.getElementById("personaSelect");
-  select.innerHTML = `<option value="">Cargando...</option>`;
+  const selects = [
+    document.getElementById("personaEntrenar")
+  ];
 
-  const { data, error } = await supabaseClient
-    .from("personas")
-    .select("id,nombre,cargo,activo")
-    .eq("activo", true)
-    .order("nombre", { ascending:true });
-
-  if(error){
-    console.error(error);
-    select.innerHTML = `<option value="">Error cargando personas</option>`;
-    setStatus("estadoDeteccion", "No se pudieron cargar personas. Revisa tabla personas y políticas RLS.", "err");
-    return;
-  }
-
-  if(!data || !data.length){
-    select.innerHTML = `<option value="">No hay personas registradas</option>`;
-    setStatus("estadoDeteccion", "No hay personas en la tabla personas.", "warn");
-    return;
-  }
-
-  select.innerHTML = `<option value="">Seleccionar persona</option>`;
-
-  data.forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = p.cargo ? `${p.nombre} · ${p.cargo}` : p.nombre;
-    opt.dataset.nombre = p.nombre;
-    select.appendChild(opt);
+  selects.forEach(s => {
+    if(s) s.innerHTML = `<option value="">Cargando...</option>`;
   });
 
-  setStatus("estadoDeteccion", "Personas cargadas. Selecciona una para asignarla al registro.", "ok");
-}
-
-function deteccionManual(){
-  const select = document.getElementById("personaSelect");
-  const opt = select.options[select.selectedIndex];
-
-  if(!select.value){
-    setStatus("estadoDeteccion", "Selecciona una persona.", "err");
-    return;
-  }
-
-  personaSeleccionadaId = select.value;
-
-  document.getElementById("personaDetectada").value = opt.dataset.nombre || opt.textContent;
-  document.getElementById("confianza").value = 100;
-
-  setStatus("estadoDeteccion", `Persona asignada: ${document.getElementById("personaDetectada").value}`, "ok");
-}
-
-// ===============================
-// SUBIR FOTO + GUARDAR REGISTRO
-// ===============================
-async function subirYGuardar(){
-  if(!supabaseClient){
-    setStatus("estadoGuardado", "Primero conecta Supabase.", "err");
-    return;
-  }
-
-  if(!fotoBlob){
-    setStatus("estadoGuardado", "Primero toma una foto.", "err");
-    return;
-  }
-
-  const bucket = document.getElementById("bucketName").value.trim();
-  const personaDetectada = document.getElementById("personaDetectada").value.trim();
-  const confianza = Number(document.getElementById("confianza").value || 0);
-  const tipoRegistro = document.getElementById("tipoRegistro").value;
-  const nota = document.getElementById("nota").value.trim();
-
-  if(!bucket){
-    setStatus("estadoGuardado", "Falta el nombre del bucket.", "err");
-    return;
-  }
-
-  if(!personaDetectada){
-    setStatus("estadoGuardado", "Falta persona detectada/asignada.", "err");
-    return;
-  }
-
-  setStatus("estadoGuardado", "Subiendo foto...", "warn");
-
-  const fecha = new Date();
-  const nombreArchivo = `registro_${fecha.getFullYear()}-${pad(fecha.getMonth()+1)}-${pad(fecha.getDate())}_${Date.now()}.jpg`;
-  const ruta = `registros/${nombreArchivo}`;
-
-  const { error: uploadError } = await supabaseClient
-    .storage
-    .from(bucket)
-    .upload(ruta, fotoBlob, {
-      contentType: "image/jpeg",
-      upsert: false
-    });
-
-  if(uploadError){
-    console.error(uploadError);
-    setStatus("estadoGuardado", "Error subiendo foto. Revisa que el bucket fotos-registro exista y que tenga políticas de Storage.", "err");
-    return;
-  }
-
-  const { data: publicData } = supabaseClient
-    .storage
-    .from(bucket)
-    .getPublicUrl(ruta);
-
-  const imagenUrl = publicData.publicUrl;
-
-  setStatus("estadoGuardado", "Foto subida. Guardando registro...", "warn");
-
-  const registro = {
-    fecha: fecha.toISOString(),
-    imagen_url: imagenUrl,
-    persona_id: personaSeleccionadaId || null,
-    persona_detectada: personaDetectada,
-    confianza: confianza,
-    tipo_registro: tipoRegistro,
-    nota: nota
-  };
-
-  const { error: insertError } = await supabaseClient
-    .from("fotos_registro")
-    .insert([registro]);
-
-  if(insertError){
-    console.error(insertError);
-    setStatus("estadoGuardado", "Foto subida, pero falló guardar en tabla fotos_registro. Revisa RLS/policies.", "err");
-    return;
-  }
-
-  setStatus("estadoGuardado", "Registro guardado correctamente.", "ok");
-
-  fotoBlob = null;
-  fotoDataUrl = null;
-
-  cargarUltimosRegistros();
-}
-
-// ===============================
-// ULTIMOS REGISTROS
-// ===============================
-async function cargarUltimosRegistros(){
-  if(!supabaseClient){
-    setStatus("estadoGuardado", "Primero conecta Supabase.", "err");
-    return;
-  }
-
-  const tbody = document.getElementById("tablaRegistros");
-  tbody.innerHTML = `<tr><td colspan="5">Cargando...</td></tr>`;
-
-  const { data, error } = await supabaseClient
-    .from("fotos_registro")
-    .select("fecha,persona_detectada,confianza,tipo_registro,imagen_url")
-    .order("fecha", { ascending:false })
-    .limit(10);
+  const {data,error} = await supabaseClient
+    .from("personas")
+    .select("id,nombre,cargo,activo")
+    .eq("activo",true)
+    .order("nombre",{ascending:true});
 
   if(error){
     console.error(error);
-    tbody.innerHTML = `<tr><td colspan="5">Error cargando registros.</td></tr>`;
+    selects.forEach(s => {
+      if(s) s.innerHTML = `<option value="">Error cargando personas</option>`;
+    });
+    return;
+  }
+
+  selects.forEach(s => {
+    if(!s) return;
+    s.innerHTML = `<option value="">Seleccionar persona</option>`;
+    (data || []).forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.cargo ? `${p.nombre} · ${p.cargo}` : p.nombre;
+      opt.dataset.nombre = p.nombre;
+      s.appendChild(opt);
+    });
+  });
+}
+
+// ===============================
+// ENTRENAMIENTO
+// ===============================
+async function capturarEntrenamiento(){
+  if(!supabaseClient){
+    setStatus("estadoEntrenamiento","Primero conecta Supabase.","err");
+    return;
+  }
+
+  if(!modelosCargados){
+    setStatus("estadoEntrenamiento","Primero carga los modelos face-api.js.","err");
+    return;
+  }
+
+  const select = document.getElementById("personaEntrenar");
+  const personaId = select.value;
+  const personaNombre = select.options[select.selectedIndex]?.dataset.nombre || "";
+
+  if(!personaId){
+    setStatus("estadoEntrenamiento","Selecciona una persona.","err");
+    return;
+  }
+
+  const video = document.getElementById("videoEntrenar");
+  if(!video.videoWidth){
+    setStatus("estadoEntrenamiento","Primero abre la cámara.","err");
+    return;
+  }
+
+  try{
+    setStatus("estadoEntrenamiento","Detectando rostro...","warn");
+
+    const canvas = document.getElementById("canvasEntrenar");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+
+    const preview = document.getElementById("previewEntrenar");
+    preview.src = canvas.toDataURL("image/jpeg",0.9);
+    preview.style.display = "block";
+
+    const deteccion = await detectarDescriptorDesdeElemento(canvas);
+
+    if(!deteccion){
+      setStatus("estadoEntrenamiento","No se detectó un rostro claro. Repite la foto con mejor luz.","err");
+      return;
+    }
+
+    const blob = await canvasToBlob(canvas);
+    const fotoUrl = await subirFotoStorage(blob, "entrenamiento");
+
+    const descriptorArray = Array.from(deteccion.descriptor);
+
+    const {error} = await supabaseClient
+      .from("rostros_referencia")
+      .insert([{
+        persona_id: personaId,
+        persona_nombre: personaNombre,
+        foto_url: fotoUrl,
+        descriptor: descriptorArray
+      }]);
+
+    if(error){
+      console.error(error);
+      setStatus("estadoEntrenamiento","Rostro detectado, pero falló al guardar en Supabase.","err");
+      return;
+    }
+
+    setStatus("estadoEntrenamiento",`Rostro guardado para ${personaNombre}. Toma varias fotos más.`,"ok");
+    cargarResumenRostros();
+
+  }catch(err){
+    console.error(err);
+    setStatus("estadoEntrenamiento","Error en entrenamiento. Revisa consola.","err");
+  }
+}
+
+// ===============================
+// RECONOCIMIENTO
+// ===============================
+async function cargarRostrosReferencia(){
+  if(!supabaseClient){
+    setStatus("estadoReconocimiento","Primero conecta Supabase.","err");
+    return;
+  }
+
+  const {data,error} = await supabaseClient
+    .from("rostros_referencia")
+    .select("id,persona_id,persona_nombre,descriptor,created_at")
+    .order("created_at",{ascending:false});
+
+  if(error){
+    console.error(error);
+    setStatus("estadoReconocimiento","No se pudieron cargar rostros de referencia.","err");
+    return;
+  }
+
+  rostrosReferencia = (data || []).map(r => ({
+    id:r.id,
+    persona_id:r.persona_id,
+    persona_nombre:r.persona_nombre,
+    descriptor:new Float32Array(r.descriptor || [])
+  })).filter(r => r.descriptor.length === 128);
+
+  setStatus("estadoReconocimiento",`Rostros cargados: ${rostrosReferencia.length}.`,"ok");
+}
+
+async function reconocerPersona(){
+  if(!modelosCargados){
+    setStatus("estadoReconocimiento","Primero carga los modelos face-api.js.","err");
+    return;
+  }
+
+  if(!rostrosReferencia.length){
+    await cargarRostrosReferencia();
+  }
+
+  if(!rostrosReferencia.length){
+    setStatus("estadoReconocimiento","No hay rostros entrenados. Primero entrena varias fotos por persona.","err");
+    return;
+  }
+
+  const video = document.getElementById("videoReconocer");
+  if(!video.videoWidth){
+    setStatus("estadoReconocimiento","Primero abre la cámara.","err");
+    return;
+  }
+
+  try{
+    setStatus("estadoReconocimiento","Reconociendo rostro...","warn");
+
+    const canvas = document.getElementById("canvasReconocer");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
+
+    const preview = document.getElementById("previewReconocer");
+    preview.src = canvas.toDataURL("image/jpeg",0.9);
+    preview.style.display = "block";
+
+    ultimaFotoReconocimientoBlob = await canvasToBlob(canvas);
+
+    const deteccion = await detectarDescriptorDesdeElemento(canvas);
+
+    if(!deteccion){
+      setResultado("No detectado","No se encontró un rostro claro.",false);
+      setStatus("estadoReconocimiento","No se detectó rostro. Mejora luz o encuadre.","err");
+      ultimoReconocimiento = null;
+      return;
+    }
+
+    const descriptorNuevo = deteccion.descriptor;
+    const mejor = buscarMejorCoincidencia(descriptorNuevo);
+
+    if(!mejor){
+      setResultado("Desconocido","No hay coincidencias suficientes.",false);
+      setStatus("estadoReconocimiento","No se encontró coincidencia.","warn");
+      ultimoReconocimiento = null;
+      return;
+    }
+
+    const umbral = 0.55;
+    const confianza = distanciaAConfianza(mejor.distancia);
+
+    if(mejor.distancia <= umbral){
+      setResultado(mejor.persona_nombre,`Confianza ${confianza}% · distancia ${mejor.distancia.toFixed(3)}`,true);
+      setStatus("estadoReconocimiento",`Reconocido: ${mejor.persona_nombre}`,"ok");
+
+      ultimoReconocimiento = {
+        persona_id: mejor.persona_id,
+        persona_detectada: mejor.persona_nombre,
+        confianza,
+        distancia: Number(mejor.distancia.toFixed(4))
+      };
+    }else{
+      setResultado("Desconocido",`Distancia ${mejor.distancia.toFixed(3)}. No alcanza el umbral.`,false);
+      setStatus("estadoReconocimiento","La cara se parece, pero no lo suficiente. Entrena más fotos.","warn");
+      ultimoReconocimiento = null;
+    }
+
+  }catch(err){
+    console.error(err);
+    setStatus("estadoReconocimiento","Error reconociendo persona.","err");
+  }
+}
+
+function buscarMejorCoincidencia(descriptorNuevo){
+  let mejor = null;
+
+  for(const r of rostrosReferencia){
+    const distancia = faceapi.euclideanDistance(descriptorNuevo, r.descriptor);
+
+    if(!mejor || distancia < mejor.distancia){
+      mejor = {
+        persona_id:r.persona_id,
+        persona_nombre:r.persona_nombre,
+        distancia
+      };
+    }
+  }
+
+  return mejor;
+}
+
+function distanciaAConfianza(distancia){
+  let conf = Math.round((1 - Math.min(distancia,0.8) / 0.8) * 100);
+  if(conf < 0) conf = 0;
+  if(conf > 100) conf = 100;
+  return conf;
+}
+
+function setResultado(nombre, detalle, ok){
+  document.getElementById("resultadoNombre").textContent = nombre;
+  document.getElementById("resultadoDetalle").textContent = detalle;
+}
+
+// ===============================
+// GUARDAR RECONOCIMIENTO
+// ===============================
+async function guardarUltimoReconocimiento(){
+  if(!supabaseClient){
+    setStatus("estadoGuardarReconocimiento","Primero conecta Supabase.","err");
+    return;
+  }
+
+  if(!ultimoReconocimiento){
+    setStatus("estadoGuardarReconocimiento","No hay reconocimiento válido para guardar.","err");
+    return;
+  }
+
+  if(!ultimaFotoReconocimientoBlob){
+    setStatus("estadoGuardarReconocimiento","No hay foto para guardar.","err");
+    return;
+  }
+
+  try{
+    setStatus("estadoGuardarReconocimiento","Subiendo foto y guardando registro...","warn");
+
+    const fotoUrl = await subirFotoStorage(ultimaFotoReconocimientoBlob, "reconocimiento");
+
+    const tipo = document.getElementById("tipoRegistro").value;
+    const nota = document.getElementById("notaRegistro").value.trim();
+
+    const {error} = await supabaseClient
+      .from("fotos_registro")
+      .insert([{
+        fecha:new Date().toISOString(),
+        imagen_url:fotoUrl,
+        persona_id:ultimoReconocimiento.persona_id,
+        persona_detectada:ultimoReconocimiento.persona_detectada,
+        confianza:ultimoReconocimiento.confianza,
+        distancia:ultimoReconocimiento.distancia,
+        tipo_registro:tipo,
+        nota:nota
+      }]);
+
+    if(error){
+      console.error(error);
+      setStatus("estadoGuardarReconocimiento","Falló guardar registro en Supabase.","err");
+      return;
+    }
+
+    setStatus("estadoGuardarReconocimiento","Registro guardado correctamente.","ok");
+
+  }catch(err){
+    console.error(err);
+    setStatus("estadoGuardarReconocimiento","Error guardando reconocimiento.","err");
+  }
+}
+
+// ===============================
+// RESUMEN Y REGISTROS
+// ===============================
+async function cargarResumenRostros(){
+  if(!supabaseClient) return;
+
+  const tbody = document.getElementById("tablaRostros");
+  tbody.innerHTML = `<tr><td colspan="3">Cargando...</td></tr>`;
+
+  const {data,error} = await supabaseClient
+    .from("rostros_referencia")
+    .select("persona_nombre,created_at")
+    .order("created_at",{ascending:false});
+
+  if(error){
+    console.error(error);
+    tbody.innerHTML = `<tr><td colspan="3">Error cargando datos.</td></tr>`;
     return;
   }
 
   if(!data || !data.length){
-    tbody.innerHTML = `<tr><td colspan="5">Sin registros.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3">Sin rostros entrenados.</td></tr>`;
+    document.getElementById("contadorEntrenamiento").textContent = "0/5";
+    return;
+  }
+
+  const resumen = {};
+  data.forEach(r => {
+    if(!resumen[r.persona_nombre]){
+      resumen[r.persona_nombre] = {count:0,last:r.created_at};
+    }
+    resumen[r.persona_nombre].count++;
+    if(new Date(r.created_at) > new Date(resumen[r.persona_nombre].last)){
+      resumen[r.persona_nombre].last = r.created_at;
+    }
+  });
+
+  tbody.innerHTML = "";
+  Object.keys(resumen).sort().forEach(nombre => {
+    const r = resumen[nombre];
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><span class="badge ${r.count >= 5 ? "badge-green" : "badge-yellow"}">${escapeHtml(nombre)}</span></td>
+      <td>${r.count}</td>
+      <td>${formatearFecha(r.last)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  actualizarContadorPersonaSeleccionada();
+}
+
+document.addEventListener("change", e => {
+  if(e.target && e.target.id === "personaEntrenar"){
+    actualizarContadorPersonaSeleccionada();
+  }
+});
+
+async function actualizarContadorPersonaSeleccionada(){
+  if(!supabaseClient) return;
+
+  const select = document.getElementById("personaEntrenar");
+  if(!select || !select.value){
+    document.getElementById("contadorEntrenamiento").textContent = "0/5";
+    return;
+  }
+
+  const nombre = select.options[select.selectedIndex]?.dataset.nombre || "";
+
+  const {data,error} = await supabaseClient
+    .from("rostros_referencia")
+    .select("id")
+    .eq("persona_id",select.value);
+
+  if(error) return;
+
+  const count = data ? data.length : 0;
+  document.getElementById("contadorEntrenamiento").textContent = `${count}/5`;
+
+  if(count >= 5){
+    setStatus("estadoEntrenamiento",`${nombre} ya tiene ${count} fotos. Puede reconocer, pero mientras más fotos mejor.`,"ok");
+  }
+}
+
+async function cargarUltimosRegistros(){
+  if(!supabaseClient) return;
+
+  const tbody = document.getElementById("tablaRegistros");
+  tbody.innerHTML = `<tr><td colspan="6">Cargando...</td></tr>`;
+
+  const {data,error} = await supabaseClient
+    .from("fotos_registro")
+    .select("fecha,persona_detectada,confianza,distancia,tipo_registro,imagen_url")
+    .order("fecha",{ascending:false})
+    .limit(30);
+
+  if(error){
+    console.error(error);
+    tbody.innerHTML = `<tr><td colspan="6">Error cargando registros.</td></tr>`;
+    return;
+  }
+
+  if(!data || !data.length){
+    tbody.innerHTML = `<tr><td colspan="6">Sin registros.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = "";
-
   data.forEach(r => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${formatearFecha(r.fecha)}</td>
       <td><span class="badge badge-green">${escapeHtml(r.persona_detectada || "-")}</span></td>
       <td>${r.confianza || 0}%</td>
+      <td>${r.distancia ?? "-"}</td>
       <td>${escapeHtml(r.tipo_registro || "-")}</td>
       <td>${r.imagen_url ? `<a href="${r.imagen_url}" target="_blank">Ver foto</a>` : "-"}</td>
     `;
@@ -765,23 +1116,83 @@ async function cargarUltimosRegistros(){
 }
 
 // ===============================
+// DETECCION
+// ===============================
+async function detectarDescriptorDesdeElemento(elemento){
+  const options = new faceapi.TinyFaceDetectorOptions({
+    inputSize:416,
+    scoreThreshold:0.5
+  });
+
+  const detecciones = await faceapi
+    .detectAllFaces(elemento, options)
+    .withFaceLandmarks()
+    .withFaceDescriptors();
+
+  if(!detecciones || !detecciones.length) return null;
+
+  detecciones.sort((a,b) => {
+    const areaA = a.detection.box.width * a.detection.box.height;
+    const areaB = b.detection.box.width * b.detection.box.height;
+    return areaB - areaA;
+  });
+
+  return detecciones[0];
+}
+
+// ===============================
+// STORAGE
+// ===============================
+async function subirFotoStorage(blob, carpeta){
+  const bucket = document.getElementById("bucketName").value.trim();
+
+  if(!bucket){
+    throw new Error("Bucket vacío");
+  }
+
+  const fecha = new Date();
+  const nombre = `${carpeta}_${fecha.getFullYear()}-${pad(fecha.getMonth()+1)}-${pad(fecha.getDate())}_${Date.now()}.jpg`;
+  const ruta = `${carpeta}/${nombre}`;
+
+  const {error} = await supabaseClient
+    .storage
+    .from(bucket)
+    .upload(ruta, blob, {
+      contentType:"image/jpeg",
+      upsert:false
+    });
+
+  if(error){
+    console.error(error);
+    throw error;
+  }
+
+  const {data} = supabaseClient.storage.from(bucket).getPublicUrl(ruta);
+  return data.publicUrl;
+}
+
+function canvasToBlob(canvas){
+  return new Promise(resolve => {
+    canvas.toBlob(blob => resolve(blob), "image/jpeg", 0.9);
+  });
+}
+
+// ===============================
 // HELPERS
 // ===============================
-function setStatus(id, msg, type){
+function setStatus(id,msg,type){
   const el = document.getElementById(id);
+  if(!el) return;
   el.className = "status";
   if(type) el.classList.add(type);
   el.textContent = msg;
 }
 
-function pad(n){
-  return String(n).padStart(2,"0");
-}
+function pad(n){return String(n).padStart(2,"0")}
 
 function formatearFecha(fechaISO){
   if(!fechaISO) return "-";
-  const d = new Date(fechaISO);
-  return d.toLocaleString("es-VE");
+  return new Date(fechaISO).toLocaleString("es-VE");
 }
 
 function escapeHtml(str){
