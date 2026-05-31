@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Registro con Foto · Supabase</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f1f4f9;
+  --card:#ffffff;
+  --text:#111827;
+  --muted:#6b7280;
+  --border:#d7ddea;
+  --blue:#153bff;
+  --green:#16a34a;
+  --red:#dc2626;
+  --yellow:#f59e0b;
+}
+body{
+  font-family:Arial, Helvetica, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  padding:18px;
+}
+.wrap{
+  max-width:980px;
+  margin:auto;
+}
+.header{
+  background:linear-gradient(135deg,#111827,#1f3aff);
+  color:white;
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:16px;
+  box-shadow:0 10px 25px rgba(0,0,0,.15);
+}
+.header h1{
+  font-size:24px;
+  margin-bottom:6px;
+}
+.header p{
+  color:#dbe3ff;
+  font-size:14px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:16px;
+  box-shadow:0 8px 18px rgba(15,23,42,.08);
+}
+.card h2{
+  font-size:17px;
+  margin-bottom:12px;
+}
+label{
+  display:block;
+  font-size:13px;
+  font-weight:700;
+  margin:10px 0 6px;
+}
+input,select,textarea{
+  width:100%;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:11px;
+  font-size:15px;
+  background:white;
+}
+textarea{
+  resize:vertical;
+  min-height:80px;
+}
+button{
+  border:0;
+  border-radius:12px;
+  padding:12px 14px;
+  font-size:15px;
+  font-weight:800;
+  cursor:pointer;
+}
+.btn-blue{background:var(--blue);color:white}
+.btn-green{background:var(--green);color:white}
+.btn-gray{background:#e5e7eb;color:#111827}
+.btn-red{background:var(--red);color:white}
+.btn-row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+video,canvas,img{
+  width:100%;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#111827;
+}
+canvas{display:none}
+.preview-box{
+  margin-top:12px;
+}
+.status{
+  margin-top:12px;
+  padding:12px;
+  border-radius:12px;
+  font-size:14px;
+  background:#eef2ff;
+  border:1px solid #c7d2fe;
+  color:#1e3a8a;
+}
+.status.ok{
+  background:#ecfdf5;
+  border-color:#bbf7d0;
+  color:#166534;
+}
+.status.err{
+  background:#fef2f2;
+  border-color:#fecaca;
+  color:#991b1b;
+}
+.status.warn{
+  background:#fffbeb;
+  border-color:#fde68a;
+  color:#92400e;
+}
+.resultado{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.badge{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  font-weight:800;
+  font-size:13px;
+}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-yellow{background:#fef3c7;color:#92400e}
+.table-wrap{
+  overflow:auto;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+  min-width:640px;
+}
+th,td{
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  padding:10px;
+  font-size:13px;
+}
+th{
+  background:#f8fafc;
+}
+.small{
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+}
+code{
+  background:#f3f4f6;
+  padding:2px 5px;
+  border-radius:5px;
+}
+
+@media(max-width:760px){
+  body{padding:10px}
+  .grid{grid-template-columns:1fr}
+  .header h1{font-size:20px}
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <h1>Registro con Foto + Supabase</h1>
+    <p>Toma una foto, guárdala en Supabase Storage y registra quién aparece.</p>
+  </div>
+
+  <div class="grid">
+
+    <div class="card">
+      <h2>1. Configuración Supabase</h2>
+
+      <label>SUPABASE URL</label>
+      <input id="supabaseUrl" placeholder="https://xxxx.supabase.co">
+
+      <label>SUPABASE ANON KEY</label>
+      <input id="supabaseKey" placeholder="eyJhbGciOi..." type="password">
+
+      <label>Bucket de Storage</label>
+      <input id="bucketName" value="fotos-registro">
+
+      <div class="btn-row">
+        <button class="btn-blue" onclick="conectarSupabase()">Conectar</button>
+        <button class="btn-gray" onclick="guardarConfigLocal()">Guardar config</button>
+      </div>
+
+      <div id="estadoSupabase" class="status warn">
+        Supabase no conectado.
+      </div>
+
+      <p class="small" style="margin-top:12px">
+        Tablas recomendadas:
+        <br><code>personas</code>: id, nombre, cargo, activo
+        <br><code>fotos_registro</code>: id, fecha, imagen_url, persona_id, persona_detectada, confianza, tipo_registro, nota
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>2. Cámara</h2>
+
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+
+      <div class="btn-row">
+        <button class="btn-blue" onclick="iniciarCamara()">Abrir cámara</button>
+        <button class="btn-green" onclick="tomarFoto()">Tomar foto</button>
+        <button class="btn-gray" onclick="detenerCamara()">Cerrar cámara</button>
+      </div>
+
+      <div class="preview-box">
+        <img id="preview" alt="Vista previa" style="display:none">
+      </div>
+
+      <div id="estadoCamara" class="status">
+        Cámara lista para iniciar.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3. Persona detectada / asignada</h2>
+
+      <label>Persona</label>
+      <select id="personaSelect">
+        <option value="">Cargando personas...</option>
+      </select>
+
+      <div class="btn-row">
+        <button class="btn-blue" onclick="cargarPersonas()">Cargar personas</button>
+        <button class="btn-gray" onclick="deteccionManual()">Usar persona seleccionada</button>
+      </div>
+
+      <div style="margin-top:14px" class="resultado">
+        <div>
+          <label>Detectado</label>
+          <input id="personaDetectada" placeholder="Ej: Rubén">
+        </div>
+        <div>
+          <label>Confianza %</label>
+          <input id="confianza" type="number" value="100">
+        </div>
+      </div>
+
+      <label>Tipo de registro</label>
+      <select id="tipoRegistro">
+        <option value="asistencia">Asistencia</option>
+        <option value="produccion">Producción</option>
+        <option value="entrega">Entrega</option>
+        <option value="pedido">Pedido</option>
+        <option value="otro">Otro</option>
+      </select>
+
+      <label>Nota</label>
+      <textarea id="nota" placeholder="Ej: llegó a imprimir pedido de stickers..."></textarea>
+
+      <div id="estadoDeteccion" class="status warn">
+        Esta versión usa asignación manual. Luego se puede conectar face-api.js o una API facial.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>4. Guardar registro</h2>
+
+      <button class="btn-green" style="width:100%" onclick="subirYGuardar()">
+        Subir foto y guardar en Supabase
+      </button>
+
+      <div id="estadoGuardado" class="status">
+        Esperando foto.
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-gray" onclick="cargarUltimosRegistros()">Ver últimos registros</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Persona</th>
+              <th>Confianza</th>
+              <th>Tipo</th>
+              <th>Foto</th>
+            </tr>
+          </thead>
+          <tbody id="tablaRegistros">
+            <tr><td colspan="5">Sin datos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let supabaseClient = null;
+let stream = null;
+let fotoBlob = null;
+let fotoDataUrl = null;
+let personaSeleccionadaId = null;
+
+// ===============================
+// CONFIG LOCAL
+// ===============================
+window.addEventListener("load", () => {
+  const cfg = JSON.parse(localStorage.getItem("supabase_foto_config") || "{}");
+  if(cfg.url) document.getElementById("supabaseUrl").value = cfg.url;
+  if(cfg.key) document.getElementById("supabaseKey").value = cfg.key;
+  if(cfg.bucket) document.getElementById("bucketName").value = cfg.bucket;
+});
+
+function guardarConfigLocal(){
+  const cfg = {
+    url: document.getElementById("supabaseUrl").value.trim(),
+    key: document.getElementById("supabaseKey").value.trim(),
+    bucket: document.getElementById("bucketName").value.trim()
+  };
+  localStorage.setItem("supabase_foto_config", JSON.stringify(cfg));
+  setStatus("estadoSupabase", "Configuración guardada en este navegador.", "ok");
+}
+
+function conectarSupabase(){
+  const url = document.getElementById("supabaseUrl").value.trim();
+  const key = document.getElementById("supabaseKey").value.trim();
+
+  if(!url || !key){
+    setStatus("estadoSupabase", "Falta SUPABASE URL o ANON KEY.", "err");
+    return;
+  }
+
+  supabaseClient = supabase.createClient(url, key);
+  setStatus("estadoSupabase", "Supabase conectado correctamente.", "ok");
+  guardarConfigLocal();
+  cargarPersonas();
+}
+
+// ===============================
+// CAMARA
+// ===============================
+async function iniciarCamara(){
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" },
+      audio: false
+    });
+
+    const video = document.getElementById("video");
+    video.srcObject = stream;
+
+    setStatus("estadoCamara", "Cámara activa.", "ok");
+  }catch(err){
+    console.error(err);
+    setStatus("estadoCamara", "No se pudo abrir la cámara. Revisa permisos del navegador.", "err");
+  }
+}
+
+function detenerCamara(){
+  if(stream){
+    stream.getTracks().forEach(track => track.stop());
+    stream = null;
+  }
+  document.getElementById("video").srcObject = null;
+  setStatus("estadoCamara", "Cámara cerrada.", "warn");
+}
+
+function tomarFoto(){
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+  const preview = document.getElementById("preview");
+
+  if(!video.videoWidth){
+    setStatus("estadoCamara", "Primero abre la cámara.", "err");
+    return;
+  }
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  fotoDataUrl = canvas.toDataURL("image/jpeg", 0.88);
+  preview.src = fotoDataUrl;
+  preview.style.display = "block";
+
+  canvas.toBlob(blob => {
+    fotoBlob = blob;
+    setStatus("estadoCamara", "Foto tomada correctamente.", "ok");
+    setStatus("estadoGuardado", "Foto lista para subir.", "ok");
+  }, "image/jpeg", 0.88);
+}
+
+// ===============================
+// PERSONAS
+// ===============================
+async function cargarPersonas(){
+  if(!supabaseClient){
+    setStatus("estadoDeteccion", "Primero conecta Supabase.", "err");
+    return;
+  }
+
+  const select = document.getElementById("personaSelect");
+  select.innerHTML = `<option value="">Cargando...</option>`;
+
+  const { data, error } = await supabaseClient
+    .from("personas")
+    .select("id,nombre,cargo,activo")
+    .eq("activo", true)
+    .order("nombre", { ascending:true });
+
+  if(error){
+    console.error(error);
+    select.innerHTML = `<option value="">Error cargando personas</option>`;
+    setStatus("estadoDeteccion", "No se pudieron cargar personas. Revisa tabla personas.", "err");
+    return;
+  }
+
+  if(!data || !data.length){
+    select.innerHTML = `<option value="">No hay personas registradas</option>`;
+    setStatus("estadoDeteccion", "No hay personas en la tabla personas.", "warn");
+    return;
+  }
+
+  select.innerHTML = `<option value="">Seleccionar persona</option>`;
+  data.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.cargo ? `${p.nombre} · ${p.cargo}` : p.nombre;
+    opt.dataset.nombre = p.nombre;
+    select.appendChild(opt);
+  });
+
+  setStatus("estadoDeteccion", "Personas cargadas. Selecciona una para asignarla al registro.", "ok");
+}
+
+function deteccionManual(){
+  const select = document.getElementById("personaSelect");
+  const opt = select.options[select.selectedIndex];
+
+  if(!select.value){
+    setStatus("estadoDeteccion", "Selecciona una persona.", "err");
+    return;
+  }
+
+  personaSeleccionadaId = select.value;
+  document.getElementById("personaDetectada").value = opt.dataset.nombre || opt.textContent;
+  document.getElementById("confianza").value = 100;
+
+  setStatus("estadoDeteccion", `Persona asignada: ${document.getElementById("personaDetectada").value}`, "ok");
+}
+
+// ===============================
+// SUBIR FOTO + GUARDAR REGISTRO
+// ===============================
+async function subirYGuardar(){
+  if(!supabaseClient){
+    setStatus("estadoGuardado", "Primero conecta Supabase.", "err");
+    return;
+  }
+
+  if(!fotoBlob){
+    setStatus("estadoGuardado", "Primero toma una foto.", "err");
+    return;
+  }
+
+  const bucket = document.getElementById("bucketName").value.trim();
+  const personaDetectada = document.getElementById("personaDetectada").value.trim();
+  const confianza = Number(document.getElementById("confianza").value || 0);
+  const tipoRegistro = document.getElementById("tipoRegistro").value;
+  const nota = document.getElementById("nota").value.trim();
+
+  if(!bucket){
+    setStatus("estadoGuardado", "Falta el nombre del bucket.", "err");
+    return;
+  }
+
+  if(!personaDetectada){
+    setStatus("estadoGuardado", "Falta persona detectada/asignada.", "err");
+    return;
+  }
+
+  setStatus("estadoGuardado", "Subiendo foto...", "warn");
+
+  const fecha = new Date();
+  const nombreArchivo = `registro_${fecha.getFullYear()}-${pad(fecha.getMonth()+1)}-${pad(fecha.getDate())}_${Date.now()}.jpg`;
+  const ruta = `registros/${nombreArchivo}`;
+
+  const { error: uploadError } = await supabaseClient
+    .storage
+    .from(bucket)
+    .upload(ruta, fotoBlob, {
+      contentType: "image/jpeg",
+      upsert: false
+    });
+
+  if(uploadError){
+    console.error(uploadError);
+    setStatus("estadoGuardado", "Error subiendo foto. Revisa bucket y políticas de Storage.", "err");
+    return;
+  }
+
+  const { data: publicData } = supabaseClient
+    .storage
+    .from(bucket)
+    .getPublicUrl(ruta);
+
+  const imagenUrl = publicData.publicUrl;
+
+  setStatus("estadoGuardado", "Foto subida. Guardando registro...", "warn");
+
+  const registro = {
+    fecha: fecha.toISOString(),
+    imagen_url: imagenUrl,
+    persona_id: personaSeleccionadaId || null,
+    persona_detectada: personaDetectada,
+    confianza: confianza,
+    tipo_registro: tipoRegistro,
+    nota: nota
+  };
+
+  const { error: insertError } = await supabaseClient
+    .from("fotos_registro")
+    .insert([registro]);
+
+  if(insertError){
+    console.error(insertError);
+    setStatus("estadoGuardado", "Foto subida, pero falló guardar en tabla fotos_registro.", "err");
+    return;
+  }
+
+  setStatus("estadoGuardado", "Registro guardado correctamente.", "ok");
+  cargarUltimosRegistros();
+}
+
+// ===============================
+// ULTIMOS REGISTROS
+// ===============================
+async function cargarUltimosRegistros(){
+  if(!supabaseClient){
+    setStatus("estadoGuardado", "Primero conecta Supabase.", "err");
+    return;
+  }
+
+  const tbody = document.getElementById("tablaRegistros");
+  tbody.innerHTML = `<tr><td colspan="5">Cargando...</td></tr>`;
+
+  const { data, error } = await supabaseClient
+    .from("fotos_registro")
+    .select("fecha,persona_detectada,confianza,tipo_registro,imagen_url")
+    .order("fecha", { ascending:false })
+    .limit(10);
+
+  if(error){
+    console.error(error);
+    tbody.innerHTML = `<tr><td colspan="5">Error cargando registros.</td></tr>`;
+    return;
+  }
+
+  if(!data || !data.length){
+    tbody.innerHTML = `<tr><td colspan="5">Sin registros.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = "";
+  data.forEach(r => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${formatearFecha(r.fecha)}</td>
+      <td><span class="badge badge-green">${escapeHtml(r.persona_detectada || "-")}</span></td>
+      <td>${r.confianza || 0}%</td>
+      <td>${escapeHtml(r.tipo_registro || "-")}</td>
+      <td><a href="${r.imagen_url}" target="_blank">Ver foto</a></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ===============================
+// HELPERS
+// ===============================
+function setStatus(id, msg, type){
+  const el = document.getElementById(id);
+  el.className = "status";
+  if(type) el.classList.add(type);
+  el.textContent = msg;
+}
+
+function pad(n){
+  return String(n).padStart(2,"0");
+}
+
+function formatearFecha(fechaISO){
+  if(!fechaISO) return "-";
+  const d = new Date(fechaISO);
+  return d.toLocaleString("es-VE");
+}
+
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+</script>
+
+</body>
+</html>
