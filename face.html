@@ -235,7 +235,7 @@ th{background:#f8fafc}
         <input id="supabaseUrl" value="https://ujfdsabypflseijatxba.supabase.co">
 
         <label>SUPABASE ANON / PUBLISHABLE KEY</label>
-        <input id="supabaseKey" type="password" placeholder="Pega aquí tu key de Supabase">
+        <input id="supabaseKey" type="password" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZmRzYWJ5cGZsc2VpamF0eGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNjcxNTIsImV4cCI6MjA5MTg0MzE1Mn0.Tyi_TeKaVG0PMA4R-aO8GPgP525GLZcqipB-tXmFq5c">
 
         <label>Bucket Storage</label>
         <input id="bucketName" value="fotos-registro">
@@ -253,11 +253,10 @@ th{background:#f8fafc}
         <h2>Modelos de reconocimiento</h2>
 
         <label>Ruta de modelos face-api.js</label>
-        <input id="modelUrl" value="./models">
+        <input id="modelUrl" value="https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/weights">
 
         <p class="small">
-          Debes tener una carpeta <b>models</b> junto a este HTML con los modelos de face-api.js.
-          Sin esos modelos, el reconocimiento no puede funcionar.
+          Esta versión carga los modelos automáticamente desde internet. No necesitas crear carpeta <b>models</b>.
         </p>
 
         <div class="btn-row">
@@ -537,6 +536,10 @@ window.addEventListener("load", () => {
   if(document.getElementById("supabaseKey").value.trim()){
     conectarSupabase();
   }
+
+  setTimeout(() => {
+    cargarModelos();
+  }, 700);
 });
 
 // ===============================
@@ -633,7 +636,7 @@ async function cargarModelos(){
   }catch(err){
     console.error(err);
     modelosCargados = false;
-    setStatus("estadoModelos","No se pudieron cargar los modelos. Revisa que exista la carpeta /models con los archivos de face-api.js.","err");
+    setStatus("estadoModelos","No se pudieron cargar los modelos desde internet. Revisa conexión o cambia la ruta de modelos.","err");
   }
 }
 
