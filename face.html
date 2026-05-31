@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Registro con Foto · Supabase</title>
+<title>Registro con Foto · Tuttovinilos</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+
 :root{
   --bg:#f1f4f9;
   --card:#ffffff;
@@ -19,17 +20,21 @@
   --green:#16a34a;
   --red:#dc2626;
   --yellow:#f59e0b;
+  --dark:#111827;
 }
+
 body{
   font-family:Arial, Helvetica, sans-serif;
   background:var(--bg);
   color:var(--text);
   padding:18px;
 }
+
 .wrap{
   max-width:980px;
   margin:auto;
 }
+
 .header{
   background:linear-gradient(135deg,#111827,#1f3aff);
   color:white;
@@ -38,19 +43,23 @@ body{
   margin-bottom:16px;
   box-shadow:0 10px 25px rgba(0,0,0,.15);
 }
+
 .header h1{
   font-size:24px;
   margin-bottom:6px;
 }
+
 .header p{
   color:#dbe3ff;
   font-size:14px;
 }
+
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:16px;
 }
+
 .card{
   background:var(--card);
   border:1px solid var(--border);
@@ -58,16 +67,19 @@ body{
   padding:16px;
   box-shadow:0 8px 18px rgba(15,23,42,.08);
 }
+
 .card h2{
   font-size:17px;
   margin-bottom:12px;
 }
+
 label{
   display:block;
   font-size:13px;
   font-weight:700;
   margin:10px 0 6px;
 }
+
 input,select,textarea{
   width:100%;
   border:1px solid var(--border);
@@ -76,10 +88,12 @@ input,select,textarea{
   font-size:15px;
   background:white;
 }
+
 textarea{
   resize:vertical;
   min-height:80px;
 }
+
 button{
   border:0;
   border-radius:12px;
@@ -88,26 +102,41 @@ button{
   font-weight:800;
   cursor:pointer;
 }
+
+button:active{
+  transform:scale(.98);
+}
+
 .btn-blue{background:var(--blue);color:white}
 .btn-green{background:var(--green);color:white}
 .btn-gray{background:#e5e7eb;color:#111827}
 .btn-red{background:var(--red);color:white}
+
 .btn-row{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
   margin-top:12px;
 }
+
 video,canvas,img{
   width:100%;
   border-radius:14px;
   border:1px solid var(--border);
   background:#111827;
 }
+
+video{
+  min-height:260px;
+  object-fit:cover;
+}
+
 canvas{display:none}
+
 .preview-box{
   margin-top:12px;
 }
+
 .status{
   margin-top:12px;
   padding:12px;
@@ -116,27 +145,33 @@ canvas{display:none}
   background:#eef2ff;
   border:1px solid #c7d2fe;
   color:#1e3a8a;
+  line-height:1.45;
 }
+
 .status.ok{
   background:#ecfdf5;
   border-color:#bbf7d0;
   color:#166534;
 }
+
 .status.err{
   background:#fef2f2;
   border-color:#fecaca;
   color:#991b1b;
 }
+
 .status.warn{
   background:#fffbeb;
   border-color:#fde68a;
   color:#92400e;
 }
+
 .resultado{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:10px;
 }
+
 .badge{
   display:inline-block;
   padding:6px 10px;
@@ -144,41 +179,64 @@ canvas{display:none}
   font-weight:800;
   font-size:13px;
 }
+
 .badge-green{background:#dcfce7;color:#166534}
 .badge-yellow{background:#fef3c7;color:#92400e}
+
 .table-wrap{
   overflow:auto;
 }
+
 table{
   width:100%;
   border-collapse:collapse;
   margin-top:10px;
   min-width:640px;
 }
+
 th,td{
   border-bottom:1px solid var(--border);
   text-align:left;
   padding:10px;
   font-size:13px;
 }
+
 th{
   background:#f8fafc;
 }
+
 .small{
   color:var(--muted);
   font-size:12px;
   line-height:1.45;
 }
+
 code{
   background:#f3f4f6;
   padding:2px 5px;
   border-radius:5px;
 }
 
+.sql-box{
+  background:#0f172a;
+  color:#e5e7eb;
+  padding:12px;
+  border-radius:12px;
+  overflow:auto;
+  font-size:12px;
+  margin-top:10px;
+  white-space:pre;
+}
+
+.hidden{
+  display:none!important;
+}
+
 @media(max-width:760px){
   body{padding:10px}
   .grid{grid-template-columns:1fr}
   .header h1{font-size:20px}
+  video{min-height:220px}
 }
 </style>
 </head>
@@ -197,10 +255,10 @@ code{
       <h2>1. Configuración Supabase</h2>
 
       <label>SUPABASE URL</label>
-      <input id="supabaseUrl" placeholder="https://xxxx.supabase.co">
+      <input id="supabaseUrl" value="https://ujfdsabypflseijatxba.supabase.co">
 
       <label>SUPABASE ANON KEY</label>
-      <input id="supabaseKey" placeholder="eyJhbGciOi..." type="password">
+      <input id="supabaseKey" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZmRzYWJ5cGZsc2VpamF0eGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNjcxNTIsImV4cCI6MjA5MTg0MzE1Mn0.Tyi_TeKaVG0PMA4R-aO8GPgP525GLZcqipB-tXmFq5c" type="password">
 
       <label>Bucket de Storage</label>
       <input id="bucketName" value="fotos-registro">
@@ -208,6 +266,7 @@ code{
       <div class="btn-row">
         <button class="btn-blue" onclick="conectarSupabase()">Conectar</button>
         <button class="btn-gray" onclick="guardarConfigLocal()">Guardar config</button>
+        <button class="btn-gray" onclick="mostrarOcultarKey()">Ver/Ocultar key</button>
       </div>
 
       <div id="estadoSupabase" class="status warn">
@@ -215,16 +274,17 @@ code{
       </div>
 
       <p class="small" style="margin-top:12px">
-        Tablas recomendadas:
-        <br><code>personas</code>: id, nombre, cargo, activo
-        <br><code>fotos_registro</code>: id, fecha, imagen_url, persona_id, persona_detectada, confianza, tipo_registro, nota
+        Necesitas tener creado:
+        <br><code>Bucket: fotos-registro</code>
+        <br><code>Tabla: personas</code>
+        <br><code>Tabla: fotos_registro</code>
       </p>
     </div>
 
     <div class="card">
       <h2>2. Cámara</h2>
 
-      <video id="video" autoplay playsinline></video>
+      <video id="video" autoplay playsinline muted></video>
       <canvas id="canvas"></canvas>
 
       <div class="btn-row">
@@ -247,7 +307,7 @@ code{
 
       <label>Persona</label>
       <select id="personaSelect">
-        <option value="">Cargando personas...</option>
+        <option value="">Primero conecta Supabase</option>
       </select>
 
       <div class="btn-row">
@@ -279,7 +339,7 @@ code{
       <textarea id="nota" placeholder="Ej: llegó a imprimir pedido de stickers..."></textarea>
 
       <div id="estadoDeteccion" class="status warn">
-        Esta versión usa asignación manual. Luego se puede conectar face-api.js o una API facial.
+        Esta versión guarda la foto y asigna la persona manualmente. Luego se puede conectar reconocimiento facial automático.
       </div>
     </div>
 
@@ -316,6 +376,79 @@ code{
       </div>
     </div>
 
+    <div class="card" style="grid-column:1/-1">
+      <h2>SQL necesario si aún no creaste las tablas</h2>
+      <p class="small">Copia esto en Supabase → SQL Editor. Si ya lo hiciste, ignora esta parte.</p>
+
+      <div class="sql-box">create table if not exists personas (
+  id uuid primary key default gen_random_uuid(),
+  nombre text not null,
+  cargo text,
+  activo boolean default true,
+  created_at timestamp with time zone default now()
+);
+
+insert into personas (nombre, cargo)
+select 'Roberto', 'CEO'
+where not exists (select 1 from personas where nombre = 'Roberto');
+
+insert into personas (nombre, cargo)
+select 'Rubén', 'Operador impresión'
+where not exists (select 1 from personas where nombre = 'Rubén');
+
+insert into personas (nombre, cargo)
+select 'Ricardo', 'Atención al cliente'
+where not exists (select 1 from personas where nombre = 'Ricardo');
+
+insert into personas (nombre, cargo)
+select 'Chico', 'Producción'
+where not exists (select 1 from personas where nombre = 'Chico');
+
+insert into personas (nombre, cargo)
+select 'Carlos', 'Ayudante'
+where not exists (select 1 from personas where nombre = 'Carlos');
+
+create table if not exists fotos_registro (
+  id uuid primary key default gen_random_uuid(),
+  fecha timestamp with time zone default now(),
+  imagen_url text,
+  persona_id uuid references personas(id),
+  persona_detectada text,
+  confianza numeric,
+  tipo_registro text,
+  nota text,
+  created_at timestamp with time zone default now()
+);
+
+alter table personas enable row level security;
+alter table fotos_registro enable row level security;
+
+drop policy if exists "leer personas" on personas;
+create policy "leer personas"
+on personas for select
+using (true);
+
+drop policy if exists "leer fotos registro" on fotos_registro;
+create policy "leer fotos registro"
+on fotos_registro for select
+using (true);
+
+drop policy if exists "insertar fotos registro" on fotos_registro;
+create policy "insertar fotos registro"
+on fotos_registro for insert
+with check (true);
+
+drop policy if exists "subir fotos publicas" on storage.objects;
+create policy "subir fotos publicas"
+on storage.objects for insert
+with check (bucket_id = 'fotos-registro');
+
+drop policy if exists "leer fotos publicas" on storage.objects;
+create policy "leer fotos publicas"
+on storage.objects for select
+using (bucket_id = 'fotos-registro');</div>
+    </div>
+
   </div>
 </div>
 
@@ -327,23 +460,35 @@ let fotoDataUrl = null;
 let personaSeleccionadaId = null;
 
 // ===============================
-// CONFIG LOCAL
+// AUTO CONEXION
 // ===============================
 window.addEventListener("load", () => {
   const cfg = JSON.parse(localStorage.getItem("supabase_foto_config") || "{}");
+
   if(cfg.url) document.getElementById("supabaseUrl").value = cfg.url;
   if(cfg.key) document.getElementById("supabaseKey").value = cfg.key;
   if(cfg.bucket) document.getElementById("bucketName").value = cfg.bucket;
+
+  conectarSupabase();
 });
 
+// ===============================
+// CONFIG LOCAL
+// ===============================
 function guardarConfigLocal(){
   const cfg = {
     url: document.getElementById("supabaseUrl").value.trim(),
     key: document.getElementById("supabaseKey").value.trim(),
     bucket: document.getElementById("bucketName").value.trim()
   };
+
   localStorage.setItem("supabase_foto_config", JSON.stringify(cfg));
   setStatus("estadoSupabase", "Configuración guardada en este navegador.", "ok");
+}
+
+function mostrarOcultarKey(){
+  const input = document.getElementById("supabaseKey");
+  input.type = input.type === "password" ? "text" : "password";
 }
 
 function conectarSupabase(){
@@ -355,10 +500,15 @@ function conectarSupabase(){
     return;
   }
 
-  supabaseClient = supabase.createClient(url, key);
-  setStatus("estadoSupabase", "Supabase conectado correctamente.", "ok");
-  guardarConfigLocal();
-  cargarPersonas();
+  try{
+    supabaseClient = supabase.createClient(url, key);
+    setStatus("estadoSupabase", "Supabase conectado correctamente.", "ok");
+    guardarConfigLocal();
+    cargarPersonas();
+  }catch(err){
+    console.error(err);
+    setStatus("estadoSupabase", "Error conectando Supabase.", "err");
+  }
 }
 
 // ===============================
@@ -366,6 +516,10 @@ function conectarSupabase(){
 // ===============================
 async function iniciarCamara(){
   try{
+    if(stream){
+      detenerCamara();
+    }
+
     stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "environment" },
       audio: false
@@ -377,7 +531,7 @@ async function iniciarCamara(){
     setStatus("estadoCamara", "Cámara activa.", "ok");
   }catch(err){
     console.error(err);
-    setStatus("estadoCamara", "No se pudo abrir la cámara. Revisa permisos del navegador.", "err");
+    setStatus("estadoCamara", "No se pudo abrir la cámara. Revisa permisos del navegador. En iPhone debe abrirse desde https o localhost.", "err");
   }
 }
 
@@ -386,6 +540,7 @@ function detenerCamara(){
     stream.getTracks().forEach(track => track.stop());
     stream = null;
   }
+
   document.getElementById("video").srcObject = null;
   setStatus("estadoCamara", "Cámara cerrada.", "warn");
 }
@@ -438,7 +593,7 @@ async function cargarPersonas(){
   if(error){
     console.error(error);
     select.innerHTML = `<option value="">Error cargando personas</option>`;
-    setStatus("estadoDeteccion", "No se pudieron cargar personas. Revisa tabla personas.", "err");
+    setStatus("estadoDeteccion", "No se pudieron cargar personas. Revisa tabla personas y políticas RLS.", "err");
     return;
   }
 
@@ -449,6 +604,7 @@ async function cargarPersonas(){
   }
 
   select.innerHTML = `<option value="">Seleccionar persona</option>`;
+
   data.forEach(p => {
     const opt = document.createElement("option");
     opt.value = p.id;
@@ -470,6 +626,7 @@ function deteccionManual(){
   }
 
   personaSeleccionadaId = select.value;
+
   document.getElementById("personaDetectada").value = opt.dataset.nombre || opt.textContent;
   document.getElementById("confianza").value = 100;
 
@@ -522,7 +679,7 @@ async function subirYGuardar(){
 
   if(uploadError){
     console.error(uploadError);
-    setStatus("estadoGuardado", "Error subiendo foto. Revisa bucket y políticas de Storage.", "err");
+    setStatus("estadoGuardado", "Error subiendo foto. Revisa que el bucket fotos-registro exista y que tenga políticas de Storage.", "err");
     return;
   }
 
@@ -551,11 +708,15 @@ async function subirYGuardar(){
 
   if(insertError){
     console.error(insertError);
-    setStatus("estadoGuardado", "Foto subida, pero falló guardar en tabla fotos_registro.", "err");
+    setStatus("estadoGuardado", "Foto subida, pero falló guardar en tabla fotos_registro. Revisa RLS/policies.", "err");
     return;
   }
 
   setStatus("estadoGuardado", "Registro guardado correctamente.", "ok");
+
+  fotoBlob = null;
+  fotoDataUrl = null;
+
   cargarUltimosRegistros();
 }
 
@@ -589,6 +750,7 @@ async function cargarUltimosRegistros(){
   }
 
   tbody.innerHTML = "";
+
   data.forEach(r => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -596,7 +758,7 @@ async function cargarUltimosRegistros(){
       <td><span class="badge badge-green">${escapeHtml(r.persona_detectada || "-")}</span></td>
       <td>${r.confianza || 0}%</td>
       <td>${escapeHtml(r.tipo_registro || "-")}</td>
-      <td><a href="${r.imagen_url}" target="_blank">Ver foto</a></td>
+      <td>${r.imagen_url ? `<a href="${r.imagen_url}" target="_blank">Ver foto</a>` : "-"}</td>
     `;
     tbody.appendChild(tr);
   });
