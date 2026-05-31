@@ -639,7 +639,7 @@ async function cargarModelos(){
   }catch(err){
     console.error(err);
     modelosCargados = false;
-    setStatus("estadoModelos","No se pudieron cargar los modelos desde internet. Revisa conexión o cambia la ruta de modelos.","err");
+    setStatus("estadoModelos","No se pudieron cargar los modelos: " + errorDetalle(err),"err");
   }
 }
 
@@ -793,7 +793,7 @@ async function capturarEntrenamiento(){
 
     if(error){
       console.error(error);
-      setStatus("estadoEntrenamiento","Rostro detectado, pero falló al guardar en Supabase.","err");
+      setStatus("estadoEntrenamiento","Rostro detectado, pero falló al guardar en Supabase: " + errorDetalle(error),"err");
       return;
     }
 
@@ -802,7 +802,7 @@ async function capturarEntrenamiento(){
 
   }catch(err){
     console.error(err);
-    setStatus("estadoEntrenamiento","Error en entrenamiento. Revisa consola.","err");
+    setStatus("estadoEntrenamiento","Error en entrenamiento: " + errorDetalle(err),"err");
   }
 }
 
@@ -911,7 +911,7 @@ async function reconocerPersona(){
 
   }catch(err){
     console.error(err);
-    setStatus("estadoReconocimiento","Error reconociendo persona.","err");
+    setStatus("estadoReconocimiento","Error reconociendo persona: " + errorDetalle(err),"err");
   }
 }
 
@@ -995,7 +995,7 @@ async function guardarUltimoReconocimiento(){
 
   }catch(err){
     console.error(err);
-    setStatus("estadoGuardarReconocimiento","Error guardando reconocimiento.","err");
+    setStatus("estadoGuardarReconocimiento","Error guardando reconocimiento: " + errorDetalle(err),"err");
   }
 }
 
@@ -1181,6 +1181,14 @@ function canvasToBlob(canvas){
   return new Promise(resolve => {
     canvas.toBlob(blob => resolve(blob), "image/jpeg", 0.9);
   });
+}
+
+
+function errorDetalle(err){
+  if(!err) return "Error desconocido";
+  if(typeof err === "string") return err;
+  if(err.message) return err.message;
+  try{return JSON.stringify(err)}catch(e){return String(err)}
 }
 
 // ===============================
