@@ -389,7 +389,18 @@ using (bucket_id = 'fotos-registro');</div>
 
         <p class="small" style="margin-top:10px">
           Recomendado: mínimo 5 fotos por persona. Mejor 8 a 12 fotos.
-          Toma fotos de frente, un poco de lado, con luz normal y sin tapar la cara.
+          Puedes tomarlas con cámara o cargarlas desde la galería.
+        </p>
+
+        <label>Cargar fotos de entrenamiento</label>
+        <input id="fotosEntrenamiento" type="file" accept="image/*" multiple>
+
+        <div class="btn-row">
+          <button class="btn-green" onclick="entrenarFotosSeleccionadas()">Entrenar fotos seleccionadas</button>
+        </div>
+
+        <p class="small" style="margin-top:8px">
+          Selecciona 5 fotos de la misma persona. El sistema detecta cada rostro, guarda la foto y guarda la huella facial.
         </p>
 
         <div id="estadoEntrenamiento" class="status warn">Selecciona persona y carga modelos.</div>
@@ -805,6 +816,108 @@ async function capturarEntrenamiento(){
     setStatus("estadoEntrenamiento","Error en entrenamiento: " + errorDetalle(err),"err");
   }
 }
+
+
+async function entrenarFotosSeleccionadas(){
+  if(!supabaseClient){
+    setStatus("estadoEntrenamiento","Primero conecta Supabase.","err");
+    return;
+  }
+
+  if(!modelosCargados){
+    setStatus("estadoEntrenamiento","Primero carga los modelos face-api.js.","err");
+    return;
+  }
+
+  const select = document.getElementById("personaEntrenar");
+  const personaId = select.value;
+  const personaNombre = select.options[select.selectedIndex]?.dataset.nombre || "";
+
+  if(!personaId){
+    setStatus("estadoEntrenamiento","Selecciona una persona antes de cargar fotos.","err");
+    return;
+  }
+
+  const input = document.getElementById("fotosEntrenamiento");
+  const files = Array.from(input.files || []);
+
+  if(!files.length){
+    setStatus("estadoEntrenamiento","Selecciona mínimo 5 fotos de la persona.","err");
+    return;
+  }
+
+  if(files.length < 5){
+    setStatus("estadoEntrenamiento","Recomendación: selecciona mínimo 5 fotos. Puedes continuar, pero no es lo ideal.","warn");
+  }
+
+  let guardadas = 0;
+  let fallidas = 0;
+
+  for(let i = 0; i < files.length; i++){
+    const file = files[i];
+
+    try{
+      setStatus("estadoEntrenamiento",`Procesando foto ${i+1} de ${files.length}...`,"warn");
+
+      const img = await fileToImage(file);
+
+      const deteccion = await detectarDescriptorDesdeElemento(img);
+
+      if(!deteccion){
+        fallidas++;
+        continue;
+      }
+
+      const fotoUrl = await subirFotoStorage(file, "entrenamiento");
+
+      const descriptorArray = Array.from(deteccion.descriptor);
+
+      const {error} = await supabaseClient
+        .from("rostros_referencia")
+        .insert([{
+          persona_id: personaId,
+          persona_nombre: personaNombre,
+          foto_url: fotoUrl,
+          descriptor: descriptorArray
+        }]);
+
+      if(error){
+        console.error(error);
+        fallidas++;
+        continue;
+      }
+
+      guardadas++;
+
+      const preview = document.getElementById("previewEntrenar");
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+
+    }catch(err){
+      console.error(err);
+      fallidas++;
+    }
+  }
+
+  if(guardadas > 0){
+    setStatus("estadoEntrenamiento",`Entrenamiento terminado para ${personaNombre}. Guardadas: ${guardadas}. Fallidas: ${fallidas}.`,"ok");
+  }else{
+    setStatus("estadoEntrenamiento",`No se pudo guardar ninguna foto. Fallidas: ${fallidas}. Revisa luz, rostro visible, bucket y políticas.`,"err");
+  }
+
+  input.value = "";
+  cargarResumenRostros();
+}
+
+function fileToImage(file){
+  return new Promise((resolve,reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 
 // ===============================
 // RECONOCIMIENTO
