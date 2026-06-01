@@ -310,6 +310,54 @@ textarea{min-height:72px;resize:vertical}
   white-space:nowrap;
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.brecha-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.48);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  z-index:500;
+}
+.brecha-modal.show{display:flex}
+.brecha-box{
+  width:min(420px,100%);
+  background:#fff;
+  border-radius:18px;
+  padding:18px;
+  box-shadow:0 22px 70px rgba(0,0,0,.28);
+}
+.brecha-title{
+  font-size:18px;
+  font-weight:900;
+  margin-bottom:5px;
+}
+.brecha-sub{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+  line-height:1.4;
+  margin-bottom:14px;
+}
+.brecha-actions{
+  display:flex;
+  gap:8px;
+  margin-top:14px;
+}
+.brecha-close{
+  background:#e5e7eb;
+  color:#111827;
+}
+.view-btn.brecha{
+  background:#111827;
+  color:#fff;
+}
+.view-btn.brecha.active{
+  background:var(--blue);
+  color:#fff;
+}
 @media(max-width:760px){
   .top-inner{align-items:flex-start;flex-wrap:wrap}
   .logo{padding-top:6px}
@@ -603,6 +651,7 @@ html.menu-ready .header-tabs,
       <div class="view-actions">
         <button id="btnPrecio" class="view-btn active" onclick="showPrecio()">💵 Precio</button>
         <button id="btnAdmin" class="view-btn admin" onclick="showAdmin()">⚙️ Administrador</button>
+        <button id="btnBrecha" class="view-btn brecha" onclick="openBrechaModal()">Brecha x1.30</button>
       </div>
     </div>
 
@@ -727,6 +776,20 @@ html.menu-ready .header-tabs,
 
 <div class="toast" id="toast">Guardado</div>
 
+<div class="brecha-modal" id="brechaModal" onclick="brechaBackdropClose(event)">
+  <div class="brecha-box">
+    <div class="brecha-title">Ajuste por brecha</div>
+    <div class="brecha-sub">Este factor se aplica a todos los precios visibles y adicionales. Los precios base guardados en Supabase no se modifican.</div>
+    <label>Valor de brecha</label>
+    <input id="brechaInput" type="number" step="0.01" min="1" value="1.3">
+    <small class="form-help">Ejemplo: precio base $10 × 1.3 = $13. Todos los precios se redondean hacia arriba.</small>
+    <div class="brecha-actions">
+      <button class="btn btn-save" onclick="saveBrecha()">Guardar brecha</button>
+      <button class="btn brecha-close" onclick="closeBrechaModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/supabase.js?v=24"></script>
 <script src="js/auth.js?v=24"></script>
 <script src="js/menu.js?v=12"></script>
@@ -740,6 +803,7 @@ let openCategories = {};
 let items = [];
 let categorias = [];
 let isLoading = false;
+let brechaValor = Number(localStorage.getItem('listado_brecha') || 1.3) || 1.3;
 
 function sb(){
   return window.supabaseClient || window.db || null;
@@ -842,6 +906,55 @@ function setStatus(msg, type){
   if(!box) return;
   box.textContent = msg;
   box.className = 'status-box' + (type ? ' ' + type : '');
+}
+
+function precioConBrecha(valor){
+  const base = Number(valor || 0);
+  const factor = Number(brechaValor || 1);
+  return Math.ceil(base * factor);
+}
+
+function moneyBrecha(valor){
+  return '$' + precioConBrecha(valor).toFixed(0);
+}
+
+function updateBrechaUI(){
+  const input = document.getElementById('brechaInput');
+  const btn = document.getElementById('btnBrecha');
+  if(input) input.value = Number(brechaValor || 1.3).toFixed(2).replace(/\.00$/,'');
+  if(btn) btn.textContent = 'Brecha x' + Number(brechaValor || 1.3).toFixed(2);
+}
+
+function openBrechaModal(){
+  updateBrechaUI();
+  const modal = document.getElementById('brechaModal');
+  if(modal) modal.classList.add('show');
+  setTimeout(() => document.getElementById('brechaInput')?.focus(), 50);
+}
+
+function closeBrechaModal(){
+  const modal = document.getElementById('brechaModal');
+  if(modal) modal.classList.remove('show');
+}
+
+function brechaBackdropClose(e){
+  if(e.target && e.target.id === 'brechaModal') closeBrechaModal();
+}
+
+function saveBrecha(){
+  const input = document.getElementById('brechaInput');
+  const valor = Number(input ? input.value : 0);
+  if(!Number.isFinite(valor) || valor < 1){
+    alert('Coloca una brecha válida. Ejemplo: 1.3');
+    return;
+  }
+
+  brechaValor = valor;
+  localStorage.setItem('listado_brecha', String(brechaValor));
+  updateBrechaUI();
+  closeBrechaModal();
+  render();
+  showToast('Brecha actualizada');
 }
 
 async function loadFromSupabase(){
@@ -1068,7 +1181,7 @@ function renderItemCard(item){
 
   const extrasPreview = extras.length
     ? `<div class="mini-extras">${extras.slice(0,3).map(ex => `
-        <div class="mini-extra-line">${escapeHTML(ex.nombre)} · +$${Number(ex.precio || 0).toFixed(2)} / ${escapeHTML(ex.unidad || '')}</div>
+        <div class="mini-extra-line">${escapeHTML(ex.nombre)} · +${moneyBrecha(ex.precio)} / ${escapeHTML(ex.unidad || '')}</div>
       `).join('')}${extras.length > 3 ? `<div class="mini-extra-line">+${extras.length - 3} extra(s) más</div>` : ''}</div>`
     : '';
 
@@ -1087,7 +1200,7 @@ function renderItemCard(item){
           ${notasPreview}
         </div>
         <div class="price-box">
-          <div class="price">$${Number(item.precio || 0).toFixed(2)}</div>
+          <div class="price">${moneyBrecha(item.precio)}</div>
           <div class="unit">/${escapeHTML(item.unidad || '')}</div>
         </div>
         <div class="chev">▾</div>
@@ -1105,7 +1218,7 @@ function renderItemCard(item){
                   <b>${escapeHTML(ex.nombre)}</b>
                   ${ex.nota ? `<small>${escapeHTML(ex.nota)}</small>` : ''}
                 </div>
-                <div class="extra-price">+$${Number(ex.precio || 0).toFixed(2)} / ${escapeHTML(ex.unidad || '')}</div>
+                <div class="extra-price">+${moneyBrecha(ex.precio)} / ${escapeHTML(ex.unidad || '')}</div>
               </div>
             `).join('')}
           </div>
@@ -1390,11 +1503,11 @@ function copyItem(id){
 
   if(item.extras && item.extras.length){
     extrasText = '\nAdicionales:\n' + item.extras
-      .map(ex => `+ ${ex.nombre}: $${Number(ex.precio || 0).toFixed(2)} / ${ex.unidad}`)
+      .map(ex => `+ ${ex.nombre}: ${moneyBrecha(ex.precio)} / ${ex.unidad}`)
       .join('\n');
   }
 
-  const text = `${item.nombre}\nCategoría: ${item.categoria}\nPrecio: $${Number(item.precio || 0).toFixed(2)} / ${item.unidad}\n${item.cantidadMinima ? `Mínimo: ${item.cantidadMinima} ${item.tipoMinimo || item.unidad}` : ''}\n${item.nota ? `Nota: ${item.nota}` : ''}${extrasText}`;
+  const text = `${item.nombre}\nCategoría: ${item.categoria}\nPrecio: ${moneyBrecha(item.precio)} / ${item.unidad}\n${item.cantidadMinima ? `Mínimo: ${item.cantidadMinima} ${item.tipoMinimo || item.unidad}` : ''}\n${item.nota ? `Nota: ${item.nota}` : ''}${extrasText}`;
 
   copyText(text.trim());
   showToast('Copiado para WhatsApp');
@@ -1471,6 +1584,7 @@ document.getElementById('search').addEventListener('input', e => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  updateBrechaUI();
   renderExtrasAdmin();
   renderCategoriasDatalist();
   loadFromSupabase();
