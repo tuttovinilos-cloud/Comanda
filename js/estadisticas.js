@@ -184,7 +184,7 @@ function renderList(id, rows, mode='metros'){
     return;
   }
 
-  const ordenados = rows.slice(0,10);
+  const ordenados = id === 'metrosPorMes' ? rows.slice(0,12) : rows.slice(0,10);
   const max = Math.max(...ordenados.map(r => mode === 'pedidos' ? r.pedidos : r.metros), 1);
 
   el.innerHTML = ordenados.map((r, i) => {
