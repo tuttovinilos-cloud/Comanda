@@ -2,1219 +2,179 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Reconocimiento Facial · Tuttovinilos</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visor Cámara RTSP · Tuttovinilos</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f3f5fb;
-  --card:#ffffff;
-  --text:#111827;
-  --muted:#64748b;
-  --border:#d9deea;
-  --blue:#123cff;
-  --green:#16a34a;
-  --red:#dc2626;
-  --yellow:#f59e0b;
-}
-body{
-  font-family:Arial,Helvetica,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  padding:14px;
-}
-.wrap{max-width:1100px;margin:auto}
-.header{
-  background:linear-gradient(135deg,#111827,#123cff);
-  color:white;
-  border-radius:18px;
-  padding:20px;
-  margin-bottom:14px;
-  box-shadow:0 10px 24px rgba(0,0,0,.16);
-}
+body{font-family:Arial,Helvetica,sans-serif;background:#eef2f7;color:#111827;padding:14px}
+.wrap{max-width:1050px;margin:auto}
+.header{background:linear-gradient(135deg,#111827,#123cff);color:white;border-radius:18px;padding:20px;margin-bottom:14px}
 .header h1{font-size:24px;margin-bottom:6px}
 .header p{color:#dbe3ff;font-size:14px}
-.tabs{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-bottom:14px;
-}
-.tab{
-  border:1px solid var(--border);
-  background:white;
-  color:#111827;
-  border-radius:999px;
-  padding:12px 16px;
-  font-size:14px;
-  font-weight:900;
-  cursor:pointer;
-}
-.tab.active{background:var(--blue);color:white}
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-}
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:16px;
-  box-shadow:0 8px 18px rgba(15,23,42,.08);
-}
+.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+.card{background:white;border:1px solid #d8deea;border-radius:18px;padding:16px;box-shadow:0 8px 18px rgba(15,23,42,.08)}
 .card.full{grid-column:1/-1}
 .card h2{font-size:18px;margin-bottom:12px}
-label{
-  display:block;
-  font-size:13px;
-  font-weight:900;
-  margin:10px 0 6px;
-}
-input,select,textarea{
-  width:100%;
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:12px;
-  font-size:15px;
-  background:white;
-}
-input[type=file]{padding:10px}
-textarea{min-height:70px;resize:vertical}
-button{
-  border:0;
-  border-radius:12px;
-  padding:12px 14px;
-  font-size:15px;
-  font-weight:900;
-  cursor:pointer;
-}
-button:active{transform:scale(.98)}
-.btn-blue{background:var(--blue);color:white}
-.btn-green{background:var(--green);color:white}
-.btn-gray{background:#e5e7eb;color:#111827}
-.btn-red{background:var(--red);color:white}
-.btn-yellow{background:var(--yellow);color:#111827}
-.btn-row{
-  display:flex;
-  gap:9px;
-  flex-wrap:wrap;
-  margin-top:12px;
-}
-video,canvas,img{
-  width:100%;
-  border-radius:14px;
-  border:1px solid var(--border);
-  background:#111827;
-}
-video{
-  min-height:280px;
-  object-fit:cover;
-}
-canvas{display:none}
-.preview{margin-top:12px}
-.preview img{display:none}
-.status{
-  margin-top:12px;
-  padding:12px;
-  border-radius:12px;
-  font-size:14px;
-  line-height:1.45;
-  background:#eef2ff;
-  border:1px solid #c7d2fe;
-  color:#1e3a8a;
-  white-space:pre-wrap;
-}
+label{display:block;font-size:13px;font-weight:900;margin:10px 0 6px}
+input{width:100%;border:1px solid #d8deea;border-radius:12px;padding:12px;font-size:15px}
+button{border:0;border-radius:12px;padding:12px 14px;font-size:15px;font-weight:900;cursor:pointer}
+.btn-blue{background:#123cff;color:white}.btn-green{background:#16a34a;color:white}.btn-gray{background:#e5e7eb;color:#111827}.btn-red{background:#dc2626;color:white}
+.btn-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+.viewer{width:100%;aspect-ratio:16/9;border:1px solid #d8deea;border-radius:16px;overflow:hidden;background:#000}
+.viewer iframe{width:100%;height:100%;border:0;background:#000}
+.status{margin-top:12px;padding:12px;border-radius:12px;font-size:14px;line-height:1.45;background:#eef2ff;border:1px solid #c7d2fe;color:#1e3a8a;white-space:pre-wrap}
 .status.ok{background:#ecfdf5;border-color:#bbf7d0;color:#166534}
 .status.err{background:#fef2f2;border-color:#fecaca;color:#991b1b}
 .status.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
-.hidden{display:none!important}
-.counter{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#eef2ff;
-  border:1px solid #c7d2fe;
-  color:#1e3a8a;
-  font-size:42px;
-  font-weight:1000;
-  border-radius:18px;
-  height:100px;
-  margin-top:10px;
-}
-.result-box{
-  background:#f8fafc;
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:18px;
-  margin-top:12px;
-}
-.result-name{
-  font-size:38px;
-  font-weight:1000;
-  letter-spacing:-1px;
-}
-.result-sub{
-  color:#64748b;
-  font-weight:800;
-  margin-top:5px;
-}
-.badge{
-  display:inline-block;
-  padding:6px 10px;
-  border-radius:999px;
-  font-weight:900;
-  font-size:13px;
-}
-.badge-green{background:#dcfce7;color:#166534}
-.badge-yellow{background:#fef3c7;color:#92400e}
-.badge-red{background:#fee2e2;color:#991b1b}
-.table-wrap{overflow:auto}
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-  min-width:760px;
-}
-th,td{
-  border-bottom:1px solid var(--border);
-  text-align:left;
-  padding:10px;
-  font-size:13px;
-}
-th{background:#f8fafc}
-.small{
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.45;
-}
-.sql-box{
-  background:#0f172a;
-  color:#e5e7eb;
-  padding:12px;
-  border-radius:12px;
-  overflow:auto;
-  font-size:12px;
-  margin-top:10px;
-  white-space:pre;
-  max-height:430px;
-}
-.progress{
-  width:100%;
-  background:#e5e7eb;
-  height:14px;
-  border-radius:999px;
-  overflow:hidden;
-  margin-top:12px;
-}
-.progress-bar{
-  width:0%;
-  height:100%;
-  background:#16a34a;
-  transition:.2s;
-}
-@media(max-width:820px){
-  body{padding:10px}
-  .grid{grid-template-columns:1fr}
-  .header h1{font-size:20px}
-  video{min-height:230px}
-  .result-name{font-size:30px}
-}
+.small{color:#64748b;font-size:12px;line-height:1.45}
+.code{background:#0f172a;color:#e5e7eb;border-radius:14px;padding:14px;overflow:auto;font-size:13px;white-space:pre-wrap;margin-top:10px}
+.badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:13px;background:#dcfce7;color:#166534}
+@media(max-width:820px){body{padding:10px}.grid{grid-template-columns:1fr}.header h1{font-size:20px}}
 </style>
 </head>
-
 <body>
 <div class="wrap">
-
   <div class="header">
-    <h1>Reconocimiento Facial · Tuttovinilos</h1>
-    <p>1) Carga mínimo 5 fotos por empleado. 2) Toma una foto y el sistema dice quién es.</p>
+    <h1>Visor Cámara RTSP · Tuttovinilos</h1>
+    <p>El navegador no reproduce RTSP directo. Este visor usa un puente RTSP → WebRTC/HLS.</p>
   </div>
 
-  <div class="tabs">
-    <button class="tab active" id="tabEntrenar" onclick="mostrarVista('entrenar')">1. Cargar fotos empleado</button>
-    <button class="tab" id="tabReconocer" onclick="mostrarVista('reconocer')">2. Tomar foto y reconocer</button>
-    <button class="tab" id="tabConfig" onclick="mostrarVista('config')">Configuración / SQL</button>
+  <div class="grid">
+    <div class="card">
+      <h2>Vista de cámara</h2>
+      <div class="viewer">
+        <iframe id="visorCamara" src=""></iframe>
+      </div>
+      <div class="btn-row">
+        <button class="btn-green" onclick="abrirCamara()">Abrir cámara</button>
+        <button class="btn-gray" onclick="recargarCamara()">Recargar</button>
+        <button class="btn-red" onclick="cerrarCamara()">Cerrar</button>
+      </div>
+      <div id="estado" class="status warn">Esperando abrir cámara.</div>
+    </div>
+
+    <div class="card">
+      <h2>Configuración</h2>
+
+      <label>URL WebRTC / MediaMTX</label>
+      <input id="urlWebRTC" value="http://localhost:8889/cam/">
+
+      <label>RTSP original</label>
+      <input id="rtspUrl" type="password" value="rtsp://Ortiznr:Roberto1@192.168.68.101/live">
+
+      <div class="btn-row">
+        <button class="btn-blue" onclick="guardarConfig()">Guardar</button>
+        <button class="btn-gray" onclick="verOcultar()">Ver/Ocultar RTSP</button>
+      </div>
+
+      <div class="status">
+        <b>Modo recomendado:</b>
+        <br>Usa MediaMTX en una PC de la misma red.
+        <br>Luego este HTML abre:
+        <br><span class="badge">http://localhost:8889/cam/</span>
+      </div>
+
+      <p class="small" style="margin-top:10px">
+        Si abres este HTML desde GitHub Pages con HTTPS, puede bloquear contenido HTTP local.
+        En ese caso ábrelo como archivo local o desde un servidor local dentro de tu red.
+      </p>
+    </div>
+
+    <div class="card full">
+      <h2>Cómo hacerlo funcionar</h2>
+      <p class="small">
+        RTSP no funciona directo en HTML, Safari, Chrome ni iPhone. Necesitas convertirlo a WebRTC o HLS.
+        La forma más limpia es MediaMTX.
+      </p>
+      <div class="code">1) Descarga MediaMTX:
+https://github.com/bluenviron/mediamtx/releases
+
+2) Crea o edita el archivo mediamtx.yml con esto:
+
+paths:
+  cam:
+    source: rtsp://Ortiznr:Roberto1@192.168.68.101/live
+
+3) Ejecuta MediaMTX en la PC:
+
+Windows:
+mediamtx.exe mediamtx.yml
+
+Mac/Linux:
+./mediamtx mediamtx.yml
+
+4) Abre este HTML y presiona:
+Abrir cámara
+
+Debe cargar:
+http://localhost:8889/cam/</div>
+    </div>
+
+    <div class="card full">
+      <h2>Nota importante</h2>
+      <div class="status warn">
+Si quieres ver la cámara desde otra laptop o celular, cambia localhost por la IP de la PC donde corre MediaMTX.
+
+Ejemplo:
+http://192.168.68.113:8889/cam/
+
+Esa PC debe estar encendida y en la misma red.
+      </div>
+    </div>
   </div>
-
-  <section id="vistaEntrenar">
-    <div class="grid">
-      <div class="card">
-        <h2>Empleado</h2>
-
-        <label>Seleccionar empleado</label>
-        <select id="personaEntrenar">
-          <option value="">Cargando empleados...</option>
-        </select>
-
-        <div class="btn-row">
-          <button class="btn-blue" onclick="cargarPersonas()">Actualizar lista</button>
-          <button class="btn-gray" onclick="cargarResumenRostros()">Ver fotos guardadas</button>
-        </div>
-
-        <div class="counter" id="contadorEntrenamiento">0/5</div>
-
-        <label>Cargar mínimo 5 fotos del empleado</label>
-        <input id="fotosEntrenamiento" type="file" accept="image/*" multiple>
-
-        <div class="btn-row">
-          <button class="btn-green" onclick="entrenarFotosSeleccionadas()">Entrenar fotos seleccionadas</button>
-        </div>
-
-        <div class="progress">
-          <div id="barraEntrenamiento" class="progress-bar"></div>
-        </div>
-
-        <div id="estadoEntrenamiento" class="status warn">Esperando conexión, modelos y selección de empleado.</div>
-      </div>
-
-      <div class="card">
-        <h2>Vista previa</h2>
-        <div class="preview">
-          <img id="previewEntrenar">
-        </div>
-
-        <p class="small" style="margin-top:12px">
-          Recomendación: fotos de frente, buena luz, una sola cara visible, sin lentes oscuros y sin tapar el rostro.
-        </p>
-      </div>
-
-      <div class="card full">
-        <h2>Resumen de entrenamiento</h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Empleado</th>
-                <th>Fotos / huellas guardadas</th>
-                <th>Estado</th>
-                <th>Última carga</th>
-              </tr>
-            </thead>
-            <tbody id="tablaRostros">
-              <tr><td colspan="4">Sin datos.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="vistaReconocer" class="hidden">
-    <div class="grid">
-      <div class="card">
-        <h2>Tomar foto</h2>
-
-        <video id="videoReconocer" autoplay playsinline muted></video>
-        <canvas id="canvasReconocer"></canvas>
-
-        <div class="btn-row">
-          <button class="btn-blue" onclick="iniciarCamara()">Abrir cámara</button>
-          <button class="btn-green" onclick="reconocerPersona()">Tomar foto y reconocer</button>
-          <button class="btn-gray" onclick="detenerCamara()">Cerrar cámara</button>
-        </div>
-
-        <div class="preview">
-          <img id="previewReconocer">
-        </div>
-
-        <div id="estadoReconocimiento" class="status warn">Primero entrena mínimo 5 fotos por empleado.</div>
-      </div>
-
-      <div class="card">
-        <h2>Resultado</h2>
-
-        <div class="result-box">
-          <div class="result-name" id="resultadoNombre">---</div>
-          <div class="result-sub" id="resultadoDetalle">Sin reconocimiento todavía</div>
-        </div>
-
-        <label>Tipo de registro</label>
-        <select id="tipoRegistro">
-          <option value="asistencia">Asistencia</option>
-          <option value="produccion">Producción</option>
-          <option value="entrada">Entrada</option>
-          <option value="salida">Salida</option>
-          <option value="otro">Otro</option>
-        </select>
-
-        <label>Nota</label>
-        <textarea id="notaRegistro" placeholder="Ej: entrada, salida, producción, entrega..."></textarea>
-
-        <div class="btn-row">
-          <button class="btn-green" onclick="guardarUltimoReconocimiento()">Guardar reconocimiento</button>
-          <button class="btn-gray" onclick="cargarRostrosReferencia()">Recargar huellas</button>
-        </div>
-
-        <div id="estadoGuardarReconocimiento" class="status">Esperando reconocimiento válido.</div>
-      </div>
-
-      <div class="card full">
-        <h2>Últimos registros</h2>
-        <button class="btn-gray" onclick="cargarUltimosRegistros()">Actualizar</button>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Empleado detectado</th>
-                <th>Confianza</th>
-                <th>Distancia</th>
-                <th>Tipo</th>
-                <th>Foto</th>
-              </tr>
-            </thead>
-            <tbody id="tablaRegistros">
-              <tr><td colspan="6">Sin datos.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="vistaConfig" class="hidden">
-    <div class="grid">
-      <div class="card">
-        <h2>Supabase</h2>
-
-        <label>SUPABASE URL</label>
-        <input id="supabaseUrl" value="https://ujfdsabypflseijatxba.supabase.co">
-
-        <label>SUPABASE ANON / PUBLISHABLE KEY</label>
-        <input id="supabaseKey" type="password" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZmRzYWJ5cGZsc2VpamF0eGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNjcxNTIsImV4cCI6MjA5MTg0MzE1Mn0.Tyi_TeKaVG0PMA4R-aO8GPgP525GLZcqipB-tXmFq5c">
-
-        <label>Bucket Storage</label>
-        <input id="bucketName" value="fotos-registro">
-
-        <label>Ruta de modelos face-api.js</label>
-        <input id="modelUrl" value="https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights">
-
-        <div class="btn-row">
-          <button class="btn-blue" onclick="conectarSupabase()">Conectar Supabase</button>
-          <button class="btn-blue" onclick="cargarModelos()">Cargar modelos</button>
-          <button class="btn-gray" onclick="guardarConfigLocal()">Guardar config</button>
-          <button class="btn-gray" onclick="mostrarOcultarKey()">Ver/Ocultar key</button>
-        </div>
-
-        <div id="estadoSupabase" class="status warn">Supabase no conectado.</div>
-        <div id="estadoModelos" class="status warn">Modelos no cargados.</div>
-      </div>
-
-      <div class="card">
-        <h2>Estado</h2>
-        <div id="estadoGeneral" class="status warn">Iniciando sistema...</div>
-        <p class="small" style="margin-top:12px">
-          Empleados configurados: Carlos, Roberto, Ricardo, Maria, Paula.
-        </p>
-      </div>
-
-      <div class="card full">
-        <h2>SQL necesario en Supabase</h2>
-        <p class="small">Ejecuta esto en Supabase → SQL Editor. También crea el bucket público <b>fotos-registro</b>.</p>
-
-        <div class="sql-box">create table if not exists personas (
-  id uuid primary key default gen_random_uuid(),
-  nombre text not null unique,
-  cargo text,
-  activo boolean default true,
-  created_at timestamp with time zone default now()
-);
-
-insert into personas (nombre, cargo, activo)
-values
-('Carlos', 'Empleado', true),
-('Roberto', 'Empleado', true),
-('Ricardo', 'Empleado', true),
-('Maria', 'Empleado', true),
-('Paula', 'Empleado', true)
-on conflict (nombre)
-do update set activo = true;
-
-create table if not exists rostros_referencia (
-  id uuid primary key default gen_random_uuid(),
-  persona_id uuid references personas(id) on delete cascade,
-  persona_nombre text,
-  foto_url text,
-  descriptor jsonb not null,
-  created_at timestamp with time zone default now()
-);
-
-create table if not exists fotos_registro (
-  id uuid primary key default gen_random_uuid(),
-  fecha timestamp with time zone default now(),
-  imagen_url text,
-  persona_id uuid references personas(id),
-  persona_detectada text,
-  confianza numeric,
-  distancia numeric,
-  tipo_registro text,
-  nota text,
-  created_at timestamp with time zone default now()
-);
-
-alter table personas enable row level security;
-alter table rostros_referencia enable row level security;
-alter table fotos_registro enable row level security;
-
-drop policy if exists "leer personas" on personas;
-create policy "leer personas"
-on personas for select
-to anon
-using (true);
-
-drop policy if exists "insertar personas" on personas;
-create policy "insertar personas"
-on personas for insert
-to anon
-with check (true);
-
-drop policy if exists "actualizar personas" on personas;
-create policy "actualizar personas"
-on personas for update
-to anon
-using (true)
-with check (true);
-
-drop policy if exists "leer rostros referencia" on rostros_referencia;
-create policy "leer rostros referencia"
-on rostros_referencia for select
-to anon
-using (true);
-
-drop policy if exists "insertar rostros referencia" on rostros_referencia;
-create policy "insertar rostros referencia"
-on rostros_referencia for insert
-to anon
-with check (true);
-
-drop policy if exists "leer fotos registro" on fotos_registro;
-create policy "leer fotos registro"
-on fotos_registro for select
-to anon
-using (true);
-
-drop policy if exists "insertar fotos registro" on fotos_registro;
-create policy "insertar fotos registro"
-on fotos_registro for insert
-to anon
-with check (true);
-
-drop policy if exists "subir fotos publicas" on storage.objects;
-create policy "subir fotos publicas"
-on storage.objects for insert
-to anon
-with check (bucket_id = 'fotos-registro');
-
-drop policy if exists "leer fotos publicas" on storage.objects;
-create policy "leer fotos publicas"
-on storage.objects for select
-to anon
-using (bucket_id = 'fotos-registro');</div>
-      </div>
-    </div>
-  </section>
-
 </div>
 
 <script>
-const EMPLEADOS_BASE = ["Carlos","Roberto","Ricardo","Maria","Paula"];
-
-let supabaseClient = null;
-let streamActual = null;
-let modelosCargados = false;
-let rostrosReferencia = [];
-let ultimoReconocimiento = null;
-let ultimaFotoReconocimientoBlob = null;
-
-window.addEventListener("load", async () => {
-  const cfg = JSON.parse(localStorage.getItem("tv_face_config") || "{}");
-
-  if(cfg.url) document.getElementById("supabaseUrl").value = cfg.url;
-  if(cfg.key) document.getElementById("supabaseKey").value = cfg.key;
-  if(cfg.bucket) document.getElementById("bucketName").value = cfg.bucket;
-
-  document.getElementById("modelUrl").value = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights";
-
-  if(document.getElementById("supabaseKey").value.trim()){
-    conectarSupabase();
-  }else{
-    setStatus("estadoGeneral","Falta pegar la anon/publishable key de Supabase en Configuración.","warn");
-  }
-
-  setTimeout(() => cargarModelos(), 500);
+window.addEventListener("load", () => {
+  const cfg = JSON.parse(localStorage.getItem("visor_rtsp_tv") || "{}");
+  if(cfg.urlWebRTC) document.getElementById("urlWebRTC").value = cfg.urlWebRTC;
+  if(cfg.rtspUrl) document.getElementById("rtspUrl").value = cfg.rtspUrl;
 });
 
-function mostrarVista(nombre){
-  document.getElementById("vistaEntrenar").classList.add("hidden");
-  document.getElementById("vistaReconocer").classList.add("hidden");
-  document.getElementById("vistaConfig").classList.add("hidden");
-
-  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-
-  if(nombre === "entrenar"){
-    document.getElementById("vistaEntrenar").classList.remove("hidden");
-    document.getElementById("tabEntrenar").classList.add("active");
-    cargarPersonas();
-    cargarResumenRostros();
+function abrirCamara(){
+  const url = document.getElementById("urlWebRTC").value.trim();
+  if(!url){
+    setStatus("estado", "Falta la URL WebRTC / MediaMTX.", "err");
+    return;
   }
-
-  if(nombre === "reconocer"){
-    document.getElementById("vistaReconocer").classList.remove("hidden");
-    document.getElementById("tabReconocer").classList.add("active");
-    cargarRostrosReferencia();
-    cargarUltimosRegistros();
-  }
-
-  if(nombre === "config"){
-    document.getElementById("vistaConfig").classList.remove("hidden");
-    document.getElementById("tabConfig").classList.add("active");
-  }
+  document.getElementById("visorCamara").src = url;
+  setStatus("estado", "Abriendo cámara:\n" + url, "ok");
 }
 
-function guardarConfigLocal(){
+function recargarCamara(){
+  const iframe = document.getElementById("visorCamara");
+  const url = iframe.src;
+  if(!url){ abrirCamara(); return; }
+  iframe.src = "";
+  setTimeout(() => { iframe.src = url; }, 300);
+  setStatus("estado", "Recargando cámara.", "warn");
+}
+
+function cerrarCamara(){
+  document.getElementById("visorCamara").src = "";
+  setStatus("estado", "Cámara cerrada.", "warn");
+}
+
+function guardarConfig(){
   const cfg = {
-    url: document.getElementById("supabaseUrl").value.trim(),
-    key: document.getElementById("supabaseKey").value.trim(),
-    bucket: document.getElementById("bucketName").value.trim()
+    urlWebRTC: document.getElementById("urlWebRTC").value.trim(),
+    rtspUrl: document.getElementById("rtspUrl").value.trim()
   };
-
-  localStorage.setItem("tv_face_config", JSON.stringify(cfg));
-  setStatus("estadoSupabase","Configuración guardada en este navegador.","ok");
+  localStorage.setItem("visor_rtsp_tv", JSON.stringify(cfg));
+  setStatus("estado", "Configuración guardada en este navegador.", "ok");
 }
 
-function mostrarOcultarKey(){
-  const input = document.getElementById("supabaseKey");
+function verOcultar(){
+  const input = document.getElementById("rtspUrl");
   input.type = input.type === "password" ? "text" : "password";
-}
-
-function conectarSupabase(){
-  const url = document.getElementById("supabaseUrl").value.trim();
-  const key = document.getElementById("supabaseKey").value.trim();
-
-  if(!url || !key){
-    setStatus("estadoSupabase","Falta URL o key de Supabase.","err");
-    return;
-  }
-
-  try{
-    supabaseClient = supabase.createClient(url, key);
-    guardarConfigLocal();
-    setStatus("estadoSupabase","Supabase conectado.","ok");
-    setStatus("estadoGeneral","Supabase conectado. Cargando empleados...","ok");
-    asegurarEmpleadosBase();
-    cargarPersonas();
-    cargarResumenRostros();
-  }catch(err){
-    setStatus("estadoSupabase","Error conectando Supabase: " + errorDetalle(err),"err");
-  }
-}
-
-async function asegurarEmpleadosBase(){
-  if(!supabaseClient) return;
-
-  for(const nombre of EMPLEADOS_BASE){
-    try{
-      await supabaseClient
-        .from("personas")
-        .upsert([{nombre:nombre, cargo:"Empleado", activo:true}], {onConflict:"nombre"});
-    }catch(e){
-      console.warn("No se pudo asegurar empleado", nombre, e);
-    }
-  }
-}
-
-async function cargarModelos(){
-  const modelUrl = document.getElementById("modelUrl").value.trim();
-
-  try{
-    setStatus("estadoModelos","Cargando modelos de reconocimiento facial...","warn");
-
-    await faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl);
-    await faceapi.nets.faceLandmark68Net.loadFromUri(modelUrl);
-    await faceapi.nets.faceRecognitionNet.loadFromUri(modelUrl);
-
-    modelosCargados = true;
-    setStatus("estadoModelos","Modelos cargados correctamente.","ok");
-    setStatus("estadoGeneral","Sistema listo: Supabase + modelos cargados.","ok");
-  }catch(err){
-    modelosCargados = false;
-    setStatus("estadoModelos","No se pudieron cargar los modelos: " + errorDetalle(err),"err");
-    setStatus("estadoGeneral","Falta cargar modelos. Revisa internet o ruta de modelos.","err");
-  }
-}
-
-async function cargarPersonas(){
-  const select = document.getElementById("personaEntrenar");
-
-  if(!supabaseClient){
-    select.innerHTML = `<option value="">Conecta Supabase primero</option>`;
-    return;
-  }
-
-  select.innerHTML = `<option value="">Cargando empleados...</option>`;
-
-  const {data,error} = await supabaseClient
-    .from("personas")
-    .select("id,nombre,cargo,activo")
-    .in("nombre", EMPLEADOS_BASE)
-    .eq("activo",true)
-    .order("nombre",{ascending:true});
-
-  if(error){
-    select.innerHTML = `<option value="">Error cargando empleados</option>`;
-    setStatus("estadoEntrenamiento","Error cargando personas: " + errorDetalle(error),"err");
-    return;
-  }
-
-  select.innerHTML = `<option value="">Seleccionar empleado</option>`;
-
-  (data || []).forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = p.nombre;
-    opt.dataset.nombre = p.nombre;
-    select.appendChild(opt);
-  });
-
-  actualizarContadorPersonaSeleccionada();
-}
-
-document.addEventListener("change", e => {
-  if(e.target && e.target.id === "personaEntrenar"){
-    actualizarContadorPersonaSeleccionada();
-  }
-});
-
-async function entrenarFotosSeleccionadas(){
-  if(!supabaseClient){
-    setStatus("estadoEntrenamiento","Primero conecta Supabase.","err");
-    return;
-  }
-
-  if(!modelosCargados){
-    setStatus("estadoEntrenamiento","Primero deben cargar los modelos correctamente.","err");
-    return;
-  }
-
-  const select = document.getElementById("personaEntrenar");
-  const personaId = select.value;
-  const personaNombre = select.options[select.selectedIndex]?.dataset.nombre || "";
-
-  if(!personaId){
-    setStatus("estadoEntrenamiento","Selecciona un empleado.","err");
-    return;
-  }
-
-  const input = document.getElementById("fotosEntrenamiento");
-  const files = Array.from(input.files || []);
-
-  if(files.length < 5){
-    setStatus("estadoEntrenamiento","Selecciona mínimo 5 fotos del mismo empleado.","err");
-    return;
-  }
-
-  let guardadas = 0;
-  let fallidas = 0;
-  let detallesFallos = [];
-
-  setBarra(0);
-
-  for(let i = 0; i < files.length; i++){
-    const file = files[i];
-
-    try{
-      setStatus("estadoEntrenamiento",`Procesando ${personaNombre}\nFoto ${i+1} de ${files.length}...`,"warn");
-
-      const img = await fileToImage(file);
-      const deteccion = await detectarDescriptorDesdeElemento(img);
-
-      if(!deteccion){
-        fallidas++;
-        detallesFallos.push(`Foto ${i+1}: no detectó rostro claro`);
-        setBarra(((i+1)/files.length)*100);
-        continue;
-      }
-
-      const fotoUrl = await subirFotoStorage(file, "entrenamiento");
-      const descriptorArray = Array.from(deteccion.descriptor);
-
-      const {error} = await supabaseClient
-        .from("rostros_referencia")
-        .insert([{
-          persona_id: personaId,
-          persona_nombre: personaNombre,
-          foto_url: fotoUrl,
-          descriptor: descriptorArray
-        }]);
-
-      if(error){
-        fallidas++;
-        detallesFallos.push(`Foto ${i+1}: ${errorDetalle(error)}`);
-        setBarra(((i+1)/files.length)*100);
-        continue;
-      }
-
-      guardadas++;
-
-      const preview = document.getElementById("previewEntrenar");
-      preview.src = URL.createObjectURL(file);
-      preview.style.display = "block";
-
-    }catch(err){
-      fallidas++;
-      detallesFallos.push(`Foto ${i+1}: ${errorDetalle(err)}`);
-    }
-
-    setBarra(((i+1)/files.length)*100);
-  }
-
-  if(guardadas >= 5){
-    setStatus("estadoEntrenamiento",
-      `Entrenamiento listo para ${personaNombre}.\nGuardadas: ${guardadas}\nFallidas: ${fallidas}`,
-      "ok"
-    );
-  }else{
-    setStatus("estadoEntrenamiento",
-      `Entrenamiento incompleto para ${personaNombre}.\nGuardadas: ${guardadas}\nFallidas: ${fallidas}\n\n${detallesFallos.slice(0,5).join("\n")}`,
-      "err"
-    );
-  }
-
-  input.value = "";
-  cargarResumenRostros();
-  cargarRostrosReferencia();
-}
-
-function setBarra(porcentaje){
-  document.getElementById("barraEntrenamiento").style.width = Math.max(0, Math.min(100, porcentaje)) + "%";
-}
-
-async function iniciarCamara(){
-  try{
-    detenerCamara();
-
-    streamActual = await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:"user"},
-      audio:false
-    });
-
-    const video = document.getElementById("videoReconocer");
-    video.srcObject = streamActual;
-
-    setStatus("estadoReconocimiento","Cámara activa. Presiona: Tomar foto y reconocer.","ok");
-  }catch(err){
-    setStatus("estadoReconocimiento","No se pudo abrir cámara. En iPhone debe abrirse desde HTTPS.\n" + errorDetalle(err),"err");
-  }
-}
-
-function detenerCamara(){
-  if(streamActual){
-    streamActual.getTracks().forEach(t => t.stop());
-    streamActual = null;
-  }
-
-  const video = document.getElementById("videoReconocer");
-  if(video) video.srcObject = null;
-}
-
-async function cargarRostrosReferencia(){
-  if(!supabaseClient){
-    setStatus("estadoReconocimiento","Primero conecta Supabase.","err");
-    return;
-  }
-
-  const {data,error} = await supabaseClient
-    .from("rostros_referencia")
-    .select("id,persona_id,persona_nombre,descriptor,created_at")
-    .in("persona_nombre", EMPLEADOS_BASE)
-    .order("created_at",{ascending:false});
-
-  if(error){
-    setStatus("estadoReconocimiento","Error cargando huellas: " + errorDetalle(error),"err");
-    return;
-  }
-
-  rostrosReferencia = (data || []).map(r => ({
-    id:r.id,
-    persona_id:r.persona_id,
-    persona_nombre:r.persona_nombre,
-    descriptor:new Float32Array(r.descriptor || [])
-  })).filter(r => r.descriptor.length === 128);
-
-  setStatus("estadoReconocimiento",`Huellas cargadas: ${rostrosReferencia.length}.`,"ok");
-}
-
-async function reconocerPersona(){
-  if(!modelosCargados){
-    setStatus("estadoReconocimiento","Primero deben cargar los modelos.","err");
-    return;
-  }
-
-  if(!rostrosReferencia.length){
-    await cargarRostrosReferencia();
-  }
-
-  if(!rostrosReferencia.length){
-    setResultado("Sin entrenamiento","Carga mínimo 5 fotos por empleado primero.",false);
-    setStatus("estadoReconocimiento","No hay huellas guardadas para reconocer.","err");
-    return;
-  }
-
-  const video = document.getElementById("videoReconocer");
-
-  if(!video.videoWidth){
-    setStatus("estadoReconocimiento","Primero abre la cámara.","err");
-    return;
-  }
-
-  try{
-    setStatus("estadoReconocimiento","Tomando foto y comparando rostro...","warn");
-
-    const canvas = document.getElementById("canvasReconocer");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
-
-    const preview = document.getElementById("previewReconocer");
-    preview.src = canvas.toDataURL("image/jpeg",0.9);
-    preview.style.display = "block";
-
-    ultimaFotoReconocimientoBlob = await canvasToBlob(canvas);
-
-    const deteccion = await detectarDescriptorDesdeElemento(canvas);
-
-    if(!deteccion){
-      setResultado("No detectado","No se encontró una cara clara.",false);
-      setStatus("estadoReconocimiento","No detectó rostro. Mejora luz y encuadre.","err");
-      ultimoReconocimiento = null;
-      return;
-    }
-
-    const mejor = buscarMejorCoincidencia(deteccion.descriptor);
-
-    if(!mejor){
-      setResultado("Desconocido","No encontró coincidencia.",false);
-      setStatus("estadoReconocimiento","No encontró coincidencia.","warn");
-      ultimoReconocimiento = null;
-      return;
-    }
-
-    const umbral = 0.55;
-    const confianza = distanciaAConfianza(mejor.distancia);
-
-    if(mejor.distancia <= umbral){
-      setResultado(mejor.persona_nombre,`Confianza ${confianza}% · distancia ${mejor.distancia.toFixed(3)}`,true);
-      setStatus("estadoReconocimiento",`Reconocido: ${mejor.persona_nombre}`,"ok");
-
-      ultimoReconocimiento = {
-        persona_id:mejor.persona_id,
-        persona_detectada:mejor.persona_nombre,
-        confianza:confianza,
-        distancia:Number(mejor.distancia.toFixed(4))
-      };
-    }else{
-      setResultado("Desconocido",`Se parece a ${mejor.persona_nombre}, pero no alcanza confianza. Distancia ${mejor.distancia.toFixed(3)}`,false);
-      setStatus("estadoReconocimiento","No alcanza el umbral. Entrena más fotos de esa persona.","warn");
-      ultimoReconocimiento = null;
-    }
-
-  }catch(err){
-    setStatus("estadoReconocimiento","Error reconociendo: " + errorDetalle(err),"err");
-  }
-}
-
-function buscarMejorCoincidencia(descriptorNuevo){
-  let mejor = null;
-
-  for(const r of rostrosReferencia){
-    const distancia = faceapi.euclideanDistance(descriptorNuevo, r.descriptor);
-
-    if(!mejor || distancia < mejor.distancia){
-      mejor = {
-        persona_id:r.persona_id,
-        persona_nombre:r.persona_nombre,
-        distancia
-      };
-    }
-  }
-
-  return mejor;
-}
-
-function distanciaAConfianza(distancia){
-  let conf = Math.round((1 - Math.min(distancia,0.8) / 0.8) * 100);
-  if(conf < 0) conf = 0;
-  if(conf > 100) conf = 100;
-  return conf;
-}
-
-function setResultado(nombre,detalle,ok){
-  document.getElementById("resultadoNombre").textContent = nombre;
-  document.getElementById("resultadoDetalle").textContent = detalle;
-}
-
-async function guardarUltimoReconocimiento(){
-  if(!supabaseClient){
-    setStatus("estadoGuardarReconocimiento","Primero conecta Supabase.","err");
-    return;
-  }
-
-  if(!ultimoReconocimiento){
-    setStatus("estadoGuardarReconocimiento","No hay reconocimiento válido para guardar.","err");
-    return;
-  }
-
-  if(!ultimaFotoReconocimientoBlob){
-    setStatus("estadoGuardarReconocimiento","No hay foto capturada para guardar.","err");
-    return;
-  }
-
-  try{
-    setStatus("estadoGuardarReconocimiento","Guardando reconocimiento...","warn");
-
-    const fotoUrl = await subirFotoStorage(ultimaFotoReconocimientoBlob, "reconocimiento");
-
-    const {error} = await supabaseClient
-      .from("fotos_registro")
-      .insert([{
-        fecha:new Date().toISOString(),
-        imagen_url:fotoUrl,
-        persona_id:ultimoReconocimiento.persona_id,
-        persona_detectada:ultimoReconocimiento.persona_detectada,
-        confianza:ultimoReconocimiento.confianza,
-        distancia:ultimoReconocimiento.distancia,
-        tipo_registro:document.getElementById("tipoRegistro").value,
-        nota:document.getElementById("notaRegistro").value.trim()
-      }]);
-
-    if(error){
-      setStatus("estadoGuardarReconocimiento","Error guardando registro: " + errorDetalle(error),"err");
-      return;
-    }
-
-    setStatus("estadoGuardarReconocimiento","Reconocimiento guardado correctamente.","ok");
-    cargarUltimosRegistros();
-
-  }catch(err){
-    setStatus("estadoGuardarReconocimiento","Error: " + errorDetalle(err),"err");
-  }
-}
-
-async function cargarResumenRostros(){
-  if(!supabaseClient) return;
-
-  const tbody = document.getElementById("tablaRostros");
-  tbody.innerHTML = `<tr><td colspan="4">Cargando...</td></tr>`;
-
-  const {data,error} = await supabaseClient
-    .from("rostros_referencia")
-    .select("persona_nombre,created_at")
-    .in("persona_nombre", EMPLEADOS_BASE)
-    .order("created_at",{ascending:false});
-
-  if(error){
-    tbody.innerHTML = `<tr><td colspan="4">Error: ${escapeHtml(errorDetalle(error))}</td></tr>`;
-    return;
-  }
-
-  const resumen = {};
-  EMPLEADOS_BASE.forEach(n => resumen[n] = {count:0,last:null});
-
-  (data || []).forEach(r => {
-    if(!resumen[r.persona_nombre]){
-      resumen[r.persona_nombre] = {count:0,last:null};
-    }
-
-    resumen[r.persona_nombre].count++;
-
-    if(!resumen[r.persona_nombre].last || new Date(r.created_at) > new Date(resumen[r.persona_nombre].last)){
-      resumen[r.persona_nombre].last = r.created_at;
-    }
-  });
-
-  tbody.innerHTML = "";
-
-  Object.keys(resumen).sort().forEach(nombre => {
-    const r = resumen[nombre];
-    const estado = r.count >= 5 ? "Listo" : "Faltan " + (5 - r.count);
-    const badge = r.count >= 5 ? "badge-green" : "badge-yellow";
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><b>${escapeHtml(nombre)}</b></td>
-      <td>${r.count}</td>
-      <td><span class="badge ${badge}">${estado}</span></td>
-      <td>${r.last ? formatearFecha(r.last) : "-"}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  actualizarContadorPersonaSeleccionada();
-}
-
-async function actualizarContadorPersonaSeleccionada(){
-  if(!supabaseClient) return;
-
-  const select = document.getElementById("personaEntrenar");
-
-  if(!select || !select.value){
-    document.getElementById("contadorEntrenamiento").textContent = "0/5";
-    return;
-  }
-
-  const {data,error} = await supabaseClient
-    .from("rostros_referencia")
-    .select("id")
-    .eq("persona_id",select.value);
-
-  if(error) return;
-
-  const count = data ? data.length : 0;
-  document.getElementById("contadorEntrenamiento").textContent = `${count}/5`;
-}
-
-async function cargarUltimosRegistros(){
-  if(!supabaseClient) return;
-
-  const tbody = document.getElementById("tablaRegistros");
-  tbody.innerHTML = `<tr><td colspan="6">Cargando...</td></tr>`;
-
-  const {data,error} = await supabaseClient
-    .from("fotos_registro")
-    .select("fecha,persona_detectada,confianza,distancia,tipo_registro,imagen_url")
-    .in("persona_detectada", EMPLEADOS_BASE)
-    .order("fecha",{ascending:false})
-    .limit(30);
-
-  if(error){
-    tbody.innerHTML = `<tr><td colspan="6">Error: ${escapeHtml(errorDetalle(error))}</td></tr>`;
-    return;
-  }
-
-  if(!data || !data.length){
-    tbody.innerHTML = `<tr><td colspan="6">Sin registros.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = "";
-
-  data.forEach(r => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${formatearFecha(r.fecha)}</td>
-      <td><span class="badge badge-green">${escapeHtml(r.persona_detectada || "-")}</span></td>
-      <td>${r.confianza || 0}%</td>
-      <td>${r.distancia ?? "-"}</td>
-      <td>${escapeHtml(r.tipo_registro || "-")}</td>
-      <td>${r.imagen_url ? `<a href="${r.imagen_url}" target="_blank">Ver foto</a>` : "-"}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-async function detectarDescriptorDesdeElemento(elemento){
-  const options = new faceapi.TinyFaceDetectorOptions({
-    inputSize:416,
-    scoreThreshold:0.45
-  });
-
-  const detecciones = await faceapi
-    .detectAllFaces(elemento, options)
-    .withFaceLandmarks()
-    .withFaceDescriptors();
-
-  if(!detecciones || !detecciones.length) return null;
-
-  detecciones.sort((a,b) => {
-    const areaA = a.detection.box.width * a.detection.box.height;
-    const areaB = b.detection.box.width * b.detection.box.height;
-    return areaB - areaA;
-  });
-
-  return detecciones[0];
-}
-
-async function subirFotoStorage(blob, carpeta){
-  const bucket = document.getElementById("bucketName").value.trim();
-
-  if(!bucket){
-    throw new Error("Bucket vacío");
-  }
-
-  const fecha = new Date();
-  const nombre = `${carpeta}_${fecha.getFullYear()}-${pad(fecha.getMonth()+1)}-${pad(fecha.getDate())}_${Date.now()}.jpg`;
-  const ruta = `${carpeta}/${nombre}`;
-
-  const {error} = await supabaseClient
-    .storage
-    .from(bucket)
-    .upload(ruta, blob, {
-      contentType:"image/jpeg",
-      upsert:false
-    });
-
-  if(error) throw error;
-
-  const {data} = supabaseClient
-    .storage
-    .from(bucket)
-    .getPublicUrl(ruta);
-
-  return data.publicUrl;
-}
-
-function fileToImage(file){
-  return new Promise((resolve,reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
-  });
-}
-
-function canvasToBlob(canvas){
-  return new Promise(resolve => {
-    canvas.toBlob(blob => resolve(blob), "image/jpeg", 0.9);
-  });
-}
-
-function errorDetalle(err){
-  if(!err) return "Error desconocido";
-  if(typeof err === "string") return err;
-  if(err.message) return err.message;
-  try{return JSON.stringify(err)}catch(e){return String(err)}
 }
 
 function setStatus(id,msg,type){
   const el = document.getElementById(id);
-  if(!el) return;
   el.className = "status";
   if(type) el.classList.add(type);
   el.textContent = msg;
 }
-
-function pad(n){return String(n).padStart(2,"0")}
-
-function formatearFecha(fechaISO){
-  if(!fechaISO) return "-";
-  return new Date(fechaISO).toLocaleString("es-VE");
-}
-
-function escapeHtml(str){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
 </script>
-
 </body>
 </html>
