@@ -1,5 +1,5 @@
 // Auth centralizado COMANDA
-// Aplica control de sesión, permisos por página y filtrado de menú.
+// Aplica control de sesiÃ³n, permisos por pÃ¡gina y filtrado de menÃº.
 
 (function () {
   const AUTH_KEY = "comanda_operador_actual";
@@ -9,6 +9,7 @@
     "index.html": "puede_pedidos",
     "clientes.html": "puede_clientes",
     "materiales.html": "puede_materiales",
+    "precios.html": "puede_precios",
     "estadisticas.html": "puede_estadisticas",
     "configuracion.html": "puede_configuracion",
     "marketing.html": "puede_marketing",
@@ -20,6 +21,7 @@
     "index.html",
     "clientes.html",
     "materiales.html",
+    "precios.html",
     "estadisticas.html",
     "marketing.html",
     "cotizador.html",
@@ -85,7 +87,7 @@
   }
 
   function aplicarPermisosComanda() {
-    // Login no se bloquea aquí.
+    // Login no se bloquea aquÃ­.
     if (PAGE === "login.html") return true;
 
     const op = getSesionOperador();
