@@ -18,6 +18,7 @@ console.log("MENU GLOBAL conectado v12");
     { page:"index.html", label:"▣ Pedidos", permission:"puede_pedidos" },
     { page:"clientes.html", label:"♟ Clientes", permission:"puede_clientes" },
     { page:"materiales.html", label:"$ Materiales", permission:"puede_materiales" },
+    { page:"precios.html", label:"💲 Precios", permission:"puede_precios" },
     { page:"estadisticas.html", label:"▥ Estadísticas", permission:"puede_estadisticas" },
     { page:"marketing.html", label:"◄ Marketing", permission:"puede_marketing" },
     { page:"Cotizador.html", label:"▣ Cotizador", permission:"puede_cotizador" },
