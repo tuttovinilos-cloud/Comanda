@@ -56,13 +56,25 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
 .invoice-detail-row{display:grid;grid-template-columns:120px 1fr 80px 80px 90px;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12px}
 .invoice-detail-row:last-child{border-bottom:none}
 .search-hint{font-size:10px;color:var(--muted);font-weight:800;margin-top:5px}
+.suggest-list{display:none;margin-top:6px;border:1px solid var(--line2);border-radius:12px;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.08);overflow:hidden;max-height:220px;overflow-y:auto}
+.suggest-list.show{display:block}
+.suggest-item{display:flex;justify-content:space-between;gap:8px;padding:9px 10px;border-bottom:1px solid var(--line);cursor:pointer;font-size:12px}
+.suggest-item:last-child{border-bottom:none}
+.suggest-item:hover{background:#f8f9ff}
+.suggest-item b{font-size:12px}
+.suggest-item small{font-size:10px;color:var(--muted);font-weight:800}
+.stat-group{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px}
+.stat-box{border:1px solid var(--line);border-radius:13px;background:var(--soft);padding:12px}
+.stat-box small{display:block;font-size:10px;color:var(--muted);font-weight:900;text-transform:uppercase}.stat-box strong{display:block;font-family:var(--head);font-size:22px;font-weight:900;color:var(--blue);margin-top:3px}
 @media(max-width:760px){
   .material-card{grid-template-columns:28px 1fr auto}
   .invoice-card-head{grid-template-columns:76px 1fr 76px;gap:6px}
   .invoice-card-head .hide-sm{display:none}
   .invoice-detail-row{grid-template-columns:1fr 62px 70px}
   .invoice-detail-row .hide-sm{display:none}
+  .stat-group{grid-template-columns:1fr}
 }
+
 
 @media(max-width:1120px){.kpis{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:760px){.header{flex-wrap:wrap!important;height:auto!important;min-height:58px!important;overflow:visible!important}.header .logo{min-width:120px!important}.header .logo img{width:118px!important;max-width:118px!important}.page{padding:10px}.page-head{flex-direction:column}.actions,.btn{width:100%}.filters{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:1fr 1fr}.ink-row{display:grid;grid-template-columns:repeat(6,minmax(92px,1fr));overflow-x:auto;gap:7px;padding-bottom:2px}.ink-pill{min-width:92px}.compact-list{grid-template-columns:1fr}.compare{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.title{font-size:20px}table{min-width:760px}}
@@ -153,11 +165,11 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
   <div id="nueva" class="panel">
     <div class="card"><div class="card-head"><div><div class="card-title">Nueva factura / nota de compra</div><div class="card-sub">Proveedores e items guardados con ayuda rápida. Esta carga guarda en Supabase.</div></div></div><div class="card-body">
       <div class="form-grid">
-        <div class="field"><label>Proveedor</label><input id="newProveedor" list="proveedoresList" placeholder="Ej: GEKO"></div>
+        <div class="field"><label>Proveedor</label><input id="newProveedor" autocomplete="off" placeholder="Escribe: AR2, Publi..."><div class="suggest-list" id="proveedorSug"></div></div>
         <div class="field"><label>Nro nota</label><input id="newNota" placeholder="80001229"></div>
         <div class="field"><label>Fecha</label><input id="newFecha" type="date"></div>
         <div class="field"><label>Estado</label><select id="newEstado"><option>Pagado</option><option>Pendiente</option></select></div>
-        <div class="field full"><label>Buscar material</label><input id="buscarMaterial" list="materialesList" placeholder="Código o nombre: TIN-WHITE, White, PET, vinil..."><div class="help" id="ayudasMaterial"></div></div>
+        <div class="field full"><label>Buscar material</label><input id="buscarMaterial" autocomplete="off" placeholder="Escribe: tinta cyan, vinil mate, clear, canvas..."><div class="suggest-list" id="materialSug"></div><div class="help" id="ayudasMaterial"></div></div>
       </div>
       <datalist id="proveedoresList"></datalist>
       <datalist id="materialesList"></datalist>
@@ -288,74 +300,40 @@ function renderKPIS(nf,df){
   document.getElementById('kpiMayor').textContent = mayor ? mayor[0].slice(0,12) : '—';
   document.getElementById('kpiPeriodo').textContent = (document.getElementById('desde').value||'inicio') + ' / ' + (document.getElementById('hasta').value||'hoy');
 }
+function textoItem(x){ return norm((x.material||x.material_nombre||x.nombre||'')+' '+(x.codigo||'')+' '+(x.categoria||'')+' '+(x.unidad||'')); }
 function esTinta(x){
-  const nombre = norm(x.material || x.material_nombre || '');
-  const codigo = norm(x.codigo || '');
-  const categoria = norm(x.categoria || '');
-  const unidad = norm(x.unidad || '');
-
-  // REGLA FUERTE:
-  // Solo cuenta como tinta si realmente pertenece a la categoría Tinta
-  // o si la unidad es Litro/Pote y el nombre/código corresponde a tinta Mimaki.
-  // Esto evita que "Vinil Clear", "Clear brillante" o PET se sumen como Tinta Clear.
-  const pareceTintaPorNombre =
-    nombre.includes('tinta') ||
-    nombre.includes('mimaki') ||
-    codigo.startsWith('tin-') ||
-    codigo.includes('tinta');
-
-  const unidadTinta =
-    unidad.includes('litro') ||
-    unidad.includes('pote') ||
-    unidad === 'l';
-
-  return categoria === 'tinta' || (pareceTintaPorNombre && unidadTinta);
+  const cat = norm(x.categoria);
+  const uni = norm(x.unidad);
+  const t = textoItem(x);
+  const esUnidadTinta = uni.includes('litro') || uni.includes('pote') || uni === 'l';
+  const esCategoriaTinta = cat === 'tinta' || cat === 'tintas';
+  const nombreTinta = t.includes('cyan') || t.includes('magenta') || t.includes('yellow') || t.includes('black') || t.includes('white') || t.includes('clear') || t.includes('mimaki');
+  return esCategoriaTinta && esUnidadTinta && nombreTinta;
 }
-
+function esSustrato(x){
+  const cat = norm(x.categoria);
+  const uni = norm(x.unidad);
+  const t = textoItem(x);
+  if(esTinta(x)) return false;
+  if(uni.includes('rollo') || uni.includes('metro')) return true;
+  return ['vinil','canvas','pet film','pet','lona','papel','pvc','acrilico','acrílico','lamina','lámina','pelicula','película'].some(k=>cat.includes(k) || t.includes(k));
+}
 function colorTinta(x){
   if(!esTinta(x)) return null;
-
-  const t = norm((x.material || x.material_nombre || '') + ' ' + (x.codigo || ''));
-
-  if(t.includes('cyan')) return 'C';
-  if(t.includes('magenta')) return 'M';
-  if(t.includes('yellow')) return 'Y';
-  if(t.includes('black')) return 'K';
-  if(t.includes('white')) return 'W';
-
-  // Clear solo cuenta aquí porque ya pasó por esTinta().
-  // Si es vinil clear / clear brillante / PET clear, queda fuera.
-  if(t.includes('clear')) return 'CL';
-
+  const t=textoItem(x);
+  if(t.includes('cyan'))return'C';
+  if(t.includes('magenta'))return'M';
+  if(t.includes('yellow'))return'Y';
+  if(t.includes('black'))return'K';
+  if(t.includes('white'))return'W';
+  if(t.includes('clear'))return'CL';
   return null;
 }
-
 function renderTintas(df){
   const vals = {C:0,M:0,Y:0,K:0,W:0,CL:0};
-
-  df.forEach(x=>{
-    const c = colorTinta(x);
-    if(c) vals[c] += num(x.cantidad);
-  });
-
-  const meta = {
-    C:['c','Cyan'],
-    M:['m','Magenta'],
-    Y:['y','Yellow'],
-    K:['k','Black'],
-    W:['w','White'],
-    CL:['cl','Clear']
-  };
-
-  document.getElementById('inkRow').innerHTML = Object.keys(vals).map(k=>`
-    <div class="ink-pill">
-      <div class="ink-left">
-        <i class="dot ${meta[k][0]}"></i>
-        <div><b>${k}</b><small>${meta[k][1]}</small></div>
-      </div>
-      <span>${vals[k].toLocaleString('es-VE')} L</span>
-    </div>
-  `).join('');
+  df.filter(esTinta).forEach(x=>{ const c=colorTinta(x); if(c) vals[c]+=num(x.cantidad); });
+  const meta = {C:['c','Cyan'],M:['m','Magenta'],Y:['y','Yellow'],K:['k','Black'],W:['w','White'],CL:['cl','Clear']};
+  document.getElementById('inkRow').innerHTML = Object.keys(vals).map(k=>`<div class="ink-pill"><div class="ink-left"><i class="dot ${meta[k][0]}"></i><div><b>${k}</b><small>${meta[k][1]}</small></div></div><span>${vals[k].toLocaleString('es-VE')}</span></div>`).join('');
 }
 function materialNombre(x){ return x.material || x.material_nombre || x.nombre || x.codigo || 'Sin material'; }
 function unidadDeMaterial(nombre, arr){
@@ -463,20 +441,58 @@ function renderProveedores(nf){
   document.getElementById('proveedoresBars').innerHTML = Object.entries(vals).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="bar"><span>${k}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.max(4,v/max*100)}%"></div></div><b class="money">${money(v)}</b></div>`).join('') || '<div class="empty">Sin proveedores</div>';
 }
 function renderEstadisticas(df){
-  const cat = agrupar(df, x=>x.categoria||'Sin categoría', x=>num(x.cantidad)*num(x.precio_unitario)); const max = Math.max(...Object.values(cat),1);
-  document.getElementById('categoriaBars').innerHTML = Object.entries(cat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="bar"><span>${k}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.max(4,v/max*100)}%"></div></div><b class="money">${money(v)}</b></div>`).join('') || '<div class="empty">Sin estadísticas</div>';
-  document.getElementById('compareStats').innerHTML = `<div><small>Líneas compra</small><strong>${df.length}</strong></div><div><small>Materiales</small><strong>${new Set(df.map(x=>x.material||x.material_nombre)).size}</strong></div><div><small>Categorías</small><strong>${new Set(df.map(x=>x.categoria)).size}</strong></div><div><small>Total</small><strong>${money(df.reduce((s,x)=>s+num(x.cantidad)*num(x.precio_unitario),0))}</strong></div>`;
+  const tinta = df.filter(esTinta).reduce((s,x)=>s+num(x.cantidad)*num(x.precio_unitario),0);
+  const sustratos = df.filter(esSustrato).reduce((s,x)=>s+num(x.cantidad)*num(x.precio_unitario),0);
+  const otros = df.reduce((s,x)=>s+num(x.cantidad)*num(x.precio_unitario),0) - tinta - sustratos;
+  const maxTop = Math.max(tinta, sustratos, otros, 1);
+  document.getElementById('categoriaBars').innerHTML = `
+    <div class="stat-group">
+      <div class="stat-box"><small>Gasto en tinta</small><strong>${money(tinta)}</strong></div>
+      <div class="stat-box"><small>Gasto en sustratos</small><strong>${money(sustratos)}</strong></div>
+    </div>
+    <div class="bar"><span>Tinta</span><div class="bar-track"><div class="bar-fill" style="width:${Math.max(4,tinta/maxTop*100)}%"></div></div><b class="money">${money(tinta)}</b></div>
+    <div class="bar"><span>Sustratos</span><div class="bar-track"><div class="bar-fill" style="width:${Math.max(4,sustratos/maxTop*100)}%"></div></div><b class="money">${money(sustratos)}</b></div>
+    <div class="bar"><span>Otros</span><div class="bar-track"><div class="bar-fill" style="width:${Math.max(4,otros/maxTop*100)}%"></div></div><b class="money">${money(otros)}</b></div>`;
+  const cat = agrupar(df, x=>normalizarCategoria(x.categoria||'Sin categoría'), x=>num(x.cantidad)*num(x.precio_unitario));
+  const total = df.reduce((s,x)=>s+num(x.cantidad)*num(x.precio_unitario),0);
+  document.getElementById('compareStats').innerHTML = `<div><small>Líneas compra</small><strong>${df.length}</strong></div><div><small>Tinta</small><strong>${money(tinta)}</strong></div><div><small>Sustratos</small><strong>${money(sustratos)}</strong></div><div><small>Total</small><strong>${money(total)}</strong></div>`;
+}
+function normalizarCategoria(c){
+  const v=norm(c);
+  if(v==='tintas') return 'Tinta';
+  if(v==='acrilico') return 'Acrílico';
+  if(v==='consumibles') return 'Consumible';
+  return c || 'Sin categoría';
 }
 function agrupar(arr,keyFn,valFn){ return arr.reduce((o,x)=>{ const k=keyFn(x)||'Sin dato'; o[k]=(o[k]||0)+valFn(x); return o; },{}); }
 function verDetalle(id){ showTab('facturas'); setTimeout(()=>{ const card=[...document.querySelectorAll('.invoice-card')].find(c=>c.innerText.includes((notas.find(n=>n.id===id)?.nro_nota)||'')); if(card){ card.classList.add('open'); card.scrollIntoView({behavior:'smooth',block:'center'}); } },100); }
 
 function renderNuevaHelpers(){
   document.getElementById('proveedoresList').innerHTML = proveedores.map(p=>`<option value="${p.nombre||''}"></option>`).join('');
-  document.getElementById('materialesList').innerHTML = materiales.map(m=>`<option value="${m.codigo||''} · ${m.nombre||''}"></option><option value="${m.nombre||''}"></option>`).join('');
+  document.getElementById('materialesList').innerHTML = materiales.map(m=>`<option value="${m.nombre||''}"></option>`).join('');
   const ordenados = [...materiales].sort((a,b)=>(favoritosMateriales.includes(b.id)-favoritosMateriales.includes(a.id)) || (a.nombre||'').localeCompare(b.nombre||''));
-  document.getElementById('ayudasMaterial').innerHTML = ordenados.slice(0,12).map(m=>`<span class="help-chip" onclick="seleccionarMaterial(${m.id})">${favoritosMateriales.includes(m.id)?'★ ':''}${m.codigo||''} · ${m.nombre||''}</span>`).join('') + '<span class="help-chip">+ Crear material si no existe</span><div class="search-hint">Tip: escribe “vinil mate”, “white”, “PET” o el código; si existe se llenan código, categoría, unidad y último precio.</div>';
+  document.getElementById('ayudasMaterial').innerHTML = ordenados.slice(0,12).map(m=>`<span class="help-chip" onclick="seleccionarMaterial(${m.id})">${favoritosMateriales.includes(m.id)?'★ ':''}${m.nombre||''}</span>`).join('') + '<span class="help-chip">+ Crear material si no existe</span><div class="search-hint">Tip: escribe “tinta cyan”, “vinil mate”, “clear” o “canvas”; si existe se llenan categoría, unidad y último precio.</div>';
 }
-function seleccionarMaterial(id){ const m=materiales.find(x=>x.id===id); if(!m)return; lineCodigo.value=m.codigo||''; lineMaterial.value=m.nombre||''; lineCategoria.value=m.categoria||''; lineUnidad.value=m.unidad||''; linePrecio.value=num(m.ultimo_precio); calcularLinea(); }
+function renderProveedorSugerencias(){
+  const q=norm(newProveedor.value);
+  const box=document.getElementById('proveedorSug');
+  if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
+  const arr=proveedores.filter(p=>norm(p.nombre||p.proveedor).includes(q)).slice(0,8);
+  if(!arr.length){ box.innerHTML=`<div class="suggest-item"><div><b>Crear proveedor nuevo</b><br><small>${newProveedor.value}</small></div></div>`; box.classList.add('show'); return; }
+  box.innerHTML=arr.map(p=>`<div class="suggest-item" onclick="seleccionarProveedor('${String(p.nombre||p.proveedor||'').replace(/'/g,"\\'")}')"><div><b>${p.nombre||p.proveedor}</b><br><small>Proveedor guardado</small></div><span>Usar</span></div>`).join('');
+  box.classList.add('show');
+}
+function seleccionarProveedor(nombre){ newProveedor.value=nombre; proveedorSug.classList.remove('show'); }
+function renderMaterialSugerencias(){
+  const q=norm(buscarMaterial.value);
+  const box=document.getElementById('materialSug');
+  if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
+  const arr=materiales.filter(m=>norm((m.nombre||'')+' '+(m.categoria||'')+' '+(m.codigo||'')).includes(q)).sort((a,b)=>(favoritosMateriales.includes(b.id)-favoritosMateriales.includes(a.id))).slice(0,10);
+  if(!arr.length){ box.innerHTML=`<div class="suggest-item"><div><b>Crear material nuevo</b><br><small>${buscarMaterial.value}</small></div></div>`; box.classList.add('show'); return; }
+  box.innerHTML=arr.map(m=>`<div class="suggest-item" onclick="seleccionarMaterial(${m.id}); materialSug.classList.remove('show')"><div><b>${favoritosMateriales.includes(m.id)?'★ ':''}${m.nombre||''}</b><br><small>${m.categoria||''} · ${m.unidad||''} · Últ: ${money(m.ultimo_precio)}</small></div><span>Usar</span></div>`).join('');
+  box.classList.add('show');
+}
+function seleccionarMaterial(id){ const m=materiales.find(x=>x.id===id); if(!m)return; buscarMaterial.value=m.nombre||''; lineCodigo.value=m.codigo||''; lineMaterial.value=m.nombre||''; lineCategoria.value=normalizarCategoria(m.categoria||''); lineUnidad.value=m.unidad||''; linePrecio.value=num(m.ultimo_precio); calcularLinea(); }
 function buscarMaterialInput(){ const q=norm(buscarMaterial.value).replace('·',' '); if(!q)return; const m=materiales.find(x=>norm((x.codigo||'')+' '+(x.nombre||'')).includes(q) || q.includes(norm(x.codigo)) || q.includes(norm(x.nombre))); if(m) seleccionarMaterial(m.id); }
 function calcularLinea(){ lineTotal.value = money(num(lineCantidad.value)*num(linePrecio.value)); }
 function agregarLinea(){
@@ -515,7 +531,7 @@ async function guardarFactura(){
 }
 
 ['desde','hasta','proveedorFiltro','categoriaFiltro','estadoFiltro','notaFiltro'].forEach(id=>document.addEventListener('change',e=>{ if(e.target&&e.target.id===id) renderTodo(); }));
-document.addEventListener('input',e=>{ if(['materialFiltro'].includes(e.target.id)) renderTodo(); if(['lineCantidad','linePrecio'].includes(e.target.id)) calcularLinea(); });
+document.addEventListener('input',e=>{ if(['materialFiltro'].includes(e.target.id)) renderTodo(); if(['lineCantidad','linePrecio'].includes(e.target.id)) calcularLinea(); if(e.target.id==='newProveedor') renderProveedorSugerencias(); if(e.target.id==='buscarMaterial') renderMaterialSugerencias(); });
 document.addEventListener('change',e=>{ if(e.target.id==='buscarMaterial') buscarMaterialInput(); });
 
 document.addEventListener('DOMContentLoaded',()=>{
