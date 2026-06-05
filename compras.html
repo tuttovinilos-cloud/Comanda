@@ -54,7 +54,7 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
 .view-tab{border:1px solid var(--line2);background:#fff;color:#334155;border-radius:999px;padding:9px 12px;font-family:var(--head);font-size:10px;font-weight:900;text-transform:uppercase;white-space:nowrap}
 .view-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
 
-.main-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:12px}
+.main-grid{display:grid;grid-template-columns:1fr;gap:12px}
 .panel{display:none}.panel.active{display:block}
 .card{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.045);margin-bottom:12px}
 .card-head{padding:13px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
@@ -71,6 +71,16 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
 .compact-list{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
 .compact-item{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:9px 10px;min-width:0}
 .compact-item b{font-size:12px}.compact-item small{font-size:10px;color:var(--muted);font-weight:800}.qty{font-family:var(--mono);font-weight:900;font-size:12px;white-space:nowrap;color:var(--blue)}
+
+.saved-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin-top:10px}
+.saved-box{border:1px solid var(--line);border-radius:14px;background:var(--soft);padding:10px;min-width:0}
+.saved-title{font-family:var(--head);font-size:11px;font-weight:900;text-transform:uppercase;color:var(--blue);margin-bottom:7px}
+.saved-chips{display:flex;flex-wrap:wrap;gap:6px}
+.saved-chip{border:1px solid var(--line2);background:#fff;border-radius:999px;padding:7px 9px;font-size:10px;font-weight:900;color:#334155;white-space:nowrap}
+.saved-mini-list{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.saved-mini{border:1px solid var(--line2);background:#fff;border-radius:10px;padding:8px;min-width:0}
+.saved-mini b{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saved-mini small{display:block;color:var(--muted);font-size:9px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;min-width:760px}
@@ -109,7 +119,7 @@ tr:hover td{background:#f8f9ff}
   .filters{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:1fr 1fr}
   .ink-row{grid-template-columns:repeat(6,minmax(84px,1fr));gap:5px}
   .ink-pill{padding:8px 6px}.ink-pill small{display:none}.ink-pill span{font-size:11px}.dot{width:13px;height:13px}
-  .compact-list{grid-template-columns:1fr}.compare{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}
+  .compact-list{grid-template-columns:1fr}.compare{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.saved-grid{grid-template-columns:1fr}.saved-mini-list{grid-template-columns:1fr}
   .line-grid{grid-template-columns:1fr 1fr}.invoice-mini{grid-template-columns:78px 1fr 65px}.invoice-mini .hide-m{display:none}.title{font-size:20px}table{min-width:760px}
 }
 @media(max-width:430px){
@@ -180,7 +190,7 @@ tr:hover td{background:#f8f9ff}
         </div>
 
         <div class="card">
-          <div class="card-head"><div><div class="card-title">Últimas facturas</div><div class="card-sub">Resumen rápido de notas registradas.</div></div><button class="mini" onclick="showTab('facturas')">Ver todas</button></div>
+          <div class="card-head"><div><div class="card-title">Últimas facturas</div><div class="card-sub">Notas registradas recientemente.</div></div><button class="mini" onclick="showTab('facturas')">Ver todas</button></div>
           <div class="card-body table-wrap"><table>
             <thead><tr><th>Fecha</th><th>Proveedor</th><th>Nota</th><th>Items</th><th>Total</th><th>Estado</th><th>Acción</th></tr></thead>
             <tbody id="tbodyUltimas"></tbody>
@@ -241,7 +251,18 @@ tr:hover td{background:#f8f9ff}
               <div class="field"><label>Precio</label><input id="lPrecio" type="number" step="0.01" value="0"></div>
               <button class="btn primary" style="padding:10px" onclick="agregarLinea()">+</button>
             </div>
-            <div class="help"><span class="help-chip">Si el material no existe, se guarda al guardar la nota</span><span class="help-chip">Código y material se ayudan entre sí</span></div>
+            <div class="help"><span class="help-chip">Proveedor nuevo se guarda automáticamente</span><span class="help-chip">Item nuevo se guarda automáticamente</span><span class="help-chip">Código y material se ayudan entre sí</span></div>
+          </div>
+
+          <div class="saved-grid">
+            <div class="saved-box">
+              <div class="saved-title">Proveedores guardados</div>
+              <div class="saved-chips" id="proveedoresGuardados"></div>
+            </div>
+            <div class="saved-box">
+              <div class="saved-title">Items guardados</div>
+              <div class="saved-mini-list" id="itemsGuardados"></div>
+            </div>
           </div>
 
           <div class="table-wrap" style="margin-top:10px"><table>
@@ -256,16 +277,6 @@ tr:hover td{background:#f8f9ff}
         </div></div>
       </div>
     </div>
-
-    <aside>
-      <div class="card"><div class="card-head"><div><div class="card-title">Resumen rápido</div><div class="card-sub">Lectura del período.</div></div></div><div class="card-body compact-list" style="grid-template-columns:1fr 1fr">
-        <div class="compact-item"><div><b>Proveedor top</b><br><small>Más comprado</small></div><span class="qty" id="sideProveedor">-</span></div>
-        <div class="compact-item"><div><b>Material top</b><br><small>Cantidad</small></div><span class="qty" id="sideMaterial">-</span></div>
-        <div class="compact-item"><div><b>Pendiente</b><br><small>Pago</small></div><span class="qty" id="sidePendiente">$0</span></div>
-        <div class="compact-item"><div><b>Última nota</b><br><small>Registrada</small></div><span class="qty" id="sideNota">-</span></div>
-      </div></div>
-      <div class="card"><div class="card-head"><div><div class="card-title">Top materiales</div><div class="card-sub">Por monto comprado.</div></div></div><div class="card-body"><div class="bars" id="topMateriales"></div></div></div>
-    </aside>
   </section>
 </main>
 
@@ -407,6 +418,7 @@ function renderAll(){
   renderMaterialesTabla();
   renderProveedores(ns);
   renderEstadisticas(ns, ds);
+  renderGuardados();
 }
 
 function renderKpis(ns, ds){
@@ -422,7 +434,6 @@ function renderKpis(ns, ds){
   document.getElementById('kpiRollos').textContent = rollos.toLocaleString('es-VE');
   document.getElementById('kpiPendiente').textContent = money(pendiente);
   document.getElementById('kpiMayor').textContent = mayor;
-  document.getElementById('sidePendiente').textContent = money(pendiente);
   document.getElementById('kpiRango').textContent = (document.getElementById('fDesde').value||'-')+' / '+(document.getElementById('fHasta').value||'-');
 }
 
@@ -496,7 +507,6 @@ function renderProveedores(ns){
   const totals = agrupar(ns, n=>n.proveedor||'Sin proveedor', n=>Number(n.total||0));
   renderBars('proveedoresBars', totals);
   const p = top(totals);
-  document.getElementById('sideProveedor').textContent = p?.key || '-';
   document.getElementById('statProveedor').textContent = p?.key || '-';
 }
 
@@ -504,12 +514,9 @@ function renderEstadisticas(ns, ds){
   const catTotals = agrupar(ds, d=>d.categoria||'Sin categoría', d=>Number(d.total||0));
   renderBars('categoriaBars', catTotals);
   const matTotals = agrupar(ds, d=>d.material||'Sin material', d=>Number(d.total||0));
-  renderBars('topMateriales', matTotals, 5);
   const mt = top(matTotals);
   const last = [...ns].sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)))[0];
-  document.getElementById('sideMaterial').textContent = mt?.key || '-';
   document.getElementById('statMaterial').textContent = mt?.key || '-';
-  document.getElementById('sideNota').textContent = last?.nro_nota || '-';
   document.getElementById('statNota').textContent = last?.nro_nota || '-';
   document.getElementById('statItems').textContent = ds.length;
 }
@@ -530,6 +537,21 @@ function verDetalleNota(id){
   const n = notas.find(x=>x.id===id);
   const lines = detalle.filter(x=>x.nota_id===id).map(x=>`• ${x.codigo||''} ${x.material||''} · ${x.cantidad||0} ${x.unidad||''} · ${money(x.total)}`).join('\n');
   alert(`${n?.proveedor||''} · ${n?.nro_nota||''}\n${fmtFecha(n?.fecha)} · ${money(n?.total)}\n\n${lines || 'Sin detalle'}`);
+}
+
+function renderGuardados(){
+  const pg = document.getElementById('proveedoresGuardados');
+  const ig = document.getElementById('itemsGuardados');
+  if(pg){
+    pg.innerHTML = proveedores.slice(0,12).map(p=>`<button type="button" class="saved-chip" onclick="document.getElementById('nProveedor').value='${String(p.nombre||'').replace(/'/g,"\'")}'">${p.nombre||''}</button>`).join('') || '<span class="saved-chip">Sin proveedores</span>';
+  }
+  if(ig){
+    ig.innerHTML = materiales.slice(0,10).map(m=>`<button type="button" class="saved-mini" onclick="llenarMaterialPorId(${Number(m.id)||0})"><b>${m.nombre||''}</b><small>${m.codigo||''} · ${m.categoria||''} · ${m.unidad||''}</small></button>`).join('') || '<div class="saved-mini"><b>Sin items</b><small>Se crearán al guardar</small></div>';
+  }
+}
+function llenarMaterialPorId(id){
+  const m = materiales.find(x=>Number(x.id)===Number(id));
+  if(m) llenarMaterial(m);
 }
 
 function prepararAutocomplete(){
