@@ -114,21 +114,37 @@ const esc=s=>String(s??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
 const money=n=>'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const qty=n=>Number(n||0).toLocaleString('es-VE',{maximumFractionDigits:2});
-const db=()=>window.supabaseClient || window.supabase || null;
+const db=()=>window.supabaseClient || window.db || null;
+async function waitSupabase(maxMs=7000){
+  const start=Date.now();
+  while(Date.now()-start<maxMs){
+    if(db() && typeof db().from==='function') return true;
+    await new Promise(r=>setTimeout(r,120));
+  }
+  return false;
+}
 function toast(msg){const t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2500)}
 function showTab(tab){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('active'));$(tab)?.classList.add('active');document.querySelector('.view-tab[data-tab="'+tab+'"]')?.classList.add('active')}
 function estadoBadge(e){const v=norm(e);let c=v.includes('credito')?'credito':v.includes('pend')?'pendiente':'pagado';return `<span class="badge ${c}">${esc(e||'Sin estado')}</span>`}
 async function cargarDatos(){
-  if(!db()){toast('No existe window.supabaseClient. Revisa js/supabase.js');return}
+  const ok=await waitSupabase();
+  if(!ok){toast('No conecta Supabase. Revisa js/supabase.js'); console.error('No window.supabaseClient/window.db'); return}
   const [p,m,n,d]=await Promise.all([
     db().from('compras_proveedores').select('*').order('nombre',{ascending:true}),
     db().from('compras_materiales').select('*').order('nombre',{ascending:true}),
     db().from('compras_notas').select('*').order('fecha',{ascending:false}),
     db().from('compras_detalle').select('*').order('created_at',{ascending:false})
   ]);
-  if(p.error)console.error('proveedores',p.error); if(m.error)console.error('materiales',m.error); if(n.error)console.error('notas',n.error); if(d.error)console.error('detalle',d.error);
+  if(p.error||m.error||n.error||d.error){
+    console.error('ERROR compras_proveedores',p.error);
+    console.error('ERROR compras_materiales',m.error);
+    console.error('ERROR compras_notas',n.error);
+    console.error('ERROR compras_detalle',d.error);
+    toast('Error leyendo Supabase. Abre consola F12.');
+  }
   proveedores=p.data||[]; materiales=m.data||[]; notas=n.data||[]; detalles=d.data||[];
-  llenarFiltros(); llenarDatalists(); renderAll(); toast('Datos cargados')
+  console.log('COMPRAS CARGADAS',{proveedores,materiales,notas,detalles});
+  llenarFiltros(); llenarDatalists(); renderAll(); toast('Datos cargados: '+materiales.length+' materiales')
 }
 function llenarFiltros(){
   $('proveedorFiltro').innerHTML='<option value="">Todos</option>'+proveedores.map(x=>`<option>${esc(x.nombre)}</option>`).join('');
@@ -171,15 +187,30 @@ function renderKpis(){
   $('kpiTotal').textContent=money(total); $('kpiFacturas').textContent=ns.length; $('kpiTintas').textContent=qty(tintas); $('kpiRollos').textContent=qty(rollos); $('kpiPendiente').textContent=money(pend); $('kpiMayor').textContent=top?top[0].slice(0,18):'—'; $('kpiMayorSub').textContent=top?money(top[1]):'Por material';
   const d=$('desde').value,h=$('hasta').value; $('kpiRango').textContent=(d||'inicio')+' / '+(h||'hoy')
 }
-function sumInk(keys){const ds=filtrarDetalles(); return ds.filter(x=>keys.some(k=>norm((x.material||'')+' '+(x.codigo||'')).includes(k))).reduce((a,x)=>a+Number(x.cantidad||0),0)}
+function sumInk(keys){
+  const ds=filtrarDetalles();
+  const base=ds.length?ds.map(x=>({texto:(x.material||'')+' '+(x.codigo||'')+' '+(x.categoria||''),cantidad:x.cantidad||0})) : materiales.map(x=>({texto:(x.nombre||'')+' '+(x.codigo||'')+' '+(x.categoria||''),cantidad:0}));
+  const total=base.filter(x=>keys.some(k=>norm(x.texto).includes(k))).reduce((a,x)=>a+Number(x.cantidad||0),0);
+  return ds.length?total:base.filter(x=>keys.some(k=>norm(x.texto).includes(k))).length;
+}
 function renderTintas(){
   const arr=[['C','Cyan','c',['cyan','tin-cyan']],['M','Magenta','m',['magenta']],['Y','Yellow','y',['yellow']],['K','Black','k',['black']],['W','White','w',['white']],['CL','Clear','cl',['clear']]];
   $('inkRow').innerHTML=arr.map(i=>`<div class="ink-pill"><div class="ink-left"><i class="dot ${i[2]}"></i><div><b>${i[0]}</b><small>${i[1]}</small></div></div><span>${qty(sumInk(i[3]))}</span></div>`).join('')
 }
 function renderCompactos(){
   const ds=filtrarDetalles(); const groups=[['Vinil blanco mate 136','vinil blanco mate'],['Vinil clear brillante 136','vinil clear'],['Canvas','canvas'],['PET Film','pet'],['Vinil negro mate','vinil negro'],['Lona blackout','blackout'],['Papel sublimación','sublim'],['PVC','pvc'],['Acrílico','acril']];
-  const html=groups.map(g=>{let rows=ds.filter(x=>norm((x.material||'')+' '+(x.categoria||'')).includes(g[1])); let cantidad=rows.reduce((a,x)=>a+Number(x.cantidad||0),0); let unidad=rows.find(x=>x.unidad)?.unidad || ''; return `<div class="compact-item"><div><b>${g[0]}</b><br><small>${rows.length} movimientos</small></div><span class="qty">${qty(cantidad)} ${esc(unidad)}</span></div>`}).join('');
-  $('materialCompact').innerHTML=html || '<div class="empty">Sin compras detalle</div>'
+  const html=groups.map(g=>{
+    let rows=ds.filter(x=>norm((x.material||'')+' '+(x.categoria||'')).includes(g[1]));
+    let cantidad=rows.reduce((a,x)=>a+Number(x.cantidad||0),0);
+    let unidad=rows.find(x=>x.unidad)?.unidad || '';
+    if(!ds.length){
+      const mats=materiales.filter(x=>norm((x.nombre||'')+' '+(x.categoria||'')+' '+(x.codigo||'')).includes(g[1]));
+      rows=mats; cantidad=Number(mats.reduce((a,x)=>a+Number(x.stock_actual||0),0)); unidad=mats.find(x=>x.unidad)?.unidad||'';
+      if(!cantidad) cantidad=mats.length;
+    }
+    return `<div class="compact-item"><div><b>${g[0]}</b><br><small>${ds.length?rows.length+' movimientos':rows.length+' materiales guardados'}</small></div><span class="qty">${qty(cantidad)} ${esc(unidad)}</span></div>`
+  }).join('');
+  $('materialCompact').innerHTML=html || '<div class="empty">Sin datos</div>'
 }
 function itemsPorNota(id){return detalles.filter(d=>d.nota_id===id)}
 function renderFacturas(){
@@ -222,7 +253,7 @@ async function guardarFactura(){try{if(!db()){toast('Sin conexión Supabase');re
   toast('Factura guardada'); limpiarFormulario(); await cargarDatos(); showTab('facturas');
 }catch(err){console.error(err);toast('Error: '+(err.message||err))}}
 function limpiarFormulario(){['nProveedor','nNota','nObs','lCodigo','lMaterial','lCategoria','lUnidad'].forEach(id=>$(id).value=''); $('nFecha').value=new Date().toISOString().slice(0,10); $('nEstado').value='Pagado'; $('lCantidad').value=1; $('lPrecio').value=0; lineas=[]; renderLineas(); calcLinea()}
-document.addEventListener('DOMContentLoaded',()=>{const today=new Date().toISOString().slice(0,10); $('hasta').value=today; $('desde').value=today.slice(0,4)+'-01-01'; $('nFecha').value=today; renderLineas(); calcLinea(); cargarDatos()});
+document.addEventListener('DOMContentLoaded',async()=>{const today=new Date().toISOString().slice(0,10); $('hasta').value=today; $('desde').value=today.slice(0,4)+'-01-01'; $('nFecha').value=today; renderLineas(); calcLinea(); await cargarDatos()});
 </script>
 </body>
 </html>
