@@ -93,7 +93,7 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
     <div class="field"><label>Proveedor</label><select id="proveedorFiltro"><option value="">Todos</option></select></div>
     <div class="field"><label>Categoría</label><select id="categoriaFiltro"><option value="">Todas</option></select></div>
     <div class="field"><label>Material</label><input id="materialFiltro" placeholder="White, vinil mate, PET..."></div>
-    <div class="field"><label>Estado</label><select id="estadoFiltro"><option value="">Todos</option><option>Pagado</option><option>Crédito</option><option>Credito</option><option>Pendiente</option><option>Sin estado</option></select></div>
+    <div class="field"><label>Estado</label><select id="estadoFiltro"><option value="">Todos</option><option>Pagado</option><option>Pendiente</option></select></div>
     <div class="field"><label>Nro nota</label><input id="notaFiltro" placeholder="80001229"></div>
   </section>
 
@@ -156,7 +156,7 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
         <div class="field"><label>Proveedor</label><input id="newProveedor" list="proveedoresList" placeholder="Ej: GEKO"></div>
         <div class="field"><label>Nro nota</label><input id="newNota" placeholder="80001229"></div>
         <div class="field"><label>Fecha</label><input id="newFecha" type="date"></div>
-        <div class="field"><label>Estado</label><select id="newEstado"><option>Pagado</option><option>Crédito</option><option>Credito</option><option>Pendiente</option><option>Sin estado</option></select></div>
+        <div class="field"><label>Estado</label><select id="newEstado"><option>Pagado</option><option>Pendiente</option></select></div>
         <div class="field full"><label>Buscar material</label><input id="buscarMaterial" list="materialesList" placeholder="Código o nombre: TIN-WHITE, White, PET, vinil..."><div class="help" id="ayudasMaterial"></div></div>
       </div>
       <datalist id="proveedoresList"></datalist>
@@ -275,7 +275,7 @@ function cargarSelects(){
 
 function renderKPIS(nf,df){
   const total = nf.reduce((s,n)=>s+num(n.total),0) || df.reduce((s,x)=>s+num(x.cantidad)*num(x.precio_unitario),0);
-  const pendientes = nf.filter(n=>['credito','crédito','pendiente'].includes(norm(n.estado))).reduce((s,n)=>s+num(n.total),0);
+  const pendientes = nf.filter(n=>norm(n.estado)==='pendiente').reduce((s,n)=>s+num(n.total),0);
   const tinta = df.filter(esTinta).reduce((s,x)=>s+num(x.cantidad),0);
   const rollos = df.filter(x=>norm(x.unidad).includes('rollo')).reduce((s,x)=>s+num(x.cantidad),0);
   const porMaterial = agrupar(df, x=>x.material || x.material_nombre || x.codigo || 'Sin material', x=>num(x.cantidad)*num(x.precio_unitario));
@@ -288,13 +288,74 @@ function renderKPIS(nf,df){
   document.getElementById('kpiMayor').textContent = mayor ? mayor[0].slice(0,12) : '—';
   document.getElementById('kpiPeriodo').textContent = (document.getElementById('desde').value||'inicio') + ' / ' + (document.getElementById('hasta').value||'hoy');
 }
-function esTinta(x){ const t=norm((x.material||x.material_nombre||'')+' '+(x.codigo||'')+' '+(x.categoria||'')); return t.includes('tinta')||t.includes('cyan')||t.includes('magenta')||t.includes('yellow')||t.includes('black')||t.includes('white')||t.includes('clear')||t.includes('mimaki'); }
-function colorTinta(x){ const t=norm((x.material||x.material_nombre||'')+' '+(x.codigo||'')); if(t.includes('cyan'))return'C'; if(t.includes('magenta'))return'M'; if(t.includes('yellow'))return'Y'; if(t.includes('black'))return'K'; if(t.includes('white'))return'W'; if(t.includes('clear'))return'CL'; return null; }
+function esTinta(x){
+  const nombre = norm(x.material || x.material_nombre || '');
+  const codigo = norm(x.codigo || '');
+  const categoria = norm(x.categoria || '');
+  const unidad = norm(x.unidad || '');
+
+  // REGLA FUERTE:
+  // Solo cuenta como tinta si realmente pertenece a la categoría Tinta
+  // o si la unidad es Litro/Pote y el nombre/código corresponde a tinta Mimaki.
+  // Esto evita que "Vinil Clear", "Clear brillante" o PET se sumen como Tinta Clear.
+  const pareceTintaPorNombre =
+    nombre.includes('tinta') ||
+    nombre.includes('mimaki') ||
+    codigo.startsWith('tin-') ||
+    codigo.includes('tinta');
+
+  const unidadTinta =
+    unidad.includes('litro') ||
+    unidad.includes('pote') ||
+    unidad === 'l';
+
+  return categoria === 'tinta' || (pareceTintaPorNombre && unidadTinta);
+}
+
+function colorTinta(x){
+  if(!esTinta(x)) return null;
+
+  const t = norm((x.material || x.material_nombre || '') + ' ' + (x.codigo || ''));
+
+  if(t.includes('cyan')) return 'C';
+  if(t.includes('magenta')) return 'M';
+  if(t.includes('yellow')) return 'Y';
+  if(t.includes('black')) return 'K';
+  if(t.includes('white')) return 'W';
+
+  // Clear solo cuenta aquí porque ya pasó por esTinta().
+  // Si es vinil clear / clear brillante / PET clear, queda fuera.
+  if(t.includes('clear')) return 'CL';
+
+  return null;
+}
+
 function renderTintas(df){
   const vals = {C:0,M:0,Y:0,K:0,W:0,CL:0};
-  df.forEach(x=>{ const c=colorTinta(x); if(c) vals[c]+=num(x.cantidad); });
-  const meta = {C:['c','Cyan'],M:['m','Magenta'],Y:['y','Yellow'],K:['k','Black'],W:['w','White'],CL:['cl','Clear']};
-  document.getElementById('inkRow').innerHTML = Object.keys(vals).map(k=>`<div class="ink-pill"><div class="ink-left"><i class="dot ${meta[k][0]}"></i><div><b>${k}</b><small>${meta[k][1]}</small></div></div><span>${vals[k].toLocaleString('es-VE')}</span></div>`).join('');
+
+  df.forEach(x=>{
+    const c = colorTinta(x);
+    if(c) vals[c] += num(x.cantidad);
+  });
+
+  const meta = {
+    C:['c','Cyan'],
+    M:['m','Magenta'],
+    Y:['y','Yellow'],
+    K:['k','Black'],
+    W:['w','White'],
+    CL:['cl','Clear']
+  };
+
+  document.getElementById('inkRow').innerHTML = Object.keys(vals).map(k=>`
+    <div class="ink-pill">
+      <div class="ink-left">
+        <i class="dot ${meta[k][0]}"></i>
+        <div><b>${k}</b><small>${meta[k][1]}</small></div>
+      </div>
+      <span>${vals[k].toLocaleString('es-VE')} L</span>
+    </div>
+  `).join('');
 }
 function materialNombre(x){ return x.material || x.material_nombre || x.nombre || x.codigo || 'Sin material'; }
 function unidadDeMaterial(nombre, arr){
