@@ -1,1 +1,581 @@
+<!DOCTYPE html>
+<html lang="es" class="loading-menu">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>TUTTOPROYECTO · Módulos de Fabricación</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/menu.css?v=34">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f2f9;--panel:#ffffff;--panel2:#f8f9ff;--soft:#f1f4fa;
+  --border:#d9deea;--border2:#cbd3e6;--text:#111827;--muted:#667085;--muted2:#475569;
+  --accent:#153bff;--accent2:#0b1f7a;--red:#dc2626;--redbg:#fee2e2;
+  --green:#16a34a;--greenbg:#dcfce7;--yellow:#d97706;--yellowbg:#fef3c7;
+  --orange:#ff8616;--orangebg:#fff7ed;--purple:#7c3aed;--purplebg:#f3e8ff;
+  --black:#111827;--shadow:0 14px 34px rgba(15,23,42,.08);
+  --head:'Montserrat',Arial,sans-serif;--body:'Inter',Arial,sans-serif;--mono:'Roboto Mono',monospace;
+}
+html{scroll-behavior:smooth;background:var(--bg);color-scheme:light}
+body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:120px;font-size:14px;line-height:1.35;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color-scheme:light}
+button{cursor:pointer;touch-action:manipulation}
+a{text-decoration:none;color:inherit}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:#eef1ff}::-webkit-scrollbar-thumb{background:#cbd3e6;border-radius:6px}
+
+/* Header compatible con menu.js */
+.header{position:sticky;top:0;z-index:900;display:grid;grid-template-columns:155px 44px minmax(0,1fr);align-items:center;gap:8px;width:100%;min-height:58px;height:58px;padding:10px 16px;overflow:hidden;background:#172bd8;border-bottom:0;box-shadow:0 8px 20px rgba(21,59,255,.18)}
+.logo{grid-column:1;grid-row:1;width:155px;min-width:155px;max-width:155px;height:38px;display:flex;align-items:center;justify-content:flex-start;padding:0;margin:0;border:0;overflow:hidden;font-family:var(--head);font-weight:900;text-transform:uppercase;color:#fff;letter-spacing:.5px}
+.logo img{display:block;width:auto;height:34px;max-width:138px;max-height:34px;object-fit:contain}.logo small{display:none}
+.noti-btn,#notiBtnGlobal{grid-column:2;grid-row:1;position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;min-width:38px;max-width:38px;height:34px;min-height:34px;max-height:34px;padding:0;margin:0;border-radius:999px;border:1px solid rgba(255,255,255,.30);background:rgba(255,255,255,.12);color:#fff;font-size:13px;box-shadow:none;cursor:pointer}
+.noti-count{position:absolute;right:-4px;top:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#e5e7eb;color:#64748b;font-family:var(--mono);font-size:8px;font-weight:900;border:1px solid rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center}.noti-count:not(.empty){background:#dc2626;color:#fff}
+.header-tabs{grid-column:3;grid-row:1;display:flex;align-items:center;justify-content:flex-end;gap:5px;width:100%;max-width:100%;min-width:0;height:36px;padding:0;margin:0;border:0;overflow:hidden;opacity:1;visibility:visible;flex-wrap:nowrap}
+html.loading-menu .header-tabs{opacity:0;visibility:hidden}html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1;visibility:visible}
+.header-tabs .tab-btn,.header-tabs .storage-pill,.header-tabs .menu-status{flex:0 1 auto;height:30px;min-height:30px;max-height:30px;padding:0 9px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#fff;font-family:var(--head);font-size:9.5px;line-height:1;font-weight:900;letter-spacing:.32px;text-transform:uppercase;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;cursor:pointer}
+.header-tabs .tab-btn.active{background:#fff;color:var(--accent);border-color:#fff}.status-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block}.mobile-menu-btn{display:none}
+
+.wrap{max-width:1480px;margin:0 auto;padding:14px 16px 24px}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;margin-bottom:12px}
+.hero-card{background:linear-gradient(135deg,#fff,#f7f8ff);border:1px solid var(--border);border-radius:24px;padding:16px 18px;box-shadow:var(--shadow);overflow:hidden;position:relative}
+.hero-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:linear-gradient(180deg,var(--accent),var(--accent2))}
+.eyebrow{font-family:var(--head);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);font-weight:900;margin-bottom:5px}
+h1{font-family:var(--head);font-size:28px;line-height:1.05;color:var(--accent2);font-weight:900;letter-spacing:-.7px}
+.hero p{color:var(--muted2);margin-top:7px;font-size:13px;max-width:880px}
+.hero-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}.btn{border:none;border-radius:15px;padding:11px 14px;background:var(--accent);color:#fff;font-family:var(--head);font-weight:900;font-size:12px;letter-spacing:.25px;box-shadow:0 12px 24px rgba(21,59,255,.18)}.btn:hover{filter:brightness(.98)}.btn.black{background:#111827}.btn.green{background:var(--green)}.btn.red{background:var(--red)}.btn.soft{background:#fff;color:var(--accent2);border:1px solid var(--border2);box-shadow:none}.btn.orange{background:var(--orange)}.btn.full{width:100%}.btn:disabled{opacity:.55;cursor:not-allowed}
+
+.kpis{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:12px}.kpi{background:#fff;border:1px solid var(--border);border-radius:20px;padding:13px;box-shadow:0 9px 24px rgba(15,23,42,.05);position:relative;overflow:hidden;min-height:83px}.kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--accent)}.kpi.green:before{background:var(--green)}.kpi.yellow:before{background:var(--yellow)}.kpi.red:before{background:var(--red)}.kpi.black:before{background:var(--black)}.kpi.orange:before{background:var(--orange)}.kpi.purple:before{background:var(--purple)}.kpi small{display:block;font-family:var(--head);font-size:9px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:900;margin-bottom:4px}.kpi strong{font-family:var(--head);font-size:27px;line-height:1;color:var(--accent2);font-weight:900}.kpi em{display:block;font-style:normal;color:var(--muted);font-size:11px;margin-top:6px}
+
+.filters{position:sticky;top:68px;z-index:600;background:#fff;border:1px solid var(--border);border-radius:24px;padding:10px;box-shadow:var(--shadow);display:grid;grid-template-columns:minmax(190px,1.5fr) repeat(5,minmax(120px,.7fr)) auto;gap:8px;margin-bottom:12px}.field{width:100%;border:1px solid var(--border2);background:#fff;border-radius:14px;padding:10px 11px;outline:none;font-size:13px;color:var(--text);min-height:42px}.field:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(21,59,255,.10)}.field.sm{min-height:36px;padding:8px 10px;font-size:12px}.field[readonly]{background:#f8fafc;color:#64748b}.label{display:block;font-size:9.5px;font-family:var(--head);text-transform:uppercase;font-weight:900;color:var(--muted);letter-spacing:.45px;margin-bottom:5px}.searchBox{position:relative}.searchBox input{padding-left:34px}.searchBox span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:310px minmax(0,1fr);gap:12px;align-items:start}.side{position:sticky;top:145px;display:grid;gap:12px}.panel{background:#fff;border:1px solid var(--border);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}.panel-head{padding:13px 15px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#fff,#f8f9ff);display:flex;align-items:center;justify-content:space-between;gap:10px}.panel-title{font-family:var(--head);font-weight:900;font-size:16px;color:var(--accent2)}.panel-body{padding:12px}.category-list{display:grid;gap:7px}.cat-btn{width:100%;border:1px solid var(--border);border-radius:16px;background:#fff;padding:10px;display:grid;grid-template-columns:1fr auto;gap:7px;align-items:center;text-align:left;color:var(--text)}.cat-btn.active{border-color:#b9c6ff;background:#f4f6ff;box-shadow:0 10px 20px rgba(21,59,255,.07)}.cat-title{font-family:var(--head);font-size:12px;font-weight:900;color:var(--accent2);line-height:1.15}.cat-meta{font-size:10px;color:var(--muted);font-weight:800;margin-top:3px}.cat-count{font-family:var(--mono);font-size:12px;font-weight:900;background:#eef2ff;color:var(--accent);border-radius:999px;padding:5px 8px}.help-list{display:grid;gap:7px}.help-line{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start;border:1px solid var(--border);background:#fbfcff;border-radius:15px;padding:9px}.help-line b{font-family:var(--head);font-size:12px;color:var(--accent2)}.help-line span{font-size:11px;color:var(--muted2)}
+
+.modules{display:grid;gap:12px}.module{background:#fff;border:1px solid var(--border);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}.module.is-open{border-color:#b9c6ff;box-shadow:0 18px 40px rgba(21,59,255,.09)}.module-head{display:grid;grid-template-columns:54px minmax(0,1fr) 110px 42px;gap:11px;align-items:center;padding:13px;cursor:pointer}.num{width:44px;height:44px;border-radius:15px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:900}.mod-title h2{font-family:var(--head);font-size:18px;line-height:1.08;color:var(--text);font-weight:900}.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);background:#f8f9ff;border-radius:999px;padding:5px 8px;font-size:10.5px;color:#475467;font-weight:800}.chip.red{background:#fff1f2;color:var(--red);border-color:#fecaca}.chip.green{background:var(--greenbg);color:#166534;border-color:#bbf7d0}.chip.yellow{background:var(--yellowbg);color:#92400e;border-color:#fde68a}.chip.purple{background:var(--purplebg);color:#6d28d9;border-color:#ddd6fe}.badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:8px 9px;font-family:var(--head);font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.2px;border:1px solid transparent;white-space:nowrap}.st-solicitud{background:var(--redbg);color:var(--red);border-color:#fecaca}.st-diseno{background:#e0f2fe;color:#075985;border-color:#bae6fd}.st-produccion{background:#111827;color:#fff;border-color:#111827}.st-proveedor{background:var(--purplebg);color:#6d28d9;border-color:#ddd6fe}.st-instalacion{background:var(--orangebg);color:#c2410c;border-color:#fed7aa}.st-revision{background:var(--yellowbg);color:#92400e;border-color:#fde68a}.st-listo{background:var(--greenbg);color:#166534;border-color:#bbf7d0}.st-bloqueado{background:#fee2e2;color:#991b1b;border-color:#fecaca}.toggle{width:38px;height:38px;border:1px solid var(--border2);border-radius:13px;background:#fff;color:var(--accent);font-weight:900;font-size:18px}.module.is-open .toggle{transform:rotate(180deg)}
+.progress-line{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-top:8px}.progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),#22c55e);width:0%}.module-detail{display:none;background:#f7f8ff;border-top:1px solid var(--border);padding:12px}.module.is-open .module-detail{display:block}.detail-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px}.detail-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:10px}.detail-card strong{font-family:var(--head);font-size:12px;color:var(--accent2);display:block;margin-bottom:4px}.detail-card span{font-size:12px;color:var(--muted2);word-break:break-word}.wide{grid-column:1/-1}.actions-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}.small-btn{border:none;border-radius:12px;background:#eef2ff;color:var(--accent2);font-family:var(--head);font-size:11px;font-weight:900;padding:8px 10px}.small-btn.red{background:var(--redbg);color:var(--red)}.small-btn.green{background:var(--greenbg);color:#166534}.small-btn.black{background:#111827;color:#fff}.small-btn.orange{background:var(--orangebg);color:#c2410c}.small-btn.purple{background:var(--purplebg);color:#6d28d9}
+
+.process-box{background:#fff;border:1px solid var(--border);border-radius:19px;overflow:hidden}.process-head{display:grid;grid-template-columns:42px minmax(0,1fr) 130px 120px 36px;gap:7px;align-items:center;padding:10px 12px;background:#fff;border-bottom:1px solid var(--border);font-family:var(--head);font-size:10px;text-transform:uppercase;font-weight:900;color:var(--muted)}.process-list{display:grid}.process{display:grid;grid-template-columns:42px minmax(0,1fr) 130px 120px 36px;gap:7px;align-items:center;padding:8px 12px;border-bottom:1px solid #edf0f7;background:#fff}.process:last-child{border-bottom:none}.process.done{background:#fbfefc}.process.blocked{background:#fff7f7}.check{width:22px;height:22px;accent-color:var(--accent)}.proc-name{font-weight:850;font-size:12.5px;color:var(--text);line-height:1.2}.process.done .proc-name{text-decoration:line-through;color:var(--muted)}.proc-type{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-top:3px}.proc-select,.proc-input{width:100%;border:1px solid var(--border2);border-radius:10px;background:#fff;padding:7px 8px;font-size:11px;outline:none}.proc-select.status-listo{border-color:#bbf7d0;background:#f0fdf4;color:#166534}.proc-select.status-bloqueado{border-color:#fecaca;background:#fff1f2;color:#991b1b}.proc-select.status-curso{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}.xbtn{width:30px;height:30px;border:none;border-radius:10px;background:var(--redbg);color:var(--red);font-weight:900}.add-process{display:grid;grid-template-columns:minmax(0,1fr) 150px 120px auto;gap:8px;padding:10px;border-top:1px dashed var(--border2);background:#fbfcff}
+
+.empty{background:#fff;border:1px dashed var(--border2);border-radius:24px;padding:28px;text-align:center;color:var(--muted2);box-shadow:var(--shadow)}.empty b{display:block;font-family:var(--head);font-size:18px;color:var(--accent2);margin-bottom:5px}.empty p{font-size:13px}
+
+.drawer-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.38);z-index:2000;display:none}.drawer-backdrop.show{display:block}.drawer{position:fixed;right:0;top:0;bottom:0;width:min(720px,96vw);background:#fff;z-index:2100;box-shadow:-24px 0 70px rgba(15,23,42,.25);transform:translateX(104%);transition:.23s ease;padding:16px;overflow:auto}.drawer.show{transform:translateX(0)}.drawer-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.drawer h2{font-family:var(--head);font-size:22px;color:var(--accent2);font-weight:900}.close{border:none;background:#eef2ff;color:var(--accent2);border-radius:13px;width:40px;height:40px;font-weight:900}.form-section{border:1px solid var(--border);background:#fbfcff;border-radius:20px;padding:12px;margin-bottom:10px}.form-title{font-family:var(--head);font-size:13px;font-weight:900;color:var(--accent2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:9px}.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.form-grid.two{grid-template-columns:repeat(2,1fr)}.form-grid.one{grid-template-columns:1fr}textarea.field{min-height:72px;resize:vertical}.switch-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.switch-card{border:1px solid var(--border2);border-radius:16px;padding:10px;background:#fff}.switch-card input{margin-right:7px;accent-color:var(--accent)}.switch-card label{display:flex;align-items:center;font-weight:900;font-size:12px;color:var(--accent2)}.switch-card small{display:block;color:var(--muted);margin-top:5px;font-size:11px}
+
+.fab{position:fixed;right:18px;bottom:18px;width:60px;height:60px;border:none;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:32px;box-shadow:0 18px 36px rgba(21,59,255,.3);z-index:1500}.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(32px);background:#111827;color:#fff;border-radius:999px;padding:12px 16px;font-size:12px;font-weight:900;opacity:0;pointer-events:none;transition:.22s;z-index:3000}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.toast.warn{background:#92400e}.toast.ok{background:#166534}.toast.err{background:#991b1b}
+
+.print-card{display:none}.hidden{display:none!important}
+@media(max-width:1260px){.kpis{grid-template-columns:repeat(4,1fr)}.filters{grid-template-columns:1fr 1fr 1fr}.grid{grid-template-columns:1fr}.side{position:static;grid-template-columns:1fr 1fr}.detail-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:980px){body{padding-bottom:96px}.header{display:flex;flex-wrap:wrap;height:auto;min-height:58px;padding:12px;overflow:visible}.logo{width:auto;min-width:130px;color:#fff}.mobile-menu-btn{display:inline-flex;align-items:center;justify-content:center;margin-left:auto;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);border-radius:999px;min-height:34px;padding:8px 14px;font-family:var(--head);font-size:12px;font-weight:900;letter-spacing:.8px;text-transform:uppercase}.header-tabs{display:none;width:100%;height:auto;flex:1 1 100%;padding-top:10px;border-top:1px solid rgba(255,255,255,.22);grid-template-columns:1fr;gap:8px;overflow:visible}.header-tabs.open{display:grid}.header-tabs .tab-btn,.header-tabs .storage-pill,.header-tabs .menu-status{width:100%;min-height:42px;height:42px;font-size:11px}.wrap{padding:10px}.hero{grid-template-columns:1fr}.hero-actions{justify-content:flex-start}.kpis{grid-template-columns:repeat(2,1fr)}.filters{position:static;grid-template-columns:1fr 1fr}.side{grid-template-columns:1fr}.module-head{grid-template-columns:46px 1fr 42px}.module-head .badge{grid-column:2;justify-self:start;margin-top:-2px}.process-head{display:none}.process{grid-template-columns:34px 1fr;gap:7px}.process .proc-select,.process .proc-input,.process .xbtn{grid-column:2}.add-process{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr 1fr}.form-grid,.form-grid.two{grid-template-columns:1fr}.drawer{width:100vw}.switch-row{grid-template-columns:1fr}}
+@media(max-width:640px){.kpis{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr}.hero-card{padding:14px}.hero h1,h1{font-size:23px}.module-head{padding:10px;gap:8px}.mod-title h2{font-size:16px}.chips{gap:4px}.chip{font-size:9.5px}.detail-grid{grid-template-columns:1fr}.actions-row .small-btn{flex:1 1 calc(50% - 8px)}.panel-head{align-items:flex-start;flex-direction:column}.category-list{grid-template-columns:1fr}.fab{right:14px;bottom:14px;width:56px;height:56px}}
+@media print{body{background:#fff;padding:0}.header,.filters,.side,.fab,.drawer,.drawer-backdrop,.hero-actions,.actions-row,.add-process,.xbtn,.small-btn,.toast{display:none!important}.wrap{max-width:none;padding:0}.hero-card,.module,.panel{box-shadow:none;border-color:#999;border-radius:0}.grid{display:block}.modules{display:block}.module{break-inside:avoid;margin-bottom:12px}.module-detail{display:block!important}.process{grid-template-columns:32px 1fr 110px 90px}.check{appearance:none}.check:checked::before{content:'✓'}.print-card{display:block}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="logo">TUTTOPROYECTO<small>Fabricación</small></div>
+  <button class="noti-btn" id="notiBtnGlobal" type="button" title="Notificaciones">🔔<span class="noti-count empty" id="notiCount">0</span></button>
+  <nav class="header-tabs" id="authMenu"></nav>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="hero-card">
+      <div class="eyebrow">Organizador de producción</div>
+      <h1>Módulos de fabricación por tipo de trabajo</h1>
+      <p>Crea un módulo por cada fabricación, selecciona el tipo de producto y el sistema genera automáticamente sus procesos, instalación e iluminación. Cada módulo muestra avance real de 0% a 100%.</p>
+    </div>
+    <div class="hero-actions">
+      <button class="btn" type="button" onclick="openDrawer()">+ Nuevo módulo</button>
+      <button class="btn soft" type="button" onclick="exportJSON()">Exportar</button>
+      <button class="btn soft" type="button" onclick="document.getElementById('importFile').click()">Importar</button>
+      <button class="btn black" type="button" onclick="window.print()">Imprimir</button>
+      <input id="importFile" type="file" accept="application/json" class="hidden" onchange="importJSON(event)">
+    </div>
+  </section>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="filters">
+    <div class="searchBox"><span>⌕</span><input class="field" id="q" placeholder="Buscar cliente, proyecto, categoría, proceso..." oninput="render()"></div>
+    <select class="field" id="filterCategory" onchange="render()"><option value="">Todas las categorías</option></select>
+    <select class="field" id="filterSubgroup" onchange="render()"><option value="">Todos los subgrupos</option></select>
+    <select class="field" id="filterStatus" onchange="render()"><option value="">Todos los estados</option></select>
+    <select class="field" id="filterResp" onchange="render()"><option value="">Todos los responsables</option></select>
+    <select class="field" id="filterLate" onchange="render()"><option value="">Fecha: todos</option><option value="late">Atrasados</option><option value="today">Entrega hoy</option><option value="week">Próx. 7 días</option></select>
+    <button class="btn soft" type="button" onclick="clearFilters()">Limpiar</button>
+  </section>
+
+  <section class="grid">
+    <aside class="side">
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Categorías</div><button class="small-btn" onclick="setCategoryFilter('')">Todas</button></div>
+        <div class="panel-body"><div class="category-list" id="categoryList"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Reglas obligatorias</div></div>
+        <div class="panel-body help-list">
+          <div class="help-line"><b>01</b><span><b>Interior / Exterior</b><br>Se debe registrar en todos los módulos.</span></div>
+          <div class="help-line"><b>02</b><span><b>Instalación</b><br>Si lleva instalación, son obligatorios altura, acceso, superficie, plantilla y fijación.</span></div>
+          <div class="help-line"><b>03</b><span><b>Iluminación</b><br>Si lleva luz, se activan tipo, color, LED, transformador y prueba.</span></div>
+          <div class="help-line"><b>04</b><span><b>Avance</b><br>El avance depende de procesos marcados como Listo.</span></div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="modules" id="modules"></section>
+  </section>
+</main>
+
+<div class="drawer-backdrop" id="backdrop" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div>
+      <div class="eyebrow">Nuevo módulo</div>
+      <h2>Crear módulo de fabricación</h2>
+    </div>
+    <button class="close" type="button" onclick="closeDrawer()">×</button>
+  </div>
+
+  <form id="moduleForm" onsubmit="createModule(event)">
+    <section class="form-section">
+      <div class="form-title">Datos principales</div>
+      <div class="form-grid">
+        <div><label class="label">Cliente</label><input class="field" id="f_cliente" placeholder="Cliente" required></div>
+        <div><label class="label">Proyecto / módulo</label><input class="field" id="f_proyecto" placeholder="Ej: Logo principal" required></div>
+        <div><label class="label">Responsable</label><select class="field" id="f_responsable"></select></div>
+        <div><label class="label">Categoría</label><select class="field" id="f_categoria" onchange="onCategoryChange()" required></select></div>
+        <div><label class="label">Subgrupo</label><select class="field" id="f_subgrupo" onchange="onSubgroupChange()" required></select></div>
+        <div><label class="label">Estado inicial</label><select class="field" id="f_estado"></select></div>
+        <div><label class="label">Medidas</label><input class="field" id="f_medidas" placeholder="Ej: 120 x 60 cm"></div>
+        <div><label class="label">Cantidad</label><input class="field" id="f_cantidad" placeholder="Ej: 12 piezas"></div>
+        <div><label class="label">Entrega</label><input class="field" id="f_entrega" type="date"></div>
+        <div><label class="label">Interior / Exterior</label><select class="field" id="f_ubicacion"><option>Interior</option><option>Exterior</option></select></div>
+        <div><label class="label">Espesor / retorno</label><select class="field" id="f_espesor"></select></div>
+        <div><label class="label">Acabado</label><input class="field" id="f_acabado" placeholder="Color / acabado"></div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="form-title">Instalación</div>
+      <div class="switch-row">
+        <div class="switch-card"><label><input type="checkbox" id="f_instalacion" onchange="toggleFormBlocks()"> Lleva instalación</label><small>Activa plantilla, fijaciones, altura, superficie y acceso.</small></div>
+        <div class="switch-card"><label><input type="checkbox" id="f_luz" onchange="toggleFormBlocks()"> Lleva iluminación</label><small>Activa LED, transformador, color y prueba de luz.</small></div>
+      </div>
+      <div class="form-grid" id="installBlock" style="margin-top:10px;display:none">
+        <div><label class="label">Altura instalación</label><input class="field" id="f_altura" placeholder="Ej: 2.50 m"></div>
+        <div><label class="label">Acceso</label><select class="field" id="f_acceso"><option>No aplica</option><option>Escalera</option><option>Andamio</option><option>Elevador</option><option>Otro</option></select></div>
+        <div><label class="label">Superficie</label><select class="field" id="f_superficie"><option>Drywall</option><option>Bloque</option><option>Concreto</option><option>Vidrio</option><option>ACM</option><option>Cerámica</option><option>Metal</option><option>Madera</option><option>PVC</option><option>Otro</option></select></div>
+        <div><label class="label">Plantilla</label><select class="field" id="f_plantilla"><option>No aplica</option><option>Cartón</option><option>Papel bond</option><option>Otra</option></select></div>
+        <div><label class="label">Fijación</label><select class="field" id="f_fijacion"><option>No aplica</option><option>Chupón</option><option>Doble faz</option><option>Clip de tornillo</option><option>Tornillo directo</option><option>Silicón / adhesivo</option><option>Otra</option></select></div>
+        <div><label class="label">Punto eléctrico</label><select class="field" id="f_punto"><option>No aplica</option><option>Sí</option><option>No</option><option>No confirmado</option></select></div>
+      </div>
+    </section>
+
+    <section class="form-section" id="lightBlock" style="display:none">
+      <div class="form-title">Iluminación</div>
+      <div class="form-grid">
+        <div><label class="label">Tipo iluminación</label><select class="field" id="f_tipo_luz"><option>Frontal</option><option>Posterior</option><option>Frontal / posterior</option></select></div>
+        <div><label class="label">Color</label><select class="field" id="f_color_luz"><option>Cálida</option><option>Media</option><option>Fría</option></select></div>
+        <div><label class="label">Tipo LED</label><select class="field" id="f_tipo_led"><option>Módulo</option><option>Cinta</option></select></div>
+        <div><label class="label">Transformador</label><input class="field" id="f_transformador" placeholder="Ej: 12V 10A"></div>
+        <div><label class="label">Voltaje</label><select class="field" id="f_voltaje"><option>No confirmado</option><option>110 V</option><option>220 V</option></select></div>
+        <div><label class="label">Ubicación trafo</label><input class="field" id="f_trafo_ubicacion" placeholder="Oculto / visible / techo"></div>
+      </div>
+    </section>
+
+    <section class="form-section" id="specialBlock">
+      <div class="form-title">Condiciones especiales</div>
+      <div class="form-grid two">
+        <div><label class="label">Aluminio pintado</label><select class="field" id="f_aluminio_pintado"><option>No</option><option>Sí</option></select></div>
+        <div><label class="label">Canto pintado</label><select class="field" id="f_canto_pintado"><option>No</option><option>Sí</option></select></div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="form-title">Notas</div>
+      <div class="form-grid one"><textarea class="field" id="f_notas" placeholder="Observaciones del cliente, instalación, color, proveedor, medidas especiales..."></textarea></div>
+    </section>
+
+    <button class="btn full" type="submit">Crear módulo con procesos</button>
+  </form>
+</aside>
+
+<button class="fab" onclick="openDrawer()" type="button">+</button>
+<div class="toast" id="toast">Guardado</div>
+
+<script>
+const STORAGE_KEY = 'tv_modulos_fabricacion_v1';
+const REMOTE_TABLE = 'organizador_fabricacion';
+const REMOTE_ID = 1;
+const STATUS = ['Solicitud','Diseño','Producción','Proveedor externo','Instalación','Revisión','Listo','Bloqueado'];
+const PROCESS_STATUS = ['Pendiente','En curso','Listo','Bloqueado'];
+const RESPONSABLES = ['Por asignar','Roberto','Ricardo','Carlos','Chico','Rubén','Gabriela','Alejandro','Dixon','Todos'];
+const CATEGORIES = [
+  { name:'Servicio de corte', subgroups:['Corte PVC','Corte acrílico'] },
+  { name:'Letras / piezas en PVC', subgroups:['PVC + laminado','Acrílico','PVC + acrílico','PVC + pintura automotriz'] },
+  { name:'Letras frontlit', subgroups:['Frontlit 4 cm','Frontlit 6 cm','Frontlit 10 cm'] },
+  { name:'Letras metálicas', subgroups:['Galvanizado con ribete','Galvanizado sin ribete','Acero inoxidable con ribete','Acero inoxidable sin ribete'] },
+  { name:'Cajas de luz', subgroups:['Caja de luz'] }
+];
+const ESPESORES = {
+  'Corte PVC':['3 mm','5 mm','9 mm','15 mm','18 mm'],
+  'Corte acrílico':['1 mm','2 mm','3 mm','5 mm','8 mm'],
+  'PVC + laminado':['3 mm','5 mm','9 mm','15 mm','18 mm'],
+  'Acrílico':['1 mm','2 mm','3 mm','5 mm','8 mm'],
+  'PVC + acrílico':['PVC 9 mm','PVC 15 mm','Otro'],
+  'PVC + pintura automotriz':['3 mm','5 mm','9 mm','15 mm','18 mm','30 mm','45 mm'],
+  'Frontlit 4 cm':['Retorno 4 cm'],
+  'Frontlit 6 cm':['Retorno 6 cm'],
+  'Frontlit 10 cm':['Retorno 10 cm'],
+  'Galvanizado con ribete':['Según diseño'],
+  'Galvanizado sin ribete':['Según diseño'],
+  'Acero inoxidable con ribete':['Según diseño'],
+  'Acero inoxidable sin ribete':['Según diseño'],
+  'Caja de luz':['Según profundidad']
+};
+const LIGHT_BY_SUBGROUP = {
+  'Corte PVC':'—','Corte acrílico':'—',
+  'PVC + laminado':'P','Acrílico':'Según diseño','PVC + acrílico':'P','PVC + pintura automotriz':'P',
+  'Frontlit 4 cm':'F/P','Frontlit 6 cm':'F/P','Frontlit 10 cm':'F/P',
+  'Galvanizado con ribete':'F','Acero inoxidable con ribete':'F',
+  'Galvanizado sin ribete':'P','Acero inoxidable sin ribete':'P',
+  'Caja de luz':'F'
+};
+const BASE_PROCESSES = {
+  'Corte PVC': [
+    ['Recepción del diseño','Diseño','Roberto'],['Verificación del diseño','Diseño','Roberto'],['Adaptación del diseño','Diseño','Roberto'],['Corte en router','Producción','Carlos'],['Revisión del corte','Revisión','Carlos'],['Limpieza si aplica','Producción','Carlos'],['Listo','Revisión','Todos']
+  ],
+  'Corte acrílico': [
+    ['Recepción del diseño','Diseño','Roberto'],['Verificación del diseño','Diseño','Roberto'],['Adaptación del diseño','Diseño','Roberto'],['Corte en láser','Producción','Carlos'],['Revisión del corte','Revisión','Carlos'],['Limpieza si aplica','Producción','Carlos'],['Listo','Revisión','Todos']
+  ],
+  'PVC + laminado': [
+    ['Recepción del diseño','Diseño','Roberto'],['Verificación del diseño','Diseño','Roberto'],['Adaptación del diseño','Diseño','Roberto'],['Impresión del vinil','Impresión','Rubén'],['Pegado del vinil','Producción','Chico'],['Corte del PVC + vinil','Producción','Carlos'],['Revisión final','Revisión','Todos'],['Listo','Revisión','Todos']
+  ],
+  'Acrílico': [
+    ['Recepción del diseño','Diseño','Roberto'],['Verificación del diseño','Diseño','Roberto'],['Adaptación del diseño','Diseño','Roberto'],['Corte del acrílico','Producción','Carlos'],['Revisión final','Revisión','Todos'],['Listo','Revisión','Todos']
+  ],
+  'PVC + acrílico': [
+    ['Recepción del diseño','Diseño','Roberto'],['Verificación del diseño','Diseño','Roberto'],['Adaptación del diseño','Diseño','Roberto'],['Corte del acrílico','Producción','Carlos'],['Corte del PVC','Producción','Carlos'],['Pegar acrílico al PVC','Producción','Chico'],['Revisión final','Revisión','Todos'],['Listo','Revisión','Todos']
+  ],
+  'PVC + pintura automotriz': [
+    ['Recepción del diseño','Diseño','Roberto'],['Verificación del diseño','Diseño','Roberto'],['Adaptación del diseño','Diseño','Roberto'],['Corte del PVC','Producción','Carlos'],['Enviar a pintura el PVC','Proveedor externo','Roberto'],['Buscar piezas de PVC pintadas','Proveedor externo','Roberto'],['Revisión final de pintura','Revisión','Todos'],['Listo','Revisión','Todos']
+  ],
+  'Frontlit 4 cm': [], 'Frontlit 6 cm': [], 'Frontlit 10 cm': [],
+  'Galvanizado con ribete': [
+    ['Recepción del diseño','Diseño','Roberto'],['Verificación del diseño','Diseño','Roberto'],['Adaptación del diseño','Diseño','Roberto'],['Enviar a corte en Cube','Proveedor externo','Roberto'],['Corte del acrílico','Producción','Carlos'],['Corte del PVC','Producción','Carlos'],['Enviar / buscar piezas en Benigno','Proveedor externo','Roberto'],['Revisión final','Revisión','Todos'],['Listo','Revisión','Todos']
+  ],
+  'Acero inoxidable con ribete': [],
+  'Galvanizado sin ribete': [
+    ['Recepción del diseño','Diseño','Roberto'],['Verificación del diseño','Diseño','Roberto'],['Adaptación del diseño','Diseño','Roberto'],['Enviar a corte en Cube','Proveedor externo','Roberto'],['Enviar / buscar piezas en Benigno','Proveedor externo','Roberto'],['Revisión final','Revisión','Todos'],['Listo','Revisión','Todos']
+  ],
+  'Acero inoxidable sin ribete': [],
+  'Caja de luz': [
+    ['Recepción del diseño','Diseño','Roberto'],['Verificación del diseño','Diseño','Roberto'],['Adaptación del diseño','Diseño','Roberto'],['Cortar ángulo en aluminio','Producción','Chico'],['Corte del acrílico','Producción','Carlos'],['Enviar a impresión','Impresión','Rubén'],['Corte del PVC para base y laterales','Producción','Carlos'],['Armado de estructura','Producción','Chico'],['Instalación de iluminación','Iluminación','Chico'],['Prueba de luz','Revisión','Todos'],['Revisión final','Revisión','Todos'],['Listo','Revisión','Todos']
+  ]
+};
+BASE_PROCESSES['Frontlit 4 cm'] = BASE_PROCESSES['Frontlit 6 cm'] = BASE_PROCESSES['Frontlit 10 cm'] = [
+  ['Recepción del diseño','Diseño','Roberto'],['Verificación del diseño','Diseño','Roberto'],['Adaptación del diseño','Diseño','Roberto'],['Corte del acrílico','Producción','Carlos'],['Doblado del aluminio','Producción','Chico'],['Corte del PVC','Producción','Carlos'],['Pegar aluminio al acrílico','Producción','Chico'],['Revisión final','Revisión','Todos'],['Listo','Revisión','Todos']
+];
+BASE_PROCESSES['Acero inoxidable con ribete'] = BASE_PROCESSES['Galvanizado con ribete'];
+BASE_PROCESSES['Acero inoxidable sin ribete'] = BASE_PROCESSES['Galvanizado sin ribete'];
+
+let data = { modules: [] };
+let openModules = new Set();
+let currentCat = '';
+let toastTimer = null;
+
+function uid(prefix='id'){ return prefix + Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4); }
+function esc(v){return String(v ?? '').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));}
+function norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
+function todayISO(){const d=new Date();return d.toISOString().slice(0,10)}
+function formatDate(d){if(!d)return 'S/F'; const parts=String(d).split('-'); return parts.length===3?`${parts[2]}/${parts[1]}/${parts[0].slice(2)}`:d;}
+function dateDiff(d){if(!d)return null;const today=new Date();today.setHours(0,0,0,0);const x=new Date(d+'T00:00:00');return Math.round((x-today)/86400000);}
+function isLate(m){const diff=dateDiff(m.entrega);return diff!==null && diff<0 && !['Listo'].includes(m.estado) && progress(m)<100;}
+function daysLabel(m){const diff=dateDiff(m.entrega);if(diff===null)return 'Sin fecha';if(diff<0)return `${Math.abs(diff)} día(s) tarde`;if(diff===0)return 'Hoy';if(diff===1)return 'Mañana';return `${diff} día(s)`;}
+function statusClass(s){return {'Solicitud':'st-solicitud','Diseño':'st-diseno','Producción':'st-produccion','Proveedor externo':'st-proveedor','Instalación':'st-instalacion','Revisión':'st-revision','Listo':'st-listo','Bloqueado':'st-bloqueado'}[s]||'st-solicitud'}
+function progress(m){const arr=m.processes||[];if(!arr.length)return 0;return Math.round(arr.filter(p=>p.status==='Listo').length/arr.length*100)}
+function processCounts(m){const arr=m.processes||[];return {total:arr.length,done:arr.filter(p=>p.status==='Listo').length,blocked:arr.filter(p=>p.status==='Bloqueado').length,doing:arr.filter(p=>p.status==='En curso').length,pending:arr.filter(p=>p.status==='Pendiente').length}}
+function getCategoryOfSub(sub){return CATEGORIES.find(c=>c.subgroups.includes(sub))?.name || ''}
+function lightDefault(sub){const code=LIGHT_BY_SUBGROUP[sub]||'—'; if(code==='F')return 'Frontal'; if(code==='P')return 'Posterior'; if(code==='F/P')return 'Frontal'; return 'No aplica';}
+function canHaveLight(sub){return (LIGHT_BY_SUBGROUP[sub]||'—') !== '—';}
+function showToast(msg,type='ok'){const t=document.getElementById('toast'); if(!t)return; t.textContent=msg; t.className='toast show '+type; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.className='toast',1600)}
+
+function makeProcess(name,type='Producción',owner='Por asignar',status='Pendiente'){
+  return {id:uid('pr'), name, type, owner, status, notes:''};
+}
+function buildProcesses(module){
+  let list = (BASE_PROCESSES[module.subgrupo]||[]).map(x=>makeProcess(x[0],x[1],x[2]||module.responsable));
+
+  if(module.subgrupo.includes('Frontlit') && module.aluminioPintado === 'Sí'){
+    const idx = list.findIndex(p=>norm(p.name).includes('pegar aluminio'));
+    const extra = [makeProcess('Enviar frontlit a pintura con acrílico pegado','Proveedor externo','Roberto'),makeProcess('Buscar frontlit en pintura','Proveedor externo','Roberto'),makeProcess('Revisar acabado de pintura del aluminio','Revisión','Todos')];
+    if(idx>=0) list.splice(idx+1,0,...extra); else list.push(...extra);
+  }
+  if(module.subgrupo === 'PVC + acrílico' && module.cantoPintado === 'Sí'){
+    list.splice(Math.max(list.length-2,0),0,makeProcess('Enviar canto a pintura','Proveedor externo','Roberto'),makeProcess('Buscar piezas con canto pintado','Proveedor externo','Roberto'),makeProcess('Revisar canto pintado','Revisión','Todos'));
+  }
+
+  if(module.llevaInstalacion){
+    list.push(makeProcess('Confirmar interior / exterior','Instalación',module.responsable));
+    list.push(makeProcess('Confirmar altura, acceso y superficie','Instalación',module.responsable));
+    if(module.plantilla === 'Cartón') list.push(makeProcess('Corte de plantilla de cartón','Instalación','Carlos'));
+    if(module.plantilla === 'Papel bond') list.push(makeProcess('Mandar a imprimir plantilla de papel bond','Instalación','Rubén'));
+    if(module.plantilla === 'Otra') list.push(makeProcess('Definir plantilla especial','Instalación','Por asignar'));
+    if(module.fijacion === 'Chupón') list.push(makeProcess('Marcar puntos de chupón en plantilla','Instalación','Carlos'));
+    if(module.fijacion === 'Doble faz') list.push(makeProcess('Preparar doble faz en piezas / plantilla','Instalación','Chico'));
+    if(module.fijacion === 'Clip de tornillo') list.push(makeProcess('Marcar clips y puntos de perforación','Instalación','Carlos'));
+    if(module.fijacion === 'Tornillo directo') list.push(makeProcess('Marcar puntos de tornillo directo','Instalación','Carlos'));
+    if(module.fijacion === 'Silicón / adhesivo') list.push(makeProcess('Preparar adhesivo / silicón y limpieza de superficie','Instalación','Chico'));
+    list.push(makeProcess('Preparar herramientas y fijaciones','Instalación','Todos'));
+    list.push(makeProcess('Instalar en sitio','Instalación','Todos'));
+    list.push(makeProcess('Revisión final en sitio','Revisión','Todos'));
+  }
+
+  if(module.llevaLuz){
+    list.push(makeProcess('Validar punto eléctrico y voltaje','Iluminación',module.responsable));
+    if(module.tipoLed === 'Módulo') list.push(makeProcess('Instalar módulos LED','Iluminación','Chico'));
+    if(module.tipoLed === 'Cinta') list.push(makeProcess('Instalar cinta LED','Iluminación','Chico'));
+    list.push(makeProcess('Cablear iluminación','Iluminación','Chico'));
+    list.push(makeProcess('Instalar transformador '+(module.transformador?`(${module.transformador})`:''),'Iluminación','Chico'));
+    list.push(makeProcess('Prueba de luz antes de entregar','Revisión','Todos'));
+    if(module.llevaInstalacion) list.push(makeProcess('Prueba de luz final en sitio','Revisión','Todos'));
+  }
+
+  return list;
+}
+
+function seedData(){
+  const mod = {
+    id: uid('m'), cliente:'Ejemplo', proyecto:'Logo principal', categoria:'Letras / piezas en PVC', subgrupo:'PVC + acrílico', estado:'Producción', entrega: todayISO(), responsable:'Roberto', medidas:'120 x 60 cm', cantidad:'1 set', ubicacion:'Interior', espesor:'PVC 9 mm', acabado:'Acrílico blanco', llevaInstalacion:true, altura:'2.50 m', acceso:'Escalera', superficie:'Drywall', plantilla:'Papel bond', fijacion:'Chupón', puntoElectrico:'Sí', llevaLuz:true, tipoIluminacion:'Posterior', colorLuz:'Fría', tipoLed:'Módulo', transformador:'12V 5A', voltaje:'110 V', trafoUbicacion:'Oculto', aluminioPintado:'No', cantoPintado:'No', notas:'Módulo de ejemplo. Puedes eliminarlo.', createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
+  };
+  mod.processes = buildProcesses(mod);
+  mod.processes[0].status='Listo'; mod.processes[1].status='Listo'; mod.processes[2].status='En curso';
+  return {modules:[mod]};
+}
+function ensureShape(){
+  if(!data || !Array.isArray(data.modules)) data={modules:[]};
+  data.modules.forEach(m=>{ if(!Array.isArray(m.processes)) m.processes=[]; });
+}
+function loadLocal(){try{const raw=localStorage.getItem(STORAGE_KEY);if(raw){data=JSON.parse(raw);ensureShape();return true}}catch(e){console.warn(e)}return false}
+function saveLocal(){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}
+async function loadRemote(){
+  try{
+    if(!window.supabaseClient) return false;
+    const {data:row,error}=await window.supabaseClient.from(REMOTE_TABLE).select('id,data').eq('id',REMOTE_ID).maybeSingle();
+    if(error || !row || !row.data || !Array.isArray(row.data.modules)) return false;
+    data=row.data; ensureShape(); return true;
+  }catch(e){return false}
+}
+async function saveRemote(){
+  try{
+    if(!window.supabaseClient) return false;
+    const payload={id:REMOTE_ID,data:data,updated_at:new Date().toISOString()};
+    const {error}=await window.supabaseClient.from(REMOTE_TABLE).upsert(payload,{onConflict:'id'});
+    return !error;
+  }catch(e){return false}
+}
+async function saveAll(silent=false){
+  ensureShape(); saveLocal(); const remote=await saveRemote(); if(!silent) showToast(remote?'Guardado en Supabase':'Guardado local',remote?'ok':'warn');
+}
+
+function populateStaticSelects(){
+  const fill=(id,arr,first)=>{const el=document.getElementById(id); if(!el)return; el.innerHTML=(first?`<option value="">${first}</option>`:'')+arr.map(x=>`<option>${esc(x)}</option>`).join('');};
+  fill('filterCategory',CATEGORIES.map(c=>c.name),'Todas las categorías');
+  fill('filterSubgroup',CATEGORIES.flatMap(c=>c.subgroups),'Todos los subgrupos');
+  fill('filterStatus',STATUS,'Todos los estados');
+  fill('filterResp',RESPONSABLES,'Todos los responsables');
+  fill('f_categoria',CATEGORIES.map(c=>c.name));
+  fill('f_estado',STATUS);
+  fill('f_responsable',RESPONSABLES);
+  document.getElementById('f_estado').value='Solicitud';
+  onCategoryChange();
+}
+function onCategoryChange(){
+  const cat=document.getElementById('f_categoria').value || CATEGORIES[0].name;
+  const subs=CATEGORIES.find(c=>c.name===cat)?.subgroups || [];
+  const sg=document.getElementById('f_subgrupo');
+  sg.innerHTML=subs.map(s=>`<option>${esc(s)}</option>`).join('');
+  onSubgroupChange();
+}
+function onSubgroupChange(){
+  const sub=document.getElementById('f_subgrupo').value;
+  const esp=ESPESORES[sub]||['Según diseño'];
+  document.getElementById('f_espesor').innerHTML=esp.map(s=>`<option>${esc(s)}</option>`).join('');
+  const luzChk=document.getElementById('f_luz');
+  luzChk.disabled=!canHaveLight(sub);
+  if(!canHaveLight(sub)) luzChk.checked=false;
+  if(canHaveLight(sub) && ['F','P'].includes(LIGHT_BY_SUBGROUP[sub])) document.getElementById('f_tipo_luz').value=lightDefault(sub);
+  if(sub==='Caja de luz') document.getElementById('f_luz').checked=true;
+  toggleFormBlocks();
+}
+function toggleFormBlocks(){
+  document.getElementById('installBlock').style.display=document.getElementById('f_instalacion').checked?'grid':'none';
+  document.getElementById('lightBlock').style.display=document.getElementById('f_luz').checked?'block':'none';
+}
+
+function createModule(e){
+  e.preventDefault();
+  const sub=document.getElementById('f_subgrupo').value;
+  const m={
+    id:uid('m'), cliente:val('f_cliente'), proyecto:val('f_proyecto'), categoria:val('f_categoria'), subgrupo:sub,
+    estado:val('f_estado')||'Solicitud', entrega:val('f_entrega'), responsable:val('f_responsable')||'Por asignar', medidas:val('f_medidas'), cantidad:val('f_cantidad'), ubicacion:val('f_ubicacion'), espesor:val('f_espesor'), acabado:val('f_acabado'),
+    llevaInstalacion:document.getElementById('f_instalacion').checked, altura:val('f_altura'), acceso:val('f_acceso'), superficie:val('f_superficie'), plantilla:val('f_plantilla'), fijacion:val('f_fijacion'), puntoElectrico:val('f_punto'),
+    llevaLuz:document.getElementById('f_luz').checked && canHaveLight(sub), tipoIluminacion:val('f_tipo_luz')||lightDefault(sub), colorLuz:val('f_color_luz'), tipoLed:val('f_tipo_led'), transformador:val('f_transformador'), voltaje:val('f_voltaje'), trafoUbicacion:val('f_trafo_ubicacion'),
+    aluminioPintado:val('f_aluminio_pintado'), cantoPintado:val('f_canto_pintado'), notas:val('f_notas'), createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
+  };
+  m.processes=buildProcesses(m);
+  data.modules.unshift(m); openModules.add(m.id); saveAll(true); closeDrawer(); resetForm(); render(); showToast('Módulo creado','ok');
+}
+function val(id){return document.getElementById(id)?.value?.trim() || ''}
+function resetForm(){document.getElementById('moduleForm').reset(); populateStaticSelects(); toggleFormBlocks();}
+
+function render(){ensureShape(); renderKpis(); renderCategories(); renderModules();}
+function getFiltered(){
+  const q=norm(document.getElementById('q')?.value||'');
+  const cat=currentCat || document.getElementById('filterCategory')?.value || '';
+  const sub=document.getElementById('filterSubgroup')?.value || '';
+  const st=document.getElementById('filterStatus')?.value || '';
+  const resp=document.getElementById('filterResp')?.value || '';
+  const late=document.getElementById('filterLate')?.value || '';
+  let arr=data.modules.filter(m=>{
+    const blob=norm([m.cliente,m.proyecto,m.categoria,m.subgrupo,m.estado,m.responsable,m.medidas,m.cantidad,m.ubicacion,m.superficie,m.plantilla,m.fijacion,m.tipoIluminacion,m.colorLuz,m.tipoLed,m.transformador,m.notas,...(m.processes||[]).map(p=>`${p.name} ${p.type} ${p.owner} ${p.status}`)].join(' '));
+    const respOk=!resp || m.responsable===resp || (m.processes||[]).some(p=>p.owner===resp);
+    let lateOk=true;
+    if(late==='late') lateOk=isLate(m);
+    if(late==='today') lateOk=dateDiff(m.entrega)===0;
+    if(late==='week'){const d=dateDiff(m.entrega); lateOk=d!==null && d>=0 && d<=7;}
+    return (!q||blob.includes(q)) && (!cat||m.categoria===cat) && (!sub||m.subgrupo===sub) && (!st||m.estado===st) && respOk && lateOk;
+  });
+  arr.sort((a,b)=>{
+    if(isLate(a)!==isLate(b)) return isLate(a)?-1:1;
+    return (a.entrega||'9999-99-99').localeCompare(b.entrega||'9999-99-99');
+  });
+  return arr;
+}
+function renderKpis(){
+  const mods=data.modules; const total=mods.length; const proc=mods.flatMap(m=>m.processes||[]); const done=proc.filter(p=>p.status==='Listo').length; const avg=proc.length?Math.round(done/proc.length*100):0;
+  const html=[
+    ['Total módulos',total,'Fabricaciones',''],['Avance global',avg+'%','Procesos listos','green'],['En producción',mods.filter(m=>m.estado==='Producción').length,'Activos','black'],['Proveedor ext.',mods.filter(m=>m.estado==='Proveedor externo').length,'Cube / Benigno / Pintura','purple'],['Instalación',mods.filter(m=>m.estado==='Instalación'||m.llevaInstalacion).length,'Con instalación','orange'],['Luz',mods.filter(m=>m.llevaLuz).length,'Con iluminación','yellow'],['Atrasados',mods.filter(isLate).length,'Revisar fecha','red']
+  ].map(k=>`<div class="kpi ${k[3]}"><small>${k[0]}</small><strong>${k[1]}</strong><em>${k[2]}</em></div>`).join('');
+  document.getElementById('kpis').innerHTML=html;
+}
+function renderCategories(){
+  const box=document.getElementById('categoryList');
+  box.innerHTML=CATEGORIES.map(c=>{
+    const count=data.modules.filter(m=>m.categoria===c.name).length;
+    const active=(currentCat===c.name || (!currentCat && document.getElementById('filterCategory')?.value===c.name))?'active':'';
+    return `<button type="button" class="cat-btn ${active}" onclick="setCategoryFilter('${esc(c.name)}')"><div><div class="cat-title">${esc(c.name)}</div><div class="cat-meta">${c.subgroups.length} subgrupo(s)</div></div><span class="cat-count">${count}</span></button>`
+  }).join('');
+}
+function renderModules(){
+  const box=document.getElementById('modules'); const arr=getFiltered();
+  if(!arr.length){box.innerHTML=`<div class="empty"><b>No hay módulos con ese filtro.</b><p>Presiona “Nuevo módulo” para crear una fabricación y generar sus procesos automáticamente.</p></div>`;return;}
+  box.innerHTML=arr.map((m,i)=>moduleHTML(m,i)).join('');
+}
+function moduleHTML(m,i){
+  const p=progress(m); const counts=processCounts(m); const open=openModules.has(m.id)?'is-open':''; const light=LIGHT_BY_SUBGROUP[m.subgrupo]||'—';
+  return `<article class="module ${open}" id="mod-${m.id}">
+    <div class="module-head" onclick="toggleModule('${m.id}')">
+      <div class="num">${String(i+1).padStart(2,'0')}</div>
+      <div class="mod-title">
+        <h2>${esc(m.proyecto || 'Sin nombre')}</h2>
+        <div class="chips">
+          <span class="chip">👤 ${esc(m.cliente||'Sin cliente')}</span>
+          <span class="chip">🏷 ${esc(m.subgrupo)}</span>
+          <span class="chip">📦 ${esc(m.cantidad||'S/C')}</span>
+          <span class="chip">📐 ${esc(m.medidas||'S/M')}</span>
+          <span class="chip ${m.llevaInstalacion?'orange':''}">🛠 ${m.llevaInstalacion?'Instalación':'Sin instalación'}</span>
+          <span class="chip ${m.llevaLuz?'yellow':''}">💡 ${m.llevaLuz?esc(m.tipoIluminacion):'Sin luz'} ${light!=='—'?'('+light+')':''}</span>
+          <span class="chip ${isLate(m)?'red':''}">📅 ${daysLabel(m)}</span>
+          <span class="chip green">⚙️ ${p}%</span>
+          ${counts.blocked?`<span class="chip red">⛔ ${counts.blocked} bloqueado(s)</span>`:''}
+        </div>
+        <div class="progress-line"><div class="progress-fill" style="width:${p}%"></div></div>
+      </div>
+      <span class="badge ${statusClass(m.estado)}">${esc(m.estado)}</span>
+      <button class="toggle" type="button">⌄</button>
+    </div>
+    <div class="module-detail">
+      ${detailHTML(m,p,counts)}
+      ${processHTML(m)}
+    </div>
+  </article>`;
+}
+function detailHTML(m,p,c){
+  return `<div class="actions-row">
+    <button class="small-btn green" onclick="event.stopPropagation(); markAll('${m.id}','Listo')">Marcar todo listo</button>
+    <button class="small-btn orange" onclick="event.stopPropagation(); rebuildProcesses('${m.id}')">Regenerar procesos</button>
+    <button class="small-btn purple" onclick="event.stopPropagation(); duplicateModule('${m.id}')">Duplicar</button>
+    <button class="small-btn black" onclick="event.stopPropagation(); updateModuleStatus('${m.id}')">Estado automático</button>
+    <button class="small-btn red" onclick="event.stopPropagation(); deleteModule('${m.id}')">Eliminar</button>
+  </div>
+  <div class="detail-grid">
+    ${dc('Categoría',m.categoria)}${dc('Subgrupo',m.subgrupo)}${dc('Responsable',m.responsable)}${dc('Entrega',formatDate(m.entrega))}${dc('Avance',`${p}% · ${c.done}/${c.total} procesos`)}
+    ${dc('Interior / exterior',m.ubicacion)}${dc('Espesor / retorno',m.espesor)}${dc('Acabado',m.acabado||'—')}${dc('Altura',m.llevaInstalacion?m.altura:'No aplica')}${dc('Superficie',m.llevaInstalacion?m.superficie:'No aplica')}
+    ${dc('Plantilla',m.llevaInstalacion?m.plantilla:'No aplica')}${dc('Fijación',m.llevaInstalacion?m.fijacion:'No aplica')}${dc('Acceso',m.llevaInstalacion?m.acceso:'No aplica')}${dc('Color luz',m.llevaLuz?m.colorLuz:'No aplica')}${dc('LED / Transformador',m.llevaLuz?`${m.tipoLed||'—'} · ${m.transformador||'S/A'}`:'No aplica')}
+    ${m.notas?`<div class="detail-card wide"><strong>Observaciones</strong><span>${esc(m.notas)}</span></div>`:''}
+  </div>`;
+}
+function dc(k,v){return `<div class="detail-card"><strong>${esc(k)}</strong><span>${esc(v||'—')}</span></div>`}
+function processHTML(m){
+  const rows=(m.processes||[]).map((p,idx)=>{
+    const done=p.status==='Listo'; const blocked=p.status==='Bloqueado';
+    return `<div class="process ${done?'done':''} ${blocked?'blocked':''}">
+      <input class="check" type="checkbox" ${done?'checked':''} onchange="setProcessStatus('${m.id}','${p.id}',this.checked?'Listo':'Pendiente')">
+      <div><div class="proc-name">${idx+1}. ${esc(p.name)}</div><span class="proc-type">${esc(p.type||'Proceso')}</span></div>
+      <select class="proc-select ${statusClassProcess(p.status)}" onchange="setProcessStatus('${m.id}','${p.id}',this.value)">${PROCESS_STATUS.map(s=>`<option ${p.status===s?'selected':''}>${s}</option>`).join('')}</select>
+      <select class="proc-input" onchange="setProcessOwner('${m.id}','${p.id}',this.value)">${RESPONSABLES.map(r=>`<option ${p.owner===r?'selected':''}>${r}</option>`).join('')}</select>
+      <button class="xbtn" type="button" onclick="deleteProcess('${m.id}','${p.id}')">×</button>
+    </div>`;
+  }).join('');
+  return `<div class="process-box">
+    <div class="process-head"><div></div><div>Proceso</div><div>Estado</div><div>Responsable</div><div></div></div>
+    <div class="process-list">${rows}</div>
+    <div class="add-process">
+      <input class="field sm" id="addName_${m.id}" placeholder="Añadir proceso manual">
+      <select class="field sm" id="addType_${m.id}"><option>Diseño</option><option>Producción</option><option>Impresión</option><option>Proveedor externo</option><option>Instalación</option><option>Iluminación</option><option>Revisión</option></select>
+      <select class="field sm" id="addOwner_${m.id}">${RESPONSABLES.map(r=>`<option>${r}</option>`).join('')}</select>
+      <button class="btn soft" type="button" onclick="addProcess('${m.id}')">Añadir</button>
+    </div>
+  </div>`;
+}
+function statusClassProcess(s){return s==='Listo'?'status-listo':s==='Bloqueado'?'status-bloqueado':s==='En curso'?'status-curso':''}
+
+function toggleModule(id){ if(openModules.has(id)) openModules.delete(id); else openModules.add(id); render(); }
+function findModule(id){return data.modules.find(m=>m.id===id)}
+function setProcessStatus(mid,pid,status){const m=findModule(mid); const p=m?.processes.find(x=>x.id===pid); if(!p)return; p.status=status; m.updatedAt=new Date().toISOString(); if(progress(m)===100)m.estado='Listo'; saveAll(true); render();}
+function setProcessOwner(mid,pid,owner){const m=findModule(mid); const p=m?.processes.find(x=>x.id===pid); if(!p)return; p.owner=owner; m.updatedAt=new Date().toISOString(); saveAll(true);}
+function deleteProcess(mid,pid){const m=findModule(mid); if(!m)return; m.processes=m.processes.filter(p=>p.id!==pid); saveAll(true); render();}
+function addProcess(mid){const m=findModule(mid); if(!m)return; const name=val(`addName_${mid}`); if(!name){showToast('Escribe el proceso','warn');return;} m.processes.push(makeProcess(name,val(`addType_${mid}`),val(`addOwner_${mid}`))); m.updatedAt=new Date().toISOString(); saveAll(true); render();}
+function markAll(mid,status){const m=findModule(mid); if(!m)return; m.processes.forEach(p=>p.status=status); if(status==='Listo')m.estado='Listo'; m.updatedAt=new Date().toISOString(); saveAll(true); render();}
+function rebuildProcesses(mid){const m=findModule(mid); if(!m)return; if(!confirm('¿Regenerar procesos? Se perderán procesos manuales y estados actuales.'))return; m.processes=buildProcesses(m); m.estado='Solicitud'; saveAll(true); render(); showToast('Procesos regenerados','ok');}
+function duplicateModule(mid){const m=findModule(mid); if(!m)return; const copy=JSON.parse(JSON.stringify(m)); copy.id=uid('m'); copy.proyecto=copy.proyecto+' · copia'; copy.estado='Solicitud'; copy.createdAt=new Date().toISOString(); copy.updatedAt=copy.createdAt; copy.processes.forEach(p=>{p.id=uid('pr'); p.status='Pendiente'}); data.modules.unshift(copy); openModules.add(copy.id); saveAll(true); render();}
+function updateModuleStatus(mid){const m=findModule(mid); if(!m)return; const c=processCounts(m); if(c.blocked)m.estado='Bloqueado'; else if(progress(m)===100)m.estado='Listo'; else if(c.doing)m.estado='Producción'; else if((m.processes||[]).some(p=>p.type==='Proveedor externo' && p.status!=='Listo'))m.estado='Proveedor externo'; else if(m.llevaInstalacion && progress(m)>70)m.estado='Instalación'; else if(progress(m)>0)m.estado='Diseño'; else m.estado='Solicitud'; saveAll(true); render();}
+function deleteModule(mid){if(!confirm('¿Eliminar este módulo completo?'))return; data.modules=data.modules.filter(m=>m.id!==mid); openModules.delete(mid); saveAll(true); render();}
+
+function setCategoryFilter(cat){currentCat=cat; document.getElementById('filterCategory').value=cat; render();}
+function clearFilters(){currentCat=''; ['q','filterCategory','filterSubgroup','filterStatus','filterResp','filterLate'].forEach(id=>{const el=document.getElementById(id); if(el)el.value='';}); render();}
+function openDrawer(){document.getElementById('backdrop').classList.add('show');document.getElementById('drawer').classList.add('show');document.getElementById('drawer').setAttribute('aria-hidden','false');setTimeout(()=>document.getElementById('f_cliente').focus(),60)}
+function closeDrawer(){document.getElementById('backdrop').classList.remove('show');document.getElementById('drawer').classList.remove('show');document.getElementById('drawer').setAttribute('aria-hidden','true')}
+
+function exportJSON(){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='organizador_fabricacion_tuttovinilos.json';a.click();URL.revokeObjectURL(a.href);}
+function importJSON(ev){const file=ev.target.files?.[0]; if(!file)return; const r=new FileReader(); r.onload=()=>{try{const imported=JSON.parse(r.result); if(!imported.modules || !Array.isArray(imported.modules)) throw new Error('Formato inválido'); data=imported; ensureShape(); saveAll(true); render(); showToast('Importado correctamente','ok');}catch(e){showToast('Archivo inválido','err')}}; r.readAsText(file); ev.target.value='';}
+
+window.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+window.addEventListener('DOMContentLoaded', async ()=>{
+  populateStaticSelects();
+  let loaded=false;
+  loaded=await loadRemote();
+  if(!loaded) loaded=loadLocal();
+  if(!loaded){data=seedData(); saveLocal();}
+  render();
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=25"></script>
+<script src="js/auth.js?v=24"></script>
+<script src="js/menu.js?v=12"></script>
+</body>
+</html>
 
