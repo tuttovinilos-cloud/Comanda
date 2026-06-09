@@ -110,6 +110,9 @@ button{cursor:pointer;border:0}
 .suggestItem{padding:10px 12px;font-size:12px;font-weight:800;border-bottom:1px solid #eef2f8;cursor:pointer}
 .suggestItem:hover{background:#f8f9ff}
 .statusLine{font-size:11px;color:var(--muted);font-weight:800;margin-top:4px}
+.catProcess{background:#f8f9ff;border:1px solid #dfe5f2;color:#28324a;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:900}
+.catProcess:hover{border-color:#4b1fa3;color:#4b1fa3;background:#f4efff}
+
 @media(max-width:1100px){.heroHead{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}.toolbar{grid-template-columns:1fr 1fr 1fr}.templates{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}.toolbar{grid-template-columns:1fr}.templates{grid-template-columns:1fr}.form{grid-template-columns:1fr}.wide2,.wide4{grid-column:span 1}.subchecks{grid-template-columns:1fr;padding-left:0}.editorRow{grid-template-columns:1fr}.table{min-width:980px}}
 </style>
@@ -226,16 +229,19 @@ button{cursor:pointer;border:0}
         <div class="field wide2"><label>Nombre</label><input id="tNombre" class="input"></div>
         <div class="field"><label>Color del tipo</label><input id="tColor" type="color" class="input" value="#efe8ff"></div>
         <div class="field"><label>Categoría</label><select id="tCat" class="select"><option>Servicio de corte</option><option>Letras / piezas en PVC</option><option>Letras frontlit</option><option>Letras metálicas</option><option>Cajas de luz</option></select></div>
-        <div class="field"><label>Partida instalación</label><select id="tInst" class="select"><option>No</option><option>Sí</option></select></div>
-        <div class="field"><label>Acceso base</label><select id="tAcc" class="select"><option>No aplica</option><option>Escalera</option><option>Andamio</option><option>Elevador</option></select></div>
-        <div class="field"><label>Fijación base</label><select id="tFix" class="select"><option>No aplica</option><option>Chupón</option><option>Doble faz</option><option>Clip de tornillo</option><option>Tornillo directo</option><option>Silicón / adhesivo</option><option>Otro</option></select></div>
-        <div class="field"><label>Partida iluminación</label><select id="tIlum" class="select"><option>No</option><option>Sí</option></select></div>
-        <div class="field"><label>Tipo iluminación</label><select id="tLuz" class="select"><option>No aplica</option><option>Posterior</option><option>Frontal</option><option>Frontal / posterior</option></select></div>
-        <div class="field"><label>Tipo LED/cinta base</label><select id="tLed" class="select"><option>No aplica</option><option>Módulo</option><option>Cinta</option><option>Módulo + cinta</option></select></div>
-        <div class="field wide4"><label>Descripción</label><input id="tDesc" class="input"></div>
+        <div class="field wide4"><label>Descripción</label><input id="tDesc" class="input" placeholder="Descripción breve del tipo de letrero"></div>
       </div>
 
-      <div class="section"><b>Procesos precargados</b><button class="btn" onclick="addProcTipo()">+ Proceso</button></div>
+      <div class="section">
+        <div>
+          <b>Catálogo de procesos existentes</b>
+          <p class="muted">Puedes agregar procesos ya conocidos sin escribirlos de nuevo.</p>
+        </div>
+        <button class="btn blue" onclick="openCatalogPrompt()">+ Nuevo proceso catálogo</button>
+      </div>
+      <div id="catalogGrid" class="chips"></div>
+
+      <div class="section"><b>Procesos precargados del tipo</b><button class="btn" onclick="addProcTipo()">+ Proceso manual</button></div>
       <div id="tipoEditor"></div>
     </div>
     <div class="foot"><button class="btn" onclick="closeTipo()">Cancelar</button><button class="btn primary" onclick="saveTipo()">Guardar setting</button></div>
@@ -251,7 +257,7 @@ button{cursor:pointer;border:0}
 <script>
 const KEY='tutto_prod_modular_cache_v1';
 const cats=['Servicio de corte','Letras / piezas en PVC','Letras frontlit','Letras metálicas','Cajas de luz'];
-let db={tipos:[],pedidos:[],clientes:[]};
+let db={tipos:[],pedidos:[],clientes:[],catalogo:[]};
 let editPedido=null,editTipo=null,tmpProcs=[],selectedClienteId=null,online=false;
 
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2,10);
@@ -269,6 +275,32 @@ function demoTipos(){
     {id:uid(),name:'Frontlit 6 cm',cat:'Letras frontlit',color:'#dbeafe',instPartida:'Sí',accBase:'Escalera',fixBase:'Clip de tornillo',ilumPartida:'Sí',luz:'Frontal / posterior',ledBase:'Módulo',desc:'Acrílico frontal, aluminio 6 cm y PVC.',procs:[P('Diseño',['Recepción','Verificación','Adaptación']),P('Acrílico',['Corte del acrílico']),P('Aluminio',['Doblado aluminio 6 cm']),P('PVC',['Corte del PVC']),P('Armado',['Pegar aluminio al acrílico']),P('Luz',['Instalación LED','Prueba de luz'])]},
     {id:uid(),name:'Metálica con ribete',cat:'Letras metálicas',color:'#fef3c7',instPartida:'Sí',accBase:'Escalera',fixBase:'Clip de tornillo',ilumPartida:'Sí',luz:'Frontal',ledBase:'Módulo',desc:'Galvanizado o inoxidable con ribete.',procs:[P('Diseño',['Recepción','Verificación','Adaptación']),P('Cube',['Enviar a corte en Cube']),P('Acrílico',['Corte del acrílico']),P('PVC',['Corte del PVC']),P('Benigno',['Enviar / buscar piezas']),P('Luz',['LED','Prueba de luz'])]},
     {id:uid(),name:'Caja de luz',cat:'Cajas de luz',color:'#dcfce7',instPartida:'Sí',accBase:'Escalera',fixBase:'Tornillo directo',ilumPartida:'Sí',luz:'Frontal',ledBase:'Módulo',desc:'Caja con acrílico, impresión, PVC y LED.',procs:[P('Diseño',['Recepción','Verificación','Adaptación']),P('Aluminio',['Cortar ángulo']),P('Acrílico',['Corte del acrílico']),P('Impresión',['Enviar a impresión']),P('PVC',['Corte base y laterales']),P('Armado y luz',['Armado','LED','Prueba'])]}
+  ];
+}
+
+
+function catalogoBase(){
+  return [
+    {id:uid(),name:'Recepción del diseño',categoria:'Diseño',subs:['Recibir archivo','Confirmar medidas','Confirmar cantidad']},
+    {id:uid(),name:'Verificación del diseño',categoria:'Diseño',subs:['Revisar vectores','Revisar medidas','Revisar trazos abiertos']},
+    {id:uid(),name:'Adaptación del diseño',categoria:'Diseño',subs:['Preparar archivo','Separar capas','Preparar producción']},
+    {id:uid(),name:'Impresión del vinil',categoria:'Impresión',subs:['Imprimir vinil','Revisar color','Revisar medida']},
+    {id:uid(),name:'Pegado del vinil',categoria:'Pegado',subs:['Limpiar superficie','Alinear vinil','Pegar sin burbujas']},
+    {id:uid(),name:'Corte en router',categoria:'Corte',subs:['Montar material','Configurar fresa','Cortar']},
+    {id:uid(),name:'Corte láser',categoria:'Corte',subs:['Configurar láser','Cortar acrílico','Revisar borde']},
+    {id:uid(),name:'Corte del acrílico',categoria:'Corte',subs:['Cortar acrílico','Proteger piezas']},
+    {id:uid(),name:'Corte del PVC',categoria:'Corte',subs:['Cortar PVC','Revisar piezas']},
+    {id:uid(),name:'Doblado de aluminio',categoria:'Frontlit',subs:['Seleccionar altura','Doblar retorno','Revisar uniones']},
+    {id:uid(),name:'Pegado aluminio al acrílico',categoria:'Armado',subs:['Alinear','Pegar','Revisar uniones']},
+    {id:uid(),name:'Enviar a pintura',categoria:'Proveedor externo',subs:['Identificar piezas','Enviar proveedor','Confirmar color']},
+    {id:uid(),name:'Buscar piezas en pintura',categoria:'Proveedor externo',subs:['Retirar piezas','Revisar acabado']},
+    {id:uid(),name:'Enviar a Cube',categoria:'Proveedor externo',subs:['Enviar archivo','Confirmar material','Confirmar fecha']},
+    {id:uid(),name:'Benigno / armado metálico',categoria:'Proveedor externo',subs:['Enviar piezas','Buscar piezas','Revisar acabado']},
+    {id:uid(),name:'Instalación LED',categoria:'Iluminación',subs:['Colocar LED','Cablear','Ordenar cables']},
+    {id:uid(),name:'Prueba de luz',categoria:'Iluminación',subs:['Encender','Revisar intensidad','Revisar sombras']},
+    {id:uid(),name:'Plantilla de instalación',categoria:'Instalación',subs:['Definir plantilla','Cortar o imprimir','Marcar puntos']},
+    {id:uid(),name:'Instalación en sitio',categoria:'Instalación',subs:['Preparar superficie','Fijar piezas','Revisar nivel']},
+    {id:uid(),name:'Revisión final',categoria:'Calidad',subs:['Revisar piezas','Revisar acabado','Marcar listo']}
   ];
 }
 
@@ -294,7 +326,7 @@ async function loadAll(){
   if(!sb){
     online=false;
     const cached=localLoad();
-    db=cached||{tipos:demoTipos(),pedidos:[],clientes:[]};
+    db=cached||{tipos:demoTipos(),pedidos:[],clientes:[],catalogo:catalogoBase()};
     toast('Modo local: Supabase no disponible.');
     render();
     return;
@@ -302,15 +334,17 @@ async function loadAll(){
 
   try{
     online=true;
-    let [tiposRes,pedidosRes,clientesRes]=await Promise.all([
+    let [tiposRes,pedidosRes,clientesRes,catalogoRes]=await Promise.all([
       sb.from('prod_tipos_letrero').select('*').order('nombre'),
       sb.from('prod_pedidos').select('*').order('created_at',{ascending:false}),
-      sb.from('prod_clientes').select('*').order('nombre')
+      sb.from('prod_clientes').select('*').order('nombre'),
+      sb.from('prod_procesos_catalogo').select('*').order('orden').order('nombre')
     ]);
 
     if(tiposRes.error) throw tiposRes.error;
     if(pedidosRes.error) throw pedidosRes.error;
     if(clientesRes.error) throw clientesRes.error;
+    if(catalogoRes.error) throw catalogoRes.error;
 
     db.tipos=(tiposRes.data||[]).map(t=>({
       id:t.id,name:t.nombre,cat:t.categoria,color:t.color||'#efe8ff',instPartida:t.instalacion_activa?'Sí':'No',accBase:t.acceso_base||'No aplica',fixBase:t.fijacion_base||'No aplica',
@@ -323,6 +357,7 @@ async function loadAll(){
     }
 
     db.clientes=clientesRes.data||[];
+    db.catalogo=(catalogoRes.data||[]).map(x=>({id:x.id,name:x.nombre,categoria:x.categoria||'',subs:x.subtareas||[]}));
 
     db.pedidos=(pedidosRes.data||[]).map(p=>({
       id:p.id,num:p.numero_pedido,fecha:p.fecha,oper:p.operador,cliente:p.cliente_nombre||'',cliente_id:p.cliente_id,
@@ -338,7 +373,7 @@ async function loadAll(){
     console.error(err);
     online=false;
     const cached=localLoad();
-    db=cached||{tipos:demoTipos(),pedidos:[],clientes:[]};
+    db=cached||{tipos:demoTipos(),pedidos:[],clientes:[],catalogo:catalogoBase()};
     toast('Error Supabase. Mostrando respaldo local.');
     render();
   }
@@ -406,7 +441,7 @@ function renderTipos(){
         <span class="colorDot" style="background:${t.color||'#efe8ff'}"></span>
       </div>
       <p class="muted" style="margin-top:8px">${t.desc||''}</p>
-      <div class="chips"><span class="chip">Instalación: ${t.instPartida}</span><span class="chip">Fijación: ${t.fixBase}</span><span class="chip">LED: ${t.ledBase}</span></div>
+      <div class="chips"><span class="chip">Procesos: ${(t.procs||[]).length}</span><span class="chip">Color configurable</span></div>
       <div class="plist">${(t.procs||[]).map((p,i)=>`<div class="proc"><div class="procTitle"><span>${i+1}. ${p.name}</span><span>${Math.round(100/(t.procs.length||1))}%</span></div><div class="chips">${(p.subs||[]).map(s=>`<span class="chip">${s}</span>`).join('')}</div></div>`).join('')}</div>
       <div class="rowBtns" style="margin-top:12px"><button class="btn" onclick="openTipo('${t.id}')">Editar</button><button class="btn red" onclick="delTipo('${t.id}')">Eliminar</button></div>
     </article>`).join('');
@@ -446,10 +481,9 @@ function drawAlerts(){
 }
 function updateConditionalFields(){document.querySelectorAll('[data-inst-field]').forEach(el=>el.classList.toggle('mutedField',pInst.value!=='Sí'));document.querySelectorAll('[data-luz-field]').forEach(el=>el.classList.toggle('mutedField',pLuz.value!=='Sí'));drawAlerts()}
 function applyTipoSettings(t,recargar=true){
-  if(!t)return; if(recargar) tmpProcs=copyProcs(t);
-  pInst.value=t.instPartida==='Sí'?'Sí':'No'; pAcc.value=t.accBase||'No aplica'; pFix.value=t.fixBase||'No aplica';
-  pLuz.value=(t.ilumPartida==='Sí'||t.luz!=='No aplica')?'Sí':'No'; pTLuz.value=pLuz.value==='Sí'?(t.luz||'No aplica'):'No aplica'; pLed.value=pLuz.value==='Sí'?(t.ledBase||'Módulo'):'No aplica';
-  if(pLuz.value==='No')pCLuz.value='No aplica'; if(pLuz.value==='Sí'&&pCLuz.value==='No aplica')pCLuz.value='Fría'; updateConditionalFields();
+  if(!t)return;
+  if(recargar) tmpProcs=copyProcs(t);
+  updateConditionalFields();
 }
 function changeTipo(){if(editPedido&&!confirm('¿Recargar procesos y partidas configuradas de este tipo?'))return;let t=db.tipos.find(x=>x.id===pTipo.value);applyTipoSettings(t,true);drawChecks();drawAlerts()}
 
@@ -514,11 +548,46 @@ async function dupPedido(id){let p=JSON.parse(JSON.stringify(db.pedidos.find(x=>
 function openTipo(id){
   editTipo=id||null;let t=id?db.tipos.find(x=>x.id===id):null;
   tipoTitle.textContent=id?'Editar setting':'Setting';
-  tNombre.value=t?t.name:''; tColor.value=t?(t.color||'#efe8ff'):'#efe8ff'; tCat.value=t?t.cat:'Letras / piezas en PVC'; tInst.value=t?(t.instPartida||'No'):'No'; tAcc.value=t?(t.accBase||'No aplica'):'No aplica'; tFix.value=t?(t.fixBase||'No aplica'):'No aplica'; tIlum.value=t?(t.ilumPartida||'No'):'No'; tLuz.value=t?t.luz:'No aplica'; tLed.value=t?(t.ledBase||'No aplica'):'No aplica'; tDesc.value=t?t.desc:'';
+  tNombre.value=t?t.name:''; tColor.value=t?(t.color||'#efe8ff'):'#efe8ff'; tCat.value=t?t.cat:'Letras / piezas en PVC'; tDesc.value=t?t.desc:'';
   tmpProcs=t?JSON.parse(JSON.stringify(t.procs)):[P('Diseño',['Recepción del diseño','Verificación del diseño','Adaptación del diseño']),P('Producción',['Proceso principal']),P('Revisión final',['Revisar y marcar listo'])];
-  drawTipoEditor(); tipoModal.classList.add('show');
+  drawTipoEditor(); drawCatalog(); tipoModal.classList.add('show');
 }
 function closeTipo(){tipoModal.classList.remove('show');editTipo=null}
+
+function drawCatalog(){
+  if(!window.catalogGrid)return;
+  const agrupado={};
+  (db.catalogo||[]).forEach(p=>{
+    const c=p.categoria||'General';
+    if(!agrupado[c])agrupado[c]=[];
+    agrupado[c].push(p);
+  });
+  catalogGrid.innerHTML=Object.keys(agrupado).map(cat=>`
+    <div style="width:100%;font-size:10px;font-weight:900;color:#6b7280;text-transform:uppercase;margin-top:6px">${cat}</div>
+    ${agrupado[cat].map(p=>`<button class="catProcess" onclick="addCatalogProcess('${p.id}')">+ ${p.name}</button>`).join('')}
+  `).join('');
+}
+function addCatalogProcess(id){
+  const p=(db.catalogo||[]).find(x=>x.id===id);
+  if(!p)return;
+  tmpProcs.push({id:uid(),name:p.name,subs:[...(p.subs||[])]});
+  drawTipoEditor();
+}
+async function openCatalogPrompt(){
+  const nombre=prompt('Nombre del nuevo proceso de catálogo:');
+  if(!nombre)return;
+  const categoria=prompt('Categoría del proceso:', 'General')||'General';
+  const subtareas=(prompt('Subtareas separadas por coma:', '')||'').split(',').map(x=>x.trim()).filter(Boolean);
+  const item={id:uid(),name:nombre,categoria,subs:subtareas};
+  db.catalogo.push(item);
+  const sb=await getSupabase();
+  if(sb&&online){
+    const {error}=await sb.from('prod_procesos_catalogo').insert({id:item.id,nombre:item.name,categoria:item.categoria,subtareas:item.subs,orden:999});
+    if(error) alert('No se pudo guardar en catálogo: '+error.message);
+  }
+  drawCatalog();
+}
+
 function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')}
 function drawTipoEditor(){tipoEditor.innerHTML=tmpProcs.map(p=>`<div class="editorRow"><input class="input" value="${esc(p.name)}" onchange="upTipoProc('${p.id}','name',this.value)"><input class="input" value="${esc((p.subs||[]).join(', '))}" onchange="upTipoProc('${p.id}','subs',this.value)"><button class="btn red" onclick="rmTipoProc('${p.id}')">Eliminar</button></div>`).join('')}
 function upTipoProc(id,f,v){let p=tmpProcs.find(x=>x.id===id);if(f==='name')p.name=v;if(f==='subs')p.subs=v.split(',').map(x=>x.trim()).filter(Boolean)}
@@ -527,11 +596,11 @@ function rmTipoProc(id){tmpProcs=tmpProcs.filter(p=>p.id!==id);drawTipoEditor()}
 
 async function insertTipo(t){
   const sb=await getSupabase(); if(!sb) return;
-  return sb.from('prod_tipos_letrero').upsert({id:t.id,nombre:t.name,categoria:t.cat,color:t.color||'#efe8ff',descripcion:t.desc||'',instalacion_activa:t.instPartida==='Sí',acceso_base:t.accBase,fijacion_base:t.fixBase,iluminacion_activa:t.ilumPartida==='Sí',tipo_iluminacion:t.luz,tipo_led:t.ledBase,procesos:t.procs});
+  return sb.from('prod_tipos_letrero').upsert({id:t.id,nombre:t.name,categoria:t.cat,color:t.color||'#efe8ff',descripcion:t.desc||'',instalacion_activa:false,acceso_base:'No aplica',fijacion_base:'No aplica',iluminacion_activa:false,tipo_iluminacion:'No aplica',tipo_led:'No aplica',procesos:t.procs});
 }
 async function saveTipo(){
   try{
-    let t={id:editTipo||uid(),name:tNombre.value||'Tipo sin nombre',cat:tCat.value,color:tColor.value||'#efe8ff',instPartida:tInst.value,accBase:tAcc.value,fixBase:tFix.value,ilumPartida:tIlum.value,luz:tLuz.value,ledBase:tLed.value,desc:tDesc.value,procs:tmpProcs};
+    let t={id:editTipo||uid(),name:tNombre.value||'Tipo sin nombre',cat:tCat.value,color:tColor.value||'#efe8ff',instPartida:'No',accBase:'No aplica',fixBase:'No aplica',ilumPartida:'No',luz:'No aplica',ledBase:'No aplica',desc:tDesc.value,procs:tmpProcs};
     const sb=await getSupabase();
     if(sb&&online){const {error}=await insertTipo(t);if(error)throw error;}
     if(editTipo){let i=db.tipos.findIndex(x=>x.id===editTipo);db.tipos[i]=t;db.pedidos.forEach(p=>{if(p.tipoId===t.id){p.tipo=t.name;p.cat=t.cat}})}else db.tipos.push(t);
