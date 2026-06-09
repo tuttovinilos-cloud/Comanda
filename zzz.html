@@ -34,7 +34,7 @@ let db=(()=>{try{return JSON.parse(localStorage.getItem(KEY))||demo()}catch(e){r
 function pct(p){return Math.round((p.procs.filter(x=>x.done).length/(p.procs.length||1))*100)}function next(p){return(p.procs.find(x=>!x.done)||{name:'Completado'}).name}function bEstado(e){if(['Listo','Entregado','Revisado'].includes(e))return'greenb';if(['En producción','En adaptación'].includes(e))return'blueb';if(['En proveedor externo','Pendiente por instalación','En instalación'].includes(e))return'yellow';if(['Solicitud','En revisión'].includes(e))return'purple';return'gray'}
 function filtros(){const fc=fCat.value,ft=fTipo.value,fe=fEstado.value,fo=fOper.value,q=document.getElementById('q').value.toLowerCase().trim();return db.pedidos.filter(p=>(!q||[p.fecha,p.oper,p.cliente,p.desc,p.cant,p.tipo,p.cat,p.estado].join(' ').toLowerCase().includes(q))&&(!fc||p.cat===fc)&&(!ft||p.tipo===ft)&&(!fe||p.estado===fe)&&(!fo||p.oper===fo))}
 function render(){fCat.innerHTML='<option value="">Todas</option>'+cats.map(x=>`<option>${x}</option>`).join('');fTipo.innerHTML='<option value="">Todos</option>'+db.tipos.map(t=>`<option>${t.name}</option>`).join('');fOper.innerHTML='<option value="">Todos</option>'+[...new Set(db.pedidos.map(p=>p.oper))].map(x=>`<option>${x}</option>`).join('');pTipo.innerHTML=db.tipos.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');let total=db.pedidos.length;sTotal.textContent=total;sProd.textContent=db.pedidos.filter(p=>p.estado==='En producción').length;sProv.textContent=db.pedidos.filter(p=>p.estado==='En proveedor externo').length;sInst.textContent=db.pedidos.filter(p=>['Pendiente por instalación','En instalación'].includes(p.estado)).length;sListo.textContent=db.pedidos.filter(p=>['Listo','Entregado'].includes(p.estado)).length;sAvg.textContent=(total?Math.round(db.pedidos.reduce((a,p)=>a+pct(p),0)/total):0)+'%';renderRows();renderTipos();store()}
-function renderRows(){rows.innerHTML=filtros().map(p=>{let pc=pct(p);return`<tr><td>${p.fecha}</td><td>${p.oper}</td><td class="client">${p.cliente}</td><td>${p.desc}</td><td>${p.cant}</td><td><span class="badge purple">${p.tipo}</span></td><td><span class="badge ${bEstado(p.estado)}">${p.estado}</span></td><td><div class="progress"><div class="ptop"><strong>${pc}%</strong><small>Pendiente: ${next(p)}</small></div><div class="bar"><i style="width:${pc}%"></i></div><div class="steps">${p.procs.map(x=>`<span class="step ${x.done?'done':x.name===next(p)?'now':''}">${x.done?'✓':'•'} ${x.name}</span>`).join('')}</div></div></td><td><div class="rowBtns"><button class="mini" onclick="openPedido('${p.id}')">✎</button><button class="mini" onclick="dupPedido('${p.id}')">⧉</button><button class="mini" onclick="delPedido('${p.id}')">×</button></div></td></tr>`}).join('')}
+function renderRows(){rows.innerHTML=filtros().map(p=>{let pc=pct(p);return`<tr><td>${p.fecha}</td><td>${p.oper}</td><td class="client">${p.cliente}</td><td>${p.desc}</td><td>${p.cant}</td><td><span class="badge purple">${p.tipo}</span></td><td><span class="badge ${bEstado(p.estado)}">${p.estado}</span></td><td><div class="progress"><div class="ptop"><strong>${pc}%</strong><small>Pendiente: ${next(p)}</small></div><div class="bar"><i style="width:${pc}%"></i></div><div class="steps">${p.procs.map(x=>`<span class="step ${x.done?'done':x.name===next(p)?'now':''}">${x.done?'✓':'•'} ${x.name}</span>`).join('')}</div></div></td><td><div class="rowBtns"><button class="mini" title="Editar" onclick="openPedido('${p.id}')">✎</button><button class="mini" title="Exportar pedido" onclick="exportPedido('${p.id}')">⇩</button><button class="mini" title="Duplicar" onclick="dupPedido('${p.id}')">⧉</button><button class="mini" title="Eliminar" onclick="delPedido('${p.id}')">×</button></div></td></tr>`}).join('')}
 function renderTipos(){tipoGrid.innerHTML=db.tipos.map(t=>`<article class="card template"><div style="display:flex;justify-content:space-between;gap:10px"><div><h3>${t.name}</h3><p class="muted">${t.cat}</p></div><span class="badge ${t.luz==='No aplica'?'gray':'yellow'}">${t.luz}</span></div><p class="muted" style="margin-top:8px">${t.desc||''}</p><div class="plist">${t.procs.map((p,i)=>`<div class="proc"><div class="procTitle"><span>${i+1}. ${p.name}</span><span>${Math.round(100/t.procs.length)}%</span></div><div class="chips">${p.subs.map(s=>`<span class="chip">${s}</span>`).join('')}</div></div>`).join('')}</div><div class="rowBtns" style="margin-top:12px"><button class="btn" onclick="openTipo('${t.id}')">Editar</button><button class="btn red" onclick="delTipo('${t.id}')">Eliminar</button></div></article>`).join('')}
 function showView(id,el){document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));el.classList.add('active');pedidos.classList.toggle('hidden',id!=='pedidos');tipos.classList.toggle('hidden',id!=='tipos')}
 function openPedido(id){editPedido=id||null;let p=id?db.pedidos.find(x=>x.id===id):null;pedidoTitle.textContent=id?'Editar pedido':'Nuevo pedido';pFecha.value=p?p.fecha:hoy();pOper.value=p?p.oper:'Roberto';pCliente.value=p?p.cliente:'';pCant.value=p?p.cant:'';pDesc.value=p?p.desc:'';pTipo.value=p?p.tipoId:db.tipos[0].id;pEstado.value=p?p.estado:'Solicitud';pUbic.value=p?p.ubic:'No definido';pInst.value=p?p.inst:'No';pAlt.value=p?p.alt:'';pSup.value=p?p.sup:'No aplica';pAcc.value=p?p.acc:'No aplica';pLuz.value=p?p.luz:'No';pTLuz.value=p?p.tluz:'No aplica';pCLuz.value=p?p.cluz:'No aplica';pObs.value=p?p.obs:'';tmpProcs=p?JSON.parse(JSON.stringify(p.procs)):copyProcs(db.tipos[0]);drawChecks();drawAlerts();pedidoModal.classList.add('show')}
@@ -43,6 +43,73 @@ function toggleProc(id,v){let p=tmpProcs.find(x=>x.id===id);p.done=v;p.subs.forE
 function drawAlerts(){let a=[];if(pInst.value==='Sí'){if(!pAlt.value.trim())a.push(['bad','Falta altura de instalación']);if(pSup.value==='No aplica')a.push(['bad','Falta tipo de superficie']);if(pAcc.value==='No aplica')a.push(['','Falta escalera / andamio / elevador'])}if(pLuz.value==='Sí'){if(pTLuz.value==='No aplica')a.push(['bad','Falta tipo de iluminación']);if(pCLuz.value==='No aplica')a.push(['','Falta color de luz'])}if(!a.length)a.push(['','Sin alertas críticas']);alerts.innerHTML=a.map(x=>`<div class="alert ${x[0]}">${x[1]}</div>`).join('')}
 ['pInst','pAlt','pSup','pAcc','pLuz','pTLuz','pCLuz'].forEach(id=>{document.addEventListener('change',e=>{if(e.target.id===id)drawAlerts()});document.addEventListener('input',e=>{if(e.target.id===id)drawAlerts()})});pTipo.onchange=()=>{if(editPedido&&!confirm('¿Recargar procesos de este tipo?'))return;let t=db.tipos.find(x=>x.id===pTipo.value);tmpProcs=copyProcs(t);pLuz.value=t.luz==='No aplica'?'No':'Sí';pTLuz.value=t.luz;drawChecks();drawAlerts()}
 function savePedido(){let t=db.tipos.find(x=>x.id===pTipo.value);let p={id:editPedido||uid(),fecha:pFecha.value||hoy(),oper:pOper.value,cliente:pCliente.value||'Cliente sin nombre',cant:pCant.value||'1',desc:pDesc.value||'Sin descripción',tipoId:t.id,tipo:t.name,cat:t.cat,estado:pEstado.value,ubic:pUbic.value,inst:pInst.value,alt:pAlt.value,sup:pSup.value,acc:pAcc.value,luz:pLuz.value,tluz:pTLuz.value,cluz:pCLuz.value,obs:pObs.value,procs:tmpProcs};if(editPedido){db.pedidos[db.pedidos.findIndex(x=>x.id===editPedido)]=p}else db.pedidos.unshift(p);closePedido();render()}function delPedido(id){if(confirm('¿Eliminar pedido?')){db.pedidos=db.pedidos.filter(p=>p.id!==id);render()}}function dupPedido(id){let p=JSON.parse(JSON.stringify(db.pedidos.find(x=>x.id===id)));p.id=uid();p.cliente+=' copia';p.procs.forEach(pr=>{pr.id=uid();pr.done=false;pr.subs.forEach(s=>{s.id=uid();s.done=false})});db.pedidos.unshift(p);render()}
+function safeFileName(str){return String(str||'pedido').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,80)||'pedido'}
+function exportPedido(id){
+  let p=db.pedidos.find(x=>x.id===id);
+  if(!p){alert('No se encontró el pedido.');return}
+  let pc=pct(p);
+  let done=p.procs.filter(x=>x.done).length;
+  let total=p.procs.length;
+  let lines=[];
+  lines.push('ORDEN / PEDIDO DE PRODUCCIÓN');
+  lines.push('TUTTOVINILOS C.A.');
+  lines.push('Fecha de exportación: '+new Date().toLocaleString('es-VE'));
+  lines.push('');
+  lines.push('==============================');
+  lines.push('DATOS GENERALES');
+  lines.push('==============================');
+  lines.push('Fecha: '+(p.fecha||''));
+  lines.push('Operador: '+(p.oper||''));
+  lines.push('Cliente: '+(p.cliente||''));
+  lines.push('Descripción: '+(p.desc||''));
+  lines.push('Cantidad: '+(p.cant||''));
+  lines.push('Categoría: '+(p.cat||''));
+  lines.push('Tipo de letrero: '+(p.tipo||''));
+  lines.push('Estado: '+(p.estado||''));
+  lines.push('Avance: '+pc+'% ('+done+' de '+total+' procesos)');
+  lines.push('Pendiente actual: '+next(p));
+  lines.push('');
+  lines.push('==============================');
+  lines.push('DATOS TÉCNICOS');
+  lines.push('==============================');
+  lines.push('Interior / exterior: '+(p.ubic||''));
+  lines.push('Lleva instalación: '+(p.inst||''));
+  lines.push('Altura de instalación: '+(p.alt||''));
+  lines.push('Superficie: '+(p.sup||''));
+  lines.push('Equipo de acceso: '+(p.acc||''));
+  lines.push('Lleva luz: '+(p.luz||''));
+  lines.push('Tipo de luz: '+(p.tluz||''));
+  lines.push('Color de luz: '+(p.cluz||''));
+  lines.push('');
+  lines.push('==============================');
+  lines.push('PROCESOS');
+  lines.push('==============================');
+  p.procs.forEach((pr,i)=>{
+    lines.push((i+1)+'. '+pr.name+' — '+(pr.done?'COMPLETO':'PENDIENTE'));
+    if(pr.subs && pr.subs.length){
+      pr.subs.forEach((s,j)=>{
+        lines.push('   '+(s.done?'[x]':'[ ]')+' '+s.name);
+      });
+    }
+    lines.push('');
+  });
+  lines.push('==============================');
+  lines.push('OBSERVACIONES');
+  lines.push('==============================');
+  lines.push(p.obs||'Sin observaciones.');
+  lines.push('');
+  lines.push('==============================');
+  lines.push('DATOS JSON DEL PEDIDO');
+  lines.push('==============================');
+  lines.push(JSON.stringify(p,null,2));
+  let blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
+  let a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='pedido_'+safeFileName(p.cliente)+'_'+safeFileName(p.tipo)+'_'+(p.fecha||hoy())+'.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 function openTipo(id){editTipo=id||null;let t=id?db.tipos.find(x=>x.id===id):null;tipoTitle.textContent=id?'Editar tipo':'Nuevo tipo';tNombre.value=t?t.name:'';tCat.value=t?t.cat:'Letras / piezas en PVC';tLuz.value=t?t.luz:'No aplica';tDesc.value=t?t.desc:'';tmpProcs=t?JSON.parse(JSON.stringify(t.procs)):[P('Diseño',['Recepción del diseño','Verificación del diseño','Adaptación del diseño']),P('Producción',['Proceso principal']),P('Revisión final',['Revisar y marcar listo'])];drawTipoEditor();tipoModal.classList.add('show')}function closeTipo(){tipoModal.classList.remove('show');editTipo=null}function drawTipoEditor(){tipoEditor.innerHTML=tmpProcs.map(p=>`<div class="editorRow"><input class="input" value="${esc(p.name)}" onchange="upTipoProc('${p.id}','name',this.value)"><input class="input" value="${esc(p.subs.join(', '))}" onchange="upTipoProc('${p.id}','subs',this.value)"><button class="btn red" onclick="rmTipoProc('${p.id}')">Eliminar</button></div>`).join('')}function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')}function upTipoProc(id,f,v){let p=tmpProcs.find(x=>x.id===id);if(f==='name')p.name=v;if(f==='subs')p.subs=v.split(',').map(x=>x.trim()).filter(Boolean)}function addProcTipo(){tmpProcs.push(P('Nuevo proceso',['Subtarea']));drawTipoEditor()}function rmTipoProc(id){tmpProcs=tmpProcs.filter(p=>p.id!==id);drawTipoEditor()}function saveTipo(){let t={id:editTipo||uid(),name:tNombre.value||'Tipo sin nombre',cat:tCat.value,luz:tLuz.value,desc:tDesc.value,procs:tmpProcs};if(editTipo){let i=db.tipos.findIndex(x=>x.id===editTipo);db.tipos[i]=t;db.pedidos.forEach(p=>{if(p.tipoId===t.id){p.tipo=t.name;p.cat=t.cat}})}else db.tipos.push(t);closeTipo();render()}function delTipo(id){if(db.pedidos.some(p=>p.tipoId===id)){alert('Este tipo está usado en pedidos. No se elimina.');return}if(confirm('¿Eliminar tipo?')){db.tipos=db.tipos.filter(t=>t.id!==id);render()}}
 [q,fCat,fTipo,fEstado,fOper].forEach(el=>{el.oninput=render;el.onchange=render});resetBtn.onclick=()=>{if(confirm('¿Resetear demo?')){localStorage.removeItem(KEY);db=demo();render()}};exportBtn.onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='organizador_produccion_tuttovinilos.json';a.click()};importBtn.onclick=()=>file.click();file.onchange=e=>{let r=new FileReader();r.onload=()=>{try{db=JSON.parse(r.result);render()}catch(err){alert('JSON inválido')}};r.readAsText(e.target.files[0])};document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePedido();closeTipo()}});render();
 </script>
