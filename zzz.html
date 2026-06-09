@@ -294,31 +294,10 @@ button{
   background:#f0f2f7;
   color:#626a82;
 }
-.progress{
-  min-width:180px;
-}
-.percentNum{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-width:64px;
-  border-radius:14px;
-  background:#efe8ff;
-  color:#4b1fa3;
-  font-size:20px;
-  font-weight:900;
-  padding:9px 12px;
-}
-.ptop{
-  display:flex;
-  align-items:center;
-  gap:9px;
-}
-.ptop small{
-  color:#737991;
-  font-size:11px;
-  font-weight:900;
-}
+.progress{min-width:92px;display:flex;align-items:center;justify-content:flex-start}
+.percentNum{display:inline-flex;align-items:center;justify-content:center;min-width:58px;border-radius:14px;background:#efe8ff;color:#4b1fa3;font-size:18px;font-weight:900;padding:8px 10px}
+.ptop{display:flex;align-items:center;gap:8px}
+.ptop small{display:none}
 .rowBtns{
   display:flex;
   gap:6px;
@@ -523,6 +502,13 @@ button{
   opacity:.45;
   pointer-events:none;
 }
+
+.actionBtn{min-width:34px;height:32px;border-radius:11px;font-size:10px;font-weight:900;border:1px solid transparent;padding:0 8px}
+.actionEdit{background:#edf4ff;color:#1754d6;border-color:#cfe0ff}
+.actionPdf{background:#e9faf2;color:#08794b;border-color:#bce8d5}
+.actionDup{background:#efe8ff;color:#4b1fa3;border-color:#dccdff}
+.actionDel{background:#fff0f2;color:#c71f35;border-color:#ffd0d7}
+
 @media(max-width:1100px){
   .stats{grid-template-columns:repeat(3,1fr)}
   .toolbar{grid-template-columns:1fr 1fr 1fr}
@@ -657,7 +643,7 @@ button{
         <h2 id="pedidoTitle">Nuevo pedido</h2>
         <p class="muted">Al seleccionar un tipo se cargan sus procesos precargados.</p>
       </div>
-      <button class="mini" onclick="closePedido()">×</button>
+      <button class="mini" onclick="closePedido()">X</button>
     </div>
 
     <div class="modalBody">
@@ -835,7 +821,7 @@ button{
         <h2 id="tipoTitle">Setting</h2>
         <p class="muted">Aquí configuras procesos, partida de instalación e iluminación para cada tipo de letrero.</p>
       </div>
-      <button class="mini" onclick="closeTipo()">×</button>
+      <button class="mini" onclick="closeTipo()">X</button>
     </div>
 
     <div class="modalBody">
@@ -1304,19 +1290,14 @@ function renderRows(){
         <td><span class="badge purple">${p.tipo}</span></td>
         <td><span class="badge ${bEstado(p.estado)}">${p.estado}</span></td>
         <td>
-          <div class="progress">
-            <div class="ptop">
-              <span class="percentNum">${pc}%</span>
-              <small>Pendiente: ${next(p)}</small>
-            </div>
-          </div>
+          <div class="progress"><span class="percentNum">${pc}%</span></div>
         </td>
         <td>
           <div class="rowBtns">
-            <button class="mini" title="Editar" onclick="openPedido('${p.id}')">✎</button>
-            <button class="mini" title="Exportar PDF" onclick="exportPedido('${p.id}')">PDF</button>
-            <button class="mini" title="Duplicar" onclick="dupPedido('${p.id}')">⧉</button>
-            <button class="mini" title="Eliminar" onclick="delPedido('${p.id}')">×</button>
+            <button class="actionBtn actionEdit" title="Editar" onclick="openPedido('${p.id}')">EDIT</button>
+            <button class="actionBtn actionPdf" title="Exportar PDF" onclick="exportPedido('${p.id}')">PDF</button>
+            <button class="actionBtn actionDup" title="Duplicar" onclick="dupPedido('${p.id}')">DUP</button>
+            <button class="actionBtn actionDel" title="Eliminar" onclick="delPedido('${p.id}')">X</button>
           </div>
         </td>
       </tr>
@@ -1433,8 +1414,8 @@ function drawChecks(){
             `).join('')}
           </div>
         </div>
-        <button class="mini" onclick="editProcPedido('${p.id}')">✎</button>
-        <button class="mini" onclick="rmProcPedido('${p.id}')">×</button>
+        <button class="mini" onclick="editProcPedido('${p.id}')">EDIT</button>
+        <button class="mini" onclick="rmProcPedido('${p.id}')">X</button>
       </div>
     </div>
   `).join('');
@@ -1630,18 +1611,12 @@ function exportPedido(id){
   let escape=s=>String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 
   let rows=p.procs.map((pr,i)=>`
-    <div class="procBox">
-      <div class="procHead">
-        <div>
-          <b>${i+1}. ${escape(pr.name)}</b>
-          <span>${pr.done?'COMPLETO':'PENDIENTE'}</span>
-        </div>
-        <div class="status ${pr.done?'ok':'pend'}">${pr.done?'✓ Listo':'• Pendiente'}</div>
-      </div>
-      <div class="subs">
-        ${(pr.subs||[]).map(s=>`<div class="sub ${s.done?'ok':''}">${s.done?'☑':'☐'} ${escape(s.name)}</div>`).join('')}
-      </div>
-    </div>
+    <tr>
+      <td>${i+1}</td>
+      <td><b>${escape(pr.name)}</b></td>
+      <td><span class="estado ${pr.done?'ok':'pend'}">${pr.done?'Listo':'Pendiente'}</span></td>
+      <td>${(pr.subs||[]).map(s=>`${s.done?'☑':'☐'} ${escape(s.name)}`).join(' &nbsp; · &nbsp; ')}</td>
+    </tr>
   `).join('');
 
   let html=`<!DOCTYPE html>
@@ -1651,37 +1626,33 @@ function exportPedido(id){
     <title>Pedido ${escape(p.num)}</title>
     <style>
       *{box-sizing:border-box}
-      body{font-family:Arial,Helvetica,sans-serif;color:#22283d;margin:0;background:#f2f4fa}
-      .page{width:210mm;min-height:297mm;margin:0 auto;background:white;padding:18mm;box-shadow:0 12px 40px rgba(0,0,0,.12)}
-      .head{display:flex;justify-content:space-between;gap:18px;border-bottom:3px solid #4b1fa3;padding-bottom:14px;margin-bottom:16px}
-      .brand{font-size:25px;font-weight:900;letter-spacing:4px;color:#35127e}
-      .subtitle{font-size:12px;color:#70778d;margin-top:5px}
+      body{font-family:Inter,Arial,Helvetica,sans-serif;color:#20233a;margin:0;background:#f3f5fb}
+      .page{width:279mm;min-height:216mm;margin:0 auto;background:white;padding:10mm;box-shadow:0 12px 40px rgba(0,0,0,.12)}
+      .head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;border-bottom:3px solid #4b1fa3;padding-bottom:9px;margin-bottom:10px}
+      .brand{font-size:22px;font-weight:900;letter-spacing:5px;color:#35127e}
+      .subtitle{font-size:10px;color:#70778d;margin-top:3px;font-weight:700}
       .order{text-align:right}
-      .order b{display:block;font-size:22px;color:#4b1fa3}
-      .order span{font-size:12px;color:#70778d}
-      .summary{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px}
-      .card{border:1px solid #e1e5f0;border-radius:14px;padding:12px;background:#fbfcff;margin-bottom:12px}
-      .card h3{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.4px;color:#4b1fa3}
-      .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
-      .item{font-size:12px}
-      .item small{display:block;color:#72798f;font-weight:700;text-transform:uppercase;font-size:9px;margin-bottom:2px}
-      .item b{font-size:13px}
-      .pill{display:inline-block;padding:5px 9px;border-radius:99px;background:#efe8ff;color:#4b1fa3;font-size:11px;font-weight:900}
-      .sectionTitle{margin:16px 0 8px;font-size:15px;font-weight:900;color:#22283d}
-      .procBox{border:1px solid #e1e5f0;border-radius:13px;margin-bottom:9px;overflow:hidden}
-      .procHead{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#f8f9ff;padding:10px 12px}
-      .procHead b{font-size:13px}
-      .procHead span{display:block;margin-top:3px;font-size:10px;color:#737b92;font-weight:800}
-      .status{font-size:11px;font-weight:900;border-radius:99px;padding:6px 9px;white-space:nowrap}
-      .status.ok{background:#e9faf2;color:#08794b}
-      .status.pend{background:#fff7df;color:#9a6500}
-      .subs{padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
-      .sub{font-size:11px;color:#596078;background:#fff;border:1px solid #eef1f7;border-radius:9px;padding:7px}
-      .sub.ok{color:#08794b;border-color:#cceede;background:#f2fcf7}
-      .obs{white-space:pre-wrap;font-size:12px;line-height:1.45}
-      .foot{margin-top:18px;border-top:1px solid #e1e5f0;padding-top:10px;font-size:10px;color:#7a8196;display:flex;justify-content:space-between}
-      @media print{body{background:white}.page{box-shadow:none;margin:0;width:auto;min-height:auto}}
-      @page{size:A4;margin:10mm}
+      .order small{display:block;color:#70778d;font-size:9px;font-weight:900;text-transform:uppercase}
+      .order b{display:block;font-size:22px;color:#4b1fa3;line-height:1.1}
+      .grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px;margin-bottom:8px}
+      .card{border:1px solid #e1e5f0;border-radius:12px;background:#fbfcff;padding:9px}
+      h3{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#4b1fa3}
+      .miniGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 9px}
+      .item{font-size:10px}
+      .item small{display:block;color:#72798f;font-weight:900;text-transform:uppercase;font-size:8px;margin-bottom:2px}
+      .item b{font-size:11px}
+      .desc{grid-column:1/-1}
+      .pill{display:inline-block;padding:4px 8px;border-radius:99px;background:#efe8ff;color:#4b1fa3;font-size:10px;font-weight:900}
+      table{width:100%;border-collapse:collapse;margin-top:8px}
+      th{background:#f8f9ff;color:#596078;font-size:9px;text-transform:uppercase;letter-spacing:.3px;text-align:left;padding:7px;border:1px solid #e1e5f0}
+      td{font-size:10px;padding:7px;border:1px solid #e1e5f0;vertical-align:top}
+      .estado{display:inline-block;border-radius:99px;padding:4px 8px;font-size:9px;font-weight:900}
+      .estado.ok{background:#e9faf2;color:#08794b}
+      .estado.pend{background:#fff7df;color:#9a6500}
+      .obs{white-space:pre-wrap;font-size:10px;line-height:1.35;min-height:34px}
+      .foot{margin-top:8px;border-top:1px solid #e1e5f0;padding-top:6px;font-size:8px;color:#7a8196;display:flex;justify-content:space-between}
+      @media print{body{background:white}.page{box-shadow:none;margin:0;width:auto;min-height:auto;padding:8mm}}
+      @page{size:letter landscape;margin:8mm}
     </style>
   </head>
   <body>
@@ -1689,52 +1660,71 @@ function exportPedido(id){
       <div class="head">
         <div>
           <div class="brand">TUTTOVINILOS</div>
-          <div class="subtitle">Orden de producción modular · Exportación PDF</div>
+          <div class="subtitle">Orden de producción modular · Formato horizontal</div>
         </div>
         <div class="order">
-          <span>N° PEDIDO</span>
+          <small>N° pedido</small>
           <b>${escape(p.num)}</b>
-          <span>${new Date().toLocaleString('es-VE')}</span>
+          <small>${new Date().toLocaleString('es-VE')}</small>
         </div>
       </div>
 
-      <div class="summary">
+      <div class="grid">
         <div class="card">
-          <h3>Datos generales</h3>
-          <div class="grid">
+          <h3>Datos del pedido</h3>
+          <div class="miniGrid">
             <div class="item"><small>Fecha</small><b>${escape(p.fecha)}</b></div>
             <div class="item"><small>Operador</small><b>${escape(p.oper)}</b></div>
             <div class="item"><small>Cliente</small><b>${escape(p.cliente)}</b></div>
             <div class="item"><small>Cantidad</small><b>${escape(p.cant)}</b></div>
-            <div class="item" style="grid-column:1/-1"><small>Descripción</small><b>${escape(p.desc)}</b></div>
+            <div class="item desc"><small>Descripción</small><b>${escape(p.desc)}</b></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Fabricación</h3>
+          <div class="miniGrid">
             <div class="item"><small>Categoría</small><b>${escape(p.cat)}</b></div>
-            <div class="item"><small>Tipo de letrero</small><b>${escape(p.tipo)}</b></div>
+            <div class="item"><small>Tipo</small><b>${escape(p.tipo)}</b></div>
             <div class="item"><small>Estado</small><span class="pill">${escape(p.estado)}</span></div>
+            <div class="item"><small>Interior/exterior</small><b>${escape(p.ubic)}</b></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Instalación / luz</h3>
+          <div class="miniGrid">
+            <div class="item"><small>Instalación</small><b>${escape(p.inst)}</b></div>
+            <div class="item"><small>Altura</small><b>${escape(p.alt)}</b></div>
+            <div class="item"><small>Superficie</small><b>${escape(p.sup)}</b></div>
+            <div class="item"><small>Acceso</small><b>${escape(p.acc)}</b></div>
+            <div class="item"><small>Fijación</small><b>${escape(p.fix)}</b></div>
+            <div class="item"><small>Luz</small><b>${escape(p.luz)}</b></div>
+            <div class="item"><small>Tipo luz</small><b>${escape(p.tluz)}</b></div>
+            <div class="item"><small>LED/cinta</small><b>${escape(p.led)}</b></div>
           </div>
         </div>
       </div>
 
       <div class="card">
-        <h3>Datos técnicos / instalación / iluminación</h3>
-        <div class="grid">
-          <div class="item"><small>Interior / exterior</small><b>${escape(p.ubic)}</b></div>
-          <div class="item"><small>Lleva instalación</small><b>${escape(p.inst)}</b></div>
-          <div class="item"><small>Altura</small><b>${escape(p.alt)}</b></div>
-          <div class="item"><small>Superficie</small><b>${escape(p.sup)}</b></div>
-          <div class="item"><small>Equipo de acceso</small><b>${escape(p.acc)}</b></div>
-          <div class="item"><small>Tipo de fijación</small><b>${escape(p.fix)}</b></div>
-          <div class="item"><small>Lleva luz</small><b>${escape(p.luz)}</b></div>
-          <div class="item"><small>Tipo de luz</small><b>${escape(p.tluz)}</b></div>
-          <div class="item"><small>Tipo de LED / cinta</small><b>${escape(p.led)}</b></div>
-          <div class="item"><small>Color de luz</small><b>${escape(p.cluz)}</b></div>
-        </div>
+        <h3>Procesos del pedido</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:34px">#</th>
+              <th style="width:170px">Proceso</th>
+              <th style="width:90px">Estado</th>
+              <th>Subtareas</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>
 
-      <div class="sectionTitle">Procesos del pedido</div>
-      ${rows}
-
-      <div class="sectionTitle">Observaciones</div>
-      <div class="card obs">${escape(p.obs||'Sin observaciones.')}</div>
+      <div class="card">
+        <h3>Observaciones</h3>
+        <div class="obs">${escape(p.obs||'Sin observaciones.')}</div>
+      </div>
 
       <div class="foot">
         <span>Generado desde Organizador de Producción Modular</span>
