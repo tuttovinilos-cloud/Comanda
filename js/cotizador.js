@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v52 factura 10% menor + posiciones ajustadas + eliminar solo Roberto");
+console.log("COTIZADOR JS conectado v53 factura BS + posiciones RIF/tabla + deshacer + eliminar solo Roberto");
 
 const $ = (id) => document.getElementById(id);
 
@@ -13,6 +13,10 @@ let previewPdfUrl = null;
 let previewPdfBlob = null;
 let previewPdfDoc = null;
 let previewSnapshot = null;
+
+let undoStack = [];
+let restaurandoDeshacer = false;
+const UNDO_MAX = 4;
 
 let data = {
   tipo: "Cotización",
@@ -111,6 +115,15 @@ function crearNumeroDocumento(consecutivo, fechaISO){
 }
 
 function currency(n){ return "$" + Number(n || 0).toFixed(2); }
+
+function currencyDocumento(n,tipoDocumento=""){
+  if(esFacturaTipo(tipoDocumento)){
+    return "BS " + moneyFactura(n,2);
+  }
+
+  return currency(n);
+}
+
 function cleanText(v){ return String(v || "").trim(); }
 
 function normalizar(valor){
@@ -364,9 +377,11 @@ function updateTotals(){
 
   actualizarEtiquetaIva(tipo);
 
-  $("subtotal").textContent = currency(t.subtotal);
-  $("iva").textContent = currency(t.iva);
-  $("total").textContent = currency(t.total);
+  const formato = esFacturaTipo(tipo) ? (n => "BS " + moneyFactura(n,2)) : currency;
+
+  $("subtotal").textContent = formato(t.subtotal);
+  $("iva").textContent = formato(t.iva);
+  $("total").textContent = formato(t.total);
 }
 
 function updateItemVisualTotal(index){
@@ -385,16 +400,19 @@ function updateItemVisualTotal(index){
 }
 
 function addItem(){
+  guardarEstadoDeshacer();
   data.items.push({ kind:"item", desc:"", qty:1, price:0 });
   render();
 }
 
 function addSeparator(){
+  guardarEstadoDeshacer();
   data.items.push({ kind:"separator", desc:"" });
   render();
 }
 
 function removeItem(index){
+  guardarEstadoDeshacer();
   if(data.items.length <= 1){
     data.items = [{ kind:"item", desc:"", qty:1, price:0 }];
   }else{
@@ -428,6 +446,117 @@ function getForm(){
     iva: $("ivaCheck").checked,
     footer: getFooter()
   };
+}
+
+function crearEstadoActualDeshacer(){
+  return {
+    form:{
+      tipo: $("tipoDocumento")?.value || data.tipo || "Cotización",
+      responsable: $("responsable")?.value || data.responsable || "",
+      fecha: $("fecha")?.value || "",
+      numero: $("numero")?.value || "",
+      vence: $("vence")?.value || "",
+      cliente: $("cliente")?.value || "",
+      rif: $("rif")?.value || "",
+      telefono: $("telefono")?.value || "",
+      email: $("email")?.value || "",
+      direccion: $("direccion")?.value || "",
+      notas: $("notas")?.value || "",
+      iva: !!$("ivaCheck")?.checked,
+      footer:getFooter()
+    },
+    items:JSON.parse(JSON.stringify(data.items || []))
+  };
+}
+
+function estadoDeshacerKey(estado){
+  return JSON.stringify(estado || {});
+}
+
+function actualizarBotonDeshacer(){
+  const btn = $("undoBtn");
+  if(!btn) return;
+
+  btn.disabled = undoStack.length === 0;
+  btn.title = undoStack.length ? `Deshacer (${undoStack.length})` : "Sin cambios para deshacer";
+}
+
+function guardarEstadoDeshacer(){
+  if(restaurandoDeshacer) return;
+
+  const estado = crearEstadoActualDeshacer();
+  const key = estadoDeshacerKey(estado);
+  const ultimo = undoStack.length ? estadoDeshacerKey(undoStack[undoStack.length - 1]) : "";
+
+  if(key === ultimo) return;
+
+  undoStack.push(estado);
+
+  if(undoStack.length > UNDO_MAX){
+    undoStack = undoStack.slice(undoStack.length - UNDO_MAX);
+  }
+
+  actualizarBotonDeshacer();
+}
+
+function setValueDeshacer(id,value){
+  const el = $(id);
+  if(!el) return;
+
+  if(el.type === "checkbox"){
+    el.checked = !!value;
+  }else{
+    el.value = value ?? "";
+  }
+}
+
+function setTextDeshacer(id,value){
+  const el = $(id);
+  if(!el) return;
+  el.innerText = value ?? "";
+}
+
+function deshacerUltimoCambio(){
+  if(!undoStack.length){
+    showToast("No hay cambios para deshacer", "warn");
+    actualizarBotonDeshacer();
+    return;
+  }
+
+  const estado = undoStack.pop();
+  const f = estado.form || {};
+
+  restaurandoDeshacer = true;
+
+  setValueDeshacer("tipoDocumento",f.tipo);
+  setValueDeshacer("responsable",f.responsable);
+  setValueDeshacer("fecha",f.fecha);
+  setValueDeshacer("numero",f.numero);
+  setValueDeshacer("vence",f.vence);
+  setValueDeshacer("cliente",f.cliente);
+  setValueDeshacer("rif",f.rif);
+  setValueDeshacer("telefono",f.telefono);
+  setValueDeshacer("email",f.email);
+  setValueDeshacer("direccion",f.direccion);
+  setValueDeshacer("notas",f.notas);
+  setValueDeshacer("ivaCheck",f.iva);
+
+  setTextDeshacer("footerDireccion",f.footer?.direccion || "");
+  setTextDeshacer("footerContacto",f.footer?.contacto || "");
+  setTextDeshacer("footerPreparadoTexto",f.footer?.preparado_texto || "Documento preparado por:");
+
+  data.tipo = f.tipo || "Cotización";
+  data.responsable = f.responsable || "";
+  data.items = JSON.parse(JSON.stringify(estado.items && estado.items.length ? estado.items : [{ kind:"item", desc:"", qty:1, price:0 }]));
+
+  aplicarModoNumeroDocumento(data.tipo,false);
+  actualizarEtiquetaIva(data.tipo);
+  render();
+  revisarClienteActual();
+
+  restaurandoDeshacer = false;
+  actualizarBotonDeshacer();
+  showToast("Cambio deshecho", "ok");
 }
 
 function crearSnapshotActual(){
@@ -833,6 +962,8 @@ function drawFacturaReferenciaHeader(doc,snapshot){
   // - Fecha a 5.5 cm desde arriba.
   // - Factura a 6 cm desde arriba.
   // - Resto del bloque principal arranca a 7 cm desde arriba.
+  // - RIF a 9 cm desde arriba.
+  // - Tabla a 9.6 cm desde arriba.
   const left = 18;
   const centerData = W / 2 + 20;
 
@@ -854,8 +985,8 @@ function drawFacturaReferenciaHeader(doc,snapshot){
     drawTextFactura(doc,dirLines[1],centerData,86,{ size:10.2, align:"center" });
   }
 
-  drawTextFactura(doc,"RIF.:",24,98,{ size:10.4 });
-  drawTextFactura(doc,form.rif || "",38,98,{ size:10.4 });
+  drawTextFactura(doc,"RIF.:",24,90,{ size:10.4 });
+  drawTextFactura(doc,form.rif || "",38,90,{ size:10.4 });
 }
 
 function drawFacturaReferenciaTable(doc,items){
@@ -865,7 +996,7 @@ function drawFacturaReferenciaTable(doc,items){
   const x3 = 127;
   const x4 = 154;
   const right = 184;
-  const y = 107;
+  const y = 96;
   const headerH = 9;
   const rowH = 16;
 
@@ -1663,7 +1794,7 @@ function renderCotizacionesPrevias(){
         </td>
 
         <td>${html(c.telefono || "")}</td>
-        <td><b>${currency(c.total || 0)}</b></td>
+        <td><b>${currencyDocumento(c.total || 0,c.tipo_documento)}</b></td>
 
         <td class="center">
           <button class="mini-btn dark" type="button" data-ver-cot="${Number(c.id)}">Abrir</button>
@@ -2017,6 +2148,12 @@ function activarTab(cual){
 }
 
 function bindEvents(){
+  document.addEventListener("focusin", e => {
+    if(e.target.matches('#panelNueva input,#panelNueva textarea,#panelNueva select,#panelNueva [contenteditable="true"]')){
+      guardarEstadoDeshacer();
+    }
+  });
+
   document.addEventListener("input", e => {
     if(e.target.matches("[data-index][data-field]")){
       const index = Number(e.target.dataset.index);
@@ -2129,6 +2266,7 @@ function bindEvents(){
   $("addSep")?.addEventListener("click", addSeparator);
 
   $("previewBtn")?.addEventListener("click", previsualizarDocumento);
+  $("undoBtn")?.addEventListener("click", deshacerUltimoCambio);
   $("guardarPreview")?.addEventListener("click", guardarDocumentoDesdePreview);
   $("imprimirPreview")?.addEventListener("click", imprimirDocumentoDesdePreview);
   $("cerrarPreview")?.addEventListener("click", cerrarPreview);
@@ -2178,6 +2316,7 @@ async function iniciarCotizador(){
 
     await cargarClientesCotizador();
     await cargarCotizacionesPrevias();
+    actualizarBotonDeshacer();
   }catch(error){
     console.error("Error iniciando cotizador:", error);
     showToast("Error iniciando cotizador: " + (error.message || error), "err");
