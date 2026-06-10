@@ -699,6 +699,15 @@ body{
   }
 }
 
+
+.suggestItem small{
+  display:block;
+  margin-top:3px;
+  color:#6b7280;
+  font-size:10px;
+  font-weight:800;
+}
+
 </style>
 </head>
 
@@ -777,7 +786,7 @@ body{
         <div class="field"><label>N° pedido</label><input id="pNum" class="input" placeholder="Ej: TV-00001"></div>
         <div class="field"><label>Fecha</label><input id="pFecha" type="date" class="input"></div>
         <div class="field"><label>Operador</label><select id="pOper" class="select"><option>Roberto</option><option>Chico</option><option>Carlos</option><option>Alejandro</option><option>Rubén</option><option>Gabriela</option></select></div>
-        <div class="field"><label>Cliente</label><input id="pCliente" class="input" autocomplete="off" oninput="buscarClientes(this.value)"><div id="clienteSuggest" class="suggestBox"></div></div>
+        <div class="field"><label>Cliente · Comanda</label><input id="pCliente" class="input" autocomplete="off" placeholder="Buscar cliente de Comanda" oninput="buscarClientes(this.value)"><div id="clienteSuggest" class="suggestBox"></div></div>
         <div class="field"><label>Cantidad</label><input id="pCant" class="input"></div>
         <div class="field wide2"><label>Descripción</label><input id="pDesc" class="input"></div>
         <div class="field"><label>Tipo letrero</label><select id="pTipo" class="select" onchange="changeTipo()"></select></div>
@@ -1057,7 +1066,7 @@ async function loadAll(){
     let [tiposRes,pedidosRes,clientesRes,catalogoRes,trabajadoresRes]=await Promise.all([
       sb.from('prod_tipos_letrero').select('*').order('nombre'),
       sb.from('prod_pedidos').select('*').order('created_at',{ascending:false}),
-      sb.from('prod_clientes').select('*').order('nombre'),
+      sb.from('clientes').select('id,nombre,telefono,correo,rif_cedula,direccion,activo').neq('activo',false).order('nombre'),
       sb.from('prod_procesos_catalogo').select('*').order('orden').order('nombre'),
       sb.from('operadores').select('nombre,activo').order('nombre')
     ]);
@@ -1340,7 +1349,10 @@ async function buscarClientes(q){
   selectedClienteId=null;
   if(!q || q.trim().length<2){clienteSuggest.classList.remove('show');return}
   let lista=db.clientes.filter(c=>String(c.nombre||'').toLowerCase().includes(q.toLowerCase())).slice(0,8);
-  clienteSuggest.innerHTML=lista.map(c=>`<div class="suggestItem" onclick="selectCliente('${c.id}','${String(c.nombre).replace(/'/g,"\\'")}')">${c.nombre}</div>`).join('')+`<div class="suggestItem" onclick="selectCliente('','${q.replace(/'/g,"\\'")}')">+ Usar nuevo cliente: ${q}</div>`;
+  clienteSuggest.innerHTML=lista.map(c=>{
+    const extra=[c.rif_cedula,c.telefono].filter(Boolean).join(' · ');
+    return `<div class="suggestItem" onclick="selectCliente('${c.id}','${String(c.nombre).replace(/'/g,"\\'")}')">${c.nombre}${extra?`<br><small>${extra}</small>`:''}</div>`;
+  }).join('')+`<div class="suggestItem" onclick="selectCliente('','${q.replace(/'/g,"\\'")}')">+ Crear cliente en Comanda: ${q}</div>`;
   clienteSuggest.classList.add('show');
 }
 function selectCliente(id,nombre){selectedClienteId=id||null;pCliente.value=nombre;clienteSuggest.classList.remove('show')}
@@ -1348,18 +1360,37 @@ function selectCliente(id,nombre){selectedClienteId=id||null;pCliente.value=nomb
 async function ensureCliente(nombre){
   nombre=(nombre||'').trim();
   if(!nombre)return null;
+
   if(selectedClienteId)return selectedClienteId;
+
   let exist=db.clientes.find(c=>String(c.nombre||'').toLowerCase()===nombre.toLowerCase());
   if(exist)return exist.id;
+
   const sb=await getSupabase();
-  const nuevo={nombre,telefono:null,email:null,nota:'Creado desde producción modular'};
+
+  const nuevo={
+    nombre:nombre,
+    telefono:'',
+    correo:'',
+    notas:'Creado desde producción modular',
+    activo:true
+  };
+
   if(sb&&online){
-    const {data,error}=await sb.from('prod_clientes').insert(nuevo).select().single();
+    const {data,error}=await sb
+      .from('clientes')
+      .insert(nuevo)
+      .select('id,nombre,telefono,correo,rif_cedula,direccion,activo')
+      .single();
+
     if(error)throw error;
+
     db.clientes.push(data);
     return data.id;
   }else{
-    nuevo.id=uid(); db.clientes.push(nuevo); return nuevo.id;
+    nuevo.id=uid();
+    db.clientes.push(nuevo);
+    return nuevo.id;
   }
 }
 
