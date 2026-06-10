@@ -1162,6 +1162,14 @@ html,body{
   }
 }
 
+
+/* Locación y plantilla */
+.quickChip:nth-child(2){
+  max-width:180px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
 </style>
 </head>
 
@@ -1245,11 +1253,13 @@ html,body{
         <div class="field"><label>Tipo letrero</label><select id="pTipo" class="select" onchange="changeTipo()"></select></div>
         <div class="field"><label>Estado</label><select id="pEstado" class="select"><option>Solicitud</option><option>En revisión</option><option>En adaptación</option><option>En producción</option><option>En proveedor externo</option><option>Pendiente por instalación</option><option>En instalación</option><option>Revisado</option><option>Listo</option><option>Entregado</option></select></div>
         <div class="field"><label>Interior/exterior</label><select id="pUbic" class="select"><option>No definido</option><option>Interior</option><option>Exterior</option></select></div>
+        <div class="field"><label>Locación</label><input id="pLocacion" class="input" placeholder="Ej: La Viña, San Diego, Taller"></div>
         <div class="field"><label>Instalación</label><select id="pInst" class="select" onchange="updateConditionalFields()"><option>No</option><option>Sí</option></select></div>
         <div class="field" data-inst-field><label>Altura</label><input id="pAlt" class="input" placeholder="Ej: 2.5 m" oninput="drawAlerts()"></div>
         <div class="field" data-inst-field><label>Superficie</label><select id="pSup" class="select" onchange="drawAlerts()"><option>No aplica</option><option>Drywall</option><option>Bloque</option><option>Concreto</option><option>Vidrio</option><option>ACM</option><option>Metal</option><option>Madera</option><option>Otro</option></select></div>
         <div class="field" data-inst-field><label>Acceso</label><select id="pAcc" class="select" onchange="drawAlerts()"><option>No aplica</option><option>Escalera</option><option>Andamio</option><option>Elevador</option></select></div>
         <div class="field" data-inst-field><label>Tipo de fijación</label><select id="pFix" class="select" onchange="drawAlerts()"><option>No aplica</option><option>Chupón</option><option>Doble faz</option><option>Clip de tornillo</option><option>Tornillo directo</option><option>Silicón / adhesivo</option><option>Otro</option></select></div>
+        <div class="field" data-inst-field><label>Tipo de plantilla</label><select id="pPlantilla" class="select" onchange="drawAlerts()"><option>No aplica</option><option>Papel</option><option>Cartón</option></select></div>
         <div class="field"><label>Luz</label><select id="pLuz" class="select" onchange="updateConditionalFields()"><option>No</option><option>Sí</option></select></div>
         <div class="field" data-luz-field><label>Tipo luz</label><select id="pTLuz" class="select" onchange="drawAlerts()"><option>No aplica</option><option>Frontal</option><option>Posterior</option><option>Frontal / posterior</option></select></div>
         <div class="field" data-luz-field><label>Tipo de LED / cinta</label><select id="pLed" class="select" onchange="drawAlerts()"><option>No aplica</option><option>Módulo</option><option>Cinta</option><option>Módulo + cinta</option></select></div>
@@ -1389,6 +1399,10 @@ html,body{
         <div class="field">
           <label>Tipo</label>
           <select id="eTipo" class="select"></select>
+        </div>
+        <div class="field">
+          <label>Locación</label>
+          <input id="eLocacion" class="input" placeholder="Ej: La Viña, Taller">
         </div>
         <div class="field wide4">
           <label>Descripción corta</label>
@@ -1551,8 +1565,8 @@ async function loadAll(){
 
     db.pedidos=(pedidosRes.data||[]).map(p=>({
       id:p.id,num:p.numero_pedido,fecha:p.fecha,entrega:p.fecha_entrega||'',oper:p.operador,cliente:p.cliente_nombre||'',cliente_id:p.cliente_id,
-      desc:p.descripcion,cant:p.cantidad,tipoId:p.tipo_id,tipo:p.tipo_nombre,cat:p.categoria,estado:p.estado,ubic:p.ubicacion||'No definido',
-      inst:p.instalacion?'Sí':'No',alt:p.altura||'',sup:p.superficie||'No aplica',acc:p.acceso||'No aplica',fix:p.fijacion||'No aplica',
+      desc:p.descripcion,cant:p.cantidad,tipoId:p.tipo_id,tipo:p.tipo_nombre,cat:p.categoria,estado:p.estado,ubic:p.ubicacion||'No definido',locacion:p.locacion||'',
+      inst:p.instalacion?'Sí':'No',alt:p.altura||'',sup:p.superficie||'No aplica',acc:p.acceso||'No aplica',fix:p.fijacion||'No aplica',plantilla:p.tipo_plantilla||'No aplica',
       luz:p.luz?'Sí':'No',tluz:p.tipo_luz||'No aplica',led:p.tipo_led||'No aplica',cluz:p.color_luz||'No aplica',obs:p.observaciones||'',procs:p.procesos||[]
     }));
 
@@ -1632,8 +1646,9 @@ function pedidoQuickChips(p){
   const items=(p.procs||[]).length;
   return `<div class="quickChips">
     <span class="quickChip">👤 ${p.cliente||'Cliente'}</span>
-    <span class="quickChip">📍 ${p.ubic||'No definido'}</span>
+    <span class="quickChip">📍 ${p.locacion||p.ubic||'No definido'}</span>
     <span class="quickChip">📦 ${items} item(s)</span>
+    ${p.inst==='Sí'?`<span class="quickChip">🧩 ${p.plantilla||'Plantilla?'}</span>`:''}
     ${entregaChip(p)}
   </div>`;
 }
@@ -1742,6 +1757,7 @@ function openExpress(){
   eCliente.value='';
   eCant.value='1';
   eDesc.value='';
+  eLocacion.value='';
   eTipo.innerHTML=db.tipos.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   expressModal.classList.add('show');
 }
@@ -1784,6 +1800,7 @@ async function saveExpress(){
       cat:t.cat,
       estado:eEstado.value,
       ubic:'No definido',
+      locacion:eLocacion.value||'',
       inst:'No',
       alt:'',
       sup:'No aplica',
@@ -1819,6 +1836,8 @@ async function saveExpress(){
         superficie:'No aplica',
         acceso:'No aplica',
         fijacion:'No aplica',
+        locacion:item.locacion,
+        tipo_plantilla:'No aplica',
         luz:false,
         tipo_luz:'No aplica',
         tipo_led:'No aplica',
@@ -1845,8 +1864,8 @@ function openPedido(id){
   const p=id?db.pedidos.find(x=>x.id===id):null, t=db.tipos[0];
   pedidoTitle.textContent=id?'Editar pedido':'Nuevo pedido';
   pNum.value=p?p.num:nextPedidoNo(); pFecha.value=p?p.fecha:hoy(); pEntrega.value=p?p.entrega:''; pOper.value=p?p.oper:operadorActualNombre(); pCliente.value=p?p.cliente:''; selectedClienteId=p?p.cliente_id:null;
-  pCant.value=p?p.cant:''; pDesc.value=p?p.desc:''; pTipo.value=p?p.tipoId:(t?t.id:''); pEstado.value=p?p.estado:'Solicitud'; pUbic.value=p?p.ubic:'No definido';
-  pInst.value=p?p.inst:'No'; pAlt.value=p?p.alt:''; pSup.value=p?p.sup:'No aplica'; pAcc.value=p?p.acc:'No aplica'; pFix.value=p?(p.fix||'No aplica'):'No aplica';
+  pCant.value=p?p.cant:''; pDesc.value=p?p.desc:''; pTipo.value=p?p.tipoId:(t?t.id:''); pEstado.value=p?p.estado:'Solicitud'; pUbic.value=p?p.ubic:'No definido'; pLocacion.value=p?p.locacion:'';
+  pInst.value=p?p.inst:'No'; pAlt.value=p?p.alt:''; pSup.value=p?p.sup:'No aplica'; pAcc.value=p?p.acc:'No aplica'; pFix.value=p?(p.fix||'No aplica'):'No aplica'; pPlantilla.value=p?(p.plantilla||'No aplica'):'No aplica';
   pLuz.value=p?p.luz:'No'; pTLuz.value=p?p.tluz:'No aplica'; pLed.value=p?(p.led||'No aplica'):'No aplica'; pCLuz.value=p?p.cluz:'No aplica'; pObs.value=p?p.obs:'';
   tmpProcs=p?JSON.parse(JSON.stringify(p.procs)):copyProcs(t||{procs:[]});
   if(!p&&t) applyTipoSettings(t,false);
@@ -1873,7 +1892,7 @@ function editProcPedido(id){let p=tmpProcs.find(x=>x.id===id),n=prompt('Proceso:
 
 function drawAlerts(){
   let a=[];
-  if(pInst.value==='Sí'){if(!pAlt.value.trim())a.push(['bad','Falta altura de instalación']);if(pSup.value==='No aplica')a.push(['bad','Falta tipo de superficie']);if(pAcc.value==='No aplica')a.push(['','Falta escalera / andamio / elevador']);if(pFix.value==='No aplica')a.push(['','Falta tipo de fijación'])}
+  if(pInst.value==='Sí'){if(!pAlt.value.trim())a.push(['bad','Falta altura de instalación']);if(pSup.value==='No aplica')a.push(['bad','Falta tipo de superficie']);if(pAcc.value==='No aplica')a.push(['','Falta escalera / andamio / elevador']);if(pFix.value==='No aplica')a.push(['','Falta tipo de fijación']);if(pPlantilla.value==='No aplica')a.push(['bad','Falta tipo de plantilla: Papel o Cartón'])}
   if(pLuz.value==='Sí'){if(pTLuz.value==='No aplica')a.push(['bad','Falta tipo de iluminación']);if(pLed.value==='No aplica')a.push(['','Falta tipo de LED / cinta']);if(pCLuz.value==='No aplica')a.push(['','Falta color de luz'])}
   if(!a.length)a.push(['','Sin alertas críticas']);
   alerts.innerHTML=a.map(x=>`<div class="alert ${x[0]}">${x[1]}</div>`).join('');
@@ -1941,13 +1960,13 @@ async function savePedido(){
     let clienteId=await ensureCliente(pCliente.value);
     let item={
       id:editPedido||uid(), num:pNum.value||nextPedidoNo(), fecha:pFecha.value||hoy(), entrega:pEntrega.value||'', oper:pOper.value, cliente:pCliente.value||'Cliente sin nombre', cliente_id:clienteId,
-      cant:pCant.value||'1', desc:pDesc.value||'Sin descripción', tipoId:t.id, tipo:t.name, cat:t.cat, estado:pEstado.value, ubic:pUbic.value,
-      inst:pInst.value, alt:pAlt.value, sup:pSup.value, acc:pAcc.value, fix:pFix.value, luz:pLuz.value, tluz:pTLuz.value, led:pLed.value, cluz:pCLuz.value, obs:pObs.value, procs:tmpProcs
+      cant:pCant.value||'1', desc:pDesc.value||'Sin descripción', tipoId:t.id, tipo:t.name, cat:t.cat, estado:pEstado.value, ubic:pUbic.value, locacion:pLocacion.value,
+      inst:pInst.value, alt:pAlt.value, sup:pSup.value, acc:pAcc.value, fix:pFix.value, plantilla:pPlantilla.value, luz:pLuz.value, tluz:pTLuz.value, led:pLed.value, cluz:pCLuz.value, obs:pObs.value, procs:tmpProcs
     };
 
     const sb=await getSupabase();
     if(sb&&online){
-      const payload={id:item.id,numero_pedido:item.num,fecha:item.fecha,fecha_entrega:item.entrega||null,operador:item.oper,cliente_id:item.cliente_id,cliente_nombre:item.cliente,descripcion:item.desc,cantidad:item.cant,tipo_id:item.tipoId,tipo_nombre:item.tipo,categoria:item.cat,estado:item.estado,ubicacion:item.ubic,instalacion:item.inst==='Sí',altura:item.alt,superficie:item.sup,acceso:item.acc,fijacion:item.fix,luz:item.luz==='Sí',tipo_luz:item.tluz,tipo_led:item.led,color_luz:item.cluz,observaciones:item.obs,procesos:item.procs};
+      const payload={id:item.id,numero_pedido:item.num,fecha:item.fecha,fecha_entrega:item.entrega||null,operador:item.oper,cliente_id:item.cliente_id,cliente_nombre:item.cliente,descripcion:item.desc,cantidad:item.cant,tipo_id:item.tipoId,tipo_nombre:item.tipo,categoria:item.cat,estado:item.estado,ubicacion:item.ubic,locacion:item.locacion,tipo_plantilla:item.plantilla,instalacion:item.inst==='Sí',altura:item.alt,superficie:item.sup,acceso:item.acc,fijacion:item.fix,luz:item.luz==='Sí',tipo_luz:item.tluz,tipo_led:item.led,color_luz:item.cluz,observaciones:item.obs,procesos:item.procs};
       const {error}=await sb.from('prod_pedidos').upsert(payload);
       if(error) throw error;
     }
@@ -2128,6 +2147,7 @@ td{font-size:10px;padding:7px;border:1px solid #d9deea;vertical-align:top}
         <div class="item"><small>Tipo</small><b>${escape(p.tipo)}</b></div>
         <div class="item"><small>Estado</small><span class="pill">${escape(p.estado)}</span></div>
         <div class="item"><small>Interior/exterior</small><b>${escape(p.ubic)}</b></div>
+        <div class="item"><small>Locación</small><b>${escape(p.locacion||'Sin locación')}</b></div>
       </div>
     </div>
 
@@ -2139,6 +2159,7 @@ td{font-size:10px;padding:7px;border:1px solid #d9deea;vertical-align:top}
         <div class="item"><small>Superficie</small><b>${escape(p.sup)}</b></div>
         <div class="item"><small>Acceso</small><b>${escape(p.acc)}</b></div>
         <div class="item"><small>Fijación</small><b>${escape(p.fix)}</b></div>
+        <div class="item"><small>Plantilla</small><b>${escape(p.plantilla||'No aplica')}</b></div>
         <div class="item"><small>Luz</small><b>${escape(p.luz)}</b></div>
         <div class="item"><small>Tipo luz</small><b>${escape(p.tluz)}</b></div>
         <div class="item"><small>LED/cinta</small><b>${escape(p.led)}</b></div>
