@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v49 factura preview manual errada");
+console.log("COTIZADOR JS conectado v50 factura preview manual errada gris/rojo");
 
 const $ = (id) => document.getElementById(id);
 
