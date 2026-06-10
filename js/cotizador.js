@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v51 factura referencia exacta + eliminar solo Roberto");
+console.log("COTIZADOR JS conectado v52 factura 10% menor + posiciones ajustadas + eliminar solo Roberto");
 
 const $ = (id) => document.getElementById(id);
 
@@ -808,11 +808,17 @@ function cantidadFactura(n){
   });
 }
 
+const FACTURA_SCALE = 0.90;
+
+function facturaFontSize(size){
+  return Number(size || 10.4) * FACTURA_SCALE;
+}
+
 function drawTextFactura(doc,text,x,y,opts={}){
   const value = String(text ?? "");
 
   doc.setFont("helvetica", opts.bold === false ? "normal" : "bold");
-  doc.setFontSize(opts.size || 10.4);
+  doc.setFontSize(facturaFontSize(opts.size || 10.4));
   doc.setTextColor(0,0,0);
 
   doc.text(value,x,y,{ align:opts.align || "left", baseline:"alphabetic" });
@@ -822,30 +828,34 @@ function drawFacturaReferenciaHeader(doc,snapshot){
   const form = snapshot.form;
   const W = doc.internal.pageSize.getWidth();
 
-  // Coordenadas tomadas del PDF de referencia impreso.
+  // Ajuste v52:
+  // - Todo el texto de factura se bajó 10% de tamaño.
+  // - Fecha a 5.5 cm desde arriba.
+  // - Factura a 6 cm desde arriba.
+  // - Resto del bloque principal arranca a 7 cm desde arriba.
   const left = 18;
-  const right = W - 27;
+  const centerData = W / 2 + 20;
 
-  drawTextFactura(doc,"FECHA:",142,58,{ size:10.4, align:"right" });
-  drawTextFactura(doc,formatFechaFactura(form.fecha),178,58,{ size:10.4, align:"right" });
+  drawTextFactura(doc,"FECHA:",142,55,{ size:10.4, align:"right" });
+  drawTextFactura(doc,formatFechaFactura(form.fecha),178,55,{ size:10.4, align:"right" });
 
-  drawTextFactura(doc,"FACTURA #",142,72,{ size:10.4, align:"right" });
-  drawTextFactura(doc,numeroFacturaVisible(form.numero),178,72,{ size:11.2, align:"right" });
+  drawTextFactura(doc,"FACTURA #",142,60,{ size:10.4, align:"right" });
+  drawTextFactura(doc,numeroFacturaVisible(form.numero),178,60,{ size:11.2, align:"right" });
 
-  drawTextFactura(doc,"NOMBRE O RAZON SOCIAL:",left,91,{ size:10.4 });
-  drawTextFactura(doc,(form.cliente || "").toUpperCase(),W/2 + 20,91,{ size:15.2, align:"center" });
+  drawTextFactura(doc,"NOMBRE O RAZON SOCIAL:",left,70,{ size:10.4 });
+  drawTextFactura(doc,(form.cliente || "").toUpperCase(),centerData,70,{ size:15.2, align:"center" });
 
-  drawTextFactura(doc,"DIRECCION FISCAL:",23,106,{ size:10.4 });
+  drawTextFactura(doc,"DIRECCION FISCAL:",23,82,{ size:10.4 });
 
   const dir = String(form.direccion || "");
   const dirLines = doc.splitTextToSize(dir, 92).slice(0,2);
-  drawTextFactura(doc,dirLines[0] || "",W/2 + 20,103,{ size:10.2, align:"center" });
+  drawTextFactura(doc,dirLines[0] || "",centerData,80,{ size:10.2, align:"center" });
   if(dirLines[1]){
-    drawTextFactura(doc,dirLines[1],W/2 + 20,110,{ size:10.2, align:"center" });
+    drawTextFactura(doc,dirLines[1],centerData,86,{ size:10.2, align:"center" });
   }
 
-  drawTextFactura(doc,"RIF.:",24,122,{ size:10.4 });
-  drawTextFactura(doc,form.rif || "",38,122,{ size:10.4 });
+  drawTextFactura(doc,"RIF.:",24,98,{ size:10.4 });
+  drawTextFactura(doc,form.rif || "",38,98,{ size:10.4 });
 }
 
 function drawFacturaReferenciaTable(doc,items){
@@ -855,23 +865,23 @@ function drawFacturaReferenciaTable(doc,items){
   const x3 = 127;
   const x4 = 154;
   const right = 184;
-  const y = 131;
-  const headerH = 10;
-  const rowH = 18;
+  const y = 107;
+  const headerH = 9;
+  const rowH = 16;
 
   doc.setDrawColor(0,0,0);
-  doc.setLineWidth(.45);
+  doc.setLineWidth(.42);
 
   doc.setFillColor(175,175,175);
   doc.rect(left,y,right-left,headerH,"FD");
 
   [x1,x2,x3,x4].forEach(x => doc.line(x,y,x,y+headerH));
 
-  drawTextFactura(doc,"#",(left+x1)/2,y+6.7,{ size:10.4, align:"center" });
-  drawTextFactura(doc,"DESCRIPCION",(x1+x2)/2,y+6.7,{ size:10.4, align:"center" });
-  drawTextFactura(doc,"CANT (m)",(x2+x3)/2,y+6.7,{ size:10.4, align:"center" });
-  drawTextFactura(doc,"P.U",(x3+x4)/2,y+6.7,{ size:10.4, align:"center" });
-  drawTextFactura(doc,"SUB TOTAL",(x4+right)/2,y+6.7,{ size:10.4, align:"center" });
+  drawTextFactura(doc,"#",(left+x1)/2,y+6.1,{ size:10.4, align:"center" });
+  drawTextFactura(doc,"DESCRIPCION",(x1+x2)/2,y+6.1,{ size:10.4, align:"center" });
+  drawTextFactura(doc,"CANT (m)",(x2+x3)/2,y+6.1,{ size:10.4, align:"center" });
+  drawTextFactura(doc,"P.U",(x3+x4)/2,y+6.1,{ size:10.4, align:"center" });
+  drawTextFactura(doc,"SUB TOTAL",(x4+right)/2,y+6.1,{ size:10.4, align:"center" });
 
   const visibles = (items || []).filter(it => it.kind === "item").slice(0,6);
   const filas = Math.max(1,visibles.length);
@@ -890,13 +900,15 @@ function drawFacturaReferenciaTable(doc,items){
     const price = Number(item.price || 0);
     const total = qty * price;
     const descLines = doc.splitTextToSize(String(item.desc || ""), x2 - x1 - 8).slice(0,2);
-    const descY = rowY + (descLines.length > 1 ? 7 : 10.2);
+    const descY = rowY + (descLines.length > 1 ? 6.4 : 9.2);
 
-    drawTextFactura(doc,String(i+1),(left+x1)/2,rowY+10.4,{ size:10.4, align:"center" });
+    drawTextFactura(doc,String(i+1),(left+x1)/2,rowY+9.4,{ size:10.4, align:"center" });
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(facturaFontSize(10.4));
     doc.text(descLines,(x1+x2)/2,descY,{ align:"center" });
-    drawTextFactura(doc,cantidadFactura(qty),(x2+x3)/2,rowY+10.4,{ size:10.4, align:"center" });
-    drawTextFactura(doc,moneyFactura(price,3),(x3+x4)/2,rowY+10.4,{ size:10.4, align:"center" });
-    drawTextFactura(doc,moneyFactura(total,2),right-1,rowY+10.4,{ size:10.4, align:"right" });
+    drawTextFactura(doc,cantidadFactura(qty),(x2+x3)/2,rowY+9.4,{ size:10.4, align:"center" });
+    drawTextFactura(doc,moneyFactura(price,3),(x3+x4)/2,rowY+9.4,{ size:10.4, align:"center" });
+    drawTextFactura(doc,moneyFactura(total,2),right-1,rowY+9.4,{ size:10.4, align:"right" });
   }
 
   doc.setLineWidth(.2);
