@@ -3,55 +3,148 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Tuttovinilos - Cotizador PRO</title>
+<title>Producción Modular · Tuttovinilos</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/cotizador.css?v=3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/menu.css?v=34">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=29"></script>
-<script src="js/auth.js?v=31"></script>
-
 <style>
-/* =========================================================
-   COTIZADOR · MENÚ GLOBAL v48
-   Usa el mismo header/menu que index, clientes, materiales, etc.
-========================================================= */
-#authTopbar{display:none!important}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f3f5fb;--card:#fff;--line:#e3e8f4;--line2:#cbd5e1;
+  --text:#172033;--muted:#6b7280;--purple:#4b1fa3;--purple2:#6b3cea;
+  --blue:#1754d6;--green:#08794b;--red:#c71f35;--yellow:#9a6500;
+  --soft:#f8f9ff;--shadow:0 16px 40px rgba(31,39,78,.08);
+  --head:'Montserrat',Inter,Arial,sans-serif;--body:'Inter',Arial,sans-serif;
+}
+body{font-family:var(--body);background:var(--bg);color:var(--text);padding-bottom:40px}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer;border:0}
+.hidden{display:none!important}
 
+#authTopbar{display:none!important}
+.header .logo img{display:block!important;width:112px!important;max-width:112px!important;height:auto!important;object-fit:contain!important}
+.header .logo small{display:none!important}
+.header-tabs[data-auth-menu]{margin-left:auto!important}
+@media(max-width:980px){.header .logo img{width:118px!important;max-width:118px!important}}
+
+.wrap{max-width:1450px;margin:auto;padding:15px}
+.hero,.toolbar,.card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}
+.heroHead{display:grid;grid-template-columns:1fr 360px;gap:18px;padding:18px;border-bottom:1px solid var(--line)}
+.hero h1{font-family:var(--head);font-size:24px;font-weight:900;color:#141b31}
+.hero p{font-size:13px;color:var(--muted);margin-top:5px}
+.btns{display:grid;gap:8px}
+.btn{border-radius:13px;padding:10px 13px;font-size:12px;font-weight:900;background:#f1f3fa;color:#333a55;border:1px solid #e2e6f2}
+.primary{background:linear-gradient(135deg,var(--purple),var(--purple2));color:#fff;border-color:transparent}
+.green{background:#e9faf2;color:#08794b;border-color:#bce8d5}
+.red{background:#fff0f2;color:#c71f35;border-color:#ffd0d7}
+.blue{background:#edf4ff;color:#1754d6;border-color:#cfe0ff}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:14px 18px 18px}
+.stat{background:#f8f9ff;border:1px solid var(--line);border-radius:16px;padding:12px}
+.stat b{display:block;font-size:23px;font-weight:900}
+.stat span{display:block;margin-top:4px;color:var(--muted);font-size:10px;font-weight:900;text-transform:uppercase}
+.toolbar{margin-top:14px;padding:12px;display:grid;grid-template-columns:1.5fr .8fr .8fr .8fr .8fr auto;gap:10px}
+.field{display:flex;flex-direction:column;gap:5px;position:relative}
+.field label{font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:900}
+.input,.select,.textarea{width:100%;border:1px solid #e2e6f2;background:#fff;border-radius:13px;padding:10px 11px;min-height:40px;font-size:13px;font-weight:700;color:var(--text);outline:none}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(75,31,163,.12)}
+.textarea{min-height:78px;resize:vertical}
+.tabs{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.tab{padding:11px 14px;border-radius:15px;background:#fff;border:1px solid var(--line);font-weight:900;color:#4a5068;box-shadow:0 8px 18px rgba(35,45,90,.06)}
+.tab.active{background:#211043;color:#fff}
+.panel{margin-top:14px}
+.tableBox{overflow:auto}
+.table{width:100%;border-collapse:collapse;min-width:1120px}
+.table th{background:#f8f9ff;color:#596078;font-size:10px;text-transform:uppercase;letter-spacing:.3px;font-weight:900;text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.table td{padding:12px 10px;border-bottom:1px solid var(--line);font-size:12px;font-weight:750;vertical-align:middle}
+.client{font-weight:900;color:#35127e}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border-radius:99px;font-size:10px;font-weight:900;white-space:nowrap}
+.estado{background:#edf4ff;color:#1754d6}
+.estado.proveedor,.estado.instalacion{background:#fff7df;color:#9a6500}
+.estado.listo,.estado.entregado{background:#e9faf2;color:#08794b}
+.estado.solicitud{background:#efe8ff;color:#4b1fa3}
+.progress{min-width:70px}
+.percentNum{display:inline-flex;align-items:center;justify-content:center;min-width:58px;border-radius:14px;background:#efe8ff;color:#4b1fa3;font-size:18px;font-weight:900;padding:8px 10px}
+.rowBtns{display:flex;gap:6px;justify-content:flex-end}
+.actionBtn{min-width:34px;height:32px;border-radius:11px;font-size:10px;font-weight:900;border:1px solid transparent;padding:0 8px}
+.actionEdit{background:#edf4ff;color:#1754d6;border-color:#cfe0ff}
+.actionPdf{background:#e9faf2;color:#08794b;border-color:#bce8d5}
+.actionDup{background:#efe8ff;color:#4b1fa3;border-color:#dccdff}
+.actionDel{background:#fff0f2;color:#c71f35;border-color:#ffd0d7}
+.templates{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.template{padding:15px}
+.template h3{font-size:16px;font-weight:900}
+.muted{color:var(--muted);font-size:12px}
+.plist{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+.proc{border:1px solid var(--line);background:#fbfcff;border-radius:15px;padding:10px}
+.procTitle{display:flex;justify-content:space-between;font-size:12px;font-weight:900}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{background:#fff;border:1px solid #e9ecf6;border-radius:99px;padding:5px 8px;font-size:10px;font-weight:800;color:#69708a}
+.colorDot{width:18px;height:18px;border-radius:50%;display:inline-block;border:2px solid #fff;box-shadow:0 0 0 1px #d8def0}
+.modalBack{position:fixed;inset:0;background:rgba(10,12,22,.55);z-index:99;display:none;place-items:center;padding:15px}
+.modalBack.show{display:grid}
+.modal{background:#fff;width:min(1020px,100%);max-height:92vh;overflow:auto;border-radius:24px;box-shadow:0 25px 80px rgba(0,0,0,.25)}
+.modalHead{position:sticky;top:0;background:#fff;z-index:2;padding:18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}
+.modalHead h2{font-family:var(--head);font-size:20px}
+.modalBody{padding:18px}
+.form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.wide2{grid-column:span 2}.wide4{grid-column:span 4}
+.section{margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.checks{display:flex;flex-direction:column;gap:10px}
+.check{border:1px solid var(--line);border-radius:17px;padding:12px;background:#fbfcff}
+.mainCheck{display:flex;gap:10px;align-items:flex-start}
+.mainCheck input{width:20px;height:20px;accent-color:var(--purple);margin-top:1px}
+.mainCheck strong{display:block;font-size:13px}
+.mainCheck small{display:block;color:var(--muted);margin-top:3px}
+.subchecks{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px;padding-left:30px}
+.subchecks label{font-size:12px;font-weight:750;color:#4c536d;display:flex;gap:7px;align-items:center}
+.subchecks input{width:16px;height:16px;accent-color:#12a86b}
+.foot{position:sticky;bottom:0;background:#fbfcff;border-top:1px solid var(--line);padding:14px 18px;display:flex;gap:10px;justify-content:flex-end}
+.editorRow{display:grid;grid-template-columns:1fr 2fr auto;gap:8px;margin-bottom:8px}
+.alert{background:#fff7df;color:#8a5c00;border:1px solid #ffe1a0;border-radius:13px;padding:8px 10px;font-size:12px;font-weight:800}
+.alert.bad{background:#fff0f2;color:#bc2639;border-color:#ffd0d7}
+.mutedField{opacity:.45;pointer-events:none}
+.suggestBox{position:absolute;left:0;right:0;top:100%;background:white;border:1px solid #dbe2ef;border-radius:14px;box-shadow:0 14px 34px rgba(15,23,42,.15);z-index:30;max-height:220px;overflow:auto;display:none}
+.suggestBox.show{display:block}
+.suggestItem{padding:10px 12px;font-size:12px;font-weight:800;border-bottom:1px solid #eef2f8;cursor:pointer}
+.suggestItem:hover{background:#f8f9ff}
+.statusLine{font-size:11px;color:var(--muted);font-weight:800;margin-top:4px}
+.catProcess{background:#f8f9ff;border:1px solid #dfe5f2;color:#28324a;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:900}
+.catProcess:hover{border-color:#4b1fa3;color:#4b1fa3;background:#f4efff}
+
+
+/* ===============================
+   FIX MENÚ TUTTOVINILOS / MÓVIL
+   =============================== */
 .header{
-  background:#172bd8!important;
-  border-bottom:0!important;
-  box-shadow:0 8px 20px rgba(21,59,255,.18)!important;
-  min-height:64px!important;
-  height:64px!important;
-  padding:14px 18px!important;
+  min-height:54px!important;
+  height:auto!important;
+  background:linear-gradient(90deg,#35127e,#5524b9)!important;
+  color:#fff!important;
   display:flex!important;
   align-items:center!important;
-  gap:14px!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  padding:8px 14px!important;
+  box-shadow:0 8px 24px rgba(33,14,80,.25)!important;
+  border:0!important;
   position:sticky!important;
   top:0!important;
-  z-index:300!important;
-  flex-wrap:nowrap!important;
-  overflow:hidden!important;
+  z-index:90!important;
 }
-
+.header a,
+.header button,
+.header-tabs a,
+.header-tabs button{
+  text-decoration:none!important;
+}
 .header .logo{
   display:flex!important;
   align-items:center!important;
   gap:8px!important;
-  flex:0 0 auto!important;
-  width:auto!important;
-  min-width:190px!important;
-  color:#fff!important;
-  border:0!important;
-  padding:0!important;
-  margin:0!important;
+  min-width:110px!important;
 }
-
 .header .logo img{
   display:block!important;
   width:112px!important;
@@ -59,92 +152,342 @@
   height:auto!important;
   object-fit:contain!important;
 }
-
 .header .logo small{
-  color:#fff!important;
-  font-weight:900!important;
-  font-size:11px!important;
-  letter-spacing:1.4px!important;
+  display:none!important;
 }
-
-.header-tabs[data-auth-menu]{
+.header-tabs,
+.header-tabs[data-auth-menu],
+#authMenu{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:7px!important;
+  flex-wrap:wrap!important;
   margin-left:auto!important;
+  font-size:0!important;
 }
-
-.controls{
-  top:64px!important;
+.header-tabs a,
+.header-tabs button,
+#authMenu a,
+#authMenu button{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:26px!important;
+  padding:6px 10px!important;
+  border-radius:999px!important;
+  background:rgba(255,255,255,.13)!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  color:#fff!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  text-transform:uppercase!important;
+  white-space:nowrap!important;
+}
+.header-tabs a.active,
+.header-tabs button.active,
+#authMenu a.active,
+#authMenu button.active{
+  background:#fff!important;
+  color:#401695!important;
+}
+#authTopbar,
+#supabaseStatus,
+.supabase-status{
+  display:none!important;
+}
+body > .menu-toggle,
+body > a[href="#menu"],
+body > button.menu-toggle{
+  display:none!important;
 }
 
 @media(max-width:980px){
   .header{
-    flex-wrap:wrap!important;
-    height:auto!important;
-    min-height:58px!important;
-    overflow:visible!important;
+    align-items:flex-start!important;
+    flex-direction:column!important;
+    gap:5px!important;
+    padding:6px 8px!important;
+    min-height:auto!important;
   }
-
-  .header .logo{
-    min-width:120px!important;
-  }
-
   .header .logo img{
-    width:118px!important;
-    max-width:118px!important;
+    width:92px!important;
+    max-width:92px!important;
   }
-
-  .header .logo small{
+  .header-tabs,
+  .header-tabs[data-auth-menu],
+  #authMenu{
+    width:100%!important;
+    justify-content:flex-start!important;
+    gap:5px!important;
+    overflow-x:auto!important;
+    flex-wrap:nowrap!important;
+    padding-bottom:3px!important;
+    scrollbar-width:none!important;
+  }
+  .header-tabs::-webkit-scrollbar,
+  #authMenu::-webkit-scrollbar{
     display:none!important;
   }
+  .header-tabs a,
+  .header-tabs button,
+  #authMenu a,
+  #authMenu button{
+    min-height:24px!important;
+    padding:6px 8px!important;
+    font-size:9px!important;
+    flex:0 0 auto!important;
+  }
+  .wrap{
+    padding:10px!important;
+  }
+  .heroHead{
+    padding:14px!important;
+  }
+}
 
-  .controls{
-    top:0!important;
+@media(max-width:1100px){.heroHead{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}.toolbar{grid-template-columns:1fr 1fr 1fr}.templates{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}.toolbar{grid-template-columns:1fr}.templates{grid-template-columns:1fr}.form{grid-template-columns:1fr}.wide2,.wide4{grid-column:span 1}.subchecks{grid-template-columns:1fr;padding-left:0}.editorRow{grid-template-columns:1fr}.table{min-width:980px}}
+
+/* Oculta textos/debug sueltos de conexión si algún script viejo los inyecta */
+body > div:empty,
+body > span:empty{display:none!important}
+
+
+/* ===============================
+   DESCRIPCIÓN COMPACTA EN TABLA
+   =============================== */
+.descPreview{
+  display:block;
+  max-width:220px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  cursor:pointer;
+  color:#172033;
+  font-weight:850;
+}
+.descPreview:hover{
+  color:#4b1fa3;
+  text-decoration:underline;
+}
+#descTextFull{
+  white-space:pre-wrap;
+  line-height:1.45;
+  font-size:14px;
+  font-weight:700;
+  color:#172033;
+  background:#f8f9ff;
+  border:1px solid #e3e8f4;
+  border-radius:16px;
+  padding:14px;
+  min-height:120px;
+}
+@media(max-width:760px){
+  .descPreview{
+    max-width:150px;
   }
 }
 
 
-.manual-number{
-  background:#fff!important;
-  border-color:var(--azul)!important;
-  box-shadow:0 0 0 3px rgba(21,59,255,.08)!important;
+/* ===============================
+   PROGRESO COMPACTO + DETALLE
+   =============================== */
+.progress{
+  min-width:74px!important;
+  max-width:82px!important;
 }
-
-.status-stack{
+.progressMini{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-width:68px;
+  border-radius:15px;
+  background:#efe8ff;
+  color:#4b1fa3;
+  padding:7px 8px;
+  cursor:pointer;
+  border:1px solid #dccdff;
+}
+.progressMini:hover{
+  background:#e6dcff;
+}
+.progressMini b{
+  font-size:18px;
+  font-weight:900;
+  line-height:1;
+}
+.progressMini small{
+  font-size:10px;
+  font-weight:900;
+  color:#5f35b0;
+  margin-top:4px;
+}
+#progressDetailBox{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.progressDetailTop{
   display:grid;
-  gap:6px;
-  justify-items:center;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
 }
-
-.mini-btn.error{
-  background:#fff1f2;
-  color:#dc2626;
-  border-color:#fecaca;
-}
-
-.mini-btn.error.active{
-  background:#dc2626;
-  color:#fff;
-  border-color:#dc2626;
-}
-
-.preview-modal{
-  width:min(980px,100%);
-  max-height:92vh;
-}
-
-.preview-frame{
-  width:100%;
-  height:70vh;
-  border:1px solid var(--linea);
-  border-radius:12px;
+.progressDetailCard{
   background:#f8f9ff;
+  border:1px solid #e3e8f4;
+  border-radius:16px;
+  padding:12px;
+}
+.progressDetailCard b{
+  display:block;
+  font-size:20px;
+  font-weight:900;
+  color:#4b1fa3;
+}
+.progressDetailCard span{
+  font-size:10px;
+  font-weight:900;
+  text-transform:uppercase;
+  color:#6b7280;
+}
+.progressProc{
+  border:1px solid #e3e8f4;
+  border-radius:16px;
+  padding:12px;
+  background:#fff;
+}
+.progressProc.done{
+  background:#f2fcf7;
+  border-color:#bce8d5;
+}
+.progressProc.pending{
+  background:#fffaf0;
+  border-color:#ffe1a0;
+}
+.progressProcHead{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  font-size:13px;
+  font-weight:900;
+}
+.progressProcHead span{
+  font-size:10px;
+  border-radius:999px;
+  padding:5px 8px;
+  font-weight:900;
+}
+.progressProc.done .progressProcHead span{
+  background:#e9faf2;
+  color:#08794b;
+}
+.progressProc.pending .progressProcHead span{
+  background:#fff7df;
+  color:#9a6500;
+}
+.progressSubs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:9px;
+}
+.progressSubs small{
+  background:#fff;
+  border:1px solid #e9ecf6;
+  border-radius:999px;
+  padding:5px 8px;
+  font-size:10px;
+  font-weight:800;
+  color:#596078;
+}
+@media(max-width:760px){
+  .progressDetailTop{
+    grid-template-columns:1fr;
+  }
+  .progressMini{
+    min-width:62px;
+    padding:6px 7px;
+  }
+  .progressMini b{
+    font-size:16px;
+  }
 }
 
-@media(max-width:700px){
-  .preview-frame{height:62vh}
+
+/* ===============================
+   PROGRESO MÁS VISIBLE
+   =============================== */
+.table th:nth-child(9),
+.table td:nth-child(9){
+  min-width:92px!important;
+  width:92px!important;
+}
+.progress{
+  min-width:78px!important;
+  max-width:86px!important;
+}
+.progressMini{
+  display:inline-flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:74px!important;
+  min-height:52px!important;
+  border-radius:16px!important;
+  background:linear-gradient(135deg,#4b1fa3,#6b3cea)!important;
+  color:#fff!important;
+  padding:8px 9px!important;
+  cursor:pointer!important;
+  border:0!important;
+  box-shadow:0 8px 18px rgba(75,31,163,.25)!important;
+}
+.progressMini b{
+  font-size:19px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  color:#fff!important;
+}
+.progressMini small{
+  font-size:10px!important;
+  font-weight:900!important;
+  color:rgba(255,255,255,.88)!important;
+  margin-top:5px!important;
+}
+.percentNum{
+  background:#4b1fa3!important;
+  color:#fff!important;
+  border-radius:14px!important;
+}
+@media(max-width:760px){
+  .table th:nth-child(9),
+  .table td:nth-child(9){
+    min-width:86px!important;
+    width:86px!important;
+  }
+  .progressMini{
+    min-width:68px!important;
+    min-height:48px!important;
+  }
+  .progressMini b{
+    font-size:17px!important;
+  }
+}
+
+
+/* Encargado por proceso */
+.editorRow .select{
+  min-height:40px;
+}
+.mainCheck > div > .select{
+  font-size:12px;
+  font-weight:800;
 }
 
 </style>
-
 </head>
 
 <body>
@@ -153,266 +496,1132 @@
     <img src="Logo tutto1.svg" alt="Tutto Vinilos">
     <small>COMANDA</small>
   </div>
-
   <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
 </header>
 
-<section class="controls">
-  <div class="controls-inner">
-    <div class="ctrl">
-      <label>Tipo de documento</label>
-      <select id="tipoDocumento">
-        <option value="Cotización">📋 Cotización</option>
-        <option value="Presupuesto">💰 Presupuesto</option>
-        <option value="Nota de Entrega">📦 Nota de Entrega</option>
-        <option value="Orden de Trabajo">🔧 Orden de Trabajo</option>
-        <option value="Factura">🧾 Factura</option>
-      </select>
+<div class="wrap">
+  <section class="hero">
+    <div class="heroHead">
+      <div>
+        <h1>Organizador de Producción Modular</h1>
+        <p>Pedidos con Supabase, clientes con buscador, procesos configurables, instalación, iluminación y PDF horizontal.</p>
+        <div class="statusLine" id="dbStatus">Conectando con Supabase...</div>
+      </div>
+      <div class="btns">
+        <button class="btn blue" id="exportBtn">Exportar JSON</button>
+        <button class="btn" id="importBtn">Importar JSON</button>
+        <button class="btn" onclick="window.print()">Imprimir</button>
+        <button class="btn green" onclick="openTipo()">Setting</button>
+        <button class="btn green" onclick="openExpress()">Pedido Express</button>
+        <button class="btn primary" onclick="openPedido()">Nuevo pedido</button>
+      </div>
     </div>
-
-    <div class="ctrl">
-      <label>Preparado por</label>
-      <select id="responsable">
-        <option value="Ricardo">👤 Ricardo</option>
-        <option value="Roberto">👤 Roberto</option>
-        <option value="Marie Gabriela">👤 Marie Gabriela</option>
-      </select>
+    <div class="stats">
+      <div class="stat"><b id="sTotal">0</b><span>Módulos</span></div>
+      <div class="stat"><b id="sProd">0</b><span>Producción</span></div>
+      <div class="stat"><b id="sProv">0</b><span>Proveedor</span></div>
+      <div class="stat"><b id="sInst">0</b><span>Instalación</span></div>
+      <div class="stat"><b id="sListo">0</b><span>Listos</span></div>
+      <div class="stat"><b id="sAvg">0%</b><span>Promedio</span></div>
     </div>
-  </div>
-</section>
+  </section>
 
-<main class="wrap">
+  <section class="toolbar">
+    <div class="field"><label>Buscar</label><input id="q" class="input" placeholder="Cliente, descripción, tipo..." oninput="render()"></div>
+    <div class="field"><label>Categoría</label><select id="fCat" class="select" onchange="render()"></select></div>
+    <div class="field"><label>Tipo</label><select id="fTipo" class="select" onchange="render()"></select></div>
+    <div class="field"><label>Estado</label><select id="fEstado" class="select" onchange="render()">
+      <option value="">Todos</option><option>Solicitud</option><option>En revisión</option><option>En adaptación</option><option>En producción</option><option>En proveedor externo</option><option>Pendiente por instalación</option><option>En instalación</option><option>Revisado</option><option>Listo</option><option>Entregado</option>
+    </select></div>
+    <div class="field"><label>Operador</label><select id="fOper" class="select" onchange="render()"></select></div>
+    <div class="field"><label>Actualizar</label><button class="btn blue" onclick="loadAll()">Recargar</button></div>
+  </section>
+
   <div class="tabs">
-    <button class="tab-btn active" id="tabNueva" type="button">Nueva cotización</button>
-    <button class="tab-btn" id="tabPrevias" type="button">Cotizaciones previas</button>
+    <button class="tab active" onclick="showView('pedidos',this)">Previsualizador</button>
+    <button class="tab" onclick="showView('tipos',this)">Settings</button>
   </div>
 
-  <section id="panelNueva" class="tab-content active">
-    <section class="card">
-      <div class="section-title">Datos del cliente</div>
+  <section id="pedidos" class="panel card tableBox">
+    <table class="table">
+      <thead><tr><th>N° pedido</th><th>Fecha</th><th>Operador</th><th>Cliente</th><th>Descripción</th><th>Cantidad</th><th>Tipo de letrero</th><th>Estado</th><th>Progreso</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </section>
 
-      <div class="grid">
+  <section id="tipos" class="panel hidden">
+    <div id="tipoGrid" class="templates"></div>
+  </section>
+</div>
+
+<div id="pedidoModal" class="modalBack">
+  <div class="modal">
+    <div class="modalHead">
+      <div><h2 id="pedidoTitle">Nuevo pedido</h2><p class="muted">Al seleccionar un tipo se cargan sus procesos, instalación e iluminación configurada.</p></div>
+      <button class="actionBtn actionDel" onclick="closePedido()">X</button>
+    </div>
+    <div class="modalBody">
+      <div class="form">
+        <div class="field"><label>N° pedido</label><input id="pNum" class="input" placeholder="Ej: TV-00001"></div>
+        <div class="field"><label>Fecha</label><input id="pFecha" type="date" class="input"></div>
+        <div class="field"><label>Operador</label><select id="pOper" class="select"><option>Roberto</option><option>Chico</option><option>Carlos</option><option>Alejandro</option><option>Rubén</option><option>Gabriela</option></select></div>
+        <div class="field"><label>Cliente</label><input id="pCliente" class="input" autocomplete="off" oninput="buscarClientes(this.value)"><div id="clienteSuggest" class="suggestBox"></div></div>
+        <div class="field"><label>Cantidad</label><input id="pCant" class="input"></div>
+        <div class="field wide2"><label>Descripción</label><input id="pDesc" class="input"></div>
+        <div class="field"><label>Tipo letrero</label><select id="pTipo" class="select" onchange="changeTipo()"></select></div>
+        <div class="field"><label>Estado</label><select id="pEstado" class="select"><option>Solicitud</option><option>En revisión</option><option>En adaptación</option><option>En producción</option><option>En proveedor externo</option><option>Pendiente por instalación</option><option>En instalación</option><option>Revisado</option><option>Listo</option><option>Entregado</option></select></div>
+        <div class="field"><label>Interior/exterior</label><select id="pUbic" class="select"><option>No definido</option><option>Interior</option><option>Exterior</option></select></div>
+        <div class="field"><label>Instalación</label><select id="pInst" class="select" onchange="updateConditionalFields()"><option>No</option><option>Sí</option></select></div>
+        <div class="field" data-inst-field><label>Altura</label><input id="pAlt" class="input" placeholder="Ej: 2.5 m" oninput="drawAlerts()"></div>
+        <div class="field" data-inst-field><label>Superficie</label><select id="pSup" class="select" onchange="drawAlerts()"><option>No aplica</option><option>Drywall</option><option>Bloque</option><option>Concreto</option><option>Vidrio</option><option>ACM</option><option>Metal</option><option>Madera</option><option>Otro</option></select></div>
+        <div class="field" data-inst-field><label>Acceso</label><select id="pAcc" class="select" onchange="drawAlerts()"><option>No aplica</option><option>Escalera</option><option>Andamio</option><option>Elevador</option></select></div>
+        <div class="field" data-inst-field><label>Tipo de fijación</label><select id="pFix" class="select" onchange="drawAlerts()"><option>No aplica</option><option>Chupón</option><option>Doble faz</option><option>Clip de tornillo</option><option>Tornillo directo</option><option>Silicón / adhesivo</option><option>Otro</option></select></div>
+        <div class="field"><label>Luz</label><select id="pLuz" class="select" onchange="updateConditionalFields()"><option>No</option><option>Sí</option></select></div>
+        <div class="field" data-luz-field><label>Tipo luz</label><select id="pTLuz" class="select" onchange="drawAlerts()"><option>No aplica</option><option>Frontal</option><option>Posterior</option><option>Frontal / posterior</option></select></div>
+        <div class="field" data-luz-field><label>Tipo de LED / cinta</label><select id="pLed" class="select" onchange="drawAlerts()"><option>No aplica</option><option>Módulo</option><option>Cinta</option><option>Módulo + cinta</option></select></div>
+        <div class="field" data-luz-field><label>Color luz</label><select id="pCLuz" class="select" onchange="drawAlerts()"><option>No aplica</option><option>Cálida</option><option>Media</option><option>Fría</option></select></div>
+        <div class="field wide2"><label>Observaciones</label><textarea id="pObs" class="textarea"></textarea></div>
+        <div class="field wide2"><label>Alertas</label><div id="alerts"></div></div>
+      </div>
+
+      <div class="section"><div><b>Procesos del pedido</b><p class="muted">Cada proceso suma al porcentaje. El encargado se asigna aquí por pedido.</p></div><button class="btn" onclick="addProcPedido()">+ Proceso</button></div>
+      <div id="checks" class="checks"></div>
+    </div>
+    <div class="foot"><button class="btn" onclick="closePedido()">Cancelar</button><button class="btn primary" onclick="savePedido()">Guardar en Supabase</button></div>
+  </div>
+</div>
+
+<div id="tipoModal" class="modalBack">
+  <div class="modal">
+    <div class="modalHead">
+      <div><h2 id="tipoTitle">Setting</h2><p class="muted">Configura tipos, color y procesos base. El encargado se asigna luego en cada pedido.</p></div>
+      <button class="actionBtn actionDel" onclick="closeTipo()">X</button>
+    </div>
+    <div class="modalBody">
+      <div class="form">
+        <div class="field wide2"><label>Nombre</label><input id="tNombre" class="input"></div>
+        <div class="field"><label>Color del tipo</label><input id="tColor" type="color" class="input" value="#efe8ff"></div>
+        <div class="field"><label>Categoría</label><select id="tCat" class="select"><option>Servicio de corte</option><option>Letras / piezas en PVC</option><option>Letras frontlit</option><option>Letras metálicas</option><option>Cajas de luz</option></select></div>
+        <div class="field wide4"><label>Descripción</label><input id="tDesc" class="input" placeholder="Descripción breve del tipo de letrero"></div>
+      </div>
+
+      <div class="section">
+        <div>
+          <b>Catálogo de procesos existentes</b>
+          <p class="muted">Puedes agregar procesos ya conocidos sin escribirlos de nuevo.</p>
+        </div>
+        <button class="btn blue" onclick="openCatalogPrompt()">+ Nuevo proceso catálogo</button>
+      </div>
+      <div id="catalogGrid" class="chips"></div>
+
+      <div class="section"><b>Procesos precargados del tipo</b><button class="btn" onclick="addProcTipo()">+ Proceso manual</button></div>
+      <div id="tipoEditor"></div>
+    </div>
+    <div class="foot"><button class="btn" onclick="closeTipo()">Cancelar</button><button class="btn primary" onclick="saveTipo()">Guardar setting</button></div>
+  </div>
+</div>
+
+
+<div id="descModal" class="modalBack">
+  <div class="modal" style="width:min(680px,100%)">
+    <div class="modalHead">
+      <div>
+        <h2>Descripción completa</h2>
+        <p class="muted" id="descModalSub">Detalle del pedido</p>
+      </div>
+      <button class="actionBtn actionDel" onclick="closeDescModal()">X</button>
+    </div>
+    <div class="modalBody">
+      <div id="descTextFull"></div>
+    </div>
+    <div class="foot">
+      <button class="btn" onclick="closeDescModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="progressModal" class="modalBack">
+  <div class="modal" style="width:min(760px,100%)">
+    <div class="modalHead">
+      <div>
+        <h2>Detalle de avance</h2>
+        <p class="muted" id="progressModalSub">Procesos del pedido</p>
+      </div>
+      <button class="actionBtn actionDel" onclick="closeProgressModal()">X</button>
+    </div>
+    <div class="modalBody">
+      <div id="progressDetailBox"></div>
+    </div>
+    <div class="foot">
+      <button class="btn" onclick="closeProgressModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="expressModal" class="modalBack">
+  <div class="modal" style="width:min(760px,100%)">
+    <div class="modalHead">
+      <div>
+        <h2>Pedido Express</h2>
+        <p class="muted">Para pedidos rápidos sin llenar instalación, iluminación ni procesos detallados.</p>
+      </div>
+      <button class="actionBtn actionDel" onclick="closeExpress()">X</button>
+    </div>
+    <div class="modalBody">
+      <div class="form">
+        <div class="field">
+          <label>N° pedido</label>
+          <input id="eNum" class="input">
+        </div>
         <div class="field">
           <label>Fecha</label>
-          <input id="fecha" type="date">
+          <input id="eFecha" type="date" class="input">
         </div>
-
         <div class="field">
-          <label>N° Documento</label>
-          <input id="numero" type="text" placeholder="Automático" readonly>
+          <label>Operador</label>
+          <select id="eOper" class="select">
+            <option>Roberto</option>
+            <option>Chico</option>
+            <option>Carlos</option>
+            <option>Alejandro</option>
+            <option>Rubén</option>
+            <option>Gabriela</option>
+          </select>
         </div>
-
         <div class="field">
-          <label>Válido hasta</label>
-          <input id="vence" type="date">
+          <label>Estado</label>
+          <select id="eEstado" class="select">
+            <option>Solicitud</option>
+            <option>En producción</option>
+            <option>Revisado</option>
+            <option>Listo</option>
+            <option>Entregado</option>
+          </select>
         </div>
-      </div>
-
-      <div style="height:12px"></div>
-
-      <div class="grid">
-        <div class="field">
+        <div class="field wide2">
           <label>Cliente</label>
-          <input id="cliente" type="text" list="clientesList" placeholder="Nombre del cliente">
-          <datalist id="clientesList"></datalist>
-          <div class="client-mini" id="clienteMini">Escribe para buscar o crear cliente nuevo.</div>
+          <input id="eCliente" class="input" placeholder="Nombre del cliente">
         </div>
-
         <div class="field">
-          <label>RIF / Cédula</label>
-          <input id="rif" type="text" placeholder="J-00000000-0 / V-00000000">
+          <label>Cantidad</label>
+          <input id="eCant" class="input" placeholder="Ej: 1">
         </div>
-
         <div class="field">
-          <label>Teléfono</label>
-          <input id="telefono" type="text" placeholder="+58 414 000 0000">
+          <label>Tipo</label>
+          <select id="eTipo" class="select"></select>
+        </div>
+        <div class="field wide4">
+          <label>Descripción corta</label>
+          <textarea id="eDesc" class="textarea" placeholder="Ej: 20 stickers, 1 letrero pequeño, corte rápido, etc."></textarea>
         </div>
       </div>
+    </div>
+    <div class="foot">
+      <button class="btn" onclick="closeExpress()">Cancelar</button>
+      <button class="btn primary" onclick="saveExpress()">Guardar pedido express</button>
+    </div>
+  </div>
+</div>
 
-      <div style="height:12px"></div>
+<input id="file" type="file" accept="application/json" class="hidden">
 
-      <div class="grid two">
-        <div class="field">
-          <label>Email</label>
-          <input id="email" type="text" placeholder="correo@ejemplo.com">
-        </div>
+<script src="js/supabase.js?v=34"></script>
+<script src="js/auth.js?v=34"></script>
+<script src="js/menu.js?v=34"></script>
 
-        <div class="field">
-          <label>Dirección</label>
-          <input id="direccion" type="text" placeholder="Dirección del cliente">
-        </div>
-      </div>
-    </section>
+<script>
 
-    <section class="card">
-      <div class="banner" id="banner">Cotización</div>
+/* =========================================================
+   FIX GLOBAL PDF PREVIEW
+   Evita error: previewPdfUrl is not defined
+   ========================================================= */
+let previewPdfUrl = null;
 
-      <div class="desktop-table">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Descripción del producto / servicio</th>
-              <th>Cant.</th>
-              <th>P. Unit ($)</th>
-              <th>Total ($)</th>
-              <th>✕</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
+function clearPreviewPdfUrl(){
+  try{
+    if(previewPdfUrl && String(previewPdfUrl).startsWith('blob:')){
+      URL.revokeObjectURL(previewPdfUrl);
+    }
+    previewPdfUrl = null;
+  }catch(err){
+    console.warn('No se pudo limpiar previewPdfUrl:', err);
+  }
+}
 
-      <div id="mobileItems" class="mobile-items"></div>
+function setPreviewPdfFromBlob(pdfBlob){
+  try{
+    clearPreviewPdfUrl();
+    previewPdfUrl = URL.createObjectURL(pdfBlob);
 
-      <div class="actions">
-        <button class="btn btn-blue" id="addItem" type="button">＋ Añadir ítem</button>
-        <button class="btn btn-gray" id="addSep" type="button">＋ Separador</button>
-      </div>
+    const iframe =
+      document.getElementById('pdfPreview') ||
+      document.getElementById('previewPdf') ||
+      document.getElementById('visorPdf') ||
+      document.querySelector('iframe[data-pdf-preview]');
 
-      <div class="bottom-grid">
-        <div class="field">
-          <label>Notas / condiciones</label>
-          <textarea id="notas" placeholder="Ej: Cotización válida por 5 días hábiles. Tiempo de entrega sujeto a aprobación del diseño."></textarea>
-        </div>
+    if(iframe) iframe.src = previewPdfUrl;
 
-        <div>
-          <label class="iva">
-            <input type="checkbox" id="ivaCheck">
-            <span id="ivaTextoCheck">Aplicar IVA 16%</span>
-          </label>
+    return previewPdfUrl;
+  }catch(err){
+    console.error('Error previsualizando PDF:', err);
+    alert('Error previsualizando PDF: ' + err.message);
+    return null;
+  }
+}
 
-          <div class="summary">
-            <div class="summary-row">
-              <span>Sub Total</span>
-              <b id="subtotal">$0.00</b>
-            </div>
+function setPreviewPdfFromUrl(url){
+  try{
+    clearPreviewPdfUrl();
+    previewPdfUrl = url;
 
-            <div class="summary-row">
-              <span id="ivaResumenLabel">IVA 16%</span>
-              <b id="iva">$0.00</b>
-            </div>
+    const iframe =
+      document.getElementById('pdfPreview') ||
+      document.getElementById('previewPdf') ||
+      document.getElementById('visorPdf') ||
+      document.querySelector('iframe[data-pdf-preview]');
 
-            <div class="summary-row final">
-              <span>TOTAL</span>
-              <span id="total">$0.00</span>
-            </div>
+    if(iframe) iframe.src = previewPdfUrl;
+
+    return previewPdfUrl;
+  }catch(err){
+    console.error('Error asignando URL PDF:', err);
+    alert('Error previsualizando PDF: ' + err.message);
+    return null;
+  }
+}
+
+function openCurrentPreviewPdf(){
+  if(!previewPdfUrl){
+    alert('No hay PDF para abrir.');
+    return;
+  }
+  window.open(previewPdfUrl, '_blank');
+}
+
+function printCurrentPreviewPdf(){
+  if(!previewPdfUrl){
+    alert('No hay PDF para imprimir.');
+    return;
+  }
+
+  const iframe =
+    document.getElementById('pdfPreview') ||
+    document.getElementById('previewPdf') ||
+    document.getElementById('visorPdf') ||
+    document.querySelector('iframe[data-pdf-preview]');
+
+  if(iframe && iframe.contentWindow){
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    return;
+  }
+
+  window.open(previewPdfUrl, '_blank');
+}
+
+window.addEventListener('beforeunload', clearPreviewPdfUrl);
+
+const KEY='tutto_prod_modular_cache_v1';
+const cats=['Servicio de corte','Letras / piezas en PVC','Letras frontlit','Letras metálicas','Cajas de luz'];
+let db={tipos:[],pedidos:[],clientes:[],catalogo:[],trabajadores:[]};
+let editPedido=null,editTipo=null,tmpProcs=[],selectedClienteId=null,online=false;
+
+const uid=()=>crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2,10);
+const hoy=()=>new Date().toISOString().slice(0,10);
+
+function toast(msg){dbStatus.textContent=msg}
+function localSave(){localStorage.setItem(KEY,JSON.stringify(db))}
+function localLoad(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function P(name,subs,encargado=''){return{id:uid(),name,encargado,subs}}
+
+function demoTipos(){
+  return [
+    {id:uid(),name:'PVC laminado',cat:'Letras / piezas en PVC',color:'#efe8ff',instPartida:'No',accBase:'No aplica',fixBase:'No aplica',ilumPartida:'Sí',luz:'Posterior',ledBase:'Módulo',desc:'PVC con vinil impreso/laminado.',procs:[P('Diseño',['Recepción del diseño','Verificación del diseño','Adaptación del diseño']),P('Impresión',['Impresión del vinil']),P('Laminado / pegado',['Pegado del vinil']),P('Corte',['Corte del PVC + vinil'])]},
+    {id:uid(),name:'PVC + acrílico',cat:'Letras / piezas en PVC',color:'#ede9fe',instPartida:'No',accBase:'No aplica',fixBase:'No aplica',ilumPartida:'Sí',luz:'Posterior',ledBase:'Módulo',desc:'Base en PVC con frente de acrílico.',procs:[P('Diseño',['Recepción del diseño','Verificación','Adaptación']),P('Corte acrílico',['Corte del acrílico']),P('Corte PVC',['Corte del PVC']),P('Pegado',['Pegar acrílico al PVC'])]},
+    {id:uid(),name:'Frontlit 6 cm',cat:'Letras frontlit',color:'#dbeafe',instPartida:'Sí',accBase:'Escalera',fixBase:'Clip de tornillo',ilumPartida:'Sí',luz:'Frontal / posterior',ledBase:'Módulo',desc:'Acrílico frontal, aluminio 6 cm y PVC.',procs:[P('Diseño',['Recepción','Verificación','Adaptación']),P('Acrílico',['Corte del acrílico']),P('Aluminio',['Doblado aluminio 6 cm']),P('PVC',['Corte del PVC']),P('Armado',['Pegar aluminio al acrílico']),P('Luz',['Instalación LED','Prueba de luz'])]},
+    {id:uid(),name:'Metálica con ribete',cat:'Letras metálicas',color:'#fef3c7',instPartida:'Sí',accBase:'Escalera',fixBase:'Clip de tornillo',ilumPartida:'Sí',luz:'Frontal',ledBase:'Módulo',desc:'Galvanizado o inoxidable con ribete.',procs:[P('Diseño',['Recepción','Verificación','Adaptación']),P('Cube',['Enviar a corte en Cube']),P('Acrílico',['Corte del acrílico']),P('PVC',['Corte del PVC']),P('Benigno',['Enviar / buscar piezas']),P('Luz',['LED','Prueba de luz'])]},
+    {id:uid(),name:'Caja de luz',cat:'Cajas de luz',color:'#dcfce7',instPartida:'Sí',accBase:'Escalera',fixBase:'Tornillo directo',ilumPartida:'Sí',luz:'Frontal',ledBase:'Módulo',desc:'Caja con acrílico, impresión, PVC y LED.',procs:[P('Diseño',['Recepción','Verificación','Adaptación']),P('Aluminio',['Cortar ángulo']),P('Acrílico',['Corte del acrílico']),P('Impresión',['Enviar a impresión']),P('PVC',['Corte base y laterales']),P('Armado y luz',['Armado','LED','Prueba'])]}
+  ];
+}
+
+
+function catalogoBase(){
+  return [
+    {id:uid(),name:'Recepción del diseño',categoria:'Diseño',subs:['Recibir archivo','Confirmar medidas','Confirmar cantidad']},
+    {id:uid(),name:'Verificación del diseño',categoria:'Diseño',subs:['Revisar vectores','Revisar medidas','Revisar trazos abiertos']},
+    {id:uid(),name:'Adaptación del diseño',categoria:'Diseño',subs:['Preparar archivo','Separar capas','Preparar producción']},
+    {id:uid(),name:'Impresión del vinil',categoria:'Impresión',subs:['Imprimir vinil','Revisar color','Revisar medida']},
+    {id:uid(),name:'Pegado del vinil',categoria:'Pegado',subs:['Limpiar superficie','Alinear vinil','Pegar sin burbujas']},
+    {id:uid(),name:'Corte en router',categoria:'Corte',subs:['Montar material','Configurar fresa','Cortar']},
+    {id:uid(),name:'Corte láser',categoria:'Corte',subs:['Configurar láser','Cortar acrílico','Revisar borde']},
+    {id:uid(),name:'Corte del acrílico',categoria:'Corte',subs:['Cortar acrílico','Proteger piezas']},
+    {id:uid(),name:'Corte del PVC',categoria:'Corte',subs:['Cortar PVC','Revisar piezas']},
+    {id:uid(),name:'Doblado de aluminio',categoria:'Frontlit',subs:['Seleccionar altura','Doblar retorno','Revisar uniones']},
+    {id:uid(),name:'Pegado aluminio al acrílico',categoria:'Armado',subs:['Alinear','Pegar','Revisar uniones']},
+    {id:uid(),name:'Enviar a pintura',categoria:'Proveedor externo',subs:['Identificar piezas','Enviar proveedor','Confirmar color']},
+    {id:uid(),name:'Buscar piezas en pintura',categoria:'Proveedor externo',subs:['Retirar piezas','Revisar acabado']},
+    {id:uid(),name:'Enviar a Cube',categoria:'Proveedor externo',subs:['Enviar archivo','Confirmar material','Confirmar fecha']},
+    {id:uid(),name:'Benigno / armado metálico',categoria:'Proveedor externo',subs:['Enviar piezas','Buscar piezas','Revisar acabado']},
+    {id:uid(),name:'Instalación LED',categoria:'Iluminación',subs:['Colocar LED','Cablear','Ordenar cables']},
+    {id:uid(),name:'Prueba de luz',categoria:'Iluminación',subs:['Encender','Revisar intensidad','Revisar sombras']},
+    {id:uid(),name:'Plantilla de instalación',categoria:'Instalación',subs:['Definir plantilla','Cortar o imprimir','Marcar puntos']},
+    {id:uid(),name:'Instalación en sitio',categoria:'Instalación',subs:['Preparar superficie','Fijar piezas','Revisar nivel']},
+    {id:uid(),name:'Revisión final',categoria:'Calidad',subs:['Revisar piezas','Revisar acabado','Marcar listo']}
+  ];
+}
+
+
+function trabajadoresBase(){
+  return ['Roberto','Ricardo','Chico','Carlos','Alejandro','Rubén','Gabriela','Ana'].map(nombre=>({nombre}));
+}
+function encargadoOptions(selected=''){
+  const lista=(db.trabajadores&&db.trabajadores.length?db.trabajadores:trabajadoresBase()).map(x=>x.nombre||x);
+  return '<option value="">Sin encargado</option>'+lista.map(n=>`<option ${n===selected?'selected':''}>${n}</option>`).join('');
+}
+
+function copyProcs(t,done=0){
+  return (t.procs||[]).map((p,i)=>({id:uid(),name:p.name,encargado:'',done:i<done,subs:(p.subs||[]).map(s=>({id:uid(),name:s,done:i<done}))}));
+}
+function pct(p){return !p.procs?.length?0:Math.round((p.procs.filter(x=>x.done).length/p.procs.length)*100)}
+function next(p){return(p.procs.find(x=>!x.done)||{name:'Completado'}).name}
+function nextPedidoNo(){
+  let nums=(db.pedidos||[]).map(p=>String(p.num||'').match(/(\d+)$/)).filter(Boolean).map(m=>parseInt(m[1],10));
+  return 'TV-'+String((nums.length?Math.max(...nums):0)+1).padStart(5,'0');
+}
+
+async function getSupabase(){
+  if(window.db) return window.db;
+  if(window.supabaseClient) return window.supabaseClient;
+  await new Promise(r=>setTimeout(r,600));
+  return window.db||window.supabaseClient||null;
+}
+
+async function loadAll(){
+  const sb=await getSupabase();
+  if(!sb){
+    online=false;
+    const cached=localLoad();
+    db=cached||{tipos:demoTipos(),pedidos:[],clientes:[],catalogo:catalogoBase(),trabajadores:trabajadoresBase()};
+    toast('Modo local: Supabase no disponible.');
+    render();
+    return;
+  }
+
+  try{
+    online=true;
+    let [tiposRes,pedidosRes,clientesRes,catalogoRes,trabajadoresRes]=await Promise.all([
+      sb.from('prod_tipos_letrero').select('*').order('nombre'),
+      sb.from('prod_pedidos').select('*').order('created_at',{ascending:false}),
+      sb.from('prod_clientes').select('*').order('nombre'),
+      sb.from('prod_procesos_catalogo').select('*').order('orden').order('nombre'),
+      sb.from('operadores').select('nombre,activo').order('nombre')
+    ]);
+
+    if(tiposRes.error) throw tiposRes.error;
+    if(pedidosRes.error) throw pedidosRes.error;
+    if(clientesRes.error) throw clientesRes.error;
+    if(catalogoRes.error) throw catalogoRes.error;
+    if(trabajadoresRes.error) console.warn('No cargaron operadores',trabajadoresRes.error);
+
+    db.tipos=(tiposRes.data||[]).map(t=>({
+      id:t.id,name:t.nombre,cat:t.categoria,color:t.color||'#efe8ff',instPartida:t.instalacion_activa?'Sí':'No',accBase:t.acceso_base||'No aplica',fixBase:t.fijacion_base||'No aplica',
+      ilumPartida:t.iluminacion_activa?'Sí':'No',luz:t.tipo_iluminacion||'No aplica',ledBase:t.tipo_led||'No aplica',desc:t.descripcion||'',procs:t.procesos||[]
+    }));
+
+    if(!db.tipos.length){
+      db.tipos=demoTipos();
+      for(const t of db.tipos) await insertTipo(t);
+    }
+
+    db.clientes=clientesRes.data||[];
+    db.catalogo=(catalogoRes.data||[]).map(x=>({id:x.id,name:x.nombre,categoria:x.categoria||'',subs:x.subtareas||[]}));
+    db.trabajadores=(trabajadoresRes.data||[]).filter(x=>x.activo!==false).map(x=>({nombre:x.nombre}));
+    if(!db.trabajadores.length) db.trabajadores=trabajadoresBase();
+
+    db.pedidos=(pedidosRes.data||[]).map(p=>({
+      id:p.id,num:p.numero_pedido,fecha:p.fecha,oper:p.operador,cliente:p.cliente_nombre||'',cliente_id:p.cliente_id,
+      desc:p.descripcion,cant:p.cantidad,tipoId:p.tipo_id,tipo:p.tipo_nombre,cat:p.categoria,estado:p.estado,ubic:p.ubicacion||'No definido',
+      inst:p.instalacion?'Sí':'No',alt:p.altura||'',sup:p.superficie||'No aplica',acc:p.acceso||'No aplica',fix:p.fijacion||'No aplica',
+      luz:p.luz?'Sí':'No',tluz:p.tipo_luz||'No aplica',led:p.tipo_led||'No aplica',cluz:p.color_luz||'No aplica',obs:p.observaciones||'',procs:p.procesos||[]
+    }));
+
+    localSave();
+    toast('Conectado a Supabase.');
+    render();
+  }catch(err){
+    console.error(err);
+    online=false;
+    const cached=localLoad();
+    db=cached||{tipos:demoTipos(),pedidos:[],clientes:[],catalogo:catalogoBase(),trabajadores:trabajadoresBase()};
+    toast('Error Supabase. Mostrando respaldo local.');
+    render();
+  }
+}
+
+function render(){
+  fCat.innerHTML='<option value="">Todas</option>'+cats.map(x=>`<option>${x}</option>`).join('');
+  fTipo.innerHTML='<option value="">Todos</option>'+db.tipos.map(t=>`<option>${t.name}</option>`).join('');
+  fOper.innerHTML='<option value="">Todos</option>'+[...new Set(db.pedidos.map(p=>p.oper).filter(Boolean))].map(x=>`<option>${x}</option>`).join('');
+  pTipo.innerHTML=db.tipos.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  if(window.eTipo) eTipo.innerHTML=db.tipos.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+
+  const total=db.pedidos.length;
+  sTotal.textContent=total;
+  sProd.textContent=db.pedidos.filter(p=>p.estado==='En producción').length;
+  sProv.textContent=db.pedidos.filter(p=>p.estado==='En proveedor externo').length;
+  sInst.textContent=db.pedidos.filter(p=>['Pendiente por instalación','En instalación'].includes(p.estado)).length;
+  sListo.textContent=db.pedidos.filter(p=>['Listo','Entregado'].includes(p.estado)).length;
+  sAvg.textContent=(total?Math.round(db.pedidos.reduce((a,p)=>a+pct(p),0)/total):0)+'%';
+
+  renderRows();
+  renderTipos();
+  localSave();
+}
+
+function filtros(){
+  const q=document.getElementById('q').value.toLowerCase().trim(),fc=fCat.value,ft=fTipo.value,fe=fEstado.value,fo=fOper.value;
+  return db.pedidos.filter(p=>{
+    const text=[p.num,p.fecha,p.oper,p.cliente,p.desc,p.cant,p.tipo,p.cat,p.estado].join(' ').toLowerCase();
+    return (!q||text.includes(q))&&(!fc||p.cat===fc)&&(!ft||p.tipo===ft)&&(!fe||p.estado===fe)&&(!fo||p.oper===fo);
+  });
+}
+function tipoColor(p){return(db.tipos.find(t=>t.id===p.tipoId)||{}).color||'#efe8ff'}
+function estadoClass(e){
+  if(['Listo','Entregado','Revisado'].includes(e)) return 'estado listo';
+  if(['En proveedor externo'].includes(e)) return 'estado proveedor';
+  if(['Pendiente por instalación','En instalación'].includes(e)) return 'estado instalacion';
+  if(['Solicitud','En revisión'].includes(e)) return 'estado solicitud';
+  return 'estado';
+}
+function renderRows(){
+  rows.innerHTML=filtros().map(p=>{
+    const bg=tipoColor(p), color=contrastText(bg);
+    return `<tr>
+      <td><b>${p.num}</b></td><td>${p.fecha||''}</td><td>${p.oper||''}</td><td class="client">${p.cliente||''}</td><td><span class="descPreview" title="Clic para ver descripción completa" onclick="openDescModal('${p.id}')">${p.desc||''}</span></td><td>${p.cant||''}</td>
+      <td><span class="badge" style="background:${bg};color:${color}">${p.tipo||''}</span></td>
+      <td><span class="${estadoClass(p.estado)}">${p.estado||''}</span></td>
+      <td>
+        <div class="progress">
+          <div class="progressMini" onclick="openProgressModal('${p.id}')" title="Ver detalle de procesos">
+            <b>${pct(p)}%</b>
+            <small>${(p.procs||[]).filter(x=>x.done).length} de ${(p.procs||[]).length||0}</small>
           </div>
         </div>
-      </div>
+      </td>
+      <td><div class="rowBtns"><button class="actionBtn actionEdit" onclick="openPedido('${p.id}')">EDIT</button><button class="actionBtn actionPdf" onclick="exportPedido('${p.id}')">PDF</button><button class="actionBtn actionDup" onclick="dupPedido('${p.id}')">DUP</button><button class="actionBtn actionDel" onclick="delPedido('${p.id}')">X</button></div></td>
+    </tr>`;
+  }).join('');
+}
 
-      <div class="footer">
-        <div id="footerDireccion" contenteditable="true">
-          Avenida Universidad, Urbanización La Granja, Edificio Diario El Carabobeño, en el Municipio Naguanagua del estado Carabobo.
+function contrastText(hex){
+  hex=(hex||'#efe8ff').replace('#','');
+  if(hex.length===3) hex=hex.split('').map(x=>x+x).join('');
+  const r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);
+  return ((r*299+g*587+b*114)/1000)>170?'#172033':'#ffffff';
+}
+
+function renderTipos(){
+  tipoGrid.innerHTML=db.tipos.map(t=>`
+    <article class="card template">
+      <div style="display:flex;justify-content:space-between;gap:10px">
+        <div><h3>${t.name}</h3><p class="muted">${t.cat}</p></div>
+        <span class="colorDot" style="background:${t.color||'#efe8ff'}"></span>
+      </div>
+      <p class="muted" style="margin-top:8px">${t.desc||''}</p>
+      <div class="chips"><span class="chip">Procesos: ${(t.procs||[]).length}</span><span class="chip">Color configurable</span></div>
+      <div class="plist">${(t.procs||[]).map((p,i)=>`<div class="proc"><div class="procTitle"><span>${i+1}. ${p.name}</span><span>${Math.round(100/(t.procs.length||1))}%</span></div><div class="chips">${(p.subs||[]).map(s=>`<span class="chip">${s}</span>`).join('')}</div></div>`).join('')}</div>
+      <div class="rowBtns" style="margin-top:12px"><button class="btn" onclick="openTipo('${t.id}')">Editar</button><button class="btn red" onclick="delTipo('${t.id}')">Eliminar</button></div>
+    </article>`).join('');
+}
+
+function showView(id,el){document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));el.classList.add('active');pedidos.classList.toggle('hidden',id!=='pedidos');tipos.classList.toggle('hidden',id!=='tipos')}
+
+
+function openExpress(){
+  eNum.value=nextPedidoNo();
+  eFecha.value=hoy();
+  eOper.value='Roberto';
+  eEstado.value='Solicitud';
+  eCliente.value='';
+  eCant.value='1';
+  eDesc.value='';
+  eTipo.innerHTML=db.tipos.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  expressModal.classList.add('show');
+}
+function closeExpress(){
+  expressModal.classList.remove('show');
+}
+function expressProcs(estado){
+  let avance=0;
+  if(estado==='En producción') avance=1;
+  if(['Revisado','Listo','Entregado'].includes(estado)) avance=3;
+  const base=[
+    {name:'Recibido',subs:['Datos básicos cargados']},
+    {name:'Producción rápida',subs:['Fabricar pedido']},
+    {name:'Revisión / entrega',subs:['Revisar y entregar']}
+  ];
+  return base.map((p,i)=>({
+    id:uid(),
+    name:p.name,
+    encargado:'',
+    done:i<avance,
+    subs:p.subs.map(s=>({id:uid(),name:s,done:i<avance}))
+  }));
+}
+async function saveExpress(){
+  try{
+    const t=db.tipos.find(x=>x.id===eTipo.value)||db.tipos[0];
+    const clienteId=await ensureCliente(eCliente.value);
+    const item={
+      id:uid(),
+      num:eNum.value||nextPedidoNo(),
+      fecha:eFecha.value||hoy(),
+      oper:eOper.value,
+      cliente:eCliente.value||'Cliente sin nombre',
+      cliente_id:clienteId,
+      cant:eCant.value||'1',
+      desc:eDesc.value||'Pedido express',
+      tipoId:t.id,
+      tipo:t.name,
+      cat:t.cat,
+      estado:eEstado.value,
+      ubic:'No definido',
+      inst:'No',
+      alt:'',
+      sup:'No aplica',
+      acc:'No aplica',
+      fix:'No aplica',
+      luz:'No',
+      tluz:'No aplica',
+      led:'No aplica',
+      cluz:'No aplica',
+      obs:'Pedido express sin detalle técnico.',
+      procs:expressProcs(eEstado.value)
+    };
+
+    const sb=await getSupabase();
+    if(sb&&online){
+      const payload={
+        id:item.id,
+        numero_pedido:item.num,
+        fecha:item.fecha,
+        operador:item.oper,
+        cliente_id:item.cliente_id,
+        cliente_nombre:item.cliente,
+        descripcion:item.desc,
+        cantidad:item.cant,
+        tipo_id:item.tipoId,
+        tipo_nombre:item.tipo,
+        categoria:item.cat,
+        estado:item.estado,
+        ubicacion:item.ubic,
+        instalacion:false,
+        altura:'',
+        superficie:'No aplica',
+        acceso:'No aplica',
+        fijacion:'No aplica',
+        luz:false,
+        tipo_luz:'No aplica',
+        tipo_led:'No aplica',
+        color_luz:'No aplica',
+        observaciones:item.obs,
+        procesos:item.procs
+      };
+      const {error}=await sb.from('prod_pedidos').upsert(payload);
+      if(error) throw error;
+    }
+
+    db.pedidos.unshift(item);
+    closeExpress();
+    render();
+    toast('Pedido express guardado.');
+  }catch(err){
+    console.error(err);
+    alert('No se pudo guardar pedido express: '+err.message);
+  }
+}
+
+function openPedido(id){
+  editPedido=id||null; selectedClienteId=null;
+  const p=id?db.pedidos.find(x=>x.id===id):null, t=db.tipos[0];
+  pedidoTitle.textContent=id?'Editar pedido':'Nuevo pedido';
+  pNum.value=p?p.num:nextPedidoNo(); pFecha.value=p?p.fecha:hoy(); pOper.value=p?p.oper:'Roberto'; pCliente.value=p?p.cliente:''; selectedClienteId=p?p.cliente_id:null;
+  pCant.value=p?p.cant:''; pDesc.value=p?p.desc:''; pTipo.value=p?p.tipoId:(t?t.id:''); pEstado.value=p?p.estado:'Solicitud'; pUbic.value=p?p.ubic:'No definido';
+  pInst.value=p?p.inst:'No'; pAlt.value=p?p.alt:''; pSup.value=p?p.sup:'No aplica'; pAcc.value=p?p.acc:'No aplica'; pFix.value=p?(p.fix||'No aplica'):'No aplica';
+  pLuz.value=p?p.luz:'No'; pTLuz.value=p?p.tluz:'No aplica'; pLed.value=p?(p.led||'No aplica'):'No aplica'; pCLuz.value=p?p.cluz:'No aplica'; pObs.value=p?p.obs:'';
+  tmpProcs=p?JSON.parse(JSON.stringify(p.procs)):copyProcs(t||{procs:[]});
+  if(!p&&t) applyTipoSettings(t,false);
+  drawChecks(); drawAlerts(); updateConditionalFields(); pedidoModal.classList.add('show');
+}
+function closePedido(){pedidoModal.classList.remove('show'); editPedido=null; clienteSuggest.classList.remove('show')}
+
+function drawChecks(){
+  checks.innerHTML=tmpProcs.map((p,i)=>`<div class="check"><div class="mainCheck"><input type="checkbox" ${p.done?'checked':''} onchange="toggleProc('${p.id}',this.checked)"><div style="flex:1"><strong>${i+1}. ${p.name}</strong><small>${(p.subs||[]).length} subtarea(s) · Encargado: ${p.encargado||'Sin asignar'}</small>
+<select class="select" style="margin-top:8px;max-width:260px" onchange="setProcEncargado('${p.id}',this.value)">${encargadoOptions(p.encargado||'')}</select>
+<div class="subchecks">${(p.subs||[]).map(s=>`<label><input type="checkbox" ${s.done?'checked':''} onchange="toggleSub('${p.id}','${s.id}',this.checked)"><span>${s.name}</span></label>`).join('')}</div></div><button class="actionBtn actionEdit" onclick="editProcPedido('${p.id}')">EDIT</button><button class="actionBtn actionDel" onclick="rmProcPedido('${p.id}')">X</button></div></div>`).join('');
+}
+
+function setProcEncargado(id,nombre){
+  const p=tmpProcs.find(x=>x.id===id);
+  if(p)p.encargado=nombre;
+}
+
+function toggleProc(id,v){let p=tmpProcs.find(x=>x.id===id);p.done=v;(p.subs||[]).forEach(s=>s.done=v);drawChecks()}
+function toggleSub(pid,sid,v){let p=tmpProcs.find(x=>x.id===pid);p.subs.find(s=>s.id===sid).done=v;p.done=p.subs.length?p.subs.every(s=>s.done):false;drawChecks()}
+function addProcPedido(){let n=prompt('Nombre del proceso');if(!n)return;tmpProcs.push({id:uid(),name:n,encargado:'',done:false,subs:[]});drawChecks()}
+function rmProcPedido(id){tmpProcs=tmpProcs.filter(p=>p.id!==id);drawChecks()}
+function editProcPedido(id){let p=tmpProcs.find(x=>x.id===id),n=prompt('Proceso:',p.name);if(n)p.name=n;let s=prompt('Subtareas separadas por coma:',(p.subs||[]).map(x=>x.name).join(', '));if(s!==null){p.subs=s.split(',').map(x=>x.trim()).filter(Boolean).map(name=>({id:uid(),name,done:false}));p.done=false}drawChecks()}
+
+function drawAlerts(){
+  let a=[];
+  if(pInst.value==='Sí'){if(!pAlt.value.trim())a.push(['bad','Falta altura de instalación']);if(pSup.value==='No aplica')a.push(['bad','Falta tipo de superficie']);if(pAcc.value==='No aplica')a.push(['','Falta escalera / andamio / elevador']);if(pFix.value==='No aplica')a.push(['','Falta tipo de fijación'])}
+  if(pLuz.value==='Sí'){if(pTLuz.value==='No aplica')a.push(['bad','Falta tipo de iluminación']);if(pLed.value==='No aplica')a.push(['','Falta tipo de LED / cinta']);if(pCLuz.value==='No aplica')a.push(['','Falta color de luz'])}
+  if(!a.length)a.push(['','Sin alertas críticas']);
+  alerts.innerHTML=a.map(x=>`<div class="alert ${x[0]}">${x[1]}</div>`).join('');
+}
+function updateConditionalFields(){document.querySelectorAll('[data-inst-field]').forEach(el=>el.classList.toggle('mutedField',pInst.value!=='Sí'));document.querySelectorAll('[data-luz-field]').forEach(el=>el.classList.toggle('mutedField',pLuz.value!=='Sí'));drawAlerts()}
+function applyTipoSettings(t,recargar=true){
+  if(!t)return;
+  if(recargar) tmpProcs=copyProcs(t);
+  updateConditionalFields();
+}
+function changeTipo(){if(editPedido&&!confirm('¿Recargar procesos y partidas configuradas de este tipo?'))return;let t=db.tipos.find(x=>x.id===pTipo.value);applyTipoSettings(t,true);drawChecks();drawAlerts()}
+
+async function buscarClientes(q){
+  selectedClienteId=null;
+  if(!q || q.trim().length<2){clienteSuggest.classList.remove('show');return}
+  let lista=db.clientes.filter(c=>String(c.nombre||'').toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  clienteSuggest.innerHTML=lista.map(c=>`<div class="suggestItem" onclick="selectCliente('${c.id}','${String(c.nombre).replace(/'/g,"\\'")}')">${c.nombre}</div>`).join('')+`<div class="suggestItem" onclick="selectCliente('','${q.replace(/'/g,"\\'")}')">+ Usar nuevo cliente: ${q}</div>`;
+  clienteSuggest.classList.add('show');
+}
+function selectCliente(id,nombre){selectedClienteId=id||null;pCliente.value=nombre;clienteSuggest.classList.remove('show')}
+
+async function ensureCliente(nombre){
+  nombre=(nombre||'').trim();
+  if(!nombre)return null;
+  if(selectedClienteId)return selectedClienteId;
+  let exist=db.clientes.find(c=>String(c.nombre||'').toLowerCase()===nombre.toLowerCase());
+  if(exist)return exist.id;
+  const sb=await getSupabase();
+  const nuevo={nombre,telefono:null,email:null,nota:'Creado desde producción modular'};
+  if(sb&&online){
+    const {data,error}=await sb.from('prod_clientes').insert(nuevo).select().single();
+    if(error)throw error;
+    db.clientes.push(data);
+    return data.id;
+  }else{
+    nuevo.id=uid(); db.clientes.push(nuevo); return nuevo.id;
+  }
+}
+
+async function savePedido(){
+  try{
+    let t=db.tipos.find(x=>x.id===pTipo.value);
+    let clienteId=await ensureCliente(pCliente.value);
+    let item={
+      id:editPedido||uid(), num:pNum.value||nextPedidoNo(), fecha:pFecha.value||hoy(), oper:pOper.value, cliente:pCliente.value||'Cliente sin nombre', cliente_id:clienteId,
+      cant:pCant.value||'1', desc:pDesc.value||'Sin descripción', tipoId:t.id, tipo:t.name, cat:t.cat, estado:pEstado.value, ubic:pUbic.value,
+      inst:pInst.value, alt:pAlt.value, sup:pSup.value, acc:pAcc.value, fix:pFix.value, luz:pLuz.value, tluz:pTLuz.value, led:pLed.value, cluz:pCLuz.value, obs:pObs.value, procs:tmpProcs
+    };
+
+    const sb=await getSupabase();
+    if(sb&&online){
+      const payload={id:item.id,numero_pedido:item.num,fecha:item.fecha,operador:item.oper,cliente_id:item.cliente_id,cliente_nombre:item.cliente,descripcion:item.desc,cantidad:item.cant,tipo_id:item.tipoId,tipo_nombre:item.tipo,categoria:item.cat,estado:item.estado,ubicacion:item.ubic,instalacion:item.inst==='Sí',altura:item.alt,superficie:item.sup,acceso:item.acc,fijacion:item.fix,luz:item.luz==='Sí',tipo_luz:item.tluz,tipo_led:item.led,color_luz:item.cluz,observaciones:item.obs,procesos:item.procs};
+      const {error}=await sb.from('prod_pedidos').upsert(payload);
+      if(error) throw error;
+    }
+    if(editPedido){db.pedidos[db.pedidos.findIndex(x=>x.id===editPedido)]=item}else db.pedidos.unshift(item);
+    closePedido(); render(); toast('Pedido guardado.');
+  }catch(err){console.error(err);alert('No se pudo guardar: '+err.message)}
+}
+
+async function delPedido(id){
+  if(!confirm('¿Eliminar pedido?'))return;
+  try{
+    const sb=await getSupabase();
+    if(sb&&online){const {error}=await sb.from('prod_pedidos').delete().eq('id',id); if(error) throw error;}
+    db.pedidos=db.pedidos.filter(p=>p.id!==id); render();
+  }catch(err){alert('No se pudo eliminar: '+err.message)}
+}
+async function dupPedido(id){let p=JSON.parse(JSON.stringify(db.pedidos.find(x=>x.id===id)));p.id=uid();p.num=nextPedidoNo();p.cliente+=' copia';p.procs.forEach(pr=>{pr.id=uid();pr.done=false;(pr.subs||[]).forEach(s=>{s.id=uid();s.done=false})});db.pedidos.unshift(p);editPedido=null;render();openPedido(p.id)}
+
+function openTipo(id){
+  editTipo=id||null;let t=id?db.tipos.find(x=>x.id===id):null;
+  tipoTitle.textContent=id?'Editar setting':'Setting';
+  tNombre.value=t?t.name:''; tColor.value=t?(t.color||'#efe8ff'):'#efe8ff'; tCat.value=t?t.cat:'Letras / piezas en PVC'; tDesc.value=t?t.desc:'';
+  tmpProcs=t?JSON.parse(JSON.stringify(t.procs)):[P('Diseño',['Recepción del diseño','Verificación del diseño','Adaptación del diseño']),P('Producción',['Proceso principal']),P('Revisión final',['Revisar y marcar listo'])];
+  drawTipoEditor(); drawCatalog(); tipoModal.classList.add('show');
+}
+function closeTipo(){tipoModal.classList.remove('show');editTipo=null}
+
+function drawCatalog(){
+  if(!window.catalogGrid)return;
+  const agrupado={};
+  (db.catalogo||[]).forEach(p=>{
+    const c=p.categoria||'General';
+    if(!agrupado[c])agrupado[c]=[];
+    agrupado[c].push(p);
+  });
+  catalogGrid.innerHTML=Object.keys(agrupado).map(cat=>`
+    <div style="width:100%;font-size:10px;font-weight:900;color:#6b7280;text-transform:uppercase;margin-top:6px">${cat}</div>
+    ${agrupado[cat].map(p=>`<button class="catProcess" onclick="addCatalogProcess('${p.id}')">+ ${p.name}</button>`).join('')}
+  `).join('');
+}
+function addCatalogProcess(id){
+  const p=(db.catalogo||[]).find(x=>x.id===id);
+  if(!p)return;
+  tmpProcs.push({id:uid(),name:p.name,subs:[...(p.subs||[])]});
+  drawTipoEditor();
+}
+async function openCatalogPrompt(){
+  const nombre=prompt('Nombre del nuevo proceso de catálogo:');
+  if(!nombre)return;
+  const categoria=prompt('Categoría del proceso:', 'General')||'General';
+  const subtareas=(prompt('Subtareas separadas por coma:', '')||'').split(',').map(x=>x.trim()).filter(Boolean);
+  const item={id:uid(),name:nombre,categoria,subs:subtareas};
+  db.catalogo.push(item);
+  const sb=await getSupabase();
+  if(sb&&online){
+    const {error}=await sb.from('prod_procesos_catalogo').insert({id:item.id,nombre:item.name,categoria:item.categoria,subtareas:item.subs,orden:999});
+    if(error) alert('No se pudo guardar en catálogo: '+error.message);
+  }
+  drawCatalog();
+}
+
+function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')}
+function drawTipoEditor(){tipoEditor.innerHTML=tmpProcs.map(p=>`<div class="editorRow"><input class="input" value="${esc(p.name)}" onchange="upTipoProc('${p.id}','name',this.value)"><input class="input" value="${esc((p.subs||[]).join(', '))}" onchange="upTipoProc('${p.id}','subs',this.value)"><button class="btn red" onclick="rmTipoProc('${p.id}')">Eliminar</button></div>`).join('')}
+function upTipoProc(id,f,v){let p=tmpProcs.find(x=>x.id===id);if(f==='name')p.name=v;if(f==='subs')p.subs=v.split(',').map(x=>x.trim()).filter(Boolean)}
+function addProcTipo(){tmpProcs.push({id:uid(),name:'Nuevo proceso',subs:['Subtarea']});drawTipoEditor()}
+function rmTipoProc(id){tmpProcs=tmpProcs.filter(p=>p.id!==id);drawTipoEditor()}
+
+async function insertTipo(t){
+  const sb=await getSupabase(); if(!sb) return;
+  return sb.from('prod_tipos_letrero').upsert({id:t.id,nombre:t.name,categoria:t.cat,color:t.color||'#efe8ff',descripcion:t.desc||'',instalacion_activa:false,acceso_base:'No aplica',fijacion_base:'No aplica',iluminacion_activa:false,tipo_iluminacion:'No aplica',tipo_led:'No aplica',procesos:t.procs});
+}
+async function saveTipo(){
+  try{
+    
+    tmpProcs = tmpProcs.map(p=>({
+      id:p.id||uid(),
+      name:p.name,
+      subs:p.subs||[]
+    }));
+
+    let t={id:editTipo||uid(),name:tNombre.value||'Tipo sin nombre',cat:tCat.value,color:tColor.value||'#efe8ff',instPartida:'No',accBase:'No aplica',fixBase:'No aplica',ilumPartida:'No',luz:'No aplica',ledBase:'No aplica',desc:tDesc.value,procs:tmpProcs};
+    const sb=await getSupabase();
+    if(sb&&online){const {error}=await insertTipo(t);if(error)throw error;}
+    if(editTipo){let i=db.tipos.findIndex(x=>x.id===editTipo);db.tipos[i]=t;db.pedidos.forEach(p=>{if(p.tipoId===t.id){p.tipo=t.name;p.cat=t.cat}})}else db.tipos.push(t);
+    closeTipo();render();toast('Setting guardado.');
+  }catch(err){alert('No se pudo guardar setting: '+err.message)}
+}
+async function delTipo(id){
+  if(db.pedidos.some(p=>p.tipoId===id)){alert('Este tipo está usado en pedidos. No se elimina.');return}
+  if(!confirm('¿Eliminar tipo?'))return;
+  try{const sb=await getSupabase();if(sb&&online){const {error}=await sb.from('prod_tipos_letrero').delete().eq('id',id);if(error)throw error;}db.tipos=db.tipos.filter(t=>t.id!==id);render()}catch(err){alert('No se pudo eliminar: '+err.message)}
+}
+
+function exportPedido(id){
+  let p=db.pedidos.find(x=>x.id===id); if(!p){alert('No se encontró el pedido.');return}
+  let escape=s=>String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  let rows=p.procs.map((pr,i)=>`<tr><td>${i+1}</td><td><b>${escape(pr.name)}</b>${pr.encargado?'<br><small>Encargado: '+escape(pr.encargado)+'</small>':''}</td><td><span class="estado ${pr.done?'ok':'pend'}">${pr.done?'Listo':'Pendiente'}</span></td><td>${(pr.subs||[]).map(s=>`${s.done?'☑':'☐'} ${escape(s.name)}`).join(' &nbsp; · &nbsp; ')}</td></tr>`).join('');
+  let html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Pedido ${escape(p.num)}</title><style>*{box-sizing:border-box}body{font-family:Inter,Arial,Helvetica,sans-serif;color:#20233a;margin:0;background:#f3f5fb}.page{width:279mm;min-height:216mm;margin:0 auto;background:white;padding:10mm;box-shadow:0 12px 40px rgba(0,0,0,.12)}.head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;border-bottom:3px solid #4b1fa3;padding-bottom:9px;margin-bottom:10px}.brand{font-size:22px;font-weight:900;letter-spacing:5px;color:#35127e}.subtitle{font-size:10px;color:#70778d;margin-top:3px;font-weight:700}.order{text-align:right}.order small{display:block;color:#70778d;font-size:9px;font-weight:900;text-transform:uppercase}.order b{display:block;font-size:22px;color:#4b1fa3;line-height:1.1}.grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px;margin-bottom:8px}.card{border:1px solid #e1e5f0;border-radius:12px;background:#fbfcff;padding:9px}h3{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#4b1fa3}.miniGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 9px}.item{font-size:10px}.item small{display:block;color:#72798f;font-weight:900;text-transform:uppercase;font-size:8px;margin-bottom:2px}.item b{font-size:11px}.desc{grid-column:1/-1}.pill{display:inline-block;padding:4px 8px;border-radius:99px;background:#efe8ff;color:#4b1fa3;font-size:10px;font-weight:900}table{width:100%;border-collapse:collapse;margin-top:8px}th{background:#f8f9ff;color:#596078;font-size:9px;text-transform:uppercase;letter-spacing:.3px;text-align:left;padding:7px;border:1px solid #e1e5f0}td{font-size:10px;padding:7px;border:1px solid #e1e5f0;vertical-align:top}.estado{display:inline-block;border-radius:99px;padding:4px 8px;font-size:9px;font-weight:900}.estado.ok{background:#e9faf2;color:#08794b}.estado.pend{background:#fff7df;color:#9a6500}.obs{white-space:pre-wrap;font-size:10px;line-height:1.35;min-height:34px}.foot{margin-top:8px;border-top:1px solid #e1e5f0;padding-top:6px;font-size:8px;color:#7a8196;display:flex;justify-content:space-between}@media print{body{background:white}.page{box-shadow:none;margin:0;width:auto;min-height:auto;padding:8mm}}@page{size:letter landscape;margin:8mm}
+/* Oculta textos/debug sueltos de conexión si algún script viejo los inyecta */
+body > div:empty,
+body > span:empty{display:none!important}
+
+
+/* ===============================
+   DESCRIPCIÓN COMPACTA EN TABLA
+   =============================== */
+.descPreview{
+  display:block;
+  max-width:220px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  cursor:pointer;
+  color:#172033;
+  font-weight:850;
+}
+.descPreview:hover{
+  color:#4b1fa3;
+  text-decoration:underline;
+}
+#descTextFull{
+  white-space:pre-wrap;
+  line-height:1.45;
+  font-size:14px;
+  font-weight:700;
+  color:#172033;
+  background:#f8f9ff;
+  border:1px solid #e3e8f4;
+  border-radius:16px;
+  padding:14px;
+  min-height:120px;
+}
+@media(max-width:760px){
+  .descPreview{
+    max-width:150px;
+  }
+}
+
+
+/* ===============================
+   PROGRESO COMPACTO + DETALLE
+   =============================== */
+.progress{
+  min-width:74px!important;
+  max-width:82px!important;
+}
+.progressMini{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-width:68px;
+  border-radius:15px;
+  background:#efe8ff;
+  color:#4b1fa3;
+  padding:7px 8px;
+  cursor:pointer;
+  border:1px solid #dccdff;
+}
+.progressMini:hover{
+  background:#e6dcff;
+}
+.progressMini b{
+  font-size:18px;
+  font-weight:900;
+  line-height:1;
+}
+.progressMini small{
+  font-size:10px;
+  font-weight:900;
+  color:#5f35b0;
+  margin-top:4px;
+}
+#progressDetailBox{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.progressDetailTop{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+.progressDetailCard{
+  background:#f8f9ff;
+  border:1px solid #e3e8f4;
+  border-radius:16px;
+  padding:12px;
+}
+.progressDetailCard b{
+  display:block;
+  font-size:20px;
+  font-weight:900;
+  color:#4b1fa3;
+}
+.progressDetailCard span{
+  font-size:10px;
+  font-weight:900;
+  text-transform:uppercase;
+  color:#6b7280;
+}
+.progressProc{
+  border:1px solid #e3e8f4;
+  border-radius:16px;
+  padding:12px;
+  background:#fff;
+}
+.progressProc.done{
+  background:#f2fcf7;
+  border-color:#bce8d5;
+}
+.progressProc.pending{
+  background:#fffaf0;
+  border-color:#ffe1a0;
+}
+.progressProcHead{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  font-size:13px;
+  font-weight:900;
+}
+.progressProcHead span{
+  font-size:10px;
+  border-radius:999px;
+  padding:5px 8px;
+  font-weight:900;
+}
+.progressProc.done .progressProcHead span{
+  background:#e9faf2;
+  color:#08794b;
+}
+.progressProc.pending .progressProcHead span{
+  background:#fff7df;
+  color:#9a6500;
+}
+.progressSubs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:9px;
+}
+.progressSubs small{
+  background:#fff;
+  border:1px solid #e9ecf6;
+  border-radius:999px;
+  padding:5px 8px;
+  font-size:10px;
+  font-weight:800;
+  color:#596078;
+}
+@media(max-width:760px){
+  .progressDetailTop{
+    grid-template-columns:1fr;
+  }
+  .progressMini{
+    min-width:62px;
+    padding:6px 7px;
+  }
+  .progressMini b{
+    font-size:16px;
+  }
+}
+
+
+/* ===============================
+   PROGRESO MÁS VISIBLE
+   =============================== */
+.table th:nth-child(9),
+.table td:nth-child(9){
+  min-width:92px!important;
+  width:92px!important;
+}
+.progress{
+  min-width:78px!important;
+  max-width:86px!important;
+}
+.progressMini{
+  display:inline-flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:74px!important;
+  min-height:52px!important;
+  border-radius:16px!important;
+  background:linear-gradient(135deg,#4b1fa3,#6b3cea)!important;
+  color:#fff!important;
+  padding:8px 9px!important;
+  cursor:pointer!important;
+  border:0!important;
+  box-shadow:0 8px 18px rgba(75,31,163,.25)!important;
+}
+.progressMini b{
+  font-size:19px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  color:#fff!important;
+}
+.progressMini small{
+  font-size:10px!important;
+  font-weight:900!important;
+  color:rgba(255,255,255,.88)!important;
+  margin-top:5px!important;
+}
+.percentNum{
+  background:#4b1fa3!important;
+  color:#fff!important;
+  border-radius:14px!important;
+}
+@media(max-width:760px){
+  .table th:nth-child(9),
+  .table td:nth-child(9){
+    min-width:86px!important;
+    width:86px!important;
+  }
+  .progressMini{
+    min-width:68px!important;
+    min-height:48px!important;
+  }
+  .progressMini b{
+    font-size:17px!important;
+  }
+}
+
+
+/* Encargado por proceso */
+.editorRow .select{
+  min-height:40px;
+}
+.mainCheck > div > .select{
+  font-size:12px;
+  font-weight:800;
+}
+
+</style></head><body><div class="page"><div class="head"><div><div class="brand">TUTTOVINILOS</div><div class="subtitle">Orden de producción modular · Formato horizontal</div></div><div class="order"><small>N° pedido</small><b>${escape(p.num)}</b><small>${new Date().toLocaleString('es-VE')}</small></div></div><div class="grid"><div class="card"><h3>Datos del pedido</h3><div class="miniGrid"><div class="item"><small>Fecha</small><b>${escape(p.fecha)}</b></div><div class="item"><small>Operador</small><b>${escape(p.oper)}</b></div><div class="item"><small>Cliente</small><b>${escape(p.cliente)}</b></div><div class="item"><small>Cantidad</small><b>${escape(p.cant)}</b></div><div class="item desc"><small>Descripción</small><b>${escape(p.desc)}</b></div></div></div><div class="card"><h3>Fabricación</h3><div class="miniGrid"><div class="item"><small>Categoría</small><b>${escape(p.cat)}</b></div><div class="item"><small>Tipo</small><b>${escape(p.tipo)}</b></div><div class="item"><small>Estado</small><span class="pill">${escape(p.estado)}</span></div><div class="item"><small>Interior/exterior</small><b>${escape(p.ubic)}</b></div></div></div><div class="card"><h3>Instalación / luz</h3><div class="miniGrid"><div class="item"><small>Instalación</small><b>${escape(p.inst)}</b></div><div class="item"><small>Altura</small><b>${escape(p.alt)}</b></div><div class="item"><small>Superficie</small><b>${escape(p.sup)}</b></div><div class="item"><small>Acceso</small><b>${escape(p.acc)}</b></div><div class="item"><small>Fijación</small><b>${escape(p.fix)}</b></div><div class="item"><small>Luz</small><b>${escape(p.luz)}</b></div><div class="item"><small>Tipo luz</small><b>${escape(p.tluz)}</b></div><div class="item"><small>LED/cinta</small><b>${escape(p.led)}</b></div></div></div></div><div class="card"><h3>Procesos del pedido</h3><table><thead><tr><th style="width:34px">#</th><th style="width:170px">Proceso</th><th style="width:90px">Estado</th><th>Subtareas</th></tr></thead><tbody>${rows}</tbody></table></div><div class="card" style="margin-top:8px"><h3>Observaciones</h3><div class="obs">${escape(p.obs||'Sin observaciones.')}</div></div><div class="foot"><span>Generado desde Organizador de Producción Modular</span><span>${escape(p.num)}</span></div></div><script>setTimeout(()=>{window.focus();window.print()},500)<\/script></body></html>`;
+  let w=window.open('','_blank'); if(!w){alert('El navegador bloqueó la ventana emergente. Permite pop-ups para exportar PDF.');return} w.document.open();w.document.write(html);w.document.close();
+}
+
+
+function openDescModal(id){
+  const p=db.pedidos.find(x=>x.id===id);
+  if(!p)return;
+  descModalSub.textContent=(p.num||'')+' · '+(p.cliente||'');
+  descTextFull.textContent=p.desc||'Sin descripción.';
+  descModal.classList.add('show');
+}
+function closeDescModal(){
+  descModal.classList.remove('show');
+}
+
+
+function openProgressModal(id){
+  const p=db.pedidos.find(x=>x.id===id);
+  if(!p)return;
+
+  const total=(p.procs||[]).length;
+  const listos=(p.procs||[]).filter(x=>x.done).length;
+  const pendientes=total-listos;
+  const siguiente=((p.procs||[]).find(x=>!x.done)||{name:'Completado'}).name;
+
+  progressModalSub.textContent=(p.num||'')+' · '+(p.cliente||'')+' · Próximo: '+siguiente;
+
+  progressDetailBox.innerHTML=`
+    <div class="progressDetailTop">
+      <div class="progressDetailCard"><b>${pct(p)}%</b><span>Avance</span></div>
+      <div class="progressDetailCard"><b>${listos}/${total}</b><span>Procesos listos</span></div>
+      <div class="progressDetailCard"><b>${pendientes}</b><span>Pendientes</span></div>
+    </div>
+    ${(p.procs||[]).map((pr,i)=>`
+      <div class="progressProc ${pr.done?'done':'pending'}">
+        <div class="progressProcHead">
+          <b>${i+1}. ${pr.name}${pr.encargado?' · '+pr.encargado:''}</b>
+          <span>${pr.done?'Listo':'Pendiente'}</span>
         </div>
-
-        <div id="footerContacto" contenteditable="true">
-          Tel: +58 414-4961122 | tuttovinilos@gmail.com
-        </div>
-
-        <div>
-          <span id="footerPreparadoTexto" contenteditable="true">Documento preparado por:</span>
-          <b id="creditName">Ricardo</b>
+        <div class="progressSubs">
+          ${(pr.subs||[]).map(s=>`<small>${s.done?'☑':'☐'} ${s.name}</small>`).join('')}
         </div>
       </div>
-    </section>
-  </section>
+    `).join('')}
+  `;
 
-  <section id="panelPrevias" class="tab-content">
-    <section class="card">
-      <div class="section-title">Cotizaciones previas guardadas</div>
+  progressModal.classList.add('show');
+}
+function closeProgressModal(){
+  progressModal.classList.remove('show');
+}
 
-      <div class="prev-toolbar">
-        <input class="prev-search" id="buscarCotizaciones" type="text" placeholder="Buscar por fecha, cliente, teléfono o número...">
-
-        <select class="prev-search" id="filtroAprobado">
-          <option value="">Todas</option>
-          <option value="aprobadas">Aprobadas</option>
-          <option value="pendientes">Pendientes</option>
-          <option value="erradas">Erradas</option>
-        </select>
-
-        <button class="btn btn-blue" id="recargarCotizaciones" type="button">Recargar</button>
-      </div>
-
-      <div class="desktop-table prev-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Aprob.</th>
-              <th>Fecha</th>
-              <th>N° Documento</th>
-              <th>Cliente</th>
-              <th>Responsable</th>
-              <th>Teléfono</th>
-              <th>Total</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody id="cotizacionesBody">
-            <tr>
-              <td colspan="8" class="empty">Cargando...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </section>
-</main>
-
-<nav class="fixed">
-  <div class="fixed-inner">
-    <div class="fixed-left">
-      <button class="btn btn-blue" id="previewBtn" type="button">
-        <span class="spinner"></span>
-        <span class="btn-text">👁 Previsualizar</span>
-      </button>
-    </div>
-  </div>
-</nav>
-
-<div class="modal-backdrop" id="detalleBackdrop">
-  <div class="modal">
-    <div class="modal-head">
-      <div class="modal-title" id="detalleTitle">Detalle de cotización</div>
-      <button class="mini-btn" id="cerrarDetalle" type="button">Cerrar</button>
-    </div>
-
-    <div class="modal-body" id="detalleBody"></div>
-
-    <div class="modal-foot">
-      <button class="btn btn-outline" id="cargarDetalleForm" type="button">Cargar para editar</button>
-      <button class="btn btn-green" id="pdfDetalle" type="button">Generar PDF</button>
-    </div>
-  </div>
-</div>
-
-
-
-<div class="modal-backdrop" id="previewBackdrop">
-  <div class="modal preview-modal">
-    <div class="modal-head">
-      <div class="modal-title" id="previewTitle">Previsualizador</div>
-      <button class="mini-btn" id="cerrarPreview" type="button">Cerrar</button>
-    </div>
-
-    <div class="modal-body">
-      <iframe id="previewFrame" class="preview-frame" title="Previsualizador del documento"></iframe>
-    </div>
-
-    <div class="modal-foot">
-      <button class="btn btn-outline" id="imprimirPreview" type="button">🖨 Imprimir</button>
-      <button class="btn btn-green" id="guardarPreview" type="button">
-        <span class="spinner"></span>
-        <span class="btn-text">Guardar</span>
-      </button>
-    </div>
-  </div>
-</div>
-
-<div id="toast" class="toast"></div>
-
-<script src="js/menu.js?v=11"></script>
-<script src="js/cotizador.js?v=48"></script>
+exportBtn.onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='organizador_produccion_tuttovinilos.json';a.click();URL.revokeObjectURL(a.href)};
+importBtn.onclick=()=>file.click();
+file.onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{db=JSON.parse(r.result);render()}catch(err){alert('JSON inválido')}};r.readAsText(f)};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePedido();closeTipo();closeDescModal();closeProgressModal();closeExpress()}});
+loadAll();
+</script>
 </body>
 </html>
