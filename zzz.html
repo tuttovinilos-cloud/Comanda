@@ -417,6 +417,66 @@ body > span:empty{display:none!important}
   }
 }
 
+
+/* ===============================
+   PROGRESO MÁS VISIBLE
+   =============================== */
+.table th:nth-child(9),
+.table td:nth-child(9){
+  min-width:92px!important;
+  width:92px!important;
+}
+.progress{
+  min-width:78px!important;
+  max-width:86px!important;
+}
+.progressMini{
+  display:inline-flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:74px!important;
+  min-height:52px!important;
+  border-radius:16px!important;
+  background:linear-gradient(135deg,#4b1fa3,#6b3cea)!important;
+  color:#fff!important;
+  padding:8px 9px!important;
+  cursor:pointer!important;
+  border:0!important;
+  box-shadow:0 8px 18px rgba(75,31,163,.25)!important;
+}
+.progressMini b{
+  font-size:19px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  color:#fff!important;
+}
+.progressMini small{
+  font-size:10px!important;
+  font-weight:900!important;
+  color:rgba(255,255,255,.88)!important;
+  margin-top:5px!important;
+}
+.percentNum{
+  background:#4b1fa3!important;
+  color:#fff!important;
+  border-radius:14px!important;
+}
+@media(max-width:760px){
+  .table th:nth-child(9),
+  .table td:nth-child(9){
+    min-width:86px!important;
+    width:86px!important;
+  }
+  .progressMini{
+    min-width:68px!important;
+    min-height:48px!important;
+  }
+  .progressMini b{
+    font-size:17px!important;
+  }
+}
+
 </style>
 </head>
 
@@ -442,6 +502,7 @@ body > span:empty{display:none!important}
         <button class="btn" id="importBtn">Importar JSON</button>
         <button class="btn" onclick="window.print()">Imprimir</button>
         <button class="btn green" onclick="openTipo()">Setting</button>
+        <button class="btn green" onclick="openExpress()">Pedido Express</button>
         <button class="btn primary" onclick="openPedido()">Nuevo pedido</button>
       </div>
     </div>
@@ -588,6 +649,72 @@ body > span:empty{display:none!important}
   </div>
 </div>
 
+
+<div id="expressModal" class="modalBack">
+  <div class="modal" style="width:min(760px,100%)">
+    <div class="modalHead">
+      <div>
+        <h2>Pedido Express</h2>
+        <p class="muted">Para pedidos rápidos sin llenar instalación, iluminación ni procesos detallados.</p>
+      </div>
+      <button class="actionBtn actionDel" onclick="closeExpress()">X</button>
+    </div>
+    <div class="modalBody">
+      <div class="form">
+        <div class="field">
+          <label>N° pedido</label>
+          <input id="eNum" class="input">
+        </div>
+        <div class="field">
+          <label>Fecha</label>
+          <input id="eFecha" type="date" class="input">
+        </div>
+        <div class="field">
+          <label>Operador</label>
+          <select id="eOper" class="select">
+            <option>Roberto</option>
+            <option>Chico</option>
+            <option>Carlos</option>
+            <option>Alejandro</option>
+            <option>Rubén</option>
+            <option>Gabriela</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Estado</label>
+          <select id="eEstado" class="select">
+            <option>Solicitud</option>
+            <option>En producción</option>
+            <option>Revisado</option>
+            <option>Listo</option>
+            <option>Entregado</option>
+          </select>
+        </div>
+        <div class="field wide2">
+          <label>Cliente</label>
+          <input id="eCliente" class="input" placeholder="Nombre del cliente">
+        </div>
+        <div class="field">
+          <label>Cantidad</label>
+          <input id="eCant" class="input" placeholder="Ej: 1">
+        </div>
+        <div class="field">
+          <label>Tipo</label>
+          <select id="eTipo" class="select"></select>
+        </div>
+        <div class="field wide4">
+          <label>Descripción corta</label>
+          <textarea id="eDesc" class="textarea" placeholder="Ej: 20 stickers, 1 letrero pequeño, corte rápido, etc."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn" onclick="closeExpress()">Cancelar</button>
+      <button class="btn primary" onclick="saveExpress()">Guardar pedido express</button>
+    </div>
+  </div>
+</div>
+
 <input id="file" type="file" accept="application/json" class="hidden">
 
 <script src="js/supabase.js?v=34"></script>
@@ -724,6 +851,7 @@ function render(){
   fTipo.innerHTML='<option value="">Todos</option>'+db.tipos.map(t=>`<option>${t.name}</option>`).join('');
   fOper.innerHTML='<option value="">Todos</option>'+[...new Set(db.pedidos.map(p=>p.oper).filter(Boolean))].map(x=>`<option>${x}</option>`).join('');
   pTipo.innerHTML=db.tipos.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  if(window.eTipo) eTipo.innerHTML=db.tipos.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
 
   const total=db.pedidos.length;
   sTotal.textContent=total;
@@ -764,7 +892,7 @@ function renderRows(){
         <div class="progress">
           <div class="progressMini" onclick="openProgressModal('${p.id}')" title="Ver detalle de procesos">
             <b>${pct(p)}%</b>
-            <small>${(p.procs||[]).filter(x=>x.done).length}/${(p.procs||[]).length||0}</small>
+            <small>${(p.procs||[]).filter(x=>x.done).length} de ${(p.procs||[]).length||0}</small>
           </div>
         </div>
       </td>
@@ -795,6 +923,110 @@ function renderTipos(){
 }
 
 function showView(id,el){document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));el.classList.add('active');pedidos.classList.toggle('hidden',id!=='pedidos');tipos.classList.toggle('hidden',id!=='tipos')}
+
+
+function openExpress(){
+  eNum.value=nextPedidoNo();
+  eFecha.value=hoy();
+  eOper.value='Roberto';
+  eEstado.value='Solicitud';
+  eCliente.value='';
+  eCant.value='1';
+  eDesc.value='';
+  eTipo.innerHTML=db.tipos.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  expressModal.classList.add('show');
+}
+function closeExpress(){
+  expressModal.classList.remove('show');
+}
+function expressProcs(estado){
+  let avance=0;
+  if(estado==='En producción') avance=1;
+  if(['Revisado','Listo','Entregado'].includes(estado)) avance=3;
+  const base=[
+    {name:'Recibido',subs:['Datos básicos cargados']},
+    {name:'Producción rápida',subs:['Fabricar pedido']},
+    {name:'Revisión / entrega',subs:['Revisar y entregar']}
+  ];
+  return base.map((p,i)=>({
+    id:uid(),
+    name:p.name,
+    done:i<avance,
+    subs:p.subs.map(s=>({id:uid(),name:s,done:i<avance}))
+  }));
+}
+async function saveExpress(){
+  try{
+    const t=db.tipos.find(x=>x.id===eTipo.value)||db.tipos[0];
+    const clienteId=await ensureCliente(eCliente.value);
+    const item={
+      id:uid(),
+      num:eNum.value||nextPedidoNo(),
+      fecha:eFecha.value||hoy(),
+      oper:eOper.value,
+      cliente:eCliente.value||'Cliente sin nombre',
+      cliente_id:clienteId,
+      cant:eCant.value||'1',
+      desc:eDesc.value||'Pedido express',
+      tipoId:t.id,
+      tipo:t.name,
+      cat:t.cat,
+      estado:eEstado.value,
+      ubic:'No definido',
+      inst:'No',
+      alt:'',
+      sup:'No aplica',
+      acc:'No aplica',
+      fix:'No aplica',
+      luz:'No',
+      tluz:'No aplica',
+      led:'No aplica',
+      cluz:'No aplica',
+      obs:'Pedido express sin detalle técnico.',
+      procs:expressProcs(eEstado.value)
+    };
+
+    const sb=await getSupabase();
+    if(sb&&online){
+      const payload={
+        id:item.id,
+        numero_pedido:item.num,
+        fecha:item.fecha,
+        operador:item.oper,
+        cliente_id:item.cliente_id,
+        cliente_nombre:item.cliente,
+        descripcion:item.desc,
+        cantidad:item.cant,
+        tipo_id:item.tipoId,
+        tipo_nombre:item.tipo,
+        categoria:item.cat,
+        estado:item.estado,
+        ubicacion:item.ubic,
+        instalacion:false,
+        altura:'',
+        superficie:'No aplica',
+        acceso:'No aplica',
+        fijacion:'No aplica',
+        luz:false,
+        tipo_luz:'No aplica',
+        tipo_led:'No aplica',
+        color_luz:'No aplica',
+        observaciones:item.obs,
+        procesos:item.procs
+      };
+      const {error}=await sb.from('prod_pedidos').upsert(payload);
+      if(error) throw error;
+    }
+
+    db.pedidos.unshift(item);
+    closeExpress();
+    render();
+    toast('Pedido express guardado.');
+  }catch(err){
+    console.error(err);
+    alert('No se pudo guardar pedido express: '+err.message);
+  }
+}
 
 function openPedido(id){
   editPedido=id||null; selectedClienteId=null;
@@ -1132,6 +1364,66 @@ body > span:empty{display:none!important}
   }
 }
 
+
+/* ===============================
+   PROGRESO MÁS VISIBLE
+   =============================== */
+.table th:nth-child(9),
+.table td:nth-child(9){
+  min-width:92px!important;
+  width:92px!important;
+}
+.progress{
+  min-width:78px!important;
+  max-width:86px!important;
+}
+.progressMini{
+  display:inline-flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:74px!important;
+  min-height:52px!important;
+  border-radius:16px!important;
+  background:linear-gradient(135deg,#4b1fa3,#6b3cea)!important;
+  color:#fff!important;
+  padding:8px 9px!important;
+  cursor:pointer!important;
+  border:0!important;
+  box-shadow:0 8px 18px rgba(75,31,163,.25)!important;
+}
+.progressMini b{
+  font-size:19px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  color:#fff!important;
+}
+.progressMini small{
+  font-size:10px!important;
+  font-weight:900!important;
+  color:rgba(255,255,255,.88)!important;
+  margin-top:5px!important;
+}
+.percentNum{
+  background:#4b1fa3!important;
+  color:#fff!important;
+  border-radius:14px!important;
+}
+@media(max-width:760px){
+  .table th:nth-child(9),
+  .table td:nth-child(9){
+    min-width:86px!important;
+    width:86px!important;
+  }
+  .progressMini{
+    min-width:68px!important;
+    min-height:48px!important;
+  }
+  .progressMini b{
+    font-size:17px!important;
+  }
+}
+
 </style></head><body><div class="page"><div class="head"><div><div class="brand">TUTTOVINILOS</div><div class="subtitle">Orden de producción modular · Formato horizontal</div></div><div class="order"><small>N° pedido</small><b>${escape(p.num)}</b><small>${new Date().toLocaleString('es-VE')}</small></div></div><div class="grid"><div class="card"><h3>Datos del pedido</h3><div class="miniGrid"><div class="item"><small>Fecha</small><b>${escape(p.fecha)}</b></div><div class="item"><small>Operador</small><b>${escape(p.oper)}</b></div><div class="item"><small>Cliente</small><b>${escape(p.cliente)}</b></div><div class="item"><small>Cantidad</small><b>${escape(p.cant)}</b></div><div class="item desc"><small>Descripción</small><b>${escape(p.desc)}</b></div></div></div><div class="card"><h3>Fabricación</h3><div class="miniGrid"><div class="item"><small>Categoría</small><b>${escape(p.cat)}</b></div><div class="item"><small>Tipo</small><b>${escape(p.tipo)}</b></div><div class="item"><small>Estado</small><span class="pill">${escape(p.estado)}</span></div><div class="item"><small>Interior/exterior</small><b>${escape(p.ubic)}</b></div></div></div><div class="card"><h3>Instalación / luz</h3><div class="miniGrid"><div class="item"><small>Instalación</small><b>${escape(p.inst)}</b></div><div class="item"><small>Altura</small><b>${escape(p.alt)}</b></div><div class="item"><small>Superficie</small><b>${escape(p.sup)}</b></div><div class="item"><small>Acceso</small><b>${escape(p.acc)}</b></div><div class="item"><small>Fijación</small><b>${escape(p.fix)}</b></div><div class="item"><small>Luz</small><b>${escape(p.luz)}</b></div><div class="item"><small>Tipo luz</small><b>${escape(p.tluz)}</b></div><div class="item"><small>LED/cinta</small><b>${escape(p.led)}</b></div></div></div></div><div class="card"><h3>Procesos del pedido</h3><table><thead><tr><th style="width:34px">#</th><th style="width:170px">Proceso</th><th style="width:90px">Estado</th><th>Subtareas</th></tr></thead><tbody>${rows}</tbody></table></div><div class="card" style="margin-top:8px"><h3>Observaciones</h3><div class="obs">${escape(p.obs||'Sin observaciones.')}</div></div><div class="foot"><span>Generado desde Organizador de Producción Modular</span><span>${escape(p.num)}</span></div></div><script>setTimeout(()=>{window.focus();window.print()},500)<\/script></body></html>`;
   let w=window.open('','_blank'); if(!w){alert('El navegador bloqueó la ventana emergente. Permite pop-ups para exportar PDF.');return} w.document.open();w.document.write(html);w.document.close();
 }
@@ -1188,7 +1480,7 @@ function closeProgressModal(){
 exportBtn.onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='organizador_produccion_tuttovinilos.json';a.click();URL.revokeObjectURL(a.href)};
 importBtn.onclick=()=>file.click();
 file.onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{db=JSON.parse(r.result);render()}catch(err){alert('JSON inválido')}};r.readAsText(f)};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePedido();closeTipo();closeDescModal();closeProgressModal()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePedido();closeTipo();closeDescModal();closeProgressModal();closeExpress()}});
 loadAll();
 </script>
 </body>
