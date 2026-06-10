@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v50 factura preview manual errada gris/rojo");
+console.log("COTIZADOR JS conectado v51 factura referencia exacta + eliminar solo Roberto");
 
 const $ = (id) => document.getElementById(id);
 
@@ -307,11 +307,11 @@ function esFacturaTipo(tipo){
 }
 
 function getIvaRate(tipo){
-  return esFacturaTipo(tipo) ? 0.12 : 0.16;
+  return 0.16;
 }
 
 function getIvaLabel(tipo){
-  return esFacturaTipo(tipo) ? "IVA 12%" : "IVA 16%";
+  return "IVA 16%";
 }
 
 
@@ -772,10 +772,9 @@ function formatFechaFactura(fechaISO){
   const parts = raw.split("-");
   if(parts.length === 3){
     const y = parts[0];
-    const m = Number(parts[1]);
-    const d = Number(parts[2]);
-    const yy = String(y).slice(-2);
-    return `${m}/${d}/${yy}`;
+    const m = parts[1];
+    const d = parts[2];
+    return `${d}-${m}-${y}`;
   }
 
   return raw;
@@ -792,163 +791,149 @@ function numeroFacturaVisible(numero){
   return limpio;
 }
 
-function moneyFactura(n){
-  return Number(n || 0).toLocaleString("en-US",{
-    minimumFractionDigits:2,
-    maximumFractionDigits:2
+function moneyFactura(n,decimales=2){
+  return Number(n || 0).toLocaleString("es-VE",{
+    minimumFractionDigits:decimales,
+    maximumFractionDigits:decimales
+  });
+}
+
+function cantidadFactura(n){
+  const num = Number(n || 0);
+  const tieneDecimales = Math.abs(num - Math.trunc(num)) > 0.000001;
+
+  return num.toLocaleString("es-VE",{
+    minimumFractionDigits:tieneDecimales ? 2 : 0,
+    maximumFractionDigits:tieneDecimales ? 2 : 0
   });
 }
 
 function drawTextFactura(doc,text,x,y,opts={}){
   const value = String(text ?? "");
 
-  doc.setFont("helvetica", opts.bold ? "bold" : "normal");
-  doc.setFontSize(opts.size || 10);
+  doc.setFont("helvetica", opts.bold === false ? "normal" : "bold");
+  doc.setFontSize(opts.size || 10.4);
   doc.setTextColor(0,0,0);
 
   doc.text(value,x,y,{ align:opts.align || "left", baseline:"alphabetic" });
 }
 
-function drawFacturaHeader(doc,snapshot){
+function drawFacturaReferenciaHeader(doc,snapshot){
   const form = snapshot.form;
   const W = doc.internal.pageSize.getWidth();
 
-  const left = 13;
-  const right = W - 13;
-  const xB = 43;
-  const xC = 76;
-  const xD = 105;
-  const xF = 152;
-  const xG = 190;
+  // Coordenadas tomadas del PDF de referencia impreso.
+  const left = 18;
+  const right = W - 27;
 
-  drawTextFactura(doc,"FECHA:",xG - 7,28,{ bold:true, size:10, align:"right" });
-  drawTextFactura(doc,formatFechaFactura(form.fecha),right,28,{ size:10, align:"right" });
+  drawTextFactura(doc,"FECHA:",142,58,{ size:10.4, align:"right" });
+  drawTextFactura(doc,formatFechaFactura(form.fecha),178,58,{ size:10.4, align:"right" });
 
-  drawTextFactura(doc,"FACTURA N°:",xG - 7,36,{ bold:true, size:10, align:"right" });
-  drawTextFactura(doc,numeroFacturaVisible(form.numero),right,36,{ size:10, align:"right" });
+  drawTextFactura(doc,"FACTURA #",142,72,{ size:10.4, align:"right" });
+  drawTextFactura(doc,numeroFacturaVisible(form.numero),178,72,{ size:11.2, align:"right" });
 
-  drawTextFactura(doc,"NOMBRE O RAZON SOCIAL:",left + 4,55,{ bold:true, size:10 });
-  drawTextFactura(doc,form.cliente || "",(xC + right) / 2,55,{ size:10, align:"center" });
+  drawTextFactura(doc,"NOMBRE O RAZON SOCIAL:",left,91,{ size:10.4 });
+  drawTextFactura(doc,(form.cliente || "").toUpperCase(),W/2 + 20,91,{ size:15.2, align:"center" });
 
-  drawTextFactura(doc,"DIRECCION FISCAL:",left,75,{ bold:true, size:10 });
+  drawTextFactura(doc,"DIRECCION FISCAL:",23,106,{ size:10.4 });
 
   const dir = String(form.direccion || "");
-  const dirLines = doc.splitTextToSize(dir, right - xC - 6).slice(0,2);
-  drawTextFactura(doc,dirLines[0] || "",(xC + right) / 2,75,{ size:9.4, align:"center" });
-  drawTextFactura(doc,dirLines[1] || "",(xC + right) / 2,83,{ size:9.4, align:"center" });
+  const dirLines = doc.splitTextToSize(dir, 92).slice(0,2);
+  drawTextFactura(doc,dirLines[0] || "",W/2 + 20,103,{ size:10.2, align:"center" });
+  if(dirLines[1]){
+    drawTextFactura(doc,dirLines[1],W/2 + 20,110,{ size:10.2, align:"center" });
+  }
 
-  drawTextFactura(doc,"RIF.:",left,94,{ bold:true, size:10 });
-  drawTextFactura(doc,form.rif || "",xB,94,{ size:10 });
-  drawTextFactura(doc,"TELF.:",xC,94,{ bold:true, size:10 });
-  drawTextFactura(doc,form.telefono || "",xD,94,{ size:10 });
+  drawTextFactura(doc,"RIF.:",24,122,{ size:10.4 });
+  drawTextFactura(doc,form.rif || "",38,122,{ size:10.4 });
 }
 
-function drawFacturaTableHeader(doc){
-  const W = doc.internal.pageSize.getWidth();
-  const left = 13;
-  const right = W - 13;
-  const xB = 43;
-  const xF = 152;
-  const xG = 190;
-  const y = 106;
-  const h = 8;
+function drawFacturaReferenciaTable(doc,items){
+  const left = 18;
+  const x1 = 37;
+  const x2 = 108;
+  const x3 = 127;
+  const x4 = 154;
+  const right = 184;
+  const y = 131;
+  const headerH = 10;
+  const rowH = 18;
 
   doc.setDrawColor(0,0,0);
-  doc.setLineWidth(.65);
+  doc.setLineWidth(.45);
 
-  doc.rect(left,y,xB-left,h);
-  doc.rect(xB,y,xF-xB,h);
-  doc.rect(xF,y,xG-xF,h);
-  doc.rect(xG,y,right-xG,h);
+  doc.setFillColor(175,175,175);
+  doc.rect(left,y,right-left,headerH,"FD");
 
-  drawTextFactura(doc,"CANTIDAD",(left+xB)/2,y+5.6,{ bold:true, size:10, align:"center" });
-  drawTextFactura(doc,"DESCRIPCION",(xB+xF)/2,y+5.6,{ bold:true, size:10, align:"center" });
-  drawTextFactura(doc,"P/UNIT.",(xF+xG)/2,y+5.6,{ bold:true, size:10, align:"center" });
-  drawTextFactura(doc,"TOTAL",(xG+right)/2,y+5.6,{ bold:true, size:10, align:"center" });
+  [x1,x2,x3,x4].forEach(x => doc.line(x,y,x,y+headerH));
+
+  drawTextFactura(doc,"#",(left+x1)/2,y+6.7,{ size:10.4, align:"center" });
+  drawTextFactura(doc,"DESCRIPCION",(x1+x2)/2,y+6.7,{ size:10.4, align:"center" });
+  drawTextFactura(doc,"CANT (m)",(x2+x3)/2,y+6.7,{ size:10.4, align:"center" });
+  drawTextFactura(doc,"P.U",(x3+x4)/2,y+6.7,{ size:10.4, align:"center" });
+  drawTextFactura(doc,"SUB TOTAL",(x4+right)/2,y+6.7,{ size:10.4, align:"center" });
+
+  const visibles = (items || []).filter(it => it.kind === "item").slice(0,6);
+  const filas = Math.max(1,visibles.length);
+
+  for(let i=0;i<filas;i++){
+    const rowY = y + headerH + (i * rowH);
+
+    doc.setFillColor(255,255,255);
+    doc.rect(left,rowY,right-left,rowH,"FD");
+    [x1,x2,x3,x4].forEach(x => doc.line(x,rowY,x,rowY+rowH));
+
+    const item = visibles[i];
+    if(!item) continue;
+
+    const qty = Number(item.qty || 0);
+    const price = Number(item.price || 0);
+    const total = qty * price;
+    const descLines = doc.splitTextToSize(String(item.desc || ""), x2 - x1 - 8).slice(0,2);
+    const descY = rowY + (descLines.length > 1 ? 7 : 10.2);
+
+    drawTextFactura(doc,String(i+1),(left+x1)/2,rowY+10.4,{ size:10.4, align:"center" });
+    doc.text(descLines,(x1+x2)/2,descY,{ align:"center" });
+    drawTextFactura(doc,cantidadFactura(qty),(x2+x3)/2,rowY+10.4,{ size:10.4, align:"center" });
+    drawTextFactura(doc,moneyFactura(price,3),(x3+x4)/2,rowY+10.4,{ size:10.4, align:"center" });
+    drawTextFactura(doc,moneyFactura(total,2),right-1,rowY+10.4,{ size:10.4, align:"right" });
+  }
 
   doc.setLineWidth(.2);
 }
 
-function drawFacturaItems(doc,items){
-  const W = doc.internal.pageSize.getWidth();
-  const left = 13;
-  const right = W - 13;
-  const xB = 43;
-  const xF = 152;
-  const xG = 190;
-  const rowStartY = 121;
-  const rowH = 7.6;
-  const maxRows = 22;
-
-  const visibles = (items || []).filter(it => it.kind === "item" || it.kind === "separator").slice(0,maxRows);
-
-  visibles.forEach((item,index) => {
-    const y = rowStartY + (index * rowH);
-
-    if(item.kind === "separator"){
-      drawTextFactura(doc,item.desc || "",(xB+xF)/2,y,{ bold:true, size:9.4, align:"center" });
-      return;
-    }
-
-    const descLines = doc.splitTextToSize(String(item.desc || ""), xF - xB - 8).slice(0,1);
-    const qty = Number(item.qty || 0);
-    const price = Number(item.price || 0);
-    const total = qty * price;
-
-    drawTextFactura(doc,qty ? String(qty) : "",xB - 1,y,{ size:10, align:"right" });
-    drawTextFactura(doc,descLines[0] || "",(xB+xF)/2,y,{ size:9.2, align:"center" });
-    drawTextFactura(doc,moneyFactura(price),xG - 1,y,{ size:10, align:"right" });
-    drawTextFactura(doc,moneyFactura(total),right,y,{ size:10, align:"right" });
-  });
-}
-
-function drawFacturaTotals(doc,snapshot){
-  const W = doc.internal.pageSize.getWidth();
-  const left = 13;
-  const right = W - 13;
-  const xB = 43;
-  const xC = 76;
-  const xF = 152;
-
+function drawFacturaReferenciaTotals(doc,snapshot){
   const form = snapshot.form;
   const t = snapshot.totals || calcularTotales(snapshot.items, form.iva, form.tipo);
+
   const subtotal = Number(t.subtotal || 0);
-  const ajustes = 0;
-  const totalNeto = subtotal + ajustes;
   const iva = Number(t.iva || 0);
-  const totalPagar = totalNeto + iva;
+  const totalPagar = Number(t.total || subtotal + iva);
 
-  drawTextFactura(doc,"ESTE DOCUMENTO VA SIN TACHADURAS NI ENMENDADURAS",(xB + xF) / 2,232,{ size:7.9, align:"center" });
+  const labelX = 154;
+  const valueX = 183;
 
-  const rows = [
-    ["SUB-TOTAL BS",subtotal],
-    ["AJUSTES BS",ajustes],
-    ["TOTAL NETO BS",totalNeto],
-    ["IVA 12% BS",iva],
-    ["TOTAL A PAGAR",totalPagar]
-  ];
+  drawTextFactura(doc,"SUB-TOTAL BS",labelX,225,{ size:10.4, align:"right" });
+  drawTextFactura(doc,moneyFactura(subtotal,2),valueX,225,{ size:10.4, align:"right" });
 
-  let y = 240;
-  rows.forEach(([label,value]) => {
-    drawTextFactura(doc,label,xF + 1,y,{ size:9.6 });
-    drawTextFactura(doc,moneyFactura(value),right,y,{ size:9.6, align:"right" });
-    y += 8;
-  });
+  drawTextFactura(doc,"IVA 16%",labelX,233,{ size:10.4, align:"right" });
+  drawTextFactura(doc,moneyFactura(iva,2),valueX,233,{ size:10.4, align:"right" });
 
-  drawTextFactura(doc,"FORMA DE PAGO:",left + 13,256,{ bold:true, size:10 });
-  drawTextFactura(doc,"CREDITO",xC + 17,256,{ size:10, align:"center" });
+  drawTextFactura(doc,"TOTAL A PAGAR BS",labelX,241,{ size:10.4, align:"right" });
+  drawTextFactura(doc,moneyFactura(totalPagar,2),valueX,241,{ size:10.4, align:"right" });
 }
 
 async function crearDocumentoFacturaPDF(snapshot=crearSnapshotActual()){
   if(!window.jspdf || !window.jspdf.jsPDF) throw new Error("No cargó la librería PDF.");
 
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"letter" });
 
-  drawFacturaHeader(doc,snapshot);
-  drawFacturaTableHeader(doc);
-  drawFacturaItems(doc,snapshot.items || []);
-  drawFacturaTotals(doc,snapshot);
+  // La referencia impresa recibida viene en proporción A4.
+  const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
+
+  drawFacturaReferenciaHeader(doc,snapshot);
+  drawFacturaReferenciaTable(doc,snapshot.items || []);
+  drawFacturaReferenciaTotals(doc,snapshot);
 
   return doc;
 }
@@ -1671,6 +1656,7 @@ function renderCotizacionesPrevias(){
         <td class="center">
           <button class="mini-btn dark" type="button" data-ver-cot="${Number(c.id)}">Abrir</button>
           <button class="mini-btn" type="button" data-pdf-cot="${Number(c.id)}">${c.pdf_nombre ? "Abrir PDF" : "Generar PDF"}</button>
+          ${esRoberto() ? `<button class="mini-btn delete" type="button" data-eliminar-cot="${Number(c.id)}">Eliminar</button>` : ""}
         </td>
       </tr>
     `;
@@ -1760,6 +1746,39 @@ async function toggleErradaCotizacion(id){
 
   renderCotizacionesPrevias();
   showToast(nuevoEstado ? "Cotización marcada como errada" : "Cotización quitada de erradas","ok");
+}
+
+
+async function eliminarCotizacion(id){
+  if(!esRoberto()){
+    showToast("Solo Roberto puede eliminar documentos", "err");
+    return;
+  }
+
+  const cot = cotizacionesDB.find(c => Number(c.id) === Number(id));
+
+  if(!cot){
+    showToast("No se encontró el documento", "err");
+    return;
+  }
+
+  const seguro = confirm(`¿Eliminar definitivamente ${cot.tipo_documento || "documento"} ${cot.numero || ""} de ${cot.cliente || "sin cliente"}?\n\nEsta acción no se puede deshacer.`);
+  if(!seguro) return;
+
+  const { error } = await db()
+    .from("cotizaciones")
+    .delete()
+    .eq("id",id);
+
+  if(error){
+    console.error(error);
+    showToast("No se pudo eliminar el documento", "err");
+    return;
+  }
+
+  cotizacionesDB = cotizacionesDB.filter(c => Number(c.id) !== Number(id));
+  renderCotizacionesPrevias();
+  showToast("Documento eliminado", "ok");
 }
 
 function buscarCotizacionPorId(id){
@@ -2056,6 +2075,13 @@ function bindEvents(){
       return;
     }
 
+    const eliminar = e.target.closest("[data-eliminar-cot]");
+
+    if(eliminar){
+      eliminarCotizacion(Number(eliminar.dataset.eliminarCot));
+      return;
+    }
+
     const ver = e.target.closest("[data-ver-cot]");
 
     if(ver){
@@ -2149,4 +2175,3 @@ async function iniciarCotizador(){
 
 
 document.addEventListener("DOMContentLoaded", iniciarCotizador);
-
