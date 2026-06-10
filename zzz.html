@@ -584,7 +584,7 @@ body > span:empty{display:none!important}
         <div class="field wide2"><label>Alertas</label><div id="alerts"></div></div>
       </div>
 
-      <div class="section"><div><b>Procesos del pedido</b><p class="muted">Cada proceso completo suma al porcentaje interno.</p></div><button class="btn" onclick="addProcPedido()">+ Proceso</button></div>
+      <div class="section"><div><b>Procesos del pedido</b><p class="muted">Cada proceso suma al porcentaje. El encargado se asigna aquí por pedido.</p></div><button class="btn" onclick="addProcPedido()">+ Proceso</button></div>
       <div id="checks" class="checks"></div>
     </div>
     <div class="foot"><button class="btn" onclick="closePedido()">Cancelar</button><button class="btn primary" onclick="savePedido()">Guardar en Supabase</button></div>
@@ -594,7 +594,7 @@ body > span:empty{display:none!important}
 <div id="tipoModal" class="modalBack">
   <div class="modal">
     <div class="modalHead">
-      <div><h2 id="tipoTitle">Setting</h2><p class="muted">Configura tipos, color y procesos base.</p></div>
+      <div><h2 id="tipoTitle">Setting</h2><p class="muted">Configura tipos, color y procesos base. El encargado se asigna luego en cada pedido.</p></div>
       <button class="actionBtn actionDel" onclick="closeTipo()">X</button>
     </div>
     <div class="modalBody">
@@ -791,7 +791,7 @@ function encargadoOptions(selected=''){
 }
 
 function copyProcs(t,done=0){
-  return (t.procs||[]).map((p,i)=>({id:uid(),name:p.name,encargado:p.encargado||'',done:i<done,subs:(p.subs||[]).map(s=>({id:uid(),name:s,done:i<done}))}));
+  return (t.procs||[]).map((p,i)=>({id:uid(),name:p.name,encargado:'',done:i<done,subs:(p.subs||[]).map(s=>({id:uid(),name:s,done:i<done}))}));
 }
 function pct(p){return !p.procs?.length?0:Math.round((p.procs.filter(x=>x.done).length/p.procs.length)*100)}
 function next(p){return(p.procs.find(x=>!x.done)||{name:'Completado'}).name}
@@ -1181,7 +1181,7 @@ function drawCatalog(){
 function addCatalogProcess(id){
   const p=(db.catalogo||[]).find(x=>x.id===id);
   if(!p)return;
-  tmpProcs.push({id:uid(),name:p.name,encargado:'',subs:[...(p.subs||[])]});
+  tmpProcs.push({id:uid(),name:p.name,subs:[...(p.subs||[])]});
   drawTipoEditor();
 }
 async function openCatalogPrompt(){
@@ -1200,9 +1200,9 @@ async function openCatalogPrompt(){
 }
 
 function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')}
-function drawTipoEditor(){tipoEditor.innerHTML=tmpProcs.map(p=>`<div class="editorRow" style="grid-template-columns:1fr 1fr 1.4fr auto"><input class="input" value="${esc(p.name)}" onchange="upTipoProc('${p.id}','name',this.value)"><select class="select" onchange="upTipoProc('${p.id}','encargado',this.value)">${encargadoOptions(p.encargado||'')}</select><input class="input" value="${esc((p.subs||[]).join(', '))}" onchange="upTipoProc('${p.id}','subs',this.value)"><button class="btn red" onclick="rmTipoProc('${p.id}')">Eliminar</button></div>`).join('')}
-function upTipoProc(id,f,v){let p=tmpProcs.find(x=>x.id===id);if(f==='name')p.name=v;if(f==='encargado')p.encargado=v;if(f==='subs')p.subs=v.split(',').map(x=>x.trim()).filter(Boolean)}
-function addProcTipo(){tmpProcs.push({id:uid(),name:'Nuevo proceso',encargado:'',subs:['Subtarea']});drawTipoEditor()}
+function drawTipoEditor(){tipoEditor.innerHTML=tmpProcs.map(p=>`<div class="editorRow"><input class="input" value="${esc(p.name)}" onchange="upTipoProc('${p.id}','name',this.value)"><input class="input" value="${esc((p.subs||[]).join(', '))}" onchange="upTipoProc('${p.id}','subs',this.value)"><button class="btn red" onclick="rmTipoProc('${p.id}')">Eliminar</button></div>`).join('')}
+function upTipoProc(id,f,v){let p=tmpProcs.find(x=>x.id===id);if(f==='name')p.name=v;if(f==='subs')p.subs=v.split(',').map(x=>x.trim()).filter(Boolean)}
+function addProcTipo(){tmpProcs.push({id:uid(),name:'Nuevo proceso',subs:['Subtarea']});drawTipoEditor()}
 function rmTipoProc(id){tmpProcs=tmpProcs.filter(p=>p.id!==id);drawTipoEditor()}
 
 async function insertTipo(t){
@@ -1211,6 +1211,13 @@ async function insertTipo(t){
 }
 async function saveTipo(){
   try{
+    
+    tmpProcs = tmpProcs.map(p=>({
+      id:p.id||uid(),
+      name:p.name,
+      subs:p.subs||[]
+    }));
+
     let t={id:editTipo||uid(),name:tNombre.value||'Tipo sin nombre',cat:tCat.value,color:tColor.value||'#efe8ff',instPartida:'No',accBase:'No aplica',fixBase:'No aplica',ilumPartida:'No',luz:'No aplica',ledBase:'No aplica',desc:tDesc.value,procs:tmpProcs};
     const sb=await getSupabase();
     if(sb&&online){const {error}=await insertTipo(t);if(error)throw error;}
