@@ -477,6 +477,16 @@ body > span:empty{display:none!important}
   }
 }
 
+
+/* Encargado por proceso */
+.editorRow .select{
+  min-height:40px;
+}
+.mainCheck > div > .select{
+  font-size:12px;
+  font-weight:800;
+}
+
 </style>
 </head>
 
@@ -724,7 +734,7 @@ body > span:empty{display:none!important}
 <script>
 const KEY='tutto_prod_modular_cache_v1';
 const cats=['Servicio de corte','Letras / piezas en PVC','Letras frontlit','Letras metálicas','Cajas de luz'];
-let db={tipos:[],pedidos:[],clientes:[],catalogo:[]};
+let db={tipos:[],pedidos:[],clientes:[],catalogo:[],trabajadores:[]};
 let editPedido=null,editTipo=null,tmpProcs=[],selectedClienteId=null,online=false;
 
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2,10);
@@ -733,7 +743,7 @@ const hoy=()=>new Date().toISOString().slice(0,10);
 function toast(msg){dbStatus.textContent=msg}
 function localSave(){localStorage.setItem(KEY,JSON.stringify(db))}
 function localLoad(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
-function P(name,subs){return{id:uid(),name,subs}}
+function P(name,subs,encargado=''){return{id:uid(),name,encargado,subs}}
 
 function demoTipos(){
   return [
@@ -771,8 +781,17 @@ function catalogoBase(){
   ];
 }
 
+
+function trabajadoresBase(){
+  return ['Roberto','Ricardo','Chico','Carlos','Alejandro','Rubén','Gabriela','Ana'].map(nombre=>({nombre}));
+}
+function encargadoOptions(selected=''){
+  const lista=(db.trabajadores&&db.trabajadores.length?db.trabajadores:trabajadoresBase()).map(x=>x.nombre||x);
+  return '<option value="">Sin encargado</option>'+lista.map(n=>`<option ${n===selected?'selected':''}>${n}</option>`).join('');
+}
+
 function copyProcs(t,done=0){
-  return (t.procs||[]).map((p,i)=>({id:uid(),name:p.name,done:i<done,subs:(p.subs||[]).map(s=>({id:uid(),name:s,done:i<done}))}));
+  return (t.procs||[]).map((p,i)=>({id:uid(),name:p.name,encargado:p.encargado||'',done:i<done,subs:(p.subs||[]).map(s=>({id:uid(),name:s,done:i<done}))}));
 }
 function pct(p){return !p.procs?.length?0:Math.round((p.procs.filter(x=>x.done).length/p.procs.length)*100)}
 function next(p){return(p.procs.find(x=>!x.done)||{name:'Completado'}).name}
@@ -793,7 +812,7 @@ async function loadAll(){
   if(!sb){
     online=false;
     const cached=localLoad();
-    db=cached||{tipos:demoTipos(),pedidos:[],clientes:[],catalogo:catalogoBase()};
+    db=cached||{tipos:demoTipos(),pedidos:[],clientes:[],catalogo:catalogoBase(),trabajadores:trabajadoresBase()};
     toast('Modo local: Supabase no disponible.');
     render();
     return;
@@ -801,17 +820,19 @@ async function loadAll(){
 
   try{
     online=true;
-    let [tiposRes,pedidosRes,clientesRes,catalogoRes]=await Promise.all([
+    let [tiposRes,pedidosRes,clientesRes,catalogoRes,trabajadoresRes]=await Promise.all([
       sb.from('prod_tipos_letrero').select('*').order('nombre'),
       sb.from('prod_pedidos').select('*').order('created_at',{ascending:false}),
       sb.from('prod_clientes').select('*').order('nombre'),
-      sb.from('prod_procesos_catalogo').select('*').order('orden').order('nombre')
+      sb.from('prod_procesos_catalogo').select('*').order('orden').order('nombre'),
+      sb.from('operadores').select('nombre,activo').order('nombre')
     ]);
 
     if(tiposRes.error) throw tiposRes.error;
     if(pedidosRes.error) throw pedidosRes.error;
     if(clientesRes.error) throw clientesRes.error;
     if(catalogoRes.error) throw catalogoRes.error;
+    if(trabajadoresRes.error) console.warn('No cargaron operadores',trabajadoresRes.error);
 
     db.tipos=(tiposRes.data||[]).map(t=>({
       id:t.id,name:t.nombre,cat:t.categoria,color:t.color||'#efe8ff',instPartida:t.instalacion_activa?'Sí':'No',accBase:t.acceso_base||'No aplica',fixBase:t.fijacion_base||'No aplica',
@@ -825,6 +846,8 @@ async function loadAll(){
 
     db.clientes=clientesRes.data||[];
     db.catalogo=(catalogoRes.data||[]).map(x=>({id:x.id,name:x.nombre,categoria:x.categoria||'',subs:x.subtareas||[]}));
+    db.trabajadores=(trabajadoresRes.data||[]).filter(x=>x.activo!==false).map(x=>({nombre:x.nombre}));
+    if(!db.trabajadores.length) db.trabajadores=trabajadoresBase();
 
     db.pedidos=(pedidosRes.data||[]).map(p=>({
       id:p.id,num:p.numero_pedido,fecha:p.fecha,oper:p.operador,cliente:p.cliente_nombre||'',cliente_id:p.cliente_id,
@@ -840,7 +863,7 @@ async function loadAll(){
     console.error(err);
     online=false;
     const cached=localLoad();
-    db=cached||{tipos:demoTipos(),pedidos:[],clientes:[],catalogo:catalogoBase()};
+    db=cached||{tipos:demoTipos(),pedidos:[],clientes:[],catalogo:catalogoBase(),trabajadores:trabajadoresBase()};
     toast('Error Supabase. Mostrando respaldo local.');
     render();
   }
@@ -951,6 +974,7 @@ function expressProcs(estado){
   return base.map((p,i)=>({
     id:uid(),
     name:p.name,
+    encargado:'',
     done:i<avance,
     subs:p.subs.map(s=>({id:uid(),name:s,done:i<avance}))
   }));
@@ -1043,11 +1067,19 @@ function openPedido(id){
 function closePedido(){pedidoModal.classList.remove('show'); editPedido=null; clienteSuggest.classList.remove('show')}
 
 function drawChecks(){
-  checks.innerHTML=tmpProcs.map((p,i)=>`<div class="check"><div class="mainCheck"><input type="checkbox" ${p.done?'checked':''} onchange="toggleProc('${p.id}',this.checked)"><div style="flex:1"><strong>${i+1}. ${p.name}</strong><small>${(p.subs||[]).length} subtarea(s)</small><div class="subchecks">${(p.subs||[]).map(s=>`<label><input type="checkbox" ${s.done?'checked':''} onchange="toggleSub('${p.id}','${s.id}',this.checked)"><span>${s.name}</span></label>`).join('')}</div></div><button class="actionBtn actionEdit" onclick="editProcPedido('${p.id}')">EDIT</button><button class="actionBtn actionDel" onclick="rmProcPedido('${p.id}')">X</button></div></div>`).join('');
+  checks.innerHTML=tmpProcs.map((p,i)=>`<div class="check"><div class="mainCheck"><input type="checkbox" ${p.done?'checked':''} onchange="toggleProc('${p.id}',this.checked)"><div style="flex:1"><strong>${i+1}. ${p.name}</strong><small>${(p.subs||[]).length} subtarea(s) · Encargado: ${p.encargado||'Sin asignar'}</small>
+<select class="select" style="margin-top:8px;max-width:260px" onchange="setProcEncargado('${p.id}',this.value)">${encargadoOptions(p.encargado||'')}</select>
+<div class="subchecks">${(p.subs||[]).map(s=>`<label><input type="checkbox" ${s.done?'checked':''} onchange="toggleSub('${p.id}','${s.id}',this.checked)"><span>${s.name}</span></label>`).join('')}</div></div><button class="actionBtn actionEdit" onclick="editProcPedido('${p.id}')">EDIT</button><button class="actionBtn actionDel" onclick="rmProcPedido('${p.id}')">X</button></div></div>`).join('');
 }
+
+function setProcEncargado(id,nombre){
+  const p=tmpProcs.find(x=>x.id===id);
+  if(p)p.encargado=nombre;
+}
+
 function toggleProc(id,v){let p=tmpProcs.find(x=>x.id===id);p.done=v;(p.subs||[]).forEach(s=>s.done=v);drawChecks()}
 function toggleSub(pid,sid,v){let p=tmpProcs.find(x=>x.id===pid);p.subs.find(s=>s.id===sid).done=v;p.done=p.subs.length?p.subs.every(s=>s.done):false;drawChecks()}
-function addProcPedido(){let n=prompt('Nombre del proceso');if(!n)return;tmpProcs.push({id:uid(),name:n,done:false,subs:[]});drawChecks()}
+function addProcPedido(){let n=prompt('Nombre del proceso');if(!n)return;tmpProcs.push({id:uid(),name:n,encargado:'',done:false,subs:[]});drawChecks()}
 function rmProcPedido(id){tmpProcs=tmpProcs.filter(p=>p.id!==id);drawChecks()}
 function editProcPedido(id){let p=tmpProcs.find(x=>x.id===id),n=prompt('Proceso:',p.name);if(n)p.name=n;let s=prompt('Subtareas separadas por coma:',(p.subs||[]).map(x=>x.name).join(', '));if(s!==null){p.subs=s.split(',').map(x=>x.trim()).filter(Boolean).map(name=>({id:uid(),name,done:false}));p.done=false}drawChecks()}
 
@@ -1149,7 +1181,7 @@ function drawCatalog(){
 function addCatalogProcess(id){
   const p=(db.catalogo||[]).find(x=>x.id===id);
   if(!p)return;
-  tmpProcs.push({id:uid(),name:p.name,subs:[...(p.subs||[])]});
+  tmpProcs.push({id:uid(),name:p.name,encargado:'',subs:[...(p.subs||[])]});
   drawTipoEditor();
 }
 async function openCatalogPrompt(){
@@ -1168,9 +1200,9 @@ async function openCatalogPrompt(){
 }
 
 function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')}
-function drawTipoEditor(){tipoEditor.innerHTML=tmpProcs.map(p=>`<div class="editorRow"><input class="input" value="${esc(p.name)}" onchange="upTipoProc('${p.id}','name',this.value)"><input class="input" value="${esc((p.subs||[]).join(', '))}" onchange="upTipoProc('${p.id}','subs',this.value)"><button class="btn red" onclick="rmTipoProc('${p.id}')">Eliminar</button></div>`).join('')}
-function upTipoProc(id,f,v){let p=tmpProcs.find(x=>x.id===id);if(f==='name')p.name=v;if(f==='subs')p.subs=v.split(',').map(x=>x.trim()).filter(Boolean)}
-function addProcTipo(){tmpProcs.push(P('Nuevo proceso',['Subtarea']));drawTipoEditor()}
+function drawTipoEditor(){tipoEditor.innerHTML=tmpProcs.map(p=>`<div class="editorRow" style="grid-template-columns:1fr 1fr 1.4fr auto"><input class="input" value="${esc(p.name)}" onchange="upTipoProc('${p.id}','name',this.value)"><select class="select" onchange="upTipoProc('${p.id}','encargado',this.value)">${encargadoOptions(p.encargado||'')}</select><input class="input" value="${esc((p.subs||[]).join(', '))}" onchange="upTipoProc('${p.id}','subs',this.value)"><button class="btn red" onclick="rmTipoProc('${p.id}')">Eliminar</button></div>`).join('')}
+function upTipoProc(id,f,v){let p=tmpProcs.find(x=>x.id===id);if(f==='name')p.name=v;if(f==='encargado')p.encargado=v;if(f==='subs')p.subs=v.split(',').map(x=>x.trim()).filter(Boolean)}
+function addProcTipo(){tmpProcs.push({id:uid(),name:'Nuevo proceso',encargado:'',subs:['Subtarea']});drawTipoEditor()}
 function rmTipoProc(id){tmpProcs=tmpProcs.filter(p=>p.id!==id);drawTipoEditor()}
 
 async function insertTipo(t){
@@ -1195,7 +1227,7 @@ async function delTipo(id){
 function exportPedido(id){
   let p=db.pedidos.find(x=>x.id===id); if(!p){alert('No se encontró el pedido.');return}
   let escape=s=>String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-  let rows=p.procs.map((pr,i)=>`<tr><td>${i+1}</td><td><b>${escape(pr.name)}</b></td><td><span class="estado ${pr.done?'ok':'pend'}">${pr.done?'Listo':'Pendiente'}</span></td><td>${(pr.subs||[]).map(s=>`${s.done?'☑':'☐'} ${escape(s.name)}`).join(' &nbsp; · &nbsp; ')}</td></tr>`).join('');
+  let rows=p.procs.map((pr,i)=>`<tr><td>${i+1}</td><td><b>${escape(pr.name)}</b>${pr.encargado?'<br><small>Encargado: '+escape(pr.encargado)+'</small>':''}</td><td><span class="estado ${pr.done?'ok':'pend'}">${pr.done?'Listo':'Pendiente'}</span></td><td>${(pr.subs||[]).map(s=>`${s.done?'☑':'☐'} ${escape(s.name)}`).join(' &nbsp; · &nbsp; ')}</td></tr>`).join('');
   let html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Pedido ${escape(p.num)}</title><style>*{box-sizing:border-box}body{font-family:Inter,Arial,Helvetica,sans-serif;color:#20233a;margin:0;background:#f3f5fb}.page{width:279mm;min-height:216mm;margin:0 auto;background:white;padding:10mm;box-shadow:0 12px 40px rgba(0,0,0,.12)}.head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;border-bottom:3px solid #4b1fa3;padding-bottom:9px;margin-bottom:10px}.brand{font-size:22px;font-weight:900;letter-spacing:5px;color:#35127e}.subtitle{font-size:10px;color:#70778d;margin-top:3px;font-weight:700}.order{text-align:right}.order small{display:block;color:#70778d;font-size:9px;font-weight:900;text-transform:uppercase}.order b{display:block;font-size:22px;color:#4b1fa3;line-height:1.1}.grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px;margin-bottom:8px}.card{border:1px solid #e1e5f0;border-radius:12px;background:#fbfcff;padding:9px}h3{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#4b1fa3}.miniGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 9px}.item{font-size:10px}.item small{display:block;color:#72798f;font-weight:900;text-transform:uppercase;font-size:8px;margin-bottom:2px}.item b{font-size:11px}.desc{grid-column:1/-1}.pill{display:inline-block;padding:4px 8px;border-radius:99px;background:#efe8ff;color:#4b1fa3;font-size:10px;font-weight:900}table{width:100%;border-collapse:collapse;margin-top:8px}th{background:#f8f9ff;color:#596078;font-size:9px;text-transform:uppercase;letter-spacing:.3px;text-align:left;padding:7px;border:1px solid #e1e5f0}td{font-size:10px;padding:7px;border:1px solid #e1e5f0;vertical-align:top}.estado{display:inline-block;border-radius:99px;padding:4px 8px;font-size:9px;font-weight:900}.estado.ok{background:#e9faf2;color:#08794b}.estado.pend{background:#fff7df;color:#9a6500}.obs{white-space:pre-wrap;font-size:10px;line-height:1.35;min-height:34px}.foot{margin-top:8px;border-top:1px solid #e1e5f0;padding-top:6px;font-size:8px;color:#7a8196;display:flex;justify-content:space-between}@media print{body{background:white}.page{box-shadow:none;margin:0;width:auto;min-height:auto;padding:8mm}}@page{size:letter landscape;margin:8mm}
 /* Oculta textos/debug sueltos de conexión si algún script viejo los inyecta */
 body > div:empty,
@@ -1424,6 +1456,16 @@ body > span:empty{display:none!important}
   }
 }
 
+
+/* Encargado por proceso */
+.editorRow .select{
+  min-height:40px;
+}
+.mainCheck > div > .select{
+  font-size:12px;
+  font-weight:800;
+}
+
 </style></head><body><div class="page"><div class="head"><div><div class="brand">TUTTOVINILOS</div><div class="subtitle">Orden de producción modular · Formato horizontal</div></div><div class="order"><small>N° pedido</small><b>${escape(p.num)}</b><small>${new Date().toLocaleString('es-VE')}</small></div></div><div class="grid"><div class="card"><h3>Datos del pedido</h3><div class="miniGrid"><div class="item"><small>Fecha</small><b>${escape(p.fecha)}</b></div><div class="item"><small>Operador</small><b>${escape(p.oper)}</b></div><div class="item"><small>Cliente</small><b>${escape(p.cliente)}</b></div><div class="item"><small>Cantidad</small><b>${escape(p.cant)}</b></div><div class="item desc"><small>Descripción</small><b>${escape(p.desc)}</b></div></div></div><div class="card"><h3>Fabricación</h3><div class="miniGrid"><div class="item"><small>Categoría</small><b>${escape(p.cat)}</b></div><div class="item"><small>Tipo</small><b>${escape(p.tipo)}</b></div><div class="item"><small>Estado</small><span class="pill">${escape(p.estado)}</span></div><div class="item"><small>Interior/exterior</small><b>${escape(p.ubic)}</b></div></div></div><div class="card"><h3>Instalación / luz</h3><div class="miniGrid"><div class="item"><small>Instalación</small><b>${escape(p.inst)}</b></div><div class="item"><small>Altura</small><b>${escape(p.alt)}</b></div><div class="item"><small>Superficie</small><b>${escape(p.sup)}</b></div><div class="item"><small>Acceso</small><b>${escape(p.acc)}</b></div><div class="item"><small>Fijación</small><b>${escape(p.fix)}</b></div><div class="item"><small>Luz</small><b>${escape(p.luz)}</b></div><div class="item"><small>Tipo luz</small><b>${escape(p.tluz)}</b></div><div class="item"><small>LED/cinta</small><b>${escape(p.led)}</b></div></div></div></div><div class="card"><h3>Procesos del pedido</h3><table><thead><tr><th style="width:34px">#</th><th style="width:170px">Proceso</th><th style="width:90px">Estado</th><th>Subtareas</th></tr></thead><tbody>${rows}</tbody></table></div><div class="card" style="margin-top:8px"><h3>Observaciones</h3><div class="obs">${escape(p.obs||'Sin observaciones.')}</div></div><div class="foot"><span>Generado desde Organizador de Producción Modular</span><span>${escape(p.num)}</span></div></div><script>setTimeout(()=>{window.focus();window.print()},500)<\/script></body></html>`;
   let w=window.open('','_blank'); if(!w){alert('El navegador bloqueó la ventana emergente. Permite pop-ups para exportar PDF.');return} w.document.open();w.document.write(html);w.document.close();
 }
@@ -1461,7 +1503,7 @@ function openProgressModal(id){
     ${(p.procs||[]).map((pr,i)=>`
       <div class="progressProc ${pr.done?'done':'pending'}">
         <div class="progressProcHead">
-          <b>${i+1}. ${pr.name}</b>
+          <b>${i+1}. ${pr.name}${pr.encargado?' · '+pr.encargado:''}</b>
           <span>${pr.done?'Listo':'Pendiente'}</span>
         </div>
         <div class="progressSubs">
