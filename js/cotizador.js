@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v48 factura preview manual errada");
+console.log("COTIZADOR JS conectado v49 factura preview manual errada");
 
 const $ = (id) => document.getElementById(id);
 
@@ -8,6 +8,11 @@ let cotizacionSeleccionada = null;
 
 const TUTTO_LOGO_SRC = "img/logo-tutto.svg?v=10";
 let tuttoLogoPngPromise = null;
+
+let previewPdfUrl = null;
+let previewPdfBlob = null;
+let previewPdfDoc = null;
+let previewSnapshot = null;
 
 let data = {
   tipo: "Cotización",
