@@ -1080,6 +1080,88 @@ html,body{
   }
 }
 
+
+/* Chips rápidos y agrupación por cliente */
+.quickChips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:6px;
+}
+.quickChip{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  padding:4px 7px;
+  border-radius:999px;
+  background:#eef3ff;
+  border:1px solid #d7e2ff;
+  color:#334155;
+  font-size:9.5px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.quickChip.bad{
+  background:#fff0f2;
+  border-color:#ffcbd3;
+  color:#dc2626;
+}
+.quickChip.today{
+  background:#fff7df;
+  border-color:#ffe1a0;
+  color:#9a6500;
+}
+.quickChip.ok{
+  background:#e9faf2;
+  border-color:#bce8d5;
+  color:#08794b;
+}
+.groupHead td{
+  background:#eef3ff!important;
+  padding:10px 12px!important;
+  border-top:2px solid #153bff!important;
+}
+.groupTitle{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.groupTitle b{
+  color:#153bff;
+  font-size:14px;
+  font-weight:900;
+  margin-right:6px;
+}
+.groupTitle span{
+  display:inline-flex;
+  align-items:center;
+  border-radius:999px;
+  background:#fff;
+  border:1px solid #d7e2ff;
+  color:#334155;
+  font-size:10px;
+  font-weight:900;
+  padding:5px 8px;
+}
+.groupTitle span.bad{
+  background:#fff0f2;
+  border-color:#ffcbd3;
+  color:#dc2626;
+}
+.tabs.tabs3{
+  grid-template-columns:1fr 1fr 1fr!important;
+}
+@media(max-width:760px){
+  .tabs.tabs3{
+    grid-template-columns:1fr!important;
+  }
+  .quickChips{
+    min-width:210px;
+  }
+}
+
 </style>
 </head>
 
@@ -1127,8 +1209,9 @@ html,body{
     <div class="field"><label>Actualizar</label><button class="btn blue" onclick="loadAll()">Recargar</button></div>
   </section>
 
-  <div class="tabs">
+  <div class="tabs tabs3">
     <button class="tab active" onclick="showView('pedidos',this)">Previsualizador</button>
+    <button class="tab" onclick="toggleGroupCliente(this)">Agrupar por cliente</button>
     <button class="tab" onclick="showView('tipos',this)">Settings</button>
   </div>
 
@@ -1154,6 +1237,7 @@ html,body{
       <div class="form">
         <div class="field"><label>N° pedido</label><input id="pNum" class="input" placeholder="Ej: TV-00001"></div>
         <div class="field"><label>Fecha</label><input id="pFecha" type="date" class="input"></div>
+        <div class="field"><label>Fecha entrega</label><input id="pEntrega" type="date" class="input"></div>
         <div class="field"><label>Operador</label><select id="pOper" class="select"><option>Roberto</option><option>Chico</option><option>Carlos</option><option>Alejandro</option><option>Rubén</option><option>Gabriela</option></select></div>
         <div class="field"><label>Cliente · Comanda</label><input id="pCliente" class="input" autocomplete="off" placeholder="Buscar cliente de Comanda" oninput="buscarClientes(this.value)"><div id="clienteSuggest" class="suggestBox"></div></div>
         <div class="field"><label>Cantidad</label><input id="pCant" class="input"></div>
@@ -1270,6 +1354,10 @@ html,body{
           <input id="eFecha" type="date" class="input">
         </div>
         <div class="field">
+          <label>Fecha entrega</label>
+          <input id="eEntrega" type="date" class="input">
+        </div>
+        <div class="field">
           <label>Operador</label>
           <select id="eOper" class="select">
             <option>Roberto</option>
@@ -1325,7 +1413,7 @@ html,body{
 const KEY='tutto_prod_modular_cache_v1';
 const cats=['Servicio de corte','Letras / piezas en PVC','Letras frontlit','Letras metálicas','Cajas de luz'];
 let db={tipos:[],pedidos:[],clientes:[],catalogo:[],trabajadores:[]};
-let editPedido=null,editTipo=null,tmpProcs=[],selectedClienteId=null,online=false;
+let editPedido=null,editTipo=null,tmpProcs=[],selectedClienteId=null,online=false,groupByCliente=false;
 
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2,10);
 const hoy=()=>new Date().toISOString().slice(0,10);
@@ -1462,7 +1550,7 @@ async function loadAll(){
     if(!db.trabajadores.length) db.trabajadores=trabajadoresBase();
 
     db.pedidos=(pedidosRes.data||[]).map(p=>({
-      id:p.id,num:p.numero_pedido,fecha:p.fecha,oper:p.operador,cliente:p.cliente_nombre||'',cliente_id:p.cliente_id,
+      id:p.id,num:p.numero_pedido,fecha:p.fecha,entrega:p.fecha_entrega||'',oper:p.operador,cliente:p.cliente_nombre||'',cliente_id:p.cliente_id,
       desc:p.descripcion,cant:p.cantidad,tipoId:p.tipo_id,tipo:p.tipo_nombre,cat:p.categoria,estado:p.estado,ubic:p.ubicacion||'No definido',
       inst:p.instalacion?'Sí':'No',alt:p.altura||'',sup:p.superficie||'No aplica',acc:p.acceso||'No aplica',fix:p.fijacion||'No aplica',
       luz:p.luz?'Sí':'No',tluz:p.tipo_luz||'No aplica',led:p.tipo_led||'No aplica',cluz:p.color_luz||'No aplica',obs:p.observaciones||'',procs:p.procesos||[]
@@ -1520,11 +1608,46 @@ function estadoClass(e){
   if(['Solicitud','En revisión'].includes(e)) return 'estado solicitud';
   return 'estado';
 }
+
+function fechaCorta(f){
+  if(!f)return '';
+  const d = new Date(f+'T00:00:00');
+  if(isNaN(d)) return '';
+  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+}
+function entregaEstado(f,estado=''){
+  if(!f)return {txt:'Sin fecha',cls:'neutral'};
+  const hoyDate = new Date(); hoyDate.setHours(0,0,0,0);
+  const d = new Date(f+'T00:00:00'); d.setHours(0,0,0,0);
+  if(['Listo','Entregado'].includes(estado)) return {txt:'📅 '+fechaCorta(f),cls:'ok'};
+  if(d.getTime() < hoyDate.getTime()) return {txt:'⚠ Atrasado',cls:'bad'};
+  if(d.getTime() === hoyDate.getTime()) return {txt:'🔥 Hoy',cls:'today'};
+  return {txt:'📅 '+fechaCorta(f),cls:'neutral'};
+}
+function entregaChip(p){
+  const e=entregaEstado(p.entrega,p.estado);
+  return `<span class="quickChip ${e.cls}">${e.txt}</span>`;
+}
+function pedidoQuickChips(p){
+  const items=(p.procs||[]).length;
+  return `<div class="quickChips">
+    <span class="quickChip">👤 ${p.cliente||'Cliente'}</span>
+    <span class="quickChip">📍 ${p.ubic||'No definido'}</span>
+    <span class="quickChip">📦 ${items} item(s)</span>
+    ${entregaChip(p)}
+  </div>`;
+}
+
 function renderRows(){
-  rows.innerHTML=filtros().map(p=>{
+  const data=filtros();
+  if(groupByCliente){
+    rows.innerHTML=renderRowsGrouped(data);
+    return;
+  }
+  rows.innerHTML=data.map(p=>{
     const bg=tipoColor(p), color=contrastText(bg);
     return `<tr>
-      <td><b>${p.num}</b></td><td>${p.fecha||''}</td><td>${p.oper||''}</td><td class="client">${p.cliente||''}</td><td><span class="descPreview" title="Clic para ver descripción completa" onclick="openDescModal('${p.id}')">${p.desc||''}</span></td><td>${p.cant||''}</td>
+      <td><b>${p.num}</b></td><td>${p.fecha||''}</td><td>${p.oper||''}</td><td class="client">${p.cliente||''}${pedidoQuickChips(p)}</td><td><span class="descPreview" title="Clic para ver descripción completa" onclick="openDescModal('${p.id}')">${p.desc||''}</span></td><td>${p.cant||''}</td>
       <td><span class="badge" style="background:${bg};color:${color}">${p.tipo||''}</span></td>
       <td><span class="${estadoClass(p.estado)}">${p.estado||''}</span></td>
       <td>
@@ -1538,6 +1661,52 @@ function renderRows(){
       <td><div class="rowBtns"><button class="actionBtn actionEdit" onclick="openPedido('${p.id}')">EDIT</button><button class="actionBtn actionPdf" onclick="exportPedido('${p.id}')">PDF</button><button class="actionBtn actionDup" onclick="dupPedido('${p.id}')">DUP</button><button class="actionBtn actionDel" onclick="delPedido('${p.id}')">X</button></div></td>
     </tr>`;
   }).join('');
+}
+
+
+function renderRowsGrouped(data){
+  const grupos={};
+  data.forEach(p=>{
+    const key=(p.cliente_id||p.cliente||'Sin cliente');
+    if(!grupos[key]) grupos[key]={cliente:p.cliente||'Sin cliente',items:[]};
+    grupos[key].items.push(p);
+  });
+
+  return Object.values(grupos).map(g=>{
+    const atrasados=g.items.filter(p=>entregaEstado(p.entrega,p.estado).cls==='bad').length;
+    const totalProcesos=g.items.reduce((a,p)=>a+(p.procs||[]).length,0);
+    const avg=g.items.length?Math.round(g.items.reduce((a,p)=>a+pct(p),0)/g.items.length):0;
+
+    return `
+      <tr class="groupHead">
+        <td colspan="10">
+          <div class="groupTitle">
+            <b>${g.cliente}</b>
+            <span>${g.items.length} pedido(s)</span>
+            <span>${totalProcesos} proceso(s)</span>
+            <span>${avg}% prom.</span>
+            ${atrasados?`<span class="bad">${atrasados} atrasado(s)</span>`:''}
+          </div>
+        </td>
+      </tr>
+      ${g.items.map(p=>{
+        const bg=tipoColor(p), color=contrastText(bg);
+        return `<tr>
+          <td><b>${p.num}</b></td><td>${p.fecha||''}</td><td>${p.oper||''}</td><td class="client">${p.cliente||''}${pedidoQuickChips(p)}</td><td><span class="descPreview" title="Clic para ver descripción completa" onclick="openDescModal('${p.id}')">${p.desc||''}</span></td><td>${p.cant||''}</td>
+          <td><span class="badge" style="background:${bg};color:${color}">${p.tipo||''}</span></td>
+          <td><span class="${estadoClass(p.estado)}">${p.estado||''}</span></td>
+          <td><div class="progress"><div class="progressMini" onclick="openProgressModal('${p.id}')" title="Ver detalle de procesos"><b>${pct(p)}%</b><small>${(p.procs||[]).filter(x=>x.done).length} de ${(p.procs||[]).length||0}</small></div></div></td>
+          <td><div class="rowBtns"><button class="actionBtn actionEdit" onclick="openPedido('${p.id}')">EDIT</button><button class="actionBtn actionPdf" onclick="exportPedido('${p.id}')">PDF</button><button class="actionBtn actionDup" onclick="dupPedido('${p.id}')">DUP</button><button class="actionBtn actionDel" onclick="delPedido('${p.id}')">X</button></div></td>
+        </tr>`;
+      }).join('')}
+    `;
+  }).join('');
+}
+function toggleGroupCliente(btn){
+  groupByCliente=!groupByCliente;
+  if(btn) btn.classList.toggle('active',groupByCliente);
+  showView('pedidos',document.querySelector('.tabs .tab'));
+  renderRows();
 }
 
 function contrastText(hex){
@@ -1567,6 +1736,7 @@ function showView(id,el){document.querySelectorAll('.tab').forEach(b=>b.classLis
 function openExpress(){
   eNum.value=nextPedidoNo();
   eFecha.value=hoy();
+  eEntrega.value='';
   eOper.value=operadorActualNombre();
   eEstado.value='Solicitud';
   eCliente.value='';
@@ -1603,6 +1773,7 @@ async function saveExpress(){
       id:uid(),
       num:eNum.value||nextPedidoNo(),
       fecha:eFecha.value||hoy(),
+      entrega:eEntrega.value||'',
       oper:eOper.value,
       cliente:eCliente.value||'Cliente sin nombre',
       cliente_id:clienteId,
@@ -1632,6 +1803,7 @@ async function saveExpress(){
         id:item.id,
         numero_pedido:item.num,
         fecha:item.fecha,
+        fecha_entrega:item.entrega||null,
         operador:item.oper,
         cliente_id:item.cliente_id,
         cliente_nombre:item.cliente,
@@ -1672,7 +1844,7 @@ function openPedido(id){
   editPedido=id||null; selectedClienteId=null;
   const p=id?db.pedidos.find(x=>x.id===id):null, t=db.tipos[0];
   pedidoTitle.textContent=id?'Editar pedido':'Nuevo pedido';
-  pNum.value=p?p.num:nextPedidoNo(); pFecha.value=p?p.fecha:hoy(); pOper.value=p?p.oper:operadorActualNombre(); pCliente.value=p?p.cliente:''; selectedClienteId=p?p.cliente_id:null;
+  pNum.value=p?p.num:nextPedidoNo(); pFecha.value=p?p.fecha:hoy(); pEntrega.value=p?p.entrega:''; pOper.value=p?p.oper:operadorActualNombre(); pCliente.value=p?p.cliente:''; selectedClienteId=p?p.cliente_id:null;
   pCant.value=p?p.cant:''; pDesc.value=p?p.desc:''; pTipo.value=p?p.tipoId:(t?t.id:''); pEstado.value=p?p.estado:'Solicitud'; pUbic.value=p?p.ubic:'No definido';
   pInst.value=p?p.inst:'No'; pAlt.value=p?p.alt:''; pSup.value=p?p.sup:'No aplica'; pAcc.value=p?p.acc:'No aplica'; pFix.value=p?(p.fix||'No aplica'):'No aplica';
   pLuz.value=p?p.luz:'No'; pTLuz.value=p?p.tluz:'No aplica'; pLed.value=p?(p.led||'No aplica'):'No aplica'; pCLuz.value=p?p.cluz:'No aplica'; pObs.value=p?p.obs:'';
@@ -1768,14 +1940,14 @@ async function savePedido(){
     let t=db.tipos.find(x=>x.id===pTipo.value);
     let clienteId=await ensureCliente(pCliente.value);
     let item={
-      id:editPedido||uid(), num:pNum.value||nextPedidoNo(), fecha:pFecha.value||hoy(), oper:pOper.value, cliente:pCliente.value||'Cliente sin nombre', cliente_id:clienteId,
+      id:editPedido||uid(), num:pNum.value||nextPedidoNo(), fecha:pFecha.value||hoy(), entrega:pEntrega.value||'', oper:pOper.value, cliente:pCliente.value||'Cliente sin nombre', cliente_id:clienteId,
       cant:pCant.value||'1', desc:pDesc.value||'Sin descripción', tipoId:t.id, tipo:t.name, cat:t.cat, estado:pEstado.value, ubic:pUbic.value,
       inst:pInst.value, alt:pAlt.value, sup:pSup.value, acc:pAcc.value, fix:pFix.value, luz:pLuz.value, tluz:pTLuz.value, led:pLed.value, cluz:pCLuz.value, obs:pObs.value, procs:tmpProcs
     };
 
     const sb=await getSupabase();
     if(sb&&online){
-      const payload={id:item.id,numero_pedido:item.num,fecha:item.fecha,operador:item.oper,cliente_id:item.cliente_id,cliente_nombre:item.cliente,descripcion:item.desc,cantidad:item.cant,tipo_id:item.tipoId,tipo_nombre:item.tipo,categoria:item.cat,estado:item.estado,ubicacion:item.ubic,instalacion:item.inst==='Sí',altura:item.alt,superficie:item.sup,acceso:item.acc,fijacion:item.fix,luz:item.luz==='Sí',tipo_luz:item.tluz,tipo_led:item.led,color_luz:item.cluz,observaciones:item.obs,procesos:item.procs};
+      const payload={id:item.id,numero_pedido:item.num,fecha:item.fecha,fecha_entrega:item.entrega||null,operador:item.oper,cliente_id:item.cliente_id,cliente_nombre:item.cliente,descripcion:item.desc,cantidad:item.cant,tipo_id:item.tipoId,tipo_nombre:item.tipo,categoria:item.cat,estado:item.estado,ubicacion:item.ubic,instalacion:item.inst==='Sí',altura:item.alt,superficie:item.sup,acceso:item.acc,fijacion:item.fix,luz:item.luz==='Sí',tipo_luz:item.tluz,tipo_led:item.led,color_luz:item.cluz,observaciones:item.obs,procesos:item.procs};
       const {error}=await sb.from('prod_pedidos').upsert(payload);
       if(error) throw error;
     }
@@ -1941,6 +2113,7 @@ td{font-size:10px;padding:7px;border:1px solid #d9deea;vertical-align:top}
       <h3>Datos del pedido</h3>
       <div class="miniGrid">
         <div class="item"><small>Fecha</small><b>${escape(p.fecha)}</b></div>
+        <div class="item"><small>Entrega</small><b>${escape(p.entrega||'Sin fecha')}</b></div>
         <div class="item"><small>Operador</small><b>${escape(p.oper)}</b></div>
         <div class="item"><small>Cliente</small><b>${escape(p.cliente)}</b></div>
         <div class="item"><small>Cantidad</small><b>${escape(p.cant)}</b></div>
