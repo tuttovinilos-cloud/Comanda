@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v46 menu global corregido");
+console.log("COTIZADOR JS conectado v47 factura formato Excel");
 
 const $ = (id) => document.getElementById(id);
 
@@ -278,12 +278,34 @@ function itemTotal(item){
   return Number(item.qty || 0) * Number(item.price || 0);
 }
 
-function calcularTotales(items=data.items, ivaAplicado=$("ivaCheck")?.checked){
+function esFacturaTipo(tipo){
+  return normalizar(tipo || "") === "factura";
+}
+
+function getIvaRate(tipo){
+  return esFacturaTipo(tipo) ? 0.12 : 0.16;
+}
+
+function getIvaLabel(tipo){
+  return esFacturaTipo(tipo) ? "IVA 12%" : "IVA 16%";
+}
+
+function actualizarEtiquetaIva(tipo){
+  const label = getIvaLabel(tipo || $("tipoDocumento")?.value || data.tipo);
+
+  const check = $("ivaTextoCheck");
+  if(check) check.textContent = `Aplicar ${label}`;
+
+  const resumen = $("ivaResumenLabel");
+  if(resumen) resumen.textContent = label;
+}
+
+function calcularTotales(items=data.items, ivaAplicado=$("ivaCheck")?.checked, tipoDocumento=$("tipoDocumento")?.value || data.tipo){
   const subtotal = (items || []).reduce((acc,it) => {
     return acc + (it.kind === "item" ? itemTotal(it) : 0);
   }, 0);
 
-  const iva = ivaAplicado ? subtotal * 0.16 : 0;
+  const iva = ivaAplicado ? subtotal * getIvaRate(tipoDocumento) : 0;
 
   return {
     subtotal,
@@ -293,7 +315,10 @@ function calcularTotales(items=data.items, ivaAplicado=$("ivaCheck")?.checked){
 }
 
 function updateTotals(){
-  const t = calcularTotales();
+  const tipo = $("tipoDocumento")?.value || data.tipo;
+  const t = calcularTotales(data.items, $("ivaCheck")?.checked, tipo);
+
+  actualizarEtiquetaIva(tipo);
 
   $("subtotal").textContent = currency(t.subtotal);
   $("iva").textContent = currency(t.iva);
@@ -364,7 +389,7 @@ function getForm(){
 function crearSnapshotActual(){
   const form = getForm();
   const items = JSON.parse(JSON.stringify(data.items || []));
-  const totals = calcularTotales(items, form.iva);
+  const totals = calcularTotales(items, form.iva, form.tipo);
 
   return {
     form,
@@ -380,6 +405,7 @@ function render(){
 
   $("banner").textContent = data.tipo;
   $("creditName").textContent = data.responsable;
+  actualizarEtiquetaIva(data.tipo);
 
   const tbody = $("tbody");
   const mobile = $("mobileItems");
@@ -691,6 +717,195 @@ function drawPdfHeaderFooter(doc,footer,form){
   doc.setFontSize(7.2);
   doc.setTextColor(120,124,130);
   doc.text(`${footer?.preparado_texto || "Documento preparado por:"} ${form?.responsable || ""}`, W/2, H-3.1, { align:"center" });
+}
+
+function formatFechaFactura(fechaISO){
+  const raw = String(fechaISO || "").trim();
+
+  if(!raw) return "";
+
+  const parts = raw.split("-");
+  if(parts.length === 3){
+    const y = parts[0];
+    const m = Number(parts[1]);
+    const d = Number(parts[2]);
+    const yy = String(y).slice(-2);
+    return `${m}/${d}/${yy}`;
+  }
+
+  return raw;
+}
+
+function numeroFacturaVisible(numero){
+  const limpio = String(numero || "").trim();
+  if(!limpio) return "";
+
+  if(/^\d+$/.test(limpio)){
+    return limpio.padStart(6,"0");
+  }
+
+  return limpio;
+}
+
+function moneyFactura(n){
+  return Number(n || 0).toLocaleString("en-US",{
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  });
+}
+
+function drawTextFactura(doc,text,x,y,opts={}){
+  const value = String(text ?? "");
+
+  doc.setFont("helvetica", opts.bold ? "bold" : "normal");
+  doc.setFontSize(opts.size || 10);
+  doc.setTextColor(0,0,0);
+
+  doc.text(value,x,y,{ align:opts.align || "left", baseline:"alphabetic" });
+}
+
+function drawFacturaHeader(doc,snapshot){
+  const form = snapshot.form;
+  const W = doc.internal.pageSize.getWidth();
+
+  const left = 13;
+  const right = W - 13;
+  const xB = 43;
+  const xC = 76;
+  const xD = 105;
+  const xF = 152;
+  const xG = 190;
+
+  drawTextFactura(doc,"FECHA:",xG - 7,28,{ bold:true, size:10, align:"right" });
+  drawTextFactura(doc,formatFechaFactura(form.fecha),right,28,{ size:10, align:"right" });
+
+  drawTextFactura(doc,"FACTURA N°:",xG - 7,36,{ bold:true, size:10, align:"right" });
+  drawTextFactura(doc,numeroFacturaVisible(form.numero),right,36,{ size:10, align:"right" });
+
+  drawTextFactura(doc,"NOMBRE O RAZON SOCIAL:",left + 4,55,{ bold:true, size:10 });
+  drawTextFactura(doc,form.cliente || "",(xC + right) / 2,55,{ size:10, align:"center" });
+
+  drawTextFactura(doc,"DIRECCION FISCAL:",left,75,{ bold:true, size:10 });
+
+  const dir = String(form.direccion || "");
+  const dirLines = doc.splitTextToSize(dir, right - xC - 6).slice(0,2);
+  drawTextFactura(doc,dirLines[0] || "",(xC + right) / 2,75,{ size:9.4, align:"center" });
+  drawTextFactura(doc,dirLines[1] || "",(xC + right) / 2,83,{ size:9.4, align:"center" });
+
+  drawTextFactura(doc,"RIF.:",left,94,{ bold:true, size:10 });
+  drawTextFactura(doc,form.rif || "",xB,94,{ size:10 });
+  drawTextFactura(doc,"TELF.:",xC,94,{ bold:true, size:10 });
+  drawTextFactura(doc,form.telefono || "",xD,94,{ size:10 });
+}
+
+function drawFacturaTableHeader(doc){
+  const W = doc.internal.pageSize.getWidth();
+  const left = 13;
+  const right = W - 13;
+  const xB = 43;
+  const xF = 152;
+  const xG = 190;
+  const y = 106;
+  const h = 8;
+
+  doc.setDrawColor(0,0,0);
+  doc.setLineWidth(.65);
+
+  doc.rect(left,y,xB-left,h);
+  doc.rect(xB,y,xF-xB,h);
+  doc.rect(xF,y,xG-xF,h);
+  doc.rect(xG,y,right-xG,h);
+
+  drawTextFactura(doc,"CANTIDAD",(left+xB)/2,y+5.6,{ bold:true, size:10, align:"center" });
+  drawTextFactura(doc,"DESCRIPCION",(xB+xF)/2,y+5.6,{ bold:true, size:10, align:"center" });
+  drawTextFactura(doc,"P/UNIT.",(xF+xG)/2,y+5.6,{ bold:true, size:10, align:"center" });
+  drawTextFactura(doc,"TOTAL",(xG+right)/2,y+5.6,{ bold:true, size:10, align:"center" });
+
+  doc.setLineWidth(.2);
+}
+
+function drawFacturaItems(doc,items){
+  const W = doc.internal.pageSize.getWidth();
+  const left = 13;
+  const right = W - 13;
+  const xB = 43;
+  const xF = 152;
+  const xG = 190;
+  const rowStartY = 121;
+  const rowH = 7.6;
+  const maxRows = 22;
+
+  const visibles = (items || []).filter(it => it.kind === "item" || it.kind === "separator").slice(0,maxRows);
+
+  visibles.forEach((item,index) => {
+    const y = rowStartY + (index * rowH);
+
+    if(item.kind === "separator"){
+      drawTextFactura(doc,item.desc || "",(xB+xF)/2,y,{ bold:true, size:9.4, align:"center" });
+      return;
+    }
+
+    const descLines = doc.splitTextToSize(String(item.desc || ""), xF - xB - 8).slice(0,1);
+    const qty = Number(item.qty || 0);
+    const price = Number(item.price || 0);
+    const total = qty * price;
+
+    drawTextFactura(doc,qty ? String(qty) : "",xB - 1,y,{ size:10, align:"right" });
+    drawTextFactura(doc,descLines[0] || "",(xB+xF)/2,y,{ size:9.2, align:"center" });
+    drawTextFactura(doc,moneyFactura(price),xG - 1,y,{ size:10, align:"right" });
+    drawTextFactura(doc,moneyFactura(total),right,y,{ size:10, align:"right" });
+  });
+}
+
+function drawFacturaTotals(doc,snapshot){
+  const W = doc.internal.pageSize.getWidth();
+  const left = 13;
+  const right = W - 13;
+  const xB = 43;
+  const xC = 76;
+  const xF = 152;
+
+  const form = snapshot.form;
+  const t = snapshot.totals || calcularTotales(snapshot.items, form.iva, form.tipo);
+  const subtotal = Number(t.subtotal || 0);
+  const ajustes = 0;
+  const totalNeto = subtotal + ajustes;
+  const iva = Number(t.iva || 0);
+  const totalPagar = totalNeto + iva;
+
+  drawTextFactura(doc,"ESTE DOCUMENTO VA SIN TACHADURAS NI ENMENDADURAS",(xB + xF) / 2,232,{ size:7.9, align:"center" });
+
+  const rows = [
+    ["SUB-TOTAL BS",subtotal],
+    ["AJUSTES BS",ajustes],
+    ["TOTAL NETO BS",totalNeto],
+    ["IVA 12% BS",iva],
+    ["TOTAL A PAGAR",totalPagar]
+  ];
+
+  let y = 240;
+  rows.forEach(([label,value]) => {
+    drawTextFactura(doc,label,xF + 1,y,{ size:9.6 });
+    drawTextFactura(doc,moneyFactura(value),right,y,{ size:9.6, align:"right" });
+    y += 8;
+  });
+
+  drawTextFactura(doc,"FORMA DE PAGO:",left + 13,256,{ bold:true, size:10 });
+  drawTextFactura(doc,"CREDITO",xC + 17,256,{ size:10, align:"center" });
+}
+
+async function crearDocumentoFacturaPDF(snapshot=crearSnapshotActual()){
+  if(!window.jspdf || !window.jspdf.jsPDF) throw new Error("No cargó la librería PDF.");
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"letter" });
+
+  drawFacturaHeader(doc,snapshot);
+  drawFacturaTableHeader(doc);
+  drawFacturaItems(doc,snapshot.items || []);
+  drawFacturaTotals(doc,snapshot);
+
+  return doc;
 }
 
 async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
@@ -1046,7 +1261,9 @@ async function createPDF(){
 
     const clienteGuardado = await guardarOActualizarClienteDesdeCotizacion();
     const snapshot = crearSnapshotActual();
-    const doc = await crearDocumentoPDF(snapshot);
+    const doc = esFacturaTipo(form.tipo)
+      ? await crearDocumentoFacturaPDF(snapshot)
+      : await crearDocumentoPDF(snapshot);
 
     const pdfBlob = doc.output("blob");
     const pdfNombre = nombreArchivoPDF(snapshot);
@@ -1123,7 +1340,7 @@ function normalizarSnapshotDesdeRegistro(reg){
     }
   };
 
-  const calculado = calcularTotales(rows, ivaAplicado);
+  const calculado = calcularTotales(rows, ivaAplicado, form.tipo);
 
   return {
     form,
@@ -1442,7 +1659,9 @@ async function generarPdfDesdeCotizacion(id){
     }
 
     const snap = normalizarSnapshotDesdeRegistro(reg);
-    const doc = await crearDocumentoPDF(snap);
+    const doc = esFacturaTipo(snap.form?.tipo)
+      ? await crearDocumentoFacturaPDF(snap)
+      : await crearDocumentoPDF(snap);
 
     doc.save(nombreArchivoPDF(snap));
 
@@ -1545,7 +1764,14 @@ function bindEvents(){
   });
 
   document.addEventListener("change", async e => {
-    if(e.target.id === "tipoDocumento" || e.target.id === "responsable"){
+    if(e.target.id === "tipoDocumento"){
+      if(esFacturaTipo(e.target.value) && $("ivaCheck")){
+        $("ivaCheck").checked = true;
+      }
+      render();
+    }
+
+    if(e.target.id === "responsable"){
       render();
     }
 
