@@ -254,6 +254,42 @@ body > button.menu-toggle{
 body > div:empty,
 body > span:empty{display:none!important}
 
+
+/* ===============================
+   DESCRIPCIÓN COMPACTA EN TABLA
+   =============================== */
+.descPreview{
+  display:block;
+  max-width:220px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  cursor:pointer;
+  color:#172033;
+  font-weight:850;
+}
+.descPreview:hover{
+  color:#4b1fa3;
+  text-decoration:underline;
+}
+#descTextFull{
+  white-space:pre-wrap;
+  line-height:1.45;
+  font-size:14px;
+  font-weight:700;
+  color:#172033;
+  background:#f8f9ff;
+  border:1px solid #e3e8f4;
+  border-radius:16px;
+  padding:14px;
+  min-height:120px;
+}
+@media(max-width:760px){
+  .descPreview{
+    max-width:150px;
+  }
+}
+
 </style>
 </head>
 
@@ -384,6 +420,25 @@ body > span:empty{display:none!important}
       <div id="tipoEditor"></div>
     </div>
     <div class="foot"><button class="btn" onclick="closeTipo()">Cancelar</button><button class="btn primary" onclick="saveTipo()">Guardar setting</button></div>
+  </div>
+</div>
+
+
+<div id="descModal" class="modalBack">
+  <div class="modal" style="width:min(680px,100%)">
+    <div class="modalHead">
+      <div>
+        <h2>Descripción completa</h2>
+        <p class="muted" id="descModalSub">Detalle del pedido</p>
+      </div>
+      <button class="actionBtn actionDel" onclick="closeDescModal()">X</button>
+    </div>
+    <div class="modalBody">
+      <div id="descTextFull"></div>
+    </div>
+    <div class="foot">
+      <button class="btn" onclick="closeDescModal()">Cerrar</button>
+    </div>
   </div>
 </div>
 
@@ -556,7 +611,7 @@ function renderRows(){
   rows.innerHTML=filtros().map(p=>{
     const bg=tipoColor(p), color=contrastText(bg);
     return `<tr>
-      <td><b>${p.num}</b></td><td>${p.fecha||''}</td><td>${p.oper||''}</td><td class="client">${p.cliente||''}</td><td>${p.desc||''}</td><td>${p.cant||''}</td>
+      <td><b>${p.num}</b></td><td>${p.fecha||''}</td><td>${p.oper||''}</td><td class="client">${p.cliente||''}</td><td><span class="descPreview" title="Clic para ver descripción completa" onclick="openDescModal('${p.id}')">${p.desc||''}</span></td><td>${p.cant||''}</td>
       <td><span class="badge" style="background:${bg};color:${color}">${p.tipo||''}</span></td>
       <td><span class="${estadoClass(p.estado)}">${p.estado||''}</span></td>
       <td><div class="progress"><span class="percentNum">${pct(p)}%</span></div></td>
@@ -761,14 +816,62 @@ function exportPedido(id){
 body > div:empty,
 body > span:empty{display:none!important}
 
+
+/* ===============================
+   DESCRIPCIÓN COMPACTA EN TABLA
+   =============================== */
+.descPreview{
+  display:block;
+  max-width:220px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  cursor:pointer;
+  color:#172033;
+  font-weight:850;
+}
+.descPreview:hover{
+  color:#4b1fa3;
+  text-decoration:underline;
+}
+#descTextFull{
+  white-space:pre-wrap;
+  line-height:1.45;
+  font-size:14px;
+  font-weight:700;
+  color:#172033;
+  background:#f8f9ff;
+  border:1px solid #e3e8f4;
+  border-radius:16px;
+  padding:14px;
+  min-height:120px;
+}
+@media(max-width:760px){
+  .descPreview{
+    max-width:150px;
+  }
+}
+
 </style></head><body><div class="page"><div class="head"><div><div class="brand">TUTTOVINILOS</div><div class="subtitle">Orden de producción modular · Formato horizontal</div></div><div class="order"><small>N° pedido</small><b>${escape(p.num)}</b><small>${new Date().toLocaleString('es-VE')}</small></div></div><div class="grid"><div class="card"><h3>Datos del pedido</h3><div class="miniGrid"><div class="item"><small>Fecha</small><b>${escape(p.fecha)}</b></div><div class="item"><small>Operador</small><b>${escape(p.oper)}</b></div><div class="item"><small>Cliente</small><b>${escape(p.cliente)}</b></div><div class="item"><small>Cantidad</small><b>${escape(p.cant)}</b></div><div class="item desc"><small>Descripción</small><b>${escape(p.desc)}</b></div></div></div><div class="card"><h3>Fabricación</h3><div class="miniGrid"><div class="item"><small>Categoría</small><b>${escape(p.cat)}</b></div><div class="item"><small>Tipo</small><b>${escape(p.tipo)}</b></div><div class="item"><small>Estado</small><span class="pill">${escape(p.estado)}</span></div><div class="item"><small>Interior/exterior</small><b>${escape(p.ubic)}</b></div></div></div><div class="card"><h3>Instalación / luz</h3><div class="miniGrid"><div class="item"><small>Instalación</small><b>${escape(p.inst)}</b></div><div class="item"><small>Altura</small><b>${escape(p.alt)}</b></div><div class="item"><small>Superficie</small><b>${escape(p.sup)}</b></div><div class="item"><small>Acceso</small><b>${escape(p.acc)}</b></div><div class="item"><small>Fijación</small><b>${escape(p.fix)}</b></div><div class="item"><small>Luz</small><b>${escape(p.luz)}</b></div><div class="item"><small>Tipo luz</small><b>${escape(p.tluz)}</b></div><div class="item"><small>LED/cinta</small><b>${escape(p.led)}</b></div></div></div></div><div class="card"><h3>Procesos del pedido</h3><table><thead><tr><th style="width:34px">#</th><th style="width:170px">Proceso</th><th style="width:90px">Estado</th><th>Subtareas</th></tr></thead><tbody>${rows}</tbody></table></div><div class="card" style="margin-top:8px"><h3>Observaciones</h3><div class="obs">${escape(p.obs||'Sin observaciones.')}</div></div><div class="foot"><span>Generado desde Organizador de Producción Modular</span><span>${escape(p.num)}</span></div></div><script>setTimeout(()=>{window.focus();window.print()},500)<\/script></body></html>`;
   let w=window.open('','_blank'); if(!w){alert('El navegador bloqueó la ventana emergente. Permite pop-ups para exportar PDF.');return} w.document.open();w.document.write(html);w.document.close();
+}
+
+
+function openDescModal(id){
+  const p=db.pedidos.find(x=>x.id===id);
+  if(!p)return;
+  descModalSub.textContent=(p.num||'')+' · '+(p.cliente||'');
+  descTextFull.textContent=p.desc||'Sin descripción.';
+  descModal.classList.add('show');
+}
+function closeDescModal(){
+  descModal.classList.remove('show');
 }
 
 exportBtn.onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='organizador_produccion_tuttovinilos.json';a.click();URL.revokeObjectURL(a.href)};
 importBtn.onclick=()=>file.click();
 file.onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{db=JSON.parse(r.result);render()}catch(err){alert('JSON inválido')}};r.readAsText(f)};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePedido();closeTipo()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePedido();closeTipo();closeDescModal()}});
 loadAll();
 </script>
 </body>
