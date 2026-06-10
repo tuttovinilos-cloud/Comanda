@@ -1389,8 +1389,9 @@ html,body{
           </select>
         </div>
         <div class="field wide2">
-          <label>Cliente</label>
-          <input id="eCliente" class="input" placeholder="Nombre del cliente">
+          <label>Cliente · Comanda</label>
+          <input id="eCliente" class="input" autocomplete="off" placeholder="Buscar cliente de Comanda" oninput="buscarClientesExpress(this.value)">
+          <div id="clienteSuggestExpress" class="suggestBox"></div>
         </div>
         <div class="field">
           <label>Cantidad</label>
@@ -1427,7 +1428,7 @@ html,body{
 const KEY='tutto_prod_modular_cache_v1';
 const cats=['Servicio de corte','Letras / piezas en PVC','Letras frontlit','Letras metálicas','Cajas de luz'];
 let db={tipos:[],pedidos:[],clientes:[],catalogo:[],trabajadores:[]};
-let editPedido=null,editTipo=null,tmpProcs=[],selectedClienteId=null,online=false,groupByCliente=false;
+let editPedido=null,editTipo=null,tmpProcs=[],selectedClienteId=null,selectedClienteExpressId=null,online=false,groupByCliente=false;
 
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2,10);
 const hoy=()=>new Date().toISOString().slice(0,10);
@@ -1749,6 +1750,8 @@ function showView(id,el){document.querySelectorAll('.tab').forEach(b=>b.classLis
 
 
 function openExpress(){
+  selectedClienteExpressId=null;
+  if(window.clienteSuggestExpress) clienteSuggestExpress.classList.remove('show');
   eNum.value=nextPedidoNo();
   eFecha.value=hoy();
   eEntrega.value='';
@@ -1784,7 +1787,7 @@ function expressProcs(estado){
 async function saveExpress(){
   try{
     const t=db.tipos.find(x=>x.id===eTipo.value)||db.tipos[0]||{id:null,name:'Pedido express',cat:'Express'};
-    const clienteId=await ensureCliente(eCliente.value);
+    const clienteId=await ensureClienteExpress(eCliente.value);
     const item={
       id:uid(),
       num:eNum.value||nextPedidoNo(),
@@ -1916,6 +1919,44 @@ async function buscarClientes(q){
   clienteSuggest.classList.add('show');
 }
 function selectCliente(id,nombre){selectedClienteId=id||null;pCliente.value=nombre;clienteSuggest.classList.remove('show')}
+
+function buscarClientesExpress(q){
+  selectedClienteExpressId=null;
+  if(!q || q.trim().length<2){
+    clienteSuggestExpress.classList.remove('show');
+    return;
+  }
+
+  let lista=db.clientes
+    .filter(c=>String(c.nombre||'').toLowerCase().includes(q.toLowerCase()))
+    .slice(0,8);
+
+  clienteSuggestExpress.innerHTML=lista.map(c=>{
+    const extra=[c.rif_cedula,c.telefono].filter(Boolean).join(' · ');
+    return `<div class="suggestItem" onclick="selectClienteExpress('${c.id}','${String(c.nombre).replace(/'/g,"\\'")}')">${c.nombre}${extra?`<br><small>${extra}</small>`:''}</div>`;
+  }).join('')+`<div class="suggestItem" onclick="selectClienteExpress('','${q.replace(/'/g,"\\'")}')">+ Crear cliente en Comanda: ${q}</div>`;
+
+  clienteSuggestExpress.classList.add('show');
+}
+
+function selectClienteExpress(id,nombre){
+  selectedClienteExpressId=id||null;
+  eCliente.value=nombre;
+  clienteSuggestExpress.classList.remove('show');
+}
+
+async function ensureClienteExpress(nombre){
+  nombre=(nombre||'').trim();
+  if(!nombre)return null;
+
+  if(selectedClienteExpressId)return selectedClienteExpressId;
+
+  let exist=db.clientes.find(c=>String(c.nombre||'').toLowerCase()===nombre.toLowerCase());
+  if(exist)return exist.id;
+
+  return await ensureCliente(nombre);
+}
+
 
 async function ensureCliente(nombre){
   nombre=(nombre||'').trim();
@@ -2253,7 +2294,14 @@ if(window.importBtn){
 if(window.file){
   file.onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{db=JSON.parse(r.result);render()}catch(err){alert('JSON inválido')}};r.readAsText(f)};
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePedido();closeTipo();closeDescModal();closeProgressModal();closeExpress()}});
+
+document.addEventListener('click',e=>{
+  if(window.clienteSuggestExpress && !e.target.closest('#expressModal .field')){
+    clienteSuggestExpress.classList.remove('show');
+  }
+});
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePedido();closeTipo();closeDescModal();closeProgressModal();closeExpress();if(window.clienteSuggestExpress)clienteSuggestExpress.classList.remove('show')}});
 loadAll();
 </script>
 </body>
