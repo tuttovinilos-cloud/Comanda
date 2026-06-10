@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v47 factura formato Excel");
+console.log("COTIZADOR JS conectado v48 factura preview manual errada");
 
 const $ = (id) => document.getElementById(id);
 
@@ -73,7 +73,8 @@ async function ejecutarClienteConFallback(queryFactory, payload){
 }
 
 function estadoTextoCotizacion(c){
-  return c.aprobado === true ? "Aprobada" : "Pendiente";
+  if(c?.errada === true) return "Errada";
+  return c?.aprobado === true ? "Aprobada" : "Pendiente";
 }
 
 
@@ -252,6 +253,10 @@ async function numeroExiste(numero){
 async function asegurarNumeroDisponible(){
   const form = getForm();
 
+  if(esFacturaTipo(form.tipo)){
+    return;
+  }
+
   if(!form.numero || await numeroExiste(form.numero)){
     $("numero").value = await obtenerSiguienteNumeroDocumento(form.fecha || todayISO());
   }
@@ -260,6 +265,7 @@ async function asegurarNumeroDisponible(){
 async function initDates(){
   const now = new Date();
   const fecha = todayISO();
+  const tipo = $("tipoDocumento")?.value || data.tipo;
 
   $("fecha").value = fecha;
 
@@ -267,10 +273,23 @@ async function initDates(){
   due.setDate(due.getDate() + 5);
 
   $("vence").value = `${due.getFullYear()}-${pad2(due.getMonth()+1)}-${pad2(due.getDate())}`;
-  $("numero").value = await obtenerSiguienteNumeroDocumento(fecha);
+
+  aplicarModoNumeroDocumento(tipo, esFacturaTipo(tipo));
+
+  if(esFacturaTipo(tipo)){
+    $("numero").value = "";
+  }else{
+    $("numero").value = await obtenerSiguienteNumeroDocumento(fecha);
+  }
 }
 
 async function refrescarNumeroPorFecha(){
+  const tipo = $("tipoDocumento")?.value || data.tipo;
+
+  aplicarModoNumeroDocumento(tipo, false);
+
+  if(esFacturaTipo(tipo)) return;
+
   $("numero").value = await obtenerSiguienteNumeroDocumento($("fecha").value || todayISO());
 }
 
@@ -288,6 +307,26 @@ function getIvaRate(tipo){
 
 function getIvaLabel(tipo){
   return esFacturaTipo(tipo) ? "IVA 12%" : "IVA 16%";
+}
+
+
+function aplicarModoNumeroDocumento(tipo, limpiarSiFactura=false){
+  const input = $("numero");
+  if(!input) return;
+
+  if(esFacturaTipo(tipo)){
+    input.readOnly = false;
+    input.placeholder = "Coloca el N° de factura";
+    input.classList.add("manual-number");
+
+    if(limpiarSiFactura){
+      input.value = "";
+    }
+  }else{
+    input.readOnly = true;
+    input.placeholder = "Automático";
+    input.classList.remove("manual-number");
+  }
 }
 
 function actualizarEtiquetaIva(tipo){
@@ -406,6 +445,7 @@ function render(){
   $("banner").textContent = data.tipo;
   $("creditName").textContent = data.responsable;
   actualizarEtiquetaIva(data.tipo);
+  aplicarModoNumeroDocumento(data.tipo, false);
 
   const tbody = $("tbody");
   const mobile = $("mobileItems");
@@ -1086,7 +1126,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   drawSummaryRow("Sub Total",currency(t.subtotal),[255,255,255],[17,24,39],true);
 
   if(Number(t.iva || 0) > 0){
-    drawSummaryRow("IVA 16%",currency(t.iva),[255,255,255],[17,24,39],true);
+    drawSummaryRow(getIvaLabel(form.tipo),currency(t.iva),[255,255,255],[17,24,39],true);
   }
 
   doc.setFillColor(...blue);
@@ -1151,8 +1191,8 @@ function abrirBlobPdf(blob){
   setTimeout(() => URL.revokeObjectURL(url),60000);
 }
 
-async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null){
-  const snapshot = crearSnapshotActual();
+async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null,snapshotOverride=null){
+  const snapshot = snapshotOverride || crearSnapshotActual();
   const form = snapshot.form;
   const t = snapshot.totals;
 
@@ -1169,7 +1209,7 @@ async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null){
     responsable: form.responsable,
     vence: form.vence || null,
     items:{
-      version:4,
+      version:5,
       modo:"texto_json_con_pdf_opcional",
       rows:snapshot.items,
       footer:snapshot.footer,
@@ -1235,42 +1275,147 @@ async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null){
   throw ultimoError || new Error("No se pudo guardar la cotización.");
 }
 
-async function createPDF(){
-  const btn = $("pdfBtn");
+async function validarFormularioDocumento(){
+  let form = getForm();
+
+  if(!form.cliente){
+    showToast("Coloca el nombre del cliente", "err");
+    return null;
+  }
+
+  if(!data.items.some(it => it.kind === "item" && cleanText(it.desc))){
+    showToast("Agrega al menos un ítem con descripción", "err");
+    return null;
+  }
+
+  if(esFacturaTipo(form.tipo)){
+    if(!form.numero){
+      showToast("Coloca el N° de factura", "err");
+      return null;
+    }
+
+    if(validarSupabase()){
+      try{
+        if(await numeroExiste(form.numero)){
+          showToast("Ese N° de factura/documento ya existe", "err");
+          return null;
+        }
+      }catch(error){
+        console.warn("No se pudo validar número duplicado:", error);
+      }
+    }
+  }else{
+    await asegurarNumeroDisponible();
+  }
+
+  return getForm();
+}
+
+async function crearDocumentoSegunTipo(snapshot){
+  return esFacturaTipo(snapshot?.form?.tipo)
+    ? await crearDocumentoFacturaPDF(snapshot)
+    : await crearDocumentoPDF(snapshot);
+}
+
+function limpiarPreviewPdf(){
+  if(previewPdfUrl){
+    URL.revokeObjectURL(previewPdfUrl);
+  }
+
+  previewPdfUrl = null;
+  previewPdfBlob = null;
+  previewPdfDoc = null;
+  previewSnapshot = null;
+
+  const frame = $("previewFrame");
+  if(frame) frame.removeAttribute("src");
+}
+
+function cerrarPreview(){
+  const modal = $("previewBackdrop");
+  if(modal) modal.style.display = "none";
+}
+
+async function previsualizarDocumento(){
+  const btn = $("previewBtn");
+
+  try{
+    const form = await validarFormularioDocumento();
+    if(!form) return;
+
+    if(btn){
+      btn.classList.add("loading");
+      btn.disabled = true;
+    }
+
+    const snapshot = crearSnapshotActual();
+    const doc = await crearDocumentoSegunTipo(snapshot);
+    const blob = doc.output("blob");
+
+    if(previewPdfUrl){
+      URL.revokeObjectURL(previewPdfUrl);
+    }
+
+    previewPdfDoc = doc;
+    previewPdfBlob = blob;
+    previewSnapshot = snapshot;
+    previewPdfUrl = URL.createObjectURL(blob);
+
+    const title = $("previewTitle");
+    if(title) title.textContent = `Previsualizador · ${snapshot.form.tipo || "Documento"} ${snapshot.form.numero || ""}`;
+
+    const frame = $("previewFrame");
+    if(frame) frame.src = previewPdfUrl;
+
+    const modal = $("previewBackdrop");
+    if(modal) modal.style.display = "flex";
+  }catch(error){
+    console.error("Error previsualizando documento:", error);
+    showToast("Error previsualizando: " + (error.message || error), "err");
+  }finally{
+    if(btn){
+      btn.classList.remove("loading");
+      btn.disabled = false;
+    }
+  }
+}
+
+async function guardarDocumentoDesdePreview(){
+  const btn = $("guardarPreview");
 
   try{
     if(!validarSupabase()) return;
 
-    let form = getForm();
-
-    if(!form.cliente){
-      showToast("Coloca el nombre del cliente", "err");
-      return;
+    if(!previewSnapshot || !previewPdfDoc || !previewPdfBlob){
+      await previsualizarDocumento();
+      if(!previewSnapshot || !previewPdfDoc || !previewPdfBlob) return;
     }
 
-    if(!data.items.some(it => it.kind === "item" && cleanText(it.desc))){
-      showToast("Agrega al menos un ítem con descripción", "err");
-      return;
+    if(btn){
+      btn.classList.add("loading");
+      btn.disabled = true;
     }
 
-    btn.classList.add("loading");
-    btn.disabled = true;
+    const form = previewSnapshot.form;
 
-    await asegurarNumeroDisponible();
-    form = getForm();
+    if(esFacturaTipo(form.tipo)){
+      if(!form.numero){
+        showToast("Coloca el N° de factura", "err");
+        return;
+      }
+
+      if(await numeroExiste(form.numero)){
+        showToast("Ese N° de factura/documento ya existe", "err");
+        return;
+      }
+    }
 
     const clienteGuardado = await guardarOActualizarClienteDesdeCotizacion();
-    const snapshot = crearSnapshotActual();
-    const doc = esFacturaTipo(form.tipo)
-      ? await crearDocumentoFacturaPDF(snapshot)
-      : await crearDocumentoPDF(snapshot);
-
-    const pdfBlob = doc.output("blob");
-    const pdfNombre = nombreArchivoPDF(snapshot);
+    const pdfNombre = nombreArchivoPDF(previewSnapshot);
 
     let pdfBase64 = "";
     try{
-      pdfBase64 = await blobToBase64(pdfBlob);
+      pdfBase64 = await blobToBase64(previewPdfBlob);
     }catch(e){
       console.warn("No se pudo convertir PDF a base64, se guardará texto:", e);
     }
@@ -1279,20 +1424,24 @@ async function createPDF(){
       base64:pdfBase64,
       mime:"application/pdf",
       nombre:pdfNombre
-    });
+    },previewSnapshot);
 
-    doc.save(pdfNombre);
+    previewPdfDoc.save(pdfNombre);
 
-    showToast("Cotización guardada", "ok");
+    showToast("Documento guardado", "ok");
 
     await cargarCotizacionesPrevias();
-    await refrescarNumeroPorFecha();
+
+    if(!esFacturaTipo(form.tipo)){
+      await refrescarNumeroPorFecha();
+    }
+
+    cerrarPreview();
 
     const tabPrevias = $("tabPrevias");
     if(tabPrevias) tabPrevias.click();
-
   }catch(err){
-    console.error("Error guardando cotización:", err);
+    console.error("Error guardando documento:", err);
     showToast("Error guardando: " + (err.message || err), "err");
   }finally{
     if(btn){
@@ -1300,6 +1449,30 @@ async function createPDF(){
       btn.disabled = false;
     }
   }
+}
+
+function imprimirDocumentoDesdePreview(){
+  const frame = $("previewFrame");
+
+  if(frame?.contentWindow){
+    try{
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+      return;
+    }catch(error){
+      console.warn("No se pudo imprimir desde iframe:", error);
+    }
+  }
+
+  if(previewPdfUrl){
+    window.open(previewPdfUrl,"_blank");
+  }else{
+    showToast("Primero genera la previsualización", "err");
+  }
+}
+
+async function createPDF(){
+  await previsualizarDocumento();
 }
 
 function normalizarSnapshotDesdeRegistro(reg){
@@ -1366,7 +1539,7 @@ async function cargarCotizacionesPrevias(){
   const selects = [
     `id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
      responsable,vence,items,notas,subtotal,iva,total,pdf_url,pdf_path,pdf_nombre,
-     pdf_mime,aprobado,aprobado_at,aprobado_por,created_at`,
+     pdf_mime,aprobado,aprobado_at,aprobado_por,errada,errada_at,errada_por,created_at`,
 
     `id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
      responsable,vence,items,notas,subtotal,iva,total,pdf_url,pdf_path,pdf_nombre,
@@ -1404,7 +1577,8 @@ async function cargarCotizacionesPrevias(){
 
   cotizacionesDB = (res.data || []).map(c => ({
     ...c,
-    aprobado:c.aprobado === true
+    aprobado:c.aprobado === true,
+    errada:c.errada === true
   }));
 
   renderCotizacionesPrevias();
@@ -1437,11 +1611,15 @@ function renderCotizacionesPrevias(){
   }
 
   if(filtroAprobado === "aprobadas"){
-    lista = lista.filter(c => c.aprobado === true);
+    lista = lista.filter(c => c.aprobado === true && c.errada !== true);
   }
 
   if(filtroAprobado === "pendientes"){
-    lista = lista.filter(c => c.aprobado !== true);
+    lista = lista.filter(c => c.aprobado !== true && c.errada !== true);
+  }
+
+  if(filtroAprobado === "erradas"){
+    lista = lista.filter(c => c.errada === true);
   }
 
   if(!lista.length){
@@ -1454,13 +1632,24 @@ function renderCotizacionesPrevias(){
       ? `<span class="approved-meta">${html(c.aprobado_por || "")} ${c.aprobado_at ? "· " + html(String(c.aprobado_at).slice(0,10)) : ""}</span>`
       : "";
 
+    const erradaMeta = c.errada
+      ? `<span class="approved-meta">${html(c.errada_por || "")} ${c.errada_at ? "· " + html(String(c.errada_at).slice(0,10)) : ""}</span>`
+      : "";
+
     return `
       <tr>
         <td class="center">
-          <button class="mini-btn ${c.aprobado ? "approved" : "pending"}" type="button" data-aprobar-cot="${Number(c.id)}">
-            ${c.aprobado ? "✅ Aprobada" : "☐ Pendiente"}
-          </button>
-          ${aprobadoMeta}
+          <div class="status-stack">
+            <button class="mini-btn ${c.aprobado ? "approved" : "pending"}" type="button" data-aprobar-cot="${Number(c.id)}">
+              ${c.aprobado ? "✅ Aprobada" : "☐ Pendiente"}
+            </button>
+
+            <button class="mini-btn error ${c.errada ? "active" : ""}" type="button" data-errar-cot="${Number(c.id)}">
+              ${c.errada ? "❌ Errada" : "Marcar errada"}
+            </button>
+
+            ${c.errada ? erradaMeta : aprobadoMeta}
+          </div>
         </td>
 
         <td>${html(c.fecha || "")}</td>
@@ -1497,7 +1686,10 @@ async function toggleAprobadoCotizacion(id){
   const update = {
     aprobado:nuevoEstado,
     aprobado_at:nuevoEstado ? new Date().toISOString() : null,
-    aprobado_por:nuevoEstado ? (op?.nombre || "") : null
+    aprobado_por:nuevoEstado ? (op?.nombre || "") : null,
+    errada:false,
+    errada_at:null,
+    errada_por:null
   };
 
   const { error } = await db()
@@ -1522,6 +1714,49 @@ async function toggleAprobadoCotizacion(id){
   showToast(nuevoEstado ? "Cotización aprobada" : "Cotización marcada como pendiente","ok");
 }
 
+
+async function toggleErradaCotizacion(id){
+  const cot = cotizacionesDB.find(c => Number(c.id) === Number(id));
+
+  if(!cot){
+    showToast("No se encontró la cotización","err");
+    return;
+  }
+
+  const nuevoEstado = !cot.errada;
+  const op = operadorSesionActual();
+
+  const update = {
+    errada:nuevoEstado,
+    errada_at:nuevoEstado ? new Date().toISOString() : null,
+    errada_por:nuevoEstado ? (op?.nombre || "") : null,
+    aprobado:nuevoEstado ? false : cot.aprobado === true,
+    aprobado_at:nuevoEstado ? null : (cot.aprobado_at || null),
+    aprobado_por:nuevoEstado ? null : (cot.aprobado_por || null)
+  };
+
+  const { error } = await db()
+    .from("cotizaciones")
+    .update(update)
+    .eq("id",id);
+
+  if(error){
+    console.error(error);
+    const msg = String(error.message || "");
+    if(msg.includes("errada") || msg.includes("schema cache")){
+      showToast("Faltan columnas para marcar erradas en Supabase", "err");
+    }else{
+      showToast("No se pudo actualizar estado errada","err");
+    }
+    return;
+  }
+
+  Object.assign(cot, update);
+
+  renderCotizacionesPrevias();
+  showToast(nuevoEstado ? "Cotización marcada como errada" : "Cotización quitada de erradas","ok");
+}
+
 function buscarCotizacionPorId(id){
   return cotizacionesDB.find(c => Number(c.id) === Number(id)) || null;
 }
@@ -1536,13 +1771,13 @@ async function obtenerCotizacionCompleta(id){
   const selectCompleto = `
     id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
     responsable,vence,items,notas,subtotal,iva,total,pdf_url,pdf_path,
-    pdf_base64,pdf_mime,pdf_nombre,aprobado,aprobado_at,aprobado_por,created_at
+    pdf_base64,pdf_mime,pdf_nombre,aprobado,aprobado_at,aprobado_por,errada,errada_at,errada_por,created_at
   `;
 
   const selectSinPdfBase64 = `
     id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
     responsable,vence,items,notas,subtotal,iva,total,pdf_url,pdf_path,
-    pdf_mime,pdf_nombre,aprobado,aprobado_at,aprobado_por,created_at
+    pdf_mime,pdf_nombre,aprobado,aprobado_at,aprobado_por,errada,errada_at,errada_por,created_at
   `;
 
   let res = await db()
@@ -1691,6 +1926,7 @@ function cargarCotizacionEnFormulario(){
   $("direccion").value = f.direccion || "";
   $("notas").value = f.notas || "";
   $("ivaCheck").checked = !!f.iva;
+  aplicarModoNumeroDocumento(f.tipo || "Cotización", false);
 
   if(f.footer){
     $("footerDireccion").innerText = f.footer.direccion || $("footerDireccion").innerText;
@@ -1765,9 +2001,18 @@ function bindEvents(){
 
   document.addEventListener("change", async e => {
     if(e.target.id === "tipoDocumento"){
-      if(esFacturaTipo(e.target.value) && $("ivaCheck")){
+      const esFactura = esFacturaTipo(e.target.value);
+
+      if(esFactura && $("ivaCheck")){
         $("ivaCheck").checked = true;
       }
+
+      aplicarModoNumeroDocumento(e.target.value, esFactura);
+
+      if(!esFactura && !$("numero")?.value){
+        await refrescarNumeroPorFecha();
+      }
+
       render();
     }
 
@@ -1796,6 +2041,13 @@ function bindEvents(){
 
     if(aprobar){
       toggleAprobadoCotizacion(Number(aprobar.dataset.aprobarCot));
+      return;
+    }
+
+    const errar = e.target.closest("[data-errar-cot]");
+
+    if(errar){
+      toggleErradaCotizacion(Number(errar.dataset.errarCot));
       return;
     }
 
@@ -1833,8 +2085,16 @@ function bindEvents(){
   $("addItem")?.addEventListener("click", addItem);
   $("addSep")?.addEventListener("click", addSeparator);
 
-  $("pdfBtn")?.addEventListener("click", createPDF);
-  $("printBtn")?.addEventListener("click", () => window.print());
+  $("previewBtn")?.addEventListener("click", previsualizarDocumento);
+  $("guardarPreview")?.addEventListener("click", guardarDocumentoDesdePreview);
+  $("imprimirPreview")?.addEventListener("click", imprimirDocumentoDesdePreview);
+  $("cerrarPreview")?.addEventListener("click", cerrarPreview);
+
+  $("previewBackdrop")?.addEventListener("click", e => {
+    if(e.target.id === "previewBackdrop"){
+      cerrarPreview();
+    }
+  });
 
   $("newQuoteBtn")?.addEventListener("click", nuevaCotizacionLimpia);
   $("clearBtn")?.addEventListener("click", () => {});
@@ -1866,6 +2126,7 @@ async function iniciarCotizador(){
 
     await initDates();
 
+    aplicarModoNumeroDocumento($("tipoDocumento")?.value || data.tipo, false);
     setResponsableDesdeSesion();
     bloquearResponsableSiNoEsRoberto();
 
