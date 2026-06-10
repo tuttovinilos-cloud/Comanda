@@ -708,6 +708,28 @@ body{
   font-weight:800;
 }
 
+
+/* Botones principales compactos */
+.heroHead{
+  grid-template-columns:1fr 360px!important;
+}
+.btns{
+  align-content:start!important;
+}
+@media(max-width:980px){
+  .heroHead{
+    grid-template-columns:1fr!important;
+  }
+  .btns{
+    grid-template-columns:repeat(3,1fr)!important;
+  }
+}
+@media(max-width:620px){
+  .btns{
+    grid-template-columns:1fr!important;
+  }
+}
+
 </style>
 </head>
 
@@ -729,9 +751,6 @@ body{
         <div class="statusLine" id="dbStatus">Conectando con Supabase...</div>
       </div>
       <div class="btns">
-        <button class="btn blue" id="exportBtn">Exportar JSON</button>
-        <button class="btn" id="importBtn">Importar JSON</button>
-        <button class="btn" onclick="window.print()">Imprimir</button>
         <button class="btn green" onclick="openTipo()">Setting</button>
         <button class="btn green" onclick="openExpress()">Pedido Express</button>
         <button class="btn primary" onclick="openPedido()">Nuevo pedido</button>
@@ -1681,9 +1700,15 @@ function closeProgressModal(){
   progressModal.classList.remove('show');
 }
 
-exportBtn.onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='organizador_produccion_tuttovinilos.json';a.click();URL.revokeObjectURL(a.href)};
-importBtn.onclick=()=>file.click();
-file.onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{db=JSON.parse(r.result);render()}catch(err){alert('JSON inválido')}};r.readAsText(f)};
+if(window.exportBtn){
+  exportBtn.onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='organizador_produccion_tuttovinilos.json';a.click();URL.revokeObjectURL(a.href)};
+}
+if(window.importBtn){
+  importBtn.onclick=()=>file.click();
+}
+if(window.file){
+  file.onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{db=JSON.parse(r.result);render()}catch(err){alert('JSON inválido')}};r.readAsText(f)};
+}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePedido();closeTipo();closeDescModal();closeProgressModal();closeExpress()}});
 loadAll();
 </script>
