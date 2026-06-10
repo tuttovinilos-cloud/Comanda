@@ -290,6 +290,133 @@ body > span:empty{display:none!important}
   }
 }
 
+
+/* ===============================
+   PROGRESO COMPACTO + DETALLE
+   =============================== */
+.progress{
+  min-width:74px!important;
+  max-width:82px!important;
+}
+.progressMini{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-width:68px;
+  border-radius:15px;
+  background:#efe8ff;
+  color:#4b1fa3;
+  padding:7px 8px;
+  cursor:pointer;
+  border:1px solid #dccdff;
+}
+.progressMini:hover{
+  background:#e6dcff;
+}
+.progressMini b{
+  font-size:18px;
+  font-weight:900;
+  line-height:1;
+}
+.progressMini small{
+  font-size:10px;
+  font-weight:900;
+  color:#5f35b0;
+  margin-top:4px;
+}
+#progressDetailBox{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.progressDetailTop{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+.progressDetailCard{
+  background:#f8f9ff;
+  border:1px solid #e3e8f4;
+  border-radius:16px;
+  padding:12px;
+}
+.progressDetailCard b{
+  display:block;
+  font-size:20px;
+  font-weight:900;
+  color:#4b1fa3;
+}
+.progressDetailCard span{
+  font-size:10px;
+  font-weight:900;
+  text-transform:uppercase;
+  color:#6b7280;
+}
+.progressProc{
+  border:1px solid #e3e8f4;
+  border-radius:16px;
+  padding:12px;
+  background:#fff;
+}
+.progressProc.done{
+  background:#f2fcf7;
+  border-color:#bce8d5;
+}
+.progressProc.pending{
+  background:#fffaf0;
+  border-color:#ffe1a0;
+}
+.progressProcHead{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  font-size:13px;
+  font-weight:900;
+}
+.progressProcHead span{
+  font-size:10px;
+  border-radius:999px;
+  padding:5px 8px;
+  font-weight:900;
+}
+.progressProc.done .progressProcHead span{
+  background:#e9faf2;
+  color:#08794b;
+}
+.progressProc.pending .progressProcHead span{
+  background:#fff7df;
+  color:#9a6500;
+}
+.progressSubs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:9px;
+}
+.progressSubs small{
+  background:#fff;
+  border:1px solid #e9ecf6;
+  border-radius:999px;
+  padding:5px 8px;
+  font-size:10px;
+  font-weight:800;
+  color:#596078;
+}
+@media(max-width:760px){
+  .progressDetailTop{
+    grid-template-columns:1fr;
+  }
+  .progressMini{
+    min-width:62px;
+    padding:6px 7px;
+  }
+  .progressMini b{
+    font-size:16px;
+  }
+}
+
 </style>
 </head>
 
@@ -438,6 +565,25 @@ body > span:empty{display:none!important}
     </div>
     <div class="foot">
       <button class="btn" onclick="closeDescModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="progressModal" class="modalBack">
+  <div class="modal" style="width:min(760px,100%)">
+    <div class="modalHead">
+      <div>
+        <h2>Detalle de avance</h2>
+        <p class="muted" id="progressModalSub">Procesos del pedido</p>
+      </div>
+      <button class="actionBtn actionDel" onclick="closeProgressModal()">X</button>
+    </div>
+    <div class="modalBody">
+      <div id="progressDetailBox"></div>
+    </div>
+    <div class="foot">
+      <button class="btn" onclick="closeProgressModal()">Cerrar</button>
     </div>
   </div>
 </div>
@@ -614,7 +760,14 @@ function renderRows(){
       <td><b>${p.num}</b></td><td>${p.fecha||''}</td><td>${p.oper||''}</td><td class="client">${p.cliente||''}</td><td><span class="descPreview" title="Clic para ver descripción completa" onclick="openDescModal('${p.id}')">${p.desc||''}</span></td><td>${p.cant||''}</td>
       <td><span class="badge" style="background:${bg};color:${color}">${p.tipo||''}</span></td>
       <td><span class="${estadoClass(p.estado)}">${p.estado||''}</span></td>
-      <td><div class="progress"><span class="percentNum">${pct(p)}%</span></div></td>
+      <td>
+        <div class="progress">
+          <div class="progressMini" onclick="openProgressModal('${p.id}')" title="Ver detalle de procesos">
+            <b>${pct(p)}%</b>
+            <small>${(p.procs||[]).filter(x=>x.done).length}/${(p.procs||[]).length||0}</small>
+          </div>
+        </div>
+      </td>
       <td><div class="rowBtns"><button class="actionBtn actionEdit" onclick="openPedido('${p.id}')">EDIT</button><button class="actionBtn actionPdf" onclick="exportPedido('${p.id}')">PDF</button><button class="actionBtn actionDup" onclick="dupPedido('${p.id}')">DUP</button><button class="actionBtn actionDel" onclick="delPedido('${p.id}')">X</button></div></td>
     </tr>`;
   }).join('');
@@ -852,6 +1005,133 @@ body > span:empty{display:none!important}
   }
 }
 
+
+/* ===============================
+   PROGRESO COMPACTO + DETALLE
+   =============================== */
+.progress{
+  min-width:74px!important;
+  max-width:82px!important;
+}
+.progressMini{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-width:68px;
+  border-radius:15px;
+  background:#efe8ff;
+  color:#4b1fa3;
+  padding:7px 8px;
+  cursor:pointer;
+  border:1px solid #dccdff;
+}
+.progressMini:hover{
+  background:#e6dcff;
+}
+.progressMini b{
+  font-size:18px;
+  font-weight:900;
+  line-height:1;
+}
+.progressMini small{
+  font-size:10px;
+  font-weight:900;
+  color:#5f35b0;
+  margin-top:4px;
+}
+#progressDetailBox{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.progressDetailTop{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+.progressDetailCard{
+  background:#f8f9ff;
+  border:1px solid #e3e8f4;
+  border-radius:16px;
+  padding:12px;
+}
+.progressDetailCard b{
+  display:block;
+  font-size:20px;
+  font-weight:900;
+  color:#4b1fa3;
+}
+.progressDetailCard span{
+  font-size:10px;
+  font-weight:900;
+  text-transform:uppercase;
+  color:#6b7280;
+}
+.progressProc{
+  border:1px solid #e3e8f4;
+  border-radius:16px;
+  padding:12px;
+  background:#fff;
+}
+.progressProc.done{
+  background:#f2fcf7;
+  border-color:#bce8d5;
+}
+.progressProc.pending{
+  background:#fffaf0;
+  border-color:#ffe1a0;
+}
+.progressProcHead{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  font-size:13px;
+  font-weight:900;
+}
+.progressProcHead span{
+  font-size:10px;
+  border-radius:999px;
+  padding:5px 8px;
+  font-weight:900;
+}
+.progressProc.done .progressProcHead span{
+  background:#e9faf2;
+  color:#08794b;
+}
+.progressProc.pending .progressProcHead span{
+  background:#fff7df;
+  color:#9a6500;
+}
+.progressSubs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:9px;
+}
+.progressSubs small{
+  background:#fff;
+  border:1px solid #e9ecf6;
+  border-radius:999px;
+  padding:5px 8px;
+  font-size:10px;
+  font-weight:800;
+  color:#596078;
+}
+@media(max-width:760px){
+  .progressDetailTop{
+    grid-template-columns:1fr;
+  }
+  .progressMini{
+    min-width:62px;
+    padding:6px 7px;
+  }
+  .progressMini b{
+    font-size:16px;
+  }
+}
+
 </style></head><body><div class="page"><div class="head"><div><div class="brand">TUTTOVINILOS</div><div class="subtitle">Orden de producción modular · Formato horizontal</div></div><div class="order"><small>N° pedido</small><b>${escape(p.num)}</b><small>${new Date().toLocaleString('es-VE')}</small></div></div><div class="grid"><div class="card"><h3>Datos del pedido</h3><div class="miniGrid"><div class="item"><small>Fecha</small><b>${escape(p.fecha)}</b></div><div class="item"><small>Operador</small><b>${escape(p.oper)}</b></div><div class="item"><small>Cliente</small><b>${escape(p.cliente)}</b></div><div class="item"><small>Cantidad</small><b>${escape(p.cant)}</b></div><div class="item desc"><small>Descripción</small><b>${escape(p.desc)}</b></div></div></div><div class="card"><h3>Fabricación</h3><div class="miniGrid"><div class="item"><small>Categoría</small><b>${escape(p.cat)}</b></div><div class="item"><small>Tipo</small><b>${escape(p.tipo)}</b></div><div class="item"><small>Estado</small><span class="pill">${escape(p.estado)}</span></div><div class="item"><small>Interior/exterior</small><b>${escape(p.ubic)}</b></div></div></div><div class="card"><h3>Instalación / luz</h3><div class="miniGrid"><div class="item"><small>Instalación</small><b>${escape(p.inst)}</b></div><div class="item"><small>Altura</small><b>${escape(p.alt)}</b></div><div class="item"><small>Superficie</small><b>${escape(p.sup)}</b></div><div class="item"><small>Acceso</small><b>${escape(p.acc)}</b></div><div class="item"><small>Fijación</small><b>${escape(p.fix)}</b></div><div class="item"><small>Luz</small><b>${escape(p.luz)}</b></div><div class="item"><small>Tipo luz</small><b>${escape(p.tluz)}</b></div><div class="item"><small>LED/cinta</small><b>${escape(p.led)}</b></div></div></div></div><div class="card"><h3>Procesos del pedido</h3><table><thead><tr><th style="width:34px">#</th><th style="width:170px">Proceso</th><th style="width:90px">Estado</th><th>Subtareas</th></tr></thead><tbody>${rows}</tbody></table></div><div class="card" style="margin-top:8px"><h3>Observaciones</h3><div class="obs">${escape(p.obs||'Sin observaciones.')}</div></div><div class="foot"><span>Generado desde Organizador de Producción Modular</span><span>${escape(p.num)}</span></div></div><script>setTimeout(()=>{window.focus();window.print()},500)<\/script></body></html>`;
   let w=window.open('','_blank'); if(!w){alert('El navegador bloqueó la ventana emergente. Permite pop-ups para exportar PDF.');return} w.document.open();w.document.write(html);w.document.close();
 }
@@ -868,10 +1148,47 @@ function closeDescModal(){
   descModal.classList.remove('show');
 }
 
+
+function openProgressModal(id){
+  const p=db.pedidos.find(x=>x.id===id);
+  if(!p)return;
+
+  const total=(p.procs||[]).length;
+  const listos=(p.procs||[]).filter(x=>x.done).length;
+  const pendientes=total-listos;
+  const siguiente=((p.procs||[]).find(x=>!x.done)||{name:'Completado'}).name;
+
+  progressModalSub.textContent=(p.num||'')+' · '+(p.cliente||'')+' · Próximo: '+siguiente;
+
+  progressDetailBox.innerHTML=`
+    <div class="progressDetailTop">
+      <div class="progressDetailCard"><b>${pct(p)}%</b><span>Avance</span></div>
+      <div class="progressDetailCard"><b>${listos}/${total}</b><span>Procesos listos</span></div>
+      <div class="progressDetailCard"><b>${pendientes}</b><span>Pendientes</span></div>
+    </div>
+    ${(p.procs||[]).map((pr,i)=>`
+      <div class="progressProc ${pr.done?'done':'pending'}">
+        <div class="progressProcHead">
+          <b>${i+1}. ${pr.name}</b>
+          <span>${pr.done?'Listo':'Pendiente'}</span>
+        </div>
+        <div class="progressSubs">
+          ${(pr.subs||[]).map(s=>`<small>${s.done?'☑':'☐'} ${s.name}</small>`).join('')}
+        </div>
+      </div>
+    `).join('')}
+  `;
+
+  progressModal.classList.add('show');
+}
+function closeProgressModal(){
+  progressModal.classList.remove('show');
+}
+
 exportBtn.onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='organizador_produccion_tuttovinilos.json';a.click();URL.revokeObjectURL(a.href)};
 importBtn.onclick=()=>file.click();
 file.onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{db=JSON.parse(r.result);render()}catch(err){alert('JSON inválido')}};r.readAsText(f)};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePedido();closeTipo();closeDescModal()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePedido();closeTipo();closeDescModal();closeProgressModal()}});
 loadAll();
 </script>
 </body>
