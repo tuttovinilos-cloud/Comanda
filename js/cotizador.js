@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v64 fila imagen visible estable");
+console.log("COTIZADOR JS conectado v65 imagen manual fuera autotable");
 
 const $ = (id) => document.getElementById(id);
 
@@ -1305,12 +1305,12 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   drawPdfField(doc,84,83,114,10,"Dirección",form.direccion || "",{ valueSize:6.5 });
 
   let count = 1;
-  const bodyMeta = [];
+  const itemImages = [];
+
   const body = [];
 
   items.forEach(item => {
     if(item.kind === "separator"){
-      bodyMeta.push({ kind:"separator", image:"" });
       body.push([{
         content: item.desc || "SECCIÓN",
         colSpan: 5,
@@ -1326,9 +1326,8 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
     const total = itemTotal(item);
 
-    bodyMeta.push({ kind:"item", image:"" });
     body.push([
-      String(count++),
+      String(count),
       item.desc || "",
       String(item.qty || 0),
       "$"+Number(item.price || 0).toFixed(2),
@@ -1336,18 +1335,14 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     ]);
 
     if(item.image){
-      bodyMeta.push({ kind:"image", image:item.image, desc:item.desc || "" });
-      body.push([{
-        content:" ",
-        colSpan:5,
-        styles:{
-          minCellHeight:16,
-          cellPadding:0.6,
-          fillColor:[255,255,255],
-          lineColor:[217,222,234]
-        }
-      }]);
+      itemImages.push({
+        number: count,
+        desc: item.desc || "",
+        src: item.image
+      });
     }
+
+    count++;
   });
 
   let tableStartY = 103;
@@ -1435,58 +1430,52 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       4:{ halign:"center", cellWidth:30, fontStyle:"bold", textColor:[21,59,255] }
     },
     alternateRowStyles:{ fillColor:[252,252,254] },
-    didParseCell:(hookData) => {
-      if(hookData.section !== "body") return;
-
-      const meta = bodyMeta[hookData.row.index];
-
-      if(meta && meta.kind === "image" && meta.image){
-        try{
-          const props = doc.getImageProperties(meta.image);
-          const maxW = Math.min(hookData.cell.width - 4, 58);
-          const maxH = 18;
-          const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
-
-          meta._iw = props.width * ratio;
-          meta._ih = props.height * ratio;
-
-          hookData.cell.styles.minCellHeight = Math.max(16, meta._ih + 4);
-          hookData.cell.styles.cellPadding = 0.6;
-          hookData.cell.styles.valign = "middle";
-        }catch(e){
-          hookData.cell.styles.minCellHeight = 16;
-          hookData.cell.styles.cellPadding = 0.6;
-        }
-      }
-    },
-    didDrawCell:(hookData) => {
-      if(hookData.section !== "body") return;
-
-      const meta = bodyMeta[hookData.row.index];
-      if(!meta || meta.kind !== "image" || !meta.image) return;
-
-      try{
-        if(!meta._iw || !meta._ih){
-          const props = doc.getImageProperties(meta.image);
-          const maxW = Math.min(hookData.cell.width - 4, 58);
-          const maxH = 18;
-          const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
-          meta._iw = props.width * ratio;
-          meta._ih = props.height * ratio;
-        }
-
-        const ix = hookData.cell.x + 1.5;
-        const iy = hookData.cell.y + (hookData.cell.height - meta._ih) / 2;
-
-        doc.addImage(meta.image, "JPEG", ix, iy, meta._iw, meta._ih, undefined, "FAST");
-      }catch(e){
-        console.warn("No se pudo insertar imagen del ítem:", e);
-      }
-    },
     didDrawPage:() => drawPdfHeaderFooter(doc,footer,form)
   });
 
   let fy = doc.lastAutoTable.finalY + 6;
+
+  if(itemImages.length){
+    const leftX = 14;
+    const rightXLimit = W - 14;
+
+    for(const img of itemImages){
+      let boxH = 24;
+
+      if(fy > H - boxH - 28){
+        doc.addPage();
+        fy = 20;
+      }
+
+      doc.setDrawColor(...line);
+      doc.setFillColor(255,255,255);
+      doc.roundedRect(leftX, fy, rightXLimit - leftX, boxH, 2.5, 2.5, "FD");
+
+      try{
+        const props = doc.getImageProperties(img.src);
+
+        const maxW = 58;
+        const maxH = 18;
+        const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
+
+        const iw = props.width * ratio;
+        const ih = props.height * ratio;
+
+        const ix = leftX + 2;
+        const iy = fy + (boxH - ih) / 2;
+
+        doc.addImage(img.src, "JPEG", ix, iy, iw, ih, undefined, "FAST");
+      }catch(e){
+        console.warn("No se pudo insertar imagen manual:", e);
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(pdfSize(7));
+        doc.setTextColor(220,38,38);
+        doc.text("No se pudo cargar imagen", leftX + 3, fy + 8);
+      }
+
+      fy += boxH + 4;
+    }
+  }
   const notesH = form.notas ? 33 : 18;
   const rightBoxH = Number(t.iva || 0) > 0 ? 33 : 25;
 
