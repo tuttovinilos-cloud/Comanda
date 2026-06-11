@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v58 imagen compacta debajo del texto");
+console.log("COTIZADOR JS conectado v61 imagen en fila separada definitiva");
 
 const $ = (id) => document.getElementById(id);
 
@@ -370,7 +370,7 @@ function renderPropuestaImagenes(){
   `).join("");
 }
 
-function resizeImageDataUrl(file,maxSide=600){
+function resizeImageDataUrl(file,maxSide=300){
   return new Promise((resolve,reject) => {
     const reader = new FileReader();
 
@@ -716,7 +716,7 @@ async function setItemImage(index,file){
 
   guardarEstadoDeshacer();
 
-  data.items[index].image = await resizeImageDataUrl(file,600);
+  data.items[index].image = await resizeImageDataUrl(file,300);
   render();
 }
 
@@ -1306,11 +1306,12 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
   let count = 1;
   const bodyMeta = [];
+  const body = [];
 
-  const body = items.map(item => {
+  items.forEach(item => {
     if(item.kind === "separator"){
       bodyMeta.push({ kind:"separator", image:"" });
-      return [{
+      body.push([{
         content: item.desc || "SECCIÓN",
         colSpan: 5,
         styles:{
@@ -1319,22 +1320,37 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
           fillColor:[232,236,255],
           textColor:[11,31,122]
         }
-      }];
+      }]);
+      return;
     }
 
     const total = itemTotal(item);
-    bodyMeta.push({ kind:"item", image:item.image || "" });
 
-    return [
+    bodyMeta.push({ kind:"item", image:"" });
+    body.push([
       String(count++),
       item.desc || "",
       String(item.qty || 0),
       "$"+Number(item.price || 0).toFixed(2),
       "$"+total.toFixed(2)
-    ];
+    ]);
+
+    if(item.image){
+      bodyMeta.push({ kind:"image", image:item.image, desc:item.desc || "" });
+      body.push([{
+        content:"",
+        colSpan:5,
+        styles:{
+          minCellHeight:26,
+          cellPadding:1.2,
+          fillColor:[255,255,255],
+          lineColor:[217,222,234]
+        }
+      }]);
+    }
   });
 
-  let tableStartY = 101;
+  let tableStartY = 103;
 
   if(esPropuestaEconomica(form.tipo)){
     doc.setDrawColor(...line);
@@ -1352,7 +1368,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     const introLines = doc.splitTextToSize(form.propuesta_intro || textoIntroPropuesta(), W-34);
     doc.text(introLines.slice(0,7),17,107);
 
-    tableStartY = 134;
+    tableStartY = 136;
 
     const imgs = form.propuesta_images || [];
     if(imgs.length){
@@ -1397,7 +1413,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     styles:{
       font:"helvetica",
       fontSize:pdfSize(7.7),
-      cellPadding:pdfPad(2.3),
+      cellPadding:pdfPad(1.6),
       textColor:[17,17,17],
       lineColor:[217,222,234],
       lineWidth:.2,
@@ -1420,37 +1436,34 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     },
     alternateRowStyles:{ fillColor:[252,252,254] },
     didParseCell:(hookData) => {
-      if(hookData.section === "body" && hookData.column.index === 1){
-        const meta = bodyMeta[hookData.row.index];
-        if(meta && meta.image){
-          const desc = String(hookData.cell.raw || "");
-          const lines = doc.splitTextToSize(desc, hookData.cell.width - 7);
-          hookData.cell.styles.valign = "top";
-          hookData.cell.styles.minCellHeight = Math.max(26, 7 + (lines.length * 3.1) + 17);
-        }
+      if(hookData.section !== "body") return;
+
+      const meta = bodyMeta[hookData.row.index];
+
+      if(meta && meta.kind === "image"){
+        hookData.cell.styles.minCellHeight = 26;
+        hookData.cell.styles.cellPadding = 1.2;
+        hookData.cell.styles.valign = "middle";
       }
     },
     didDrawCell:(hookData) => {
-      if(hookData.section !== "body" || hookData.column.index !== 1) return;
+      if(hookData.section !== "body") return;
 
       const meta = bodyMeta[hookData.row.index];
-      if(!meta || !meta.image) return;
+      if(!meta || meta.kind !== "image" || !meta.image) return;
 
       try{
         const props = doc.getImageProperties(meta.image);
-        const descText = String(hookData.cell.raw || "");
-        const lines = doc.splitTextToSize(descText, hookData.cell.width - 7);
 
-        const maxW = hookData.cell.width - 9;
-        const maxH = 17;
+        const maxW = 58;
+        const maxH = 20;
         const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
 
         const iw = props.width * ratio;
         const ih = props.height * ratio;
 
-        const ix = hookData.cell.x + 4;
-        const textBlockH = Math.max(3.8, lines.length * 3.1);
-        const iy = hookData.cell.y + 4.2 + textBlockH + 1.8;
+        const ix = hookData.cell.x + 15;
+        const iy = hookData.cell.y + (hookData.cell.height - ih) / 2;
 
         doc.addImage(meta.image,"JPEG",ix,iy,iw,ih,undefined,"FAST");
       }catch(e){
@@ -2638,4 +2651,3 @@ async function iniciarCotizador(){
 
 
 document.addEventListener("DOMContentLoaded", iniciarCotizador);
-
