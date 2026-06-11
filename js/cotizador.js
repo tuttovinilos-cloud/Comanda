@@ -1,10 +1,11 @@
-console.log("COTIZADOR JS conectado v54 propuesta económica + imágenes");
+console.log("COTIZADOR JS conectado v55 propuesta económica fix imágenes");
 
 const $ = (id) => document.getElementById(id);
 
 let clientesDB = [];
 let cotizacionesDB = [];
 let cotizacionSeleccionada = null;
+window.propuestaImages = window.propuestaImages || [];
 
 const TUTTO_LOGO_SRC = "img/logo-tutto.svg?v=10";
 let tuttoLogoPngPromise = null;
@@ -317,6 +318,11 @@ function itemTotal(item){
 }
 
 
+
+function syncPropuestaImagesGlobal(){
+  window.propuestaImages = data.propuestaImages || [];
+}
+
 function esPropuestaEconomica(tipo){
   return normalizar(tipo || "") === "propuesta economica" || normalizar(tipo || "") === "propuesta económica";
 }
@@ -340,10 +346,12 @@ function actualizarVistaPropuesta(){
   const banner = $("banner");
   if(banner) banner.textContent = tipo;
 
+  syncPropuestaImagesGlobal();
   renderPropuestaImagenes();
 }
 
 function renderPropuestaImagenes(){
+  syncPropuestaImagesGlobal();
   const grid = $("propuestaPreviewGrid");
   if(!grid) return;
 
@@ -666,7 +674,7 @@ function crearSnapshotActual(){
     items,
     totals,
     propuestaImages: JSON.parse(JSON.stringify(data.propuestaImages || [])),
-    propuestaImages: propuestaImages,
+    propuestaImages: JSON.parse(JSON.stringify(data.propuestaImages || [])),
     footer: form.footer
   };
 }
