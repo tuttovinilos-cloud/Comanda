@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v57 cliente autofill RIF/dirección corregido");
+console.log("COTIZADOR JS conectado v60 propuesta con ajuste de escala en preview + imágenes -15%");
 
 const $ = (id) => document.getElementById(id);
 
@@ -13,6 +13,19 @@ let previewPdfUrl = null;
 let previewPdfBlob = null;
 let previewPdfDoc = null;
 let previewSnapshot = null;
+
+const PREVIEW_ESCALA_PDF_MIN = 70;
+const PREVIEW_ESCALA_PDF_MAX = 100;
+const PREVIEW_ESCALA_PDF_DEFAULT = 100;
+let previewEscalaPdf = normalizarEscalaPreviewPdfLocal(
+  (() => {
+    try{
+      return localStorage.getItem("cotizador_preview_escala_pdf") || PREVIEW_ESCALA_PDF_DEFAULT;
+    }catch(e){
+      return PREVIEW_ESCALA_PDF_DEFAULT;
+    }
+  })()
+);
 
 let undoStack = [];
 let restaurandoDeshacer = false;
@@ -134,6 +147,34 @@ function normalizar(valor){
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
+}
+
+function normalizarEscalaPreviewPdfLocal(valor){
+  const n = Number(valor);
+  if(!Number.isFinite(n)) return PREVIEW_ESCALA_PDF_DEFAULT;
+  return Math.min(PREVIEW_ESCALA_PDF_MAX, Math.max(PREVIEW_ESCALA_PDF_MIN, Math.round(n)));
+}
+
+function getEscalaPreviewPdf(){
+  return normalizarEscalaPreviewPdfLocal(previewEscalaPdf);
+}
+
+function setEscalaPreviewPdf(valor){
+  previewEscalaPdf = normalizarEscalaPreviewPdfLocal(valor);
+  try{
+    localStorage.setItem("cotizador_preview_escala_pdf", String(previewEscalaPdf));
+  }catch(e){}
+  return previewEscalaPdf;
+}
+
+function factorEscalaPreviewPdf(tipoDocumento=""){
+  // La factura conserva su formato exacto de referencia.
+  if(esFacturaTipo(tipoDocumento)) return 1;
+  return getEscalaPreviewPdf() / 100;
+}
+
+function escalaPreviewAplica(tipoDocumento=""){
+  return !esFacturaTipo(tipoDocumento);
 }
 
 function nombreBonito(valor){
@@ -1193,24 +1234,28 @@ async function getTuttoLogoPngDataUrl(){
 }
 
 function drawPdfField(doc,x,y,w,h,label,value,opts={}){
+  const fieldScale = Number(opts.scale || 1);
+  const labelSize = (opts.labelSize || 5.2) * fieldScale;
+  const valueSize = (opts.valueSize || 6.9) * fieldScale;
+
   doc.setDrawColor(...(opts.border || [217,222,234]));
   doc.setFillColor(...(opts.fill || [255,255,255]));
   doc.roundedRect(x,y,w,h,opts.radius || 3,opts.radius || 3,"FD");
 
   doc.setFont("helvetica","bold");
-  doc.setFontSize(opts.labelSize || 5.2);
+  doc.setFontSize(labelSize);
   doc.setTextColor(107,114,128);
   doc.text(String(label || "").toUpperCase(), x+3, y+3.5);
 
   doc.setFont("helvetica", opts.valueBold ? "bold" : "normal");
-  doc.setFontSize(opts.valueSize || 6.9);
+  doc.setFontSize(valueSize);
   doc.setTextColor(17,24,39);
 
   const maxLines = opts.maxLines || 1;
-  const lineHeight = opts.lineHeight || 3.25;
+  const lineHeight = (opts.lineHeight || 3.25) * fieldScale;
   const valueY = y + (opts.valueOffsetY || 8);
   const lines = doc.splitTextToSize(String(value || "—"), w - 6).slice(0,maxLines);
-  doc.text(lines, x+3, valueY, { lineHeightFactor: lineHeight / Math.max(Number(opts.valueSize || 6.9) * 0.3528, 1) });
+  doc.text(lines, x+3, valueY, { lineHeightFactor: lineHeight / Math.max(valueSize * 0.3528, 1) });
 }
 
 function drawPdfHeaderFooter(doc,footer,form){
@@ -1426,32 +1471,34 @@ async function crearDocumentoFacturaPDF(snapshot=crearSnapshotActual()){
   return doc;
 }
 
-function drawPropuestaEconomicaIntro(doc,x,y,w){
+function drawPropuestaEconomicaIntro(doc,x,y,w,scale=1){
   const blueDark = [11,31,122];
   const blueSoft = [248,249,255];
   const line = [217,222,234];
+  const s = (n) => Number((Number(n || 0) * Number(scale || 1)).toFixed(3));
+  const introH = Math.max(32,s(42));
 
   doc.setDrawColor(...line);
   doc.setFillColor(...blueSoft);
-  doc.roundedRect(x,y,w,42,3,3,"FD");
+  doc.roundedRect(x,y,w,introH,3,3,"FD");
 
   doc.setFont("helvetica","bold");
-  doc.setFontSize(10.4);
+  doc.setFontSize(s(10.4));
   doc.setTextColor(...blueDark);
-  doc.text("Propuesta Económica",x+4,y+7);
+  doc.text("Propuesta Económica",x+4,y+s(7));
 
   doc.setFont("helvetica","normal");
-  doc.setFontSize(8.2);
+  doc.setFontSize(s(8.2));
   doc.setTextColor(55,65,81);
 
-  let ty = y + 13;
+  let ty = y + s(13);
   PROPUESTA_ECONOMICA_INTRO.forEach((parrafo,idx) => {
     const lines = doc.splitTextToSize(parrafo,w-8);
     doc.text(lines,x+4,ty);
-    ty += (lines.length * 4.2) + (idx === 0 ? 3.2 : 0);
+    ty += (lines.length * s(4.2)) + (idx === 0 ? s(3.2) : 0);
   });
 
-  return y + 42;
+  return y + introH;
 }
 
 function getPdfImageFormat(src){
@@ -1488,6 +1535,12 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   const blue = [21,59,255];
   const blueDark = [11,31,122];
   const line = [217,222,234];
+  const pdfScale = factorEscalaPreviewPdf(form.tipo);
+  const sPdf = (n) => Number((Number(n || 0) * pdfScale).toFixed(3));
+  const padPdf = (pad) => {
+    if(typeof pad === "number") return Math.max(0.6,sPdf(pad));
+    return Object.fromEntries(Object.entries(pad || {}).map(([k,v]) => [k, Math.max(0.6,sPdf(v))]));
+  };
 
   doc.setFillColor(...blue);
   doc.rect(0,0,W,30,"F");
@@ -1504,7 +1557,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
   doc.setTextColor(255,255,255);
   doc.setFont("helvetica","bold");
-  doc.setFontSize(8.5);
+  doc.setFontSize(sPdf(8.5));
   doc.text("Tel: +58 414-4961122", W-14, 10.8, { align:"right" });
   doc.text("Email: tuttovinilos@gmail.com", W-14, 15.4, { align:"right" });
   doc.text("RIF: J-40218250-3", W-14, 20, { align:"right" });
@@ -1512,30 +1565,31 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   doc.setFillColor(...blueDark);
   doc.roundedRect(14,35,W-28,11,4,4,"F");
 
-  doc.setFontSize(15);
+  doc.setFontSize(sPdf(15));
   doc.setTextColor(255,255,255);
   doc.text((form.tipo || "Cotización").toUpperCase(), W/2, 42.2, { align:"center" });
 
-  drawPdfField(doc,14,50,54,10,"Fecha",form.fecha || "",{ valueBold:true });
-  drawPdfField(doc,71,50,62,10,"N° Documento",form.numero || "",{ valueBold:true });
-  drawPdfField(doc,136,50,62,10,"Válido hasta",form.vence || "",{ valueBold:true });
+  drawPdfField(doc,14,50,54,10,"Fecha",form.fecha || "",{ valueBold:true, scale:pdfScale });
+  drawPdfField(doc,71,50,62,10,"N° Documento",form.numero || "",{ valueBold:true, scale:pdfScale });
+  drawPdfField(doc,136,50,62,10,"Válido hasta",form.vence || "",{ valueBold:true, scale:pdfScale });
 
   doc.setFont("helvetica","bold");
-  doc.setFontSize(7.8);
+  doc.setFontSize(sPdf(7.8));
   doc.setTextColor(...blue);
   doc.text("DATOS DEL CLIENTE",14,66);
 
   doc.setDrawColor(...line);
   doc.line(14,67.5,W-14,67.5);
 
-  drawPdfField(doc,14,70,67,10,"Cliente",form.cliente || "",{ valueBold:true,valueSize:6.7 });
-  drawPdfField(doc,84,70,55,10,"RIF / Cédula",form.rif || "",{ valueSize:6.7 });
-  drawPdfField(doc,142,70,56,10,"Teléfono",form.telefono || "",{ valueSize:6.7 });
-  drawPdfField(doc,14,83,67,10,"Email",form.email || "",{ valueSize:6.5 });
+  drawPdfField(doc,14,70,67,10,"Cliente",form.cliente || "",{ valueBold:true,valueSize:6.7, scale:pdfScale });
+  drawPdfField(doc,84,70,55,10,"RIF / Cédula",form.rif || "",{ valueSize:6.7, scale:pdfScale });
+  drawPdfField(doc,142,70,56,10,"Teléfono",form.telefono || "",{ valueSize:6.7, scale:pdfScale });
+  drawPdfField(doc,14,83,67,10,"Email",form.email || "",{ valueSize:6.5, scale:pdfScale });
 
   // v58: dirección 10% más pequeña, caja más alta y hasta 3 filas.
   drawPdfField(doc,84,83,114,18,"Dirección",form.direccion || "",{
     valueSize:5.85,
+    scale:pdfScale,
     maxLines:3,
     lineHeight:3.05,
     valueOffsetY:7.4
@@ -1544,13 +1598,15 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   let tableStartY = 110;
   const esPropuestaActual = esPropuestaEconomicaTipo(form.tipo);
   const etiquetaCantidadTablaPdf = etiquetaCantidadPdfPorTipo(form.tipo);
-  const propuestaCellPadding = esPropuestaActual
+  const imageBoxScale = esPropuestaActual ? 0.85 : 1;
+  const propuestaCellPaddingBase = esPropuestaActual
     ? { top:1.85, right:2.05, bottom:1.85, left:2.05 }
     : 2.3;
-  const propuestaImagePaddingY = esPropuestaActual ? 6.8 : 8;
+  const propuestaCellPadding = padPdf(propuestaCellPaddingBase);
+  const propuestaImagePaddingY = (esPropuestaActual ? 6.8 : 8) * pdfScale * imageBoxScale;
 
   if(esPropuestaActual){
-    tableStartY = drawPropuestaEconomicaIntro(doc,14,106,W-28) + 7;
+    tableStartY = drawPropuestaEconomicaIntro(doc,14,106,W-28,pdfScale) + sPdf(7);
   }
 
   let count = 1;
@@ -1575,8 +1631,9 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       const imagenes = getImagenesItem(item);
 
       if(imagenes.length){
+        const imageMax = Math.max(8,18 * pdfScale * imageBoxScale);
         const imageList = imagenes.map(img => {
-          const dims = getPdfImageSize(doc,img.src,18,18);
+          const dims = getPdfImageSize(doc,img.src,imageMax,imageMax);
 
           return {
             src:img.src,
@@ -1586,7 +1643,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
           };
         });
 
-        const maxH = Math.max(...imageList.map(img => img.h),18);
+        const maxH = Math.max(...imageList.map(img => img.h),imageMax);
 
         body.push([{
           content:"",
@@ -1628,7 +1685,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     margin:{ left:14, right:14, bottom:26 },
     styles:{
       font:"helvetica",
-      fontSize:esPropuestaActual ? 6.95 : 7.7,
+      fontSize:esPropuestaActual ? sPdf(6.95) : sPdf(7.7),
       cellPadding:propuestaCellPadding,
       textColor:[17,17,17],
       lineColor:[217,222,234],
@@ -1641,13 +1698,13 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       textColor:[17,17,17],
       fontStyle:"bold",
       halign:"center",
-      fontSize:esPropuestaActual ? 6.5 : 7.2,
+      fontSize:esPropuestaActual ? sPdf(6.5) : sPdf(7.2),
       cellPadding:propuestaCellPadding
     },
     columnStyles:{
       0:{ halign:"center", cellWidth:12, fontStyle:"bold", textColor:[220,38,38] },
       // v58/v59: descripción más pequeña para que los textos largos respiren mejor.
-      1:{ cellWidth:"auto", fontSize:esPropuestaActual ? 6.2 : 6.9, overflow:"linebreak" },
+      1:{ cellWidth:"auto", fontSize:esPropuestaActual ? sPdf(6.2) : sPdf(6.9), overflow:"linebreak" },
       2:{ halign:"center", cellWidth:esPropuestaActual ? 24 : 19 },
       3:{ halign:"center", cellWidth:28 },
       4:{ halign:"center", cellWidth:30, fontStyle:"bold", textColor:[21,59,255] }
@@ -1665,8 +1722,8 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       if(!imageList.length) return;
 
       try{
-        const gap = 3;
-        const maxTotalW = Math.max(10,cellData.cell.width - 8);
+        const gap = Math.max(1.6,3 * pdfScale * imageBoxScale);
+        const maxTotalW = Math.max(10,cellData.cell.width - (8 * pdfScale));
         const totalOriginalW = imageList.reduce((acc,img) => acc + (img.w || 0),0) + gap * Math.max(0,imageList.length - 1);
         const scale = totalOriginalW > maxTotalW ? maxTotalW / totalOriginalW : 1;
         const totalW = totalOriginalW * scale;
@@ -1707,12 +1764,12 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     doc.roundedRect(14,fy,leftW,33,3,3,"FD");
 
     doc.setFont("helvetica","bold");
-    doc.setFontSize(8);
+    doc.setFontSize(sPdf(8));
     doc.setTextColor(...blueDark);
     doc.text("NOTAS / CONDICIONES",17,fy+5.5);
 
     doc.setFont("helvetica","normal");
-    doc.setFontSize(8.4);
+    doc.setFontSize(sPdf(8.4));
     doc.setTextColor(70,74,82);
     doc.text(doc.splitTextToSize(form.notas,leftW-6).slice(0,7),17,fy+11);
   }
@@ -1731,7 +1788,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     doc.rect(rightX,rowY,rightW,8);
 
     doc.setFont("helvetica",bold ? "bold" : "normal");
-    doc.setFontSize(size);
+    doc.setFontSize(sPdf(size));
     doc.setTextColor(...txtColor);
 
     doc.text(label,rightX+3,rowY+5.4);
@@ -1750,7 +1807,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   doc.roundedRect(rightX,rowY,rightW,10,0,0,"F");
 
   doc.setFont("helvetica","bold");
-  doc.setFontSize(12);
+  doc.setFontSize(sPdf(12));
   doc.setTextColor(255,255,255);
 
   doc.text("TOTAL",rightX+3,rowY+6.7);
@@ -1953,6 +2010,92 @@ function cerrarPreview(){
   if(modal) modal.style.display = "none";
 }
 
+function asegurarControlEscalaPreview(snapshot=null){
+  const title = $("previewTitle");
+  if(!title) return;
+
+  let wrap = $("previewScaleWrap");
+
+  if(!wrap){
+    wrap = document.createElement("div");
+    wrap.id = "previewScaleWrap";
+    wrap.style.cssText = [
+      "display:flex",
+      "align-items:center",
+      "gap:8px",
+      "margin:0 0 10px 0",
+      "padding:0 2px",
+      "font-size:12px",
+      "font-weight:800",
+      "color:#374151",
+      "flex-wrap:wrap"
+    ].join(";");
+
+    wrap.innerHTML = `
+      <span>Tamaño PDF</span>
+      <select id="previewScaleSelect" style="height:34px;border:1px solid #d9deea;border-radius:10px;padding:0 10px;font-weight:900;color:#153bff;background:#fff;">
+        <option value="100">100%</option>
+        <option value="95">95%</option>
+        <option value="90">90%</option>
+        <option value="85">85%</option>
+        <option value="80">80%</option>
+        <option value="75">75%</option>
+        <option value="70">70%</option>
+      </select>
+      <small style="color:#6b7280;font-weight:700;">Ajusta antes de guardar o imprimir</small>
+    `;
+
+    const header = title.closest(".modal-head");
+    if(header){
+      header.insertAdjacentElement("afterend", wrap);
+    }else if(title.parentElement){
+      title.parentElement.appendChild(wrap);
+    }
+  }
+
+  const tipo = snapshot?.form?.tipo || $("tipoDocumento")?.value || data.tipo;
+  const aplica = escalaPreviewAplica(tipo);
+
+  wrap.style.display = aplica ? "flex" : "none";
+
+  const select = $("previewScaleSelect");
+  if(select){
+    select.value = String(getEscalaPreviewPdf());
+    select.disabled = !aplica;
+  }
+}
+
+async function regenerarPreviewPdfConEscala(){
+  if(!previewSnapshot) return;
+
+  const select = $("previewScaleSelect");
+
+  try{
+    if(select) select.disabled = true;
+
+    const doc = await crearDocumentoSegunTipo(previewSnapshot);
+    const blob = doc.output("blob");
+
+    if(previewPdfUrl){
+      URL.revokeObjectURL(previewPdfUrl);
+    }
+
+    previewPdfDoc = doc;
+    previewPdfBlob = blob;
+    previewPdfUrl = URL.createObjectURL(blob);
+
+    const frame = $("previewFrame");
+    if(frame) frame.src = previewPdfUrl;
+
+    showToast(`Vista ajustada al ${getEscalaPreviewPdf()}%`, "ok");
+  }catch(error){
+    console.error("Error ajustando escala del preview:", error);
+    showToast("No se pudo ajustar el tamaño del PDF", "err");
+  }finally{
+    if(select) select.disabled = false;
+  }
+}
+
 async function previsualizarDocumento(){
   const btn = $("previewBtn");
 
@@ -1980,6 +2123,8 @@ async function previsualizarDocumento(){
 
     const title = $("previewTitle");
     if(title) title.textContent = `Previsualizador · ${snapshot.form.tipo || "Documento"} ${snapshot.form.numero || ""}`;
+
+    asegurarControlEscalaPreview(snapshot);
 
     const frame = $("previewFrame");
     if(frame) frame.src = previewPdfUrl;
@@ -2679,6 +2824,12 @@ function bindEvents(){
   });
 
   document.addEventListener("change", async e => {
+    if(e.target.id === "previewScaleSelect"){
+      setEscalaPreviewPdf(e.target.value);
+      await regenerarPreviewPdfConEscala();
+      return;
+    }
+
     if(e.target.matches("[data-image-add-index]")){
       await agregarImagenAlMismoRenglon(Number(e.target.dataset.imageAddIndex), e.target.files);
       e.target.value = "";
