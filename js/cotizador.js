@@ -325,6 +325,23 @@ function esPropuestaEconomicaTipo(tipo){
   return normalizar(tipo || "") === "propuesta economica";
 }
 
+function etiquetaCantidadPorTipo(tipo){
+  return esPropuestaEconomicaTipo(tipo) ? "Cant. por m²" : "Cant.";
+}
+
+function etiquetaCantidadDetallePorTipo(tipo){
+  return esPropuestaEconomicaTipo(tipo) ? "Cant. por m²" : "Cant";
+}
+
+function etiquetaCantidadPdfPorTipo(tipo){
+  return esPropuestaEconomicaTipo(tipo) ? "CANT. POR M²" : "CANT.";
+}
+
+function actualizarEtiquetaCantidadTabla(tipo){
+  const th = document.querySelector(".desktop-table thead th:nth-child(3)");
+  if(th) th.textContent = etiquetaCantidadPorTipo(tipo);
+}
+
 const PROPUESTA_ECONOMICA_INTRO = [
   "El presente archivo tiene como finalidad poder presentarles una propuesta económica que sirva como base para que ambas partes puedan mantener sus operaciones comerciales sin afectar la calidad que muy bien nos definen.",
   "Es por ello, que vamos a tomar como ejemplo este tipo de etiqueta, ya que tenemos el vector y medidas."
@@ -818,6 +835,9 @@ function render(){
 
   data.tipo = tipoEl.value || data.tipo || "Cotización";
   data.responsable = responsableEl.value || data.responsable || "";
+  const cantidadLabel = esPropuestaEconomicaTipo(data.tipo) ? "Cant. por m²" : "Cantidad";
+
+  actualizarEtiquetaCantidadTabla(data.tipo);
 
   const banner = $("banner");
   const creditName = $("creditName");
@@ -963,7 +983,7 @@ function render(){
 
           <div class="item-grid">
             <div class="field">
-              <label>Cantidad</label>
+              <label>${html(cantidadLabel)}</label>
               <input type="number" min="0" step="0.01" value="${item.qty}" data-index="${index}" data-field="qty">
             </div>
 
@@ -1522,8 +1542,14 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   });
 
   let tableStartY = 110;
+  const esPropuestaActual = esPropuestaEconomicaTipo(form.tipo);
+  const etiquetaCantidadTablaPdf = etiquetaCantidadPdfPorTipo(form.tipo);
+  const propuestaCellPadding = esPropuestaActual
+    ? { top:1.85, right:2.05, bottom:1.85, left:2.05 }
+    : 2.3;
+  const propuestaImagePaddingY = esPropuestaActual ? 6.8 : 8;
 
-  if(esPropuestaEconomicaTipo(form.tipo)){
+  if(esPropuestaActual){
     tableStartY = drawPropuestaEconomicaIntro(doc,14,106,W-28) + 7;
   }
 
@@ -1567,7 +1593,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
           colSpan:5,
           imageList,
           styles:{
-            minCellHeight:maxH + 8,
+            minCellHeight:maxH + propuestaImagePaddingY,
             halign:"center",
             valign:"middle",
             fillColor:[255,255,255]
@@ -1596,14 +1622,14 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
   doc.autoTable({
     startY:tableStartY,
-    head:[["#","DESCRIPCIÓN DEL PRODUCTO / SERVICIO","CANT.","P. UNIT ($)","TOTAL ($)"]],
+    head:[["#","DESCRIPCIÓN DEL PRODUCTO / SERVICIO",etiquetaCantidadTablaPdf,"P. UNIT ($)","TOTAL ($)"]],
     body,
     theme:"grid",
     margin:{ left:14, right:14, bottom:26 },
     styles:{
       font:"helvetica",
-      fontSize:7.7,
-      cellPadding:2.3,
+      fontSize:esPropuestaActual ? 6.95 : 7.7,
+      cellPadding:propuestaCellPadding,
       textColor:[17,17,17],
       lineColor:[217,222,234],
       lineWidth:.2,
@@ -1615,13 +1641,14 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       textColor:[17,17,17],
       fontStyle:"bold",
       halign:"center",
-      fontSize:7.2
+      fontSize:esPropuestaActual ? 6.5 : 7.2,
+      cellPadding:propuestaCellPadding
     },
     columnStyles:{
       0:{ halign:"center", cellWidth:12, fontStyle:"bold", textColor:[220,38,38] },
-      // v58: descripción 10% más pequeña para que los textos largos respiren mejor.
-      1:{ cellWidth:"auto", fontSize:6.9, overflow:"linebreak" },
-      2:{ halign:"center", cellWidth:19 },
+      // v58/v59: descripción más pequeña para que los textos largos respiren mejor.
+      1:{ cellWidth:"auto", fontSize:esPropuestaActual ? 6.2 : 6.9, overflow:"linebreak" },
+      2:{ halign:"center", cellWidth:esPropuestaActual ? 24 : 19 },
       3:{ halign:"center", cellWidth:28 },
       4:{ halign:"center", cellWidth:30, fontStyle:"bold", textColor:[21,59,255] }
     },
@@ -2447,6 +2474,7 @@ function abrirDetalleCotizacion(id){
 
   const snap = normalizarSnapshotDesdeRegistro(reg);
   const form = snap.form;
+  const cantidadDetalleLabel = etiquetaCantidadDetallePorTipo(form.tipo);
 
   $("detalleTitle").textContent = `${form.tipo || "Cotización"} · ${form.numero || ""}`;
 
@@ -2476,7 +2504,7 @@ function abrirDetalleCotizacion(id){
     return `
       <div class="detail-item">
         <b>${numero}. ${html(it.desc || "")}</b><br>
-        Cant: ${html(it.qty || 0)} · P.Unit: ${currency(it.price || 0)} · Total: ${currency(itemTotal(it))}
+        ${html(cantidadDetalleLabel)}: ${html(it.qty || 0)} · P.Unit: ${currency(it.price || 0)} · Total: ${currency(itemTotal(it))}
       </div>
     `;
   }).join("");
