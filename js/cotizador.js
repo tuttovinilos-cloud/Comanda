@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v54 propuesta económica + imágenes ordenadas");
+console.log("COTIZADOR JS conectado v55 FIX eventos siempre activos + propuesta económica + imágenes 50px");
 
 const $ = (id) => document.getElementById(id);
 
@@ -17,6 +17,7 @@ let previewSnapshot = null;
 let undoStack = [];
 let restaurandoDeshacer = false;
 const UNDO_MAX = 4;
+let eventosCotizadorVinculados = false;
 
 let data = {
   tipo: "Cotización",
@@ -388,9 +389,13 @@ function updateTotals(){
 
   const formato = esFacturaTipo(tipo) ? (n => "BS " + moneyFactura(n,2)) : currency;
 
-  $("subtotal").textContent = formato(t.subtotal);
-  $("iva").textContent = formato(t.iva);
-  $("total").textContent = formato(t.total);
+  const subtotalEl = $("subtotal");
+  const ivaEl = $("iva");
+  const totalEl = $("total");
+
+  if(subtotalEl) subtotalEl.textContent = formato(t.subtotal);
+  if(ivaEl) ivaEl.textContent = formato(t.iva);
+  if(totalEl) totalEl.textContent = formato(t.total);
 }
 
 function updateItemVisualTotal(index){
@@ -420,7 +425,7 @@ function addSeparator(){
   render();
 }
 
-function procesarImagenCotizador(file,maxPx=300){
+function procesarImagenCotizador(file,maxPx=50){
   return new Promise((resolve,reject) => {
     if(!file || !String(file.type || "").startsWith("image/")){
       reject(new Error("Selecciona un archivo de imagen válido."));
@@ -463,14 +468,21 @@ function addImageItem(){
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/*";
+  input.style.position = "fixed";
+  input.style.left = "-9999px";
+  input.style.top = "-9999px";
+  document.body.appendChild(input);
 
   input.addEventListener("change", async () => {
     const file = input.files && input.files[0];
-    if(!file) return;
+    if(!file){
+      input.remove();
+      return;
+    }
 
     try{
       guardarEstadoDeshacer();
-      const img = await procesarImagenCotizador(file,300);
+      const img = await procesarImagenCotizador(file,50);
 
       data.items.push({
         kind:"image",
@@ -487,6 +499,8 @@ function addImageItem(){
     }catch(error){
       console.error(error);
       showToast(error.message || "No se pudo añadir la imagen", "err");
+    }finally{
+      input.remove();
     }
   });
 
@@ -498,7 +512,7 @@ async function cambiarImagenItem(index,file){
 
   try{
     guardarEstadoDeshacer();
-    const img = await procesarImagenCotizador(file,300);
+    const img = await procesarImagenCotizador(file,50);
 
     data.items[index] = {
       ...data.items[index],
@@ -679,16 +693,30 @@ function crearSnapshotActual(){
 }
 
 function render(){
-  data.tipo = $("tipoDocumento").value;
-  data.responsable = $("responsable").value;
-
-  $("banner").textContent = data.tipo;
-  $("creditName").textContent = data.responsable;
-  actualizarEtiquetaIva(data.tipo);
-  aplicarModoNumeroDocumento(data.tipo, false);
-
+  const tipoEl = $("tipoDocumento");
+  const responsableEl = $("responsable");
   const tbody = $("tbody");
   const mobile = $("mobileItems");
+
+  if(!tipoEl || !responsableEl || !tbody || !mobile){
+    console.warn("Render cotizador detenido: faltan elementos base del formulario.");
+    return;
+  }
+
+  if(!Array.isArray(data.items) || !data.items.length){
+    data.items = [{ kind:"item", desc:"", qty:1, price:0 }];
+  }
+
+  data.tipo = tipoEl.value || data.tipo || "Cotización";
+  data.responsable = responsableEl.value || data.responsable || "";
+
+  const banner = $("banner");
+  const creditName = $("creditName");
+  if(banner) banner.textContent = data.tipo;
+  if(creditName) creditName.textContent = data.responsable;
+
+  actualizarEtiquetaIva(data.tipo);
+  aplicarModoNumeroDocumento(data.tipo, false);
 
   tbody.innerHTML = "";
   mobile.innerHTML = "";
@@ -745,7 +773,7 @@ function render(){
                 <input value="${html(item.desc || "")}" placeholder="Comentario de imagen (opcional)" data-index="${index}" data-field="desc">
               </div>
               ${imagenHtml}
-              <div class="image-hint">Máximo guardado y mostrado: 300px por lado.</div>
+              <div class="image-hint">Máximo guardado y mostrado: 50px x 50px.</div>
             </div>
           </td>
           <td class="center">
@@ -769,7 +797,7 @@ function render(){
               <input value="${html(item.desc || "")}" placeholder="Comentario de imagen (opcional)" data-index="${index}" data-field="desc">
             </div>
             ${imagenHtml}
-            <div class="image-hint">Máximo guardado y mostrado: 300px por lado.</div>
+            <div class="image-hint">Máximo guardado y mostrado: 50px x 50px.</div>
           </div>
         </div>
       `);
@@ -1373,7 +1401,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
     if(item.kind === "image"){
       if(item.src){
-        const dims = getPdfImageSize(doc,item.src,82,62);
+        const dims = getPdfImageSize(doc,item.src,18,18);
         body.push([{
           content:"",
           colSpan:5,
@@ -2417,6 +2445,9 @@ function activarTab(cual){
 }
 
 function bindEvents(){
+  if(eventosCotizadorVinculados) return;
+  eventosCotizadorVinculados = true;
+
   document.addEventListener("focusin", e => {
     if(e.target.matches('#panelNueva input,#panelNueva textarea,#panelNueva select,#panelNueva [contenteditable="true"]')){
       guardarEstadoDeshacer();
@@ -2576,10 +2607,18 @@ function bindEvents(){
 }
 
 async function iniciarCotizador(){
+  let interfazLista = false;
+
   try{
     aplicarMenuDesplegable();
-
     setResponsableDesdeSesion();
+
+    // Primero se montan botones/eventos y la primera fila.
+    // Así la página no queda "muerta" si Supabase, CDN o el consecutivo tardan/fallan.
+    bindEvents();
+    render();
+    updateTotals();
+    interfazLista = true;
 
     await initDates();
 
@@ -2588,14 +2627,36 @@ async function iniciarCotizador(){
     bloquearResponsableSiNoEsRoberto();
 
     render();
-    bindEvents();
+    updateTotals();
 
-    await cargarClientesCotizador();
-    await cargarCotizacionesPrevias();
-    actualizarBotonDeshacer();
+    try{
+      await cargarClientesCotizador();
+    }catch(errorClientes){
+      console.warn("No se pudieron cargar clientes, pero el cotizador sigue activo:", errorClientes);
+    }
+
+    try{
+      await cargarCotizacionesPrevias();
+    }catch(errorPrevias){
+      console.warn("No se pudieron cargar cotizaciones previas, pero el cotizador sigue activo:", errorPrevias);
+    }
+
   }catch(error){
     console.error("Error iniciando cotizador:", error);
-    showToast("Error iniciando cotizador: " + (error.message || error), "err");
+
+    if(!interfazLista){
+      try{
+        bindEvents();
+        render();
+        updateTotals();
+      }catch(errorFallback){
+        console.error("No se pudo levantar interfaz básica:", errorFallback);
+      }
+    }
+
+    showToast("Cotizador activo con modo seguro. Revisa consola si algo no carga.", "warn");
+  }finally{
+    actualizarBotonDeshacer();
   }
 }
 
