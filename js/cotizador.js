@@ -1186,8 +1186,11 @@ function drawPdfField(doc,x,y,w,h,label,value,opts={}){
   doc.setFontSize(opts.valueSize || 6.9);
   doc.setTextColor(17,24,39);
 
-  const lines = doc.splitTextToSize(String(value || "—"), w - 6);
-  doc.text(lines.slice(0, opts.maxLines || 1), x+3, y+8);
+  const maxLines = opts.maxLines || 1;
+  const lineHeight = opts.lineHeight || 3.25;
+  const valueY = y + (opts.valueOffsetY || 8);
+  const lines = doc.splitTextToSize(String(value || "—"), w - 6).slice(0,maxLines);
+  doc.text(lines, x+3, valueY, { lineHeightFactor: lineHeight / Math.max(Number(opts.valueSize || 6.9) * 0.3528, 1) });
 }
 
 function drawPdfHeaderFooter(doc,footer,form){
@@ -1299,11 +1302,12 @@ function drawFacturaReferenciaHeader(doc,snapshot){
   drawTextFactura(doc,"DIRECCION FISCAL:",23,82,{ size:10.4 });
 
   const dir = String(form.direccion || "");
-  const dirLines = doc.splitTextToSize(dir, 92).slice(0,2);
-  drawTextFactura(doc,dirLines[0] || "",centerData,80,{ size:10.2, align:"center" });
-  if(dirLines[1]){
-    drawTextFactura(doc,dirLines[1],centerData,86,{ size:10.2, align:"center" });
-  }
+  const dirLines = doc.splitTextToSize(dir, 96).slice(0,3);
+
+  // v58: dirección fiscal 10% más pequeña y hasta 3 filas para evitar cortes.
+  dirLines.forEach((linea,idx) => {
+    drawTextFactura(doc,linea,centerData,78 + (idx * 4.4),{ size:9.2, align:"center" });
+  });
 
   drawTextFactura(doc,"RIF.:",24,90,{ size:10.4 });
   drawTextFactura(doc,form.rif || "",38,90,{ size:10.4 });
@@ -1350,13 +1354,14 @@ function drawFacturaReferenciaTable(doc,items){
     const qty = Number(item.qty || 0);
     const price = Number(item.price || 0);
     const total = qty * price;
-    const descLines = doc.splitTextToSize(String(item.desc || ""), x2 - x1 - 8).slice(0,2);
-    const descY = rowY + (descLines.length > 1 ? 6.4 : 9.2);
+    const descLines = doc.splitTextToSize(String(item.desc || ""), x2 - x1 - 7).slice(0,3);
+    const descY = rowY + (descLines.length > 2 ? 5.1 : (descLines.length > 1 ? 6.4 : 9.2));
 
     drawTextFactura(doc,String(i+1),(left+x1)/2,rowY+9.4,{ size:10.4, align:"center" });
     doc.setFont("helvetica","bold");
-    doc.setFontSize(facturaFontSize(10.4));
-    doc.text(descLines,(x1+x2)/2,descY,{ align:"center" });
+    // v58: descripción 10% más pequeña y hasta 3 líneas para evitar cortes.
+    doc.setFontSize(facturaFontSize(9.4));
+    doc.text(descLines,(x1+x2)/2,descY,{ align:"center", lineHeightFactor:1.08 });
     drawTextFactura(doc,cantidadFactura(qty),(x2+x3)/2,rowY+9.4,{ size:10.4, align:"center" });
     drawTextFactura(doc,moneyFactura(price,3),(x3+x4)/2,rowY+9.4,{ size:10.4, align:"center" });
     drawTextFactura(doc,moneyFactura(total,2),right-1,rowY+9.4,{ size:10.4, align:"right" });
@@ -1507,12 +1512,19 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   drawPdfField(doc,84,70,55,10,"RIF / Cédula",form.rif || "",{ valueSize:6.7 });
   drawPdfField(doc,142,70,56,10,"Teléfono",form.telefono || "",{ valueSize:6.7 });
   drawPdfField(doc,14,83,67,10,"Email",form.email || "",{ valueSize:6.5 });
-  drawPdfField(doc,84,83,114,10,"Dirección",form.direccion || "",{ valueSize:6.5 });
 
-  let tableStartY = 101;
+  // v58: dirección 10% más pequeña, caja más alta y hasta 3 filas.
+  drawPdfField(doc,84,83,114,18,"Dirección",form.direccion || "",{
+    valueSize:5.85,
+    maxLines:3,
+    lineHeight:3.05,
+    valueOffsetY:7.4
+  });
+
+  let tableStartY = 110;
 
   if(esPropuestaEconomicaTipo(form.tipo)){
-    tableStartY = drawPropuestaEconomicaIntro(doc,14,98,W-28) + 7;
+    tableStartY = drawPropuestaEconomicaIntro(doc,14,106,W-28) + 7;
   }
 
   let count = 1;
@@ -1607,7 +1619,8 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     },
     columnStyles:{
       0:{ halign:"center", cellWidth:12, fontStyle:"bold", textColor:[220,38,38] },
-      1:{ cellWidth:"auto" },
+      // v58: descripción 10% más pequeña para que los textos largos respiren mejor.
+      1:{ cellWidth:"auto", fontSize:6.9, overflow:"linebreak" },
       2:{ halign:"center", cellWidth:19 },
       3:{ halign:"center", cellWidth:28 },
       4:{ halign:"center", cellWidth:30, fontStyle:"bold", textColor:[21,59,255] }
