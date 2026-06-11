@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v65 imagen manual fuera autotable");
+console.log("COTIZADOR JS conectado v66 caja imagen ajustada");
 
 const $ = (id) => document.getElementById(id);
 
@@ -1437,20 +1437,8 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
   if(itemImages.length){
     const leftX = 14;
-    const rightXLimit = W - 14;
 
     for(const img of itemImages){
-      let boxH = 24;
-
-      if(fy > H - boxH - 28){
-        doc.addPage();
-        fy = 20;
-      }
-
-      doc.setDrawColor(...line);
-      doc.setFillColor(255,255,255);
-      doc.roundedRect(leftX, fy, rightXLimit - leftX, boxH, 2.5, 2.5, "FD");
-
       try{
         const props = doc.getImageProperties(img.src);
 
@@ -1461,19 +1449,47 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
         const iw = props.width * ratio;
         const ih = props.height * ratio;
 
-        const ix = leftX + 2;
-        const iy = fy + (boxH - ih) / 2;
+        const pad = 2;
+        const boxW = iw + (pad * 2);
+        const boxH = ih + (pad * 2);
+
+        if(fy > H - boxH - 28){
+          doc.addPage();
+          fy = 20;
+        }
+
+        doc.setDrawColor(...line);
+        doc.setFillColor(255,255,255);
+        doc.roundedRect(leftX, fy, boxW, boxH, 2.2, 2.2, "FD");
+
+        const ix = leftX + pad;
+        const iy = fy + pad;
 
         doc.addImage(img.src, "JPEG", ix, iy, iw, ih, undefined, "FAST");
+
+        fy += boxH + 4;
       }catch(e){
         console.warn("No se pudo insertar imagen manual:", e);
+
+        const boxW = 55;
+        const boxH = 10;
+
+        if(fy > H - boxH - 28){
+          doc.addPage();
+          fy = 20;
+        }
+
+        doc.setDrawColor(...line);
+        doc.setFillColor(255,240,242);
+        doc.roundedRect(leftX, fy, boxW, boxH, 2.2, 2.2, "FD");
+
         doc.setFont("helvetica","bold");
         doc.setFontSize(pdfSize(7));
         doc.setTextColor(220,38,38);
-        doc.text("No se pudo cargar imagen", leftX + 3, fy + 8);
-      }
+        doc.text("No se pudo cargar imagen", leftX + 3, fy + 6.5);
 
-      fy += boxH + 4;
+        fy += boxH + 4;
+      }
     }
   }
   const notesH = form.notas ? 33 : 18;
@@ -2653,4 +2669,3 @@ async function iniciarCotizador(){
 
 
 document.addEventListener("DOMContentLoaded", iniciarCotizador);
-
