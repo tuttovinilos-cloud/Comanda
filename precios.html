@@ -628,6 +628,39 @@ html.menu-ready .header-tabs,
   }
 }
 
+
+/* Colores para notas y extras */
+.mini-extra-line{
+  color:var(--orange)!important;
+}
+.mini-extra-line:before{
+  color:var(--orange)!important;
+  font-weight:900!important;
+}
+.mini-note-line{
+  color:#2563eb!important;
+}
+.mini-note-line:before{
+  color:#2563eb!important;
+  font-weight:900!important;
+}
+.item.expanded .mini-extra-line,
+.item.expanded .mini-extra-line:before{
+  color:#ffb18d!important;
+}
+.item.expanded .mini-note-line,
+.item.expanded .mini-note-line:before{
+  color:#bfdbfe!important;
+}
+.extra-price{
+  color:var(--orange)!important;
+}
+.note{
+  color:#2563eb!important;
+  background:#eef5ff!important;
+  border-color:#cfe0ff!important;
+}
+
 </style>
 </head>
 
@@ -916,6 +949,12 @@ function precioConBrecha(valor){
 
 function moneyBrecha(valor){
   return '$' + precioConBrecha(valor).toFixed(0);
+}
+
+function moneyExtra(valor){
+  const base = Number(valor || 0);
+  const factor = Number(brechaValor || 1);
+  return '$' + (Math.ceil(base * factor * 10) / 10).toFixed(1);
 }
 
 
@@ -1275,7 +1314,7 @@ function renderItemCard(item){
 
   const extrasPreview = extras.length
     ? `<div class="mini-extras">${extras.slice(0,3).map(ex => `
-        <div class="mini-extra-line">${escapeHTML(ex.nombre)} · +${moneyBrecha(ex.precio)} / ${escapeHTML(ex.unidad || '')}</div>
+        <div class="mini-extra-line">${escapeHTML(ex.nombre)} · +${moneyExtra(ex.precio)} / ${escapeHTML(ex.unidad || '')}</div>
       `).join('')}${extras.length > 3 ? `<div class="mini-extra-line">+${extras.length - 3} extra(s) más</div>` : ''}</div>`
     : '';
 
@@ -1312,7 +1351,7 @@ function renderItemCard(item){
                   <b>${escapeHTML(ex.nombre)}</b>
                   ${ex.nota ? `<small>${escapeHTML(ex.nota)}</small>` : ''}
                 </div>
-                <div class="extra-price">+${moneyBrecha(ex.precio)} / ${escapeHTML(ex.unidad || '')}</div>
+                <div class="extra-price">+${moneyExtra(ex.precio)} / ${escapeHTML(ex.unidad || '')}</div>
               </div>
             `).join('')}
           </div>
@@ -1597,7 +1636,7 @@ function copyItem(id){
 
   if(item.extras && item.extras.length){
     extrasText = '\nAdicionales:\n' + item.extras
-      .map(ex => `+ ${ex.nombre}: ${moneyBrecha(ex.precio)} / ${ex.unidad}`)
+      .map(ex => `+ ${ex.nombre}: ${moneyExtra(ex.precio)} / ${ex.unidad}`)
       .join('\n');
   }
 
