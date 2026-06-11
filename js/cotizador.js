@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v61 imagen en fila separada definitiva");
+console.log("COTIZADOR JS conectado v63 fila imagen altura exacta");
 
 const $ = (id) => document.getElementById(id);
 
@@ -1341,8 +1341,8 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
         content:"",
         colSpan:5,
         styles:{
-          minCellHeight:26,
-          cellPadding:1.2,
+          minCellHeight:8,
+          cellPadding:0,
           fillColor:[255,255,255],
           lineColor:[217,222,234]
         }
@@ -1440,10 +1440,24 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
       const meta = bodyMeta[hookData.row.index];
 
-      if(meta && meta.kind === "image"){
-        hookData.cell.styles.minCellHeight = 26;
-        hookData.cell.styles.cellPadding = 1.2;
-        hookData.cell.styles.valign = "middle";
+      if(meta && meta.kind === "image" && meta.image){
+        try{
+          const props = doc.getImageProperties(meta.image);
+
+          const maxW = Math.min(hookData.cell.width - 2.4, 58);
+          const maxH = 20;
+          const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
+
+          meta._iw = props.width * ratio;
+          meta._ih = props.height * ratio;
+
+          hookData.cell.styles.minCellHeight = meta._ih + 2.4;
+          hookData.cell.styles.cellPadding = 0;
+          hookData.cell.styles.valign = "top";
+        }catch(e){
+          hookData.cell.styles.minCellHeight = 14;
+          hookData.cell.styles.cellPadding = 0;
+        }
       }
     },
     didDrawCell:(hookData) => {
@@ -1453,19 +1467,19 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       if(!meta || meta.kind !== "image" || !meta.image) return;
 
       try{
-        const props = doc.getImageProperties(meta.image);
+        if(!meta._iw || !meta._ih){
+          const props = doc.getImageProperties(meta.image);
+          const maxW = Math.min(hookData.cell.width - 2.4, 58);
+          const maxH = 20;
+          const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
+          meta._iw = props.width * ratio;
+          meta._ih = props.height * ratio;
+        }
 
-        const maxW = 58;
-        const maxH = 20;
-        const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
+        const ix = hookData.cell.x + 1.2;
+        const iy = hookData.cell.y + 1.2;
 
-        const iw = props.width * ratio;
-        const ih = props.height * ratio;
-
-        const ix = hookData.cell.x + 15;
-        const iy = hookData.cell.y + (hookData.cell.height - ih) / 2;
-
-        doc.addImage(meta.image,"JPEG",ix,iy,iw,ih,undefined,"FAST");
+        doc.addImage(meta.image,"JPEG",ix,iy,meta._iw,meta._ih,undefined,"FAST");
       }catch(e){
         console.warn("No se pudo insertar imagen del ítem:",e);
       }
@@ -2651,4 +2665,3 @@ async function iniciarCotizador(){
 
 
 document.addEventListener("DOMContentLoaded", iniciarCotizador);
-
