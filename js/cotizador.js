@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v57 imagen debajo de texto + escala pdf 90");
+console.log("COTIZADOR JS conectado v58 imagen compacta debajo del texto");
 
 const $ = (id) => document.getElementById(id);
 
@@ -1327,7 +1327,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
     return [
       String(count++),
-      item.image ? String(item.desc || "") + "\n\n\n\n\n" : (item.desc || ""),
+      item.desc || "",
       String(item.qty || 0),
       "$"+Number(item.price || 0).toFixed(2),
       "$"+total.toFixed(2)
@@ -1423,11 +1423,10 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       if(hookData.section === "body" && hookData.column.index === 1){
         const meta = bodyMeta[hookData.row.index];
         if(meta && meta.image){
-          const txt = String(hookData.cell.raw || "");
-          const desc = txt.replace(/\n+$/g,"");
-          const lines = doc.splitTextToSize(desc, hookData.cell.width - 6);
+          const desc = String(hookData.cell.raw || "");
+          const lines = doc.splitTextToSize(desc, hookData.cell.width - 7);
           hookData.cell.styles.valign = "top";
-          hookData.cell.styles.minCellHeight = Math.max(32, 9 + (lines.length * 3.2) + 20);
+          hookData.cell.styles.minCellHeight = Math.max(26, 7 + (lines.length * 3.1) + 17);
         }
       }
     },
@@ -1439,17 +1438,19 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
       try{
         const props = doc.getImageProperties(meta.image);
-        const descText = String((items || []).filter(x=>x.kind !== "separator")[hookData.row.index]?.desc || "");
-        const lines = doc.splitTextToSize(descText, hookData.cell.width - 6);
-        const maxW = hookData.cell.width - 8;
-        const maxH = 20;
+        const descText = String(hookData.cell.raw || "");
+        const lines = doc.splitTextToSize(descText, hookData.cell.width - 7);
+
+        const maxW = hookData.cell.width - 9;
+        const maxH = 17;
         const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
+
         const iw = props.width * ratio;
         const ih = props.height * ratio;
 
         const ix = hookData.cell.x + 4;
-        const textBlockH = Math.max(5, lines.length * 3.4);
-        const iy = hookData.cell.y + 5 + textBlockH + 2;
+        const textBlockH = Math.max(3.8, lines.length * 3.1);
+        const iy = hookData.cell.y + 4.2 + textBlockH + 1.8;
 
         doc.addImage(meta.image,"JPEG",ix,iy,iw,ih,undefined,"FAST");
       }catch(e){
