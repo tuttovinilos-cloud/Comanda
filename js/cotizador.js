@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v53 factura BS + posiciones RIF/tabla + deshacer + eliminar solo Roberto");
+console.log("COTIZADOR JS conectado v54 propuesta económica + imágenes ordenadas");
 
 const $ = (id) => document.getElementById(id);
 
@@ -319,6 +319,15 @@ function esFacturaTipo(tipo){
   return normalizar(tipo || "") === "factura";
 }
 
+function esPropuestaEconomicaTipo(tipo){
+  return normalizar(tipo || "") === "propuesta economica";
+}
+
+const PROPUESTA_ECONOMICA_INTRO = [
+  "El presente archivo tiene como finalidad poder presentarles una propuesta económica que sirva como base para que ambas partes puedan mantener sus operaciones comerciales sin afectar la calidad que muy bien nos definen.",
+  "Es por ello, que vamos a tomar como ejemplo este tipo de etiqueta, ya que tenemos el vector y medidas."
+];
+
 function getIvaRate(tipo){
   return 0.16;
 }
@@ -409,6 +418,103 @@ function addSeparator(){
   guardarEstadoDeshacer();
   data.items.push({ kind:"separator", desc:"" });
   render();
+}
+
+function procesarImagenCotizador(file,maxPx=300){
+  return new Promise((resolve,reject) => {
+    if(!file || !String(file.type || "").startsWith("image/")){
+      reject(new Error("Selecciona un archivo de imagen válido."));
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const img = new Image();
+
+      img.onload = () => {
+        const escala = Math.min(1, maxPx / Math.max(img.width || 1, img.height || 1));
+        const w = Math.max(1, Math.round((img.width || maxPx) * escala));
+        const h = Math.max(1, Math.round((img.height || maxPx) * escala));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img,0,0,w,h);
+
+        const mime = String(file.type || "").includes("png") ? "image/png" : "image/jpeg";
+        const src = canvas.toDataURL(mime,0.86);
+
+        resolve({ src, width:w, height:h, mime });
+      };
+
+      img.onerror = () => reject(new Error("No se pudo leer la imagen."));
+      img.src = reader.result;
+    };
+
+    reader.onerror = () => reject(new Error("No se pudo cargar la imagen."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function addImageItem(){
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+
+  input.addEventListener("change", async () => {
+    const file = input.files && input.files[0];
+    if(!file) return;
+
+    try{
+      guardarEstadoDeshacer();
+      const img = await procesarImagenCotizador(file,300);
+
+      data.items.push({
+        kind:"image",
+        desc:"",
+        name:file.name || "imagen",
+        src:img.src,
+        width:img.width,
+        height:img.height,
+        mime:img.mime
+      });
+
+      render();
+      showToast("Imagen añadida", "ok");
+    }catch(error){
+      console.error(error);
+      showToast(error.message || "No se pudo añadir la imagen", "err");
+    }
+  });
+
+  input.click();
+}
+
+async function cambiarImagenItem(index,file){
+  if(!data.items[index] || data.items[index].kind !== "image" || !file) return;
+
+  try{
+    guardarEstadoDeshacer();
+    const img = await procesarImagenCotizador(file,300);
+
+    data.items[index] = {
+      ...data.items[index],
+      name:file.name || data.items[index].name || "imagen",
+      src:img.src,
+      width:img.width,
+      height:img.height,
+      mime:img.mime
+    };
+
+    render();
+    showToast("Imagen actualizada", "ok");
+  }catch(error){
+    console.error(error);
+    showToast(error.message || "No se pudo cambiar la imagen", "err");
+  }
 }
 
 function removeItem(index){
@@ -620,6 +726,58 @@ function render(){
 
       return;
     }
+
+    if(item.kind === "image"){
+      const imagenHtml = item.src
+        ? `<img class="quote-image-preview" src="${html(item.src)}" alt="${html(item.name || "Imagen")}">`
+        : `<div class="image-empty">Imagen pendiente</div>`;
+
+      tbody.insertAdjacentHTML("beforeend", `
+        <tr class="image-row">
+          <td class="num"></td>
+          <td colspan="4">
+            <div class="quote-image-box">
+              <div class="quote-image-actions">
+                <label class="btn btn-gray image-picker">
+                  Cambiar imagen
+                  <input type="file" accept="image/*" data-image-index="${index}">
+                </label>
+                <input value="${html(item.desc || "")}" placeholder="Comentario de imagen (opcional)" data-index="${index}" data-field="desc">
+              </div>
+              ${imagenHtml}
+              <div class="image-hint">Máximo guardado y mostrado: 300px por lado.</div>
+            </div>
+          </td>
+          <td class="center">
+            <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
+          </td>
+        </tr>
+      `);
+
+      mobile.insertAdjacentHTML("beforeend", `
+        <div class="item-card">
+          <div class="item-head">
+            <span>Imagen</span>
+            <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
+          </div>
+          <div class="item-body">
+            <div class="quote-image-actions">
+              <label class="btn btn-gray image-picker">
+                Cambiar imagen
+                <input type="file" accept="image/*" data-image-index="${index}">
+              </label>
+              <input value="${html(item.desc || "")}" placeholder="Comentario de imagen (opcional)" data-index="${index}" data-field="desc">
+            </div>
+            ${imagenHtml}
+            <div class="image-hint">Máximo guardado y mostrado: 300px por lado.</div>
+          </div>
+        </div>
+      `);
+
+      return;
+    }
+
+    if(!item.kind) item.kind = "item";
 
     const number = visibleNumber++;
     const total = itemTotal(item);
@@ -1081,6 +1239,52 @@ async function crearDocumentoFacturaPDF(snapshot=crearSnapshotActual()){
   return doc;
 }
 
+function drawPropuestaEconomicaIntro(doc,x,y,w){
+  const blueDark = [11,31,122];
+  const blueSoft = [248,249,255];
+  const line = [217,222,234];
+
+  doc.setDrawColor(...line);
+  doc.setFillColor(...blueSoft);
+  doc.roundedRect(x,y,w,42,3,3,"FD");
+
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(10.4);
+  doc.setTextColor(...blueDark);
+  doc.text("Propuesta Económica",x+4,y+7);
+
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(8.2);
+  doc.setTextColor(55,65,81);
+
+  let ty = y + 13;
+  PROPUESTA_ECONOMICA_INTRO.forEach((parrafo,idx) => {
+    const lines = doc.splitTextToSize(parrafo,w-8);
+    doc.text(lines,x+4,ty);
+    ty += (lines.length * 4.2) + (idx === 0 ? 3.2 : 0);
+  });
+
+  return y + 42;
+}
+
+function getPdfImageFormat(src){
+  return String(src || "").toLowerCase().startsWith("data:image/png") ? "PNG" : "JPEG";
+}
+
+function getPdfImageSize(doc,src,maxW=82,maxH=62){
+  try{
+    const props = doc.getImageProperties(src);
+    const ratio = Math.min(maxW / (props.width || maxW), maxH / (props.height || maxH), 1);
+    return {
+      w: Math.max(8,(props.width || maxW) * ratio),
+      h: Math.max(8,(props.height || maxH) * ratio)
+    };
+  }catch(error){
+    console.warn("No se pudieron calcular medidas de imagen PDF:", error);
+    return { w:maxW, h:maxH };
+  }
+}
+
 async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   if(!window.jspdf || !window.jspdf.jsPDF) throw new Error("No cargó la librería PDF.");
 
@@ -1143,11 +1347,18 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   drawPdfField(doc,14,83,67,10,"Email",form.email || "",{ valueSize:6.5 });
   drawPdfField(doc,84,83,114,10,"Dirección",form.direccion || "",{ valueSize:6.5 });
 
-  let count = 1;
+  let tableStartY = 101;
 
-  const body = items.map(item => {
+  if(esPropuestaEconomicaTipo(form.tipo)){
+    tableStartY = drawPropuestaEconomicaIntro(doc,14,98,W-28) + 7;
+  }
+
+  let count = 1;
+  const body = [];
+
+  items.forEach(item => {
     if(item.kind === "separator"){
-      return [{
+      body.push([{
         content: item.desc || "SECCIÓN",
         colSpan: 5,
         styles:{
@@ -1156,22 +1367,50 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
           fillColor:[232,236,255],
           textColor:[11,31,122]
         }
-      }];
+      }]);
+      return;
+    }
+
+    if(item.kind === "image"){
+      if(item.src){
+        const dims = getPdfImageSize(doc,item.src,82,62);
+        body.push([{
+          content:"",
+          colSpan:5,
+          imageSrc:item.src,
+          imageW:dims.w,
+          imageH:dims.h,
+          imageFormat:getPdfImageFormat(item.src),
+          styles:{
+            minCellHeight:dims.h + 8,
+            halign:"center",
+            valign:"middle",
+            fillColor:[255,255,255]
+          }
+        }]);
+      }else{
+        body.push([{
+          content:"IMAGEN",
+          colSpan:5,
+          styles:{ halign:"center", fontStyle:"bold", fillColor:[255,255,255] }
+        }]);
+      }
+      return;
     }
 
     const total = itemTotal(item);
 
-    return [
+    body.push([
       String(count++),
       item.desc || "",
       String(item.qty || 0),
       "$"+Number(item.price || 0).toFixed(2),
       "$"+total.toFixed(2)
-    ];
+    ]);
   });
 
   doc.autoTable({
-    startY:101,
+    startY:tableStartY,
     head:[["#","DESCRIPCIÓN DEL PRODUCTO / SERVICIO","CANT.","P. UNIT ($)","TOTAL ($)"]],
     body,
     theme:"grid",
@@ -1201,6 +1440,19 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       4:{ halign:"center", cellWidth:30, fontStyle:"bold", textColor:[21,59,255] }
     },
     alternateRowStyles:{ fillColor:[252,252,254] },
+    didDrawCell:(cellData) => {
+      const raw = cellData.cell && cellData.cell.raw;
+
+      if(cellData.section !== "body" || !raw || !raw.imageSrc) return;
+
+      try{
+        const imgX = cellData.cell.x + (cellData.cell.width - raw.imageW) / 2;
+        const imgY = cellData.cell.y + 4;
+        doc.addImage(raw.imageSrc, raw.imageFormat || "JPEG", imgX, imgY, raw.imageW, raw.imageH, undefined, "FAST");
+      }catch(error){
+        console.warn("No se pudo dibujar la imagen en PDF:", error);
+      }
+    },
     didDrawPage:() => drawPdfHeaderFooter(doc,footer,form)
   });
 
@@ -1993,14 +2245,31 @@ function abrirDetalleCotizacion(id){
 
   $("detalleTitle").textContent = `${form.tipo || "Cotización"} · ${form.numero || ""}`;
 
+  let itemDetalleNumero = 1;
+
   const itemsHtml = (snap.items || []).map((it,i) => {
     if(it.kind === "separator"){
       return `<div class="detail-item"><b>${html(it.desc || "SECCIÓN")}</b></div>`;
     }
 
+    if(it.kind === "image"){
+      const img = it.src
+        ? `<img class="detail-image" src="${html(it.src)}" alt="${html(it.name || "Imagen")}">`
+        : `<div class="image-empty">Imagen pendiente</div>`;
+
+      return `
+        <div class="detail-item">
+          <b>Imagen</b>${it.desc ? `<br>${html(it.desc)}` : ""}
+          ${img}
+        </div>
+      `;
+    }
+
+    const numero = itemDetalleNumero++;
+
     return `
       <div class="detail-item">
-        <b>${i+1}. ${html(it.desc || "")}</b><br>
+        <b>${numero}. ${html(it.desc || "")}</b><br>
         Cant: ${html(it.qty || 0)} · P.Unit: ${currency(it.price || 0)} · Total: ${currency(itemTotal(it))}
       </div>
     `;
@@ -2173,6 +2442,12 @@ function bindEvents(){
   });
 
   document.addEventListener("change", async e => {
+    if(e.target.matches("[data-image-index]")){
+      await cambiarImagenItem(Number(e.target.dataset.imageIndex), e.target.files && e.target.files[0]);
+      e.target.value = "";
+      return;
+    }
+
     if(e.target.id === "tipoDocumento"){
       const esFactura = esFacturaTipo(e.target.value);
 
@@ -2264,6 +2539,7 @@ function bindEvents(){
 
   $("addItem")?.addEventListener("click", addItem);
   $("addSep")?.addEventListener("click", addSeparator);
+  $("addImg")?.addEventListener("click", addImageItem);
 
   $("previewBtn")?.addEventListener("click", previsualizarDocumento);
   $("undoBtn")?.addEventListener("click", deshacerUltimoCambio);
