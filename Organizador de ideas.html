@@ -1246,7 +1246,7 @@ html,body{
 <div id="pedidoModal" class="modalBack">
   <div class="modal">
     <div class="modalHead">
-      <div><h2 id="pedidoTitle">Nuevo pedido</h2><p class="muted">Al seleccionar un tipo se cargan sus procesos base. La instalación, iluminación y encargados se definen en cada pedido.</p></div>
+      <div><h2 id="pedidoTitle">Nuevo pedido</h2><p class="muted">Al seleccionar un tipo se cargan sus procesos base. El espesor, instalación, iluminación y encargados se definen en cada pedido.</p></div>
       <button class="actionBtn actionDel" onclick="closePedido()">X</button>
     </div>
     <div class="modalBody">
@@ -1259,6 +1259,7 @@ html,body{
         <div class="field"><label>Cantidad</label><input id="pCant" class="input"></div>
         <div class="field wide2"><label>Descripción</label><input id="pDesc" class="input"></div>
         <div class="field"><label>Tipo letrero</label><select id="pTipo" class="select" onchange="changeTipo()"></select></div>
+        <div class="field"><label>Espesor / profundidad</label><input id="pEspesor" class="input" list="espesoresList" placeholder="Ej: 3 mm, 6 cm"></div>
         <div class="field"><label>Estado</label><select id="pEstado" class="select"><option>Solicitud</option><option>En revisión</option><option>En adaptación</option><option>En producción</option><option>En proveedor externo</option><option>Pendiente por instalación</option><option>En instalación</option><option>Revisado</option><option>Listo</option><option>Entregado</option></select></div>
         <div class="field"><label>Interior/exterior</label><select id="pUbic" class="select"><option>No definido</option><option>Interior</option><option>Exterior</option></select></div>
         <div class="field"><label>Locación</label><input id="pLocacion" class="input" placeholder="Ej: La Viña, San Diego, Taller"></div>
@@ -1410,6 +1411,10 @@ html,body{
           <select id="eTipo" class="select"></select>
         </div>
         <div class="field">
+          <label>Espesor / profundidad</label>
+          <input id="eEspesor" class="input" list="espesoresList" placeholder="Ej: 3 mm, 6 cm">
+        </div>
+        <div class="field">
           <label>Locación</label>
           <input id="eLocacion" class="input" placeholder="Ej: La Viña, Taller">
         </div>
@@ -1425,6 +1430,21 @@ html,body{
     </div>
   </div>
 </div>
+
+
+<datalist id="espesoresList">
+  <option value="1 mm">
+  <option value="2 mm">
+  <option value="3 mm">
+  <option value="5 mm">
+  <option value="8 mm">
+  <option value="10 mm">
+  <option value="15 mm">
+  <option value="18 mm">
+  <option value="4 cm">
+  <option value="6 cm">
+  <option value="10 cm">
+</datalist>
 
 <input id="file" type="file" accept="application/json" class="hidden">
 
@@ -1574,7 +1594,7 @@ async function loadAll(){
 
     db.pedidos=(pedidosRes.data||[]).map(p=>({
       id:p.id,num:p.numero_pedido,fecha:p.fecha,entrega:p.fecha_entrega||'',oper:p.operador,cliente:p.cliente_nombre||'',cliente_id:p.cliente_id,
-      desc:p.descripcion,cant:p.cantidad,tipoId:p.tipo_id,tipo:p.tipo_nombre,cat:p.categoria,estado:p.estado,ubic:p.ubicacion||'No definido',locacion:p.locacion||'',
+      desc:p.descripcion,cant:p.cantidad,tipoId:p.tipo_id,tipo:p.tipo_nombre,espesor:p.espesor||'',cat:p.categoria,estado:p.estado,ubic:p.ubicacion||'No definido',locacion:p.locacion||'',
       inst:p.instalacion?'Sí':'No',alt:p.altura||'',sup:p.superficie||'No aplica',acc:p.acceso||'No aplica',fix:p.fijacion||'No aplica',plantilla:p.tipo_plantilla||'No aplica',
       luz:p.luz?'Sí':'No',tluz:p.tipo_luz||'No aplica',led:p.tipo_led||'No aplica',cluz:p.color_luz||'No aplica',obs:p.observaciones||'',procs:p.procesos||[]
     }));
@@ -1657,6 +1677,7 @@ function pedidoQuickChips(p){
     <span class="quickChip">👤 ${p.cliente||'Cliente'}</span>
     <span class="quickChip">📍 ${p.locacion||p.ubic||'No definido'}</span>
     <span class="quickChip">📦 ${items} item(s)</span>
+    ${p.espesor?`<span class="quickChip">📏 ${p.espesor}</span>`:''}
     ${p.inst==='Sí'?`<span class="quickChip ${(!p.plantilla||p.plantilla==='No aplica')?'bad':''}">🧩 ${(!p.plantilla||p.plantilla==='No aplica')?'Falta plantilla':p.plantilla}</span>`:''}
     ${entregaChip(p)}
   </div>`;
@@ -1769,6 +1790,7 @@ function openExpress(){
   eCant.value='1';
   eDesc.value='';
   eLocacion.value='';
+  if(window.eEspesor) eEspesor.value='';
   eTipo.innerHTML=db.tipos.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   expressModal.classList.add('show');
 }
@@ -1808,6 +1830,7 @@ async function saveExpress(){
       desc:eDesc.value||'Pedido express',
       tipoId:t.id,
       tipo:t.name,
+      espesor:eEspesor.value||'',
       cat:t.cat,
       estado:eEstado.value,
       ubic:'No definido',
@@ -1839,6 +1862,7 @@ async function saveExpress(){
         cantidad:item.cant,
         tipo_id:item.tipoId,
         tipo_nombre:item.tipo,
+        espesor:item.espesor,
         categoria:item.cat,
         estado:item.estado,
         ubicacion:item.ubic,
@@ -1875,7 +1899,7 @@ function openPedido(id){
   const p=id?db.pedidos.find(x=>x.id===id):null, t=db.tipos[0];
   pedidoTitle.textContent=id?'Editar pedido':'Nuevo pedido';
   pNum.value=p?p.num:nextPedidoNo(); pFecha.value=p?p.fecha:hoy(); pEntrega.value=p?p.entrega:''; pOper.value=p?p.oper:operadorActualNombre(); pCliente.value=p?p.cliente:''; selectedClienteId=p?p.cliente_id:null;
-  pCant.value=p?p.cant:''; pDesc.value=p?p.desc:''; pTipo.value=p?p.tipoId:(t?t.id:''); pEstado.value=p?p.estado:'Solicitud'; pUbic.value=p?p.ubic:'No definido'; pLocacion.value=p?p.locacion:'';
+  pCant.value=p?p.cant:''; pDesc.value=p?p.desc:''; pTipo.value=p?p.tipoId:(t?t.id:''); pEspesor.value=p?p.espesor:''; pEstado.value=p?p.estado:'Solicitud'; pUbic.value=p?p.ubic:'No definido'; pLocacion.value=p?p.locacion:'';
   pInst.value=p?p.inst:'No'; pAlt.value=p?p.alt:''; pSup.value=p?p.sup:'No aplica'; pAcc.value=p?p.acc:'No aplica'; pFix.value=p?(p.fix||'No aplica'):'No aplica';
   pPlantilla.value=p?(p.plantilla||'No aplica'):'No aplica';
   if(pInst.value==='Sí' && (!pPlantilla.value || pPlantilla.value==='No aplica')) pPlantilla.value='Papel';
@@ -2035,13 +2059,13 @@ async function savePedido(){
     let clienteId=await ensureCliente(pCliente.value);
     let item={
       id:editPedido||uid(), num:pNum.value||nextPedidoNo(), fecha:pFecha.value||hoy(), entrega:pEntrega.value||'', oper:pOper.value, cliente:pCliente.value||'Cliente sin nombre', cliente_id:clienteId,
-      cant:pCant.value||'1', desc:pDesc.value||'Sin descripción', tipoId:t.id, tipo:t.name, cat:t.cat, estado:pEstado.value, ubic:pUbic.value, locacion:pLocacion.value,
+      cant:pCant.value||'1', desc:pDesc.value||'Sin descripción', tipoId:t.id, tipo:t.name, espesor:pEspesor.value||'', cat:t.cat, estado:pEstado.value, ubic:pUbic.value, locacion:pLocacion.value,
       inst:pInst.value, alt:pAlt.value, sup:pSup.value, acc:pAcc.value, fix:pFix.value, plantilla:pPlantilla.value, luz:pLuz.value, tluz:pTLuz.value, led:pLed.value, cluz:pCLuz.value, obs:pObs.value, procs:tmpProcs
     };
 
     const sb=await getSupabase();
     if(sb&&online){
-      const payload={id:item.id,numero_pedido:item.num,fecha:item.fecha,fecha_entrega:item.entrega||null,operador:item.oper,cliente_id:item.cliente_id,cliente_nombre:item.cliente,descripcion:item.desc,cantidad:item.cant,tipo_id:item.tipoId,tipo_nombre:item.tipo,categoria:item.cat,estado:item.estado,ubicacion:item.ubic,locacion:item.locacion,tipo_plantilla:item.plantilla,instalacion:item.inst==='Sí',altura:item.alt,superficie:item.sup,acceso:item.acc,fijacion:item.fix,luz:item.luz==='Sí',tipo_luz:item.tluz,tipo_led:item.led,color_luz:item.cluz,observaciones:item.obs,procesos:item.procs};
+      const payload={id:item.id,numero_pedido:item.num,fecha:item.fecha,fecha_entrega:item.entrega||null,operador:item.oper,cliente_id:item.cliente_id,cliente_nombre:item.cliente,descripcion:item.desc,cantidad:item.cant,tipo_id:item.tipoId,tipo_nombre:item.tipo,espesor:item.espesor,categoria:item.cat,estado:item.estado,ubicacion:item.ubic,locacion:item.locacion,tipo_plantilla:item.plantilla,instalacion:item.inst==='Sí',altura:item.alt,superficie:item.sup,acceso:item.acc,fijacion:item.fix,luz:item.luz==='Sí',tipo_luz:item.tluz,tipo_led:item.led,color_luz:item.cluz,observaciones:item.obs,procesos:item.procs};
       const {error}=await sb.from('prod_pedidos').upsert(payload);
       if(error) throw error;
     }
@@ -2220,6 +2244,7 @@ td{font-size:10px;padding:7px;border:1px solid #d9deea;vertical-align:top}
       <div class="miniGrid">
         <div class="item"><small>Categoría</small><b>${escape(p.cat)}</b></div>
         <div class="item"><small>Tipo</small><b>${escape(p.tipo)}</b></div>
+        <div class="item"><small>Espesor</small><b>${escape(p.espesor||'No definido')}</b></div>
         <div class="item"><small>Estado</small><span class="pill">${escape(p.estado)}</span></div>
         <div class="item"><small>Interior/exterior</small><b>${escape(p.ubic)}</b></div>
         <div class="item"><small>Locación</small><b>${escape(p.locacion||'Sin locación')}</b></div>
