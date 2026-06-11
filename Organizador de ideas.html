@@ -1170,6 +1170,14 @@ html,body{
   text-overflow:ellipsis;
 }
 
+
+/* Validación visual de plantilla */
+.quickChip.bad{
+  background:#fff0f2!important;
+  border-color:#ffcbd3!important;
+  color:#dc2626!important;
+}
+
 </style>
 </head>
 
@@ -1649,7 +1657,7 @@ function pedidoQuickChips(p){
     <span class="quickChip">👤 ${p.cliente||'Cliente'}</span>
     <span class="quickChip">📍 ${p.locacion||p.ubic||'No definido'}</span>
     <span class="quickChip">📦 ${items} item(s)</span>
-    ${p.inst==='Sí'?`<span class="quickChip">🧩 ${p.plantilla||'Plantilla?'}</span>`:''}
+    ${p.inst==='Sí'?`<span class="quickChip ${(!p.plantilla||p.plantilla==='No aplica')?'bad':''}">🧩 ${(!p.plantilla||p.plantilla==='No aplica')?'Falta plantilla':p.plantilla}</span>`:''}
     ${entregaChip(p)}
   </div>`;
 }
@@ -1868,7 +1876,9 @@ function openPedido(id){
   pedidoTitle.textContent=id?'Editar pedido':'Nuevo pedido';
   pNum.value=p?p.num:nextPedidoNo(); pFecha.value=p?p.fecha:hoy(); pEntrega.value=p?p.entrega:''; pOper.value=p?p.oper:operadorActualNombre(); pCliente.value=p?p.cliente:''; selectedClienteId=p?p.cliente_id:null;
   pCant.value=p?p.cant:''; pDesc.value=p?p.desc:''; pTipo.value=p?p.tipoId:(t?t.id:''); pEstado.value=p?p.estado:'Solicitud'; pUbic.value=p?p.ubic:'No definido'; pLocacion.value=p?p.locacion:'';
-  pInst.value=p?p.inst:'No'; pAlt.value=p?p.alt:''; pSup.value=p?p.sup:'No aplica'; pAcc.value=p?p.acc:'No aplica'; pFix.value=p?(p.fix||'No aplica'):'No aplica'; pPlantilla.value=p?(p.plantilla||'No aplica'):'No aplica';
+  pInst.value=p?p.inst:'No'; pAlt.value=p?p.alt:''; pSup.value=p?p.sup:'No aplica'; pAcc.value=p?p.acc:'No aplica'; pFix.value=p?(p.fix||'No aplica'):'No aplica';
+  pPlantilla.value=p?(p.plantilla||'No aplica'):'No aplica';
+  if(pInst.value==='Sí' && (!pPlantilla.value || pPlantilla.value==='No aplica')) pPlantilla.value='Papel';
   pLuz.value=p?p.luz:'No'; pTLuz.value=p?p.tluz:'No aplica'; pLed.value=p?(p.led||'No aplica'):'No aplica'; pCLuz.value=p?p.cluz:'No aplica'; pObs.value=p?p.obs:'';
   tmpProcs=p?JSON.parse(JSON.stringify(p.procs)):copyProcs(t||{procs:[]});
   if(!p&&t) applyTipoSettings(t,false);
@@ -1900,7 +1910,18 @@ function drawAlerts(){
   if(!a.length)a.push(['','Sin alertas críticas']);
   alerts.innerHTML=a.map(x=>`<div class="alert ${x[0]}">${x[1]}</div>`).join('');
 }
-function updateConditionalFields(){document.querySelectorAll('[data-inst-field]').forEach(el=>el.classList.toggle('mutedField',pInst.value!=='Sí'));document.querySelectorAll('[data-luz-field]').forEach(el=>el.classList.toggle('mutedField',pLuz.value!=='Sí'));drawAlerts()}
+function updateConditionalFields(){
+  document.querySelectorAll('[data-inst-field]').forEach(el=>el.classList.toggle('mutedField',pInst.value!=='Sí'));
+  document.querySelectorAll('[data-luz-field]').forEach(el=>el.classList.toggle('mutedField',pLuz.value!=='Sí'));
+
+  if(pInst.value==='Sí'){
+    if(!pPlantilla.value || pPlantilla.value==='No aplica') pPlantilla.value='Papel';
+  }else{
+    pPlantilla.value='No aplica';
+  }
+
+  drawAlerts();
+}
 function applyTipoSettings(t,recargar=true){
   if(!t)return;
   if(recargar) tmpProcs=copyProcs(t);
@@ -1995,7 +2016,20 @@ async function ensureCliente(nombre){
   }
 }
 
+
+function validarInstalacionAntesDeGuardar(){
+  if(pInst.value === 'Sí'){
+    if(!pPlantilla.value || pPlantilla.value === 'No aplica'){
+      alert('Si el pedido lleva instalación, debes seleccionar el tipo de plantilla: Papel o Cartón.');
+      pPlantilla.focus();
+      return false;
+    }
+  }
+  return true;
+}
+
 async function savePedido(){
+  if(!validarInstalacionAntesDeGuardar()) return;
   try{
     let t=db.tipos.find(x=>x.id===pTipo.value);
     let clienteId=await ensureCliente(pCliente.value);
@@ -2200,10 +2234,11 @@ td{font-size:10px;padding:7px;border:1px solid #d9deea;vertical-align:top}
         <div class="item"><small>Superficie</small><b>${escape(p.sup)}</b></div>
         <div class="item"><small>Acceso</small><b>${escape(p.acc)}</b></div>
         <div class="item"><small>Fijación</small><b>${escape(p.fix)}</b></div>
-        <div class="item"><small>Plantilla</small><b>${escape(p.plantilla||'No aplica')}</b></div>
+        <div class="item"><small>Plantilla</small><b>${escape(p.inst==='Sí' && (!p.plantilla || p.plantilla==='No aplica') ? 'FALTA DEFINIR' : (p.plantilla||'No aplica'))}</b></div>
         <div class="item"><small>Luz</small><b>${escape(p.luz)}</b></div>
         <div class="item"><small>Tipo luz</small><b>${escape(p.tluz)}</b></div>
         <div class="item"><small>LED/cinta</small><b>${escape(p.led)}</b></div>
+        <div class="item"><small>Color luz</small><b>${escape(p.cluz||'No aplica')}</b></div>
       </div>
     </div>
   </div>
