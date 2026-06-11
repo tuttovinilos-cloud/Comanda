@@ -1,11 +1,10 @@
-console.log("COTIZADOR JS conectado v70 propuesta económica PDF manual estable");
+console.log("COTIZADOR JS conectado v53 factura BS + posiciones RIF/tabla + deshacer + eliminar solo Roberto");
 
 const $ = (id) => document.getElementById(id);
 
 let clientesDB = [];
 let cotizacionesDB = [];
 let cotizacionSeleccionada = null;
-window.propuestaImages = window.propuestaImages || [];
 
 const TUTTO_LOGO_SRC = "img/logo-tutto.svg?v=10";
 let tuttoLogoPngPromise = null;
@@ -22,8 +21,7 @@ const UNDO_MAX = 4;
 let data = {
   tipo: "Cotización",
   responsable: "Ricardo",
-  items: [{ kind: "item", desc: "", qty: 1, price: 0, image: "" }],
-  propuestaImages: []
+  items: [{ kind: "item", desc: "", qty: 1, price: 0 }]
 };
 
 
@@ -317,104 +315,6 @@ function itemTotal(item){
   return Number(item.qty || 0) * Number(item.price || 0);
 }
 
-
-
-function syncPropuestaImagesGlobal(){
-  window.propuestaImages = data.propuestaImages || [];
-}
-
-function esPropuestaEconomica(tipo){
-  return normalizar(tipo || "") === "propuesta economica" || normalizar(tipo || "") === "propuesta económica";
-}
-
-function textoIntroPropuesta(){
-  return `El presente archivo tiene como finalidad poder presentarles una propuesta económica que sirva como base para que ambas partes puedan mantener sus operaciones comerciales sin afectar la calidad que muy bien nos definen.
-
-Es por ello, que vamos a tomar como ejemplo este tipo de etiqueta, ya que tenemos el vector y medidas.`;
-}
-
-function actualizarVistaPropuesta(){
-  const tipo = $("tipoDocumento")?.value || data.tipo;
-  const activa = esPropuestaEconomica(tipo);
-
-  const box = $("propuestaBox");
-  if(box) box.classList.toggle("show", activa);
-
-  const th = $("thCantidad");
-  if(th) th.textContent = activa ? "Cant. por metro" : "Cant.";
-
-  const banner = $("banner");
-  if(banner) banner.textContent = tipo;
-
-  syncPropuestaImagesGlobal();
-  renderPropuestaImagenes();
-}
-
-function renderPropuestaImagenes(){
-  syncPropuestaImagesGlobal();
-  const grid = $("propuestaPreviewGrid");
-  if(!grid) return;
-
-  const imgs = data.propuestaImages || [];
-
-  if(!imgs.length){
-    grid.innerHTML = "";
-    return;
-  }
-
-  grid.innerHTML = imgs.map((src,i) => `
-    <div class="propuesta-img-card">
-      <img src="${src}" alt="Imagen propuesta ${i+1}">
-      <button type="button" data-remove-propuesta-img="${i}">Quitar</button>
-    </div>
-  `).join("");
-}
-
-function resizeImageDataUrl(file,maxSide=300){
-  return new Promise((resolve,reject) => {
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const img = new Image();
-
-      img.onload = () => {
-        const scale = Math.min(maxSide / img.width, maxSide / img.height, 1);
-        const w = Math.max(1, Math.round(img.width * scale));
-        const h = Math.max(1, Math.round(img.height * scale));
-
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-
-        const ctx = canvas.getContext("2d");
-        ctx.clearRect(0,0,w,h);
-        ctx.drawImage(img,0,0,w,h);
-
-        resolve(canvas.toDataURL("image/jpeg",0.84));
-      };
-
-      img.onerror = () => reject(new Error("No se pudo leer la imagen"));
-      img.src = reader.result;
-    };
-
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-async function agregarImagenesPropuesta(files){
-  const lista = Array.from(files || []);
-  if(!lista.length) return;
-
-  for(const file of lista){
-    if(!String(file.type || "").startsWith("image/")) continue;
-    const dataUrl = await resizeImageDataUrl(file);
-    data.propuestaImages.push(dataUrl);
-  }
-
-  renderPropuestaImagenes();
-}
-
 function esFacturaTipo(tipo){
   return normalizar(tipo || "") === "factura";
 }
@@ -501,7 +401,7 @@ function updateItemVisualTotal(index){
 
 function addItem(){
   guardarEstadoDeshacer();
-  data.items.push({ kind:"item", desc:"", qty:1, price:0, image:"" });
+  data.items.push({ kind:"item", desc:"", qty:1, price:0 });
   render();
 }
 
@@ -515,7 +415,6 @@ function removeItem(index){
   guardarEstadoDeshacer();
   if(data.items.length <= 1){
     data.items = [{ kind:"item", desc:"", qty:1, price:0 }];
-  data.propuestaImages = [];
   }else{
     data.items.splice(index, 1);
   }
@@ -545,8 +444,6 @@ function getForm(){
     direccion: cleanText($("direccion").value),
     notas: cleanText($("notas").value),
     iva: $("ivaCheck").checked,
-    propuesta_intro: textoIntroPropuesta(),
-    propuesta_images: JSON.parse(JSON.stringify(data.propuestaImages || [])),
     footer: getFooter()
   };
 }
@@ -568,8 +465,7 @@ function crearEstadoActualDeshacer(){
       iva: !!$("ivaCheck")?.checked,
       footer:getFooter()
     },
-    items:JSON.parse(JSON.stringify(data.items || [])),
-    propuestaImages:JSON.parse(JSON.stringify(data.propuestaImages || []))
+    items:JSON.parse(JSON.stringify(data.items || []))
   };
 }
 
@@ -652,7 +548,6 @@ function deshacerUltimoCambio(){
   data.tipo = f.tipo || "Cotización";
   data.responsable = f.responsable || "";
   data.items = JSON.parse(JSON.stringify(estado.items && estado.items.length ? estado.items : [{ kind:"item", desc:"", qty:1, price:0 }]));
-  data.propuestaImages = JSON.parse(JSON.stringify(estado.propuestaImages || []));
 
   aplicarModoNumeroDocumento(data.tipo,false);
   actualizarEtiquetaIva(data.tipo);
@@ -673,62 +568,16 @@ function crearSnapshotActual(){
     form,
     items,
     totals,
-    propuestaImages: JSON.parse(JSON.stringify(data.propuestaImages || [])),
-    propuestaImages: JSON.parse(JSON.stringify(data.propuestaImages || [])),
     footer: form.footer
   };
-}
-
-
-function itemImageHtml(index,item){
-  if(!item || item.kind !== "item") return "";
-
-  const hasImg = !!item.image;
-
-  return `
-    <div class="desc-image-compact ${hasImg ? "has-img" : ""}">
-      <label class="desc-image-btn compact">
-        🖼 ${hasImg ? "Cambiar" : "Imagen"}
-        <input type="file" accept="image/*" data-item-image="${index}" hidden>
-      </label>
-
-      ${hasImg ? `
-        <div class="desc-image-thumb">
-          <img src="${item.image}" alt="Imagen descripción ${index+1}">
-        </div>
-        <button class="desc-image-remove compact" type="button" data-remove-item-image="${index}">X</button>
-      ` : ""}
-    </div>
-  `;
-}
-
-async function setItemImage(index,file){
-  if(!data.items[index]) return;
-  if(!file) return;
-
-  guardarEstadoDeshacer();
-
-  data.items[index].image = await resizeImageDataUrl(file,300);
-  render();
-}
-
-function removeItemImage(index){
-  if(!data.items[index]) return;
-
-  guardarEstadoDeshacer();
-
-  data.items[index].image = "";
-  render();
 }
 
 function render(){
   data.tipo = $("tipoDocumento").value;
   data.responsable = $("responsable").value;
-  if(!Array.isArray(data.propuestaImages)) data.propuestaImages = [];
 
   $("banner").textContent = data.tipo;
   $("creditName").textContent = data.responsable;
-  actualizarVistaPropuesta();
   actualizarEtiquetaIva(data.tipo);
   aplicarModoNumeroDocumento(data.tipo, false);
 
@@ -780,7 +629,6 @@ function render(){
         <td class="num">${number}</td>
         <td class="desc">
           <input value="${html(item.desc)}" placeholder="Descripción" data-index="${index}" data-field="desc">
-          ${itemImageHtml(index,item)}
         </td>
         <td class="center">
           <input type="number" min="0" step="0.01" value="${item.qty}" data-index="${index}" data-field="qty">
@@ -808,7 +656,6 @@ function render(){
           <div class="field">
             <label>Descripción</label>
             <input value="${html(item.desc)}" placeholder="Descripción del producto o servicio" data-index="${index}" data-field="desc">
-            ${itemImageHtml(index,item)}
           </div>
 
           <div class="item-grid">
@@ -1234,241 +1081,6 @@ async function crearDocumentoFacturaPDF(snapshot=crearSnapshotActual()){
   return doc;
 }
 
-
-async function crearDocumentoPropuestaEconomicaPDF(snapshot=crearSnapshotActual()){
-  if(!window.jspdf || !window.jspdf.jsPDF) throw new Error("No cargó la librería PDF.");
-
-  const { jsPDF } = window.jspdf;
-  const form = snapshot.form;
-  const items = snapshot.items || [];
-  const t = snapshot.totals || calcularTotales(items, form.iva, form.tipo);
-  const footer = snapshot.footer || form.footer || getFooter();
-
-  const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"letter" });
-
-  const W = doc.internal.pageSize.getWidth();
-  const H = doc.internal.pageSize.getHeight();
-  const blue = [21,59,255];
-  const blueDark = [11,31,122];
-  const line = [217,222,234];
-
-  const margin = 14;
-  let y = 10;
-
-  const ensureSpace = (needed) => {
-    if(y + needed > H - 26){
-      drawPdfHeaderFooter(doc,footer,form);
-      doc.addPage();
-      y = 16;
-    }
-  };
-
-  // Header
-  doc.setFillColor(...blue);
-  doc.roundedRect(margin,y,W-(margin*2),10,3,3,"F");
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(pdfSize(13));
-  doc.setTextColor(255,255,255);
-  doc.text("PROPUESTA ECONÓMICA", W/2, y+6.8, { align:"center" });
-  y += 17;
-
-  // Datos superiores
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(pdfSize(7.8));
-  doc.setTextColor(...blue);
-  doc.text("DATOS DEL CLIENTE",margin,y);
-  y += 3;
-
-  const fieldH = 9;
-  const gap = 4;
-  const colW = (W - (margin*2) - (gap*2)) / 3;
-
-  drawPdfField(doc,margin,y,colW,fieldH,"Cliente",form.cliente || "",{ valueBold:true,valueSize:6.4 });
-  drawPdfField(doc,margin+colW+gap,y,colW,fieldH,"RIF / Cédula",form.rif || "",{ valueSize:6.4 });
-  drawPdfField(doc,margin+(colW+gap)*2,y,colW,fieldH,"Teléfono",form.telefono || "",{ valueSize:6.4 });
-  y += fieldH + 3;
-
-  drawPdfField(doc,margin,y,colW,fieldH,"Fecha",form.fecha || "",{ valueSize:6.4 });
-  drawPdfField(doc,margin+colW+gap,y,colW,fieldH,"N° Documento",form.numero || "",{ valueSize:6.4,valueBold:true });
-  drawPdfField(doc,margin+(colW+gap)*2,y,colW,fieldH,"Válido hasta",form.vence || "",{ valueSize:6.4 });
-  y += fieldH + 6;
-
-  // Introducción
-  const intro = form.propuesta_intro || textoIntroPropuesta();
-  const introLines = doc.splitTextToSize(intro, W - margin*2 - 8);
-  const introH = Math.max(24, 8 + introLines.length * 3.4);
-
-  ensureSpace(introH + 4);
-
-  doc.setDrawColor(...line);
-  doc.setFillColor(248,249,255);
-  doc.roundedRect(margin,y,W-(margin*2),introH,3,3,"FD");
-
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(pdfSize(7.6));
-  doc.setTextColor(...blue);
-  doc.text("INTRODUCCIÓN",margin+3,y+5.2);
-
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(pdfSize(7.2));
-  doc.setTextColor(51,65,85);
-  doc.text(introLines,margin+3,y+10);
-  y += introH + 7;
-
-  // Tabla manual
-  const tableX = margin;
-  const tableW = W - margin*2;
-  const c1 = 9;
-  const c3 = 20;
-  const c4 = 28;
-  const c5 = 31;
-  const c2 = tableW - c1 - c3 - c4 - c5;
-  const xs = [tableX, tableX+c1, tableX+c1+c2, tableX+c1+c2+c3, tableX+c1+c2+c3+c4, tableX+tableW];
-
-  const drawHeader = () => {
-    ensureSpace(9);
-
-    doc.setDrawColor(...line);
-    doc.setFillColor(243,245,252);
-    doc.rect(tableX,y,tableW,8,"FD");
-
-    xs.forEach(x => doc.line(x,y,x,y+8));
-
-    doc.setFont("helvetica","bold");
-    doc.setFontSize(pdfSize(6.2));
-    doc.setTextColor(17,24,39);
-
-    doc.text("#", tableX+c1/2, y+5.1, { align:"center" });
-    doc.text("DESCRIPCIÓN DEL PRODUCTO / SERVICIO", xs[1]+c2/2, y+5.1, { align:"center" });
-    doc.text("CANT. POR METRO", xs[2]+c3/2, y+4.2, { align:"center" });
-    doc.text("P. UNIT ($)", xs[3]+c4/2, y+5.1, { align:"center" });
-    doc.text("TOTAL ($)", xs[4]+c5/2, y+5.1, { align:"center" });
-
-    y += 8;
-  };
-
-  drawHeader();
-
-  let n = 1;
-
-  for(const item of items){
-    if(item.kind === "separator"){
-      ensureSpace(8);
-      doc.setDrawColor(...line);
-      doc.setFillColor(232,236,255);
-      doc.rect(tableX,y,tableW,8,"FD");
-      doc.setFont("helvetica","bold");
-      doc.setFontSize(pdfSize(6.8));
-      doc.setTextColor(...blueDark);
-      doc.text(String(item.desc || "SECCIÓN"), tableX+tableW/2, y+5.1, { align:"center" });
-      y += 8;
-      continue;
-    }
-
-    const desc = String(item.desc || "");
-    const descLines = doc.splitTextToSize(desc, c2 - 5);
-    const rowH = Math.max(8, 5 + descLines.length * 3.2);
-    const total = itemTotal(item);
-
-    ensureSpace(rowH + (item.image ? 24 : 0) + 4);
-
-    doc.setDrawColor(...line);
-    doc.setFillColor(255,255,255);
-    doc.rect(tableX,y,tableW,rowH,"FD");
-    xs.forEach(x => doc.line(x,y,x,y+rowH));
-
-    doc.setFont("helvetica","bold");
-    doc.setFontSize(pdfSize(6.4));
-    doc.setTextColor(220,38,38);
-    doc.text(String(n), tableX+c1/2, y + rowH/2 + 1.4, { align:"center" });
-
-    doc.setFont("helvetica","normal");
-    doc.setFontSize(pdfSize(6.8));
-    doc.setTextColor(17,24,39);
-    doc.text(descLines, xs[1]+3, y+5);
-
-    doc.setFont("helvetica","normal");
-    doc.setFontSize(pdfSize(6.8));
-    doc.setTextColor(17,24,39);
-    doc.text(String(item.qty || 0), xs[2]+c3/2, y + rowH/2 + 1.4, { align:"center" });
-    doc.text("$"+Number(item.price || 0).toFixed(2), xs[3]+c4/2, y + rowH/2 + 1.4, { align:"center" });
-
-    doc.setFont("helvetica","bold");
-    doc.setTextColor(...blue);
-    doc.text("$"+total.toFixed(2), xs[4]+c5/2, y + rowH/2 + 1.4, { align:"center" });
-
-    y += rowH;
-
-    if(item.image){
-      try{
-        const props = doc.getImageProperties(item.image);
-        const maxW = 38;
-        const maxH = 17;
-        const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
-        const iw = props.width * ratio;
-        const ih = props.height * ratio;
-
-        const pad = 2;
-        const boxW = iw + pad*2;
-        const boxH = ih + pad*2;
-
-        ensureSpace(boxH + 4);
-
-        doc.setDrawColor(...line);
-        doc.setFillColor(255,255,255);
-        doc.roundedRect(xs[1], y+2, boxW, boxH, 2, 2, "FD");
-        doc.addImage(item.image, "JPEG", xs[1]+pad, y+2+pad, iw, ih, undefined, "FAST");
-
-        y += boxH + 5;
-      }catch(e){
-        console.warn("No se pudo dibujar imagen de propuesta:", e);
-      }
-    }
-
-    n++;
-  }
-
-  y += 4;
-
-  // Totales
-  const boxW = 50;
-  const boxX = W - margin - boxW;
-  const boxH = Number(t.iva || 0) > 0 ? 26 : 18;
-
-  ensureSpace(boxH + 8);
-
-  doc.setDrawColor(...line);
-  doc.setFillColor(255,255,255);
-  doc.roundedRect(boxX,y,boxW,boxH,3,3,"FD");
-
-  let ty = y;
-  const totalRow = (label,value,fill,textColor,bold=false) => {
-    doc.setFillColor(...fill);
-    doc.rect(boxX,ty,boxW,8,"F");
-    doc.setDrawColor(...line);
-    doc.rect(boxX,ty,boxW,8);
-
-    doc.setFont("helvetica",bold ? "bold" : "normal");
-    doc.setFontSize(pdfSize(7.4));
-    doc.setTextColor(...textColor);
-    doc.text(label,boxX+3,ty+5.2);
-    doc.text(value,boxX+boxW-3,ty+5.2,{ align:"right" });
-    ty += 8;
-  };
-
-  totalRow("Sub Total",currency(t.subtotal),[255,255,255],[17,24,39],true);
-
-  if(Number(t.iva || 0) > 0){
-    totalRow(getIvaLabel(form.tipo),currency(t.iva),[255,255,255],[17,24,39],true);
-  }
-
-  totalRow("TOTAL",currency(t.total),blue,[255,255,255],true);
-
-  drawPdfHeaderFooter(doc,footer,form);
-
-  return doc;
-}
-
 async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   if(!window.jspdf || !window.jspdf.jsPDF) throw new Error("No cargó la librería PDF.");
 
@@ -1532,11 +1144,9 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   drawPdfField(doc,84,83,114,10,"Dirección",form.direccion || "",{ valueSize:6.5 });
 
   let count = 1;
-  const bodyMeta = [];
 
   const body = items.map(item => {
     if(item.kind === "separator"){
-      bodyMeta.push({ kind:"separator", image:"" });
       return [{
         content: item.desc || "SECCIÓN",
         colSpan: 5,
@@ -1550,7 +1160,6 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     }
 
     const total = itemTotal(item);
-    bodyMeta.push({ kind:"item", image:item.image || "" });
 
     return [
       String(count++),
@@ -1561,63 +1170,9 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     ];
   });
 
-  let tableStartY = 101;
-
-  if(esPropuestaEconomica(form.tipo)){
-    doc.setDrawColor(...line);
-    doc.setFillColor(248,249,255);
-    doc.roundedRect(14,96,W-28,32,3,3,"FD");
-
-    doc.setFont("helvetica","bold");
-    doc.setFontSize(8);
-    doc.setTextColor(...blue);
-    doc.text("INTRODUCCIÓN",17,101.5);
-
-    doc.setFont("helvetica","normal");
-    doc.setFontSize(7.6);
-    doc.setTextColor(51,65,85);
-    const introLines = doc.splitTextToSize(form.propuesta_intro || textoIntroPropuesta(), W-34);
-    doc.text(introLines.slice(0,7),17,107);
-
-    tableStartY = 134;
-
-    const imgs = form.propuesta_images || [];
-    if(imgs.length){
-      const imgY = tableStartY;
-      const gap = 4;
-      const boxW = (W - 28 - gap) / 2;
-      const boxH = 38;
-
-      imgs.slice(0,4).forEach((src,i) => {
-        const col = i % 2;
-        const row = Math.floor(i / 2);
-        const x = 14 + col * (boxW + gap);
-        const y = imgY + row * (boxH + gap);
-
-        doc.setDrawColor(...line);
-        doc.setFillColor(255,255,255);
-        doc.roundedRect(x,y,boxW,boxH,3,3,"FD");
-
-        try{
-          const props = doc.getImageProperties(src);
-          const ratio = Math.min((boxW-6)/props.width,(boxH-6)/props.height);
-          const iw = props.width * ratio;
-          const ih = props.height * ratio;
-          const ix = x + (boxW - iw) / 2;
-          const iy = y + (boxH - ih) / 2;
-          doc.addImage(src,"JPEG",ix,iy,iw,ih,undefined,"FAST");
-        }catch(e){
-          console.warn("No se pudo insertar imagen propuesta:",e);
-        }
-      });
-
-      tableStartY = imgY + (imgs.length > 2 ? 2 : 1) * (boxH + gap) + 4;
-    }
-  }
-
   doc.autoTable({
-    startY:tableStartY,
-    head:[["#","DESCRIPCIÓN DEL PRODUCTO / SERVICIO", esPropuestaEconomica(form.tipo) ? "CANT. POR METRO" : "CANT.","P. UNIT ($)","TOTAL ($)"]],
+    startY:101,
+    head:[["#","DESCRIPCIÓN DEL PRODUCTO / SERVICIO","CANT.","P. UNIT ($)","TOTAL ($)"]],
     body,
     theme:"grid",
     margin:{ left:14, right:14, bottom:26 },
@@ -1646,35 +1201,6 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       4:{ halign:"center", cellWidth:30, fontStyle:"bold", textColor:[21,59,255] }
     },
     alternateRowStyles:{ fillColor:[252,252,254] },
-    didParseCell:(hookData) => {
-      if(hookData.section === "body" && hookData.column.index === 1){
-        const meta = bodyMeta[hookData.row.index];
-        if(meta && meta.image){
-          hookData.cell.styles.minCellHeight = 33;
-        }
-      }
-    },
-    didDrawCell:(hookData) => {
-      if(hookData.section !== "body" || hookData.column.index !== 1) return;
-
-      const meta = bodyMeta[hookData.row.index];
-      if(!meta || !meta.image) return;
-
-      try{
-        const props = doc.getImageProperties(meta.image);
-        const maxW = hookData.cell.width - 6;
-        const maxH = 20;
-        const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
-        const iw = props.width * ratio;
-        const ih = props.height * ratio;
-        const ix = hookData.cell.x + 3;
-        const iy = hookData.cell.y + hookData.cell.height - ih - 3;
-
-        doc.addImage(meta.image,"JPEG",ix,iy,iw,ih,undefined,"FAST");
-      }catch(e){
-        console.warn("No se pudo insertar imagen del ítem:",e);
-      }
-    },
     didDrawPage:() => drawPdfHeaderFooter(doc,footer,form)
   });
 
@@ -1820,8 +1346,6 @@ async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null,snaps
       modo:"texto_json_con_pdf_opcional",
       rows:snapshot.items,
       footer:snapshot.footer,
-      propuesta_intro:form.propuesta_intro || "",
-      propuesta_images:form.propuesta_images || [],
       iva_aplicado:form.iva
     },
     notas: form.notas,
@@ -1921,15 +1445,9 @@ async function validarFormularioDocumento(){
 }
 
 async function crearDocumentoSegunTipo(snapshot){
-  if(esFacturaTipo(snapshot?.form?.tipo)){
-    return await crearDocumentoFacturaPDF(snapshot);
-  }
-
-  if(esPropuestaEconomica(snapshot?.form?.tipo)){
-    return await crearDocumentoPropuestaEconomicaPDF(snapshot);
-  }
-
-  return await crearDocumentoPDF(snapshot);
+  return esFacturaTipo(snapshot?.form?.tipo)
+    ? await crearDocumentoFacturaPDF(snapshot)
+    : await crearDocumentoPDF(snapshot);
 }
 
 function limpiarPreviewPdf(){
@@ -2095,8 +1613,6 @@ function normalizarSnapshotDesdeRegistro(reg){
 
   let rows = [];
   let footer = null;
-  let propuestaImages = [];
-  let propuestaIntro = "";
   let ivaAplicado = Number(reg?.iva || 0) > 0;
 
   if(Array.isArray(raw)){
@@ -2104,8 +1620,6 @@ function normalizarSnapshotDesdeRegistro(reg){
   }else if(raw && typeof raw === "object"){
     rows = Array.isArray(raw.rows) ? raw.rows : (Array.isArray(raw.items) ? raw.items : []);
     footer = raw.footer || null;
-    propuestaImages = Array.isArray(raw.propuesta_images) ? raw.propuesta_images : [];
-    propuestaIntro = raw.propuesta_intro || "";
 
     if(typeof raw.iva_aplicado === "boolean"){
       ivaAplicado = raw.iva_aplicado;
@@ -2125,8 +1639,6 @@ function normalizarSnapshotDesdeRegistro(reg){
     direccion: reg?.direccion || "",
     notas: reg?.notas || "",
     iva: ivaAplicado,
-    propuesta_intro: propuestaIntro || textoIntroPropuesta(),
-    propuesta_images: propuestaImages,
     footer: footer || {
       direccion:"Avenida Universidad, Urbanización La Granja, Edificio Diario El Carabobeño, en el Municipio Naguanagua del estado Carabobo.",
       contacto:"Tel: +58 414-4961122 | tuttovinilos@gmail.com",
@@ -2144,7 +1656,6 @@ function normalizarSnapshotDesdeRegistro(reg){
       iva:Number(reg?.iva || calculado.iva),
       total:Number(reg?.total || calculado.total)
     },
-    propuestaImages: propuestaImages,
     footer: form.footer
   };
 }
@@ -2595,7 +2106,6 @@ function cargarCotizacionEnFormulario(){
       ? snap.items
       : [{ kind:"item", desc:"", qty:1, price:0 }]
   ));
-  data.propuestaImages = JSON.parse(JSON.stringify(snap.form?.propuesta_images || snap.propuestaImages || []));
 
   render();
   cerrarDetalle();
@@ -2663,24 +2173,6 @@ function bindEvents(){
   });
 
   document.addEventListener("change", async e => {
-
-    const imgInput = e.target.closest("[data-item-image]");
-    if(imgInput){
-      const idx = Number(imgInput.dataset.itemImage);
-      const file = imgInput.files && imgInput.files[0];
-      if(file){
-        try{
-          await setItemImage(idx,file);
-        }catch(error){
-          console.error(error);
-          showToast("No se pudo cargar la imagen", "err");
-        }
-      }
-      imgInput.value = "";
-      return;
-    }
-
-
     if(e.target.id === "tipoDocumento"){
       const esFactura = esFacturaTipo(e.target.value);
 
@@ -2695,7 +2187,6 @@ function bindEvents(){
       }
 
       render();
-      actualizarVistaPropuesta();
     }
 
     if(e.target.id === "responsable"){
@@ -2712,20 +2203,6 @@ function bindEvents(){
   });
 
   document.addEventListener("click", e => {
-    const removeItemImg = e.target.closest("[data-remove-item-image]");
-    if(removeItemImg){
-      removeItemImage(Number(removeItemImg.dataset.removeItemImage));
-      return;
-    }
-
-    const removeImg = e.target.closest("[data-remove-propuesta-img]");
-    if(removeImg){
-      guardarEstadoDeshacer();
-      data.propuestaImages.splice(Number(removeImg.dataset.removePropuestaImg),1);
-      renderPropuestaImagenes();
-      return;
-    }
-
     const remove = e.target.closest("[data-remove]");
 
     if(remove){
@@ -2785,18 +2262,6 @@ function bindEvents(){
     }
   });
 
-
-  $("propuestaImagenes")?.addEventListener("change", async e => {
-    try{
-      guardarEstadoDeshacer();
-      await agregarImagenesPropuesta(e.target.files);
-      e.target.value = "";
-    }catch(error){
-      console.error(error);
-      showToast("No se pudo agregar imagen: " + (error.message || error), "err");
-    }
-  });
-
   $("addItem")?.addEventListener("click", addItem);
   $("addSep")?.addEventListener("click", addSeparator);
 
@@ -2847,7 +2312,6 @@ async function iniciarCotizador(){
     bloquearResponsableSiNoEsRoberto();
 
     render();
-    actualizarVistaPropuesta();
     bindEvents();
 
     await cargarClientesCotizador();
