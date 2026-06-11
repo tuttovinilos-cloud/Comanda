@@ -464,38 +464,104 @@ function procesarImagenCotizador(file,maxPx=100){
   });
 }
 
+function crearRegistroImagen(file,img){
+  return {
+    name:file?.name || "imagen",
+    src:img.src,
+    width:img.width,
+    height:img.height,
+    mime:img.mime
+  };
+}
+
+function getImagenesItem(item){
+  if(!item || item.kind !== "image") return [];
+
+  if(Array.isArray(item.images) && item.images.length){
+    return item.images.filter(img => img && img.src);
+  }
+
+  if(item.src){
+    return [{
+      name:item.name || "imagen",
+      src:item.src,
+      width:item.width,
+      height:item.height,
+      mime:item.mime
+    }];
+  }
+
+  return [];
+}
+
+function sincronizarImagenPrincipal(item){
+  if(!item || item.kind !== "image") return item;
+
+  const imagenes = getImagenesItem(item);
+  item.images = imagenes;
+
+  const primera = imagenes[0];
+
+  item.name = primera?.name || item.name || "imagen";
+  item.src = primera?.src || "";
+  item.width = primera?.width || 0;
+  item.height = primera?.height || 0;
+  item.mime = primera?.mime || "";
+
+  return item;
+}
+
+async function procesarArchivosImagen(files){
+  const lista = Array.from(files || []).filter(file => file && String(file.type || "").startsWith("image/"));
+
+  if(!lista.length){
+    throw new Error("Selecciona un archivo de imagen válido.");
+  }
+
+  const imagenes = [];
+
+  for(const file of lista){
+    const img = await procesarImagenCotizador(file,100);
+    imagenes.push(crearRegistroImagen(file,img));
+  }
+
+  return imagenes;
+}
+
 function addImageItem(){
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/*";
+  input.multiple = true;
   input.style.position = "fixed";
   input.style.left = "-9999px";
   input.style.top = "-9999px";
   document.body.appendChild(input);
 
   input.addEventListener("change", async () => {
-    const file = input.files && input.files[0];
-    if(!file){
+    if(!input.files || !input.files.length){
       input.remove();
       return;
     }
 
     try{
       guardarEstadoDeshacer();
-      const img = await procesarImagenCotizador(file,100);
+      const imagenes = await procesarArchivosImagen(input.files);
+      const primera = imagenes[0] || {};
 
-      data.items.push({
+      data.items.push(sincronizarImagenPrincipal({
         kind:"image",
         desc:"",
-        name:file.name || "imagen",
-        src:img.src,
-        width:img.width,
-        height:img.height,
-        mime:img.mime
-      });
+        images:imagenes,
+        name:primera.name || "imagen",
+        src:primera.src || "",
+        width:primera.width || 0,
+        height:primera.height || 0,
+        mime:primera.mime || ""
+      }));
 
       render();
-      showToast("Imagen añadida", "ok");
+      showToast(imagenes.length > 1 ? "Imágenes añadidas" : "Imagen añadida", "ok");
     }catch(error){
       console.error(error);
       showToast(error.message || "No se pudo añadir la imagen", "err");
@@ -507,21 +573,20 @@ function addImageItem(){
   input.click();
 }
 
-async function cambiarImagenItem(index,file){
+async function cambiarImagenItem(index,file,pos=0){
   if(!data.items[index] || data.items[index].kind !== "image" || !file) return;
 
   try{
     guardarEstadoDeshacer();
     const img = await procesarImagenCotizador(file,100);
+    const imagenes = getImagenesItem(data.items[index]);
 
-    data.items[index] = {
+    imagenes[pos] = crearRegistroImagen(file,img);
+
+    data.items[index] = sincronizarImagenPrincipal({
       ...data.items[index],
-      name:file.name || data.items[index].name || "imagen",
-      src:img.src,
-      width:img.width,
-      height:img.height,
-      mime:img.mime
-    };
+      images:imagenes
+    });
 
     render();
     showToast("Imagen actualizada", "ok");
@@ -529,6 +594,49 @@ async function cambiarImagenItem(index,file){
     console.error(error);
     showToast(error.message || "No se pudo cambiar la imagen", "err");
   }
+}
+
+async function agregarImagenAlMismoRenglon(index,files){
+  if(!data.items[index] || data.items[index].kind !== "image") return;
+
+  try{
+    guardarEstadoDeshacer();
+    const nuevas = await procesarArchivosImagen(files);
+    const imagenes = getImagenesItem(data.items[index]).concat(nuevas);
+
+    data.items[index] = sincronizarImagenPrincipal({
+      ...data.items[index],
+      images:imagenes
+    });
+
+    render();
+    showToast(nuevas.length > 1 ? "Imágenes añadidas al renglón" : "Imagen añadida al renglón", "ok");
+  }catch(error){
+    console.error(error);
+    showToast(error.message || "No se pudo añadir la imagen", "err");
+  }
+}
+
+function eliminarImagenDelRenglon(index,pos){
+  if(!data.items[index] || data.items[index].kind !== "image") return;
+
+  const imagenes = getImagenesItem(data.items[index]);
+
+  if(imagenes.length <= 1){
+    showToast("Debe quedar al menos una imagen en el renglón", "warn");
+    return;
+  }
+
+  guardarEstadoDeshacer();
+  imagenes.splice(pos,1);
+
+  data.items[index] = sincronizarImagenPrincipal({
+    ...data.items[index],
+    images:imagenes
+  });
+
+  render();
+  showToast("Imagen eliminada", "ok");
 }
 
 function removeItem(index){
@@ -756,9 +864,19 @@ function render(){
     }
 
     if(item.kind === "image"){
-      const imagenHtml = item.src
-        ? `<img class="quote-image-preview" src="${html(item.src)}" alt="${html(item.name || "Imagen")}">`
-        : `<div class="image-empty">Imagen pendiente</div>`;
+      const imagenes = getImagenesItem(item);
+      const imagenesHtml = imagenes.length
+        ? `<div class="quote-image-list">${imagenes.map((img,pos) => `
+            <div class="quote-image-slot">
+              <img class="quote-image-preview" src="${html(img.src)}" alt="${html(img.name || "Imagen")}">
+              <label class="image-change-mini" title="Cambiar esta imagen">
+                Cambiar
+                <input type="file" accept="image/*" data-image-index="${index}" data-image-pos="${pos}">
+              </label>
+              ${imagenes.length > 1 ? `<button class="image-remove-mini" data-image-remove-index="${index}" data-image-remove-pos="${pos}" type="button" title="Quitar esta imagen">×</button>` : ""}
+            </div>
+          `).join("")}</div>`
+        : `<div class="quote-image-list"><div class="image-empty">Imagen pendiente</div></div>`;
 
       tbody.insertAdjacentHTML("beforeend", `
         <tr class="image-row">
@@ -767,11 +885,11 @@ function render(){
             <div class="quote-image-box">
               <div class="quote-image-actions">
                 <label class="btn btn-gray image-picker">
-                  Cambiar imagen
-                  <input type="file" accept="image/*" data-image-index="${index}">
+                  + Otra foto
+                  <input type="file" accept="image/*" multiple data-image-add-index="${index}">
                 </label>
               </div>
-              ${imagenHtml}
+              ${imagenesHtml}
             </div>
           </td>
           <td class="center">
@@ -787,13 +905,15 @@ function render(){
             <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
           </div>
           <div class="item-body">
-            <div class="quote-image-actions">
-              <label class="btn btn-gray image-picker">
-                Cambiar imagen
-                <input type="file" accept="image/*" data-image-index="${index}">
-              </label>
+            <div class="quote-image-box mobile-image-box">
+              <div class="quote-image-actions">
+                <label class="btn btn-gray image-picker">
+                  + Otra foto
+                  <input type="file" accept="image/*" multiple data-image-add-index="${index}">
+                </label>
+              </div>
+              ${imagenesHtml}
             </div>
-            ${imagenHtml}
           </div>
         </div>
       `);
@@ -1396,17 +1516,28 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     }
 
     if(item.kind === "image"){
-      if(item.src){
-        const dims = getPdfImageSize(doc,item.src,18,18);
+      const imagenes = getImagenesItem(item);
+
+      if(imagenes.length){
+        const imageList = imagenes.map(img => {
+          const dims = getPdfImageSize(doc,img.src,18,18);
+
+          return {
+            src:img.src,
+            w:dims.w,
+            h:dims.h,
+            format:getPdfImageFormat(img.src)
+          };
+        });
+
+        const maxH = Math.max(...imageList.map(img => img.h),18);
+
         body.push([{
           content:"",
           colSpan:5,
-          imageSrc:item.src,
-          imageW:dims.w,
-          imageH:dims.h,
-          imageFormat:getPdfImageFormat(item.src),
+          imageList,
           styles:{
-            minCellHeight:dims.h + 8,
+            minCellHeight:maxH + 8,
             halign:"center",
             valign:"middle",
             fillColor:[255,255,255]
@@ -1467,16 +1598,35 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     didDrawCell:(cellData) => {
       const raw = cellData.cell && cellData.cell.raw;
 
-      if(cellData.section !== "body" || !raw || !raw.imageSrc) return;
+      if(cellData.section !== "body" || !raw) return;
+
+      const imageList = Array.isArray(raw.imageList) && raw.imageList.length
+        ? raw.imageList
+        : (raw.imageSrc ? [{ src:raw.imageSrc, w:raw.imageW, h:raw.imageH, format:raw.imageFormat || "JPEG" }] : []);
+
+      if(!imageList.length) return;
 
       try{
-        const imgX = cellData.cell.x + (cellData.cell.width - raw.imageW) / 2;
-        const imgY = cellData.cell.y + 4;
-        doc.addImage(raw.imageSrc, raw.imageFormat || "JPEG", imgX, imgY, raw.imageW, raw.imageH, undefined, "FAST");
+        const gap = 3;
+        const maxTotalW = Math.max(10,cellData.cell.width - 8);
+        const totalOriginalW = imageList.reduce((acc,img) => acc + (img.w || 0),0) + gap * Math.max(0,imageList.length - 1);
+        const scale = totalOriginalW > maxTotalW ? maxTotalW / totalOriginalW : 1;
+        const totalW = totalOriginalW * scale;
+        let imgX = cellData.cell.x + (cellData.cell.width - totalW) / 2;
+
+        imageList.forEach(img => {
+          const w = (img.w || 18) * scale;
+          const h = (img.h || 18) * scale;
+          const imgY = cellData.cell.y + (cellData.cell.height - h) / 2;
+
+          doc.addImage(img.src, img.format || "JPEG", imgX, imgY, w, h, undefined, "FAST");
+          imgX += w + gap;
+        });
       }catch(error){
         console.warn("No se pudo dibujar la imagen en PDF:", error);
       }
     },
+
     didDrawPage:() => drawPdfHeaderFooter(doc,footer,form)
   });
 
@@ -2277,14 +2427,15 @@ function abrirDetalleCotizacion(id){
     }
 
     if(it.kind === "image"){
-      const img = it.src
-        ? `<img class="detail-image" src="${html(it.src)}" alt="${html(it.name || "Imagen")}">`
+      const imagenes = getImagenesItem(it);
+      const imgs = imagenes.length
+        ? `<div class="detail-image-list">${imagenes.map(img => `<img class="detail-image" src="${html(img.src)}" alt="${html(img.name || "Imagen")}">`).join("")}</div>`
         : `<div class="image-empty">Imagen pendiente</div>`;
 
       return `
         <div class="detail-item">
           <b>Imagen</b>
-          ${img}
+          ${imgs}
         </div>
       `;
     }
@@ -2469,8 +2620,14 @@ function bindEvents(){
   });
 
   document.addEventListener("change", async e => {
+    if(e.target.matches("[data-image-add-index]")){
+      await agregarImagenAlMismoRenglon(Number(e.target.dataset.imageAddIndex), e.target.files);
+      e.target.value = "";
+      return;
+    }
+
     if(e.target.matches("[data-image-index]")){
-      await cambiarImagenItem(Number(e.target.dataset.imageIndex), e.target.files && e.target.files[0]);
+      await cambiarImagenItem(Number(e.target.dataset.imageIndex), e.target.files && e.target.files[0], Number(e.target.dataset.imagePos || 0));
       e.target.value = "";
       return;
     }
@@ -2505,6 +2662,13 @@ function bindEvents(){
   });
 
   document.addEventListener("click", e => {
+    const removeImg = e.target.closest("[data-image-remove-index]");
+
+    if(removeImg){
+      eliminarImagenDelRenglon(Number(removeImg.dataset.imageRemoveIndex), Number(removeImg.dataset.imageRemovePos || 0));
+      return;
+    }
+
     const remove = e.target.closest("[data-remove]");
 
     if(remove){
