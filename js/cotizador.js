@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v56 propuesta económica + imágenes con caja 100px");
+console.log("COTIZADOR JS conectado v57 cliente autofill RIF/dirección corregido");
 
 const $ = (id) => document.getElementById(id);
 
@@ -990,27 +990,40 @@ async function cargarClientesCotizador(){
   if(!validarSupabase()) return;
 
   /*
-    FIX v34:
-    La tabla clientes ha cambiado varias veces. Primero intentamos traer todos
-    los campos útiles. Si Supabase rechaza algún campo por schema cache,
-    caemos a un select básico compatible.
+    FIX v57:
+    El select anterior pedía columnas que no siempre existen en tu tabla
+    (por ejemplo email/rif). Cuando Supabase rechazaba ese select, el código
+    caía a un select básico sin rif_cedula ni direccion. Por eso decía
+    "Cliente encontrado" pero no rellenaba RIF ni dirección.
+
+    Ahora primero pedimos las columnas reales usadas en clientes.html:
+    rif_cedula y direccion. Solo si alguna instalación vieja falla,
+    se baja de nivel sin perder esos campos antes de ir al modo básico.
   */
-  let res = await db()
-    .from("clientes")
-    .select("id,nombre,tipo_cliente,telefono,correo,email,rif_cedula,rif,direccion,notas,activo")
-    .order("nombre", { ascending:true });
+  const selectsClientes = [
+    "id,nombre,tipo_cliente,telefono,correo,rif_cedula,direccion,notas,activo",
+    "id,nombre,tipo_cliente,telefono,correo,rif_cedula,direccion,notas",
+    "id,nombre,tipo_cliente,telefono,correo,notas",
+    "id,nombre"
+  ];
 
-  if(res.error){
-    console.warn("Clientes select completo falló. Probando básico:", res.error);
+  let res = { data:[], error:null };
+  let ultimoError = null;
 
+  for(const columnas of selectsClientes){
     res = await db()
       .from("clientes")
-      .select("id,nombre,tipo_cliente,telefono,correo,notas")
+      .select(columnas)
       .order("nombre", { ascending:true });
+
+    if(!res.error) break;
+
+    ultimoError = res.error;
+    console.warn("Clientes select falló. Probando otro nivel:", columnas, res.error);
   }
 
   if(res.error){
-    console.error("Error cargando clientes:", res.error);
+    console.error("Error cargando clientes:", ultimoError || res.error);
     showToast("Error cargando clientes", "err");
     clientesDB = [];
     renderClientesDatalist();
@@ -1018,7 +1031,7 @@ async function cargarClientesCotizador(){
   }
 
   clientesDB = res.data || [];
-  console.log("Clientes cargados en cotizador:", clientesDB.length);
+  console.log("Clientes cargados en cotizador:", clientesDB.length, clientesDB[0] || null);
 
   renderClientesDatalist();
 
