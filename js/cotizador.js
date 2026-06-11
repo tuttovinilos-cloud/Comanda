@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v66 caja imagen ajustada");
+console.log("COTIZADOR JS conectado v67 descripcion + imagen intercalada");
 
 const $ = (id) => document.getElementById(id);
 
@@ -1305,12 +1305,12 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   drawPdfField(doc,84,83,114,10,"Dirección",form.direccion || "",{ valueSize:6.5 });
 
   let count = 1;
-  const itemImages = [];
-
+  const bodyMeta = [];
   const body = [];
 
   items.forEach(item => {
     if(item.kind === "separator"){
+      bodyMeta.push({ kind:"separator" });
       body.push([{
         content: item.desc || "SECCIÓN",
         colSpan: 5,
@@ -1326,6 +1326,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
     const total = itemTotal(item);
 
+    bodyMeta.push({ kind:"item" });
     body.push([
       String(count),
       item.desc || "",
@@ -1335,11 +1336,20 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     ]);
 
     if(item.image){
-      itemImages.push({
-        number: count,
-        desc: item.desc || "",
-        src: item.image
+      bodyMeta.push({
+        kind:"image",
+        src:item.image
       });
+      body.push([{
+        content:" ",
+        colSpan:5,
+        styles:{
+          minCellHeight:16,
+          cellPadding:0.6,
+          fillColor:[255,255,255],
+          lineColor:[217,222,234]
+        }
+      }]);
     }
 
     count++;
@@ -1430,6 +1440,53 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       4:{ halign:"center", cellWidth:30, fontStyle:"bold", textColor:[21,59,255] }
     },
     alternateRowStyles:{ fillColor:[252,252,254] },
+    didParseCell:(hookData) => {
+      if(hookData.section !== "body") return;
+
+      const meta = bodyMeta[hookData.row.index];
+      if(!meta || meta.kind !== "image" || !meta.src) return;
+
+      try{
+        const props = doc.getImageProperties(meta.src);
+        const maxW = Math.min(hookData.cell.width - 4, 58);
+        const maxH = 18;
+        const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
+
+        meta._iw = props.width * ratio;
+        meta._ih = props.height * ratio;
+
+        hookData.cell.styles.minCellHeight = Math.max(16, meta._ih + 4);
+        hookData.cell.styles.cellPadding = 0.6;
+        hookData.cell.styles.valign = "middle";
+      }catch(e){
+        hookData.cell.styles.minCellHeight = 16;
+        hookData.cell.styles.cellPadding = 0.6;
+      }
+    },
+    didDrawCell:(hookData) => {
+      if(hookData.section !== "body") return;
+
+      const meta = bodyMeta[hookData.row.index];
+      if(!meta || meta.kind !== "image" || !meta.src) return;
+
+      try{
+        if(!meta._iw || !meta._ih){
+          const props = doc.getImageProperties(meta.src);
+          const maxW = Math.min(hookData.cell.width - 4, 58);
+          const maxH = 18;
+          const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
+          meta._iw = props.width * ratio;
+          meta._ih = props.height * ratio;
+        }
+
+        const ix = hookData.cell.x + 1.5;
+        const iy = hookData.cell.y + (hookData.cell.height - meta._ih) / 2;
+
+        doc.addImage(meta.src, "JPEG", ix, iy, meta._iw, meta._ih, undefined, "FAST");
+      }catch(e){
+        console.warn("No se pudo insertar imagen intercalada:", e);
+      }
+    },
     didDrawPage:() => drawPdfHeaderFooter(doc,footer,form)
   });
 
