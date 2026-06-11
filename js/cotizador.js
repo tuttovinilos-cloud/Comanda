@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v55 FIX eventos siempre activos + propuesta económica + imágenes 50px");
+console.log("COTIZADOR JS conectado v56 propuesta económica + imágenes con caja 100px");
 
 const $ = (id) => document.getElementById(id);
 
@@ -425,7 +425,7 @@ function addSeparator(){
   render();
 }
 
-function procesarImagenCotizador(file,maxPx=50){
+function procesarImagenCotizador(file,maxPx=100){
   return new Promise((resolve,reject) => {
     if(!file || !String(file.type || "").startsWith("image/")){
       reject(new Error("Selecciona un archivo de imagen válido."));
@@ -482,7 +482,7 @@ function addImageItem(){
 
     try{
       guardarEstadoDeshacer();
-      const img = await procesarImagenCotizador(file,50);
+      const img = await procesarImagenCotizador(file,100);
 
       data.items.push({
         kind:"image",
@@ -512,7 +512,7 @@ async function cambiarImagenItem(index,file){
 
   try{
     guardarEstadoDeshacer();
-    const img = await procesarImagenCotizador(file,50);
+    const img = await procesarImagenCotizador(file,100);
 
     data.items[index] = {
       ...data.items[index],
@@ -770,10 +770,8 @@ function render(){
                   Cambiar imagen
                   <input type="file" accept="image/*" data-image-index="${index}">
                 </label>
-                <input value="${html(item.desc || "")}" placeholder="Comentario de imagen (opcional)" data-index="${index}" data-field="desc">
               </div>
               ${imagenHtml}
-              <div class="image-hint">Máximo guardado y mostrado: 50px x 50px.</div>
             </div>
           </td>
           <td class="center">
@@ -794,10 +792,8 @@ function render(){
                 Cambiar imagen
                 <input type="file" accept="image/*" data-image-index="${index}">
               </label>
-              <input value="${html(item.desc || "")}" placeholder="Comentario de imagen (opcional)" data-index="${index}" data-field="desc">
             </div>
             ${imagenHtml}
-            <div class="image-hint">Máximo guardado y mostrado: 50px x 50px.</div>
           </div>
         </div>
       `);
@@ -2287,7 +2283,7 @@ function abrirDetalleCotizacion(id){
 
       return `
         <div class="detail-item">
-          <b>Imagen</b>${it.desc ? `<br>${html(it.desc)}` : ""}
+          <b>Imagen</b>
           ${img}
         </div>
       `;
