@@ -32,6 +32,7 @@ let data = {
 function pickClienteField(c, campo){
   if(!c) return "";
   if(campo === "rif") return c.rif_cedula || c.rif || c.cedula_rif || c.identificacion || "";
+  if(campo === "telefono") return c.telefono || c.phone || c.celular || c.whatsapp || "";
   if(campo === "correo") return c.correo || c.email || "";
   if(campo === "direccion") return c.direccion || c.address || "";
   return c[campo] || "";
@@ -1020,6 +1021,10 @@ async function cargarClientesCotizador(){
   console.log("Clientes cargados en cotizador:", clientesDB.length);
 
   renderClientesDatalist();
+
+  // Si el campo cliente ya tiene un nombre escrito o seleccionado,
+  // rellenamos de una vez RIF, teléfono, correo y dirección.
+  revisarClienteActual();
 }
 
 function renderClientesDatalist(){
@@ -1045,7 +1050,7 @@ function llenarDatosCliente(cliente){
   if(!cliente) return;
 
   $("rif").value = pickClienteField(cliente, "rif");
-  $("telefono").value = cliente.telefono || "";
+  $("telefono").value = pickClienteField(cliente, "telefono");
   $("email").value = pickClienteField(cliente, "correo");
   $("direccion").value = pickClienteField(cliente, "direccion");
 
@@ -2712,21 +2717,29 @@ function bindEvents(){
     }
   });
 
-  $("cliente")?.addEventListener("change", revisarClienteActual);
-  $("cliente")?.addEventListener("blur", revisarClienteActual);
+  const clienteInput = $("cliente");
 
-  $("cliente")?.addEventListener("input", () => {
-    const mini = $("clienteMini");
-    const cliente = buscarClientePorNombre($("cliente").value);
+  if(clienteInput){
+    const autocompletarClienteActual = () => {
+      const mini = $("clienteMini");
+      const cliente = buscarClientePorNombre(clienteInput.value);
 
-    if(cliente){
-      mini.innerHTML = `Cliente encontrado: <b>${html(cliente.nombre)}</b>`;
-    }else{
-      mini.textContent = $("cliente").value.trim()
-        ? "Cliente nuevo: se guardará automáticamente en clientes."
-        : "Escribe para buscar o crear cliente nuevo.";
-    }
-  });
+      if(cliente){
+        llenarDatosCliente(cliente);
+        return;
+      }
+
+      if(mini){
+        mini.textContent = clienteInput.value.trim()
+          ? "Cliente nuevo: se guardará automáticamente en clientes."
+          : "Escribe para buscar o crear cliente nuevo.";
+      }
+    };
+
+    clienteInput.addEventListener("input", autocompletarClienteActual);
+    clienteInput.addEventListener("change", autocompletarClienteActual);
+    clienteInput.addEventListener("blur", autocompletarClienteActual);
+  }
 
   $("addItem")?.addEventListener("click", addItem);
   $("addSep")?.addEventListener("click", addSeparator);
