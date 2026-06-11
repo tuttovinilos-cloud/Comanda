@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v67 descripcion + imagen intercalada");
+console.log("COTIZADOR JS conectado v68 fix [] + formulario compacto");
 
 const $ = (id) => document.getElementById(id);
 
@@ -697,15 +697,18 @@ function itemImageHtml(index,item){
   const hasImg = !!item.image;
 
   return `
-    <div class="desc-image-tools">
-      <label class="desc-image-btn">
-        🖼 ${hasImg ? "Cambiar imagen" : "Añadir imagen"}
+    <div class="desc-image-compact ${hasImg ? "has-img" : ""}">
+      <label class="desc-image-btn compact">
+        🖼 ${hasImg ? "Cambiar" : "Imagen"}
         <input type="file" accept="image/*" data-item-image="${index}" hidden>
       </label>
-      ${hasImg ? `<button class="desc-image-remove" type="button" data-remove-item-image="${index}">Quitar imagen</button>` : ""}
-    </div>
-    <div class="desc-image-preview ${hasImg ? "show" : ""}">
-      ${hasImg ? `<img src="${item.image}" alt="Imagen descripción ${index+1}">` : ""}
+
+      ${hasImg ? `
+        <div class="desc-image-thumb">
+          <img src="${item.image}" alt="Imagen descripción ${index+1}">
+        </div>
+        <button class="desc-image-remove compact" type="button" data-remove-item-image="${index}">X</button>
+      ` : ""}
     </div>
   `;
 }
@@ -1344,8 +1347,8 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
         content:" ",
         colSpan:5,
         styles:{
-          minCellHeight:16,
-          cellPadding:0.6,
+          minCellHeight:14,
+          cellPadding:0.4,
           fillColor:[255,255,255],
           lineColor:[217,222,234]
         }
@@ -1455,12 +1458,12 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
         meta._iw = props.width * ratio;
         meta._ih = props.height * ratio;
 
-        hookData.cell.styles.minCellHeight = Math.max(16, meta._ih + 4);
-        hookData.cell.styles.cellPadding = 0.6;
+        hookData.cell.styles.minCellHeight = Math.max(14, meta._ih + 3);
+        hookData.cell.styles.cellPadding = 0.4;
         hookData.cell.styles.valign = "middle";
       }catch(e){
-        hookData.cell.styles.minCellHeight = 16;
-        hookData.cell.styles.cellPadding = 0.6;
+        hookData.cell.styles.minCellHeight = 14;
+        hookData.cell.styles.cellPadding = 0.4;
       }
     },
     didDrawCell:(hookData) => {
@@ -1491,64 +1494,6 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   });
 
   let fy = doc.lastAutoTable.finalY + 6;
-
-  if(itemImages.length){
-    const leftX = 14;
-
-    for(const img of itemImages){
-      try{
-        const props = doc.getImageProperties(img.src);
-
-        const maxW = 58;
-        const maxH = 18;
-        const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
-
-        const iw = props.width * ratio;
-        const ih = props.height * ratio;
-
-        const pad = 2;
-        const boxW = iw + (pad * 2);
-        const boxH = ih + (pad * 2);
-
-        if(fy > H - boxH - 28){
-          doc.addPage();
-          fy = 20;
-        }
-
-        doc.setDrawColor(...line);
-        doc.setFillColor(255,255,255);
-        doc.roundedRect(leftX, fy, boxW, boxH, 2.2, 2.2, "FD");
-
-        const ix = leftX + pad;
-        const iy = fy + pad;
-
-        doc.addImage(img.src, "JPEG", ix, iy, iw, ih, undefined, "FAST");
-
-        fy += boxH + 4;
-      }catch(e){
-        console.warn("No se pudo insertar imagen manual:", e);
-
-        const boxW = 55;
-        const boxH = 10;
-
-        if(fy > H - boxH - 28){
-          doc.addPage();
-          fy = 20;
-        }
-
-        doc.setDrawColor(...line);
-        doc.setFillColor(255,240,242);
-        doc.roundedRect(leftX, fy, boxW, boxH, 2.2, 2.2, "FD");
-
-        doc.setFont("helvetica","bold");
-        doc.setFontSize(pdfSize(7));
-        doc.setTextColor(220,38,38);
-        doc.text("No se pudo cargar imagen", leftX + 3, fy + 6.5);
-
-        fy += boxH + 4;
-      }
-    }
-  }
   const notesH = form.notas ? 33 : 18;
   const rightBoxH = Number(t.iva || 0) > 0 ? 33 : 25;
 
