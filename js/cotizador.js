@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v56 imagen por descripción");
+console.log("COTIZADOR JS conectado v57 imagen debajo de texto + escala pdf 90");
 
 const $ = (id) => document.getElementById(id);
 
@@ -426,6 +426,17 @@ function getIvaRate(tipo){
 function getIvaLabel(tipo){
   return "IVA 16%";
 }
+
+
+const PDF_GENERAL_SCALE = 0.90;
+
+function pdfSize(v){
+  return Number(v || 0) * PDF_GENERAL_SCALE;
+}
+function pdfPad(v){
+  return Number(v || 0) * PDF_GENERAL_SCALE;
+}
+
 
 
 function aplicarModoNumeroDocumento(tipo, limpiarSiFactura=false){
@@ -1008,12 +1019,12 @@ function drawPdfField(doc,x,y,w,h,label,value,opts={}){
   doc.roundedRect(x,y,w,h,opts.radius || 3,opts.radius || 3,"FD");
 
   doc.setFont("helvetica","bold");
-  doc.setFontSize(opts.labelSize || 5.2);
+  doc.setFontSize(pdfSize(opts.labelSize || 5.2));
   doc.setTextColor(107,114,128);
   doc.text(String(label || "").toUpperCase(), x+3, y+3.5);
 
   doc.setFont("helvetica", opts.valueBold ? "bold" : "normal");
-  doc.setFontSize(opts.valueSize || 6.9);
+  doc.setFontSize(pdfSize(opts.valueSize || 6.9));
   doc.setTextColor(17,24,39);
 
   const lines = doc.splitTextToSize(String(value || "—"), w - 6);
@@ -1031,14 +1042,14 @@ function drawPdfHeaderFooter(doc,footer,form){
   doc.line(14,H-20,W-14,H-20);
 
   doc.setFont("helvetica","normal");
-  doc.setFontSize(7.5);
+  doc.setFontSize(pdfSize(7.5));
   doc.setTextColor(95,99,104);
 
   const dirLines = doc.splitTextToSize(footer?.direccion || "", W-28);
   doc.text(dirLines.slice(0,2), W/2, H-13, { align:"center" });
   doc.text(footer?.contacto || "", W/2, H-7.7, { align:"center" });
 
-  doc.setFontSize(7.2);
+  doc.setFontSize(pdfSize(7.2));
   doc.setTextColor(120,124,130);
   doc.text(`${footer?.preparado_texto || "Documento preparado por:"} ${form?.responsable || ""}`, W/2, H-3.1, { align:"center" });
 }
@@ -1263,7 +1274,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
   doc.setTextColor(255,255,255);
   doc.setFont("helvetica","bold");
-  doc.setFontSize(8.5);
+  doc.setFontSize(pdfSize(8.5));
   doc.text("Tel: +58 414-4961122", W-14, 10.8, { align:"right" });
   doc.text("Email: tuttovinilos@gmail.com", W-14, 15.4, { align:"right" });
   doc.text("RIF: J-40218250-3", W-14, 20, { align:"right" });
@@ -1271,7 +1282,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   doc.setFillColor(...blueDark);
   doc.roundedRect(14,35,W-28,11,4,4,"F");
 
-  doc.setFontSize(15);
+  doc.setFontSize(pdfSize(15));
   doc.setTextColor(255,255,255);
   doc.text((form.tipo || "Cotización").toUpperCase(), W/2, 42.2, { align:"center" });
 
@@ -1280,7 +1291,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   drawPdfField(doc,136,50,62,10,"Válido hasta",form.vence || "",{ valueBold:true });
 
   doc.setFont("helvetica","bold");
-  doc.setFontSize(7.8);
+  doc.setFontSize(pdfSize(7.8));
   doc.setTextColor(...blue);
   doc.text("DATOS DEL CLIENTE",14,66);
 
@@ -1316,7 +1327,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
     return [
       String(count++),
-      item.desc || "",
+      item.image ? String(item.desc || "") + "\n\n\n\n\n" : (item.desc || ""),
       String(item.qty || 0),
       "$"+Number(item.price || 0).toFixed(2),
       "$"+total.toFixed(2)
@@ -1331,12 +1342,12 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     doc.roundedRect(14,96,W-28,32,3,3,"FD");
 
     doc.setFont("helvetica","bold");
-    doc.setFontSize(8);
+    doc.setFontSize(pdfSize(8));
     doc.setTextColor(...blue);
     doc.text("INTRODUCCIÓN",17,101.5);
 
     doc.setFont("helvetica","normal");
-    doc.setFontSize(7.6);
+    doc.setFontSize(pdfSize(7.6));
     doc.setTextColor(51,65,85);
     const introLines = doc.splitTextToSize(form.propuesta_intro || textoIntroPropuesta(), W-34);
     doc.text(introLines.slice(0,7),17,107);
@@ -1385,8 +1396,8 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     margin:{ left:14, right:14, bottom:26 },
     styles:{
       font:"helvetica",
-      fontSize:7.7,
-      cellPadding:2.3,
+      fontSize:pdfSize(7.7),
+      cellPadding:pdfPad(2.3),
       textColor:[17,17,17],
       lineColor:[217,222,234],
       lineWidth:.2,
@@ -1398,7 +1409,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       textColor:[17,17,17],
       fontStyle:"bold",
       halign:"center",
-      fontSize:7.2
+      fontSize:pdfSize(7.2)
     },
     columnStyles:{
       0:{ halign:"center", cellWidth:12, fontStyle:"bold", textColor:[220,38,38] },
@@ -1412,7 +1423,11 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       if(hookData.section === "body" && hookData.column.index === 1){
         const meta = bodyMeta[hookData.row.index];
         if(meta && meta.image){
-          hookData.cell.styles.minCellHeight = 33;
+          const txt = String(hookData.cell.raw || "");
+          const desc = txt.replace(/\n+$/g,"");
+          const lines = doc.splitTextToSize(desc, hookData.cell.width - 6);
+          hookData.cell.styles.valign = "top";
+          hookData.cell.styles.minCellHeight = Math.max(32, 9 + (lines.length * 3.2) + 20);
         }
       }
     },
@@ -1424,13 +1439,17 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
       try{
         const props = doc.getImageProperties(meta.image);
-        const maxW = hookData.cell.width - 6;
+        const descText = String((items || []).filter(x=>x.kind !== "separator")[hookData.row.index]?.desc || "");
+        const lines = doc.splitTextToSize(descText, hookData.cell.width - 6);
+        const maxW = hookData.cell.width - 8;
         const maxH = 20;
         const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
         const iw = props.width * ratio;
         const ih = props.height * ratio;
-        const ix = hookData.cell.x + 3;
-        const iy = hookData.cell.y + hookData.cell.height - ih - 3;
+
+        const ix = hookData.cell.x + 4;
+        const textBlockH = Math.max(5, lines.length * 3.4);
+        const iy = hookData.cell.y + 5 + textBlockH + 2;
 
         doc.addImage(meta.image,"JPEG",ix,iy,iw,ih,undefined,"FAST");
       }catch(e){
@@ -1459,12 +1478,12 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     doc.roundedRect(14,fy,leftW,33,3,3,"FD");
 
     doc.setFont("helvetica","bold");
-    doc.setFontSize(8);
+    doc.setFontSize(pdfSize(8));
     doc.setTextColor(...blueDark);
     doc.text("NOTAS / CONDICIONES",17,fy+5.5);
 
     doc.setFont("helvetica","normal");
-    doc.setFontSize(8.4);
+    doc.setFontSize(pdfSize(8.4));
     doc.setTextColor(70,74,82);
     doc.text(doc.splitTextToSize(form.notas,leftW-6).slice(0,7),17,fy+11);
   }
@@ -1502,7 +1521,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   doc.roundedRect(rightX,rowY,rightW,10,0,0,"F");
 
   doc.setFont("helvetica","bold");
-  doc.setFontSize(12);
+  doc.setFontSize(pdfSize(12));
   doc.setTextColor(255,255,255);
 
   doc.text("TOTAL",rightX+3,rowY+6.7);
