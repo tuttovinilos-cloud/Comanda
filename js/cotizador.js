@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v63 fila imagen altura exacta");
+console.log("COTIZADOR JS conectado v64 fila imagen visible estable");
 
 const $ = (id) => document.getElementById(id);
 
@@ -1338,11 +1338,11 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     if(item.image){
       bodyMeta.push({ kind:"image", image:item.image, desc:item.desc || "" });
       body.push([{
-        content:"",
+        content:" ",
         colSpan:5,
         styles:{
-          minCellHeight:8,
-          cellPadding:0,
+          minCellHeight:16,
+          cellPadding:0.6,
           fillColor:[255,255,255],
           lineColor:[217,222,234]
         }
@@ -1443,20 +1443,19 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       if(meta && meta.kind === "image" && meta.image){
         try{
           const props = doc.getImageProperties(meta.image);
-
-          const maxW = Math.min(hookData.cell.width - 2.4, 58);
-          const maxH = 20;
+          const maxW = Math.min(hookData.cell.width - 4, 58);
+          const maxH = 18;
           const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
 
           meta._iw = props.width * ratio;
           meta._ih = props.height * ratio;
 
-          hookData.cell.styles.minCellHeight = meta._ih + 2.4;
-          hookData.cell.styles.cellPadding = 0;
-          hookData.cell.styles.valign = "top";
+          hookData.cell.styles.minCellHeight = Math.max(16, meta._ih + 4);
+          hookData.cell.styles.cellPadding = 0.6;
+          hookData.cell.styles.valign = "middle";
         }catch(e){
-          hookData.cell.styles.minCellHeight = 14;
-          hookData.cell.styles.cellPadding = 0;
+          hookData.cell.styles.minCellHeight = 16;
+          hookData.cell.styles.cellPadding = 0.6;
         }
       }
     },
@@ -1469,19 +1468,19 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       try{
         if(!meta._iw || !meta._ih){
           const props = doc.getImageProperties(meta.image);
-          const maxW = Math.min(hookData.cell.width - 2.4, 58);
-          const maxH = 20;
+          const maxW = Math.min(hookData.cell.width - 4, 58);
+          const maxH = 18;
           const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
           meta._iw = props.width * ratio;
           meta._ih = props.height * ratio;
         }
 
-        const ix = hookData.cell.x + 1.2;
-        const iy = hookData.cell.y + 1.2;
+        const ix = hookData.cell.x + 1.5;
+        const iy = hookData.cell.y + (hookData.cell.height - meta._ih) / 2;
 
-        doc.addImage(meta.image,"JPEG",ix,iy,meta._iw,meta._ih,undefined,"FAST");
+        doc.addImage(meta.image, "JPEG", ix, iy, meta._iw, meta._ih, undefined, "FAST");
       }catch(e){
-        console.warn("No se pudo insertar imagen del ítem:",e);
+        console.warn("No se pudo insertar imagen del ítem:", e);
       }
     },
     didDrawPage:() => drawPdfHeaderFooter(doc,footer,form)
