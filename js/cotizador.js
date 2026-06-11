@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v53 factura BS + posiciones RIF/tabla + deshacer + eliminar solo Roberto");
+console.log("COTIZADOR JS conectado v54 propuesta económica + imágenes");
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,8 @@ const UNDO_MAX = 4;
 let data = {
   tipo: "Cotización",
   responsable: "Ricardo",
-  items: [{ kind: "item", desc: "", qty: 1, price: 0 }]
+  items: [{ kind: "item", desc: "", qty: 1, price: 0 }],
+  propuestaImages: []
 };
 
 
@@ -315,6 +316,97 @@ function itemTotal(item){
   return Number(item.qty || 0) * Number(item.price || 0);
 }
 
+
+function esPropuestaEconomica(tipo){
+  return normalizar(tipo || "") === "propuesta economica" || normalizar(tipo || "") === "propuesta económica";
+}
+
+function textoIntroPropuesta(){
+  return `El presente archivo tiene como finalidad poder presentarles una propuesta económica que sirva como base para que ambas partes puedan mantener sus operaciones comerciales sin afectar la calidad que muy bien nos definen.
+
+Es por ello, que vamos a tomar como ejemplo este tipo de etiqueta, ya que tenemos el vector y medidas.`;
+}
+
+function actualizarVistaPropuesta(){
+  const tipo = $("tipoDocumento")?.value || data.tipo;
+  const activa = esPropuestaEconomica(tipo);
+
+  const box = $("propuestaBox");
+  if(box) box.classList.toggle("show", activa);
+
+  const th = $("thCantidad");
+  if(th) th.textContent = activa ? "Cant. por metro" : "Cant.";
+
+  const banner = $("banner");
+  if(banner) banner.textContent = tipo;
+
+  renderPropuestaImagenes();
+}
+
+function renderPropuestaImagenes(){
+  const grid = $("propuestaPreviewGrid");
+  if(!grid) return;
+
+  const imgs = data.propuestaImages || [];
+
+  if(!imgs.length){
+    grid.innerHTML = "";
+    return;
+  }
+
+  grid.innerHTML = imgs.map((src,i) => `
+    <div class="propuesta-img-card">
+      <img src="${src}" alt="Imagen propuesta ${i+1}">
+      <button type="button" data-remove-propuesta-img="${i}">Quitar</button>
+    </div>
+  `).join("");
+}
+
+function resizeImageDataUrl(file,maxW=1200,maxH=900){
+  return new Promise((resolve,reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const img = new Image();
+
+      img.onload = () => {
+        const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0,0,w,h);
+        ctx.drawImage(img,0,0,w,h);
+
+        resolve(canvas.toDataURL("image/jpeg",0.82));
+      };
+
+      img.onerror = () => reject(new Error("No se pudo leer la imagen"));
+      img.src = reader.result;
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function agregarImagenesPropuesta(files){
+  const lista = Array.from(files || []);
+  if(!lista.length) return;
+
+  for(const file of lista){
+    if(!String(file.type || "").startsWith("image/")) continue;
+    const dataUrl = await resizeImageDataUrl(file);
+    data.propuestaImages.push(dataUrl);
+  }
+
+  renderPropuestaImagenes();
+}
+
 function esFacturaTipo(tipo){
   return normalizar(tipo || "") === "factura";
 }
@@ -415,6 +507,7 @@ function removeItem(index){
   guardarEstadoDeshacer();
   if(data.items.length <= 1){
     data.items = [{ kind:"item", desc:"", qty:1, price:0 }];
+  data.propuestaImages = [];
   }else{
     data.items.splice(index, 1);
   }
@@ -444,6 +537,8 @@ function getForm(){
     direccion: cleanText($("direccion").value),
     notas: cleanText($("notas").value),
     iva: $("ivaCheck").checked,
+    propuesta_intro: textoIntroPropuesta(),
+    propuesta_images: JSON.parse(JSON.stringify(data.propuestaImages || [])),
     footer: getFooter()
   };
 }
@@ -465,7 +560,8 @@ function crearEstadoActualDeshacer(){
       iva: !!$("ivaCheck")?.checked,
       footer:getFooter()
     },
-    items:JSON.parse(JSON.stringify(data.items || []))
+    items:JSON.parse(JSON.stringify(data.items || [])),
+    propuestaImages:JSON.parse(JSON.stringify(data.propuestaImages || []))
   };
 }
 
@@ -548,6 +644,7 @@ function deshacerUltimoCambio(){
   data.tipo = f.tipo || "Cotización";
   data.responsable = f.responsable || "";
   data.items = JSON.parse(JSON.stringify(estado.items && estado.items.length ? estado.items : [{ kind:"item", desc:"", qty:1, price:0 }]));
+  data.propuestaImages = JSON.parse(JSON.stringify(estado.propuestaImages || []));
 
   aplicarModoNumeroDocumento(data.tipo,false);
   actualizarEtiquetaIva(data.tipo);
@@ -568,6 +665,8 @@ function crearSnapshotActual(){
     form,
     items,
     totals,
+    propuestaImages: JSON.parse(JSON.stringify(data.propuestaImages || [])),
+    propuestaImages: propuestaImages,
     footer: form.footer
   };
 }
@@ -575,9 +674,11 @@ function crearSnapshotActual(){
 function render(){
   data.tipo = $("tipoDocumento").value;
   data.responsable = $("responsable").value;
+  if(!Array.isArray(data.propuestaImages)) data.propuestaImages = [];
 
   $("banner").textContent = data.tipo;
   $("creditName").textContent = data.responsable;
+  actualizarVistaPropuesta();
   actualizarEtiquetaIva(data.tipo);
   aplicarModoNumeroDocumento(data.tipo, false);
 
@@ -1170,9 +1271,63 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     ];
   });
 
+  let tableStartY = 101;
+
+  if(esPropuestaEconomica(form.tipo)){
+    doc.setDrawColor(...line);
+    doc.setFillColor(248,249,255);
+    doc.roundedRect(14,96,W-28,32,3,3,"FD");
+
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...blue);
+    doc.text("INTRODUCCIÓN",17,101.5);
+
+    doc.setFont("helvetica","normal");
+    doc.setFontSize(7.6);
+    doc.setTextColor(51,65,85);
+    const introLines = doc.splitTextToSize(form.propuesta_intro || textoIntroPropuesta(), W-34);
+    doc.text(introLines.slice(0,7),17,107);
+
+    tableStartY = 134;
+
+    const imgs = form.propuesta_images || [];
+    if(imgs.length){
+      const imgY = tableStartY;
+      const gap = 4;
+      const boxW = (W - 28 - gap) / 2;
+      const boxH = 38;
+
+      imgs.slice(0,4).forEach((src,i) => {
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const x = 14 + col * (boxW + gap);
+        const y = imgY + row * (boxH + gap);
+
+        doc.setDrawColor(...line);
+        doc.setFillColor(255,255,255);
+        doc.roundedRect(x,y,boxW,boxH,3,3,"FD");
+
+        try{
+          const props = doc.getImageProperties(src);
+          const ratio = Math.min((boxW-6)/props.width,(boxH-6)/props.height);
+          const iw = props.width * ratio;
+          const ih = props.height * ratio;
+          const ix = x + (boxW - iw) / 2;
+          const iy = y + (boxH - ih) / 2;
+          doc.addImage(src,"JPEG",ix,iy,iw,ih,undefined,"FAST");
+        }catch(e){
+          console.warn("No se pudo insertar imagen propuesta:",e);
+        }
+      });
+
+      tableStartY = imgY + (imgs.length > 2 ? 2 : 1) * (boxH + gap) + 4;
+    }
+  }
+
   doc.autoTable({
-    startY:101,
-    head:[["#","DESCRIPCIÓN DEL PRODUCTO / SERVICIO","CANT.","P. UNIT ($)","TOTAL ($)"]],
+    startY:tableStartY,
+    head:[["#","DESCRIPCIÓN DEL PRODUCTO / SERVICIO", esPropuestaEconomica(form.tipo) ? "CANT. POR METRO" : "CANT.","P. UNIT ($)","TOTAL ($)"]],
     body,
     theme:"grid",
     margin:{ left:14, right:14, bottom:26 },
@@ -1346,6 +1501,8 @@ async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null,snaps
       modo:"texto_json_con_pdf_opcional",
       rows:snapshot.items,
       footer:snapshot.footer,
+      propuesta_intro:form.propuesta_intro || "",
+      propuesta_images:form.propuesta_images || [],
       iva_aplicado:form.iva
     },
     notas: form.notas,
@@ -1613,6 +1770,8 @@ function normalizarSnapshotDesdeRegistro(reg){
 
   let rows = [];
   let footer = null;
+  let propuestaImages = [];
+  let propuestaIntro = "";
   let ivaAplicado = Number(reg?.iva || 0) > 0;
 
   if(Array.isArray(raw)){
@@ -1620,6 +1779,8 @@ function normalizarSnapshotDesdeRegistro(reg){
   }else if(raw && typeof raw === "object"){
     rows = Array.isArray(raw.rows) ? raw.rows : (Array.isArray(raw.items) ? raw.items : []);
     footer = raw.footer || null;
+    propuestaImages = Array.isArray(raw.propuesta_images) ? raw.propuesta_images : [];
+    propuestaIntro = raw.propuesta_intro || "";
 
     if(typeof raw.iva_aplicado === "boolean"){
       ivaAplicado = raw.iva_aplicado;
@@ -1639,6 +1800,8 @@ function normalizarSnapshotDesdeRegistro(reg){
     direccion: reg?.direccion || "",
     notas: reg?.notas || "",
     iva: ivaAplicado,
+    propuesta_intro: propuestaIntro || textoIntroPropuesta(),
+    propuesta_images: propuestaImages,
     footer: footer || {
       direccion:"Avenida Universidad, Urbanización La Granja, Edificio Diario El Carabobeño, en el Municipio Naguanagua del estado Carabobo.",
       contacto:"Tel: +58 414-4961122 | tuttovinilos@gmail.com",
@@ -1656,6 +1819,7 @@ function normalizarSnapshotDesdeRegistro(reg){
       iva:Number(reg?.iva || calculado.iva),
       total:Number(reg?.total || calculado.total)
     },
+    propuestaImages: propuestaImages,
     footer: form.footer
   };
 }
@@ -2106,6 +2270,7 @@ function cargarCotizacionEnFormulario(){
       ? snap.items
       : [{ kind:"item", desc:"", qty:1, price:0 }]
   ));
+  data.propuestaImages = JSON.parse(JSON.stringify(snap.form?.propuesta_images || snap.propuestaImages || []));
 
   render();
   cerrarDetalle();
@@ -2187,6 +2352,7 @@ function bindEvents(){
       }
 
       render();
+      actualizarVistaPropuesta();
     }
 
     if(e.target.id === "responsable"){
@@ -2203,6 +2369,14 @@ function bindEvents(){
   });
 
   document.addEventListener("click", e => {
+    const removeImg = e.target.closest("[data-remove-propuesta-img]");
+    if(removeImg){
+      guardarEstadoDeshacer();
+      data.propuestaImages.splice(Number(removeImg.dataset.removePropuestaImg),1);
+      renderPropuestaImagenes();
+      return;
+    }
+
     const remove = e.target.closest("[data-remove]");
 
     if(remove){
@@ -2262,6 +2436,18 @@ function bindEvents(){
     }
   });
 
+
+  $("propuestaImagenes")?.addEventListener("change", async e => {
+    try{
+      guardarEstadoDeshacer();
+      await agregarImagenesPropuesta(e.target.files);
+      e.target.value = "";
+    }catch(error){
+      console.error(error);
+      showToast("No se pudo agregar imagen: " + (error.message || error), "err");
+    }
+  });
+
   $("addItem")?.addEventListener("click", addItem);
   $("addSep")?.addEventListener("click", addSeparator);
 
@@ -2312,6 +2498,7 @@ async function iniciarCotizador(){
     bloquearResponsableSiNoEsRoberto();
 
     render();
+    actualizarVistaPropuesta();
     bindEvents();
 
     await cargarClientesCotizador();
