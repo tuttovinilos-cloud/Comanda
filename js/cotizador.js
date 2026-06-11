@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v55 propuesta económica fix imágenes");
+console.log("COTIZADOR JS conectado v56 imagen por descripción");
 
 const $ = (id) => document.getElementById(id);
 
@@ -22,7 +22,7 @@ const UNDO_MAX = 4;
 let data = {
   tipo: "Cotización",
   responsable: "Ricardo",
-  items: [{ kind: "item", desc: "", qty: 1, price: 0 }],
+  items: [{ kind: "item", desc: "", qty: 1, price: 0, image: "" }],
   propuestaImages: []
 };
 
@@ -370,7 +370,7 @@ function renderPropuestaImagenes(){
   `).join("");
 }
 
-function resizeImageDataUrl(file,maxW=1200,maxH=900){
+function resizeImageDataUrl(file,maxSide=600){
   return new Promise((resolve,reject) => {
     const reader = new FileReader();
 
@@ -378,7 +378,7 @@ function resizeImageDataUrl(file,maxW=1200,maxH=900){
       const img = new Image();
 
       img.onload = () => {
-        const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+        const scale = Math.min(maxSide / img.width, maxSide / img.height, 1);
         const w = Math.max(1, Math.round(img.width * scale));
         const h = Math.max(1, Math.round(img.height * scale));
 
@@ -390,7 +390,7 @@ function resizeImageDataUrl(file,maxW=1200,maxH=900){
         ctx.clearRect(0,0,w,h);
         ctx.drawImage(img,0,0,w,h);
 
-        resolve(canvas.toDataURL("image/jpeg",0.82));
+        resolve(canvas.toDataURL("image/jpeg",0.84));
       };
 
       img.onerror = () => reject(new Error("No se pudo leer la imagen"));
@@ -501,7 +501,7 @@ function updateItemVisualTotal(index){
 
 function addItem(){
   guardarEstadoDeshacer();
-  data.items.push({ kind:"item", desc:"", qty:1, price:0 });
+  data.items.push({ kind:"item", desc:"", qty:1, price:0, image:"" });
   render();
 }
 
@@ -679,6 +679,45 @@ function crearSnapshotActual(){
   };
 }
 
+
+function itemImageHtml(index,item){
+  if(!item || item.kind !== "item") return "";
+
+  const hasImg = !!item.image;
+
+  return `
+    <div class="desc-image-tools">
+      <label class="desc-image-btn">
+        🖼 ${hasImg ? "Cambiar imagen" : "Añadir imagen"}
+        <input type="file" accept="image/*" data-item-image="${index}" hidden>
+      </label>
+      ${hasImg ? `<button class="desc-image-remove" type="button" data-remove-item-image="${index}">Quitar imagen</button>` : ""}
+    </div>
+    <div class="desc-image-preview ${hasImg ? "show" : ""}">
+      ${hasImg ? `<img src="${item.image}" alt="Imagen descripción ${index+1}">` : ""}
+    </div>
+  `;
+}
+
+async function setItemImage(index,file){
+  if(!data.items[index]) return;
+  if(!file) return;
+
+  guardarEstadoDeshacer();
+
+  data.items[index].image = await resizeImageDataUrl(file,600);
+  render();
+}
+
+function removeItemImage(index){
+  if(!data.items[index]) return;
+
+  guardarEstadoDeshacer();
+
+  data.items[index].image = "";
+  render();
+}
+
 function render(){
   data.tipo = $("tipoDocumento").value;
   data.responsable = $("responsable").value;
@@ -738,6 +777,7 @@ function render(){
         <td class="num">${number}</td>
         <td class="desc">
           <input value="${html(item.desc)}" placeholder="Descripción" data-index="${index}" data-field="desc">
+          ${itemImageHtml(index,item)}
         </td>
         <td class="center">
           <input type="number" min="0" step="0.01" value="${item.qty}" data-index="${index}" data-field="qty">
@@ -765,6 +805,7 @@ function render(){
           <div class="field">
             <label>Descripción</label>
             <input value="${html(item.desc)}" placeholder="Descripción del producto o servicio" data-index="${index}" data-field="desc">
+            ${itemImageHtml(index,item)}
           </div>
 
           <div class="item-grid">
@@ -1253,9 +1294,11 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   drawPdfField(doc,84,83,114,10,"Dirección",form.direccion || "",{ valueSize:6.5 });
 
   let count = 1;
+  const bodyMeta = [];
 
   const body = items.map(item => {
     if(item.kind === "separator"){
+      bodyMeta.push({ kind:"separator", image:"" });
       return [{
         content: item.desc || "SECCIÓN",
         colSpan: 5,
@@ -1269,6 +1312,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     }
 
     const total = itemTotal(item);
+    bodyMeta.push({ kind:"item", image:item.image || "" });
 
     return [
       String(count++),
@@ -1364,6 +1408,35 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       4:{ halign:"center", cellWidth:30, fontStyle:"bold", textColor:[21,59,255] }
     },
     alternateRowStyles:{ fillColor:[252,252,254] },
+    didParseCell:(hookData) => {
+      if(hookData.section === "body" && hookData.column.index === 1){
+        const meta = bodyMeta[hookData.row.index];
+        if(meta && meta.image){
+          hookData.cell.styles.minCellHeight = 33;
+        }
+      }
+    },
+    didDrawCell:(hookData) => {
+      if(hookData.section !== "body" || hookData.column.index !== 1) return;
+
+      const meta = bodyMeta[hookData.row.index];
+      if(!meta || !meta.image) return;
+
+      try{
+        const props = doc.getImageProperties(meta.image);
+        const maxW = hookData.cell.width - 6;
+        const maxH = 20;
+        const ratio = Math.min(maxW / props.width, maxH / props.height, 1);
+        const iw = props.width * ratio;
+        const ih = props.height * ratio;
+        const ix = hookData.cell.x + 3;
+        const iy = hookData.cell.y + hookData.cell.height - ih - 3;
+
+        doc.addImage(meta.image,"JPEG",ix,iy,iw,ih,undefined,"FAST");
+      }catch(e){
+        console.warn("No se pudo insertar imagen del ítem:",e);
+      }
+    },
     didDrawPage:() => drawPdfHeaderFooter(doc,footer,form)
   });
 
@@ -2346,6 +2419,24 @@ function bindEvents(){
   });
 
   document.addEventListener("change", async e => {
+
+    const imgInput = e.target.closest("[data-item-image]");
+    if(imgInput){
+      const idx = Number(imgInput.dataset.itemImage);
+      const file = imgInput.files && imgInput.files[0];
+      if(file){
+        try{
+          await setItemImage(idx,file);
+        }catch(error){
+          console.error(error);
+          showToast("No se pudo cargar la imagen", "err");
+        }
+      }
+      imgInput.value = "";
+      return;
+    }
+
+
     if(e.target.id === "tipoDocumento"){
       const esFactura = esFacturaTipo(e.target.value);
 
@@ -2377,6 +2468,12 @@ function bindEvents(){
   });
 
   document.addEventListener("click", e => {
+    const removeItemImg = e.target.closest("[data-remove-item-image]");
+    if(removeItemImg){
+      removeItemImage(Number(removeItemImg.dataset.removeItemImage));
+      return;
+    }
+
     const removeImg = e.target.closest("[data-remove-propuesta-img]");
     if(removeImg){
       guardarEstadoDeshacer();
