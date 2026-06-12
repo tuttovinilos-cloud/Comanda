@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v57 propuesta económica sin cuadro");
+console.log("COTIZADOR JS conectado v58 campos PDF compactos");
 
 const $ = (id) => document.getElementById(id);
 
@@ -1159,17 +1159,20 @@ function drawPdfField(doc,x,y,w,h,label,value,opts={}){
   doc.setFillColor(...(opts.fill || [255,255,255]));
   doc.roundedRect(x,y,w,h,opts.radius || 3,opts.radius || 3,"FD");
 
+  const labelY = y + (opts.labelY || Math.min(3.1, h * 0.38));
+  const valueY = y + (opts.valueY || Math.max(6.4, h - 1.6));
+
   doc.setFont("helvetica","bold");
-  doc.setFontSize(opts.labelSize || 5.2);
+  doc.setFontSize(opts.labelSize || 4.8);
   doc.setTextColor(107,114,128);
-  doc.text(String(label || "").toUpperCase(), x+3, y+3.5);
+  doc.text(String(label || "").toUpperCase(), x+3, labelY);
 
   doc.setFont("helvetica", opts.valueBold ? "bold" : "normal");
-  doc.setFontSize(opts.valueSize || 6.9);
+  doc.setFontSize(opts.valueSize || 6.5);
   doc.setTextColor(17,24,39);
 
   const lines = doc.splitTextToSize(String(value || "—"), w - 6);
-  doc.text(lines.slice(0, opts.maxLines || 1), x+3, y+8);
+  doc.text(lines.slice(0, opts.maxLines || 1), x+3, valueY);
 }
 
 function drawPdfHeaderFooter(doc,footer,form){
@@ -1433,6 +1436,15 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   const blueDark = [11,31,122];
   const line = [217,222,234];
 
+  // Campos compactos solo para Cotización / Nota de entrega / Propuesta Económica.
+  // Factura usa su propio formato en crearDocumentoFacturaPDF() y no se toca.
+  const FIELD_H = 8.5;
+  const Y_DOC_FIELDS = 50;
+  const Y_CLIENT_TITLE = 63.5;
+  const Y_CLIENT_LINE = 65;
+  const Y_CLIENT_ROW_1 = 67.5;
+  const Y_CLIENT_ROW_2 = 78;
+
   doc.setFillColor(...blue);
   doc.rect(0,0,W,30,"F");
 
@@ -1460,28 +1472,28 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   doc.setTextColor(255,255,255);
   doc.text((form.tipo || "Cotización").toUpperCase(), W/2, 42.2, { align:"center" });
 
-  drawPdfField(doc,14,50,54,10,"Fecha",form.fecha || "",{ valueBold:true });
-  drawPdfField(doc,71,50,62,10,"N° Documento",form.numero || "",{ valueBold:true });
-  drawPdfField(doc,136,50,62,10,"Válido hasta",form.vence || "",{ valueBold:true });
+  drawPdfField(doc,14,Y_DOC_FIELDS,54,FIELD_H,"Fecha",form.fecha || "",{ valueBold:true });
+  drawPdfField(doc,71,Y_DOC_FIELDS,62,FIELD_H,"N° Documento",form.numero || "",{ valueBold:true });
+  drawPdfField(doc,136,Y_DOC_FIELDS,62,FIELD_H,"Válido hasta",form.vence || "",{ valueBold:true });
 
   doc.setFont("helvetica","bold");
   doc.setFontSize(7.8);
   doc.setTextColor(...blue);
-  doc.text("DATOS DEL CLIENTE",14,66);
+  doc.text("DATOS DEL CLIENTE",14,Y_CLIENT_TITLE);
 
   doc.setDrawColor(...line);
-  doc.line(14,67.5,W-14,67.5);
+  doc.line(14,Y_CLIENT_LINE,W-14,Y_CLIENT_LINE);
 
-  drawPdfField(doc,14,70,67,10,"Cliente",form.cliente || "",{ valueBold:true,valueSize:6.7 });
-  drawPdfField(doc,84,70,55,10,"RIF / Cédula",form.rif || "",{ valueSize:6.7 });
-  drawPdfField(doc,142,70,56,10,"Teléfono",form.telefono || "",{ valueSize:6.7 });
-  drawPdfField(doc,14,83,67,10,"Email",form.email || "",{ valueSize:6.5 });
-  drawPdfField(doc,84,83,114,10,"Dirección",form.direccion || "",{ valueSize:6.5 });
+  drawPdfField(doc,14,Y_CLIENT_ROW_1,67,FIELD_H,"Cliente",form.cliente || "",{ valueBold:true,valueSize:6.4 });
+  drawPdfField(doc,84,Y_CLIENT_ROW_1,55,FIELD_H,"RIF / Cédula",form.rif || "",{ valueSize:6.4 });
+  drawPdfField(doc,142,Y_CLIENT_ROW_1,56,FIELD_H,"Teléfono",form.telefono || "",{ valueSize:6.4 });
+  drawPdfField(doc,14,Y_CLIENT_ROW_2,67,FIELD_H,"Email",form.email || "",{ valueSize:6.3 });
+  drawPdfField(doc,84,Y_CLIENT_ROW_2,114,FIELD_H,"Dirección",form.direccion || "",{ valueSize:6.3 });
 
-  let tableStartY = 101;
+  let tableStartY = 93;
 
   if(esPropuestaEconomicaTipo(form.tipo)){
-    tableStartY = drawPropuestaEconomicaIntro(doc,14,98,W-28) + 7;
+    tableStartY = drawPropuestaEconomicaIntro(doc,14,91,W-28) + 6;
   }
 
   let count = 1;
