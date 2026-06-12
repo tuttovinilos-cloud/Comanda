@@ -31,10 +31,79 @@ let data = {
 ========================================================= */
 function pickClienteField(c, campo){
   if(!c) return "";
-  if(campo === "rif") return c.rif_cedula || c.rif || c.cedula_rif || c.identificacion || "";
-  if(campo === "correo") return c.correo || c.email || "";
-  if(campo === "direccion") return c.direccion || c.address || "";
-  return c[campo] || "";
+
+  const invalidos = new Set([
+    "sin telefono",
+    "sin teléfono",
+    "sin correo",
+    "sin email",
+    "sin direccion",
+    "sin dirección",
+    "—",
+    "-"
+  ]);
+
+  const pick = (campos) => {
+    for(const key of campos){
+      const raw = c[key];
+
+      if(raw === undefined || raw === null) continue;
+
+      const value = String(raw).trim();
+      if(!value) continue;
+      if(invalidos.has(normalizar(value))) continue;
+
+      return value;
+    }
+
+    return "";
+  };
+
+  if(campo === "rif") return pick([
+    "rif_cedula",
+    "rif",
+    "cedula_rif",
+    "rif_cliente",
+    "documento",
+    "documento_identidad",
+    "identificacion",
+    "cedula",
+    "ci_rif",
+    "nit",
+    "tax_id"
+  ]);
+
+  if(campo === "telefono") return pick([
+    "telefono",
+    "telefono_cliente",
+    "telefono_contacto",
+    "celular",
+    "movil",
+    "móvil",
+    "whatsapp",
+    "phone",
+    "telefono1",
+    "contacto"
+  ]);
+
+  if(campo === "correo") return pick([
+    "correo",
+    "email",
+    "correo_cliente",
+    "mail"
+  ]);
+
+  if(campo === "direccion") return pick([
+    "direccion",
+    "dirección",
+    "address",
+    "direccion_fiscal",
+    "direccion_cliente",
+    "ubicacion",
+    "ubicación"
+  ]);
+
+  return pick([campo]);
 }
 
 function buildClientePayload(form, existente=null, incluirActivo=true){
@@ -989,18 +1058,28 @@ async function cargarClientesCotizador(){
   if(!validarSupabase()) return;
 
   /*
-    FIX v34:
-    La tabla clientes ha cambiado varias veces. Primero intentamos traer todos
-    los campos útiles. Si Supabase rechaza algún campo por schema cache,
-    caemos a un select básico compatible.
+    FIX v58:
+    Se usa select("*") para traer todos los campos reales de la tabla clientes.
+    Antes, si una columna del select no existía, Supabase caía a un fallback
+    demasiado básico y el cotizador detectaba el cliente, pero no traía RIF,
+    teléfono, correo o dirección para autocompletar.
   */
   let res = await db()
     .from("clientes")
-    .select("id,nombre,tipo_cliente,telefono,correo,email,rif_cedula,rif,direccion,notas,activo")
+    .select("*")
     .order("nombre", { ascending:true });
 
   if(res.error){
-    console.warn("Clientes select completo falló. Probando básico:", res.error);
+    console.warn("Clientes select * falló. Probando select compatible:", res.error);
+
+    res = await db()
+      .from("clientes")
+      .select("id,nombre,tipo_cliente,telefono,correo,rif_cedula,rif,direccion,notas")
+      .order("nombre", { ascending:true });
+  }
+
+  if(res.error){
+    console.warn("Clientes select compatible falló. Probando básico:", res.error);
 
     res = await db()
       .from("clientes")
@@ -1017,7 +1096,7 @@ async function cargarClientesCotizador(){
   }
 
   clientesDB = res.data || [];
-  console.log("Clientes cargados en cotizador:", clientesDB.length);
+  console.log("Clientes cargados en cotizador:", clientesDB.length, clientesDB[0] || null);
 
   renderClientesDatalist();
 }
@@ -1044,10 +1123,23 @@ function buscarClientePorNombre(nombre){
 function llenarDatosCliente(cliente){
   if(!cliente) return;
 
-  $("rif").value = pickClienteField(cliente, "rif");
-  $("telefono").value = cliente.telefono || "";
-  $("email").value = pickClienteField(cliente, "correo");
-  $("direccion").value = pickClienteField(cliente, "direccion");
+  const rif = pickClienteField(cliente, "rif");
+  const telefono = pickClienteField(cliente, "telefono");
+  const correo = pickClienteField(cliente, "correo");
+  const direccion = pickClienteField(cliente, "direccion");
+
+  if($("rif")) $("rif").value = rif;
+  if($("telefono")) $("telefono").value = telefono;
+  if($("email")) $("email").value = correo;
+  if($("direccion")) $("direccion").value = direccion;
+
+  console.log("Cliente autocompletado:", {
+    nombre:cliente.nombre || "",
+    rif,
+    telefono,
+    correo,
+    direccion
+  });
 
   const mini = $("clienteMini");
   if(mini){
@@ -2719,8 +2811,8 @@ function bindEvents(){
     const cliente = buscarClientePorNombre($("cliente").value);
 
     if(cliente){
-      mini.innerHTML = `Cliente encontrado: <b>${html(cliente.nombre)}</b>`;
-    }else{
+      llenarDatosCliente(cliente);
+    }else if(mini){
       mini.textContent = $("cliente").value.trim()
         ? "Cliente nuevo: se guardará automáticamente en clientes."
         : "Escribe para buscar o crear cliente nuevo.";
