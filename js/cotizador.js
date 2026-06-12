@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v56 propuesta económica + imágenes con caja 100px");
+console.log("COTIZADOR JS conectado v57 propuesta económica sin cuadro");
 
 const $ = (id) => document.getElementById(id);
 
@@ -1384,31 +1384,18 @@ async function crearDocumentoFacturaPDF(snapshot=crearSnapshotActual()){
 }
 
 function drawPropuestaEconomicaIntro(doc,x,y,w){
-  const blueDark = [11,31,122];
-  const blueSoft = [248,249,255];
-  const line = [217,222,234];
-
-  doc.setDrawColor(...line);
-  doc.setFillColor(...blueSoft);
-  doc.roundedRect(x,y,w,42,3,3,"FD");
-
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(10.4);
-  doc.setTextColor(...blueDark);
-  doc.text("Propuesta Económica",x+4,y+7);
-
   doc.setFont("helvetica","normal");
-  doc.setFontSize(8.2);
+  doc.setFontSize(8.5);
   doc.setTextColor(55,65,81);
 
-  let ty = y + 13;
+  let ty = y;
   PROPUESTA_ECONOMICA_INTRO.forEach((parrafo,idx) => {
-    const lines = doc.splitTextToSize(parrafo,w-8);
-    doc.text(lines,x+4,ty);
+    const lines = doc.splitTextToSize(parrafo,w);
+    doc.text(lines,x,ty);
     ty += (lines.length * 4.2) + (idx === 0 ? 3.2 : 0);
   });
 
-  return y + 42;
+  return ty;
 }
 
 function getPdfImageFormat(src){
