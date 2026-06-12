@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v58 campos PDF compactos");
+console.log("COTIZADOR JS conectado v59 direccion PDF 2 lineas");
 
 const $ = (id) => document.getElementById(id);
 
@@ -1580,7 +1580,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   drawPdfField(doc,84,Y_CLIENT_ROW_1,55,FIELD_H,"RIF / Cédula",form.rif || "",{ valueSize:6.4 });
   drawPdfField(doc,142,Y_CLIENT_ROW_1,56,FIELD_H,"Teléfono",form.telefono || "",{ valueSize:6.4 });
   drawPdfField(doc,14,Y_CLIENT_ROW_2,67,FIELD_H,"Email",form.email || "",{ valueSize:6.3 });
-  drawPdfField(doc,84,Y_CLIENT_ROW_2,114,FIELD_H,"Dirección",form.direccion || "",{ valueSize:6.3 });
+  drawPdfField(doc,84,Y_CLIENT_ROW_2,114,FIELD_H,"Dirección",form.direccion || "",{ valueSize:5.2, maxLines:2, valueY:5.9 });
 
   let tableStartY = 93;
 
