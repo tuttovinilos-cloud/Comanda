@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v60 propuesta con ajuste de escala en preview + imágenes -15%");
+console.log("COTIZADOR JS conectado v62 PDF propuesta más compacto + escala preview");
 
 const $ = (id) => document.getElementById(id);
 
@@ -1476,26 +1476,27 @@ function drawPropuestaEconomicaIntro(doc,x,y,w,scale=1){
   const blueSoft = [248,249,255];
   const line = [217,222,234];
   const s = (n) => Number((Number(n || 0) * Number(scale || 1)).toFixed(3));
-  const introH = Math.max(32,s(42));
+  // v62: intro de Propuesta Económica más compacto para ganar espacio en PDF.
+  const introH = Math.max(25,s(34));
 
   doc.setDrawColor(...line);
   doc.setFillColor(...blueSoft);
   doc.roundedRect(x,y,w,introH,3,3,"FD");
 
   doc.setFont("helvetica","bold");
-  doc.setFontSize(s(10.4));
+  doc.setFontSize(s(9.3));
   doc.setTextColor(...blueDark);
-  doc.text("Propuesta Económica",x+4,y+s(7));
+  doc.text("Propuesta Económica",x+4,y+s(6.2));
 
   doc.setFont("helvetica","normal");
-  doc.setFontSize(s(8.2));
+  doc.setFontSize(s(7.3));
   doc.setTextColor(55,65,81);
 
-  let ty = y + s(13);
+  let ty = y + s(11.5);
   PROPUESTA_ECONOMICA_INTRO.forEach((parrafo,idx) => {
     const lines = doc.splitTextToSize(parrafo,w-8);
     doc.text(lines,x+4,ty);
-    ty += (lines.length * s(4.2)) + (idx === 0 ? s(3.2) : 0);
+    ty += (lines.length * s(3.45)) + (idx === 0 ? s(2.1) : 0);
   });
 
   return y + introH;
@@ -1599,14 +1600,15 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   const esPropuestaActual = esPropuestaEconomicaTipo(form.tipo);
   const etiquetaCantidadTablaPdf = etiquetaCantidadPdfPorTipo(form.tipo);
   const imageBoxScale = esPropuestaActual ? 0.85 : 1;
+  // v62: filas más pegadas en Propuesta Económica para que entren más renglones en el PDF.
   const propuestaCellPaddingBase = esPropuestaActual
-    ? { top:1.85, right:2.05, bottom:1.85, left:2.05 }
+    ? { top:0.95, right:1.45, bottom:0.95, left:1.45 }
     : 2.3;
   const propuestaCellPadding = padPdf(propuestaCellPaddingBase);
-  const propuestaImagePaddingY = (esPropuestaActual ? 6.8 : 8) * pdfScale * imageBoxScale;
+  const propuestaImagePaddingY = (esPropuestaActual ? 4.2 : 8) * pdfScale * imageBoxScale;
 
   if(esPropuestaActual){
-    tableStartY = drawPropuestaEconomicaIntro(doc,14,106,W-28,pdfScale) + sPdf(7);
+    tableStartY = drawPropuestaEconomicaIntro(doc,14,104,W-28,pdfScale) + sPdf(4);
   }
 
   let count = 1;
@@ -1631,7 +1633,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       const imagenes = getImagenesItem(item);
 
       if(imagenes.length){
-        const imageMax = Math.max(8,18 * pdfScale * imageBoxScale);
+        const imageMax = Math.max(7,16 * pdfScale * imageBoxScale);
         const imageList = imagenes.map(img => {
           const dims = getPdfImageSize(doc,img.src,imageMax,imageMax);
 
@@ -1685,8 +1687,10 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     margin:{ left:14, right:14, bottom:26 },
     styles:{
       font:"helvetica",
-      fontSize:esPropuestaActual ? sPdf(6.95) : sPdf(7.7),
+      fontSize:esPropuestaActual ? sPdf(6.05) : sPdf(7.7),
       cellPadding:propuestaCellPadding,
+      lineHeight:esPropuestaActual ? 1.02 : 1.15,
+      minCellHeight:esPropuestaActual ? sPdf(4.6) : undefined,
       textColor:[17,17,17],
       lineColor:[217,222,234],
       lineWidth:.2,
@@ -1698,13 +1702,14 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       textColor:[17,17,17],
       fontStyle:"bold",
       halign:"center",
-      fontSize:esPropuestaActual ? sPdf(6.5) : sPdf(7.2),
-      cellPadding:propuestaCellPadding
+      fontSize:esPropuestaActual ? sPdf(5.85) : sPdf(7.2),
+      cellPadding:propuestaCellPadding,
+      minCellHeight:esPropuestaActual ? sPdf(5.2) : undefined
     },
     columnStyles:{
       0:{ halign:"center", cellWidth:12, fontStyle:"bold", textColor:[220,38,38] },
       // v58/v59: descripción más pequeña para que los textos largos respiren mejor.
-      1:{ cellWidth:"auto", fontSize:esPropuestaActual ? sPdf(6.2) : sPdf(6.9), overflow:"linebreak" },
+      1:{ cellWidth:"auto", fontSize:esPropuestaActual ? sPdf(5.65) : sPdf(6.9), overflow:"linebreak", minCellHeight:esPropuestaActual ? sPdf(4.6) : undefined },
       2:{ halign:"center", cellWidth:esPropuestaActual ? 24 : 19 },
       3:{ halign:"center", cellWidth:28 },
       4:{ halign:"center", cellWidth:30, fontStyle:"bold", textColor:[21,59,255] }
@@ -1722,7 +1727,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       if(!imageList.length) return;
 
       try{
-        const gap = Math.max(1.6,3 * pdfScale * imageBoxScale);
+        const gap = Math.max(1.2,2.2 * pdfScale * imageBoxScale);
         const maxTotalW = Math.max(10,cellData.cell.width - (8 * pdfScale));
         const totalOriginalW = imageList.reduce((acc,img) => acc + (img.w || 0),0) + gap * Math.max(0,imageList.length - 1);
         const scale = totalOriginalW > maxTotalW ? maxTotalW / totalOriginalW : 1;
