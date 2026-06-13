@@ -821,6 +821,107 @@ body{padding-bottom:24px!important}
   }
 }
 
+
+/* ============================== FILA RÁPIDA + COLORES DE ESTADO ============================== */
+.quick-row td{
+  background:#f8f9ff!important;
+  border-bottom:2px solid #d4dae8!important;
+}
+.quick-input,
+.quick-select{
+  width:100%;
+  height:31px;
+  border:1px solid #d4dae8;
+  border-radius:9px;
+  background:#fff;
+  color:#0f172a;
+  padding:0 9px;
+  font-size:11.5px;
+  font-weight:700;
+  outline:none;
+}
+.quick-input:focus,
+.quick-select:focus{
+  border-color:#153bff;
+  box-shadow:0 0 0 3px rgba(21,59,255,.10);
+}
+.quick-btn{
+  height:31px;
+  min-width:31px;
+  padding:0 10px;
+  border-radius:999px;
+  border:1px solid #153bff;
+  background:#153bff;
+  color:#fff;
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.quick-btn:hover{background:#172bd8}
+.quick-label{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:27px;
+  padding:0 9px;
+  border-radius:999px;
+  background:#eaf0ff;
+  color:#153bff;
+  font-family:var(--head);
+  font-size:9px;
+  font-weight:900;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+/* Forzar colores en los select de estatus/pago */
+.cell-mini-select.b-req,
+.quick-select.b-req{
+  background:#fee2e2!important;
+  color:#b91c1c!important;
+  border-color:#fecaca!important;
+}
+.cell-mini-select.b-curso,
+.quick-select.b-curso{
+  background:#1e2536!important;
+  color:#fff!important;
+  border-color:#1e2536!important;
+}
+.cell-mini-select.b-rev,
+.quick-select.b-rev{
+  background:#fef3c7!important;
+  color:#92400e!important;
+  border-color:#fde68a!important;
+}
+.cell-mini-select.b-listo,
+.quick-select.b-listo{
+  background:#dcfce7!important;
+  color:#166534!important;
+  border-color:#bbf7d0!important;
+}
+.cell-mini-select.b-pend,
+.quick-select.b-pend{
+  background:#fee2e2!important;
+  color:#b91c1c!important;
+  border-color:#fecaca!important;
+}
+.cell-mini-select.b-abon,
+.quick-select.b-abon{
+  background:#fef3c7!important;
+  color:#92400e!important;
+  border-color:#fde68a!important;
+}
+.cell-mini-select.b-pag,
+.quick-select.b-pag{
+  background:#dcfce7!important;
+  color:#166534!important;
+  border-color:#bbf7d0!important;
+}
+@media(max-width:760px){
+  .quick-row{display:table-row}
+}
+
 </style>
 </head>
 <body>
@@ -1309,8 +1410,60 @@ function renderKpis(){
     </div>`;
 }
 
+
+function quickRowHtml(){
+  return `<tr class="quick-row" onclick="event.stopPropagation()">
+    <td><span class="quick-label">Nuevo</span></td>
+    <td><input class="quick-input" id="q_fecha" type="date" value="${new Date().toISOString().split("T")[0]}"></td>
+    <td><input class="quick-input" id="q_operador" list="operadoresList" placeholder="Operador" value="${escapeHtml(getOperadorSesion()?.nombre || "")}"></td>
+    <td><input class="quick-input" id="q_cliente" list="clientesList" placeholder="Cliente"></td>
+    <td><input class="quick-input" id="q_descripcion" placeholder="Descripción"></td>
+    <td><input class="quick-input" id="q_material" list="materialesList" placeholder="Material"></td>
+    <td><input class="quick-input" id="q_precio" type="number" step="0.01" placeholder="0.00"></td>
+    <td>
+      <select class="quick-select b-req" id="q_estatus_trabajo" onchange="pintarSelectRapido(this)">
+        <option value="Solicitud" selected>Solicitud</option>
+        <option value="En curso">En curso</option>
+        <option value="Revisado">Revisado</option>
+        <option value="Listo">Listo</option>
+      </select>
+    </td>
+    <td>
+      <select class="quick-select b-pend" id="q_estatus_pago" onchange="pintarSelectPagoRapido(this)">
+        <option value="Pendiente" selected>Pendiente</option>
+        <option value="Abonado">Abonado</option>
+        <option value="Pagado">Pagado</option>
+      </select>
+    </td>
+    <td><input class="quick-input" id="q_monto_abonado" type="number" step="0.01" placeholder="0.00"></td>
+    <td><input class="quick-input" id="q_fecha_entrega" type="date"></td>
+    <td style="text-align:center"><input id="q_archivo" type="file" style="max-width:110px;font-size:10px"></td>
+    <td class="actions-cell"><button class="quick-btn" type="button" onclick="guardarPedidoRapido()">Guardar</button></td>
+  </tr>`;
+}
+
+function pintarSelectEstado(select){
+  const valor = select.value;
+  select.classList.remove("b-req","b-curso","b-rev","b-listo");
+  if(valor === "Solicitud") select.classList.add("b-req");
+  else if(valor === "En curso") select.classList.add("b-curso");
+  else if(valor === "Revisado") select.classList.add("b-rev");
+  else if(valor === "Listo") select.classList.add("b-listo");
+}
+
+function pintarSelectPago(select){
+  const valor = select.value;
+  select.classList.remove("b-pend","b-abon","b-pag");
+  if(valor === "Pendiente") select.classList.add("b-pend");
+  else if(valor === "Abonado") select.classList.add("b-abon");
+  else if(valor === "Pagado") select.classList.add("b-pag");
+}
+
+function pintarSelectRapido(select){ pintarSelectEstado(select); }
+function pintarSelectPagoRapido(select){ pintarSelectPago(select); }
+
 function renderRows(rows){
-  $("rows").innerHTML = rows.map(p=>{
+  $("rows").innerHTML = quickRowHtml() + rows.map(p=>{
     const estatus = String(p.estatus_trabajo || "Solicitud");
     const pago = String(p.estatus_pago || "Pendiente");
     const st = ST[estatus] || ST["Solicitud"];
@@ -1329,12 +1482,12 @@ function renderRows(rows){
       <td class="cell-mat">${escapeHtml(p.material || "—")}</td>
       <td class="cell-price tnum">${money(pedidoPrecio(p))}</td>
       <td onclick="event.stopPropagation()">
-        <select class="cell-mini-select ${st.b}" onchange="actualizarCampo(${Number(p.id)}, 'estatus_trabajo', this.value)">
+        <select class="cell-mini-select ${st.b}" onchange="pintarSelectEstado(this); actualizarCampo(${Number(p.id)}, 'estatus_trabajo', this.value)">
           ${["Solicitud","En curso","Revisado","Listo"].map(x=>`<option ${x===estatus?"selected":""}>${x}</option>`).join("")}
         </select>
       </td>
       <td onclick="event.stopPropagation()">
-        <select class="cell-mini-select ${pgClass}" onchange="actualizarCampo(${Number(p.id)}, 'estatus_pago', this.value)">
+        <select class="cell-mini-select ${pgClass}" onchange="pintarSelectPago(this); actualizarCampo(${Number(p.id)}, 'estatus_pago', this.value)">
           ${["Pendiente","Abonado","Pagado"].map(x=>`<option ${x===pago?"selected":""}>${x}</option>`).join("")}
         </select>
       </td>
@@ -1593,6 +1746,71 @@ async function subirArchivo(){
   };
 }
 
+
+async function guardarPedidoRapido(){
+  try{
+    const clienteInput = $("q_cliente");
+    const descInput = $("q_descripcion");
+
+    let cliente = String(clienteInput?.value || "").trim();
+    const descripcion = String(descInput?.value || "").trim();
+
+    if(!cliente && !descripcion){
+      alert("Coloca al menos cliente o descripción.");
+      return;
+    }
+
+    const supa = await esperarSupabase();
+    cliente = await asegurarCliente(cliente);
+
+    const abono = num($("q_monto_abonado")?.value || 0);
+    let pago = $("q_estatus_pago")?.value || "Pendiente";
+    if(abono > 0 && pago === "Pendiente") pago = "Abonado";
+
+    const datos = {
+      fecha: $("q_fecha")?.value || new Date().toISOString().split("T")[0],
+      fecha_entrega: $("q_fecha_entrega")?.value || null,
+      operador: $("q_operador")?.value || "",
+      cliente,
+      descripcion,
+      cantidad: "",
+      precio: String($("q_precio")?.value || ""),
+      material: $("q_material")?.value || "",
+      tipo_impresion: "",
+      estatus_trabajo: $("q_estatus_trabajo")?.value || "Solicitud",
+      estatus_pago: pago,
+      monto_abonado: abono
+    };
+
+    const fileInput = $("q_archivo");
+    const archivo = fileInput && fileInput.files ? fileInput.files[0] : null;
+
+    if(archivo){
+      const nombreLimpio = archivo.name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\w.\-]+/g, "_");
+
+      const ruta = `pedidos/${Date.now()}_${nombreLimpio}`;
+      const upload = await supa.storage.from("adjuntos-pedidos").upload(ruta, archivo);
+      if(upload.error) throw new Error("Error subiendo archivo: " + upload.error.message);
+
+      const pub = supa.storage.from("adjuntos-pedidos").getPublicUrl(ruta);
+      datos.archivo_url = pub.data.publicUrl;
+      datos.archivo_nombre = archivo.name;
+    }
+
+    const { error } = await supa.from("pedidos").insert([datos]);
+    if(error) throw error;
+
+    await cargarTodo(false);
+    toast("Pedido rápido guardado ✅");
+  }catch(err){
+    console.error(err);
+    alert(err.message || "Error guardando pedido rápido.");
+  }
+}
+
 async function guardarPedido(){
   try{
     const supa = await esperarSupabase();
@@ -1801,6 +2019,11 @@ window.guardarPedido = guardarPedido;
 window.actualizarCampo = actualizarCampo;
 window.actualizarAbono = actualizarAbono;
 window.eliminarPedidoActual = eliminarPedidoActual;
+window.guardarPedidoRapido = guardarPedidoRapido;
+window.pintarSelectEstado = pintarSelectEstado;
+window.pintarSelectPago = pintarSelectPago;
+window.pintarSelectRapido = pintarSelectRapido;
+window.pintarSelectPagoRapido = pintarSelectPagoRapido;
 </script>
 
 <script src="js/notificaciones.js?v=35"></script>
