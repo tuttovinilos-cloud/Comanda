@@ -173,7 +173,7 @@ button,input,select{font:inherit}button{cursor:pointer;touch-action:manipulation
               <div class="total-num" id="totalNum">0</div>
               <div class="total-desc">etiquetas<br/>por material</div>
             </div>
-            <div class="quarter-mult" id="quarterMult">x4 = 0</div>
+            <div class="quarter-mult" id="quarterMult">÷4 = 0</div>
           </div>
           <div class="hero-grid">
             <span><b id="colsVal">0</b> col</span>
@@ -263,14 +263,18 @@ function fmt2(n){ return (Math.round(n*100)/100).toFixed(2); }
 function smartNumber(n){ return Number.isInteger(Number(n)) ? Number(n) : Number(n).toFixed(1); }
 function mmToCm(n){ const cm = Number(n || 0) / 10; return Number.isInteger(cm) ? String(cm) : cm.toFixed(1); }
 
+function displayTotal(r){
+  return state.format === "formato3767" ? r.total * 4 : r.total;
+}
+
 function copyMessage(r){
   const orient = r.rotation === "rotated" ? " Acomodo rotado." : "";
-  return `La cantidad de etiquetas sería de: ${r.total} unidades con la medida de ${mmToCm(r.labelW)} cm x ${mmToCm(r.labelH)} cm.${orient}`;
+  return `La cantidad de etiquetas sería de: ${displayTotal(r)} unidades con la medida de ${mmToCm(r.labelW)} cm x ${mmToCm(r.labelH)} cm.${orient}`;
 }
 
 function updateCopyText(r){
   const medida = `${mmToCm(r.labelW)} cm x ${mmToCm(r.labelH)} cm`;
-  $('copyText').innerHTML = `La cantidad de etiquetas sería de: <b>${r.total}</b> unidades con la medida de <b>${medida}</b>${r.rotation === "rotated" ? ". Acomodo rotado." : "."}`;
+  $('copyText').innerHTML = `La cantidad de etiquetas sería de: <b>${displayTotal(r)}</b> unidades con la medida de <b>${medida}</b>${r.rotation === "rotated" ? ". Acomodo rotado." : "."}`;
 }
 
 async function copyResult(){
@@ -316,7 +320,7 @@ function recompute(){
 }
 
 function renderResults(r){
-  $('totalNum').textContent=r.total;
+  $('totalNum').textContent=displayTotal(r);
   $('colsVal').textContent=r.cols;
   $('rowsVal').textContent=r.rows;
 
@@ -334,7 +338,7 @@ function renderResults(r){
   const quarterMult = $('quarterMult');
   if(quarterMult){
     if(state.format==='formato3767'){
-      quarterMult.textContent = `x4 = ${r.total * 4}`;
+      quarterMult.textContent = `÷4 = ${r.total}`;
       quarterMult.classList.add('show');
     }else{
       quarterMult.textContent = '';
