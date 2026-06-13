@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>PROTOTIPO FUNCIONAL · Supabase · Tuttovinilos</title>
+<title>PROTOTIPO FUNCIONAL · Menú corregido · Tuttovinilos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -792,6 +792,35 @@ tbody tr:hover td:first-child{background:var(--panel2)}
   .btn-modal{flex:1}
 }
 
+
+/* ============================== AJUSTE ROBERTO ============================== */
+/* Sin barra inferior: Clientes / Estadísticas / Cotizador ya salen en el menú superior */
+body{padding-bottom:24px!important}
+.bottomnav{display:none!important}
+
+/* Menú móvil forzado para que despliegue siempre */
+.header.menu-open{overflow:visible!important}
+.header-tabs.open{
+  display:grid!important;
+  opacity:1!important;
+  visibility:visible!important;
+  height:auto!important;
+  min-height:0!important;
+  overflow:visible!important;
+}
+@media(max-width:980px){
+  .header.menu-open{
+    height:auto!important;
+    min-height:48px!important;
+    overflow:visible!important;
+  }
+  .header-tabs.open{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    width:100%!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -806,7 +835,7 @@ tbody tr:hover td:first-child{background:var(--panel2)}
     🔔 <span class="noti-count empty" id="notiCount">0</span>
   </button>
 
-  <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menú">☰ Menú</button>
+  <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menú" onclick="togglePrototipoMenu(event)">☰ Menú</button>
 
   <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
 </header>
@@ -971,16 +1000,6 @@ tbody tr:hover td:first-child{background:var(--panel2)}
 
 <div class="toast" id="toast"></div>
 
-<nav class="bottomnav">
-  <button class="nav-item active">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h12"/></svg>Pedidos</button>
-  <button class="nav-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>Clientes</button>
-  <button class="nav-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11H3v10h6zM21 3h-6v18h6zM15 7H9v14h6z"/></svg>Estadísticas</button>
-  <button class="nav-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 6v6c0 5 8 8 8 8s8-3 8-8V6z"/></svg>Cotizador</button>
-</nav>
 
 
 
@@ -1720,12 +1739,6 @@ function configurarBotones(){
   const nuevo = document.querySelector(".btn-primary");
   if(nuevo) nuevo.onclick = abrirNuevo;
 
-  const bottom = document.querySelectorAll(".bottomnav .nav-item");
-  if(bottom[0]) bottom[0].onclick = () => location.href = "Prototipo.html";
-  if(bottom[1]) bottom[1].onclick = () => location.href = "clientes.html";
-  if(bottom[2]) bottom[2].onclick = () => location.href = "estadisticas.html";
-  if(bottom[3]) bottom[3].onclick = () => location.href = "Cotizador.html";
-
   const modal = $("pedidoModal");
   if(modal){
     modal.addEventListener("click", e => {
@@ -1738,15 +1751,40 @@ function configurarBotones(){
   });
 }
 
+
+function togglePrototipoMenu(e){
+  if(e){
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  const header = document.querySelector(".header");
+  const menu = document.getElementById("authMenu");
+  const btn = document.getElementById("mobileMenuBtn");
+
+  if(!menu || !btn) return false;
+
+  const isOpen = menu.classList.toggle("open");
+  if(header) header.classList.toggle("menu-open", isOpen);
+
+  btn.classList.toggle("active", isOpen);
+  btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  btn.textContent = isOpen ? "✕ Cerrar" : "☰ Menú";
+
+  if(typeof window.updateStickyOffsets === "function"){
+    window.updateStickyOffsets();
+  }
+
+  return false;
+}
+window.togglePrototipoMenu = togglePrototipoMenu;
+
+
 document.addEventListener("DOMContentLoaded", async function(){
   const btn = $("mobileMenuBtn");
   const menu = $("authMenu");
 
-  if(btn && menu){
-    btn.addEventListener("click", function(){
-      menu.classList.toggle("open");
-    });
-  }
+  if(btn && menu){ btn.onclick = togglePrototipoMenu; }
 
   configurarBotones();
   await cargarTodo(false);
