@@ -663,6 +663,7 @@ tbody tr:hover td:first-child{background:var(--panel2)}
 
 
 <!-- CONEXIÓN REAL SUPABASE / AUTH / MENÚ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=24"></script>
 <script src="js/auth.js?v=24"></script>
 <script src="js/menu.js?v=40"></script>
@@ -699,13 +700,20 @@ const PG = {
   "Pagado":"b-pag"
 };
 
-function db(){
-  return window.supabaseClient || window.db || null;
+function getSupabaseClient(){
+  const c = window.supabaseClient;
+  if(c && typeof c.from === "function") return c;
+
+  const d = window.db;
+  if(d && typeof d.from === "function") return d;
+
+  return null;
 }
 
 function esperarSupabase(intentos = 0){
   return new Promise((resolve, reject) => {
-    if(db()) return resolve(db());
+    const c = getSupabaseClient();
+    if(c) return resolve(c);
     if(intentos > 80) return reject(new Error("No se pudo conectar con Supabase."));
     setTimeout(() => esperarSupabase(intentos + 1).then(resolve).catch(reject), 100);
   });
@@ -1062,4 +1070,3 @@ document.addEventListener("DOMContentLoaded", function(){
 
 </body>
 </html>
-
