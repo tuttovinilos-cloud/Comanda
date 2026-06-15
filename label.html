@@ -136,17 +136,20 @@ button,input,select{font:inherit}button{cursor:pointer;touch-action:manipulation
       <div class="sec">
         <div class="sec-title"><span class="n">1</span>Formato del material</div>
         <div class="formats">
-          <button class="format-btn" data-format="rollo127" aria-pressed="true">Formato 127<span class="dim">127 × 78 cm · útil 125 × 76</span></button>
-          <button class="format-btn" data-format="rollo136" aria-pressed="false">Formato 136<span class="dim">136 × 74 cm · útil 134 × 72</span></button>
-          <button class="format-btn" data-format="cuarto127" aria-pressed="false">64×40<span class="dim">útil 63 × 39 cm · ×4</span></button>
-          <button class="format-btn" data-format="cuarto136" aria-pressed="false">67×37<span class="dim">1/4 de 136 · ×4</span></button>
-          <button class="format-btn full" data-format="pliego" aria-pressed="false">Pliego<span class="dim">70 × 82 cm · útil 68 × 80</span></button>
-          <button class="format-btn full" data-format="custom" aria-pressed="false">Personalizado<span class="dim">define ancho y alto</span></button>
+          <button class="format-btn" data-format="rollo127" aria-pressed="true">Formato 127<span class="dim">área imprimible 125 × 78 cm</span></button>
+          <button class="format-btn" data-format="rollo136" aria-pressed="false">Formato 136<span class="dim">área imprimible 134 × 74 cm</span></button>
+          <button class="format-btn" data-format="cuarto127" aria-pressed="false">63×39<span class="dim">área imprimible 61 × 39 cm · ×4</span></button>
+          <button class="format-btn" data-format="cuarto136" aria-pressed="false">68×37<span class="dim">área imprimible 66 × 36 cm · ×4</span></button>
+          <button class="format-btn full" data-format="pliego" aria-pressed="false">Pliego<span class="dim">mide 100 × 70 cm · imprimible 68 × 80</span></button>
+          <button class="format-btn full" data-format="custom" aria-pressed="false">Personalizado<span class="dim">descuenta 2 cm total: 1 cm por lado</span></button>
         </div>
         <div class="custom-box" id="customBox">
           <div class="input-grid" style="margin-top:9px">
-            <div class="input-field"><label>Ancho material</label><div class="control"><input id="materialW" type="number" inputmode="decimal" value="1270" step="0.1"/><span class="unit">mm</span></div></div>
-            <div class="input-field"><label>Alto material</label><div class="control"><input id="materialH" type="number" inputmode="decimal" value="780" step="0.1"/><span class="unit">mm</span></div></div>
+            <div class="input-field"><label>Ancho total material</label><div class="control"><input id="materialW" type="number" inputmode="decimal" value="1270" step="0.1"/><span class="unit">mm</span></div></div>
+            <div class="input-field"><label>Alto total material</label><div class="control"><input id="materialH" type="number" inputmode="decimal" value="780" step="0.1"/><span class="unit">mm</span></div></div>
+          </div>
+          <div class="empty-hint" style="margin-top:8px;font-size:11px;line-height:1.35">
+            En personalizado se descuenta automáticamente 2 cm en ancho y 2 cm en alto (1 cm por cada lado).
           </div>
         </div>
       </div>
@@ -222,13 +225,15 @@ button,input,select{font:inherit}button{cursor:pointer;touch-action:manipulation
 <script src="js/menu.js?v=40"></script>
 
 <script>
-const MARGIN_MM = 10;
+const CUSTOM_MARGIN_MM = 10; // Solo personalizado: 1 cm por cada lado
 const FORMATS = {
-  rollo127:{w:1270,h:780,workW:1250,workH:760,label:'Formato 127'},
-  rollo136:{w:1360,h:740,workW:1340,workH:720,label:'Formato 136'},
-  cuarto127:{w:640,h:400,workW:630,workH:390,label:'64×40',quarter:true},
-  cuarto136:{w:670,h:370,workW:650,workH:350,label:'67×37',quarter:true},
-  pliego:{w:700,h:820,workW:680,workH:800,label:'Pliego'}
+  // En estos formatos el área imprimible YA viene definida por Tuttovinilos.
+  // No se descuenta margen adicional.
+  rollo127:{w:1270,h:780,workW:1250,workH:780,label:'Formato 127'},
+  rollo136:{w:1360,h:740,workW:1340,workH:740,label:'Formato 136'},
+  cuarto127:{w:630,h:390,workW:610,workH:390,label:'63×39',quarter:true},
+  cuarto136:{w:680,h:370,workW:660,workH:360,label:'68×37',quarter:true},
+  pliego:{w:700,h:1000,workW:680,workH:800,label:'Pliego'}
 };
 let state = { format:'rollo127', labelW:100, labelH:50, materialW:1270, materialH:780, spacing:3 };
 let lastResult = null;
@@ -239,9 +244,10 @@ function getMaterial(){
     return {
       w:state.materialW,
       h:state.materialH,
-      workW:state.materialW - MARGIN_MM*2,
-      workH:state.materialH - MARGIN_MM*2,
-      label:'Personalizado'
+      workW:Math.max(0,state.materialW - CUSTOM_MARGIN_MM*2),
+      workH:Math.max(0,state.materialH - CUSTOM_MARGIN_MM*2),
+      label:'Personalizado',
+      custom:true
     };
   }
   return FORMATS[state.format];
@@ -255,14 +261,14 @@ function layout(workW, workH, lw, lh){
 }
 
 function bestLayout(materialW, materialH, labelW, labelH, workWOverride, workHOverride){
-  const workW = workWOverride || (materialW - MARGIN_MM*2), workH = workHOverride || (materialH - MARGIN_MM*2);
+  const workW = workWOverride || (materialW - CUSTOM_MARGIN_MM*2), workH = workHOverride || (materialH - CUSTOM_MARGIN_MM*2);
   const normal = layout(workW, workH, labelW, labelH);
   const rotated = layout(workW, workH, labelH, labelW);
   const useRotated = rotated.total > normal.total;
   const chosen = useRotated ? rotated : normal;
   const placedW = useRotated ? labelH : labelW;
   const placedH = useRotated ? labelW : labelH;
-  const materialArea = materialW*materialH;
+  const materialArea = workW*workH;
   const usedArea = chosen.total*labelW*labelH;
 
   return { materialW, materialH, labelW, labelH, placedW, placedH,
@@ -381,8 +387,10 @@ function renderResults(r){
   $('utilVal').textContent=fmt2(r.utilization);
   $('utilBar').style.width=Math.min(100,Math.max(0,r.utilization))+'%';
   const material = getMaterial();
-  $('materialMeta').textContent=`Material ${r.materialW}×${r.materialH} mm · área útil ${material.workW || (r.materialW-MARGIN_MM*2)}×${material.workH || (r.materialH-MARGIN_MM*2)} mm`;
-  $('labelMeta').textContent=`Etiqueta ${smartNumber(r.labelW)}×${smartNumber(r.labelH)} mm · sep ${smartNumber(state.spacing)} mm · marco 10 mm`;
+  $('materialMeta').textContent=`${material.label || 'Material'} · medida ${r.materialW}×${r.materialH} mm · área imprimible ${material.workW || (r.materialW-CUSTOM_MARGIN_MM*2)}×${material.workH || (r.materialH-CUSTOM_MARGIN_MM*2)} mm`;
+  $('labelMeta').textContent= material.custom
+    ? `Etiqueta ${smartNumber(r.labelW)}×${smartNumber(r.labelH)} mm · sep ${smartNumber(state.spacing)} mm · personalizado descuenta 10 mm por lado`
+    : `Etiqueta ${smartNumber(r.labelW)}×${smartNumber(r.labelH)} mm · sep ${smartNumber(state.spacing)} mm · sin margen adicional`;
   updateCopyText(r);
 }
 
@@ -390,8 +398,8 @@ function renderPreview(r){
   const box=$('previewBox');
   const W=r.materialW,H=r.materialH,sp=state.spacing,lw=r.placedW,lh=r.placedH;
   const material = getMaterial();
-  const workW = material.workW || (W - MARGIN_MM*2);
-  const workH = material.workH || (H - MARGIN_MM*2);
+  const workW = material.workW || (W - CUSTOM_MARGIN_MM*2);
+  const workH = material.workH || (H - CUSTOM_MARGIN_MM*2);
   const padX = Math.max(0,(W-workW)/2);
   const padY = Math.max(0,(H-workH)/2);
   let labels='';
