@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v59 direccion PDF 2 lineas");
+console.log("COTIZADOR JS conectado v60 notas condiciones corregidas");
 
 const $ = (id) => document.getElementById(id);
 
@@ -296,6 +296,23 @@ function showToast(msg, type="ok"){
   setTimeout(() => {
     t.className = "toast";
   }, 3600);
+}
+
+
+/* =========================================================
+   FIX v60 · Notas / condiciones autoexpandible
+   Evita que el texto quede escondido dentro del textarea.
+========================================================= */
+function autoGrowTextarea(el){
+  if(!el) return;
+
+  const min = Number(el.dataset.minHeight || 116);
+  el.style.height = "auto";
+  el.style.height = Math.max(min, el.scrollHeight + 4) + "px";
+}
+
+function ajustarNotasAuto(){
+  autoGrowTextarea($("notas"));
 }
 
 async function obtenerSiguienteNumeroDocumento(fechaISO){
@@ -1051,6 +1068,7 @@ function render(){
   });
 
   updateTotals();
+  ajustarNotasAuto();
 }
 
 /* CLIENTES CORREGIDO */
@@ -1722,7 +1740,14 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   });
 
   let fy = doc.lastAutoTable.finalY + 6;
-  const notesH = form.notas ? 33 : 18;
+
+  const leftW = 126;
+  const rightX = 145;
+  const rightW = W - rightX - 14;
+
+  const noteLinesAll = form.notas ? doc.splitTextToSize(form.notas,leftW-6) : [];
+  const noteLines = noteLinesAll.slice(0,18);
+  const notesH = form.notas ? Math.min(88, Math.max(33, 13 + (noteLines.length * 4.2))) : 18;
   const rightBoxH = Number(t.iva || 0) > 0 ? 33 : 25;
 
   if(fy > H - Math.max(notesH,rightBoxH) - 26){
@@ -1730,14 +1755,10 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     fy = 20;
   }
 
-  const leftW = 126;
-  const rightX = 145;
-  const rightW = W - rightX - 14;
-
   if(form.notas){
     doc.setDrawColor(...line);
     doc.setFillColor(252,252,254);
-    doc.roundedRect(14,fy,leftW,33,3,3,"FD");
+    doc.roundedRect(14,fy,leftW,notesH,3,3,"FD");
 
     doc.setFont("helvetica","bold");
     doc.setFontSize(8);
@@ -1747,7 +1768,14 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     doc.setFont("helvetica","normal");
     doc.setFontSize(8.4);
     doc.setTextColor(70,74,82);
-    doc.text(doc.splitTextToSize(form.notas,leftW-6).slice(0,7),17,fy+11);
+    doc.text(noteLines,17,fy+11);
+
+    if(noteLinesAll.length > noteLines.length){
+      doc.setFont("helvetica","bold");
+      doc.setFontSize(7);
+      doc.setTextColor(220,38,38);
+      doc.text("Nota recortada por espacio disponible.",17,fy+notesH-4);
+    }
   }
 
   doc.setDrawColor(...line);
@@ -2627,6 +2655,7 @@ function cargarCotizacionEnFormulario(){
   $("email").value = f.email || "";
   $("direccion").value = f.direccion || "";
   $("notas").value = f.notas || "";
+  ajustarNotasAuto();
   $("ivaCheck").checked = !!f.iva;
   aplicarModoNumeroDocumento(f.tipo || "Cotización", false);
 
@@ -2658,6 +2687,7 @@ async function nuevaCotizacionLimpia(){
   $("email").value = "";
   $("direccion").value = "";
   $("notas").value = "";
+  ajustarNotasAuto();
   $("ivaCheck").checked = false;
   $("clienteMini").textContent = "Escribe para buscar o crear cliente nuevo.";
 
@@ -2693,6 +2723,10 @@ function bindEvents(){
   });
 
   document.addEventListener("input", e => {
+    if(e.target.id === "notas"){
+      autoGrowTextarea(e.target);
+    }
+
     if(e.target.matches("[data-index][data-field]")){
       const index = Number(e.target.dataset.index);
       const field = e.target.dataset.field;
@@ -2869,6 +2903,7 @@ async function iniciarCotizador(){
     bindEvents();
     render();
     updateTotals();
+    ajustarNotasAuto();
     interfazLista = true;
 
     await initDates();
@@ -2879,6 +2914,7 @@ async function iniciarCotizador(){
 
     render();
     updateTotals();
+    ajustarNotasAuto();
 
     try{
       await cargarClientesCotizador();
