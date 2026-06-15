@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v60 notas autogrow");
+console.log("COTIZADOR JS conectado v60 notas condiciones corregidas");
 
 const $ = (id) => document.getElementById(id);
 
@@ -2950,5 +2950,4 @@ async function iniciarCotizador(){
 
 
 document.addEventListener("DOMContentLoaded", iniciarCotizador);
-
 
