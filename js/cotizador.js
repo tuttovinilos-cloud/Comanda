@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v60 notas condiciones corregidas");
+console.log("COTIZADOR JS conectado v61 notas PDF dentro del cuadro");
 
 const $ = (id) => document.getElementById(id);
 
@@ -1529,6 +1529,37 @@ function getPdfImageSize(doc,src,maxW=82,maxH=62){
   }
 }
 
+
+function splitNotasPdf(doc,text,maxWidth){
+  const raw = String(text || "").replace(/\r/g,"").trim();
+  if(!raw) return [];
+
+  const bloques = raw.split("\n");
+  const lines = [];
+
+  bloques.forEach((bloque,idx) => {
+    const t = String(bloque || "").trim();
+
+    if(!t){
+      if(lines.length && idx < bloques.length - 1) lines.push("");
+      return;
+    }
+
+    const wrapped = doc.splitTextToSize(t,maxWidth);
+
+    wrapped.forEach((line,i) => {
+      // Sangría visual para líneas continuadas de bullets.
+      if(i > 0 && /^[\-•]/.test(t)){
+        lines.push("  " + line);
+      }else{
+        lines.push(line);
+      }
+    });
+  });
+
+  return lines;
+}
+
 async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   if(!window.jspdf || !window.jspdf.jsPDF) throw new Error("No cargó la librería PDF.");
 
@@ -1745,9 +1776,17 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   const rightX = 145;
   const rightW = W - rightX - 14;
 
-  const noteLinesAll = form.notas ? doc.splitTextToSize(form.notas,leftW-6) : [];
-  const noteLines = noteLinesAll.slice(0,18);
-  const notesH = form.notas ? Math.min(88, Math.max(33, 13 + (noteLines.length * 4.2))) : 18;
+  // FIX v61:
+  // Las notas deben respetar el cuadro.
+  // Se usa un ancho interno más conservador, menor fuente y línea por línea.
+  const noteX = 17;
+  const noteInnerW = leftW - 14;
+  const noteFontSize = 7.2;
+  const noteLineH = 3.35;
+  const noteLinesAll = form.notas ? splitNotasPdf(doc,form.notas,noteInnerW) : [];
+  const maxNoteLines = 24;
+  const noteLines = noteLinesAll.slice(0,maxNoteLines);
+  const notesH = form.notas ? Math.min(95, Math.max(33, 13 + (noteLines.length * noteLineH) + 4)) : 18;
   const rightBoxH = Number(t.iva || 0) > 0 ? 33 : 25;
 
   if(fy > H - Math.max(notesH,rightBoxH) - 26){
@@ -1761,20 +1800,27 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     doc.roundedRect(14,fy,leftW,notesH,3,3,"FD");
 
     doc.setFont("helvetica","bold");
-    doc.setFontSize(8);
+    doc.setFontSize(7.4);
     doc.setTextColor(...blueDark);
-    doc.text("NOTAS / CONDICIONES",17,fy+5.5);
+    doc.text("NOTAS / CONDICIONES",noteX,fy+5.5);
 
     doc.setFont("helvetica","normal");
-    doc.setFontSize(8.4);
+    doc.setFontSize(noteFontSize);
     doc.setTextColor(70,74,82);
-    doc.text(noteLines,17,fy+11);
+
+    let noteY = fy + 10.2;
+    noteLines.forEach(line => {
+      if(noteY <= fy + notesH - 5){
+        doc.text(String(line || ""),noteX,noteY);
+        noteY += noteLineH;
+      }
+    });
 
     if(noteLinesAll.length > noteLines.length){
       doc.setFont("helvetica","bold");
-      doc.setFontSize(7);
+      doc.setFontSize(6.5);
       doc.setTextColor(220,38,38);
-      doc.text("Nota recortada por espacio disponible.",17,fy+notesH-4);
+      doc.text("Nota recortada por espacio disponible.",noteX,fy+notesH-3.5);
     }
   }
 
