@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v61 notas PDF dentro del cuadro");
+console.log("COTIZADOR JS conectado v62 notas ancho completo PDF");
 
 const $ = (id) => document.getElementById(id);
 
@@ -16,7 +16,7 @@ let previewSnapshot = null;
 
 let undoStack = [];
 let restaurandoDeshacer = false;
-const UNDO_MAX = 10;
+const UNDO_MAX = 4;
 let eventosCotizadorVinculados = false;
 
 let data = {
@@ -1772,43 +1772,54 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
   let fy = doc.lastAutoTable.finalY + 6;
 
-  const leftW = 126;
-  const rightX = 145;
-  const rightW = W - rightX - 14;
-
-  // FIX v61:
-  // Las notas deben respetar el cuadro.
-  // Se usa un ancho interno más conservador, menor fuente y línea por línea.
-  const noteX = 17;
-  const noteInnerW = leftW - 14;
-  const noteFontSize = 7.2;
-  const noteLineH = 3.35;
-  const noteLinesAll = form.notas ? splitNotasPdf(doc,form.notas,noteInnerW) : [];
-  const maxNoteLines = 24;
-  const noteLines = noteLinesAll.slice(0,maxNoteLines);
-  const notesH = form.notas ? Math.min(95, Math.max(33, 13 + (noteLines.length * noteLineH) + 4)) : 18;
+  const rightW = 53;
+  const rightX = W - 14 - rightW;
+  const fullX = 14;
+  const fullW = W - 28;
   const rightBoxH = Number(t.iva || 0) > 0 ? 33 : 25;
 
-  if(fy > H - Math.max(notesH,rightBoxH) - 26){
-    doc.addPage();
-    fy = 20;
-  }
+  /*
+    FIX v62:
+    Cuando hay muchas Notas / condiciones, el cuadro ya no va en columna izquierda.
+    Ahora ocupa el ancho completo del documento para que el texto respete el cuadro
+    y no quede comprimido ni pegado al total.
+  */
+  let totalsY = fy;
 
   if(form.notas){
+    const noteX = fullX + 4;
+    const noteInnerW = fullW - 8;
+    const noteFontSize = 7.4;
+    const noteLineH = 3.45;
+
+    doc.setFont("helvetica","normal");
+    doc.setFontSize(noteFontSize);
+
+    const noteLinesAll = splitNotasPdf(doc,form.notas,noteInnerW);
+    const maxNoteLines = 30;
+    const noteLines = noteLinesAll.slice(0,maxNoteLines);
+    const notesH = Math.min(105, Math.max(34, 14 + (noteLines.length * noteLineH) + 5));
+    const requiredH = notesH + 7 + rightBoxH;
+
+    if(fy > H - requiredH - 26){
+      doc.addPage();
+      fy = 20;
+    }
+
     doc.setDrawColor(...line);
     doc.setFillColor(252,252,254);
-    doc.roundedRect(14,fy,leftW,notesH,3,3,"FD");
+    doc.roundedRect(fullX,fy,fullW,notesH,3,3,"FD");
 
     doc.setFont("helvetica","bold");
-    doc.setFontSize(7.4);
+    doc.setFontSize(7.6);
     doc.setTextColor(...blueDark);
-    doc.text("NOTAS / CONDICIONES",noteX,fy+5.5);
+    doc.text("NOTAS / CONDICIONES",noteX,fy+5.7);
 
     doc.setFont("helvetica","normal");
     doc.setFontSize(noteFontSize);
     doc.setTextColor(70,74,82);
 
-    let noteY = fy + 10.2;
+    let noteY = fy + 10.5;
     noteLines.forEach(line => {
       if(noteY <= fy + notesH - 5){
         doc.text(String(line || ""),noteX,noteY);
@@ -1822,13 +1833,21 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       doc.setTextColor(220,38,38);
       doc.text("Nota recortada por espacio disponible.",noteX,fy+notesH-3.5);
     }
+
+    totalsY = fy + notesH + 7;
+  }else{
+    if(fy > H - rightBoxH - 26){
+      doc.addPage();
+      fy = 20;
+    }
+    totalsY = fy;
   }
 
   doc.setDrawColor(...line);
   doc.setFillColor(255,255,255);
-  doc.roundedRect(rightX,fy,rightW,rightBoxH,3,3,"FD");
+  doc.roundedRect(rightX,totalsY,rightW,rightBoxH,3,3,"FD");
 
-  let rowY = fy;
+  let rowY = totalsY;
 
   const drawSummaryRow = (label,value,fill,txtColor,bold=false,size=9.2) => {
     doc.setFillColor(...fill);
