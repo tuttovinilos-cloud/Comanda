@@ -16,7 +16,7 @@ let previewSnapshot = null;
 
 let undoStack = [];
 let restaurandoDeshacer = false;
-const UNDO_MAX = 4;
+const UNDO_MAX = 10;
 let eventosCotizadorVinculados = false;
 
 let data = {
