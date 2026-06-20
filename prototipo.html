@@ -71,6 +71,15 @@ button{cursor:pointer;border:0}
 .bloque .texto{
   font-family:var(--head);font-weight:800;font-size:12px;color:var(--azulOsc);
   text-align:center;padding:6px 8px;width:100%;word-break:break-word}
+.bloque .medida{
+  display:block;
+  margin-top:4px;
+  font-family:var(--body);
+  font-size:10.5px;
+  font-weight:900;
+  color:var(--gris);
+  line-height:1.15;
+}
 .bloque .quitar{
   position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:999px;
   background:var(--rojo);color:#fff;font-weight:900;font-size:12px;line-height:1;
@@ -128,7 +137,7 @@ button{cursor:pointer;border:0}
       <div class="hint">
         • Toca <b>＋ Bloque</b> para agregar un cuadro · <b>arrastra</b> para moverlo ·
         usa la esquina azul para <b>cambiar tamaño</b> · pasa el cursor y toca la <b>✕</b> roja para borrarlo.<br>
-        • Los números se ordenan solos. Escribe la descripción en la <b>leyenda</b> de la derecha.<br>
+        • Cada bloque muestra su medida real en <b>píxeles</b>. Los números se ordenan solos. Escribe la descripción en la <b>leyenda</b> de la derecha.<br>
         • Cuando quede como lo quieres, toca <b>Exportar imagen</b> y mándame el PNG.
       </div>
     </div>
@@ -155,6 +164,7 @@ let uid=1;
 
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1700)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function medidaPx(b){return Math.round(b.w)+' × '+Math.round(b.h)+' px'}
 
 function agregarBloque(x,y){
   const rect=lienzo.getBoundingClientRect();
@@ -189,7 +199,10 @@ function render(){
     el.innerHTML=`
       <button class="quitar" title="Quitar">✕</button>
       <span class="numero">${i+1}</span>
-      <span class="texto">${esc(b.texto)||''}</span>
+      <span class="texto">
+        <span class="nombre">${esc(b.texto)||''}</span>
+        <small class="medida">${medidaPx(b)}</small>
+      </span>
       <span class="resize" title="Redimensionar"></span>`;
     el.querySelector('.quitar').addEventListener('pointerdown',e=>{e.stopPropagation();quitarBloque(b.id)});
     iniciarArrastre(el,b);
@@ -211,7 +224,14 @@ function renderLeyenda(){
   cont.querySelectorAll('input').forEach(inp=>{
     inp.addEventListener('input',e=>{
       const b=bloques.find(x=>x.id===Number(e.target.dataset.id));
-      if(b){b.texto=e.target.value;const el=[...lienzo.children][bloques.indexOf(b)];if(el)el.querySelector('.texto').textContent=b.texto}
+      if(b){
+        b.texto=e.target.value;
+        const el=[...lienzo.children][bloques.indexOf(b)];
+        if(el){
+          const nombre=el.querySelector('.nombre');
+          if(nombre)nombre.textContent=b.texto;
+        }
+      }
     });
   });
 }
@@ -231,7 +251,12 @@ function iniciarArrastre(el,b){
       b.y=Math.max(0,Math.min(r.height-b.h,ev.clientY-r.top-offY));
       el.style.left=b.x+'px';el.style.top=b.y+'px';
     }
-    function soltar(ev){el.releasePointerCapture(e.pointerId);el.removeEventListener('pointermove',mover);el.removeEventListener('pointerup',soltar);render()}
+    function soltar(ev){
+      try{el.releasePointerCapture(e.pointerId)}catch(err){}
+      el.removeEventListener('pointermove',mover);
+      el.removeEventListener('pointerup',soltar);
+      render();
+    }
     el.addEventListener('pointermove',mover);
     el.addEventListener('pointerup',soltar);
   });
@@ -244,11 +269,20 @@ function iniciarResize(handle,el,b){
     handle.setPointerCapture(e.pointerId);
     const startX=e.clientX,startY=e.clientY,w0=b.w,h0=b.h;
     function mover(ev){
-      b.w=Math.max(60,w0+(ev.clientX-startX));
-      b.h=Math.max(46,h0+(ev.clientY-startY));
-      el.style.width=b.w+'px';el.style.height=b.h+'px';
+      const r=lienzo.getBoundingClientRect();
+      b.w=Math.max(60,Math.min(r.width-b.x,w0+(ev.clientX-startX)));
+      b.h=Math.max(46,Math.min(r.height-b.y,h0+(ev.clientY-startY)));
+      el.style.width=b.w+'px';
+      el.style.height=b.h+'px';
+      const medida=el.querySelector('.medida');
+      if(medida)medida.textContent=medidaPx(b);
     }
-    function soltar(){handle.removeEventListener('pointermove',mover);handle.removeEventListener('pointerup',soltar)}
+    function soltar(){
+      try{handle.releasePointerCapture(e.pointerId)}catch(err){}
+      handle.removeEventListener('pointermove',mover);
+      handle.removeEventListener('pointerup',soltar);
+      render();
+    }
     handle.addEventListener('pointermove',mover);
     handle.addEventListener('pointerup',soltar);
   });
@@ -288,6 +322,22 @@ function exportarPNG(){
   ctx.strokeStyle='#d9deea';ctx.lineWidth=1.6;
   ctx.strokeRect(pad,areaY,W,Hcanvas);
 
+  // Dibujar grilla en exportación
+  ctx.strokeStyle='#eef1ff';
+  ctx.lineWidth=1;
+  for(let gx=0;gx<=W;gx+=30){
+    ctx.beginPath();
+    ctx.moveTo(pad+gx,areaY);
+    ctx.lineTo(pad+gx,areaY+Hcanvas);
+    ctx.stroke();
+  }
+  for(let gy=0;gy<=Hcanvas;gy+=30){
+    ctx.beginPath();
+    ctx.moveTo(pad,areaY+gy);
+    ctx.lineTo(pad+W,areaY+gy);
+    ctx.stroke();
+  }
+
   // Bloques
   bloques.forEach((b,i)=>{
     const bx=pad+b.x, by=areaY+b.y;
@@ -295,13 +345,24 @@ function exportarPNG(){
     roundRect(ctx,bx,by,b.w,b.h,10);ctx.fill();
     ctx.strokeStyle='#153bff';ctx.lineWidth=2;
     roundRect(ctx,bx,by,b.w,b.h,10);ctx.stroke();
-    // texto centrado
+
+    // texto centrado + medida
+    ctx.fillStyle='#0b1f7a';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+
     if(b.texto){
-      ctx.fillStyle='#0b1f7a';ctx.font='800 12px Montserrat,Arial';
-      ctx.textAlign='center';ctx.textBaseline='middle';
-      wrapText(ctx,b.texto,bx+b.w/2,by+b.h/2,b.w-14,14);
-      ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.font='800 12px Montserrat,Arial';
+      wrapText(ctx,b.texto,bx+b.w/2,by+b.h/2-8,b.w-14,14);
     }
+
+    ctx.font='900 10.5px Inter,Arial';
+    ctx.fillStyle='#6b7280';
+    ctx.fillText(medidaPx(b),bx+b.w/2,by+b.h/2+22);
+
+    ctx.textAlign='left';
+    ctx.textBaseline='top';
+
     // número (círculo arriba derecha)
     const nx=bx+b.w-14, ny=by+14;
     ctx.beginPath();ctx.arc(nx,ny,12,0,Math.PI*2);
@@ -327,7 +388,7 @@ function exportarPNG(){
     ctx.textAlign='left';ctx.textBaseline='top';
     // texto
     ctx.fillStyle='#111827';ctx.font='600 13px Inter,Arial';
-    ctx.fillText(b.texto||'(sin describir)',pad+32,y+2);
+    ctx.fillText((b.texto||'(sin describir)')+' · '+medidaPx(b),pad+32,y+2);
     y+=lineH;
   });
 
@@ -348,7 +409,7 @@ function wrapText(ctx,text,cx,cy,maxW,lh){
   const words=String(text).split(/\s+/);let line='',lines=[];
   for(const w of words){const t=line?line+' '+w:w;if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=w}else line=t}
   if(line)lines.push(line);
-  lines=lines.slice(0,4);
+  lines=lines.slice(0,3);
   const startY=cy-((lines.length-1)*lh)/2;
   lines.forEach((l,i)=>ctx.fillText(l,cx,startY+i*lh));
 }
@@ -369,6 +430,7 @@ function importarJSON(file){
   reader.onload=()=>{
     try{
       const data=JSON.parse(reader.result);
+      uid=1;
       bloques=(data.bloques||[]).map(b=>({id:uid++,x:+b.x||0,y:+b.y||0,w:+b.w||120,h:+b.h||80,texto:b.texto||''}));
       if(data.titulo)$('titulo').value=data.titulo;
       render();toast('Importado ✓');
