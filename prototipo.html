@@ -9,11 +9,11 @@
 :root{
   --azul:#153bff;--azulOsc:#0b1f7a;--azulClaro:#eef1ff;
   --fondo:#f0f2f9;--linea:#d9deea;--texto:#111827;--gris:#6b7280;
-  --verde:#16a34a;--rojo:#dc2626;--card:#fff;
+  --verde:#16a34a;--rojo:#dc2626;--card:#fff;--amarillo:#f59e0b;
   --head:'Montserrat',Arial,sans-serif;--body:'Inter',Arial,sans-serif;
 }
 body{font-family:var(--body);background:var(--fondo);color:var(--texto);min-height:100vh;font-size:14px}
-button,input,textarea{font:inherit}
+button,input,textarea,select{font:inherit}
 button{cursor:pointer;border:0}
 
 .top{
@@ -33,9 +33,10 @@ button{cursor:pointer;border:0}
 .btn.verde{background:var(--verde);color:#fff}
 .btn.gris{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4)}
 .btn.rojo{background:var(--rojo);color:#fff}
+.btn.amarillo{background:var(--amarillo);color:#fff}
 
-.wrap{max-width:1280px;margin:16px auto;padding:0 16px 60px;display:grid;
-  grid-template-columns:minmax(0,1fr) 320px;gap:16px}
+.wrap{max-width:1380px;margin:16px auto;padding:0 16px 60px;display:grid;
+  grid-template-columns:minmax(0,1fr) 340px;gap:16px}
 
 .panel{background:var(--card);border:1px solid var(--linea);border-radius:16px;
   box-shadow:0 4px 18px rgba(0,0,0,.05);overflow:hidden}
@@ -50,16 +51,38 @@ button{cursor:pointer;border:0}
   color:var(--azulOsc);margin-bottom:12px;outline:none}
 .tituloDoc:focus{border-color:var(--azul);box-shadow:0 0 0 3px rgba(21,59,255,.1)}
 
+.toolbar{
+  display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-bottom:12px;
+  background:#f8f9ff;border:1px solid var(--linea);border-radius:12px;padding:10px;
+}
+.campo{display:flex;flex-direction:column;gap:4px}
+.campo label{font-size:10.5px;text-transform:uppercase;font-weight:900;color:var(--gris);letter-spacing:.4px}
+.campo input,.campo select{
+  height:36px;border:1px solid var(--linea);border-radius:9px;padding:0 9px;
+  font-weight:800;outline:none;background:#fff;color:var(--texto);min-width:86px;
+}
+.campo input:focus,.campo select:focus{border-color:var(--azul);box-shadow:0 0 0 3px rgba(21,59,255,.1)}
+.campo.zoom input{width:130px}
+.zoom-info{font-size:11px;color:var(--gris);font-weight:800;padding-bottom:10px}
+
+.lienzo-viewport{
+  width:100%;height:540px;overflow:auto;border:1.6px dashed var(--linea);
+  border-radius:12px;background:#fff;position:relative;
+}
+.lienzo-zoom{
+  transform-origin:top left;
+  position:relative;
+}
 #lienzo{
-  position:relative;width:100%;height:540px;background:
+  position:relative;width:1400px;height:900px;background:
     linear-gradient(#eef1ff 1px,transparent 1px) 0 0/100% 30px,
     linear-gradient(90deg,#eef1ff 1px,transparent 1px) 0 0/30px 100%,
     #fff;
-  border:1.6px dashed var(--linea);border-radius:12px;overflow:hidden;touch-action:none;
+  overflow:hidden;touch-action:none;
 }
 .bloque{
   position:absolute;background:var(--azulClaro);border:2px solid var(--azul);
-  border-radius:10px;min-width:60px;min-height:46px;display:flex;
+  border-radius:10px;min-width:40px;min-height:30px;display:flex;
   align-items:center;justify-content:center;cursor:move;user-select:none;
   box-shadow:0 4px 12px rgba(21,59,255,.14);touch-action:none;overflow:hidden;
 }
@@ -80,6 +103,15 @@ button{cursor:pointer;border:0}
   color:var(--gris);
   line-height:1.15;
 }
+.bloque .coords{
+  display:block;
+  margin-top:2px;
+  font-family:var(--body);
+  font-size:9.5px;
+  font-weight:800;
+  color:#8a94a6;
+  line-height:1.15;
+}
 .bloque .quitar{
   position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:999px;
   background:var(--rojo);color:#fff;font-weight:900;font-size:12px;line-height:1;
@@ -88,9 +120,22 @@ button{cursor:pointer;border:0}
 .bloque .resize{
   position:absolute;right:0;bottom:0;width:18px;height:18px;cursor:nwse-resize;
   background:linear-gradient(135deg,transparent 45%,var(--azul) 45%);border-bottom-right-radius:9px}
-.bloque.sel{outline:3px solid rgba(21,59,255,.35)}
+.bloque.sel{outline:3px solid rgba(21,59,255,.35);background:#fff7ed;border-color:#f59e0b}
 
 .hint{color:var(--gris);font-size:11.5px;margin-top:8px;line-height:1.5}
+
+.editor-box{border:1px solid var(--linea);background:#f8f9ff;border-radius:13px;padding:12px;margin-bottom:14px}
+.editor-box h3{font-family:var(--head);font-size:12px;font-weight:900;color:var(--azul);text-transform:uppercase;margin-bottom:10px}
+.editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.editor-grid .campo input{width:100%;min-width:0}
+.editor-actions{display:flex;gap:8px;margin-top:10px}
+.mini-btn{
+  height:34px;padding:0 10px;border-radius:9px;font-family:var(--head);
+  font-weight:900;font-size:11px;text-transform:uppercase;background:var(--azul);color:#fff;
+}
+.mini-btn.gris{background:#e5e7eb;color:#111827}
+.mini-btn.rojo{background:var(--rojo);color:#fff}
+.editor-vacio{font-size:12px;color:var(--gris);font-weight:700;line-height:1.45}
 
 .leyenda-item{display:flex;align-items:center;gap:8px;margin-bottom:9px}
 .leyenda-num{flex:0 0 auto;width:28px;height:28px;border-radius:999px;
@@ -107,9 +152,9 @@ button{cursor:pointer;border:0}
   transition:.25s;z-index:200}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-@media(max-width:860px){
+@media(max-width:920px){
   .wrap{grid-template-columns:1fr}
-  #lienzo{height:420px}
+  .lienzo-viewport{height:470px}
   .top h1{font-size:15px;width:100%}
 }
 </style>
@@ -120,6 +165,7 @@ button{cursor:pointer;border:0}
   <h1>🟦 Editor de Bloques · Tuttovinilos</h1>
   <div class="acciones">
     <button class="btn gris" onclick="agregarBloque()">＋ Bloque</button>
+    <button class="btn amarillo" onclick="duplicarSeleccion()">Duplicar</button>
     <button class="btn verde" onclick="exportarPNG()">⬇ Exportar imagen</button>
     <button class="btn azul" onclick="exportarJSON()">{ } Exportar JSON</button>
     <button class="btn gris" onclick="document.getElementById('importFile').click()">⬆ Importar</button>
@@ -133,20 +179,56 @@ button{cursor:pointer;border:0}
     <div class="panel-head"><b>Área de trabajo</b><span id="contador" style="font-size:11px;color:var(--gris);font-weight:700">0 bloques</span></div>
     <div class="panel-body">
       <input id="titulo" class="tituloDoc" value="Distribución de bloques" placeholder="Título del cuadro...">
-      <div id="lienzo"></div>
+
+      <div class="toolbar">
+        <div class="campo zoom">
+          <label>Zoom visual</label>
+          <input id="zoomRange" type="range" min="25" max="150" value="70" step="5" oninput="cambiarZoom(this.value)">
+        </div>
+        <div class="campo">
+          <label>Zoom</label>
+          <select id="zoomSelect" onchange="cambiarZoom(this.value)">
+            <option value="25">25%</option>
+            <option value="35">35%</option>
+            <option value="50">50%</option>
+            <option value="70" selected>70%</option>
+            <option value="85">85%</option>
+            <option value="100">100%</option>
+            <option value="125">125%</option>
+            <option value="150">150%</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label>Ancho lienzo px</label>
+          <input id="lienzoW" type="number" min="300" max="5000" value="1400" onchange="aplicarTamanoLienzo()">
+        </div>
+        <div class="campo">
+          <label>Alto lienzo px</label>
+          <input id="lienzoH" type="number" min="300" max="5000" value="900" onchange="aplicarTamanoLienzo()">
+        </div>
+        <div class="zoom-info" id="zoomInfo">Visual: 70% · Real: 1400 × 900 px</div>
+      </div>
+
+      <div class="lienzo-viewport" id="viewport">
+        <div class="lienzo-zoom" id="lienzoZoom">
+          <div id="lienzo"></div>
+        </div>
+      </div>
+
       <div class="hint">
-        • Toca <b>＋ Bloque</b> para agregar un cuadro · <b>arrastra</b> para moverlo ·
-        usa la esquina azul para <b>cambiar tamaño</b> · pasa el cursor y toca la <b>✕</b> roja para borrarlo.<br>
-        • Cada bloque muestra su medida real en <b>píxeles</b>. Los números se ordenan solos. Escribe la descripción en la <b>leyenda</b> de la derecha.<br>
-        • Cuando quede como lo quieres, toca <b>Exportar imagen</b> y mándame el PNG.
+        • Baja el <b>zoom visual</b> para ver más espacio y meter más bloques. El tamaño real en px no cambia.<br>
+        • Selecciona un bloque y modifica manualmente <b>X, Y, ancho y alto</b> en el panel derecho.<br>
+        • Cada bloque muestra su medida real en <b>píxeles</b> y sus coordenadas.
       </div>
     </div>
   </section>
 
-  <!-- LEYENDA -->
+  <!-- PANEL DERECHO -->
   <aside class="panel">
-    <div class="panel-head"><b>Leyenda</b></div>
+    <div class="panel-head"><b>Editar bloque</b></div>
     <div class="panel-body">
+      <div class="editor-box" id="editorBloque"></div>
+      <div class="panel-head" style="padding:0 0 10px;border-bottom:0"><b>Leyenda</b></div>
       <div id="leyenda"></div>
     </div>
   </aside>
@@ -158,23 +240,92 @@ button{cursor:pointer;border:0}
 <script>
 const $=id=>document.getElementById(id);
 const lienzo=$('lienzo');
+const viewport=$('viewport');
+const lienzoZoom=$('lienzoZoom');
+
 let bloques=[];           // {id, x, y, w, h, texto}
 let seleccion=null;
 let uid=1;
+let zoom=0.70;
 
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1700)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function medidaPx(b){return Math.round(b.w)+' × '+Math.round(b.h)+' px'}
+function coordPx(b){return 'X '+Math.round(b.x)+' · Y '+Math.round(b.y)}
+
+function cambiarZoom(valor){
+  zoom=Number(valor)/100;
+  $('zoomRange').value=valor;
+  $('zoomSelect').value=String(valor);
+  aplicarZoom();
+}
+
+function aplicarZoom(){
+  const w=Number($('lienzoW').value)||1400;
+  const h=Number($('lienzoH').value)||900;
+  lienzoZoom.style.width=(w*zoom)+'px';
+  lienzoZoom.style.height=(h*zoom)+'px';
+  lienzoZoom.style.transform='scale('+zoom+')';
+  $('zoomInfo').textContent='Visual: '+Math.round(zoom*100)+'% · Real: '+w+' × '+h+' px';
+}
+
+function aplicarTamanoLienzo(){
+  const w=Math.max(300,Number($('lienzoW').value)||1400);
+  const h=Math.max(300,Number($('lienzoH').value)||900);
+  $('lienzoW').value=w;
+  $('lienzoH').value=h;
+  lienzo.style.width=w+'px';
+  lienzo.style.height=h+'px';
+
+  bloques.forEach(b=>{
+    b.x=Math.max(0,Math.min(w-b.w,b.x));
+    b.y=Math.max(0,Math.min(h-b.h,b.y));
+    b.w=Math.max(40,Math.min(w-b.x,b.w));
+    b.h=Math.max(30,Math.min(h-b.y,b.h));
+  });
+
+  aplicarZoom();
+  render();
+}
+
+function seleccionar(id){
+  seleccion=id;
+  render();
+}
+
+function bloqueSeleccionado(){
+  return bloques.find(b=>b.id===seleccion)||null;
+}
 
 function agregarBloque(x,y){
-  const rect=lienzo.getBoundingClientRect();
+  const wLienzo=Number($('lienzoW').value)||1400;
+  const hLienzo=Number($('lienzoH').value)||900;
   const b={
     id:uid++,
-    x:(x!=null?x:30+(bloques.length*22)%Math.max(60,rect.width-180)),
-    y:(y!=null?y:30+(bloques.length*18)%Math.max(60,rect.height-120)),
+    x:(x!=null?x:30+(bloques.length*42)%Math.max(60,wLienzo-180)),
+    y:(y!=null?y:30+(bloques.length*34)%Math.max(60,hLienzo-120)),
     w:120,h:80,texto:''
   };
   bloques.push(b);
+  seleccion=b.id;
+  render();
+}
+
+function duplicarSeleccion(){
+  const b=bloqueSeleccionado();
+  if(!b){toast('Selecciona un bloque');return}
+  const wLienzo=Number($('lienzoW').value)||1400;
+  const hLienzo=Number($('lienzoH').value)||900;
+  const copia={
+    id:uid++,
+    x:Math.min(wLienzo-b.w,b.x+25),
+    y:Math.min(hLienzo-b.h,b.y+25),
+    w:b.w,
+    h:b.h,
+    texto:b.texto
+  };
+  bloques.push(copia);
+  seleccion=copia.id;
   render();
 }
 
@@ -202,6 +353,7 @@ function render(){
       <span class="texto">
         <span class="nombre">${esc(b.texto)||''}</span>
         <small class="medida">${medidaPx(b)}</small>
+        <small class="coords">${coordPx(b)}</small>
       </span>
       <span class="resize" title="Redimensionar"></span>`;
     el.querySelector('.quitar').addEventListener('pointerdown',e=>{e.stopPropagation();quitarBloque(b.id)});
@@ -209,8 +361,100 @@ function render(){
     iniciarResize(el.querySelector('.resize'),el,b);
     lienzo.appendChild(el);
   });
+  renderEditor();
   renderLeyenda();
   $('contador').textContent=bloques.length+(bloques.length===1?' bloque':' bloques');
+}
+
+function renderEditor(){
+  const cont=$('editorBloque');
+  const b=bloqueSeleccionado();
+
+  if(!b){
+    cont.innerHTML='<h3>Sin selección</h3><div class="editor-vacio">Toca un bloque para editar sus medidas exactas.</div>';
+    return;
+  }
+
+  const idx=bloques.indexOf(b)+1;
+  cont.innerHTML=`
+    <h3>Bloque ${idx}</h3>
+    <div class="editor-grid">
+      <div class="campo">
+        <label>X px</label>
+        <input id="editX" type="number" value="${Math.round(b.x)}" oninput="actualizarSeleccionDesdeInputs()">
+      </div>
+      <div class="campo">
+        <label>Y px</label>
+        <input id="editY" type="number" value="${Math.round(b.y)}" oninput="actualizarSeleccionDesdeInputs()">
+      </div>
+      <div class="campo">
+        <label>Ancho px</label>
+        <input id="editW" type="number" min="40" value="${Math.round(b.w)}" oninput="actualizarSeleccionDesdeInputs()">
+      </div>
+      <div class="campo">
+        <label>Alto px</label>
+        <input id="editH" type="number" min="30" value="${Math.round(b.h)}" oninput="actualizarSeleccionDesdeInputs()">
+      </div>
+    </div>
+    <div class="editor-actions">
+      <button class="mini-btn" onclick="duplicarSeleccion()">Duplicar</button>
+      <button class="mini-btn gris" onclick="centrarSeleccion()">Centrar</button>
+      <button class="mini-btn rojo" onclick="quitarBloque(${b.id})">Borrar</button>
+    </div>
+  `;
+}
+
+function actualizarSeleccionDesdeInputs(){
+  const b=bloqueSeleccionado();
+  if(!b)return;
+
+  const wLienzo=Number($('lienzoW').value)||1400;
+  const hLienzo=Number($('lienzoH').value)||900;
+
+  let x=Number($('editX').value);
+  let y=Number($('editY').value);
+  let w=Number($('editW').value);
+  let h=Number($('editH').value);
+
+  if(!Number.isFinite(x))x=b.x;
+  if(!Number.isFinite(y))y=b.y;
+  if(!Number.isFinite(w))w=b.w;
+  if(!Number.isFinite(h))h=b.h;
+
+  w=Math.max(40,Math.min(wLienzo,w));
+  h=Math.max(30,Math.min(hLienzo,h));
+  x=Math.max(0,Math.min(wLienzo-w,x));
+  y=Math.max(0,Math.min(hLienzo-h,y));
+
+  b.x=x;b.y=y;b.w=w;b.h=h;
+
+  dibujarSoloBloque(b);
+}
+
+function dibujarSoloBloque(b){
+  const index=bloques.indexOf(b);
+  const el=lienzo.children[index];
+  if(!el)return render();
+
+  el.style.left=b.x+'px';
+  el.style.top=b.y+'px';
+  el.style.width=b.w+'px';
+  el.style.height=b.h+'px';
+
+  const medida=el.querySelector('.medida');
+  const coords=el.querySelector('.coords');
+  if(medida)medida.textContent=medidaPx(b);
+  if(coords)coords.textContent=coordPx(b);
+}
+
+function centrarSeleccion(){
+  const b=bloqueSeleccionado();
+  if(!b)return;
+  const wLienzo=Number($('lienzoW').value)||1400;
+  const hLienzo=Number($('lienzoH').value)||900;
+  b.x=Math.round((wLienzo-b.w)/2);
+  b.y=Math.round((hLienzo-b.h)/2);
+  render();
 }
 
 function renderLeyenda(){
@@ -233,112 +477,124 @@ function renderLeyenda(){
         }
       }
     });
+    inp.addEventListener('focus',e=>{
+      seleccion=Number(e.target.dataset.id);
+      render();
+    });
   });
 }
 
-/* ---- Arrastrar bloque ---- */
+/* ---- Arrastrar bloque con zoom corregido ---- */
 function iniciarArrastre(el,b){
   el.addEventListener('pointerdown',e=>{
     if(e.target.classList.contains('resize')||e.target.classList.contains('quitar'))return;
     seleccion=b.id;
     const rect=lienzo.getBoundingClientRect();
-    const offX=e.clientX-rect.left-b.x;
-    const offY=e.clientY-rect.top-b.y;
+    const offX=(e.clientX-rect.left)/zoom-b.x;
+    const offY=(e.clientY-rect.top)/zoom-b.y;
     el.setPointerCapture(e.pointerId);
+
     function mover(ev){
       const r=lienzo.getBoundingClientRect();
-      b.x=Math.max(0,Math.min(r.width-b.w,ev.clientX-r.left-offX));
-      b.y=Math.max(0,Math.min(r.height-b.h,ev.clientY-r.top-offY));
-      el.style.left=b.x+'px';el.style.top=b.y+'px';
+      const wLienzo=Number($('lienzoW').value)||1400;
+      const hLienzo=Number($('lienzoH').value)||900;
+      b.x=Math.max(0,Math.min(wLienzo-b.w,(ev.clientX-r.left)/zoom-offX));
+      b.y=Math.max(0,Math.min(hLienzo-b.h,(ev.clientY-r.top)/zoom-offY));
+      el.style.left=b.x+'px';
+      el.style.top=b.y+'px';
+      const coords=el.querySelector('.coords');
+      if(coords)coords.textContent=coordPx(b);
     }
-    function soltar(ev){
+
+    function soltar(){
       try{el.releasePointerCapture(e.pointerId)}catch(err){}
       el.removeEventListener('pointermove',mover);
       el.removeEventListener('pointerup',soltar);
       render();
     }
+
     el.addEventListener('pointermove',mover);
     el.addEventListener('pointerup',soltar);
   });
 }
 
-/* ---- Redimensionar ---- */
+/* ---- Redimensionar con zoom corregido ---- */
 function iniciarResize(handle,el,b){
   handle.addEventListener('pointerdown',e=>{
     e.stopPropagation();
+    seleccion=b.id;
     handle.setPointerCapture(e.pointerId);
     const startX=e.clientX,startY=e.clientY,w0=b.w,h0=b.h;
+
     function mover(ev){
-      const r=lienzo.getBoundingClientRect();
-      b.w=Math.max(60,Math.min(r.width-b.x,w0+(ev.clientX-startX)));
-      b.h=Math.max(46,Math.min(r.height-b.y,h0+(ev.clientY-startY)));
+      const wLienzo=Number($('lienzoW').value)||1400;
+      const hLienzo=Number($('lienzoH').value)||900;
+      b.w=Math.max(40,Math.min(wLienzo-b.x,w0+(ev.clientX-startX)/zoom));
+      b.h=Math.max(30,Math.min(hLienzo-b.y,h0+(ev.clientY-startY)/zoom));
       el.style.width=b.w+'px';
       el.style.height=b.h+'px';
       const medida=el.querySelector('.medida');
       if(medida)medida.textContent=medidaPx(b);
     }
+
     function soltar(){
       try{handle.releasePointerCapture(e.pointerId)}catch(err){}
       handle.removeEventListener('pointermove',mover);
       handle.removeEventListener('pointerup',soltar);
       render();
     }
+
     handle.addEventListener('pointermove',mover);
     handle.addEventListener('pointerup',soltar);
   });
 }
 
-/* Doble clic en lienzo vacío = agregar bloque ahí */
+/* Doble clic en lienzo vacío = agregar bloque ahí con zoom corregido */
 lienzo.addEventListener('dblclick',e=>{
   if(e.target!==lienzo)return;
   const r=lienzo.getBoundingClientRect();
-  agregarBloque(e.clientX-r.left-60,e.clientY-r.top-40);
+  agregarBloque((e.clientX-r.left)/zoom-60,(e.clientY-r.top)/zoom-40);
 });
 
-/* ---- EXPORTAR PNG (lienzo + leyenda dibujados en canvas) ---- */
+/* ---- EXPORTAR PNG ---- */
 function exportarPNG(){
   if(!bloques.length){toast('Agrega al menos un bloque');return}
-  const W=lienzo.clientWidth, Hcanvas=lienzo.clientHeight;
+
+  const W=Number($('lienzoW').value)||1400;
+  const Hcanvas=Number($('lienzoH').value)||900;
   const pad=24, lineH=26;
   const legendH=40+bloques.length*lineH+20;
   const cw=W+pad*2;
   const ch=pad + 34 + Hcanvas + 30 + legendH + pad;
 
   const c=document.createElement('canvas');
-  const scale=2; // nitidez
+  const scale=2;
   c.width=cw*scale;c.height=ch*scale;
   const ctx=c.getContext('2d');
   ctx.scale(scale,scale);
   ctx.fillStyle='#ffffff';ctx.fillRect(0,0,cw,ch);
 
   let y=pad;
-  // Título
   ctx.fillStyle='#0b1f7a';ctx.font='900 20px Montserrat,Arial';ctx.textBaseline='top';
   ctx.fillText($('titulo').value||'Distribución de bloques',pad,y);
   y+=34;
 
-  // Marco del área
   const areaY=y;
-  ctx.strokeStyle='#d9deea';ctx.lineWidth=1.6;
-  ctx.strokeRect(pad,areaY,W,Hcanvas);
+  ctx.fillStyle='#fff';
+  ctx.fillRect(pad,areaY,W,Hcanvas);
 
-  // Dibujar grilla en exportación
   ctx.strokeStyle='#eef1ff';
   ctx.lineWidth=1;
   for(let gx=0;gx<=W;gx+=30){
-    ctx.beginPath();
-    ctx.moveTo(pad+gx,areaY);
-    ctx.lineTo(pad+gx,areaY+Hcanvas);
-    ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pad+gx,areaY);ctx.lineTo(pad+gx,areaY+Hcanvas);ctx.stroke();
   }
   for(let gy=0;gy<=Hcanvas;gy+=30){
-    ctx.beginPath();
-    ctx.moveTo(pad,areaY+gy);
-    ctx.lineTo(pad+W,areaY+gy);
-    ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pad,areaY+gy);ctx.lineTo(pad+W,areaY+gy);ctx.stroke();
   }
 
-  // Bloques
+  ctx.strokeStyle='#d9deea';ctx.lineWidth=1.6;
+  ctx.strokeRect(pad,areaY,W,Hcanvas);
+
   bloques.forEach((b,i)=>{
     const bx=pad+b.x, by=areaY+b.y;
     ctx.fillStyle='#eef1ff';
@@ -346,24 +602,26 @@ function exportarPNG(){
     ctx.strokeStyle='#153bff';ctx.lineWidth=2;
     roundRect(ctx,bx,by,b.w,b.h,10);ctx.stroke();
 
-    // texto centrado + medida
     ctx.fillStyle='#0b1f7a';
     ctx.textAlign='center';
     ctx.textBaseline='middle';
 
     if(b.texto){
       ctx.font='800 12px Montserrat,Arial';
-      wrapText(ctx,b.texto,bx+b.w/2,by+b.h/2-8,b.w-14,14);
+      wrapText(ctx,b.texto,bx+b.w/2,by+b.h/2-12,b.w-14,14);
     }
 
     ctx.font='900 10.5px Inter,Arial';
     ctx.fillStyle='#6b7280';
-    ctx.fillText(medidaPx(b),bx+b.w/2,by+b.h/2+22);
+    ctx.fillText(medidaPx(b),bx+b.w/2,by+b.h/2+18);
+
+    ctx.font='800 9.5px Inter,Arial';
+    ctx.fillStyle='#8a94a6';
+    ctx.fillText(coordPx(b),bx+b.w/2,by+b.h/2+32);
 
     ctx.textAlign='left';
     ctx.textBaseline='top';
 
-    // número (círculo arriba derecha)
     const nx=bx+b.w-14, ny=by+14;
     ctx.beginPath();ctx.arc(nx,ny,12,0,Math.PI*2);
     ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#153bff';ctx.lineWidth=1.5;ctx.stroke();
@@ -373,22 +631,19 @@ function exportarPNG(){
     ctx.textAlign='left';ctx.textBaseline='top';
   });
 
-  // Leyenda
   y=areaY+Hcanvas+30;
   ctx.fillStyle='#153bff';ctx.font='900 14px Montserrat,Arial';
   ctx.fillText('LEYENDA',pad,y);y+=28;
   ctx.font='600 13px Inter,Arial';
   bloques.forEach((b,i)=>{
-    // círculo número
     ctx.beginPath();ctx.arc(pad+11,y+9,11,0,Math.PI*2);
     ctx.fillStyle='#153bff';ctx.fill();
     ctx.fillStyle='#fff';ctx.font='900 12px Montserrat,Arial';
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(String(i+1),pad+11,y+10);
     ctx.textAlign='left';ctx.textBaseline='top';
-    // texto
     ctx.fillStyle='#111827';ctx.font='600 13px Inter,Arial';
-    ctx.fillText((b.texto||'(sin describir)')+' · '+medidaPx(b),pad+32,y+2);
+    ctx.fillText((b.texto||'(sin describir)')+' · '+medidaPx(b)+' · '+coordPx(b),pad+32,y+2);
     y+=lineH;
   });
 
@@ -416,7 +671,11 @@ function wrapText(ctx,text,cx,cy,maxW,lh){
 
 /* ---- EXPORTAR / IMPORTAR JSON ---- */
 function exportarJSON(){
-  const data={titulo:$('titulo').value,bloques};
+  const data={
+    titulo:$('titulo').value,
+    lienzo:{w:Number($('lienzoW').value)||1400,h:Number($('lienzoH').value)||900,zoom:Math.round(zoom*100)},
+    bloques
+  };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -430,17 +689,40 @@ function importarJSON(file){
   reader.onload=()=>{
     try{
       const data=JSON.parse(reader.result);
+
+      if(data.lienzo){
+        $('lienzoW').value=data.lienzo.w||1400;
+        $('lienzoH').value=data.lienzo.h||900;
+        const z=data.lienzo.zoom||70;
+        $('zoomRange').value=z;
+        $('zoomSelect').value=String(z);
+        zoom=z/100;
+      }
+
       uid=1;
-      bloques=(data.bloques||[]).map(b=>({id:uid++,x:+b.x||0,y:+b.y||0,w:+b.w||120,h:+b.h||80,texto:b.texto||''}));
+      bloques=(data.bloques||[]).map(b=>({
+        id:uid++,
+        x:+b.x||0,
+        y:+b.y||0,
+        w:+b.w||120,
+        h:+b.h||80,
+        texto:b.texto||''
+      }));
       if(data.titulo)$('titulo').value=data.titulo;
-      render();toast('Importado ✓');
+
+      aplicarTamanoLienzo();
+      render();
+      toast('Importado ✓');
     }catch(e){toast('Archivo inválido')}
   };
   reader.readAsText(file);
 }
 
-/* arranque: 3 bloques de ejemplo */
-agregarBloque(40,40);agregarBloque(200,60);agregarBloque(120,220);
+/* arranque */
+aplicarTamanoLienzo();
+agregarBloque(40,40);
+agregarBloque(200,60);
+agregarBloque(120,220);
 </script>
 </body>
 </html>
