@@ -346,7 +346,7 @@ button{cursor:pointer;border:0;touch-action:manipulation}
   border:1px solid rgba(255,255,255,.78);
   box-shadow:var(--shadow2);
   display:grid;
-  grid-template-columns:repeat(5,1fr);
+  grid-template-columns:repeat(6,1fr);
   gap:5px;
 }
 .segBtn{
@@ -1017,6 +1017,7 @@ button{cursor:pointer;border:0;touch-action:manipulation}
     <button class="segBtn" data-view="flujo" onclick="setView('flujo')">Flujo</button>
     <button class="segBtn" data-view="bloqueos" onclick="setView('bloqueos')">Bloqueos</button>
     <button class="segBtn" data-view="kanban" onclick="setView('kanban')">Tablero</button>
+    <button class="segBtn" data-view="listos" onclick="setView('listos')">Listos</button>
     <button class="segBtn" data-view="plantillas" onclick="setView('plantillas')">Plantillas</button>
   </nav>
 
@@ -1062,6 +1063,18 @@ button{cursor:pointer;border:0;touch-action:manipulation}
     <div class="kanban" id="kanban"></div>
   </section>
 
+  <section class="panel hidden" id="viewListos">
+    <div class="detail glass">
+      <div class="detailHeader">
+        <div>
+          <h2>Pedidos listos / archivo</h2>
+          <p>Los pedidos completados salen de la operación principal para no acumular ruido.</p>
+        </div>
+      </div>
+      <div class="parallelBoard" id="readyGrid"></div>
+    </div>
+  </section>
+
   <section class="panel hidden" id="viewPlantillas">
     <div class="detail glass">
       <div class="detailHeader">
@@ -1097,6 +1110,20 @@ button{cursor:pointer;border:0;touch-action:manipulation}
         <div class="field"><label>Estado</label><select class="select" id="pEstado"><option>Diseño pendiente</option><option>Producción paralela</option><option>Ensamblaje</option><option>Listo</option><option>Bloqueado</option></select></div>
         <div class="field wide2"><label>Próxima acción</label><input class="input" id="pNext" placeholder="Ej: Aprobar diseño"></div>
         <div class="field wide4"><label>Descripción</label><textarea class="textarea" id="pDesc"></textarea></div>
+
+        <div class="sectionLabel">Especificaciones completas</div>
+        <div class="field"><label>Medidas</label><input class="input" id="pMedidas" placeholder="Ej: 120 x 60 cm"></div>
+        <div class="field"><label>Material</label><input class="input" id="pMaterial" placeholder="PVC 15mm, Acrílico 3mm..."></div>
+        <div class="field"><label>Espesor</label><input class="input" id="pEspesor" placeholder="Ej: 3mm / 6cm"></div>
+        <div class="field"><label>Acabado</label><input class="input" id="pAcabado" placeholder="Pintura, vinil, barniz..."></div>
+        <div class="field"><label>Lleva luz</label><select class="select" id="pLlevaLuz"><option>No</option><option>Sí</option></select></div>
+        <div class="field"><label>Tipo de luz</label><select class="select" id="pTipoLuz"><option>No aplica</option><option>Frontal</option><option>Posterior</option><option>Frontal / posterior</option><option>Neón LED</option></select></div>
+        <div class="field"><label>Color de luz</label><select class="select" id="pColorLuz"><option>No aplica</option><option>Cálida</option><option>Media</option><option>Fría</option><option>RGB</option></select></div>
+        <div class="field"><label>Transformador</label><input class="input" id="pTransformador" placeholder="12V 5A, 12V 10A..."></div>
+        <div class="field"><label>Instalación</label><select class="select" id="pInstalacion"><option>No</option><option>Sí</option></select></div>
+        <div class="field"><label>Altura</label><input class="input" id="pAltura" placeholder="Ej: 2.5m"></div>
+        <div class="field"><label>Superficie</label><input class="input" id="pSuperficie" placeholder="Concreto, drywall, ACM..."></div>
+        <div class="field"><label>Fijación</label><input class="input" id="pFijacion" placeholder="Chupones, pernos, doble faz..."></div>
 
         <div class="sectionLabel">Bloqueo</div>
         <div class="field"><label>Bloqueado</label><select class="select" id="pBloq"><option>No</option><option>Sí</option></select></div>
@@ -1319,7 +1346,7 @@ function updateBlockStates(o){
   });
   const pct=calcPct(o);
   if(o.blocked==='Sí')o.estado='Bloqueado';
-  else if(pct>=100)o.estado='Listo';
+  else if(pct>=100){o.estado='Listo';o.next='Pedido listo / archivo';}
   else if((o.blocks.find(b=>b.name.toLowerCase().includes('diseño'))||{}).status==='done')o.estado='Producción paralela';
   else o.estado='Diseño pendiente';
   const nextBlock=o.blocks.find(b=>b.status==='pending')||o.blocks.find(b=>b.status==='waiting')||o.blocks.find(b=>b.status==='blocked');
@@ -1346,6 +1373,8 @@ function filteredOrders(){
   const fv=document.getElementById('fVista').value;
   const fo=document.getElementById('fOrden').value;
   let arr=orders.filter(o=>{
+    if(currentView!=='listos' && document.getElementById('fVista').value!=='listos' && o.estado==='Listo')return false;
+    if(currentView==='listos' && o.estado!=='Listo')return false;
     const text=[o.num,o.cliente,o.tipo,o.resp,o.estado,o.next,o.desc,o.bloqueoMotivo,...o.blocks.map(b=>b.name)].join(' ').toLowerCase();
     let ok=true;
     if(fv==='bloqueados')ok=o.blocked==='Sí';
@@ -1368,6 +1397,9 @@ function fillFilters(){
   if([...document.getElementById('fEstado').options].some(o=>o.value===estadoSel))document.getElementById('fEstado').value=estadoSel;
 }
 function render(){
+  orders[0].specs={medidas:'250 x 90 cm',material:'Acrílico frontal + PVC base + aluminio',espesor:'Acrílico 3mm / PVC 9mm / canto 6cm',acabado:'Luz frontal',llevaLuz:'Sí',tipoLuz:'Frontal',colorLuz:'Fría',transformador:'12V 10A',instalacion:'Sí',altura:'2.8 m',superficie:'Fachada',fijacion:'Pernos / plantilla'};
+  orders[1].specs={medidas:'80 x 35 cm',material:'Acrílico blanco',espesor:'3mm',acabado:'Blanco y negro',llevaLuz:'No',tipoLuz:'No aplica',colorLuz:'No aplica',transformador:'No aplica',instalacion:'Sí',altura:'1.6 m',superficie:'Pared interna',fijacion:'Separadores'};
+  orders[2].specs={medidas:'Varios formatos',material:'Vinil adhesivo',espesor:'No aplica',acabado:'UV + corte',llevaLuz:'No',tipoLuz:'No aplica',colorLuz:'No aplica',transformador:'No aplica',instalacion:'No',altura:'No aplica',superficie:'No aplica',fijacion:'No aplica'};
   orders.forEach(updateBlockStates);
   save();
   fillFilters();
@@ -1392,24 +1424,34 @@ function render(){
   renderFlow();
   renderBlocked();
   renderKanban();
+  renderReady();
   renderTemplates();
 }
 function renderList(list){
   document.getElementById('sideCount').textContent=list.length;
-  document.getElementById('orderList').innerHTML=list.map(o=>`
-    <button class="orderCard ${o.id===selectedId?'active':''}" onclick="selectOrder('${o.id}')">
-      <div class="orderTop">
-        <span class="orderNum">${esc(o.num)}</span>
-        <span class="statusDot ${statusDot(o)}"></span>
-      </div>
-      <h3>${esc(o.cliente)}</h3>
-      <p>${esc(o.tipo)} · ${esc(o.desc||'Sin descripción')}</p>
-      <div class="miniInfo">
-        <span class="chip ${o.blocked==='Sí'?'red':'gray'}">${esc(o.estado)}</span>
-        <span class="chip violet">${calcPct(o)}%</span>
-        <span class="chip">👤 ${esc(o.resp)}</span>
-      </div>
-    </button>
+  const groups={};
+  list.forEach(o=>{
+    const k=o.cliente||'Sin cliente';
+    if(!groups[k])groups[k]=[];
+    groups[k].push(o);
+  });
+  document.getElementById('orderList').innerHTML=Object.keys(groups).map(cliente=>`
+    <div style="padding:8px 4px 4px;font-family:var(--head);font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">${esc(cliente)} · ${groups[cliente].length}</div>
+    ${groups[cliente].map(o=>`
+      <button class="orderCard ${o.id===selectedId?'active':''}" onclick="selectOrder('${o.id}')">
+        <div class="orderTop">
+          <span class="orderNum">${esc(o.num)}</span>
+          <span class="statusDot ${statusDot(o)}"></span>
+        </div>
+        <h3>${esc(o.tipo)}</h3>
+        <p>${esc(o.desc||'Sin descripción')}</p>
+        <div class="miniInfo">
+          <span class="chip ${o.blocked==='Sí'?'red':o.estado==='Listo'?'green':'gray'}">${esc(o.estado)}</span>
+          <span class="chip violet">${calcPct(o)}%</span>
+          <span class="chip">👤 ${esc(o.resp)}</span>
+        </div>
+      </button>
+    `).join('')}
   `).join('') || `<div class="orderCard"><h3>Sin pedidos</h3><p>No hay resultados con estos filtros.</p></div>`;
 }
 function selectOrder(id){selectedId=id;render()}
@@ -1430,6 +1472,7 @@ function renderDetail(){
       <div class="detailActions">
         <button class="iosBtn small" onclick="openOrder('${o.id}')">Editar</button>
         <button class="iosBtn green small" onclick="completeNext('${o.id}')">Completar siguiente</button>
+        <button class="iosBtn small" onclick="exportPDF('${o.id}')">PDF</button>
         <button class="iosBtn red small" onclick="deleteOrder('${o.id}')">Eliminar</button>
       </div>
     </div>
@@ -1449,6 +1492,21 @@ function renderDetail(){
           <b>${pct}% completado</b>
         </div>
         <div class="progressRing" style="--p:${pct}" data-pct="${pct}%"></div>
+      </div>
+    </div>
+
+    <div class="bigStatus">
+      <div class="statusCard">
+        <small>Medidas / material</small>
+        <b>${esc(o.specs?.medidas||'No definido')} · ${esc(o.specs?.material||'No definido')}</b>
+      </div>
+      <div class="statusCard">
+        <small>Iluminación</small>
+        <b>${o.specs?.llevaLuz==='Sí' ? `${esc(o.specs?.tipoLuz||'Luz')} · ${esc(o.specs?.colorLuz||'Sin color')}` : 'Sin luz'}</b>
+      </div>
+      <div class="statusCard">
+        <small>Instalación</small>
+        <b>${o.specs?.instalacion==='Sí' ? `${esc(o.specs?.altura||'Altura N/D')} · ${esc(o.specs?.superficie||'Superficie N/D')}` : 'Sin instalación'}</b>
       </div>
     </div>
 
@@ -1586,6 +1644,36 @@ function renderKanban(){
     return`<div class="lane"><h3>${esc(l.name)} <span>${items.length}</span></h3>${items.map(o=>`<button class="miniOrder" onclick="selectAndDetail('${o.id}')"><b>${esc(o.num)} · ${esc(o.cliente)}</b><p>${esc(o.next)}</p><small>${esc(o.tipo)} · ${calcPct(o)}%</small></button>`).join('')||'<div class="miniOrder"><p>Vacío</p></div>'}</div>`
   }).join('');
 }
+
+function renderReady(){
+  const ready=orders.filter(o=>o.estado==='Listo');
+  const box=document.getElementById('readyGrid');
+  if(!box)return;
+  box.innerHTML=ready.map(o=>`
+    <article class="blockCard done">
+      <div class="blockHead">
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="blockIcon">✅</div>
+          <div class="blockInfo"><h4>${esc(o.cliente)}</h4><small>${esc(o.num)} · ${esc(o.tipo)}</small></div>
+        </div>
+        <span class="blockPct">100%</span>
+      </div>
+      <div class="miniInfo">
+        <span class="chip green">Listo</span>
+        <span class="chip">👤 ${esc(o.resp)}</span>
+        <span class="chip">${esc(o.entrega||'Sin fecha')}</span>
+      </div>
+      <div class="deps">
+        <b>Especificaciones</b>
+        <span>${esc(o.specs?.medidas||'Medidas N/D')}</span>
+        <span>${esc(o.specs?.material||'Material N/D')}</span>
+        <span>${o.specs?.llevaLuz==='Sí'?esc((o.specs?.tipoLuz||'Luz')+' · '+(o.specs?.colorLuz||'')):'Sin luz'}</span>
+      </div>
+      <button class="iosBtn small" style="width:100%;margin-top:12px" onclick="selectAndDetail('${o.id}')">Ver detalle</button>
+    </article>
+  `).join('') || `<div class="orderCard"><h3>No hay pedidos listos</h3><p>Cuando un pedido llegue a 100%, aparecerá aquí.</p></div>`;
+}
+
 function renderTemplates(){
   const cards=Object.entries(templates).map(([name,t])=>`
     <article class="blockCard">
@@ -1608,7 +1696,7 @@ function renderTemplates(){
 function setView(view){
   currentView=view;
   document.querySelectorAll('.segBtn').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
-  ['Detalle','Flujo','Bloqueos','Kanban','Plantillas'].forEach(v=>{
+  ['Detalle','Flujo','Bloqueos','Kanban','Listos','Plantillas'].forEach(v=>{
     document.getElementById('view'+v).classList.toggle('hidden',v.toLowerCase()!==view);
   });
   render();
@@ -1632,6 +1720,18 @@ function openOrder(id=null){
   document.getElementById('pEstado').value=o?o.estado:'Diseño pendiente';
   document.getElementById('pNext').value=o?o.next:'Aprobar diseño';
   document.getElementById('pDesc').value=o?o.desc:'';
+  document.getElementById('pMedidas').value=o?.specs?.medidas||'';
+  document.getElementById('pMaterial').value=o?.specs?.material||'';
+  document.getElementById('pEspesor').value=o?.specs?.espesor||'';
+  document.getElementById('pAcabado').value=o?.specs?.acabado||'';
+  document.getElementById('pLlevaLuz').value=o?.specs?.llevaLuz||'No';
+  document.getElementById('pTipoLuz').value=o?.specs?.tipoLuz||'No aplica';
+  document.getElementById('pColorLuz').value=o?.specs?.colorLuz||'No aplica';
+  document.getElementById('pTransformador').value=o?.specs?.transformador||'';
+  document.getElementById('pInstalacion').value=o?.specs?.instalacion||'No';
+  document.getElementById('pAltura').value=o?.specs?.altura||'';
+  document.getElementById('pSuperficie').value=o?.specs?.superficie||'';
+  document.getElementById('pFijacion').value=o?.specs?.fijacion||'';
   document.getElementById('pBloq').value=o?o.blocked:'No';
   document.getElementById('pBloqMotivo').value=o?o.bloqueoMotivo:'';
   document.getElementById('pPrioridad').value=o?o.prioridad:'Normal';
@@ -1677,6 +1777,20 @@ function saveOrder(){
   o.blocked=document.getElementById('pBloq').value;
   o.bloqueoMotivo=document.getElementById('pBloqMotivo').value;
   o.prioridad=document.getElementById('pPrioridad').value;
+  o.specs={
+    medidas:document.getElementById('pMedidas').value,
+    material:document.getElementById('pMaterial').value,
+    espesor:document.getElementById('pEspesor').value,
+    acabado:document.getElementById('pAcabado').value,
+    llevaLuz:document.getElementById('pLlevaLuz').value,
+    tipoLuz:document.getElementById('pTipoLuz').value,
+    colorLuz:document.getElementById('pColorLuz').value,
+    transformador:document.getElementById('pTransformador').value,
+    instalacion:document.getElementById('pInstalacion').value,
+    altura:document.getElementById('pAltura').value,
+    superficie:document.getElementById('pSuperficie').value,
+    fijacion:document.getElementById('pFijacion').value
+  };
   updateBlockStates(o);
   selectedId=o.id;
   save();
@@ -1709,12 +1823,90 @@ function createDemo(showToast=true){
   orders[0].blocks[1].tasks[0].done=true;
   orders[2].blocks[0].tasks.forEach(t=>t.done=true);
   orders[2].blocks[1].tasks[0].done=true;
+  orders[0].specs={medidas:'250 x 90 cm',material:'Acrílico frontal + PVC base + aluminio',espesor:'Acrílico 3mm / PVC 9mm / canto 6cm',acabado:'Luz frontal',llevaLuz:'Sí',tipoLuz:'Frontal',colorLuz:'Fría',transformador:'12V 10A',instalacion:'Sí',altura:'2.8 m',superficie:'Fachada',fijacion:'Pernos / plantilla'};
+  orders[1].specs={medidas:'80 x 35 cm',material:'Acrílico blanco',espesor:'3mm',acabado:'Blanco y negro',llevaLuz:'No',tipoLuz:'No aplica',colorLuz:'No aplica',transformador:'No aplica',instalacion:'Sí',altura:'1.6 m',superficie:'Pared interna',fijacion:'Separadores'};
+  orders[2].specs={medidas:'Varios formatos',material:'Vinil adhesivo',espesor:'No aplica',acabado:'UV + corte',llevaLuz:'No',tipoLuz:'No aplica',colorLuz:'No aplica',transformador:'No aplica',instalacion:'No',altura:'No aplica',superficie:'No aplica',fijacion:'No aplica'};
   orders.forEach(updateBlockStates);
   selectedId=orders[0].id;
   save();
   render();
   if(showToast)toast('Demo cargada.');
 }
+
+
+function exportPDF(id){
+  const o=orders.find(x=>x.id===id);
+  if(!o){alert('No se encontró el pedido.');return}
+  const specs=o.specs||{};
+  const html=`<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>${esc(o.num)} · ${esc(o.cliente)}</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;margin:0;background:#f3f5f9;color:#111827}
+.topbar{position:sticky;top:0;background:#172bd8;padding:10px;display:flex;justify-content:flex-end;gap:8px}
+button{border:0;border-radius:999px;padding:9px 14px;font-weight:bold;cursor:pointer}
+.print{background:white;color:#153bff}
+.close{background:rgba(255,255,255,.16);color:white}
+.page{width:min(1050px,calc(100% - 28px));margin:14px auto;background:white;border-radius:18px;padding:22px;border:1px solid #d9deea}
+h1{margin:0;color:#153bff;font-size:24px}
+h2{margin:18px 0 8px;font-size:15px;color:#172554;text-transform:uppercase}
+p{font-size:13px;line-height:1.45}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.box{border:1px solid #d9deea;border-radius:12px;padding:9px;background:#f8f9ff}
+.box small{display:block;color:#64748b;font-size:10px;text-transform:uppercase;font-weight:bold}
+.box b{display:block;margin-top:4px;font-size:13px}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+th,td{border:1px solid #d9deea;padding:7px;font-size:12px;text-align:left;vertical-align:top}
+th{background:#f8f9ff;text-transform:uppercase;font-size:10px;color:#475569}
+.bad{color:#dc2626;font-weight:bold}
+@media print{.topbar{display:none}body{background:white}.page{width:auto;margin:0;border:0;border-radius:0}}
+</style>
+</head>
+<body>
+<div class="topbar"><button class="print" onclick="window.print()">Guardar PDF / Imprimir</button><button class="close" onclick="window.close()">Cerrar</button></div>
+<div class="page">
+<h1>TUTTOVINILOS · ${esc(o.num)}</h1>
+<p><b>Cliente:</b> ${esc(o.cliente)} · <b>Tipo:</b> ${esc(o.tipo)} · <b>Estado:</b> ${esc(o.estado)} · <b>Responsable:</b> ${esc(o.resp)}</p>
+<p><b>Descripción:</b> ${esc(o.desc||'')}</p>
+<p><b>Próxima acción:</b> ${esc(o.next||'')}</p>
+<p><b>Bloqueo:</b> <span class="${o.blocked==='Sí'?'bad':''}">${esc(o.blocked==='Sí'?(o.bloqueoMotivo||'Bloqueado'):'Sin bloqueo')}</span></p>
+
+<h2>Especificaciones completas</h2>
+<div class="grid">
+  <div class="box"><small>Medidas</small><b>${esc(specs.medidas||'No definido')}</b></div>
+  <div class="box"><small>Material</small><b>${esc(specs.material||'No definido')}</b></div>
+  <div class="box"><small>Espesor</small><b>${esc(specs.espesor||'No definido')}</b></div>
+  <div class="box"><small>Acabado</small><b>${esc(specs.acabado||'No definido')}</b></div>
+  <div class="box"><small>Lleva luz</small><b>${esc(specs.llevaLuz||'No')}</b></div>
+  <div class="box"><small>Tipo de luz</small><b>${esc(specs.tipoLuz||'No aplica')}</b></div>
+  <div class="box"><small>Color de luz</small><b>${esc(specs.colorLuz||'No aplica')}</b></div>
+  <div class="box"><small>Transformador</small><b>${esc(specs.transformador||'No definido')}</b></div>
+  <div class="box"><small>Instalación</small><b>${esc(specs.instalacion||'No')}</b></div>
+  <div class="box"><small>Altura</small><b>${esc(specs.altura||'No definido')}</b></div>
+  <div class="box"><small>Superficie</small><b>${esc(specs.superficie||'No definido')}</b></div>
+  <div class="box"><small>Fijación</small><b>${esc(specs.fijacion||'No definido')}</b></div>
+</div>
+
+<h2>Bloques paralelos</h2>
+<table>
+<thead><tr><th>Bloque</th><th>Responsable</th><th>Estado</th><th>Dependencias</th><th>Tareas</th></tr></thead>
+<tbody>
+${o.blocks.map(b=>`<tr><td>${esc(b.name)}</td><td>${esc(b.resp)}</td><td>${esc(b.status)}</td><td>${(b.deps||[]).map(esc).join(' · ')||'Inicio'}</td><td>${b.tasks.map(t=>(t.done?'☑ ':'☐ ')+esc(t.name)).join(' · ')}</td></tr>`).join('')}
+</tbody>
+</table>
+</div>
+</body>
+</html>`;
+  const w=window.open('','_blank');
+  if(!w){alert('Permite pop-ups para abrir PDF.');return}
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+
 
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
