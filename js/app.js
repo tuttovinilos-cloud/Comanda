@@ -702,7 +702,12 @@ function pedidoCumpleFiltros(p) {
 }
 
 function inputAbonoHtml(id, monto) {
-  return `<input class="cell-edit abono-edit ${claseAbono(monto)}" data-abono-id="${escapeHtml(id)}" type="number" step="0.01" value="${money(monto)}" title="Editar abono" onclick="event.stopPropagation()"/>`;
+  return `
+    <div class="abono-wrap">
+      <input class="cell-edit abono-edit ${claseAbono(monto)}" data-abono-id="${escapeHtml(id)}" type="number" step="0.01" value="${money(monto)}" title="Editar abono" onclick="event.stopPropagation()"/>
+      <button class="pay-cell-btn" type="button" onclick="event.stopPropagation();openPagoPedido(${escapeHtml(id)})" title="Registrar pago">Pago</button>
+    </div>
+  `;
 }
 
 function pedidoFilaHTML(p) {
@@ -1078,6 +1083,278 @@ async function actualizarAbonoPedido(id, monto) {
 
   mostrarToast("Abono actualizado");
   renderPedidosPaginados(false);
+}
+
+
+// ===========================
+// PAGOS POR PEDIDO - ETAPA 1
+// ===========================
+let pagoPedidoActualId = null;
+
+function getEl(id) {
+  return document.getElementById(id);
+}
+
+function getPedidoPorId(id) {
+  return pedidosDB.find(p => Number(p.id) === Number(id)) || null;
+}
+
+function totalPedidoUSD(pedido) {
+  if (!pedido) return 0;
+
+  const posibles = [
+    pedido.precio_total,
+    pedido.total,
+    pedido.precio,
+    pedido.precio_unitario_calculado
+  ];
+
+  for (const valor of posibles) {
+    const n = numeroSeguro(valor);
+    if (n > 0) return n;
+  }
+
+  return 0;
+}
+
+function pagadoPedidoUSD(pedido) {
+  return numeroSeguro(pedido ? pedido.monto_abonado : 0);
+}
+
+function saldoPedidoUSD(pedido) {
+  const total = totalPedidoUSD(pedido);
+  const pagado = pagadoPedidoUSD(pedido);
+  return Math.max(total - pagado, 0);
+}
+
+function estatusPagoDesdeMontos(total, pagado) {
+  if (total > 0 && pagado >= (total - 0.009)) return "Pagado";
+  if (pagado > 0) return "Abonado";
+  return "Pendiente";
+}
+
+function operadorActualNombre() {
+  const op = getOperadorSesionLocal();
+  return String(op && op.nombre ? op.nombre : "").trim();
+}
+
+function clienteIdPorPedido(pedido) {
+  if (!pedido) return null;
+  if (pedido.cliente_id) return pedido.cliente_id;
+
+  const nombre = normalizarBusqueda(pedido.cliente || "");
+  if (!nombre) return null;
+
+  const cliente = clientesBusquedaDB.find(c => normalizarBusqueda(c.nombre) === nombre);
+  return cliente ? cliente.id : null;
+}
+
+function abrirBackdrop(id) {
+  const el = getEl(id);
+  if (el) el.style.display = "flex";
+}
+
+function setText(id, value) {
+  const el = getEl(id);
+  if (el) el.textContent = value;
+}
+
+function setValue(id, value) {
+  const el = getEl(id);
+  if (el) el.value = value;
+}
+
+function openPagoPedido(id) {
+  const pedido = getPedidoPorId(id);
+
+  if (!pedido) {
+    alert("No se encontró el pedido para registrar pago.");
+    return;
+  }
+
+  pagoPedidoActualId = Number(id);
+
+  const total = totalPedidoUSD(pedido);
+  const pagado = pagadoPedidoUSD(pedido);
+  const saldo = Math.max(total - pagado, 0);
+
+  setValue("pago_cliente", pedido.cliente || "");
+  setValue("pago_descripcion", pedido.descripcion || "");
+  setText("pago_total", "$" + money(total));
+  setText("pago_pagado", "$" + money(pagado));
+  setText("pago_saldo", "$" + money(saldo));
+
+  setValue("pago_monto_recibido", "");
+  setValue("pago_moneda", "USD");
+  setValue("pago_tasa", "1");
+  setValue("pago_metodo", "");
+  setValue("pago_metodo_otro", "");
+  setValue("pago_referencia", "");
+  setValue("pago_nota", "");
+
+  onMetodoPagoChange();
+  calcularPagoModal();
+  abrirBackdrop("pagoBackdrop");
+}
+
+function onMetodoPagoChange() {
+  const metodo = getEl("pago_metodo")?.value || "";
+  const wrap = getEl("pago_metodo_otro_wrap");
+
+  if (!wrap) return;
+
+  if (metodo === "Otro") wrap.classList.remove("pay-hidden");
+  else wrap.classList.add("pay-hidden");
+}
+
+function datosCalculoPagoActual() {
+  const pedido = getPedidoPorId(pagoPedidoActualId);
+  const montoRecibido = numeroSeguro(getEl("pago_monto_recibido")?.value || 0);
+  const moneda = getEl("pago_moneda")?.value || "USD";
+  let tasa = numeroSeguro(getEl("pago_tasa")?.value || 1);
+
+  if (tasa <= 0) tasa = 1;
+
+  const equivalenteUSD = moneda === "BS" ? (montoRecibido / tasa) : montoRecibido;
+  const total = totalPedidoUSD(pedido);
+  const pagadoActual = pagadoPedidoUSD(pedido);
+  const saldoAntes = Math.max(total - pagadoActual, 0);
+  const pagadoBruto = pagadoActual + equivalenteUSD;
+  const pagadoNuevo = total > 0 ? Math.min(pagadoBruto, total) : pagadoBruto;
+  const saldoDespues = total > 0 ? Math.max(total - pagadoNuevo, 0) : 0;
+  const excedente = total > 0 ? Math.max(pagadoBruto - total, 0) : 0;
+  const estatus = estatusPagoDesdeMontos(total, pagadoNuevo);
+
+  return {
+    pedido,
+    montoRecibido,
+    moneda,
+    tasa,
+    equivalenteUSD,
+    total,
+    pagadoActual,
+    saldoAntes,
+    pagadoNuevo,
+    saldoDespues,
+    excedente,
+    estatus
+  };
+}
+
+function calcularPagoModal() {
+  const datos = datosCalculoPagoActual();
+
+  setValue("pago_equivalente", "$" + money(datos.equivalenteUSD));
+
+  if (!datos.pedido) {
+    setText("pago_resultado_monto", "$0.00");
+    setText("pago_resultado_texto", "Sin pedido seleccionado");
+    return;
+  }
+
+  if (datos.total <= 0) {
+    setText("pago_resultado_monto", "$" + money(datos.pagadoNuevo));
+    setText("pago_resultado_texto", datos.equivalenteUSD > 0 ? "Pago registrado, pero el pedido no tiene total definido" : "Coloca el monto recibido");
+    return;
+  }
+
+  setText("pago_resultado_monto", "$" + money(datos.saldoDespues));
+
+  let texto = datos.saldoDespues <= 0.009 ? "Pedido pagado completo" : "Saldo pendiente después del pago";
+  if (datos.excedente > 0) texto += " · Excedente: $" + money(datos.excedente);
+
+  setText("pago_resultado_texto", texto);
+}
+
+async function aplicarPagoPedido() {
+  if (!validarSupabase()) return;
+
+  const datos = datosCalculoPagoActual();
+  const pedido = datos.pedido;
+
+  if (!pedido) {
+    alert("No hay pedido seleccionado.");
+    return;
+  }
+
+  if (datos.montoRecibido <= 0) {
+    alert("Coloca el monto recibido.");
+    return;
+  }
+
+  if (datos.moneda === "BS" && datos.tasa <= 0) {
+    alert("Coloca una tasa válida para Bs.");
+    return;
+  }
+
+  const metodo = getEl("pago_metodo")?.value || "";
+  const metodoOtro = String(getEl("pago_metodo_otro")?.value || "").trim();
+
+  if (!metodo) {
+    alert("Selecciona el método de pago.");
+    return;
+  }
+
+  if (metodo === "Otro" && !metodoOtro) {
+    alert("Especifica el otro método de pago.");
+    return;
+  }
+
+  const referencia = String(getEl("pago_referencia")?.value || "").trim();
+  const nota = String(getEl("pago_nota")?.value || "").trim();
+  const clienteId = clienteIdPorPedido(pedido);
+  const registradoPor = operadorActualNombre();
+
+  const pagoPayload = {
+    pedido_id: pedido.id,
+    cliente_id: clienteId,
+    cliente_nombre: pedido.cliente || "",
+    pedido_descripcion: pedido.descripcion || "",
+    monto_recibido: datos.montoRecibido,
+    moneda: datos.moneda,
+    tasa_usada: datos.tasa,
+    equivalente_usd: datos.equivalenteUSD,
+    metodo_pago: metodo,
+    metodo_otro: metodo === "Otro" ? metodoOtro : null,
+    referencia,
+    nota,
+    saldo_antes: datos.saldoAntes,
+    saldo_despues: datos.saldoDespues,
+    registrado_por: registradoPor || null
+  };
+
+  const { error: pagoError } = await db()
+    .from("pedidos_pagos")
+    .insert([pagoPayload]);
+
+  if (pagoError) {
+    console.error("Error registrando pago:", pagoError);
+    alert("No se pudo registrar el pago. Revisa que la tabla pedidos_pagos exista en Supabase.\n\n" + pagoError.message);
+    return;
+  }
+
+  const updatePayload = {
+    monto_abonado: datos.pagadoNuevo,
+    estatus_pago: datos.estatus
+  };
+
+  const { error: pedidoError } = await db()
+    .from("pedidos")
+    .update(updatePayload)
+    .eq("id", pedido.id);
+
+  if (pedidoError) {
+    console.error("Pago registrado, pero no se pudo actualizar el pedido:", pedidoError);
+    alert("El pago se registró, pero no se pudo actualizar el saldo del pedido.\n\n" + pedidoError.message);
+    return;
+  }
+
+  pedido.monto_abonado = datos.pagadoNuevo;
+  pedido.estatus_pago = datos.estatus;
+
+  closeModal("pagoBackdrop");
+  renderPedidosPaginados(false);
+  mostrarToast("Pago registrado ✅");
 }
 
 // ===========================
