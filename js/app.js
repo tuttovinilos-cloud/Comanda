@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v46 pagos fix boton pago");
+console.log("APP JS conectado correctamente v47 pagos fix boton pago");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
