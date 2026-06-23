@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Contabilidad · Tuttovinilos</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --azul:#153bff;--azulOsc:#0b1f7a;--azulClaro:#eef1ff;
+  --bg:#f0f2f9;--card:#fff;--soft:#f8f9ff;--line:#d9deea;
+  --text:#111827;--muted:#6b7280;--green:#16a34a;--red:#dc2626;
+  --yellow:#f59e0b;--purple:#7c3aed;--cyan:#0891b2;
+  --head:'Montserrat',Arial,sans-serif;--body:'Inter',Arial,sans-serif;
+}
+body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+button,input,select,textarea{font:inherit}
+button{border:0;cursor:pointer}
+.top{
+  background:linear-gradient(135deg,var(--azul),var(--azulOsc));
+  color:#fff;padding:14px 18px;display:flex;justify-content:space-between;
+  align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:20;
+  box-shadow:0 8px 24px rgba(21,59,255,.25)
+}
+.brand h1{font-family:var(--head);font-size:18px;font-weight:900;letter-spacing:.2px}
+.brand p{font-size:12px;opacity:.85;margin-top:2px}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{
+  min-height:38px;padding:9px 13px;border-radius:11px;font-family:var(--head);
+  font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:.35px;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px
+}
+.btn.white{background:#fff;color:var(--azul)}
+.btn.ghost{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.35);color:#fff}
+.btn.green{background:var(--green);color:#fff}
+.btn.red{background:var(--red);color:#fff}
+.btn.blue{background:var(--azul);color:#fff}
+.btn.gray{background:#e5e7eb;color:#111827}
+.btn.yellow{background:var(--yellow);color:#fff}
+.btn.small{min-height:30px;padding:7px 9px;font-size:10px;border-radius:9px}
+
+.wrap{max-width:1440px;margin:16px auto;padding:0 14px 60px}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.kpi{
+  background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px;
+  box-shadow:0 4px 16px rgba(0,0,0,.045);min-height:92px
+}
+.kpi span{display:block;font-size:10.5px;text-transform:uppercase;font-weight:900;color:var(--muted);letter-spacing:.45px}
+.kpi strong{display:block;margin-top:8px;font-family:var(--head);font-size:22px;font-weight:900;color:var(--azulOsc)}
+.kpi.green strong{color:var(--green)}
+.kpi.red strong{color:var(--red)}
+.kpi.yellow strong{color:var(--yellow)}
+.kpi.purple strong{color:var(--purple)}
+.kpi small{display:block;margin-top:4px;color:var(--muted);font-size:11px;font-weight:700}
+
+.selector{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px
+}
+.big-tab{
+  min-height:86px;border-radius:20px;background:#fff;border:2px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;
+  box-shadow:0 4px 16px rgba(0,0,0,.045);transition:.18s
+}
+.big-tab .left{display:flex;align-items:center;gap:12px;text-align:left}
+.big-tab .ico{
+  width:48px;height:48px;border-radius:15px;display:flex;align-items:center;justify-content:center;
+  font-size:24px;font-weight:900
+}
+.big-tab h2{font-family:var(--head);font-size:18px;font-weight:900;color:var(--text)}
+.big-tab p{font-size:12px;color:var(--muted);font-weight:800;margin-top:3px;text-transform:none;letter-spacing:0}
+.big-tab strong{font-family:var(--head);font-size:22px;font-weight:900}
+.big-tab.entrada .ico{background:#dcfce7;color:var(--green)}
+.big-tab.salida .ico{background:#fee2e2;color:var(--red)}
+.big-tab.active{border-color:var(--azul);box-shadow:0 8px 25px rgba(21,59,255,.16)}
+.big-tab.entrada.active{background:linear-gradient(135deg,#fff,#ecfdf5)}
+.big-tab.salida.active{background:linear-gradient(135deg,#fff,#fef2f2)}
+
+.panel{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+  box-shadow:0 4px 18px rgba(0,0,0,.05);overflow:hidden;margin-bottom:14px
+}
+.panel-head{
+  padding:13px 15px;border-bottom:1px solid var(--line);display:flex;
+  align-items:center;justify-content:space-between;gap:10px;background:#fff
+}
+.panel-head b{font-family:var(--head);font-size:12px;font-weight:900;text-transform:uppercase;color:var(--azul);letter-spacing:.55px}
+.panel-head .mini{font-size:11px;font-weight:800;color:var(--muted)}
+.panel-body{padding:13px}
+.quick{
+  background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px
+}
+.quick-title{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px
+}
+.quick-title h3{font-family:var(--head);font-size:12px;color:var(--azulOsc);font-weight:900;text-transform:uppercase}
+.form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field.full{grid-column:1/-1}
+.field.two{grid-column:span 2}
+.field label{font-size:10px;text-transform:uppercase;color:var(--muted);font-weight:900;letter-spacing:.35px}
+.field input,.field select,.field textarea{
+  width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text);
+  min-height:36px;padding:8px 10px;outline:none;font-size:13px;font-weight:700
+}
+.field textarea{resize:vertical;min-height:60px}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--azul);box-shadow:0 0 0 3px rgba(21,59,255,.1)
+}
+.row-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.filters{
+  display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:12px;
+  background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px
+}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+table{width:100%;border-collapse:collapse;min-width:880px}
+th,td{padding:10px 9px;border-bottom:1px solid #edf0f7;text-align:left;vertical-align:top}
+th{
+  background:#f8f9ff;font-family:var(--head);font-size:10px;text-transform:uppercase;
+  color:var(--muted);letter-spacing:.4px;font-weight:900;position:sticky;top:0
+}
+td{font-size:12.5px;font-weight:700}
+td .main{font-weight:900;color:#111827}
+td .sub{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.3}
+.money{font-family:var(--head);font-weight:900}
+.money.in{color:var(--green)}
+.money.out{color:var(--red)}
+.badge{
+  display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;
+  font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.25px
+}
+.badge.manual{background:#eef1ff;color:var(--azul)}
+.badge.pedido{background:#ecfdf5;color:var(--green)}
+.badge.idea{background:#f5f3ff;color:var(--purple)}
+.badge.general{background:#f3f4f6;color:#374151}
+.badge.impresion{background:#ecfeff;color:var(--cyan)}
+.badge.proyectos{background:#fff7ed;color:#c2410c}
+.badge.pendiente{background:#fef3c7;color:#b45309}
+.badge.pagado{background:#dcfce7;color:#15803d}
+.actions-cell{display:flex;gap:6px;flex-wrap:wrap}
+.empty{text-align:center;color:var(--muted);padding:25px 10px;font-size:13px;font-weight:800}
+.oculto{display:none!important}
+
+.resumen-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.alerta{
+  margin-top:12px;border:1px dashed #f59e0b;background:#fffbeb;color:#92400e;
+  padding:11px 13px;border-radius:14px;font-size:12px;font-weight:800;line-height:1.45
+}
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+  background:#0f172a;color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;
+  font-weight:800;opacity:0;pointer-events:none;transition:.25s;z-index:100;
+  box-shadow:0 14px 40px rgba(0,0,0,.25)
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:1120px){
+  .kpis{grid-template-columns:repeat(3,1fr)}
+  .resumen-grid{grid-template-columns:1fr}
+}
+@media(max-width:720px){
+  .top{align-items:flex-start}
+  .brand h1{font-size:15px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .selector{grid-template-columns:1fr}
+  .big-tab{min-height:74px}
+  .form-grid{grid-template-columns:1fr 1fr}
+  .field.two{grid-column:span 2}
+  .filters{grid-template-columns:1fr 1fr}
+  .filters .btn{grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <h1>💰 Contabilidad · Tuttovinilos</h1>
+    <p>Control rápido de entradas y salidas</p>
+  </div>
+  <div class="top-actions">
+    <button class="btn ghost" onclick="cargarEjemplos()">Datos ejemplo</button>
+    <button class="btn white" onclick="exportarJSON()">Exportar JSON</button>
+    <button class="btn ghost" onclick="document.getElementById('importFile').click()">Importar</button>
+    <button class="btn red" onclick="limpiarTodo()">Limpiar</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="kpis">
+    <div class="kpi green">
+      <span>Entradas mes</span>
+      <strong id="kpiEntradas">$0.00</strong>
+      <small id="kpiEntradasCount">0 movimientos</small>
+    </div>
+    <div class="kpi red">
+      <span>Salidas mes</span>
+      <strong id="kpiSalidas">$0.00</strong>
+      <small id="kpiSalidasCount">0 movimientos</small>
+    </div>
+    <div class="kpi">
+      <span>Balance</span>
+      <strong id="kpiBalance">$0.00</strong>
+      <small>Entradas - salidas</small>
+    </div>
+    <div class="kpi yellow">
+      <span>Por cobrar</span>
+      <strong id="kpiCobrar">$0.00</strong>
+      <small>Entradas pendientes</small>
+    </div>
+    <div class="kpi purple">
+      <span>Mayor gasto</span>
+      <strong id="kpiMayorGasto">-</strong>
+      <small id="kpiMayorGastoMonto">$0.00</small>
+    </div>
+    <div class="kpi">
+      <span>Resultado real</span>
+      <strong id="kpiReal">$0.00</strong>
+      <small>Solo pagado/cobrado</small>
+    </div>
+  </section>
+
+  <section class="selector">
+    <button class="big-tab entrada active" id="btnVistaEntradas" onclick="cambiarVista('entradas')">
+      <div class="left">
+        <div class="ico">＋</div>
+        <div>
+          <h2>Entradas</h2>
+          <p>Pedidos, organizador de ideas y entradas manuales</p>
+        </div>
+      </div>
+      <strong id="tabTotalEntradas">$0.00</strong>
+    </button>
+
+    <button class="big-tab salida" id="btnVistaSalidas" onclick="cambiarVista('salidas')">
+      <div class="left">
+        <div class="ico">−</div>
+        <div>
+          <h2>Salidas</h2>
+          <p>Gastos, materiales, sueldos y operación</p>
+        </div>
+      </div>
+      <strong id="tabTotalSalidas">$0.00</strong>
+    </button>
+  </section>
+
+  <!-- MÓDULO ENTRADAS -->
+  <section id="vistaEntradas">
+    <div class="panel">
+      <div class="panel-head">
+        <b>Entradas</b>
+        <span class="mini">Vista completa de ingresos</span>
+      </div>
+      <div class="panel-body">
+
+        <div class="quick">
+          <div class="quick-title">
+            <h3>Entrada rápida</h3>
+            <button class="btn small gray" onclick="limpiarFormEntrada()">Vaciar</button>
+          </div>
+
+          <div class="form-grid">
+            <div class="field two">
+              <label>Cliente</label>
+              <input id="inCliente" placeholder="Ej: Frida, Galpe, Soma">
+            </div>
+            <div class="field">
+              <label>Monto $</label>
+              <input id="inMonto" type="number" step="0.01" placeholder="0.00">
+            </div>
+            <div class="field">
+              <label>Fecha</label>
+              <input id="inFecha" type="date">
+            </div>
+            <div class="field two">
+              <label>Concepto</label>
+              <input id="inConcepto" placeholder="Anticipo, pago final, pedido...">
+            </div>
+            <div class="field">
+              <label>Origen</label>
+              <select id="inOrigen">
+                <option value="Manual">Manual</option>
+                <option value="Pedido">Pedido</option>
+                <option value="Organizador">Organizador de ideas</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Estado</label>
+              <select id="inEstado">
+                <option value="Cobrado">Cobrado</option>
+                <option value="Pendiente">Pendiente</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Método</label>
+              <select id="inMetodo">
+                <option>Efectivo</option>
+                <option>Zelle</option>
+                <option>Pago móvil</option>
+                <option>Transferencia</option>
+                <option>Punto</option>
+                <option>Otro</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Responsable</label>
+              <input id="inResponsable" value="Ricardo">
+            </div>
+            <div class="field full">
+              <label>Nota</label>
+              <textarea id="inNota" placeholder="Observación opcional"></textarea>
+            </div>
+          </div>
+
+          <div class="row-actions">
+            <button class="btn green" onclick="guardarEntrada()">+ Guardar entrada</button>
+          </div>
+        </div>
+
+        <div class="filters">
+          <div class="field">
+            <label>Buscar</label>
+            <input id="filtroEntradaTexto" placeholder="Cliente, concepto..." oninput="render()">
+          </div>
+          <div class="field">
+            <label>Origen</label>
+            <select id="filtroEntradaOrigen" onchange="render()">
+              <option value="">Todos</option>
+              <option value="Pedido">Pedido</option>
+              <option value="Organizador">Organizador</option>
+              <option value="Manual">Manual</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Estado</label>
+            <select id="filtroEntradaEstado" onchange="render()">
+              <option value="">Todos</option>
+              <option value="Cobrado">Cobrado</option>
+              <option value="Pendiente">Pendiente</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Mes</label>
+            <input id="filtroEntradaMes" type="month" onchange="render()">
+          </div>
+          <button class="btn gray" onclick="resetFiltrosEntradas()">Reset</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Cliente / concepto</th>
+                <th>Origen</th>
+                <th>Método</th>
+                <th>Estado</th>
+                <th>Monto</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tablaEntradas"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <b>Resumen de entradas</b>
+        <span class="mini">Agrupado por origen</span>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Origen</th>
+                <th>Cantidad</th>
+                <th>Total</th>
+                <th>Porcentaje</th>
+              </tr>
+            </thead>
+            <tbody id="tablaResumenEntradas"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MÓDULO SALIDAS -->
+  <section id="vistaSalidas" class="oculto">
+    <div class="panel">
+      <div class="panel-head">
+        <b>Salidas</b>
+        <span class="mini">Vista completa de gastos</span>
+      </div>
+      <div class="panel-body">
+
+        <div class="quick">
+          <div class="quick-title">
+            <h3>Salida rápida</h3>
+            <button class="btn small gray" onclick="limpiarFormSalida()">Vaciar</button>
+          </div>
+
+          <div class="form-grid">
+            <div class="field two">
+              <label>Proveedor / persona</label>
+              <input id="outProveedor" placeholder="Ej: proveedor PVC, Rubén, alquiler">
+            </div>
+            <div class="field">
+              <label>Monto $</label>
+              <input id="outMonto" type="number" step="0.01" placeholder="0.00">
+            </div>
+            <div class="field">
+              <label>Fecha</label>
+              <input id="outFecha" type="date">
+            </div>
+            <div class="field two">
+              <label>Descripción</label>
+              <input id="outDescripcion" placeholder="PVC 15mm, tinta, lona, sueldo...">
+            </div>
+            <div class="field">
+              <label>Rubro</label>
+              <select id="outRubro">
+                <option>Materiales</option>
+                <option>Tintas</option>
+                <option>Vinil / Lona</option>
+                <option>Acrílico / PVC</option>
+                <option>Sueldos</option>
+                <option>Alquiler</option>
+                <option>Servicios</option>
+                <option>Transporte</option>
+                <option>Herramientas</option>
+                <option>Mantenimiento</option>
+                <option>General</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Área</label>
+              <select id="outArea">
+                <option>General</option>
+                <option>Impresión</option>
+                <option>Proyectos</option>
+                <option>Servicio de corte</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Método</label>
+              <select id="outMetodo">
+                <option>Efectivo</option>
+                <option>Zelle</option>
+                <option>Pago móvil</option>
+                <option>Transferencia</option>
+                <option>Punto</option>
+                <option>Otro</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Estado</label>
+              <select id="outEstado">
+                <option value="Pagado">Pagado</option>
+                <option value="Pendiente">Pendiente</option>
+              </select>
+            </div>
+            <div class="field two">
+              <label>Cliente asociado</label>
+              <input id="outCliente" placeholder="Opcional: cliente o pedido">
+            </div>
+            <div class="field two">
+              <label>Responsable</label>
+              <input id="outResponsable" value="Roberto">
+            </div>
+            <div class="field full">
+              <label>Nota</label>
+              <textarea id="outNota" placeholder="Observación opcional"></textarea>
+            </div>
+          </div>
+
+          <div class="row-actions">
+            <button class="btn red" onclick="guardarSalida()">+ Guardar salida</button>
+          </div>
+        </div>
+
+        <div class="filters">
+          <div class="field">
+            <label>Buscar</label>
+            <input id="filtroSalidaTexto" placeholder="Proveedor, rubro..." oninput="render()">
+          </div>
+          <div class="field">
+            <label>Rubro</label>
+            <select id="filtroSalidaRubro" onchange="render()">
+              <option value="">Todos</option>
+              <option>Materiales</option>
+              <option>Tintas</option>
+              <option>Vinil / Lona</option>
+              <option>Acrílico / PVC</option>
+              <option>Sueldos</option>
+              <option>Alquiler</option>
+              <option>Servicios</option>
+              <option>Transporte</option>
+              <option>Herramientas</option>
+              <option>Mantenimiento</option>
+              <option>General</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Área</label>
+            <select id="filtroSalidaArea" onchange="render()">
+              <option value="">Todas</option>
+              <option>General</option>
+              <option>Impresión</option>
+              <option>Proyectos</option>
+              <option>Servicio de corte</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Mes</label>
+            <input id="filtroSalidaMes" type="month" onchange="render()">
+          </div>
+          <button class="btn gray" onclick="resetFiltrosSalidas()">Reset</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Proveedor / gasto</th>
+                <th>Rubro</th>
+                <th>Área</th>
+                <th>Estado</th>
+                <th>Monto</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tablaSalidas"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="resumen-grid">
+      <div class="panel">
+        <div class="panel-head">
+          <b>Resumen por rubro</b>
+          <span class="mini">Gastos clasificados</span>
+        </div>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rubro</th>
+                  <th>Cantidad</th>
+                  <th>Total</th>
+                  <th>Porcentaje</th>
+                </tr>
+              </thead>
+              <tbody id="tablaResumenRubros"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <b>Resumen por área</b>
+          <span class="mini">Impresión / Proyectos / General</span>
+        </div>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Área</th>
+                  <th>Cantidad</th>
+                  <th>Total</th>
+                  <th>Porcentaje</th>
+                </tr>
+              </thead>
+              <tbody id="tablaResumenAreas"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="alerta">
+    Esta versión guarda en el navegador con <b>localStorage</b>. La estructura queda lista para conectar luego con Supabase y traer automáticamente los pedidos del index y el organizador de ideas.
+  </div>
+
+</div>
+
+<input id="importFile" type="file" accept="application/json" style="display:none" onchange="importarJSON(this.files[0])">
+<div class="toast" id="toast">Listo</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const STORAGE_KEY='tutto_contabilidad_v2';
+
+let entradas=[];
+let salidas=[];
+let vistaActual='entradas';
+
+function hoyISO(){
+  const d=new Date();
+  return d.toISOString().slice(0,10);
+}
+function mesActual(){
+  const d=new Date();
+  return d.toISOString().slice(0,7);
+}
+function uid(){
+  return Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+}
+function money(n){
+  return '$'+(Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function toast(msg){
+  const t=$('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),1700);
+}
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function badge(text,extra=''){
+  const cls=String(text).toLowerCase()
+    .replace('organizador de ideas','idea')
+    .replace('organizador','idea')
+    .replace('servicio de corte','general')
+    .replace('vinil / lona','general')
+    .replace('acrílico / pvc','general')
+    .replace(/\s+/g,'');
+  return `<span class="badge ${cls} ${extra}">${esc(text)}</span>`;
+}
+function save(){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify({entradas,salidas,vistaActual}));
+}
+function load(){
+  try{
+    const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+    entradas=Array.isArray(data.entradas)?data.entradas:[];
+    salidas=Array.isArray(data.salidas)?data.salidas:[];
+    vistaActual=data.vistaActual||'entradas';
+  }catch(e){
+    entradas=[];salidas=[];vistaActual='entradas';
+  }
+}
+function setFechasIniciales(){
+  $('inFecha').value=hoyISO();
+  $('outFecha').value=hoyISO();
+  $('filtroEntradaMes').value=mesActual();
+  $('filtroSalidaMes').value=mesActual();
+}
+function cambiarVista(vista){
+  vistaActual=vista;
+  $('vistaEntradas').classList.toggle('oculto',vista!=='entradas');
+  $('vistaSalidas').classList.toggle('oculto',vista!=='salidas');
+  $('btnVistaEntradas').classList.toggle('active',vista==='entradas');
+  $('btnVistaSalidas').classList.toggle('active',vista==='salidas');
+  save();
+}
+
+/* ENTRADAS */
+function guardarEntrada(){
+  const monto=Number($('inMonto').value);
+  if(!$('inCliente').value.trim()){toast('Falta cliente');return}
+  if(!$('inConcepto').value.trim()){toast('Falta concepto');return}
+  if(!monto || monto<=0){toast('Monto inválido');return}
+
+  entradas.unshift({
+    id:uid(),
+    fecha:$('inFecha').value||hoyISO(),
+    cliente:$('inCliente').value.trim(),
+    concepto:$('inConcepto').value.trim(),
+    monto:monto,
+    origen:$('inOrigen').value,
+    estado:$('inEstado').value,
+    metodo:$('inMetodo').value,
+    responsable:$('inResponsable').value.trim(),
+    nota:$('inNota').value.trim(),
+    creado:new Date().toISOString()
+  });
+  save();
+  limpiarFormEntrada(false);
+  render();
+  toast('Entrada guardada ✓');
+}
+function limpiarFormEntrada(resetFecha=true){
+  $('inCliente').value='';
+  $('inMonto').value='';
+  $('inConcepto').value='';
+  $('inOrigen').value='Manual';
+  $('inEstado').value='Cobrado';
+  $('inMetodo').value='Efectivo';
+  $('inResponsable').value='Ricardo';
+  $('inNota').value='';
+  if(resetFecha)$('inFecha').value=hoyISO();
+}
+
+/* SALIDAS */
+function guardarSalida(){
+  const monto=Number($('outMonto').value);
+  if(!$('outProveedor').value.trim()){toast('Falta proveedor/persona');return}
+  if(!$('outDescripcion').value.trim()){toast('Falta descripción');return}
+  if(!monto || monto<=0){toast('Monto inválido');return}
+
+  salidas.unshift({
+    id:uid(),
+    fecha:$('outFecha').value||hoyISO(),
+    proveedor:$('outProveedor').value.trim(),
+    descripcion:$('outDescripcion').value.trim(),
+    monto:monto,
+    rubro:$('outRubro').value,
+    area:$('outArea').value,
+    metodo:$('outMetodo').value,
+    estado:$('outEstado').value,
+    cliente:$('outCliente').value.trim(),
+    responsable:$('outResponsable').value.trim(),
+    nota:$('outNota').value.trim(),
+    creado:new Date().toISOString()
+  });
+  save();
+  limpiarFormSalida(false);
+  render();
+  toast('Salida guardada ✓');
+}
+function limpiarFormSalida(resetFecha=true){
+  $('outProveedor').value='';
+  $('outMonto').value='';
+  $('outDescripcion').value='';
+  $('outRubro').value='Materiales';
+  $('outArea').value='General';
+  $('outMetodo').value='Efectivo';
+  $('outEstado').value='Pagado';
+  $('outCliente').value='';
+  $('outResponsable').value='Roberto';
+  $('outNota').value='';
+  if(resetFecha)$('outFecha').value=hoyISO();
+}
+
+/* FILTROS */
+function filtrarEntradas(){
+  const q=$('filtroEntradaTexto').value.trim().toLowerCase();
+  const origen=$('filtroEntradaOrigen').value;
+  const estado=$('filtroEntradaEstado').value;
+  const mes=$('filtroEntradaMes').value;
+
+  return entradas.filter(x=>{
+    const texto=(x.cliente+' '+x.concepto+' '+x.metodo+' '+x.responsable+' '+x.nota).toLowerCase();
+    if(q && !texto.includes(q))return false;
+    if(origen && x.origen!==origen)return false;
+    if(estado && x.estado!==estado)return false;
+    if(mes && !String(x.fecha||'').startsWith(mes))return false;
+    return true;
+  });
+}
+function filtrarSalidas(){
+  const q=$('filtroSalidaTexto').value.trim().toLowerCase();
+  const rubro=$('filtroSalidaRubro').value;
+  const area=$('filtroSalidaArea').value;
+  const mes=$('filtroSalidaMes').value;
+
+  return salidas.filter(x=>{
+    const texto=(x.proveedor+' '+x.descripcion+' '+x.rubro+' '+x.area+' '+x.cliente+' '+x.responsable+' '+x.nota).toLowerCase();
+    if(q && !texto.includes(q))return false;
+    if(rubro && x.rubro!==rubro)return false;
+    if(area && x.area!==area)return false;
+    if(mes && !String(x.fecha||'').startsWith(mes))return false;
+    return true;
+  });
+}
+function resetFiltrosEntradas(){
+  $('filtroEntradaTexto').value='';
+  $('filtroEntradaOrigen').value='';
+  $('filtroEntradaEstado').value='';
+  $('filtroEntradaMes').value=mesActual();
+  render();
+}
+function resetFiltrosSalidas(){
+  $('filtroSalidaTexto').value='';
+  $('filtroSalidaRubro').value='';
+  $('filtroSalidaArea').value='';
+  $('filtroSalidaMes').value=mesActual();
+  render();
+}
+
+/* RENDER */
+function render(){
+  renderEntradas();
+  renderSalidas();
+  renderKPIs();
+  renderResumenes();
+}
+function renderEntradas(){
+  const data=filtrarEntradas();
+  const tb=$('tablaEntradas');
+
+  if(!data.length){
+    tb.innerHTML=`<tr><td colspan="7" class="empty">No hay entradas con estos filtros.</td></tr>`;
+    return;
+  }
+
+  tb.innerHTML=data.map(x=>`
+    <tr>
+      <td>
+        <div class="main">${esc(x.fecha||'')}</div>
+        <div class="sub">${esc(x.responsable||'')}</div>
+      </td>
+      <td>
+        <div class="main">${esc(x.cliente)}</div>
+        <div class="sub">${esc(x.concepto)}</div>
+        ${x.nota?`<div class="sub">Nota: ${esc(x.nota)}</div>`:''}
+      </td>
+      <td>${x.origen==='Pedido'?badge('Pedido'):x.origen==='Organizador'?badge('Organizador','idea'):badge('Manual')}</td>
+      <td>${esc(x.metodo)}</td>
+      <td>${x.estado==='Pendiente'?badge('Pendiente','pendiente'):badge('Cobrado','pagado')}</td>
+      <td class="money in">${money(x.monto)}</td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn small gray" onclick="editarEntrada('${x.id}')">Editar</button>
+          <button class="btn small red" onclick="borrarEntrada('${x.id}')">Borrar</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+function renderSalidas(){
+  const data=filtrarSalidas();
+  const tb=$('tablaSalidas');
+
+  if(!data.length){
+    tb.innerHTML=`<tr><td colspan="7" class="empty">No hay salidas con estos filtros.</td></tr>`;
+    return;
+  }
+
+  tb.innerHTML=data.map(x=>`
+    <tr>
+      <td>
+        <div class="main">${esc(x.fecha||'')}</div>
+        <div class="sub">${esc(x.responsable||'')}</div>
+      </td>
+      <td>
+        <div class="main">${esc(x.proveedor)}</div>
+        <div class="sub">${esc(x.descripcion)}</div>
+        ${x.cliente?`<div class="sub">Cliente: ${esc(x.cliente)}</div>`:''}
+        ${x.nota?`<div class="sub">Nota: ${esc(x.nota)}</div>`:''}
+      </td>
+      <td>${badge(x.rubro,'general')}</td>
+      <td>${badge(x.area)}</td>
+      <td>${x.estado==='Pendiente'?badge('Pendiente','pendiente'):badge('Pagado','pagado')}</td>
+      <td class="money out">${money(x.monto)}</td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn small gray" onclick="editarSalida('${x.id}')">Editar</button>
+          <button class="btn small red" onclick="borrarSalida('${x.id}')">Borrar</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+function renderKPIs(){
+  const mesE=$('filtroEntradaMes').value||mesActual();
+  const mesS=$('filtroSalidaMes').value||mesActual();
+
+  const entMes=entradas.filter(x=>String(x.fecha||'').startsWith(mesE));
+  const salMes=salidas.filter(x=>String(x.fecha||'').startsWith(mesS));
+
+  const totalEnt=entMes.reduce((s,x)=>s+Number(x.monto||0),0);
+  const totalSal=salMes.reduce((s,x)=>s+Number(x.monto||0),0);
+  const cobrar=entMes.filter(x=>x.estado==='Pendiente').reduce((s,x)=>s+Number(x.monto||0),0);
+  const realEnt=entMes.filter(x=>x.estado==='Cobrado').reduce((s,x)=>s+Number(x.monto||0),0);
+  const realSal=salMes.filter(x=>x.estado==='Pagado').reduce((s,x)=>s+Number(x.monto||0),0);
+
+  $('kpiEntradas').textContent=money(totalEnt);
+  $('kpiEntradasCount').textContent=entMes.length+' movimientos';
+  $('kpiSalidas').textContent=money(totalSal);
+  $('kpiSalidasCount').textContent=salMes.length+' movimientos';
+  $('kpiBalance').textContent=money(totalEnt-totalSal);
+  $('kpiCobrar').textContent=money(cobrar);
+  $('kpiReal').textContent=money(realEnt-realSal);
+  $('tabTotalEntradas').textContent=money(totalEnt);
+  $('tabTotalSalidas').textContent=money(totalSal);
+
+  const porRubro={};
+  salMes.forEach(x=>porRubro[x.rubro]=(porRubro[x.rubro]||0)+Number(x.monto||0));
+  const mayor=Object.entries(porRubro).sort((a,b)=>b[1]-a[1])[0];
+
+  $('kpiMayorGasto').textContent=mayor?mayor[0]:'-';
+  $('kpiMayorGastoMonto').textContent=mayor?money(mayor[1]):money(0);
+}
+function tablaAgrupada(tbodyId,data,keyName,tipo){
+  const map={};
+  data.forEach(x=>{
+    const k=x[keyName]||'Sin definir';
+    if(!map[k])map[k]={count:0,total:0};
+    map[k].count++;
+    map[k].total+=Number(x.monto||0);
+  });
+
+  const arr=Object.entries(map).map(([grupo,v])=>({grupo,...v})).sort((a,b)=>b.total-a.total);
+  const total=arr.reduce((s,x)=>s+x.total,0);
+  const tb=$(tbodyId);
+
+  if(!arr.length){
+    tb.innerHTML='<tr><td colspan="4" class="empty">Sin datos.</td></tr>';
+    return;
+  }
+
+  tb.innerHTML=arr.map(x=>`
+    <tr>
+      <td><div class="main">${esc(x.grupo)}</div></td>
+      <td>${x.count}</td>
+      <td class="money ${tipo==='entrada'?'in':'out'}">${money(x.total)}</td>
+      <td>${total?((x.total/total)*100).toFixed(1):'0.0'}%</td>
+    </tr>
+  `).join('');
+}
+function renderResumenes(){
+  tablaAgrupada('tablaResumenEntradas',filtrarEntradas(),'origen','entrada');
+  tablaAgrupada('tablaResumenRubros',filtrarSalidas(),'rubro','salida');
+  tablaAgrupada('tablaResumenAreas',filtrarSalidas(),'area','salida');
+}
+
+/* EDITAR / BORRAR */
+function editarEntrada(id){
+  const x=entradas.find(e=>e.id===id);
+  if(!x)return;
+  cambiarVista('entradas');
+  $('inCliente').value=x.cliente||'';
+  $('inMonto').value=x.monto||'';
+  $('inFecha').value=x.fecha||hoyISO();
+  $('inConcepto').value=x.concepto||'';
+  $('inOrigen').value=x.origen||'Manual';
+  $('inEstado').value=x.estado||'Cobrado';
+  $('inMetodo').value=x.metodo||'Efectivo';
+  $('inResponsable').value=x.responsable||'Ricardo';
+  $('inNota').value=x.nota||'';
+  entradas=entradas.filter(e=>e.id!==id);
+  save();render();
+  toast('Entrada cargada para editar');
+}
+function editarSalida(id){
+  const x=salidas.find(e=>e.id===id);
+  if(!x)return;
+  cambiarVista('salidas');
+  $('outProveedor').value=x.proveedor||'';
+  $('outMonto').value=x.monto||'';
+  $('outFecha').value=x.fecha||hoyISO();
+  $('outDescripcion').value=x.descripcion||'';
+  $('outRubro').value=x.rubro||'Materiales';
+  $('outArea').value=x.area||'General';
+  $('outMetodo').value=x.metodo||'Efectivo';
+  $('outEstado').value=x.estado||'Pagado';
+  $('outCliente').value=x.cliente||'';
+  $('outResponsable').value=x.responsable||'Roberto';
+  $('outNota').value=x.nota||'';
+  salidas=salidas.filter(e=>e.id!==id);
+  save();render();
+  toast('Salida cargada para editar');
+}
+function borrarEntrada(id){
+  if(!confirm('¿Borrar esta entrada?'))return;
+  entradas=entradas.filter(x=>x.id!==id);
+  save();render();toast('Entrada borrada');
+}
+function borrarSalida(id){
+  if(!confirm('¿Borrar esta salida?'))return;
+  salidas=salidas.filter(x=>x.id!==id);
+  save();render();toast('Salida borrada');
+}
+
+/* IMPORTAR / EXPORTAR */
+function exportarJSON(){
+  const data={entradas,salidas,vistaActual,exportado:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='contabilidad_tuttovinilos_'+hoyISO()+'.json';
+  a.click();
+  toast('JSON exportado ✓');
+}
+function importarJSON(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const data=JSON.parse(reader.result);
+      if(!Array.isArray(data.entradas)||!Array.isArray(data.salidas))throw new Error('formato');
+      entradas=data.entradas;
+      salidas=data.salidas;
+      vistaActual=data.vistaActual||'entradas';
+      save();render();cambiarVista(vistaActual);toast('Importado ✓');
+    }catch(e){
+      toast('Archivo inválido');
+    }
+  };
+  reader.readAsText(file);
+}
+function limpiarTodo(){
+  if(!confirm('¿Borrar toda la contabilidad local?'))return;
+  entradas=[];salidas=[];save();render();toast('Datos borrados');
+}
+
+/* EJEMPLOS */
+function cargarEjemplos(){
+  if((entradas.length||salidas.length) && !confirm('Esto añadirá datos de ejemplo. ¿Continuar?'))return;
+  const f=hoyISO();
+  entradas.unshift(
+    {id:uid(),fecha:f,cliente:'Frida',concepto:'Anticipo logo corpóreo',monto:200,origen:'Pedido',estado:'Cobrado',metodo:'Zelle',responsable:'Ricardo',nota:'Pedido tomado desde index',creado:new Date().toISOString()},
+    {id:uid(),fecha:f,cliente:'Galpe',concepto:'Pago parcial letras iluminadas',monto:450,origen:'Organizador',estado:'Pendiente',metodo:'Transferencia',responsable:'Roberto',nota:'Viene del organizador de ideas',creado:new Date().toISOString()},
+    {id:uid(),fecha:f,cliente:'Soma',concepto:'Diseño de logo',monto:100,origen:'Manual',estado:'Cobrado',metodo:'Efectivo',responsable:'Ricardo',nota:'Entrada manual',creado:new Date().toISOString()}
+  );
+  salidas.unshift(
+    {id:uid(),fecha:f,proveedor:'Proveedor PVC',descripcion:'PVC 15mm 1 lámina',monto:68,rubro:'Acrílico / PVC',area:'Proyectos',metodo:'Efectivo',estado:'Pagado',cliente:'Frida',responsable:'Roberto',nota:'Material asociado a pedido',creado:new Date().toISOString()},
+    {id:uid(),fecha:f,proveedor:'Mimaki consumibles',descripcion:'Tinta UV CMYK',monto:160,rubro:'Tintas',area:'Impresión',metodo:'Transferencia',estado:'Pagado',cliente:'',responsable:'Roberto',nota:'Compra general impresión',creado:new Date().toISOString()},
+    {id:uid(),fecha:f,proveedor:'Rubén',descripcion:'Sueldo semanal',monto:175,rubro:'Sueldos',area:'Impresión',metodo:'Pago móvil',estado:'Pendiente',cliente:'',responsable:'Roberto',nota:'Pendiente por pagar',creado:new Date().toISOString()}
+  );
+  save();render();toast('Ejemplos cargados');
+}
+
+/* ARRANQUE */
+load();
+setFechasIniciales();
+render();
+cambiarVista(vistaActual);
+</script>
+</body>
+</html>
