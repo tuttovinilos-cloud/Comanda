@@ -174,7 +174,6 @@ button{cursor:pointer;border:0}
 </header>
 
 <div class="wrap">
-  <!-- LIENZO -->
   <section class="panel">
     <div class="panel-head"><b>Área de trabajo</b><span id="contador" style="font-size:11px;color:var(--gris);font-weight:700">0 bloques</span></div>
     <div class="panel-body">
@@ -223,7 +222,6 @@ button{cursor:pointer;border:0}
     </div>
   </section>
 
-  <!-- PANEL DERECHO -->
   <aside class="panel">
     <div class="panel-head"><b>Editar bloque</b></div>
     <div class="panel-body">
@@ -243,7 +241,7 @@ const lienzo=$('lienzo');
 const viewport=$('viewport');
 const lienzoZoom=$('lienzoZoom');
 
-let bloques=[];           // {id, x, y, w, h, texto}
+let bloques=[];
 let seleccion=null;
 let uid=1;
 let zoom=0.70;
@@ -286,6 +284,14 @@ function aplicarTamanoLienzo(){
 
   aplicarZoom();
   render();
+}
+
+function marcarSeleccionVisual(){
+  [...lienzo.children].forEach((el,i)=>{
+    const b=bloques[i];
+    if(!b)return;
+    el.classList.toggle('sel',b.id===seleccion);
+  });
 }
 
 function seleccionar(id){
@@ -459,12 +465,17 @@ function centrarSeleccion(){
 
 function renderLeyenda(){
   const cont=$('leyenda');
-  if(!bloques.length){cont.innerHTML='<div class="leyenda-vacia">Agrega bloques para que aparezcan aquí, numerados.</div>';return}
+  if(!bloques.length){
+    cont.innerHTML='<div class="leyenda-vacia">Agrega bloques para que aparezcan aquí, numerados.</div>';
+    return;
+  }
+
   cont.innerHTML=bloques.map((b,i)=>`
     <div class="leyenda-item">
       <span class="leyenda-num">${i+1}</span>
       <input value="${esc(b.texto)}" placeholder="¿Qué es el bloque ${i+1}?" data-id="${b.id}">
     </div>`).join('');
+
   cont.querySelectorAll('input').forEach(inp=>{
     inp.addEventListener('input',e=>{
       const b=bloques.find(x=>x.id===Number(e.target.dataset.id));
@@ -477,9 +488,11 @@ function renderLeyenda(){
         }
       }
     });
+
     inp.addEventListener('focus',e=>{
       seleccion=Number(e.target.dataset.id);
-      render();
+      marcarSeleccionVisual();
+      renderEditor();
     });
   });
 }
@@ -493,6 +506,8 @@ function iniciarArrastre(el,b){
     const offX=(e.clientX-rect.left)/zoom-b.x;
     const offY=(e.clientY-rect.top)/zoom-b.y;
     el.setPointerCapture(e.pointerId);
+    marcarSeleccionVisual();
+    renderEditor();
 
     function mover(ev){
       const r=lienzo.getBoundingClientRect();
@@ -524,6 +539,9 @@ function iniciarResize(handle,el,b){
     e.stopPropagation();
     seleccion=b.id;
     handle.setPointerCapture(e.pointerId);
+    marcarSeleccionVisual();
+    renderEditor();
+
     const startX=e.clientX,startY=e.clientY,w0=b.w,h0=b.h;
 
     function mover(ev){
