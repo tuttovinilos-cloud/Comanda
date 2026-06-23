@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v47 pagos fix boton pago");
+console.log("APP JS conectado correctamente v48 pagos final sin recursion");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -13,13 +13,8 @@ let tiposImpresionMap = new Map();
 let clientesBusquedaDB = [];
 let clientesCatalogoDB = [];
 
-// Puente global inmediato para botones/acciones de pago.
-// Esto evita que el botón Pago quede muerto por orden de carga o cache parcial.
-window.openPagoPedido = function(id){ return openPagoPedido(id); };
-window.openPagoPedidoSafe = function(id){ return abrirPagoPedidoSeguro(id); };
-window.onMetodoPagoChange = function(){ return onMetodoPagoChange(); };
-window.calcularPagoModal = function(){ return calcularPagoModal(); };
-window.aplicarPagoPedido = function(){ return aplicarPagoPedido(); };
+// Las funciones globales de pago se asignan al final del archivo,
+ // cuando ya existen las funciones internas. Así evitamos recursión.
 
 // ===========================
 // SUPABASE SEGURO
@@ -713,7 +708,14 @@ function inputAbonoHtml(id, monto) {
   return `
     <div class="abono-wrap">
       <input class="cell-edit abono-edit ${claseAbono(monto)}" data-abono-id="${escapeHtml(id)}" type="number" step="0.01" value="${money(monto)}" title="Editar abono" onclick="event.stopPropagation()"/>
-      <button class="pay-cell-btn" type="button" data-pago-id="${escapeHtml(id)}" title="Registrar pago" onpointerdown="event.preventDefault();event.stopPropagation();window.openPagoPedidoSafe && window.openPagoPedidoSafe('${escapeHtml(id)}');return false" onclick="event.preventDefault();event.stopPropagation();window.openPagoPedidoSafe && window.openPagoPedidoSafe('${escapeHtml(id)}');return false">Pago</button>
+    </div>
+  `;
+}
+
+function botonPagoHtml(id) {
+  return `
+    <div class="payment-action-wrap">
+      <button class="pay-cell-btn" type="button" data-pago-id="${escapeHtml(id)}" title="Registrar pago">Pago</button>
     </div>
   `;
 }
@@ -778,7 +780,8 @@ function pedidoFilaHTML(p) {
       </td>
 
       <td class="abono-cell">${inputAbonoHtml(id, abono)}</td>
-      <td>${escapeHtml(p.fecha_entrega || "—")}</td>
+      <td class="entrega-cell">${escapeHtml(p.fecha_entrega || "—")}</td>
+      <td class="pago-action-cell">${botonPagoHtml(id)}</td>
       <td>${archivo}</td>
     </tr>
   `;
@@ -1179,7 +1182,7 @@ function setValue(id, value) {
   if (el) el.value = value;
 }
 
-function openPagoPedido(id) {
+function abrirModalPagoPedido(id) {
   const pedido = getPedidoPorId(id);
 
   if (!pedido) {
@@ -1235,12 +1238,12 @@ function abrirPagoPedidoSeguro(id) {
 
   ultimoPagoTapId = pedidoId;
   ultimoPagoTapAt = ahora;
-  openPagoPedido(pedidoId);
+  abrirModalPagoPedido(pedidoId);
   return false;
 }
 
 window.openPagoPedidoSafe = abrirPagoPedidoSeguro;
-window.openPagoPedido = function(id){ return abrirPagoPedidoSeguro(id); };
+window.openPagoPedido = abrirPagoPedidoSeguro;
 
 function manejarBotonPagoPedido(e) {
   const btn = e.target && e.target.closest ? e.target.closest(".pay-cell-btn") : null;
@@ -1760,12 +1763,13 @@ function inyectarEstilosAppFinal() {
 }
 
 
-// Reconfirmar funciones de pago para compatibilidad con HTML anterior
-window.openPagoPedido = function(id){ return openPagoPedido(id); };
-window.openPagoPedidoSafe = function(id){ return abrirPagoPedidoSeguro(id); };
-window.onMetodoPagoChange = function(){ return onMetodoPagoChange(); };
-window.calcularPagoModal = function(){ return calcularPagoModal(); };
-window.aplicarPagoPedido = function(){ return aplicarPagoPedido(); };
+// Reconfirmar funciones de pago para compatibilidad con HTML anterior.
+// No llamar window.openPagoPedido -> openPagoPedido, porque eso causa recursión.
+window.openPagoPedido = abrirPagoPedidoSeguro;
+window.openPagoPedidoSafe = abrirPagoPedidoSeguro;
+window.onMetodoPagoChange = onMetodoPagoChange;
+window.calcularPagoModal = calcularPagoModal;
+window.aplicarPagoPedido = aplicarPagoPedido;
 
 // ===========================
 // LISTENERS ABONO
