@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v48 pagos final sin recursion");
+console.log("APP JS conectado correctamente v49 pagos deuda USD/BCV");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -12,6 +12,7 @@ let materialesMap = new Map();
 let tiposImpresionMap = new Map();
 let clientesBusquedaDB = [];
 let clientesCatalogoDB = [];
+let ultimosPagosPorPedido = new Map();
 
 // Las funciones globales de pago se asignan al final del archivo,
  // cuando ya existen las funciones internas. Así evitamos recursión.
@@ -627,6 +628,33 @@ async function crearNotificacionPedidoListoFallback(id, pedidoBase, estadoAnteri
 // ===========================
 // CARGAR PEDIDOS
 // ===========================
+async function cargarUltimosPagosPedidos() {
+  ultimosPagosPorPedido = new Map();
+
+  if (!validarSupabase()) return;
+
+  try {
+    const { data, error } = await db()
+      .from("pedidos_pagos")
+      .select("id,pedido_id,monto_recibido,moneda,equivalente_usd,metodo_pago,metodo_otro,referencia,created_at")
+      .order("created_at", { ascending: false })
+      .limit(5000);
+
+    if (error) {
+      console.warn("No se pudieron cargar últimos pagos:", error);
+      return;
+    }
+
+    (data || []).forEach(pago => {
+      const key = Number(pago.pedido_id || 0);
+      if (!key || ultimosPagosPorPedido.has(key)) return;
+      ultimosPagosPorPedido.set(key, pago);
+    });
+  } catch (e) {
+    console.warn("No se pudo cargar historial de pagos:", e);
+  }
+}
+
 async function cargarPedidos(resetPage = true) {
   if (!validarSupabase()) return;
 
@@ -644,6 +672,7 @@ async function cargarPedidos(resetPage = true) {
   pedidosDB = data || [];
   console.log("Pedidos cargados:", pedidosDB.length);
 
+  await cargarUltimosPagosPedidos();
   renderPedidosPaginados(resetPage);
 
   if (typeof aplicarPermisosComanda === "function") aplicarPermisosComanda();
@@ -671,6 +700,8 @@ function pedidoCumpleFiltros(p) {
   const operador = String(p.operador || "");
   const estatus = String(p.estatus_trabajo || "");
   const pago = String(p.estatus_pago || "");
+  const deuda = resumenDeudaPedido(p);
+  const ultimoPago = ultimosPagosPorPedido.get(Number(p.id));
 
   const contenido = normalizarBusqueda([
     p.id,
@@ -681,6 +712,14 @@ function pedidoCumpleFiltros(p) {
     p.material,
     p.tipo_impresion,
     p.precio,
+    p.precio_total,
+    p.moneda_deuda,
+    p.tipo_tasa_deuda,
+    deuda.totalTexto,
+    deuda.saldoTexto,
+    ultimoPago?.metodo_pago,
+    ultimoPago?.metodo_otro,
+    ultimoPago?.referencia,
     p.estatus_trabajo,
     p.estatus_pago,
     p.fecha_entrega,
@@ -704,18 +743,212 @@ function pedidoCumpleFiltros(p) {
   return true;
 }
 
+function tipoDeudaNormalizado(valor) {
+  const v = String(valor || "USD_FIJO").toUpperCase();
+  if (v === "BCV" || v === "BS_BCV") return "BS_BCV";
+  if (v === "MANUAL" || v === "BS_MANUAL") return "BS_MANUAL";
+  return "USD_FIJO";
+}
+
+function esDeudaBs(pedido) {
+  const tipo = tipoDeudaNormalizado(pedido?.tipo_tasa_deuda || pedido?.tipo_deuda);
+  const moneda = String(pedido?.moneda_deuda || "").toUpperCase();
+  return moneda === "BS" || tipo === "BS_BCV" || tipo === "BS_MANUAL";
+}
+
+function tasaDeudaPedido(pedido) {
+  const t = numeroSeguro(pedido?.tasa_deuda || 0);
+  return t > 0 ? t : 1;
+}
+
+function totalBaseUsdPedido(pedido) {
+  if (!pedido) return 0;
+
+  const posibles = [
+    pedido.precio_total,
+    pedido.total,
+    pedido.precio,
+    pedido.precio_unitario_calculado
+  ];
+
+  for (const valor of posibles) {
+    const n = numeroSeguro(valor);
+    if (n > 0) return n;
+  }
+
+  return 0;
+}
+
+function totalBsPedido(pedido) {
+  if (!pedido) return 0;
+  const guardado = numeroSeguro(pedido.total_bs || 0);
+  if (guardado > 0) return guardado;
+  return totalBaseUsdPedido(pedido) * tasaDeudaPedido(pedido);
+}
+
+function pagadoUsdPedido(pedido) {
+  return numeroSeguro(pedido ? pedido.monto_abonado : 0);
+}
+
+function pagadoBsPedido(pedido) {
+  if (!pedido) return 0;
+  const guardado = numeroSeguro(pedido.monto_abonado_bs || 0);
+  if (guardado > 0) return guardado;
+  if (esDeudaBs(pedido)) return pagadoUsdPedido(pedido) * tasaDeudaPedido(pedido);
+  return 0;
+}
+
+function formatoBs(valor) {
+  return "Bs " + money(valor);
+}
+
+function formatoUsd(valor) {
+  return "$" + money(valor);
+}
+
+function etiquetaTipoDeuda(pedido) {
+  const tipo = tipoDeudaNormalizado(pedido?.tipo_tasa_deuda || pedido?.tipo_deuda);
+  const tasa = tasaDeudaPedido(pedido);
+
+  if (tipo === "BS_BCV") return "BCV " + money(tasa);
+  if (tipo === "BS_MANUAL") return "Bs tasa " + money(tasa);
+  return "USD fijo";
+}
+
+function resumenDeudaPedido(pedido) {
+  const bs = esDeudaBs(pedido);
+  const totalUsd = totalBaseUsdPedido(pedido);
+  const tasa = tasaDeudaPedido(pedido);
+  const total = bs ? totalBsPedido(pedido) : totalUsd;
+  const pagado = bs ? pagadoBsPedido(pedido) : pagadoUsdPedido(pedido);
+  const saldo = Math.max(total - pagado, 0);
+  const estado = total <= 0 ? "sin_monto" : (saldo <= 0.009 ? "pagado" : (pagado > 0 ? "abonado" : "debe"));
+
+  return {
+    esBs: bs,
+    tipo: tipoDeudaNormalizado(pedido?.tipo_tasa_deuda || pedido?.tipo_deuda),
+    tasa,
+    total,
+    totalUsd,
+    totalBs: bs ? total : 0,
+    pagado,
+    saldo,
+    estado,
+    totalTexto: bs ? formatoBs(total) : formatoUsd(total),
+    pagadoTexto: bs ? formatoBs(pagado) : formatoUsd(pagado),
+    saldoTexto: bs ? formatoBs(saldo) : formatoUsd(saldo),
+    tipoTexto: etiquetaTipoDeuda(pedido)
+  };
+}
+
+function payloadDeudaDesdeFormulario(prefijo) {
+  const montoBaseUsd = numeroSeguro(document.getElementById(prefijo + "_precio_total")?.value || 0);
+  const tipo = tipoDeudaNormalizado(document.getElementById(prefijo + "_tipo_deuda")?.value || "USD_FIJO");
+  let tasa = numeroSeguro(document.getElementById(prefijo + "_tasa_deuda")?.value || 1);
+
+  if (tipo === "USD_FIJO") tasa = 1;
+  if (tasa <= 0) tasa = 1;
+
+  const esBs = tipo === "BS_BCV" || tipo === "BS_MANUAL";
+
+  return {
+    precio_total: montoBaseUsd,
+    moneda_deuda: esBs ? "BS" : "USD",
+    tipo_tasa_deuda: tipo,
+    tasa_deuda: tasa,
+    total_bs: esBs ? (montoBaseUsd * tasa) : null
+  };
+}
+
+function aplicarFormularioDeuda(prefijo, pedido) {
+  const monto = totalBaseUsdPedido(pedido);
+  const tipo = tipoDeudaNormalizado(pedido?.tipo_tasa_deuda || (esDeudaBs(pedido) ? "BS_BCV" : "USD_FIJO"));
+  const tasa = tasaDeudaPedido(pedido);
+
+  const montoEl = document.getElementById(prefijo + "_precio_total");
+  const tipoEl = document.getElementById(prefijo + "_tipo_deuda");
+  const tasaEl = document.getElementById(prefijo + "_tasa_deuda");
+
+  if (montoEl) montoEl.value = monto > 0 ? money(monto) : "";
+  if (tipoEl) tipoEl.value = tipo;
+  if (tasaEl) tasaEl.value = tipo === "USD_FIJO" ? "" : money(tasa);
+
+  actualizarVisibilidadTasaDeuda(prefijo);
+}
+
+function actualizarVisibilidadTasaDeuda(prefijo) {
+  const tipoEl = document.getElementById(prefijo + "_tipo_deuda");
+  const tasaEl = document.getElementById(prefijo + "_tasa_deuda");
+  const wrap = document.getElementById(prefijo + "_tasa_deuda_wrap");
+
+  const tipo = tipoDeudaNormalizado(tipoEl?.value || "USD_FIJO");
+  const mostrar = tipo !== "USD_FIJO";
+
+  if (tasaEl) {
+    tasaEl.style.display = mostrar ? "" : "none";
+    if (!mostrar) tasaEl.value = "";
+  }
+
+  if (wrap) wrap.style.display = mostrar ? "" : "none";
+}
+
 function inputAbonoHtml(id, monto) {
   return `
     <div class="abono-wrap">
-      <input class="cell-edit abono-edit ${claseAbono(monto)}" data-abono-id="${escapeHtml(id)}" type="number" step="0.01" value="${money(monto)}" title="Editar abono" onclick="event.stopPropagation()"/>
+      <input class="cell-edit abono-edit ${claseAbono(monto)}" data-abono-id="${escapeHtml(id)}" type="number" step="0.01" value="${money(monto)}" title="Editar abono equivalente USD" onclick="event.stopPropagation()"/>
     </div>
   `;
 }
 
-function botonPagoHtml(id) {
+function ultimoPagoTexto(id) {
+  const pago = ultimosPagosPorPedido.get(Number(id));
+  if (!pago) return "";
+
+  const metodo = String(pago.metodo_otro || pago.metodo_pago || "").trim();
+  const ref = String(pago.referencia || "").trim();
+  const monto = pago.moneda === "BS" ? formatoBs(pago.monto_recibido) : formatoUsd(pago.monto_recibido);
+
+  const partes = [monto, metodo, ref ? "Ref. " + ref : ""].filter(Boolean);
+  return partes.join(" · ");
+}
+
+function botonPagoHtml(id, pedido) {
+  const deuda = resumenDeudaPedido(pedido);
+  let texto = "Sin monto";
+  let clase = "pay-sinmonto";
+
+  if (deuda.estado === "pagado") {
+    texto = "Pagado";
+    clase = "pay-pagado";
+  } else if (deuda.estado === "abonado") {
+    texto = "Debe " + deuda.saldoTexto;
+    clase = "pay-abonado";
+  } else if (deuda.estado === "debe") {
+    texto = "Debe " + deuda.saldoTexto;
+    clase = "pay-debe";
+  }
+
+  const ultimo = ultimoPagoTexto(id);
+
   return `
     <div class="payment-action-wrap">
-      <button class="pay-cell-btn" type="button" data-pago-id="${escapeHtml(id)}" title="Registrar pago">Pago</button>
+      <button class="pay-cell-btn ${clase}" type="button" data-pago-id="${escapeHtml(id)}" title="Registrar pago">
+        <span>${escapeHtml(texto)}</span>
+        <small>${escapeHtml(deuda.tipoTexto)}</small>
+      </button>
+      ${ultimo ? `<div class="pay-last-info" title="${escapeHtml(ultimo)}">${escapeHtml(ultimo)}</div>` : ""}
+    </div>
+  `;
+}
+
+function deudaCellHtml(pedido) {
+  const deuda = resumenDeudaPedido(pedido);
+  if (deuda.total <= 0) return `<span class="deuda-pill deuda-empty">Sin monto</span>`;
+
+  return `
+    <div class="deuda-cell-wrap">
+      <strong>${escapeHtml(deuda.totalTexto)}</strong>
+      <span>${escapeHtml(deuda.tipoTexto)}</span>
     </div>
   `;
 }
@@ -738,7 +971,7 @@ function pedidoFilaHTML(p) {
       <td>${escapeHtml(p.fecha)}</td>
       <td>${escapeHtml(p.operador)}</td>
       <td>${escapeHtml(p.cliente)}</td>
-      <td>${escapeHtml(p.descripcion)}</td>
+      <td title="${escapeHtml(p.descripcion)}">${escapeHtml(p.descripcion)}</td>
 
       <td>
         <input 
@@ -752,7 +985,7 @@ function pedidoFilaHTML(p) {
 
       <td>${chipCatalogo(p.material, "material")}</td>
       <td>${chipCatalogo(p.tipo_impresion, "impresion")}</td>
-      <td>${escapeHtml(p.precio)}</td>
+      <td>${deudaCellHtml(p)}</td>
 
       <td>
         <select 
@@ -781,92 +1014,11 @@ function pedidoFilaHTML(p) {
 
       <td class="abono-cell">${inputAbonoHtml(id, abono)}</td>
       <td class="entrega-cell">${escapeHtml(p.fecha_entrega || "—")}</td>
-      <td class="pago-action-cell">${botonPagoHtml(id)}</td>
+      <td class="pago-action-cell">${botonPagoHtml(id, p)}</td>
       <td>${archivo}</td>
     </tr>
   `;
 }
-
-function renderPaginacionPedidos(total, paginas, inicio, fin) {
-  const bar = document.getElementById("paginationBar");
-  if (!bar) return;
-
-  if (!total) {
-    bar.innerHTML = `<span class="page-info">0 pedidos</span>`;
-    return;
-  }
-
-  bar.innerHTML = `
-    <button class="page-btn" type="button" onclick="cambiarPaginaPedidos(-1)" ${paginaActualPedidos <= 1 ? "disabled" : ""}>← Anterior</button>
-    <span class="page-info">${inicio + 1}-${fin} de ${total}</span>
-    <span class="page-info">Página ${paginaActualPedidos} / ${paginas}</span>
-    <button class="page-btn" type="button" onclick="cambiarPaginaPedidos(1)" ${paginaActualPedidos >= paginas ? "disabled" : ""}>Siguiente →</button>
-    <select class="page-select" onchange="cambiarTamanoPaginaPedidos(this.value)">
-      <option value="20" ${pedidosPorPagina === 20 ? "selected" : ""}>1-20 por página</option>
-      <option value="40" ${pedidosPorPagina === 40 ? "selected" : ""}>1-40 por página</option>
-      <option value="100" ${pedidosPorPagina === 100 ? "selected" : ""}>1-100 por página</option>
-    </select>
-  `;
-}
-
-function renderPedidosPaginados(resetPage = false) {
-  const tabla = document.getElementById("orderTableBody");
-  const emptyState = document.getElementById("emptyState");
-
-  if (!tabla) return;
-
-  const filtrados = pedidosDB
-    .filter(pedidoCumpleFiltros)
-    .sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
-
-  const total = filtrados.length;
-  const paginas = Math.max(1, Math.ceil(total / pedidosPorPagina));
-
-  if (resetPage) paginaActualPedidos = 1;
-  if (paginaActualPedidos < 1) paginaActualPedidos = 1;
-  if (paginaActualPedidos > paginas) paginaActualPedidos = paginas;
-
-  const inicio = (paginaActualPedidos - 1) * pedidosPorPagina;
-  const fin = Math.min(inicio + pedidosPorPagina, total);
-  const pagina = filtrados.slice(inicio, fin);
-
-  tabla.innerHTML = "";
-
-  if (!total) {
-    if (emptyState) {
-      emptyState.style.display = "block";
-      emptyState.textContent = "— SIN PEDIDOS EN ESTE FILTRO —";
-    }
-    renderPaginacionPedidos(0, 1, 0, 0);
-    return;
-  }
-
-  if (emptyState) {
-    emptyState.style.display = "none";
-    emptyState.textContent = "— SIN PEDIDOS —";
-  }
-
-  tabla.innerHTML = pagina.map(pedidoFilaHTML).join("");
-  renderPaginacionPedidos(total, paginas, inicio, fin);
-
-  if (typeof aplicarPermisosComanda === "function") aplicarPermisosComanda();
-  if (typeof aplicarColoresEstadosYAbonos === "function") setTimeout(aplicarColoresEstadosYAbonos, 30);
-}
-
-function cambiarPaginaPedidos(delta) {
-  paginaActualPedidos += Number(delta || 0);
-  renderPedidosPaginados(false);
-}
-
-function cambiarTamanoPaginaPedidos(valor) {
-  pedidosPorPagina = Number(valor || 20);
-  paginaActualPedidos = 1;
-  renderPedidosPaginados(false);
-}
-
-window.cambiarPaginaPedidos = cambiarPaginaPedidos;
-window.cambiarTamanoPaginaPedidos = cambiarTamanoPaginaPedidos;
-window.renderPedidosPaginados = renderPedidosPaginados;
 
 // ===========================
 // GUARDAR FILA RÁPIDA
@@ -885,6 +1037,7 @@ async function saveQuickOrder() {
   const estatus_trabajo = document.getElementById("q_estatus_trabajo")?.value || "Solicitud";
   let estatus_pago = document.getElementById("q_estatus_pago")?.value || "Pendiente";
   const fecha_entrega = document.getElementById("q_entrega")?.value || null;
+  const deudaPayload = payloadDeudaDesdeFormulario("q");
 
   const opSesion = getOperadorSesionLocal();
 
@@ -918,6 +1071,8 @@ async function saveQuickOrder() {
       estatus_pago,
       monto_abonado,
       fecha_entrega,
+      ...deudaPayload,
+      monto_abonado_bs: deudaPayload.moneda_deuda === "BS" ? (monto_abonado * deudaPayload.tasa_deuda) : 0,
       archivo_url: archivoData.archivo_url,
       archivo_nombre: archivoData.archivo_nombre
     }]);
@@ -954,6 +1109,7 @@ async function saveOrder() {
   const tipo_impresion = document.getElementById("f_impresion")?.value || "";
   const monto_abonado = numeroSeguro(document.getElementById("f_monto_abonado")?.value || 0);
   const fecha_entrega = document.getElementById("f_entrega")?.value || null;
+  const deudaPayload = payloadDeudaDesdeFormulario("f");
 
   const opSesion = getOperadorSesionLocal();
 
@@ -975,7 +1131,9 @@ async function saveOrder() {
     material,
     tipo_impresion,
     monto_abonado,
-    fecha_entrega
+    fecha_entrega,
+    ...deudaPayload,
+    monto_abonado_bs: deudaPayload.moneda_deuda === "BS" ? (monto_abonado * deudaPayload.tasa_deuda) : 0
   };
 
   if (monto_abonado > 0) datosPedido.estatus_pago = "Abonado";
@@ -1111,25 +1269,11 @@ function getPedidoPorId(id) {
 }
 
 function totalPedidoUSD(pedido) {
-  if (!pedido) return 0;
-
-  const posibles = [
-    pedido.precio_total,
-    pedido.total,
-    pedido.precio,
-    pedido.precio_unitario_calculado
-  ];
-
-  for (const valor of posibles) {
-    const n = numeroSeguro(valor);
-    if (n > 0) return n;
-  }
-
-  return 0;
+  return totalBaseUsdPedido(pedido);
 }
 
 function pagadoPedidoUSD(pedido) {
-  return numeroSeguro(pedido ? pedido.monto_abonado : 0);
+  return pagadoUsdPedido(pedido);
 }
 
 function saldoPedidoUSD(pedido) {
@@ -1191,22 +1335,19 @@ function abrirModalPagoPedido(id) {
     return;
   }
 
-  console.log("Abriendo modal de pago para pedido:", id, pedido);
   pagoPedidoActualId = Number(id);
-
-  const total = totalPedidoUSD(pedido);
-  const pagado = pagadoPedidoUSD(pedido);
-  const saldo = Math.max(total - pagado, 0);
+  const deuda = resumenDeudaPedido(pedido);
 
   setValue("pago_cliente", pedido.cliente || "");
   setValue("pago_descripcion", pedido.descripcion || "");
-  setText("pago_total", "$" + money(total));
-  setText("pago_pagado", "$" + money(pagado));
-  setText("pago_saldo", "$" + money(saldo));
+  setText("pago_total", deuda.totalTexto);
+  setText("pago_pagado", deuda.pagadoTexto);
+  setText("pago_saldo", deuda.saldoTexto);
+  setText("pago_tipo_deuda", deuda.tipoTexto + (deuda.esBs ? " · base " + formatoUsd(deuda.totalUsd) : ""));
 
   setValue("pago_monto_recibido", "");
-  setValue("pago_moneda", "USD");
-  setValue("pago_tasa", "1");
+  setValue("pago_moneda", deuda.esBs ? "BS" : "USD");
+  setValue("pago_tasa", deuda.esBs ? money(deuda.tasa) : "1");
   setValue("pago_metodo", "");
   setValue("pago_metodo_otro", "");
   setValue("pago_referencia", "");
@@ -1217,9 +1358,6 @@ function abrirModalPagoPedido(id) {
   abrirBackdrop("pagoBackdrop");
 }
 
-
-// Click robusto para el botón Pago.
-// V4: usamos pointerdown + click + puente directo para evitar que el listener de la fila bloquee el botón.
 let ultimoPagoTapId = null;
 let ultimoPagoTapAt = 0;
 
@@ -1279,29 +1417,49 @@ function datosCalculoPagoActual() {
 
   if (tasa <= 0) tasa = 1;
 
+  const deuda = resumenDeudaPedido(pedido);
   const equivalenteUSD = moneda === "BS" ? (montoRecibido / tasa) : montoRecibido;
-  const total = totalPedidoUSD(pedido);
-  const pagadoActual = pagadoPedidoUSD(pedido);
-  const saldoAntes = Math.max(total - pagadoActual, 0);
-  const pagadoBruto = pagadoActual + equivalenteUSD;
-  const pagadoNuevo = total > 0 ? Math.min(pagadoBruto, total) : pagadoBruto;
-  const saldoDespues = total > 0 ? Math.max(total - pagadoNuevo, 0) : 0;
-  const excedente = total > 0 ? Math.max(pagadoBruto - total, 0) : 0;
-  const estatus = estatusPagoDesdeMontos(total, pagadoNuevo);
+  const pagoAplicadoDeuda = deuda.esBs
+    ? (moneda === "BS" ? montoRecibido : (montoRecibido * tasa))
+    : equivalenteUSD;
+
+  const saldoAntes = deuda.saldo;
+  const pagadoBruto = deuda.pagado + pagoAplicadoDeuda;
+  const pagadoNuevo = deuda.total > 0 ? Math.min(pagadoBruto, deuda.total) : pagadoBruto;
+  const saldoDespues = deuda.total > 0 ? Math.max(deuda.total - pagadoNuevo, 0) : 0;
+  const excedente = deuda.total > 0 ? Math.max(pagadoBruto - deuda.total, 0) : 0;
+  const estatus = estatusPagoDesdeMontos(deuda.total, pagadoNuevo);
+
+  let pagadoNuevoUsdResumen = 0;
+  let pagadoNuevoBsResumen = 0;
+
+  if (deuda.esBs) {
+    pagadoNuevoBsResumen = pagadoNuevo;
+    pagadoNuevoUsdResumen = deuda.total > 0 && deuda.totalUsd > 0
+      ? Math.min(deuda.totalUsd, deuda.totalUsd * (pagadoNuevo / deuda.total))
+      : equivalenteUSD;
+  } else {
+    pagadoNuevoUsdResumen = pagadoNuevo;
+    pagadoNuevoBsResumen = 0;
+  }
 
   return {
     pedido,
+    deuda,
     montoRecibido,
     moneda,
     tasa,
     equivalenteUSD,
-    total,
-    pagadoActual,
+    pagoAplicadoDeuda,
+    total: deuda.total,
+    pagadoActual: deuda.pagado,
     saldoAntes,
     pagadoNuevo,
     saldoDespues,
     excedente,
-    estatus
+    estatus,
+    pagadoNuevoUsdResumen,
+    pagadoNuevoBsResumen
   };
 }
 
@@ -1316,16 +1474,18 @@ function calcularPagoModal() {
     return;
   }
 
+  const resultadoTexto = datos.deuda.esBs ? formatoBs(datos.saldoDespues) : formatoUsd(datos.saldoDespues);
+
   if (datos.total <= 0) {
-    setText("pago_resultado_monto", "$" + money(datos.pagadoNuevo));
+    setText("pago_resultado_monto", resultadoTexto);
     setText("pago_resultado_texto", datos.equivalenteUSD > 0 ? "Pago registrado, pero el pedido no tiene total definido" : "Coloca el monto recibido");
     return;
   }
 
-  setText("pago_resultado_monto", "$" + money(datos.saldoDespues));
+  setText("pago_resultado_monto", resultadoTexto);
 
   let texto = datos.saldoDespues <= 0.009 ? "Pedido pagado completo" : "Saldo pendiente después del pago";
-  if (datos.excedente > 0) texto += " · Excedente: $" + money(datos.excedente);
+  if (datos.excedente > 0) texto += " · Excedente: " + (datos.deuda.esBs ? formatoBs(datos.excedente) : formatoUsd(datos.excedente));
 
   setText("pago_resultado_texto", texto);
 }
@@ -1382,9 +1542,18 @@ async function aplicarPagoPedido() {
     metodo_otro: metodo === "Otro" ? metodoOtro : null,
     referencia,
     nota,
-    saldo_antes: datos.saldoAntes,
-    saldo_despues: datos.saldoDespues,
-    registrado_por: registradoPor || null
+    saldo_antes: datos.deuda.esBs && datos.deuda.tasa > 0 ? (datos.saldoAntes / datos.deuda.tasa) : datos.saldoAntes,
+    saldo_despues: datos.deuda.esBs && datos.deuda.tasa > 0 ? (datos.saldoDespues / datos.deuda.tasa) : datos.saldoDespues,
+    registrado_por: registradoPor || null,
+    moneda_deuda: datos.deuda.esBs ? "BS" : "USD",
+    tipo_tasa_deuda: datos.deuda.tipo,
+    tasa_deuda: datos.deuda.tasa,
+    total_deuda_usd: datos.deuda.totalUsd,
+    total_deuda_bs: datos.deuda.esBs ? datos.deuda.total : null,
+    pago_aplicado_usd: datos.equivalenteUSD,
+    pago_aplicado_bs: datos.deuda.esBs ? datos.pagoAplicadoDeuda : null,
+    saldo_antes_deuda: datos.saldoAntes,
+    saldo_despues_deuda: datos.saldoDespues
   };
 
   const { error: pagoError } = await db()
@@ -1393,12 +1562,13 @@ async function aplicarPagoPedido() {
 
   if (pagoError) {
     console.error("Error registrando pago:", pagoError);
-    alert("No se pudo registrar el pago. Revisa que la tabla pedidos_pagos exista en Supabase.\n\n" + pagoError.message);
+    alert("No se pudo registrar el pago. Revisa que la tabla pedidos_pagos exista y tenga permisos/RLS.\n\n" + pagoError.message);
     return;
   }
 
   const updatePayload = {
-    monto_abonado: datos.pagadoNuevo,
+    monto_abonado: datos.pagadoNuevoUsdResumen,
+    monto_abonado_bs: datos.deuda.esBs ? datos.pagadoNuevoBsResumen : 0,
     estatus_pago: datos.estatus
   };
 
@@ -1413,11 +1583,8 @@ async function aplicarPagoPedido() {
     return;
   }
 
-  pedido.monto_abonado = datos.pagadoNuevo;
-  pedido.estatus_pago = datos.estatus;
-
   closeModal("pagoBackdrop");
-  renderPedidosPaginados(false);
+  await cargarPedidos(false);
   mostrarToast("Pago registrado ✅");
 }
 
@@ -1444,6 +1611,7 @@ function openEditOrder(id) {
   document.getElementById("f_impresion").value = pedido.tipo_impresion || "";
   document.getElementById("f_monto_abonado").value = money(pedido.monto_abonado || 0);
   document.getElementById("f_entrega").value = pedido.fecha_entrega || "";
+  aplicarFormularioDeuda("f", pedido);
 
   pintarSelectsCatalogos();
 
@@ -1492,6 +1660,10 @@ function openOrderModal() {
   document.getElementById("f_impresion").value = "";
   document.getElementById("f_monto_abonado").value = "";
   document.getElementById("f_entrega").value = "";
+  document.getElementById("f_precio_total").value = "";
+  document.getElementById("f_tipo_deuda").value = "USD_FIJO";
+  document.getElementById("f_tasa_deuda").value = "";
+  actualizarVisibilidadTasaDeuda("f");
 
   pintarSelectsCatalogos();
 
@@ -1559,7 +1731,9 @@ function limpiarFilaRapida() {
     "q_descripcion",
     "q_cantidad",
     "q_monto_abonado",
-    "q_entrega"
+    "q_entrega",
+    "q_precio_total",
+    "q_tasa_deuda"
   ];
 
   campos.forEach(id => {
@@ -1572,6 +1746,10 @@ function limpiarFilaRapida() {
 
   const estatusPago = document.getElementById("q_estatus_pago");
   if (estatusPago) estatusPago.value = "Pendiente";
+
+  const tipoDeuda = document.getElementById("q_tipo_deuda");
+  if (tipoDeuda) tipoDeuda.value = "USD_FIJO";
+  actualizarVisibilidadTasaDeuda("q");
 
   const rowFileInput = document.getElementById("rowFileInput");
   if (rowFileInput) rowFileInput.value = "";
@@ -1770,6 +1948,7 @@ window.openPagoPedidoSafe = abrirPagoPedidoSeguro;
 window.onMetodoPagoChange = onMetodoPagoChange;
 window.calcularPagoModal = calcularPagoModal;
 window.aplicarPagoPedido = aplicarPagoPedido;
+window.actualizarVisibilidadTasaDeuda = actualizarVisibilidadTasaDeuda;
 
 // ===========================
 // LISTENERS ABONO
@@ -1804,6 +1983,8 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   marcarSupabaseActivo();
   ponerFechaHoy();
+  actualizarVisibilidadTasaDeuda("q");
+  actualizarVisibilidadTasaDeuda("f");
   asegurarOpcionesFiltroEstado();
   inyectarEstilosAppFinal();
 
