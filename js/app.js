@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v50 pagos deuda en modal");
+console.log("APP JS conectado correctamente v51 pagos deuda render fix");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -1056,6 +1056,88 @@ function pedidoFilaHTML(p) {
     </tr>
   `;
 }
+
+
+function renderPaginacionPedidos(total, paginas, inicio, fin) {
+  const bar = document.getElementById("paginationBar");
+  if (!bar) return;
+
+  if (!total) {
+    bar.innerHTML = `<span class="page-info">0 pedidos</span>`;
+    return;
+  }
+
+  bar.innerHTML = `
+    <button class="page-btn" type="button" onclick="cambiarPaginaPedidos(-1)" ${paginaActualPedidos <= 1 ? "disabled" : ""}>← Anterior</button>
+    <span class="page-info">${inicio + 1}-${fin} de ${total}</span>
+    <span class="page-info">Página ${paginaActualPedidos} / ${paginas}</span>
+    <button class="page-btn" type="button" onclick="cambiarPaginaPedidos(1)" ${paginaActualPedidos >= paginas ? "disabled" : ""}>Siguiente →</button>
+    <select class="page-select" onchange="cambiarTamanoPaginaPedidos(this.value)">
+      <option value="20" ${pedidosPorPagina === 20 ? "selected" : ""}>1-20 por página</option>
+      <option value="40" ${pedidosPorPagina === 40 ? "selected" : ""}>1-40 por página</option>
+      <option value="100" ${pedidosPorPagina === 100 ? "selected" : ""}>1-100 por página</option>
+    </select>
+  `;
+}
+
+function renderPedidosPaginados(resetPage = false) {
+  const tabla = document.getElementById("orderTableBody");
+  const emptyState = document.getElementById("emptyState");
+
+  if (!tabla) return;
+
+  const filtrados = pedidosDB
+    .filter(pedidoCumpleFiltros)
+    .sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+
+  const total = filtrados.length;
+  const paginas = Math.max(1, Math.ceil(total / pedidosPorPagina));
+
+  if (resetPage) paginaActualPedidos = 1;
+  if (paginaActualPedidos < 1) paginaActualPedidos = 1;
+  if (paginaActualPedidos > paginas) paginaActualPedidos = paginas;
+
+  const inicio = (paginaActualPedidos - 1) * pedidosPorPagina;
+  const fin = Math.min(inicio + pedidosPorPagina, total);
+  const pagina = filtrados.slice(inicio, fin);
+
+  tabla.innerHTML = "";
+
+  if (!total) {
+    if (emptyState) {
+      emptyState.style.display = "block";
+      emptyState.textContent = "— SIN PEDIDOS EN ESTE FILTRO —";
+    }
+    renderPaginacionPedidos(0, 1, 0, 0);
+    return;
+  }
+
+  if (emptyState) {
+    emptyState.style.display = "none";
+    emptyState.textContent = "— SIN PEDIDOS —";
+  }
+
+  tabla.innerHTML = pagina.map(pedidoFilaHTML).join("");
+  renderPaginacionPedidos(total, paginas, inicio, fin);
+
+  if (typeof aplicarPermisosComanda === "function") aplicarPermisosComanda();
+  if (typeof aplicarColoresEstadosYAbonos === "function") setTimeout(aplicarColoresEstadosYAbonos, 30);
+}
+
+function cambiarPaginaPedidos(delta) {
+  paginaActualPedidos += Number(delta || 0);
+  renderPedidosPaginados(false);
+}
+
+function cambiarTamanoPaginaPedidos(valor) {
+  pedidosPorPagina = Number(valor || 40);
+  paginaActualPedidos = 1;
+  renderPedidosPaginados(false);
+}
+
+window.cambiarPaginaPedidos = cambiarPaginaPedidos;
+window.cambiarTamanoPaginaPedidos = cambiarTamanoPaginaPedidos;
+window.renderPedidosPaginados = renderPedidosPaginados;
 
 // ===========================
 // GUARDAR FILA RÁPIDA
