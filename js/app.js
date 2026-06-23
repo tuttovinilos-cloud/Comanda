@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v45 pagos");
+console.log("APP JS conectado correctamente v46 pagos fix boton pago");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -16,6 +16,7 @@ let clientesCatalogoDB = [];
 // Puente global inmediato para botones/acciones de pago.
 // Esto evita que el botón Pago quede muerto por orden de carga o cache parcial.
 window.openPagoPedido = function(id){ return openPagoPedido(id); };
+window.openPagoPedidoSafe = function(id){ return abrirPagoPedidoSeguro(id); };
 window.onMetodoPagoChange = function(){ return onMetodoPagoChange(); };
 window.calcularPagoModal = function(){ return calcularPagoModal(); };
 window.aplicarPagoPedido = function(){ return aplicarPagoPedido(); };
@@ -712,7 +713,7 @@ function inputAbonoHtml(id, monto) {
   return `
     <div class="abono-wrap">
       <input class="cell-edit abono-edit ${claseAbono(monto)}" data-abono-id="${escapeHtml(id)}" type="number" step="0.01" value="${money(monto)}" title="Editar abono" onclick="event.stopPropagation()"/>
-      <button class="pay-cell-btn" type="button" data-pago-id="${escapeHtml(id)}" title="Registrar pago">Pago</button>
+      <button class="pay-cell-btn" type="button" data-pago-id="${escapeHtml(id)}" title="Registrar pago" onpointerdown="event.preventDefault();event.stopPropagation();window.openPagoPedidoSafe && window.openPagoPedidoSafe('${escapeHtml(id)}');return false" onclick="event.preventDefault();event.stopPropagation();window.openPagoPedidoSafe && window.openPagoPedidoSafe('${escapeHtml(id)}');return false">Pago</button>
     </div>
   `;
 }
@@ -1158,7 +1159,14 @@ function clienteIdPorPedido(pedido) {
 
 function abrirBackdrop(id) {
   const el = getEl(id);
-  if (el) el.style.display = "flex";
+  if (el) {
+    el.style.display = "flex";
+    return true;
+  }
+
+  console.error("No existe el backdrop/modal:", id);
+  alert("No existe el modal " + id + ". Revisa el index.html.");
+  return false;
 }
 
 function setText(id, value) {
@@ -1175,10 +1183,12 @@ function openPagoPedido(id) {
   const pedido = getPedidoPorId(id);
 
   if (!pedido) {
-    alert("No se encontró el pedido para registrar pago.");
+    console.warn("No se encontró el pedido para registrar pago:", id, "Pedidos cargados:", pedidosDB.length);
+    alert("No se encontró el pedido para registrar pago. Recarga la página y prueba de nuevo.");
     return;
   }
 
+  console.log("Abriendo modal de pago para pedido:", id, pedido);
   pagoPedidoActualId = Number(id);
 
   const total = totalPedidoUSD(pedido);
@@ -1206,8 +1216,33 @@ function openPagoPedido(id) {
 
 
 // Click robusto para el botón Pago.
-// Usa captura para frenar el onclick del <tr> y no depender del onclick inline.
-document.addEventListener("click", function(e) {
+// V4: usamos pointerdown + click + puente directo para evitar que el listener de la fila bloquee el botón.
+let ultimoPagoTapId = null;
+let ultimoPagoTapAt = 0;
+
+function abrirPagoPedidoSeguro(id) {
+  const pedidoId = Number(id);
+
+  if (!pedidoId) {
+    alert("No se encontró el ID del pedido para registrar pago.");
+    return false;
+  }
+
+  const ahora = Date.now();
+  if (ultimoPagoTapId === pedidoId && (ahora - ultimoPagoTapAt) < 450) {
+    return false;
+  }
+
+  ultimoPagoTapId = pedidoId;
+  ultimoPagoTapAt = ahora;
+  openPagoPedido(pedidoId);
+  return false;
+}
+
+window.openPagoPedidoSafe = abrirPagoPedidoSeguro;
+window.openPagoPedido = function(id){ return abrirPagoPedidoSeguro(id); };
+
+function manejarBotonPagoPedido(e) {
   const btn = e.target && e.target.closest ? e.target.closest(".pay-cell-btn") : null;
   if (!btn) return;
 
@@ -1216,13 +1251,12 @@ document.addEventListener("click", function(e) {
   if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
 
   const id = btn.dataset.pagoId || btn.getAttribute("data-pago-id") || btn.getAttribute("data-id");
-  if (!id) {
-    alert("No se encontró el ID del pedido para registrar pago.");
-    return;
-  }
+  abrirPagoPedidoSeguro(id);
+}
 
-  openPagoPedido(id);
-}, true);
+["pointerdown", "mousedown", "touchstart", "click"].forEach(function(tipoEvento){
+  document.addEventListener(tipoEvento, manejarBotonPagoPedido, true);
+});
 
 function onMetodoPagoChange() {
   const metodo = getEl("pago_metodo")?.value || "";
@@ -1728,6 +1762,7 @@ function inyectarEstilosAppFinal() {
 
 // Reconfirmar funciones de pago para compatibilidad con HTML anterior
 window.openPagoPedido = function(id){ return openPagoPedido(id); };
+window.openPagoPedidoSafe = function(id){ return abrirPagoPedidoSeguro(id); };
 window.onMetodoPagoChange = function(){ return onMetodoPagoChange(); };
 window.calcularPagoModal = function(){ return calcularPagoModal(); };
 window.aplicarPagoPedido = function(){ return aplicarPagoPedido(); };
