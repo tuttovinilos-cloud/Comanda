@@ -1698,6 +1698,13 @@ function inyectarEstilosAppFinal() {
   document.head.appendChild(style);
 }
 
+
+// Exponer funciones de pago para botones onclick del HTML
+window.openPagoPedido = openPagoPedido;
+window.onMetodoPagoChange = onMetodoPagoChange;
+window.calcularPagoModal = calcularPagoModal;
+window.aplicarPagoPedido = aplicarPagoPedido;
+
 // ===========================
 // LISTENERS ABONO
 // ===========================
