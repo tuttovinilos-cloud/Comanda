@@ -2080,8 +2080,25 @@ window.closeModal = window.closeModal || function(id){
     }
   });
 
+  // Exponer funciones para que puedan abrirse aunque la tabla bloquee clicks internos.
+  window.abrirModalPagoSinSupabase = abrirModalPago;
   window.instalarBotonesPagoSinSupabase = instalarBotonesPago;
   window.pintarSaldoClienteSinSupabase = pintarSaldoCliente;
+
+  // Captura directa del botón + Pago.
+  // Esto corrige el problema donde el listener global de filas bloquea el click del botón.
+  document.addEventListener("click", function(e){
+    const btn = e.target && e.target.closest ? e.target.closest(".btn-pago-mini") : null;
+    if(!btn) return;
+
+    const tr = btn.closest("#orderTableBody tr");
+    if(!tr) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    abrirModalPago(tr);
+  }, true);
 })();
 </script>
 
