@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente");
+console.log("APP JS conectado correctamente v45 pagos");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -12,6 +12,13 @@ let materialesMap = new Map();
 let tiposImpresionMap = new Map();
 let clientesBusquedaDB = [];
 let clientesCatalogoDB = [];
+
+// Puente global inmediato para botones/acciones de pago.
+// Esto evita que el botón Pago quede muerto por orden de carga o cache parcial.
+window.openPagoPedido = function(id){ return openPagoPedido(id); };
+window.onMetodoPagoChange = function(){ return onMetodoPagoChange(); };
+window.calcularPagoModal = function(){ return calcularPagoModal(); };
+window.aplicarPagoPedido = function(){ return aplicarPagoPedido(); };
 
 // ===========================
 // SUPABASE SEGURO
@@ -705,7 +712,7 @@ function inputAbonoHtml(id, monto) {
   return `
     <div class="abono-wrap">
       <input class="cell-edit abono-edit ${claseAbono(monto)}" data-abono-id="${escapeHtml(id)}" type="number" step="0.01" value="${money(monto)}" title="Editar abono" onclick="event.stopPropagation()"/>
-      <button class="pay-cell-btn" type="button" onclick="event.stopPropagation();openPagoPedido(${escapeHtml(id)})" title="Registrar pago">Pago</button>
+      <button class="pay-cell-btn" type="button" data-pago-id="${escapeHtml(id)}" title="Registrar pago">Pago</button>
     </div>
   `;
 }
@@ -1196,6 +1203,26 @@ function openPagoPedido(id) {
   calcularPagoModal();
   abrirBackdrop("pagoBackdrop");
 }
+
+
+// Click robusto para el botón Pago.
+// Usa captura para frenar el onclick del <tr> y no depender del onclick inline.
+document.addEventListener("click", function(e) {
+  const btn = e.target && e.target.closest ? e.target.closest(".pay-cell-btn") : null;
+  if (!btn) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+  if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+
+  const id = btn.dataset.pagoId || btn.getAttribute("data-pago-id") || btn.getAttribute("data-id");
+  if (!id) {
+    alert("No se encontró el ID del pedido para registrar pago.");
+    return;
+  }
+
+  openPagoPedido(id);
+}, true);
 
 function onMetodoPagoChange() {
   const metodo = getEl("pago_metodo")?.value || "";
@@ -1699,11 +1726,11 @@ function inyectarEstilosAppFinal() {
 }
 
 
-// Exponer funciones de pago para botones onclick del HTML
-window.openPagoPedido = openPagoPedido;
-window.onMetodoPagoChange = onMetodoPagoChange;
-window.calcularPagoModal = calcularPagoModal;
-window.aplicarPagoPedido = aplicarPagoPedido;
+// Reconfirmar funciones de pago para compatibilidad con HTML anterior
+window.openPagoPedido = function(id){ return openPagoPedido(id); };
+window.onMetodoPagoChange = function(){ return onMetodoPagoChange(); };
+window.calcularPagoModal = function(){ return calcularPagoModal(); };
+window.aplicarPagoPedido = function(){ return aplicarPagoPedido(); };
 
 // ===========================
 // LISTENERS ABONO
