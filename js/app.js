@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v49 pagos deuda USD/BCV");
+console.log("APP JS conectado correctamente v50 pagos deuda en modal");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -811,8 +811,8 @@ function etiquetaTipoDeuda(pedido) {
   const tasa = tasaDeudaPedido(pedido);
 
   if (tipo === "BS_BCV") return "BCV " + money(tasa);
-  if (tipo === "BS_MANUAL") return "Bs tasa " + money(tasa);
-  return "USD fijo";
+  if (tipo === "BS_MANUAL") return "Tasa " + money(tasa);
+  return "Dólares ($)";
 }
 
 function resumenDeudaPedido(pedido) {
@@ -892,6 +892,43 @@ function actualizarVisibilidadTasaDeuda(prefijo) {
   if (wrap) wrap.style.display = mostrar ? "" : "none";
 }
 
+
+function onPagoTipoDeudaChange() {
+  const tipo = tipoDeudaNormalizado(getEl("pago_deuda_tipo")?.value || "USD_FIJO");
+  const wrap = getEl("pago_deuda_tasa_wrap");
+  const tasaEl = getEl("pago_deuda_tasa");
+
+  if (wrap) wrap.style.display = tipo === "USD_FIJO" ? "none" : "";
+  if (tasaEl && tipo === "USD_FIJO") tasaEl.value = "";
+}
+
+function payloadDeudaDesdePagoModal() {
+  const montoBaseUsd = numeroSeguro(getEl("pago_deuda_monto")?.value || 0);
+  const tipo = tipoDeudaNormalizado(getEl("pago_deuda_tipo")?.value || "USD_FIJO");
+  let tasa = numeroSeguro(getEl("pago_deuda_tasa")?.value || 1);
+
+  if (tipo === "USD_FIJO") tasa = 1;
+  if (tasa <= 0) tasa = 1;
+
+  const esBs = tipo === "BS_BCV" || tipo === "BS_MANUAL";
+
+  return {
+    precio_total: montoBaseUsd,
+    moneda_deuda: esBs ? "BS" : "USD",
+    tipo_tasa_deuda: tipo,
+    tasa_deuda: tasa,
+    total_bs: esBs ? (montoBaseUsd * tasa) : null
+  };
+}
+
+function pedidoConDeudaPagoModal(pedido) {
+  if (!pedido) return pedido;
+  const modal = getEl("pagoBackdrop");
+  const montoEl = getEl("pago_deuda_monto");
+  if (!modal || !montoEl) return pedido;
+  return { ...pedido, ...payloadDeudaDesdePagoModal() };
+}
+
 function inputAbonoHtml(id, monto) {
   return `
     <div class="abono-wrap">
@@ -914,7 +951,7 @@ function ultimoPagoTexto(id) {
 
 function botonPagoHtml(id, pedido) {
   const deuda = resumenDeudaPedido(pedido);
-  let texto = "Sin monto";
+  let texto = "Definir";
   let clase = "pay-sinmonto";
 
   if (deuda.estado === "pagado") {
@@ -1340,6 +1377,12 @@ function abrirModalPagoPedido(id) {
 
   setValue("pago_cliente", pedido.cliente || "");
   setValue("pago_descripcion", pedido.descripcion || "");
+
+  setValue("pago_deuda_monto", deuda.totalUsd > 0 ? money(deuda.totalUsd) : "");
+  setValue("pago_deuda_tipo", deuda.tipo || "USD_FIJO");
+  setValue("pago_deuda_tasa", deuda.esBs ? money(deuda.tasa) : "");
+  onPagoTipoDeudaChange();
+
   setText("pago_total", deuda.totalTexto);
   setText("pago_pagado", deuda.pagadoTexto);
   setText("pago_saldo", deuda.saldoTexto);
@@ -1417,7 +1460,13 @@ function datosCalculoPagoActual() {
 
   if (tasa <= 0) tasa = 1;
 
-  const deuda = resumenDeudaPedido(pedido);
+  const deuda = resumenDeudaPedido(pedidoConDeudaPagoModal(pedido));
+
+  setText("pago_total", deuda.totalTexto);
+  setText("pago_pagado", deuda.pagadoTexto);
+  setText("pago_saldo", deuda.saldoTexto);
+  setText("pago_tipo_deuda", deuda.tipoTexto + (deuda.esBs ? " · base " + formatoUsd(deuda.totalUsd) : ""));
+
   const equivalenteUSD = moneda === "BS" ? (montoRecibido / tasa) : montoRecibido;
   const pagoAplicadoDeuda = deuda.esBs
     ? (moneda === "BS" ? montoRecibido : (montoRecibido * tasa))
@@ -1488,6 +1537,67 @@ function calcularPagoModal() {
   if (datos.excedente > 0) texto += " · Excedente: " + (datos.deuda.esBs ? formatoBs(datos.excedente) : formatoUsd(datos.excedente));
 
   setText("pago_resultado_texto", texto);
+}
+
+
+async function guardarDeudaPedido() {
+  if (!validarSupabase()) return;
+
+  const pedido = getPedidoPorId(pagoPedidoActualId);
+  if (!pedido) {
+    alert("No hay pedido seleccionado.");
+    return;
+  }
+
+  const deudaPayload = payloadDeudaDesdePagoModal();
+  if (numeroSeguro(deudaPayload.precio_total) <= 0) {
+    alert("Coloca el monto que debe el cliente.");
+    return;
+  }
+
+  const pedidoSimulado = { ...pedido, ...deudaPayload };
+  let abonoBs = numeroSeguro(pedido.monto_abonado_bs || 0);
+
+  if (deudaPayload.moneda_deuda === "BS" && abonoBs <= 0 && numeroSeguro(pedido.monto_abonado || 0) > 0) {
+    abonoBs = numeroSeguro(pedido.monto_abonado || 0) * numeroSeguro(deudaPayload.tasa_deuda || 1);
+  }
+
+  if (deudaPayload.moneda_deuda !== "BS") abonoBs = 0;
+
+  const pedidoEstado = {
+    ...pedidoSimulado,
+    monto_abonado_bs: abonoBs
+  };
+
+  const deuda = resumenDeudaPedido(pedidoEstado);
+  const updatePayload = {
+    ...deudaPayload,
+    monto_abonado_bs: abonoBs,
+    estatus_pago: estatusPagoDesdeMontos(deuda.total, deuda.pagado)
+  };
+
+  const { error } = await db()
+    .from("pedidos")
+    .update(updatePayload)
+    .eq("id", pedido.id);
+
+  if (error) {
+    console.error("No se pudo guardar la deuda:", error);
+    alert("No se pudo guardar el monto que debe el cliente.\n\n" + error.message);
+    return;
+  }
+
+  mostrarToast("Monto guardado ✅");
+  await cargarPedidos(false);
+
+  const actualizado = getPedidoPorId(pedido.id) || { ...pedido, ...updatePayload };
+  pagoPedidoActualId = Number(pedido.id);
+  const deudaActual = resumenDeudaPedido(actualizado);
+  setValue("pago_deuda_monto", deudaActual.totalUsd > 0 ? money(deudaActual.totalUsd) : "");
+  setValue("pago_deuda_tipo", deudaActual.tipo || "USD_FIJO");
+  setValue("pago_deuda_tasa", deudaActual.esBs ? money(deudaActual.tasa) : "");
+  onPagoTipoDeudaChange();
+  calcularPagoModal();
 }
 
 async function aplicarPagoPedido() {
@@ -1566,7 +1676,9 @@ async function aplicarPagoPedido() {
     return;
   }
 
+  const deudaPayload = payloadDeudaDesdePagoModal();
   const updatePayload = {
+    ...deudaPayload,
     monto_abonado: datos.pagadoNuevoUsdResumen,
     monto_abonado_bs: datos.deuda.esBs ? datos.pagadoNuevoBsResumen : 0,
     estatus_pago: datos.estatus
@@ -1949,6 +2061,8 @@ window.onMetodoPagoChange = onMetodoPagoChange;
 window.calcularPagoModal = calcularPagoModal;
 window.aplicarPagoPedido = aplicarPagoPedido;
 window.actualizarVisibilidadTasaDeuda = actualizarVisibilidadTasaDeuda;
+window.onPagoTipoDeudaChange = onPagoTipoDeudaChange;
+window.guardarDeudaPedido = guardarDeudaPedido;
 
 // ===========================
 // LISTENERS ABONO
