@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Tuttovinilos</title>
-<!-- clientes.html corregido v29 -->
+<!-- clientes.html corregido v53 · deuda acumulada por cliente -->
 <link rel="icon" href="data:,">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -416,6 +416,50 @@ tr:hover td{background:#ffffff03}
   color:var(--muted2);
   font-size:10px;
   letter-spacing:1.2px;
+}
+
+
+
+.deuda-btn{
+  border:1px solid #fecaca;
+  background:#fee2e2;
+  color:#991b1b;
+  border-radius:14px;
+  padding:8px 10px;
+  font-family:var(--head);
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+  min-width:125px;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+}
+
+.deuda-btn.ok{
+  border-color:#bbf7d0;
+  background:#dcfce7;
+  color:#166534;
+}
+
+.deuda-btn strong{
+  display:block;
+  font-family:var(--mono);
+  font-size:20px;
+  line-height:1;
+  color:inherit;
+}
+
+.deuda-btn small{
+  display:block;
+  font-size:9px;
+  letter-spacing:.7px;
+  color:inherit;
+  opacity:.8;
 }
 
 .pedidos-btn:hover{
@@ -893,6 +937,7 @@ tbody tr:hover td{background:#eef1ff!important}
   box-shadow:none!important;
 }
 .pedidos-btn strong{color:#153bff!important}
+.deuda-btn strong{color:inherit!important}
 .pedidos-btn small{color:#475569!important}
 .pedidos-btn:hover{background:#dde5ff!important;border-color:#153bff!important}
 .mini-btn{
@@ -1213,11 +1258,16 @@ td:nth-child(4){
 
 th:nth-child(5),
 td:nth-child(5){
-  width:120px!important;
+  width:150px!important;
 }
 
 th:nth-child(6),
 td:nth-child(6){
+  width:120px!important;
+}
+
+th:nth-child(7),
+td:nth-child(7){
   width:220px!important;
 }
 
@@ -1414,6 +1464,11 @@ textarea{
 
   th:nth-child(6),
   td:nth-child(6){
+    width:125px!important;
+  }
+
+  th:nth-child(7),
+  td:nth-child(7){
     width:170px!important;
   }
 }
@@ -1487,6 +1542,8 @@ textarea{
     <option value="nombre_za">Nombre Z-A</option>
     <option value="pedidos_mayor">Más pedidos</option>
     <option value="pedidos_menor">Menos pedidos</option>
+    <option value="deuda_mayor">Más deuda</option>
+    <option value="deuda_menor">Menos deuda</option>
   </select>
 
   <button class="btn" onclick="nuevoCliente()">+ Añadir cliente</button>
@@ -1508,7 +1565,7 @@ textarea{
     <div class="card-header">
       <div>
         <div class="card-title">Clientes</div>
-        <div class="card-sub">Crear, editar, eliminar y revisar historial de pedidos por cliente.</div>
+        <div class="card-sub">Crear, editar, revisar historial y ver deuda acumulada por cliente.</div>
       </div>
 
       <div class="card-actions">
@@ -1524,13 +1581,14 @@ textarea{
             <th>Cliente</th>
             <th>Notas</th>
             <th>Pedidos / Historial</th>
+            <th>Deuda</th>
             <th>Estado</th>
             <th>Acción</th>
           </tr>
         </thead>
 
         <tbody id="clientesBody">
-          <tr><td colspan="6" class="empty">Cargando clientes...</td></tr>
+          <tr><td colspan="7" class="empty">Cargando clientes...</td></tr>
         </tbody>
       </table>
     </div>
@@ -1630,10 +1688,11 @@ textarea{
 <script src="js/menu.js?v=11"></script>
 
 <script>
-console.log("CLIENTES HTML conectado");
+console.log("CLIENTES HTML conectado v53 deuda acumulada");
 
 let clientesDB = [];
 let pedidosDB = [];
+let clientesDeudaMap = new Map();
 let clientesSeleccionados = new Set();
 const CLIENTES_FUSION_UNDO_KEY = "tutto_ultima_fusion_clientes_v1";
 
@@ -1705,6 +1764,11 @@ function numeroCliente(valor){
   return Number.isFinite(n) ? n : null;
 }
 
+function money(valor){
+  const n = Number(valor || 0);
+  return Number.isFinite(n) ? n.toFixed(2) : "0.00";
+}
+
 function escapeHtml(valor){
   return String(valor ?? "")
     .replaceAll("&","&amp;")
@@ -1729,17 +1793,86 @@ function mostrarToast(mensaje){
   }, 2200);
 }
 
-function contarPedidosCliente(nombre){
+function contarPedidosCliente(nombre, clienteId = null){
   const n = normalizar(nombre);
-  if(!n) return 0;
+  const id = Number(clienteId || 0);
 
-  return pedidosDB.filter(p => normalizar(p.cliente) === n).length;
+  return pedidosDB.filter(p => {
+    if(id && Number(p.cliente_id || 0) === id) return true;
+    return n && normalizar(p.cliente) === n;
+  }).length;
+}
+
+function deudaCliente(cliente){
+  const id = Number(cliente && cliente.id ? cliente.id : 0);
+  const row = clientesDeudaMap.get(id);
+
+  if(!row){
+    return {
+      pedidos_pendientes:0,
+      saldo:0,
+      total:0,
+      abonado:0
+    };
+  }
+
+  return {
+    pedidos_pendientes:Number(row.pedidos_pendientes || 0),
+    saldo:Number(row.saldo_pendiente_usd_equiv || 0),
+    total:Number(row.total_deuda_usd_equiv || 0),
+    abonado:Number(row.total_abonado_usd_equiv || 0)
+  };
+}
+
+function deudaClienteHtml(cliente){
+  const d = deudaCliente(cliente);
+
+  if(d.saldo > 0.009){
+    return `
+      <div class="deuda-btn" title="Total: $${money(d.total)} · Abonado: $${money(d.abonado)}">
+        <strong>$${money(d.saldo)}</strong>
+        <small>${d.pedidos_pendientes} pendiente${d.pedidos_pendientes === 1 ? "" : "s"}</small>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="deuda-btn ok">
+      <strong>$0.00</strong>
+      <small>Sin deuda</small>
+    </div>
+  `;
+}
+
+async function cargarDeudasClientes(){
+  clientesDeudaMap = new Map();
+
+  try{
+    const { data, error } = await db()
+      .from("vw_clientes_deuda")
+      .select("cliente_id, cliente, pedidos_total, pedidos_pendientes, total_deuda_usd_equiv, total_abonado_usd_equiv, saldo_pendiente_usd_equiv, ultima_fecha_pedido")
+      .order("saldo_pendiente_usd_equiv", { ascending:false });
+
+    if(error){
+      console.warn("No se pudo cargar vw_clientes_deuda:", error);
+      clientesDeudaMap = new Map();
+      return;
+    }
+
+    (data || []).forEach(row => {
+      const id = Number(row.cliente_id || 0);
+      if(id) clientesDeudaMap.set(id, row);
+    });
+  }catch(error){
+    console.warn("No se pudo cargar deuda acumulada de clientes:", error);
+    clientesDeudaMap = new Map();
+  }
 }
 
 async function cargarPedidos(){
   const { data, error } = await db()
     .from("pedidos")
-    .select("id, fecha, cliente, descripcion, cantidad, material, tipo_impresion, estatus_trabajo, estatus_pago, fecha_entrega")
+    .select("id, cliente_id, fecha, cliente, descripcion, cantidad, material, tipo_impresion, estatus_trabajo, estatus_pago, fecha_entrega, precio_total, monto_abonado, moneda_deuda, tipo_tasa_deuda, tasa_deuda, total_bs, monto_abonado_bs")
     .order("id", { ascending:false });
 
   if(error){
@@ -1802,7 +1935,7 @@ async function cargarClientes(){
   if(error){
     console.error("Error cargando clientes:", error);
     document.getElementById("clientesBody").innerHTML = `
-      <tr><td colspan="6" class="empty">Error cargando clientes: ${escapeHtml(error.message)}</td></tr>
+      <tr><td colspan="7" class="empty">Error cargando clientes: ${escapeHtml(error.message)}</td></tr>
     `;
     return;
   }
@@ -1817,6 +1950,7 @@ async function inicializarClientes(){
   await cargarClientes();
   await crearClientesDesdePedidos();
   await cargarClientes();
+  await cargarDeudasClientes();
 
   filtrarClientes();
 }
@@ -1853,13 +1987,15 @@ function filtrarClientes(){
   lista.sort((a,b) => {
     const na = String(a.nombre || "");
     const nb = String(b.nombre || "");
-    const pa = contarPedidosCliente(a.nombre);
-    const pb = contarPedidosCliente(b.nombre);
+    const pa = contarPedidosCliente(a.nombre, a.id);
+    const pb = contarPedidosCliente(b.nombre, b.id);
 
     if(orden === "nombre_az") return na.localeCompare(nb);
     if(orden === "nombre_za") return nb.localeCompare(na);
     if(orden === "pedidos_mayor") return pb - pa;
     if(orden === "pedidos_menor") return pa - pb;
+    if(orden === "deuda_mayor") return deudaCliente(b).saldo - deudaCliente(a).saldo;
+    if(orden === "deuda_menor") return deudaCliente(a).saldo - deudaCliente(b).saldo;
 
     return 0;
   });
@@ -1977,7 +2113,7 @@ async function deshacerUltimaFusionClientes(){
     for(const pedido of (backup.pedidos_originales || [])){
       const { error } = await db()
         .from('pedidos')
-        .update({ cliente: pedido.cliente })
+        .update({ cliente: pedido.cliente, cliente_id: pedido.cliente_id || null })
         .eq('id', pedido.id);
 
       if(error) throw error;
@@ -2008,6 +2144,7 @@ async function deshacerUltimaFusionClientes(){
     limpiarSeleccionClientes(false);
     await cargarPedidos();
     await cargarClientes();
+    await cargarDeudasClientes();
     filtrarClientes();
 
     mostrarToast('Fusión deshecha');
@@ -2033,13 +2170,13 @@ function renderClientes(lista){
   if(!tbody) return;
 
   if(!lista.length){
-    tbody.innerHTML = `<tr><td colspan="6" class="empty">Sin clientes</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">Sin clientes</td></tr>`;
     limpiarSeleccionClientes(false);
     return;
   }
 
   tbody.innerHTML = lista.map(c => {
-    const pedidos = contarPedidosCliente(c.nombre);
+    const pedidos = contarPedidosCliente(c.nombre, c.id);
 
     const estado = c.activo === true
       ? `<span class="badge ok">Activo</span>`
@@ -2079,6 +2216,8 @@ function renderClientes(lista){
             <small>${pedidos === 1 ? "Pedido" : "Pedidos"} / Historial</small>
           </button>
         </td>
+
+        <td>${deudaClienteHtml(c)}</td>
 
         <td>${estado}</td>
 
@@ -2292,18 +2431,22 @@ async function eliminarClienteFisicoOOcultar(id, nombreDestino = ""){
   if(updateError) throw updateError;
 }
 
-async function actualizarPedidosDeCliente(nombreAnterior, nombreNuevo){
+async function actualizarPedidosDeCliente(nombreAnterior, nombreNuevo, clienteIdDestino = null){
   const anterior = normalizar(nombreAnterior);
   const nuevo = nombreBonito(nombreNuevo);
+  const idDestino = Number(clienteIdDestino || 0);
 
   if(!anterior || !nuevo) return 0;
 
   const pedidosActualizar = pedidosDB.filter(p => normalizar(p.cliente) === anterior);
 
   for(const pedido of pedidosActualizar){
+    const payload = { cliente:nuevo };
+    if(idDestino) payload.cliente_id = idDestino;
+
     const { error } = await db()
       .from("pedidos")
-      .update({ cliente:nuevo })
+      .update(payload)
       .eq("id", pedido.id);
 
     if(error) throw error;
@@ -2344,7 +2487,7 @@ async function fusionarDuplicadosExactosCliente(nombreFinal, idPrincipal){
 
   for(const dup of duplicados){
     datosFusionados = mezclarDatosCliente(datosFusionados, dup, false);
-    await actualizarPedidosDeCliente(dup.nombre, nombreFinal);
+    await actualizarPedidosDeCliente(dup.nombre, nombreFinal, idPrincipal);
   }
 
   datosFusionados.nombre = nombreFinal;
@@ -2411,12 +2554,12 @@ async function guardarClienteModal(){
       if(updateError) throw updateError;
 
       if(clienteOriginal){
-        await actualizarPedidosDeCliente(clienteOriginal.nombre, nombre);
+        await actualizarPedidosDeCliente(clienteOriginal.nombre, nombre, duplicado.id);
 
         await eliminarClienteFisicoOOcultar(clienteOriginal.id, nombre);
       }
 
-      await actualizarPedidosDeCliente(duplicado.nombre, nombre);
+      await actualizarPedidosDeCliente(duplicado.nombre, nombre, duplicado.id);
       await fusionarDuplicadosExactosCliente(nombre, duplicado.id);
 
       mensaje = "Cliente fusionado y pedidos actualizados";
@@ -2430,7 +2573,7 @@ async function guardarClienteModal(){
       if(updateError) throw updateError;
 
       if(clienteOriginal && normalizar(clienteOriginal.nombre) !== normalizar(nombre)){
-        await actualizarPedidosDeCliente(clienteOriginal.nombre, nombre);
+        await actualizarPedidosDeCliente(clienteOriginal.nombre, nombre, id);
         mensaje = "Cliente actualizado y pedidos renombrados";
       }
 
@@ -2447,6 +2590,7 @@ async function guardarClienteModal(){
     cerrarModalCliente();
     await cargarPedidos();
     await cargarClientes();
+    await cargarDeudasClientes();
     filtrarClientes();
 
     mostrarToast(mensaje);
@@ -2512,7 +2656,7 @@ async function fusionarClientesSeleccionados(){
     const nombresAFusionar = todosAFusionar.map(c => normalizar(c.nombre));
     const pedidosOriginales = pedidosDB
       .filter(p => nombresAFusionar.includes(normalizar(p.cliente)))
-      .map(p => ({ id:p.id, cliente:p.cliente }));
+      .map(p => ({ id:p.id, cliente:p.cliente, cliente_id:p.cliente_id || null }));
 
     const backupFusion = {
       nombre_final:nombreFinal,
@@ -2527,7 +2671,7 @@ async function fusionarClientesSeleccionados(){
 
     // Mover pedidos de todos los nombres seleccionados al nombre final.
     for(const c of todosAFusionar){
-      await actualizarPedidosDeCliente(c.nombre, nombreFinal);
+      await actualizarPedidosDeCliente(c.nombre, nombreFinal, principal.id);
     }
 
     // Mezclar datos: conserva teléfono/correo/notas si existen.
@@ -2575,6 +2719,7 @@ async function fusionarClientesSeleccionados(){
     limpiarSeleccionClientes(false);
     await cargarPedidos();
     await cargarClientes();
+    await cargarDeudasClientes();
     filtrarClientes();
 
     mostrarToast(`Clientes fusionados como ${nombreFinal}`);
@@ -2604,7 +2749,7 @@ async function eliminarCliente(id){
     return;
   }
 
-  const pedidos = contarPedidosCliente(cliente.nombre);
+  const pedidos = contarPedidosCliente(cliente.nombre, cliente.id);
 
   if(pedidos > 0){
     alert(
@@ -2628,6 +2773,7 @@ async function eliminarCliente(id){
     await eliminarClienteFisicoOOcultar(id);
     await cargarPedidos();
     await cargarClientes();
+    await cargarDeudasClientes();
     filtrarClientes();
     mostrarToast("Cliente eliminado");
   }catch(error){
@@ -2645,7 +2791,7 @@ function verHistorialCliente(id){
   }
 
   const nombreNorm = normalizar(cliente.nombre);
-  const pedidos = pedidosDB.filter(p => normalizar(p.cliente) === nombreNorm);
+  const pedidos = pedidosDB.filter(p => Number(p.cliente_id || 0) === Number(cliente.id) || normalizar(p.cliente) === nombreNorm);
 
   document.getElementById("historyTitle").textContent = `Historial · ${cliente.nombre}`;
 
@@ -2665,7 +2811,8 @@ function verHistorialCliente(id){
           Cantidad: ${escapeHtml(p.cantidad || "")}<br>
           Material: ${escapeHtml(p.material || "")}<br>
           Impresión: ${escapeHtml(p.tipo_impresion || "")}<br>
-          Entrega: ${escapeHtml(p.fecha_entrega || "—")}
+          Entrega: ${escapeHtml(p.fecha_entrega || "—")}<br>
+          Total: ${escapeHtml(p.precio_total ? "$" + money(p.precio_total) : "—")} · Abonado: ${escapeHtml(p.monto_abonado ? "$" + money(p.monto_abonado) : "$0.00")}
         </div>
       </div>
     `).join("");
