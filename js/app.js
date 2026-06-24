@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v51 pagos deuda render fix");
+console.log("APP JS conectado correctamente v52 cliente_id seguro");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -143,7 +143,7 @@ function puedeModificarCantidadLocal() {
 // ===========================
 async function asegurarClienteExiste(nombreCliente) {
   const nombre = String(nombreCliente || "").trim();
-  if (!nombre) return "";
+  if (!nombre) return { id: null, nombre: "" };
 
   const nombreNormalizado = normalizarBusqueda(nombre);
 
@@ -154,18 +154,21 @@ async function asegurarClienteExiste(nombreCliente) {
 
   if (error) {
     console.warn("No se pudo verificar cliente:", error);
-    return nombreBonito(nombre);
+    return { id: null, nombre: nombreBonito(nombre) };
   }
 
   const clienteExistente = (data || []).find(c => normalizarBusqueda(c.nombre) === nombreNormalizado);
 
   if (clienteExistente) {
-    return String(clienteExistente.nombre || nombreBonito(nombre)).trim();
+    return {
+      id: clienteExistente.id || null,
+      nombre: String(clienteExistente.nombre || nombreBonito(nombre)).trim()
+    };
   }
 
   const nombreFinal = nombreBonito(nombre);
 
-  const { error: insertError } = await db()
+  const { data: nuevoCliente, error: insertError } = await db()
     .from("clientes")
     .insert([{
       nombre: nombreFinal,
@@ -174,15 +177,20 @@ async function asegurarClienteExiste(nombreCliente) {
       correo: "",
       notas: "",
       activo: true
-    }]);
+    }])
+    .select("id, nombre")
+    .single();
 
   if (insertError) {
     console.warn("No se pudo crear cliente automáticamente:", insertError);
-    return nombreFinal;
+    return { id: null, nombre: nombreFinal };
   }
 
-  console.log("Cliente creado automáticamente:", nombreFinal);
-  return nombreFinal;
+  console.log("Cliente creado automáticamente:", nombreFinal, "ID:", nuevoCliente?.id);
+  return {
+    id: nuevoCliente?.id || null,
+    nombre: String(nuevoCliente?.nombre || nombreFinal).trim()
+  };
 }
 
 async function cargarClientesBusqueda() {
@@ -245,6 +253,19 @@ async function resolverNombreClienteAntesDeGuardar(nombreIngresado) {
   }
 
   return { ok: true, nombreFinal: nombreBonito(nombre) };
+}
+
+async function resolverNombreClienteIdAntesDeGuardar(nombreIngresado) {
+  const decision = await resolverNombreClienteAntesDeGuardar(nombreIngresado);
+  if (!decision.ok) return { ok: false, id: null, nombreFinal: "" };
+
+  const clienteInfo = await asegurarClienteExiste(decision.nombreFinal || nombreIngresado);
+
+  return {
+    ok: true,
+    id: clienteInfo && clienteInfo.id ? clienteInfo.id : null,
+    nombreFinal: clienteInfo && clienteInfo.nombre ? clienteInfo.nombre : (decision.nombreFinal || nombreBonito(nombreIngresado))
+  };
 }
 
 // ===========================
@@ -1171,16 +1192,18 @@ async function saveQuickOrder() {
 
   const archivoData = await subirArchivoPedido();
 
-  const decisionCliente = await resolverNombreClienteAntesDeGuardar(cliente);
+  const decisionCliente = await resolverNombreClienteIdAntesDeGuardar(cliente);
   if (!decisionCliente.ok) return;
 
-  cliente = await asegurarClienteExiste(decisionCliente.nombreFinal || cliente) || cliente;
+  cliente = decisionCliente.nombreFinal || cliente;
+  const cliente_id = decisionCliente.id || null;
 
   const { error } = await db()
     .from("pedidos")
     .insert([{
       fecha,
       operador,
+      cliente_id,
       cliente,
       descripcion,
       cantidad,
@@ -1235,16 +1258,18 @@ async function saveOrder() {
   if (!puedeModificarOperadorLocal() && opSesion && opSesion.nombre) operador = opSesion.nombre;
   if (!fecha) fecha = new Date().toISOString().split("T")[0];
 
-  const decisionCliente = await resolverNombreClienteAntesDeGuardar(cliente);
+  const decisionCliente = await resolverNombreClienteIdAntesDeGuardar(cliente);
   if (!decisionCliente.ok) return;
 
-  cliente = await asegurarClienteExiste(decisionCliente.nombreFinal || cliente) || cliente;
+  cliente = decisionCliente.nombreFinal || cliente;
+  const cliente_id = decisionCliente.id || null;
 
   const archivoData = await subirArchivoPedido();
 
   const datosPedido = {
     fecha,
     operador,
+    cliente_id,
     cliente,
     descripcion,
     material,
@@ -2145,6 +2170,7 @@ window.aplicarPagoPedido = aplicarPagoPedido;
 window.actualizarVisibilidadTasaDeuda = actualizarVisibilidadTasaDeuda;
 window.onPagoTipoDeudaChange = onPagoTipoDeudaChange;
 window.guardarDeudaPedido = guardarDeudaPedido;
+window.resolverNombreClienteIdAntesDeGuardar = resolverNombreClienteIdAntesDeGuardar;
 
 // ===========================
 // LISTENERS ABONO
