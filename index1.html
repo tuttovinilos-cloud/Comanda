@@ -2184,10 +2184,10 @@ window.closeModal = window.closeModal || function(id){
 <script>
 (function(){
   // =====================================================
-  // TEST PAGO SIMPLE V53 - SOLO INDEX
+  // TEST PAGO SIMPLE V54 - SOLO INDEX
   // No modifica app.js. Oculta Pago/Abono viejos y usa una sola columna Pago.
   // =====================================================
-  const VERSION = 'v53_pago_simple_index';
+  const VERSION = 'v54_pago_simple_index';
   const STORE_KEY = 'comanda_pago_simple_v53';
   let cachePedidos = new Map();
   let pedidoActualId = null;
@@ -2269,6 +2269,7 @@ window.closeModal = window.closeModal || function(id){
     let estado = local.estado || 'SIN_MONTO';
     if(!local.estado){
       if(monto <= 0) estado = 'SIN_MONTO';
+      else if(pagado > monto + 0.009) estado = 'A_FAVOR';
       else if(estadoBD === 'pagado' || pagado >= monto - 0.009) estado = 'PAGADO';
       else if(estadoBD === 'abonado' || pagado > 0) estado = 'ABONADO';
       else estado = 'PENDIENTE';
@@ -2290,6 +2291,10 @@ window.closeModal = window.closeModal || function(id){
     return Math.max(num(item.monto) - num(item.pagado), 0);
   }
 
+  function favorItem(item){
+    return Math.max(num(item.pagado) - num(item.monto), 0);
+  }
+
   function textoTipo(item){
     if(item.tipo === 'BCV') return item.tasa > 0 ? 'BCV ' + money(item.tasa) : 'BCV';
     return 'Divisa';
@@ -2302,7 +2307,13 @@ window.closeModal = window.closeModal || function(id){
     let sub = 'Sin monto';
 
     if(item.monto > 0){
-      if(item.estado === 'PAGADO' || item.pagado >= item.monto - 0.009){
+      const favor = favorItem(item);
+
+      if(favor > 0.009 || item.estado === 'A_FAVOR'){
+        clase = 'simple-favor';
+        titulo = 'A favor $' + money(favor);
+        sub = 'Pagó $' + money(item.pagado) + (item.fecha ? ' · ' + fechaCorta(item.fecha) : '');
+      }else if(item.estado === 'PAGADO' || item.pagado >= item.monto - 0.009){
         clase = 'simple-ok';
         titulo = 'Pagado $' + money(item.monto);
         sub = textoTipo(item) + (item.fecha ? ' · ' + fechaCorta(item.fecha) : '');
@@ -2414,13 +2425,19 @@ window.closeModal = window.closeModal || function(id){
             <input type="number" id="pagoSimpleTasa" step="0.0001" placeholder="Ej: 40.00"/>
           </div>
 
-          <div class="field">
-            <label>Acción</label>
-            <select id="pagoSimpleAccion">
-              <option value="PENDIENTE">Pendiente / guardar deuda</option>
-              <option value="ABONO">Agregar abono</option>
-              <option value="LISTO">Listo / pagar restante</option>
-            </select>
+          <div class="form-grid simple-form-grid-compact">
+            <div class="field">
+              <label>Acción</label>
+              <select id="pagoSimpleAccion">
+                <option value="PENDIENTE">Pendiente / guardar deuda</option>
+                <option value="ABONO">Agregar abono</option>
+                <option value="LISTO">Listo / pagar restante</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Fecha</label>
+              <input type="date" id="pagoSimpleFecha"/>
+            </div>
           </div>
 
           <div class="field" id="pagoSimpleAbonoWrap" style="display:none">
@@ -2449,6 +2466,7 @@ window.closeModal = window.closeModal || function(id){
     $('pagoSimpleAccion').addEventListener('change', pintarModalSimple);
     $('pagoSimpleMonto').addEventListener('input', pintarModalSimple);
     $('pagoSimpleAbono').addEventListener('input', pintarModalSimple);
+    $('pagoSimpleFecha').addEventListener('change', pintarModalSimple);
   }
 
   function abrirModalSimple(id){
@@ -2460,6 +2478,7 @@ window.closeModal = window.closeModal || function(id){
     $('pagoSimpleTipo').value = item.tipo || 'DIVISA';
     $('pagoSimpleTasa').value = item.tasa > 0 ? money(item.tasa) : '';
     $('pagoSimpleAccion').value = item.monto > 0 && item.pagado > 0 ? 'ABONO' : 'PENDIENTE';
+    $('pagoSimpleFecha').value = item.fecha || fechaISO();
     $('pagoSimpleAbono').value = '';
 
     pintarModalSimple();
@@ -2491,22 +2510,25 @@ window.closeModal = window.closeModal || function(id){
 
     const item = itemModalActual();
     const nuevoAbono = accion === 'ABONO' ? num($('pagoSimpleAbono')?.value || 0) : 0;
+    const fecha = $('pagoSimpleFecha')?.value || fechaISO();
     let pagadoPreview = item.pagado;
     let accionTexto = 'Se guardará como pendiente';
 
     if(accion === 'ABONO'){
-      pagadoPreview = Math.min(item.monto, item.pagado + nuevoAbono);
+      pagadoPreview = item.pagado + nuevoAbono;
       accionTexto = 'Se agregará abono de $' + money(nuevoAbono);
     }
 
     if(accion === 'LISTO'){
-      pagadoPreview = item.monto;
+      pagadoPreview = item.pagado > item.monto ? item.pagado : item.monto;
       accionTexto = 'Se agregará automáticamente el saldo restante';
     }
 
     const saldo = Math.max(item.monto - pagadoPreview, 0);
+    const favor = Math.max(pagadoPreview - item.monto, 0);
+    const estadoTexto = favor > 0.009 ? `A favor $${money(favor)}` : `Saldo $${money(saldo)}`;
     const resumen = item.monto > 0
-      ? `Debe $${money(item.monto)} · Pagado $${money(pagadoPreview)} · Saldo $${money(saldo)} · ${tipo === 'BCV' ? 'BCV' : 'Divisa'}`
+      ? `Debe $${money(item.monto)} · Pagado $${money(pagadoPreview)} · ${estadoTexto} · ${tipo === 'BCV' ? 'BCV' : 'Divisa'} · ${fechaCorta(fecha)}`
       : 'Coloca el monto que debe el cliente';
 
     if($('pagoSimpleResumen')) $('pagoSimpleResumen').textContent = resumen + ' · ' + accionTexto;
@@ -2537,7 +2559,7 @@ window.closeModal = window.closeModal || function(id){
         equivalente_usd: delta,
         metodo_pago: auto ? 'Listo automático' : 'Abono simple',
         referencia: '',
-        nota: 'TEST_PAGO_SIMPLE_V53',
+        nota: 'TEST_PAGO_SIMPLE_V54',
         saldo_antes: Math.max(item.monto - item.pagado, 0),
         saldo_despues: Math.max(item.monto - (item.pagado + delta), 0),
         moneda_deuda: item.tipo === 'BCV' ? 'BCV' : 'USD',
@@ -2559,7 +2581,7 @@ window.closeModal = window.closeModal || function(id){
     const id = pedidoActualId;
     const item = itemModalActual();
     const accion = $('pagoSimpleAccion')?.value || 'PENDIENTE';
-    const hoy = fechaISO();
+    const fechaPago = $('pagoSimpleFecha')?.value || fechaISO();
 
     if(item.monto <= 0){
       alert('Coloca el monto que debe el cliente.');
@@ -2581,22 +2603,21 @@ window.closeModal = window.closeModal || function(id){
     if(accion === 'ABONO'){
       delta = num($('pagoSimpleAbono')?.value || 0);
       if(delta <= 0){ alert('Coloca el monto del abono.'); return; }
-      delta = Math.min(delta, Math.max(item.monto - pagado, 0));
-      pagado = Math.min(item.monto, pagado + delta);
-      abonos.push({ monto: delta, fecha: hoy, auto:false });
-      estado = pagado >= item.monto - 0.009 ? 'PAGADO' : 'ABONADO';
+      pagado = pagado + delta;
+      abonos.push({ monto: delta, fecha: fechaPago, auto:false });
+      estado = pagado > item.monto + 0.009 ? 'A_FAVOR' : (pagado >= item.monto - 0.009 ? 'PAGADO' : 'ABONADO');
     }else if(accion === 'LISTO'){
       delta = Math.max(item.monto - pagado, 0);
       if(delta > 0){
-        abonos.push({ monto: delta, fecha: hoy, auto:true });
+        abonos.push({ monto: delta, fecha: fechaPago, auto:true });
+        pagado = pagado + delta;
       }
-      pagado = item.monto;
-      estado = 'PAGADO';
+      estado = pagado > item.monto + 0.009 ? 'A_FAVOR' : 'PAGADO';
       auto = true;
     }else{
       // Pendiente: define la deuda y no agrega pago.
       if(pagado > 0){
-        estado = pagado >= item.monto - 0.009 ? 'PAGADO' : 'ABONADO';
+        estado = pagado > item.monto + 0.009 ? 'A_FAVOR' : (pagado >= item.monto - 0.009 ? 'PAGADO' : 'ABONADO');
       }else{
         estado = 'PENDIENTE';
       }
@@ -2608,7 +2629,7 @@ window.closeModal = window.closeModal || function(id){
       tasa: item.tipo === 'BCV' ? item.tasa : 0,
       pagado,
       estado,
-      fecha: hoy,
+      fecha: fechaPago,
       abonos
     };
 
@@ -2617,7 +2638,7 @@ window.closeModal = window.closeModal || function(id){
 
     const tipoSupabase = itemFinal.tipo === 'BCV' ? 'BS_BCV' : 'USD_FIJO';
     const tasa = itemFinal.tipo === 'BCV' && itemFinal.tasa > 0 ? itemFinal.tasa : 1;
-    const estadoSupabase = estado === 'PAGADO' ? 'Pagado' : (estado === 'ABONADO' ? 'Abonado' : 'Pendiente');
+    const estadoSupabase = (estado === 'PAGADO' || estado === 'A_FAVOR') ? 'Pagado' : (estado === 'ABONADO' ? 'Abonado' : 'Pendiente');
     const payload = {
       precio_total: itemFinal.monto,
       monto_abonado: itemFinal.pagado,
@@ -2661,8 +2682,8 @@ window.closeModal = window.closeModal || function(id){
   }
 
   function instalarEventos(){
-    if(window.__PAGO_SIMPLE_INDEX_V53_INSTALADO) return;
-    window.__PAGO_SIMPLE_INDEX_V53_INSTALADO = true;
+    if(window.__PAGO_SIMPLE_INDEX_V54_INSTALADO) return;
+    window.__PAGO_SIMPLE_INDEX_V54_INSTALADO = true;
 
     document.addEventListener('click', function(e){
       const btn = e.target && e.target.closest ? e.target.closest('.pay-simple-btn') : null;
@@ -2689,33 +2710,67 @@ window.closeModal = window.closeModal || function(id){
     const style = document.createElement('style');
     style.id = 'pagoSimpleCss';
     style.textContent = `
-      /* TEST PAGO SIMPLE V53 */
+      /* TEST PAGO SIMPLE V54 */
       #filterPago{display:none!important}
+      table{min-width:1260px!important}
+      table th:nth-child(9),table td:nth-child(9),
       table th:nth-child(11),table td:nth-child(11),
       table th:nth-child(12),table td:nth-child(12){display:none!important}
-      table th:nth-child(14),table td:nth-child(14){width:145px!important;min-width:145px!important;text-align:center!important;overflow:visible!important}
+      table th:nth-child(1),table td:nth-child(1){width:42px!important;min-width:42px!important}
+      table th:nth-child(2),table td:nth-child(2){width:82px!important;min-width:82px!important}
+      table th:nth-child(3),table td:nth-child(3){width:92px!important;min-width:92px!important}
+      table th:nth-child(4),table td:nth-child(4){width:150px!important;min-width:150px!important}
+      table th:nth-child(5),table td:nth-child(5){width:260px!important;min-width:260px!important;max-width:260px!important}
+      table th:nth-child(6),table td:nth-child(6){width:82px!important;min-width:82px!important}
+      table th:nth-child(7),table td:nth-child(7){width:112px!important;min-width:112px!important}
+      table th:nth-child(8),table td:nth-child(8){width:112px!important;min-width:112px!important}
+      table th:nth-child(10),table td:nth-child(10){width:104px!important;min-width:104px!important}
+      table th:nth-child(13),table td:nth-child(13){width:94px!important;min-width:94px!important;text-align:center!important}
+      table th:nth-child(14),table td:nth-child(14){width:142px!important;min-width:142px!important;text-align:center!important;overflow:visible!important}
+      table th:nth-child(15),table td:nth-child(15){width:78px!important;min-width:78px!important;text-align:center!important}
+      #orderTableBody td{height:42px!important;max-height:42px!important;padding:7px 8px!important}
       .simple-pago-cell{overflow:visible!important}
+      .pago-simple-modal .modal-body{gap:11px!important}
+      .pago-simple-modal .form-grid{gap:9px!important}
       .pay-simple-btn{
-        width:100%;min-height:35px;padding:5px 7px;border-radius:10px;border:1px solid #64748b;
-        background:#64748b;color:#fff;cursor:pointer;font-family:var(--head);font-size:9px;font-weight:900;
-        letter-spacing:.35px;text-transform:uppercase;line-height:1.05;display:flex;flex-direction:column;
+        width:100%;min-height:34px;padding:5px 7px;border-radius:10px;border:1px solid #64748b;
+        background:#64748b;color:#fff;cursor:pointer;font-family:var(--head);font-size:8.5px;font-weight:900;
+        letter-spacing:.25px;text-transform:uppercase;line-height:1.05;display:flex;flex-direction:column;
         align-items:center;justify-content:center;gap:2px;white-space:nowrap;overflow:hidden;
       }
       .pay-simple-btn span,.pay-simple-btn small{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-      .pay-simple-btn small{font-size:7px;opacity:.92;letter-spacing:.2px}
+      .pay-simple-btn small{font-size:6.8px;opacity:.92;letter-spacing:.15px}
       .pay-simple-btn.simple-debe{background:#dc2626;border-color:#dc2626;color:#fff}
       .pay-simple-btn.simple-abono{background:#f59e0b;border-color:#f59e0b;color:#111827}
       .pay-simple-btn.simple-ok{background:#16a34a;border-color:#16a34a;color:#fff}
+      .pay-simple-btn.simple-favor{background:#2563eb;border-color:#2563eb;color:#fff}
       .pay-simple-btn.simple-sin{background:#64748b;border-color:#64748b;color:#fff}
-      .simple-resumen{border:1px solid #d9deea;border-radius:12px;background:#f8f9ff;padding:12px 14px;font-weight:900;color:#111827;font-family:var(--mono);font-size:13px;line-height:1.35}
+      .simple-resumen{border:1px solid #d9deea;border-radius:12px;background:#f8f9ff;padding:11px 12px;font-weight:900;color:#111827;font-family:var(--mono);font-size:12px;line-height:1.35}
       .simple-historial{border:1px solid #d9deea;border-radius:12px;background:#fff;overflow:hidden}
-      .simple-hist-title{padding:9px 12px;background:#eef1ff;color:#153bff;font-family:var(--head);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.6px}
-      .simple-empty{padding:12px;color:#64748b;font-size:12px;font-weight:700}
-      .simple-hist-row{display:flex;justify-content:space-between;gap:10px;padding:9px 12px;border-top:1px solid #eef1ff;font-size:12px;font-weight:800;color:#111827}
+      .simple-hist-title{padding:8px 11px;background:#eef1ff;color:#153bff;font-family:var(--head);font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.5px}
+      .simple-empty{padding:11px;color:#64748b;font-size:12px;font-weight:700}
+      .simple-hist-row{display:flex;justify-content:space-between;gap:9px;padding:8px 11px;border-top:1px solid #eef1ff;font-size:12px;font-weight:800;color:#111827}
       .simple-hist-row small{color:#64748b;font-family:var(--mono);font-size:10px;white-space:nowrap}
       @media(max-width:980px){
-        table th:nth-child(14),table td:nth-child(14){width:100px!important;min-width:100px!important}
-        .pay-simple-btn{min-height:30px;padding:4px 5px;font-size:7.5px}.pay-simple-btn small{font-size:6px}
+        table{min-width:980px!important}
+        table th:nth-child(4),table td:nth-child(4){width:180px!important;min-width:180px!important;padding-left:12px!important}
+        table th:nth-child(5),table td:nth-child(5){width:220px!important;min-width:220px!important;max-width:220px!important}
+        table th:nth-child(6),table td:nth-child(6){width:64px!important;min-width:64px!important}
+        table th:nth-child(7),table td:nth-child(7),
+        table th:nth-child(8),table td:nth-child(8){width:94px!important;min-width:94px!important}
+        table th:nth-child(10),table td:nth-child(10){width:88px!important;min-width:88px!important}
+        table th:nth-child(13),table td:nth-child(13){width:78px!important;min-width:78px!important}
+        table th:nth-child(14),table td:nth-child(14){width:112px!important;min-width:112px!important}
+        table th:nth-child(15),table td:nth-child(15){width:58px!important;min-width:58px!important}
+        #orderTableBody td{height:34px!important;max-height:34px!important;padding:4px 5px!important}
+        .pay-simple-btn{min-height:29px;padding:4px 5px;font-size:7.2px}.pay-simple-btn small{font-size:5.8px}
+        .pago-simple-modal .form-grid{grid-template-columns:1fr 1fr!important}
+      }
+      @media(max-width:430px){
+        table{min-width:900px!important}
+        table th:nth-child(4),table td:nth-child(4){width:165px!important;min-width:165px!important}
+        table th:nth-child(5),table td:nth-child(5){width:200px!important;min-width:200px!important;max-width:200px!important}
+        .pago-simple-modal .form-grid{grid-template-columns:1fr!important}
       }
     `;
     document.head.appendChild(style);
@@ -2738,7 +2793,7 @@ window.closeModal = window.closeModal || function(id){
     initPagoSimple();
   }
 
-  window.pagoSimpleIndexV53 = {
+  window.pagoSimpleIndexV54 = {
     refrescar: function(){ cargarCachePedidosSimple(); aplicarTablaPagoSimple(); },
     abrir: abrirModalSimple,
     version: VERSION
