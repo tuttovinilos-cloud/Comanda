@@ -661,6 +661,141 @@ html.menu-ready .header-tabs,
   border-color:#cfe0ff!important;
 }
 
+/* =========================================================
+   PRECIO FIJO / VARIABLE v1
+   Añade productos con ecuación sin romper estructura Supabase actual.
+   La configuración variable se guarda dentro de keywords como metadata oculta.
+========================================================= */
+.price-type{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.type-card{
+  border:2px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  background:#fff;
+  cursor:pointer;
+}
+.type-card.active{
+  border-color:var(--blue);
+  background:#eef1ff;
+}
+.type-card b{
+  display:block;
+  font-family:var(--head);
+  color:var(--text);
+  font-size:13px;
+  font-weight:900;
+  margin-bottom:4px;
+}
+.type-card small{
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.35;
+  font-weight:700;
+}
+.fixed-fields,.variable-fields{display:none}
+.fixed-fields.show,.variable-fields.show{display:block}
+.formula-box{
+  background:var(--soft);
+  border:1.6px solid var(--orange);
+  border-radius:14px;
+  padding:12px;
+}
+.formula-input{
+  font-family:var(--mono);
+  font-size:14px;
+  font-weight:800;
+}
+.formula-preview{
+  margin-top:8px;
+  font-family:var(--mono);
+  font-size:11px;
+  line-height:1.45;
+  color:var(--blue-dark);
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:9px;
+  font-weight:700;
+}
+.formula-preview.err{
+  color:var(--red);
+  border-color:rgba(220,38,38,.25);
+  background:#fff5f5;
+}
+.quick-formulas{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:8px;
+}
+.quick-formulas button{
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--blue);
+  border-radius:9px;
+  padding:8px;
+  font-size:10px;
+  font-weight:900;
+}
+.calc-strip{
+  display:none;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:10px;
+  margin-top:10px;
+  box-shadow:0 2px 12px rgba(0,0,0,.06);
+}
+.calc-strip.show{display:block}
+.calc-strip-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+}
+.calc-strip-title b{
+  font-family:var(--head);
+  color:var(--blue-dark);
+  font-size:12px;
+  font-weight:900;
+}
+.calc-strip-title small{
+  color:var(--muted);
+  font-size:10px;
+  font-weight:800;
+}
+.calc-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+}
+.mini-pill.purple{
+  background:rgba(124,58,237,.10);
+  border-color:rgba(124,58,237,.22);
+  color:#7c3aed;
+}
+.item.expanded .mini-pill.purple{color:#ddd6fe}
+.calc-detail{
+  background:var(--soft);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+  margin-bottom:10px;
+  font-size:12px;
+  font-weight:800;
+  color:#334155;
+  line-height:1.5;
+}
+.calc-detail b{color:var(--blue)}
+@media(max-width:620px){
+  .price-type,.quick-formulas,.calc-grid{grid-template-columns:1fr}
+}
+
 </style>
 </head>
 
@@ -693,6 +828,27 @@ html.menu-ready .header-tabs,
       <input id="search" class="search" placeholder="Buscar vinil, lona, barniz..." autocomplete="off">
       <button id="clearBtn" class="clear" onclick="clearSearch()">×</button>
     </div>
+
+    <div id="calcStrip" class="calc-strip">
+      <div class="calc-strip-title">
+        <b>📐 Medidas para productos variables</b>
+        <small>Se usa en ancho × alto</small>
+      </div>
+      <div class="calc-grid">
+        <div>
+          <label>Ancho cm</label>
+          <input id="calcAncho" type="number" step="0.01" value="100" oninput="render()">
+        </div>
+        <div>
+          <label>Alto cm</label>
+          <input id="calcAlto" type="number" step="0.01" value="100" oninput="render()">
+        </div>
+        <div>
+          <label>Cantidad</label>
+          <input id="calcCant" type="number" step="1" value="1" oninput="render()">
+        </div>
+      </div>
+    </div>
   </section>
 
   <div id="statusBox" class="status-box">Conectando con Supabase...</div>
@@ -701,6 +857,20 @@ html.menu-ready .header-tabs,
     <div class="form-title" id="formTitle">Agregar producto</div>
 
     <div class="form-grid">
+      <div>
+        <label>Tipo de precio</label>
+        <div class="price-type">
+          <div class="type-card active" id="cardFijo" onclick="setTipoPrecio('fijo')">
+            <b>Precio fijo</b>
+            <small>Producto normal. Funciona como tu listado actual.</small>
+          </div>
+          <div class="type-card" id="cardVariable" onclick="setTipoPrecio('variable')">
+            <b>Precio variable</b>
+            <small>Depende de ancho, alto, cantidad y ecuación.</small>
+          </div>
+        </div>
+      </div>
+
       <div>
         <label>Nombre del producto</label>
         <input id="fNombre" placeholder="Ej: Vinil holográfico con barniz">
@@ -717,20 +887,40 @@ html.menu-ready .header-tabs,
         <small class="form-help">Las categorías se guardan en MAYÚSCULAS para evitar duplicados por mayúsculas/minúsculas.</small>
       </div>
 
-      <div class="row2">
-        <div>
-          <label>Precio</label>
-          <input id="fPrecio" type="number" step="0.01" placeholder="Ej: 23">
+      <div class="fixed-fields show" id="fixedFields">
+        <div class="row2">
+          <div>
+            <label>Precio</label>
+            <input id="fPrecio" type="number" step="0.01" placeholder="Ej: 23">
+          </div>
+          <div>
+            <label>Unidad</label>
+            <select id="fUnidad">
+              <option value="m²">m²</option>
+              <option value="unidad">unidad</option>
+              <option value="pliego">pliego</option>
+              <option value="metro lineal">metro lineal</option>
+              <option value="servicio">servicio</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label>Unidad</label>
-          <select id="fUnidad">
-            <option value="m²">m²</option>
-            <option value="unidad">unidad</option>
-            <option value="pliego">pliego</option>
-            <option value="metro lineal">metro lineal</option>
-            <option value="servicio">servicio</option>
-          </select>
+      </div>
+
+      <div class="variable-fields" id="variableFields">
+        <div class="formula-box">
+          <label>Ecuación del precio por pieza</label>
+          <input id="fFormula" class="formula-input" placeholder="Ej: 86 * AREA ^ 0.86" value="86 * AREA ^ 0.86" oninput="previewFormula()">
+          <small class="form-help">
+            Variables permitidas: <b>AREA</b>, <b>ANCHO</b>, <b>ALTO</b>, <b>CANT</b>, <b>BRECHA</b>.<br>
+            Funciones: <b>RAIZ()</b>, <b>POT()</b>, <b>MAX()</b>, <b>MIN()</b>, <b>REDONDEAR.MAS()</b>.
+          </small>
+          <div class="quick-formulas">
+            <button type="button" onclick="setFormula('86 * AREA ^ 0.86')">Curva: 86 × AREA^0.86</button>
+            <button type="button" onclick="setFormula('3 + 83 * AREA')">Lineal: 3 + 83 × AREA</button>
+            <button type="button" onclick="setFormula('MAX(2, 86 * AREA ^ 0.86)')">Con mínimo: MAX(2, curva)</button>
+            <button type="button" onclick="setFormula('REDONDEAR.MAS(86 * AREA ^ 0.86)')">Redondear hacia arriba</button>
+          </div>
+          <div class="formula-preview" id="formulaPreview">—</div>
         </div>
       </div>
 
@@ -837,6 +1027,7 @@ let items = [];
 let categorias = [];
 let isLoading = false;
 let brechaValor = 1.3;
+let tipoPrecioForm = 'fijo';
 
 function sb(){
   return window.supabaseClient || window.db || null;
@@ -1090,6 +1281,340 @@ async function saveBrecha(){
   }
 }
 
+
+/* =========================================================
+   PRECIO VARIABLE · metadata + fórmula segura tipo Excel
+   Compatible con tu Supabase actual:
+   Se guarda en keywords como:
+   __TVTIPO=variable__ __TVFORMULA=base64__
+========================================================= */
+function b64EncodeUnicode(str){
+  return btoa(unescape(encodeURIComponent(String(str || ''))));
+}
+
+function b64DecodeUnicode(str){
+  try{
+    return decodeURIComponent(escape(atob(String(str || ''))));
+  }catch(e){
+    return '';
+  }
+}
+
+function parsePrecioMeta(keywords){
+  const raw = String(keywords || '');
+  const tipoMatch = raw.match(/__TVTIPO=(fijo|variable)__/i);
+  const formulaMatch = raw.match(/__TVFORMULA=([A-Za-z0-9+/=]+)__/i);
+  const tipoPrecio = tipoMatch ? tipoMatch[1].toLowerCase() : 'fijo';
+  const formula = formulaMatch ? b64DecodeUnicode(formulaMatch[1]) : '';
+
+  const keywordsClean = raw
+    .replace(/__TVTIPO=(fijo|variable)__/ig,'')
+    .replace(/__TVFORMULA=([A-Za-z0-9+/=]+)__/ig,'')
+    .replace(/\s+/g,' ')
+    .trim();
+
+  return {
+    tipoPrecio,
+    formula: formula || '86 * AREA ^ 0.86',
+    keywordsClean
+  };
+}
+
+function buildKeywordsWithMeta(keywords,tipoPrecio,formula){
+  const clean = parsePrecioMeta(keywords).keywordsClean;
+  const tipo = tipoPrecio === 'variable' ? 'variable' : 'fijo';
+
+  if(tipo === 'variable'){
+    return `${clean} __TVTIPO=variable__ __TVFORMULA=${b64EncodeUnicode(formula || '86 * AREA ^ 0.86')}__`.trim();
+  }
+
+  return `${clean} __TVTIPO=fijo__`.trim();
+}
+
+function tokenizeFormula(input){
+  let s = String(input || '')
+    .replace(/×/g,'*')
+    .replace(/÷/g,'/')
+    .replace(/\s+/g,'')
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'');
+
+  s = s.replace(/(\d),(\d)/g,'$1.$2');
+
+  const tokens = [];
+  let i = 0;
+
+  while(i < s.length){
+    const c = s[i];
+
+    if(/[0-9.]/.test(c)){
+      let j = i + 1;
+      while(j < s.length && /[0-9.]/.test(s[j])) j++;
+      const raw = s.slice(i,j);
+      const value = Number(raw);
+      if(!Number.isFinite(value)) throw new Error('Número inválido: ' + raw);
+      tokens.push({type:'number', value});
+      i = j;
+      continue;
+    }
+
+    if(/[A-Z_]/.test(c)){
+      let j = i + 1;
+      while(j < s.length && /[A-Z0-9_.]/.test(s[j])) j++;
+      tokens.push({type:'name', value:s.slice(i,j)});
+      i = j;
+      continue;
+    }
+
+    if('+-*/^(),;'.includes(c)){
+      tokens.push({type:c, value:c});
+      i++;
+      continue;
+    }
+
+    throw new Error('Símbolo no permitido: ' + c);
+  }
+
+  return tokens;
+}
+
+function evaluateFormula(formula,vars){
+  const tokens = tokenizeFormula(formula);
+  let pos = 0;
+
+  const peek = () => tokens[pos];
+
+  function consume(type){
+    const t = tokens[pos];
+    if(!t || (type && t.type !== type)) throw new Error('Fórmula incompleta');
+    pos++;
+    return t;
+  }
+
+  function parseExpression(){ return parseAddSub(); }
+
+  function parseAddSub(){
+    let value = parseMulDiv();
+    while(peek() && (peek().type === '+' || peek().type === '-')){
+      const op = consume().type;
+      const right = parseMulDiv();
+      value = op === '+' ? value + right : value - right;
+    }
+    return value;
+  }
+
+  function parseMulDiv(){
+    let value = parsePower();
+    while(peek() && (peek().type === '*' || peek().type === '/')){
+      const op = consume().type;
+      const right = parsePower();
+      if(op === '/' && right === 0) throw new Error('División entre cero');
+      value = op === '*' ? value * right : value / right;
+    }
+    return value;
+  }
+
+  function parsePower(){
+    let value = parseUnary();
+    if(peek() && peek().type === '^'){
+      consume('^');
+      const right = parsePower();
+      value = Math.pow(value,right);
+    }
+    return value;
+  }
+
+  function parseUnary(){
+    if(peek() && peek().type === '+'){
+      consume('+');
+      return parseUnary();
+    }
+    if(peek() && peek().type === '-'){
+      consume('-');
+      return -parseUnary();
+    }
+    return parsePrimary();
+  }
+
+  function parsePrimary(){
+    const t = peek();
+    if(!t) throw new Error('Fórmula incompleta');
+
+    if(t.type === 'number'){
+      consume();
+      return t.value;
+    }
+
+    if(t.type === '('){
+      consume('(');
+      const value = parseExpression();
+      consume(')');
+      return value;
+    }
+
+    if(t.type === 'name'){
+      const name = consume().value;
+
+      if(peek() && peek().type === '('){
+        consume('(');
+        const args = [];
+
+        if(peek() && peek().type !== ')'){
+          args.push(parseExpression());
+          while(peek() && (peek().type === ',' || peek().type === ';')){
+            consume();
+            args.push(parseExpression());
+          }
+        }
+
+        consume(')');
+        return applyFunction(name,args);
+      }
+
+      if(Object.prototype.hasOwnProperty.call(vars,name)){
+        return Number(vars[name] || 0);
+      }
+
+      throw new Error('Variable desconocida: ' + name);
+    }
+
+    throw new Error('Token inesperado');
+  }
+
+  function applyFunction(name,args){
+    if(name === 'RAIZ' || name === 'SQRT'){
+      if(args.length !== 1) throw new Error(name + ' necesita 1 valor');
+      return Math.sqrt(args[0]);
+    }
+
+    if(name === 'POT' || name === 'POWER'){
+      if(args.length !== 2) throw new Error(name + ' necesita 2 valores');
+      return Math.pow(args[0],args[1]);
+    }
+
+    if(name === 'MAX'){
+      if(!args.length) throw new Error('MAX necesita valores');
+      return Math.max(...args);
+    }
+
+    if(name === 'MIN'){
+      if(!args.length) throw new Error('MIN necesita valores');
+      return Math.min(...args);
+    }
+
+    if(name === 'CEIL' || name === 'REDONDEAR.MAS' || name === 'REDONDEARMAS'){
+      if(args.length < 1) throw new Error(name + ' necesita 1 valor');
+      return Math.ceil(args[0]);
+    }
+
+    if(name === 'FLOOR' || name === 'REDONDEAR.MENOS' || name === 'REDONDEARMENOS'){
+      if(args.length < 1) throw new Error(name + ' necesita 1 valor');
+      return Math.floor(args[0]);
+    }
+
+    if(name === 'ROUND' || name === 'REDONDEAR'){
+      if(args.length < 1) throw new Error(name + ' necesita 1 valor');
+      return Math.round(args[0]);
+    }
+
+    throw new Error('Función desconocida: ' + name);
+  }
+
+  const value = parseExpression();
+
+  if(pos < tokens.length){
+    throw new Error('Hay texto sobrante en la fórmula');
+  }
+
+  if(!Number.isFinite(value)){
+    throw new Error('Resultado inválido');
+  }
+
+  return value;
+}
+
+function getCalcVars(){
+  const ancho = Number(document.getElementById('calcAncho')?.value || 0);
+  const alto = Number(document.getElementById('calcAlto')?.value || 0);
+  const cant = Math.max(1,Math.round(Number(document.getElementById('calcCant')?.value || 1)));
+  const area = Math.max(0,(ancho / 100) * (alto / 100));
+
+  return {
+    ANCHO: ancho,
+    ALTO: alto,
+    ANCHO_CM: ancho,
+    ALTO_CM: alto,
+    ANCHO_M: ancho / 100,
+    ALTO_M: alto / 100,
+    AREA: area,
+    M2: area,
+    CANT: cant,
+    CANTIDAD: cant,
+    BRECHA: Number(brechaValor || 1)
+  };
+}
+
+function calcularVariable(item){
+  const vars = getCalcVars();
+  const pieza = evaluateFormula(item.formula || '86 * AREA ^ 0.86',vars);
+  const subtotal = pieza * vars.CANT;
+  const total = Math.ceil(subtotal * vars.BRECHA);
+
+  return {
+    pieza,
+    subtotal,
+    total,
+    area: vars.AREA,
+    ancho: vars.ANCHO,
+    alto: vars.ALTO,
+    cant: vars.CANT
+  };
+}
+
+function setTipoPrecio(tipo){
+  tipoPrecioForm = tipo === 'variable' ? 'variable' : 'fijo';
+
+  document.getElementById('cardFijo')?.classList.toggle('active',tipoPrecioForm === 'fijo');
+  document.getElementById('cardVariable')?.classList.toggle('active',tipoPrecioForm === 'variable');
+
+  document.getElementById('fixedFields')?.classList.toggle('show',tipoPrecioForm === 'fijo');
+  document.getElementById('variableFields')?.classList.toggle('show',tipoPrecioForm === 'variable');
+
+  previewFormula();
+}
+
+function setFormula(formula){
+  const input = document.getElementById('fFormula');
+  if(input) input.value = formula;
+  previewFormula();
+}
+
+function previewFormula(){
+  const box = document.getElementById('formulaPreview');
+  if(!box) return;
+
+  if(tipoPrecioForm !== 'variable'){
+    box.className = 'formula-preview';
+    box.textContent = 'Producto de precio fijo.';
+    return;
+  }
+
+  const vars = getCalcVars();
+
+  try{
+    const precio = evaluateFormula(document.getElementById('fFormula')?.value || '86 * AREA ^ 0.86',vars);
+    box.className = 'formula-preview';
+    box.innerHTML =
+      `Prueba con ${vars.ANCHO}×${vars.ALTO} cm · AREA=${vars.AREA.toFixed(4)} m²<br>` +
+      `Precio por pieza: <b>$${precio.toFixed(2)}</b> · con brecha y cantidad: <b>$${Math.ceil(precio * vars.CANT * vars.BRECHA)}</b>`;
+  }catch(err){
+    box.className = 'formula-preview err';
+    box.textContent = 'Error en fórmula: ' + (err.message || err);
+  }
+}
+
+
 async function loadFromSupabase(){
   if(isLoading) return;
   isLoading = true;
@@ -1147,6 +1672,17 @@ async function loadFromSupabase(){
           orden: Number(ex.orden || 0)
         }))
     }));
+
+    items = items.map(item => {
+      const meta = parsePrecioMeta(item.keywords || '');
+      return {
+        ...item,
+        tipoPrecio: meta.tipoPrecio,
+        formula: meta.formula,
+        keywords: meta.keywordsClean,
+        unidadOriginal: item.unidad || 'm²'
+      };
+    });
 
     renderCategoriasDatalist();
     render();
@@ -1235,7 +1771,7 @@ function filteredItems(){
     if(!query) return true;
 
     const extrasText = (item.extras || []).map(ex => `${ex.nombre} ${ex.nota}`).join(' ');
-    const haystack = normalize(`${item.nombre} ${item.categoria} ${item.keywords} ${item.nota} ${extrasText}`);
+    const haystack = normalize(`${item.nombre} ${item.categoria} ${item.keywords} ${item.nota} ${extrasText} ${item.tipoPrecio || ''} ${item.formula || ''}`);
 
     return query.split(/\s+/).filter(Boolean).every(t => haystack.includes(normalize(t)));
   });
@@ -1263,12 +1799,15 @@ function groupByCategory(list){
 }
 
 function render(){
-  renderResults();
+  const list = filteredItems();
+  const hasVariable = list.some(item => item.tipoPrecio === 'variable');
+  document.getElementById('calcStrip')?.classList.toggle('show',hasVariable);
+  previewFormula();
+  renderResults(list);
 }
 
-function renderResults(){
+function renderResults(list=filteredItems()){
   const box = document.getElementById('results');
-  const list = filteredItems();
 
   if(!list.length){
     box.innerHTML = '<div class="empty">No hay productos. Agrega el primero desde Administrador.</div>';
@@ -1322,24 +1861,63 @@ function renderItemCard(item){
     ? `<div class="mini-notes">${notas.slice(0,3).map(n => `<div class="mini-note-line">${escapeHTML(n)}</div>`).join('')}</div>`
     : '';
 
+  const isVariable = item.tipoPrecio === 'variable';
+  let priceText = moneyBrecha(item.precio);
+  let unitText = '/' + escapeHTML(item.unidad || '');
+  let variablePreview = item.cantidadMinima
+    ? `<div class="item-preview"><span class="mini-pill orange">Mínimo: ${item.cantidadMinima} ${escapeHTML(item.tipoMinimo || item.unidad)}</span></div>`
+    : '';
+  let variableDetail = '';
+
+  if(isVariable){
+    try{
+      const calc = calcularVariable(item);
+      priceText = '$' + calc.total;
+      unitText = `${calc.cant} pza(s)`;
+      variablePreview = `
+        <div class="item-preview">
+          <span class="mini-pill purple">Variable</span>
+          <span class="mini-pill orange">${calc.ancho}×${calc.alto} cm</span>
+          <span class="mini-pill">${calc.area.toFixed(4).replace(/0+$/,'').replace(/\.$/,'')} m²</span>
+        </div>
+      `;
+      variableDetail = `
+        <div class="calc-detail">
+          <b>Fórmula:</b> ${escapeHTML(item.formula || '')}<br>
+          <b>Medida:</b> ${calc.ancho}×${calc.alto} cm · <b>Área:</b> ${calc.area.toFixed(4)} m²<br>
+          <b>Precio pieza:</b> $${calc.pieza.toFixed(2)} · <b>Cantidad:</b> ${calc.cant}<br>
+          <b>Subtotal:</b> $${calc.subtotal.toFixed(2)} · <b>Con brecha:</b> $${calc.total}
+        </div>
+      `;
+    }catch(err){
+      priceText = 'Error';
+      unitText = 'fórmula';
+      variablePreview = `<div class="item-preview"><span class="mini-pill purple">Variable</span><span class="mini-pill orange">Error fórmula</span></div>`;
+      variableDetail = `<div class="calc-detail" style="color:var(--red)"><b>Error:</b> ${escapeHTML(err.message || err)}</div>`;
+    }
+  }else if(!variablePreview){
+    variablePreview = `<div class="item-preview"><span class="mini-pill">Fijo</span></div>`;
+  }
+
   return `
     <div class="item ${expandedId === item.id ? 'expanded' : ''}">
       <div class="item-head" onclick="toggleItem('${item.id}')">
         <div class="item-info">
           <div class="item-name">${escapeHTML(item.nombre)}</div>
           <div class="item-cat">${escapeHTML(item.categoria || 'Sin categoría')}</div>
-          ${item.cantidadMinima ? `<div class="item-preview"><span class="mini-pill orange">Mínimo: ${item.cantidadMinima} ${escapeHTML(item.tipoMinimo || item.unidad)}</span></div>` : ''}
+          ${variablePreview}
           ${extrasPreview}
           ${notasPreview}
         </div>
         <div class="price-box">
-          <div class="price">${moneyBrecha(item.precio)}</div>
-          <div class="unit">/${escapeHTML(item.unidad || '')}</div>
+          <div class="price">${priceText}</div>
+          <div class="unit">${unitText}</div>
         </div>
         <div class="chev">▾</div>
       </div>
 
       <div class="detail">
+        ${variableDetail}
         ${notas.length ? `<div class="note">${notas.map(n => `<div>${escapeHTML(n)}</div>`).join('')}</div>` : ''}
 
         ${extras.length ? `
@@ -1413,6 +1991,7 @@ function addExtra(){
   document.getElementById('exNota').value = '';
 
   renderExtrasAdmin();
+  previewFormula();
 }
 
 function renderExtrasAdmin(){
@@ -1451,14 +2030,25 @@ async function saveItem(){
 
     const categoria = await getOrCreateCategoria(categoriaNombre);
 
+    const formulaPrecio = (document.getElementById('fFormula')?.value || '86 * AREA ^ 0.86').trim();
+
+    if(tipoPrecioForm === 'variable'){
+      try{
+        evaluateFormula(formulaPrecio,getCalcVars());
+      }catch(err){
+        alert('La ecuación tiene error: ' + (err.message || err));
+        return;
+      }
+    }
+
     const payload = {
       categoria_id: categoria.id,
       nombre,
-      precio: parseFloat(document.getElementById('fPrecio').value) || 0,
-      unidad: document.getElementById('fUnidad').value,
+      precio: tipoPrecioForm === 'variable' ? 0 : (parseFloat(document.getElementById('fPrecio').value) || 0),
+      unidad: tipoPrecioForm === 'variable' ? 'unidad' : document.getElementById('fUnidad').value,
       cantidad_minima: parseFloat(document.getElementById('fMinimo').value) || 0,
-      tipo_minimo: document.getElementById('fTipoMinimo').value,
-      keywords: document.getElementById('fKeywords').value.trim(),
+      tipo_minimo: tipoPrecioForm === 'variable' ? 'unidad' : document.getElementById('fTipoMinimo').value,
+      keywords: buildKeywordsWithMeta(document.getElementById('fKeywords').value.trim(),tipoPrecioForm,formulaPrecio),
       nota: document.getElementById('fNota').value.trim(),
       activo: document.getElementById('fActivo').checked
     };
@@ -1533,18 +2123,21 @@ function editItem(id){
 
   document.getElementById('formTitle').textContent = 'Editando producto';
   setMode('admin');
+  setTipoPrecio(item.tipoPrecio || 'fijo');
 
   document.getElementById('fNombre').value = item.nombre || '';
   setCategoriaFormValue(item.categoria || '');
   document.getElementById('fPrecio').value = item.precio || '';
-  document.getElementById('fUnidad').value = item.unidad || 'm²';
+  document.getElementById('fUnidad').value = item.unidad && item.unidad !== 'unidad' ? item.unidad : 'm²';
+  document.getElementById('fFormula').value = item.formula || '86 * AREA ^ 0.86';
   document.getElementById('fMinimo').value = item.cantidadMinima || '';
   document.getElementById('fTipoMinimo').value = item.tipoMinimo || item.unidad || 'm²';
-  document.getElementById('fKeywords').value = item.keywords || '';
+  document.getElementById('fKeywords').value = parsePrecioMeta(item.keywords || '').keywordsClean;
   document.getElementById('fNota').value = item.nota || '';
   document.getElementById('fActivo').checked = item.activo !== false;
 
   renderExtrasAdmin();
+  previewFormula();
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
@@ -1563,18 +2156,21 @@ function duplicarItem(id){
 
   document.getElementById('formTitle').textContent = 'Duplicando producto';
   setMode('admin');
+  setTipoPrecio(item.tipoPrecio || 'fijo');
 
   document.getElementById('fNombre').value = `${item.nombre || ''} COPIA`.trim();
   setCategoriaFormValue(item.categoria || '');
   document.getElementById('fPrecio').value = item.precio || '';
-  document.getElementById('fUnidad').value = item.unidad || 'm²';
+  document.getElementById('fUnidad').value = item.unidad && item.unidad !== 'unidad' ? item.unidad : 'm²';
+  document.getElementById('fFormula').value = item.formula || '86 * AREA ^ 0.86';
   document.getElementById('fMinimo').value = item.cantidadMinima || '';
   document.getElementById('fTipoMinimo').value = item.tipoMinimo || item.unidad || 'm²';
-  document.getElementById('fKeywords').value = item.keywords || '';
+  document.getElementById('fKeywords').value = parsePrecioMeta(item.keywords || '').keywordsClean;
   document.getElementById('fNota').value = item.nota || '';
   document.getElementById('fActivo').checked = item.activo !== false;
 
   renderExtrasAdmin();
+  previewFormula();
   showToast('Producto duplicado. Modifica y guarda.');
   window.scrollTo({top:0, behavior:'smooth'});
 }
@@ -1584,11 +2180,13 @@ function resetForm(){
   tempExtras = [];
   document.getElementById('formTitle').textContent = 'Agregar producto';
 
-  ['fNombre','fCategoria','fPrecio','fMinimo','fKeywords','fNota','exNombre','exPrecio','exNota'].forEach(id => {
+  ['fNombre','fCategoria','fPrecio','fMinimo','fKeywords','fNota','fFormula','exNombre','exPrecio','exNota'].forEach(id => {
     document.getElementById(id).value = '';
   });
 
+  setTipoPrecio('fijo');
   setCategoriaFormValue('');
+  document.getElementById('fFormula').value = '86 * AREA ^ 0.86';
   document.getElementById('fUnidad').value = 'm²';
   document.getElementById('fTipoMinimo').value = 'm²';
   document.getElementById('exUnidad').value = 'm²';
@@ -1640,7 +2238,20 @@ function copyItem(id){
       .join('\n');
   }
 
-  const text = `${item.nombre}\nCategoría: ${item.categoria}\nPrecio: ${moneyBrecha(item.precio)} / ${item.unidad}\n${item.cantidadMinima ? `Mínimo: ${item.cantidadMinima} ${item.tipoMinimo || item.unidad}` : ''}\n${item.nota ? `Nota: ${item.nota}` : ''}${extrasText}`;
+  let precioTexto = `${moneyBrecha(item.precio)} / ${item.unidad}`;
+  let detalleMedida = '';
+
+  if(item.tipoPrecio === 'variable'){
+    try{
+      const calc = calcularVariable(item);
+      precioTexto = '$' + calc.total;
+      detalleMedida = `${calc.cant} pza(s) de ${calc.ancho}×${calc.alto} cm`;
+    }catch(err){
+      precioTexto = 'Error en fórmula';
+    }
+  }
+
+  const text = `${item.nombre}\nCategoría: ${item.categoria}\n${detalleMedida}\nPrecio: ${precioTexto}\n${item.cantidadMinima ? `Mínimo: ${item.cantidadMinima} ${item.tipoMinimo || item.unidad}` : ''}\n${item.nota ? `Nota: ${item.nota}` : ''}${extrasText}`;
 
   copyText(text.trim());
   showToast('Copiado para WhatsApp');
@@ -1720,6 +2331,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateBrechaUI();
   renderExtrasAdmin();
   renderCategoriasDatalist();
+  setTipoPrecio('fijo');
 
   await loadBrechaGlobal();
   escucharBrechaGlobal();
