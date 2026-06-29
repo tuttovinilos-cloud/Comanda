@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Tuttovinilos</title>
-<!-- clientes.html corregido v54 · deuda acumulada + cobrar deuda cliente -->
+<!-- clientes.html corregido v60 · estado de cuenta pago simple -->
 <link rel="icon" href="data:,">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -444,6 +444,12 @@ tr:hover td{background:#ffffff03}
   border-color:#bbf7d0;
   background:#dcfce7;
   color:#166534;
+}
+
+.deuda-btn.favor{
+  border-color:#bfdbfe;
+  background:#dbeafe;
+  color:#1d4ed8;
 }
 
 .deuda-btn strong{
@@ -1826,14 +1832,14 @@ textarea{
 <div class="layout">
 
   <div class="note">
-    <strong>Clientes:</strong> marca varios clientes con la casilla y usa “Fusionar seleccionados para unir nombres duplicados sin cambiar el diseño.
+    <strong>Clientes:</strong> marca varios clientes con la casilla y usa “Fusionar seleccionados” para unir nombres duplicados. La deuda se calcula desde los pagos nuevos del sistema.
   </div>
 
   <section class="card">
     <div class="card-header">
       <div>
         <div class="card-title">Clientes</div>
-        <div class="card-sub">Crear, editar, revisar historial y ver deuda acumulada por cliente.</div>
+        <div class="card-sub">Crear, editar, revisar historial y ver estado de cuenta por cliente.</div>
       </div>
 
       <div class="card-actions">
@@ -2024,7 +2030,7 @@ textarea{
 <script src="js/menu.js?v=11"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v54 deuda acumulada + cobro cliente");
+console.log("CLIENTES HTML conectado v60 estado de cuenta pago simple");
 
 let clientesDB = [];
 let pedidosDB = [];
@@ -2139,24 +2145,81 @@ function contarPedidosCliente(nombre, clienteId = null){
   }).length;
 }
 
+function estadoPagoSimpleCliente(total, pagado){
+  total = numeroSeguro(total);
+  pagado = numeroSeguro(pagado);
+  if(total <= 0) return "SIN_MONTO";
+  if(pagado > total + 0.009) return "A_FAVOR";
+  if(pagado >= total - 0.009) return "PAGADO";
+  if(pagado > 0.009) return "ABONADO";
+  return "PENDIENTE";
+}
+
+function estadoLabelPagoSimple(estado){
+  const e = String(estado || "").toUpperCase();
+  if(e === "A_FAVOR") return "A favor";
+  if(e === "PAGADO") return "Pagado";
+  if(e === "ABONADO") return "Abonado";
+  if(e === "PENDIENTE") return "Pendiente";
+  return "Sin monto";
+}
+
+function resumenPagoSimpleCliente(pedido){
+  const total = numeroSeguro(pedido?.pago_simple_total || 0);
+  const pagado = numeroSeguro(pedido?.pago_simple_pagado || 0);
+  const saldo = Math.max(total - pagado, 0);
+  const aFavor = Math.max(pagado - total, 0);
+  let estado = String(pedido?.pago_simple_estado || "").toUpperCase();
+  if(!estado || estado === "PENDIENTE_PAGO") estado = estadoPagoSimpleCliente(total, pagado);
+  const tipo = String(pedido?.pago_simple_tipo || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA";
+
+  return {
+    pedido,
+    id:Number(pedido?.id || 0),
+    total,
+    pagado,
+    saldo,
+    aFavor,
+    estado,
+    tipo,
+    fecha:String(pedido?.pago_simple_fecha || pedido?.fecha || "").slice(0,10)
+  };
+}
+
+function pedidosEstadoCuentaCliente(cliente, soloConMonto = true){
+  if(!cliente) return [];
+  const id = Number(cliente.id || 0);
+  const nombre = normalizar(cliente.nombre);
+
+  return pedidosDB
+    .filter(p => Number(p.cliente_id || 0) === id || (nombre && normalizar(p.cliente) === nombre))
+    .map(p => resumenPagoSimpleCliente(p))
+    .filter(x => !soloConMonto || x.total > 0.009 || x.pagado > 0.009)
+    .sort((a,b) => Number(b.id || 0) - Number(a.id || 0));
+}
+
 function deudaCliente(cliente){
   const id = Number(cliente && cliente.id ? cliente.id : 0);
   const row = clientesDeudaMap.get(id);
 
   if(!row){
     return {
+      pedidos_total:0,
       pedidos_pendientes:0,
       saldo:0,
       total:0,
-      abonado:0
+      abonado:0,
+      a_favor:0
     };
   }
 
   return {
+    pedidos_total:Number(row.pedidos_total || 0),
     pedidos_pendientes:Number(row.pedidos_pendientes || 0),
     saldo:Number(row.saldo_pendiente_usd_equiv || 0),
     total:Number(row.total_deuda_usd_equiv || 0),
-    abonado:Number(row.total_abonado_usd_equiv || 0)
+    abonado:Number(row.total_abonado_usd_equiv || 0),
+    a_favor:Number(row.total_a_favor_usd_equiv || 0)
   };
 }
 
@@ -2166,13 +2229,25 @@ function deudaClienteHtml(cliente){
 
   if(d.saldo > 0.009){
     return `
-      <div class="deuda-btn" title="Total: $${money(d.total)} · Abonado: $${money(d.abonado)}">
+      <div class="deuda-btn" title="Total: $${money(d.total)} · Pagado: $${money(d.abonado)} · A favor: $${money(d.a_favor)}">
         <strong>$${money(d.saldo)}</strong>
         <small>${d.pedidos_pendientes} pendiente${d.pedidos_pendientes === 1 ? "" : "s"}</small>
       </div>
       <div class="deuda-actions">
-        <button class="mini-btn" onclick="verDeudaCliente(${id})">Ver deuda</button>
+        <button class="mini-btn" onclick="verDeudaCliente(${id})">Ver cuenta</button>
         <button class="mini-btn cobrar" onclick="cobrarDeudaCliente(${id})">Cobrar</button>
+      </div>
+    `;
+  }
+
+  if(d.a_favor > 0.009){
+    return `
+      <div class="deuda-btn favor" title="Total: $${money(d.total)} · Pagado: $${money(d.abonado)}">
+        <strong>$${money(d.a_favor)}</strong>
+        <small>A favor</small>
+      </div>
+      <div class="deuda-actions">
+        <button class="mini-btn" onclick="verDeudaCliente(${id})">Ver cuenta</button>
       </div>
     `;
   }
@@ -2188,32 +2263,32 @@ function deudaClienteHtml(cliente){
 async function cargarDeudasClientes(){
   clientesDeudaMap = new Map();
 
-  try{
-    const { data, error } = await db()
-      .from("vw_clientes_deuda")
-      .select("cliente_id, cliente, pedidos_total, pedidos_pendientes, total_deuda_usd_equiv, total_abonado_usd_equiv, saldo_pendiente_usd_equiv, ultima_fecha_pedido")
-      .order("saldo_pendiente_usd_equiv", { ascending:false });
+  clientesDB.forEach(cliente => {
+    const items = pedidosEstadoCuentaCliente(cliente, true);
+    const total = items.reduce((acc,x) => acc + numeroSeguro(x.total), 0);
+    const abonado = items.reduce((acc,x) => acc + numeroSeguro(x.pagado), 0);
+    const saldo = items.reduce((acc,x) => acc + numeroSeguro(x.saldo), 0);
+    const aFavor = items.reduce((acc,x) => acc + numeroSeguro(x.aFavor), 0);
+    const pendientes = items.filter(x => x.saldo > 0.009).length;
 
-    if(error){
-      console.warn("No se pudo cargar vw_clientes_deuda:", error);
-      clientesDeudaMap = new Map();
-      return;
-    }
-
-    (data || []).forEach(row => {
-      const id = Number(row.cliente_id || 0);
-      if(id) clientesDeudaMap.set(id, row);
+    clientesDeudaMap.set(Number(cliente.id || 0), {
+      cliente_id:cliente.id,
+      cliente:cliente.nombre,
+      pedidos_total:items.length,
+      pedidos_pendientes:pendientes,
+      total_deuda_usd_equiv:total,
+      total_abonado_usd_equiv:abonado,
+      saldo_pendiente_usd_equiv:saldo,
+      total_a_favor_usd_equiv:aFavor,
+      ultima_fecha_pedido:items[0]?.fecha || null
     });
-  }catch(error){
-    console.warn("No se pudo cargar deuda acumulada de clientes:", error);
-    clientesDeudaMap = new Map();
-  }
+  });
 }
 
 async function cargarPedidos(){
   const { data, error } = await db()
     .from("pedidos")
-    .select("id, cliente_id, fecha, cliente, descripcion, cantidad, material, tipo_impresion, estatus_trabajo, estatus_pago, fecha_entrega, precio_total, monto_abonado, moneda_deuda, tipo_tasa_deuda, tasa_deuda, total_bs, monto_abonado_bs")
+    .select("id, cliente_id, fecha, cliente, descripcion, cantidad, material, tipo_impresion, estatus_trabajo, estatus_pago, fecha_entrega, precio_total, monto_abonado, moneda_deuda, tipo_tasa_deuda, tasa_deuda, total_bs, monto_abonado_bs, pago_simple_total, pago_simple_tipo, pago_simple_pagado, pago_simple_saldo, pago_simple_a_favor, pago_simple_estado, pago_simple_fecha, pago_simple_actualizado_en")
     .order("id", { ascending:false });
 
   if(error){
@@ -3125,122 +3200,128 @@ async function eliminarCliente(id){
 
 
 let deudaClienteActualId = null;
+const PAGO_SIMPLE_CLIENTES_NOTA = "PAGO_SIMPLE_V58";
 
 function numeroSeguro(valor){
   const n = Number(String(valor ?? "").replace(/[^0-9,.-]/g, "").replace(",", "."));
   return Number.isFinite(n) ? n : 0;
 }
 
-function tipoDeudaNormalizado(valor){
-  const v = String(valor || "USD_FIJO").toUpperCase();
-  if(v === "BCV" || v === "BS_BCV") return "BS_BCV";
-  if(v === "MANUAL" || v === "BS_MANUAL") return "BS_MANUAL";
-  return "USD_FIJO";
+function fechaISOCliente(){
+  return new Date().toISOString().split("T")[0];
 }
 
-function esDeudaBsPedido(pedido){
-  const tipo = tipoDeudaNormalizado(pedido?.tipo_tasa_deuda);
-  const moneda = String(pedido?.moneda_deuda || "").toUpperCase();
-  return moneda === "BS" || tipo === "BS_BCV" || tipo === "BS_MANUAL";
+function fechaCortaCliente(iso){
+  if(!iso) return "";
+  const p = String(iso).slice(0,10).split("-");
+  if(p.length !== 3) return String(iso).slice(0,10);
+  return `${p[2]}/${p[1]}/${p[0]}`;
 }
 
-function tasaDeudaPedidoCliente(pedido){
-  const t = numeroSeguro(pedido?.tasa_deuda || 0);
-  return t > 0 ? t : 1;
+function tipoTextoCuenta(item){
+  return item.tipo === "BCV" ? "BCV" : "Divisa";
 }
 
-function totalUsdPedidoCliente(pedido){
-  const n = numeroSeguro(pedido?.precio_total || 0);
-  return n > 0 ? n : 0;
+function claseEstadoCuenta(item){
+  if(item.aFavor > 0.009 || item.estado === "A_FAVOR") return "favor";
+  if(item.saldo <= 0.009 && item.total > 0) return "pagado";
+  if(item.pagado > 0.009) return "abonado";
+  if(item.total > 0) return "debe";
+  return "sin";
 }
 
-function totalBsPedidoCliente(pedido){
-  const guardado = numeroSeguro(pedido?.total_bs || 0);
-  if(guardado > 0) return guardado;
-  return totalUsdPedidoCliente(pedido) * tasaDeudaPedidoCliente(pedido);
+function estadoPagoCuentaDesdeItem(item){
+  if(item.aFavor > 0.009) return "A_FAVOR";
+  if(item.total > 0 && item.pagado >= item.total - 0.009) return "PAGADO";
+  if(item.pagado > 0.009) return "ABONADO";
+  if(item.total > 0) return "PENDIENTE";
+  return "SIN_MONTO";
 }
 
-function resumenPedidoDeudaCliente(pedido){
-  const esBs = esDeudaBsPedido(pedido);
-  const tasa = tasaDeudaPedidoCliente(pedido);
-  const totalUsd = totalUsdPedidoCliente(pedido);
-  const totalDeuda = esBs ? totalBsPedidoCliente(pedido) : totalUsd;
-  const pagadoDeuda = esBs
-    ? numeroSeguro(pedido?.monto_abonado_bs || 0)
-    : numeroSeguro(pedido?.monto_abonado || 0);
-
-  const saldoDeuda = Math.max(totalDeuda - pagadoDeuda, 0);
-  const saldoUsd = esBs && tasa > 0 ? (saldoDeuda / tasa) : saldoDeuda;
-  const pagadoUsd = esBs && totalDeuda > 0 && totalUsd > 0
-    ? Math.min(totalUsd, totalUsd * (pagadoDeuda / totalDeuda))
-    : numeroSeguro(pedido?.monto_abonado || 0);
-
-  return {
-    esBs,
-    tasa,
-    tipo: tipoDeudaNormalizado(pedido?.tipo_tasa_deuda),
-    totalUsd,
-    totalDeuda,
-    pagadoDeuda,
-    pagadoUsd,
-    saldoDeuda,
-    saldoUsd
-  };
-}
-
-function estatusPagoCliente(total, pagado){
-  if(total > 0 && pagado >= (total - 0.009)) return "Pagado";
-  if(pagado > 0) return "Abonado";
+function estatusSupabaseCuenta(estado){
+  const e = String(estado || "").toUpperCase();
+  if(e === "PAGADO" || e === "A_FAVOR") return "Pagado";
+  if(e === "ABONADO") return "Abonado";
   return "Pendiente";
 }
 
-function pedidosPendientesCliente(cliente){
-  if(!cliente) return [];
-  const id = Number(cliente.id || 0);
-  const nombre = normalizar(cliente.nombre);
+function payloadPedidoCuenta(item, fechaPago = null){
+  const total = numeroSeguro(item.total);
+  const pagado = numeroSeguro(item.pagado);
+  const saldo = Math.max(total - pagado, 0);
+  const aFavor = Math.max(pagado - total, 0);
+  const estado = estadoPagoCuentaDesdeItem({ total, pagado, saldo, aFavor });
+  const tipo = item.tipo === "BCV" ? "BCV" : "DIVISA";
+  const tasa = tipo === "BCV" && numeroSeguro(item.tasa) > 0 ? numeroSeguro(item.tasa) : 1;
 
-  return pedidosDB
-    .filter(p => Number(p.cliente_id || 0) === id || (nombre && normalizar(p.cliente) === nombre))
-    .map(p => ({ pedido:p, deuda:resumenPedidoDeudaCliente(p) }))
-    .filter(x => x.deuda.saldoUsd > 0.009)
-    .sort((a,b) => Number(a.pedido.id || 0) - Number(b.pedido.id || 0));
+  return {
+    precio_total:total,
+    monto_abonado:pagado,
+    estatus_pago:estatusSupabaseCuenta(estado),
+    moneda_deuda:tipo === "BCV" ? "BS" : "USD",
+    tipo_tasa_deuda:tipo === "BCV" ? "BS_BCV" : "USD_FIJO",
+    tasa_deuda:tasa,
+    total_bs:tipo === "BCV" ? total * tasa : null,
+    monto_abonado_bs:tipo === "BCV" ? pagado * tasa : 0,
+    pago_simple_total:total,
+    pago_simple_tipo:tipo,
+    pago_simple_pagado:pagado,
+    pago_simple_saldo:saldo,
+    pago_simple_a_favor:aFavor,
+    pago_simple_estado:estado,
+    pago_simple_fecha:fechaPago || item.fecha || fechaISOCliente(),
+    pago_simple_actualizado_en:new Date().toISOString()
+  };
+}
+
+function pedidosPendientesCliente(cliente){
+  return pedidosEstadoCuentaCliente(cliente, true)
+    .filter(x => x.saldo > 0.009)
+    .sort((a,b) => Number(a.id || 0) - Number(b.id || 0));
 }
 
 function pintarDeudaModal(cliente){
-  const pendientes = pedidosPendientesCliente(cliente);
-  const totalSaldo = pendientes.reduce((acc,x) => acc + x.deuda.saldoUsd, 0);
-  const d = deudaCliente(cliente);
+  const cuenta = pedidosEstadoCuentaCliente(cliente, true);
+  const pendientes = cuenta.filter(x => x.saldo > 0.009);
+  const total = cuenta.reduce((acc,x) => acc + x.total, 0);
+  const pagado = cuenta.reduce((acc,x) => acc + x.pagado, 0);
+  const saldo = cuenta.reduce((acc,x) => acc + x.saldo, 0);
+  const aFavor = cuenta.reduce((acc,x) => acc + x.aFavor, 0);
 
-  document.getElementById("deudaTitle").textContent = `Deuda · ${cliente.nombre}`;
+  document.getElementById("deudaTitle").textContent = `Estado de cuenta · ${cliente.nombre}`;
 
   document.getElementById("deudaSummary").innerHTML = `
-    <div class="deuda-summary-box"><label>Saldo</label><strong>$${money(totalSaldo)}</strong></div>
-    <div class="deuda-summary-box"><label>Pendientes</label><strong>${pendientes.length}</strong></div>
-    <div class="deuda-summary-box"><label>Total</label><strong>$${money(d.total)}</strong></div>
-    <div class="deuda-summary-box"><label>Abonado</label><strong>$${money(d.abonado)}</strong></div>
+    <div class="deuda-summary-box"><label>Total</label><strong>$${money(total)}</strong></div>
+    <div class="deuda-summary-box"><label>Pagado</label><strong>$${money(pagado)}</strong></div>
+    <div class="deuda-summary-box"><label>Saldo</label><strong>$${money(saldo)}</strong></div>
+    <div class="deuda-summary-box"><label>A favor</label><strong>$${money(aFavor)}</strong></div>
   `;
 
   const lista = document.getElementById("deudaPedidosLista");
 
-  if(!pendientes.length){
-    lista.innerHTML = `<div class="empty">Este cliente no tiene deuda pendiente</div>`;
+  if(!cuenta.length){
+    lista.innerHTML = `<div class="empty">Este cliente no tiene pedidos con monto registrado</div>`;
   }else{
-    lista.innerHTML = pendientes.map(({pedido, deuda}) => {
-      const totalTxt = deuda.esBs ? `Bs ${money(deuda.totalDeuda)} · base $${money(deuda.totalUsd)}` : `$${money(deuda.totalDeuda)}`;
-      const saldoTxt = deuda.esBs ? `Bs ${money(deuda.saldoDeuda)} / $${money(deuda.saldoUsd)}` : `$${money(deuda.saldoUsd)}`;
+    lista.innerHTML = cuenta.map(item => {
+      const pedido = item.pedido;
+      const clase = claseEstadoCuenta(item);
+      const saldoTxt = item.aFavor > 0.009 ? `A favor $${money(item.aFavor)}` : `Saldo $${money(item.saldo)}`;
       return `
-        <div class="deuda-pedido-row">
+        <div class="deuda-pedido-row estado-${clase}">
           <div class="deuda-pedido-id">#${escapeHtml(pedido.id)}</div>
           <div class="deuda-pedido-desc">
             <strong>${escapeHtml(pedido.descripcion || "Sin descripción")}</strong>
-            <small>${escapeHtml(pedido.fecha || "")} · ${escapeHtml(pedido.estatus_pago || "")}</small>
+            <small>${escapeHtml(pedido.fecha || "")} · ${escapeHtml(tipoTextoCuenta(item))} · ${escapeHtml(estadoLabelPagoSimple(item.estado))}</small>
           </div>
-          <div class="deuda-pedido-money pagado" title="Total">${escapeHtml(totalTxt)}</div>
-          <div class="deuda-pedido-money debe" title="Saldo">${escapeHtml(saldoTxt)}</div>
+          <div class="deuda-pedido-money pagado" title="Pagado">Pagado $${money(item.pagado)}</div>
+          <div class="deuda-pedido-money ${item.saldo > 0.009 ? "debe" : "pagado"}" title="Saldo">${escapeHtml(saldoTxt)}</div>
         </div>
       `;
     }).join("");
   }
+
+  const boxCobro = document.getElementById("deudaCobroBox");
+  if(boxCobro) boxCobro.style.display = pendientes.length ? "" : "none";
 
   calcularPagoGlobalCliente();
 }
@@ -3291,7 +3372,7 @@ function calcularPagoGlobalCliente(){
   if(!resultado || !cliente) return;
 
   const pendientes = pedidosPendientesCliente(cliente);
-  const saldo = pendientes.reduce((acc,x) => acc + x.deuda.saldoUsd, 0);
+  const saldo = pendientes.reduce((acc,x) => acc + x.saldo, 0);
   const monto = numeroSeguro(document.getElementById("deudaPagoMonto")?.value || 0);
   const moneda = document.getElementById("deudaPagoMoneda")?.value || "USD";
   let tasa = numeroSeguro(document.getElementById("deudaPagoTasa")?.value || 1);
@@ -3302,12 +3383,17 @@ function calcularPagoGlobalCliente(){
   const restante = Math.max(saldo - aplicado, 0);
   const excedente = Math.max(equivalenteUsd - saldo, 0);
 
+  if(!pendientes.length){
+    resultado.textContent = "Este cliente no tiene deuda pendiente";
+    return;
+  }
+
   if(monto <= 0){
     resultado.textContent = `Saldo actual: $${money(saldo)} · Coloca el monto recibido`;
     return;
   }
 
-  resultado.textContent = `Aplicará $${money(aplicado)} · Quedará $${money(restante)}${excedente > 0 ? " · Excedente $" + money(excedente) : ""}`;
+  resultado.textContent = `Aplicará $${money(aplicado)} · Quedará $${money(restante)}${excedente > 0 ? " · A favor $" + money(excedente) : ""}`;
 }
 
 async function aplicarPagoGlobalCliente(){
@@ -3346,33 +3432,42 @@ async function aplicarPagoGlobalCliente(){
   const registradoPor = typeof window.getSesionOperador === "function"
     ? (window.getSesionOperador()?.nombre || "")
     : "";
+  const fechaPago = fechaISOCliente();
 
   let pagosAplicados = 0;
 
   try{
-    for(const item of pendientes){
+    for(let i = 0; i < pendientes.length; i++){
       if(disponibleUsd <= 0.009) break;
 
+      const item = pendientes[i];
       const pedido = item.pedido;
-      const deuda = resumenPedidoDeudaCliente(pedido);
-      const aplicarUsd = Math.min(disponibleUsd, deuda.saldoUsd);
+      const esUltimo = i === pendientes.length - 1;
+      const aplicarUsd = esUltimo ? disponibleUsd : Math.min(disponibleUsd, item.saldo);
       if(aplicarUsd <= 0.009) continue;
 
+      const pagadoAntes = item.pagado;
+      const saldoAntes = item.saldo;
+      const nuevoPagado = pagadoAntes + aplicarUsd;
+      const nuevoSaldo = Math.max(item.total - nuevoPagado, 0);
+      const nuevoAFavor = Math.max(nuevoPagado - item.total, 0);
+      const itemFinal = {
+        ...item,
+        pagado:nuevoPagado,
+        saldo:nuevoSaldo,
+        aFavor:nuevoAFavor,
+        tasa:numeroSeguro(pedido.tasa_deuda || 1),
+        fecha:fechaPago
+      };
+      itemFinal.estado = estadoPagoCuentaDesdeItem(itemFinal);
+
       const montoRecibidoParte = moneda === "BS" ? (aplicarUsd * tasa) : aplicarUsd;
-      const pagoAplicadoDeuda = deuda.esBs ? (aplicarUsd * deuda.tasa) : aplicarUsd;
-      const nuevoPagadoDeuda = Math.min(deuda.pagadoDeuda + pagoAplicadoDeuda, deuda.totalDeuda);
-      const nuevoSaldoDeuda = Math.max(deuda.totalDeuda - nuevoPagadoDeuda, 0);
-      const nuevoAbonadoUsd = deuda.esBs
-        ? Math.min(deuda.totalUsd, deuda.pagadoUsd + aplicarUsd)
-        : Math.min(deuda.totalUsd, numeroSeguro(pedido.monto_abonado || 0) + aplicarUsd);
-      const nuevoAbonadoBs = deuda.esBs ? nuevoPagadoDeuda : 0;
-      const nuevoEstatus = estatusPagoCliente(deuda.totalDeuda, nuevoPagadoDeuda);
 
       const pagoPayload = {
         pedido_id: pedido.id,
         cliente_id: cliente.id,
         cliente_nombre: cliente.nombre || pedido.cliente || "",
-        pedido_descripcion: pedido.descripcion || "",
+        pedido_descripcion: pedido.descripcion || "Pago global cliente",
         monto_recibido: montoRecibidoParte,
         moneda,
         tasa_usada: tasa,
@@ -3380,19 +3475,25 @@ async function aplicarPagoGlobalCliente(){
         metodo_pago: metodo,
         metodo_otro: null,
         referencia,
-        nota: nota ? (`Pago global cliente. ${nota}`) : "Pago global cliente",
-        saldo_antes: deuda.saldoUsd,
-        saldo_despues: deuda.esBs && deuda.tasa > 0 ? (nuevoSaldoDeuda / deuda.tasa) : nuevoSaldoDeuda,
+        nota: PAGO_SIMPLE_CLIENTES_NOTA,
+        saldo_antes: saldoAntes,
+        saldo_despues: nuevoSaldo,
         registrado_por: registradoPor || null,
-        moneda_deuda: deuda.esBs ? "BS" : "USD",
-        tipo_tasa_deuda: deuda.tipo,
-        tasa_deuda: deuda.tasa,
-        total_deuda_usd: deuda.totalUsd,
-        total_deuda_bs: deuda.esBs ? deuda.totalDeuda : null,
+        fecha_pago: fechaPago,
+        tipo_movimiento: nuevoAFavor > 0.009 ? "A_FAVOR" : "ABONO",
+        monto_aplicado: aplicarUsd,
+        saldo_despues_simple: nuevoSaldo,
+        a_favor_despues: nuevoAFavor,
+        tipo_pago_simple: item.tipo,
+        moneda_deuda: item.tipo === "BCV" ? "BS" : "USD",
+        tipo_tasa_deuda: item.tipo === "BCV" ? "BS_BCV" : "USD_FIJO",
+        tasa_deuda: item.tipo === "BCV" && numeroSeguro(pedido.tasa_deuda) > 0 ? numeroSeguro(pedido.tasa_deuda) : 1,
+        total_deuda_usd: item.total,
+        total_deuda_bs: item.tipo === "BCV" && numeroSeguro(pedido.tasa_deuda) > 0 ? item.total * numeroSeguro(pedido.tasa_deuda) : null,
         pago_aplicado_usd: aplicarUsd,
-        pago_aplicado_bs: deuda.esBs ? pagoAplicadoDeuda : null,
-        saldo_antes_deuda: deuda.saldoDeuda,
-        saldo_despues_deuda: nuevoSaldoDeuda
+        pago_aplicado_bs: item.tipo === "BCV" && numeroSeguro(pedido.tasa_deuda) > 0 ? aplicarUsd * numeroSeguro(pedido.tasa_deuda) : null,
+        saldo_antes_deuda: saldoAntes,
+        saldo_despues_deuda: nuevoSaldo
       };
 
       const { error:pagoError } = await db()
@@ -3403,11 +3504,7 @@ async function aplicarPagoGlobalCliente(){
 
       const { error:updateError } = await db()
         .from("pedidos")
-        .update({
-          monto_abonado: nuevoAbonadoUsd,
-          monto_abonado_bs: nuevoAbonadoBs,
-          estatus_pago: nuevoEstatus
-        })
+        .update(payloadPedidoCuenta(itemFinal, fechaPago))
         .eq("id", pedido.id);
 
       if(updateError) throw updateError;
@@ -3417,8 +3514,8 @@ async function aplicarPagoGlobalCliente(){
     }
 
     await cargarPedidos();
-    await cargarDeudasClientes();
     await cargarClientes();
+    await cargarDeudasClientes();
     filtrarClientes();
 
     const clienteActualizado = clientesDB.find(c => Number(c.id) === Number(cliente.id));
@@ -3434,7 +3531,37 @@ async function aplicarPagoGlobalCliente(){
   }
 }
 
-function verHistorialCliente(id){
+async function cargarPagosCliente(cliente){
+  let pagos = [];
+
+  try{
+    if(cliente?.id){
+      const { data, error } = await db()
+        .from("pedidos_pagos")
+        .select("id, pedido_id, monto_recibido, monto_aplicado, moneda, tasa_usada, equivalente_usd, metodo_pago, referencia, nota, fecha_pago, tipo_movimiento, created_at")
+        .eq("cliente_id", cliente.id)
+        .order("created_at", { ascending:false });
+
+      if(!error && Array.isArray(data)) pagos = data;
+    }
+
+    if(!pagos.length && cliente?.nombre){
+      const { data, error } = await db()
+        .from("pedidos_pagos")
+        .select("id, pedido_id, monto_recibido, monto_aplicado, moneda, tasa_usada, equivalente_usd, metodo_pago, referencia, nota, fecha_pago, tipo_movimiento, created_at")
+        .ilike("cliente_nombre", cliente.nombre)
+        .order("created_at", { ascending:false });
+
+      if(!error && Array.isArray(data)) pagos = data;
+    }
+  }catch(error){
+    console.warn("No se pudo cargar historial de pagos del cliente:", error);
+  }
+
+  return pagos;
+}
+
+async function verHistorialCliente(id){
   const cliente = clientesDB.find(c => Number(c.id) === Number(id));
 
   if(!cliente){
@@ -3444,30 +3571,75 @@ function verHistorialCliente(id){
 
   const nombreNorm = normalizar(cliente.nombre);
   const pedidos = pedidosDB.filter(p => Number(p.cliente_id || 0) === Number(cliente.id) || normalizar(p.cliente) === nombreNorm);
+  const cuenta = pedidos.map(p => resumenPagoSimpleCliente(p)).filter(x => x.total > 0.009 || x.pagado > 0.009);
+  const pagos = await cargarPagosCliente(cliente);
+
+  const total = cuenta.reduce((acc,x) => acc + x.total, 0);
+  const pagado = cuenta.reduce((acc,x) => acc + x.pagado, 0);
+  const saldo = cuenta.reduce((acc,x) => acc + x.saldo, 0);
+  const aFavor = cuenta.reduce((acc,x) => acc + x.aFavor, 0);
 
   document.getElementById("historyTitle").textContent = `Historial · ${cliente.nombre}`;
 
   const body = document.getElementById("historyBody");
 
+  const resumenHtml = `
+    <div class="deuda-modal-summary">
+      <div class="deuda-summary-box"><label>Total</label><strong>$${money(total)}</strong></div>
+      <div class="deuda-summary-box"><label>Pagado</label><strong>$${money(pagado)}</strong></div>
+      <div class="deuda-summary-box"><label>Saldo</label><strong>$${money(saldo)}</strong></div>
+      <div class="deuda-summary-box"><label>A favor</label><strong>$${money(aFavor)}</strong></div>
+    </div>
+  `;
+
   if(!pedidos.length){
-    body.innerHTML = `<div class="empty">Este cliente no tiene pedidos registrados</div>`;
+    body.innerHTML = resumenHtml + `<div class="empty">Este cliente no tiene pedidos registrados</div>`;
   }else{
-    body.innerHTML = pedidos.map(p => `
-      <div class="history-item">
-        <div class="history-top">
-          <span>#${escapeHtml(p.id)} · ${escapeHtml(p.fecha || "")}</span>
-          <span>${escapeHtml(p.estatus_trabajo || "")} / ${escapeHtml(p.estatus_pago || "")}</span>
+    const pedidosHtml = pedidos.map(p => {
+      const item = resumenPagoSimpleCliente(p);
+      const estado = item.total > 0 || item.pagado > 0 ? estadoLabelPagoSimple(item.estado) : (p.estatus_pago || "");
+      const saldoTxt = item.aFavor > 0.009 ? `A favor $${money(item.aFavor)}` : `Saldo $${money(item.saldo)}`;
+
+      return `
+        <div class="history-item">
+          <div class="history-top">
+            <span>#${escapeHtml(p.id)} · ${escapeHtml(p.fecha || "")}</span>
+            <span>${escapeHtml(p.estatus_trabajo || "")} / ${escapeHtml(estado)}</span>
+          </div>
+          <div class="history-desc">
+            <strong>${escapeHtml(p.descripcion || "")}</strong><br>
+            Cantidad: ${escapeHtml(p.cantidad || "")}<br>
+            Material: ${escapeHtml(p.material || "")}<br>
+            Impresión: ${escapeHtml(p.tipo_impresion || "")}<br>
+            Entrega: ${escapeHtml(p.fecha_entrega || "—")}<br>
+            Total: $${money(item.total)} · Pagado: $${money(item.pagado)} · ${escapeHtml(saldoTxt)}
+          </div>
         </div>
-        <div class="history-desc">
-          <strong>${escapeHtml(p.descripcion || "")}</strong><br>
-          Cantidad: ${escapeHtml(p.cantidad || "")}<br>
-          Material: ${escapeHtml(p.material || "")}<br>
-          Impresión: ${escapeHtml(p.tipo_impresion || "")}<br>
-          Entrega: ${escapeHtml(p.fecha_entrega || "—")}<br>
-          Total: ${escapeHtml(p.precio_total ? "$" + money(p.precio_total) : "—")} · Abonado: ${escapeHtml(p.monto_abonado ? "$" + money(p.monto_abonado) : "$0.00")}
-        </div>
-      </div>
-    `).join("");
+      `;
+    }).join("");
+
+    const pagosHtml = pagos.length ? `
+      <div class="deuda-cobro-title" style="margin-top:10px">Pagos registrados</div>
+      ${pagos.map(pg => {
+        const monto = numeroSeguro(pg.monto_aplicado || pg.equivalente_usd || pg.monto_recibido || 0);
+        const fecha = String(pg.fecha_pago || pg.created_at || "").slice(0,10);
+        return `
+          <div class="history-item">
+            <div class="history-top">
+              <span>#${escapeHtml(pg.pedido_id || "")} · ${escapeHtml(fechaCortaCliente(fecha))}</span>
+              <span>${escapeHtml(pg.metodo_pago || pg.tipo_movimiento || "Pago")}</span>
+            </div>
+            <div class="history-desc">
+              Monto aplicado: <strong>$${money(monto)}</strong><br>
+              ${pg.referencia ? `Referencia: ${escapeHtml(pg.referencia)}<br>` : ""}
+              ${pg.nota && pg.nota !== PAGO_SIMPLE_CLIENTES_NOTA ? `Nota: ${escapeHtml(pg.nota)}<br>` : ""}
+            </div>
+          </div>
+        `;
+      }).join("")}
+    ` : `<div class="empty">Sin pagos registrados en historial</div>`;
+
+    body.innerHTML = resumenHtml + pedidosHtml + pagosHtml;
   }
 
   document.getElementById("historyBackdrop").style.display = "flex";
