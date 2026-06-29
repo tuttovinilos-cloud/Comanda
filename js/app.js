@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v52 cliente_id seguro");
+console.log("APP JS conectado correctamente v58 pago simple definitivo");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -1215,6 +1215,7 @@ async function saveQuickOrder() {
       fecha_entrega,
       ...deudaPayload,
       monto_abonado_bs: deudaPayload.moneda_deuda === "BS" ? (monto_abonado * deudaPayload.tasa_deuda) : 0,
+      ...payloadPagoSimpleInicial(deudaPayload, monto_abonado, fecha),
       archivo_url: archivoData.archivo_url,
       archivo_nombre: archivoData.archivo_nombre
     }]);
@@ -1277,10 +1278,13 @@ async function saveOrder() {
     monto_abonado,
     fecha_entrega,
     ...deudaPayload,
-    monto_abonado_bs: deudaPayload.moneda_deuda === "BS" ? (monto_abonado * deudaPayload.tasa_deuda) : 0
+    monto_abonado_bs: deudaPayload.moneda_deuda === "BS" ? (monto_abonado * deudaPayload.tasa_deuda) : 0,
+    ...payloadPagoSimpleInicial(deudaPayload, monto_abonado, fecha)
   };
 
-  if (monto_abonado > 0) datosPedido.estatus_pago = "Abonado";
+  if (monto_abonado > 0) {
+    datosPedido.estatus_pago = estadoSupabaseDesdePagoSimple(estadoPagoSimpleDesdeMontos(deudaPayload.precio_total, monto_abonado));
+  }
   if (puedeModificarCantidadLocal() || !pedidoEditandoId) datosPedido.cantidad = cantidad;
 
   if (archivoData.archivo_url) {
@@ -1400,41 +1404,470 @@ async function actualizarAbonoPedido(id, monto) {
 
 
 // ===========================
-// PAGOS POR PEDIDO - ETAPA 1
+// PAGO SIMPLE DEFINITIVO V58
 // ===========================
-let pagoPedidoActualId = null;
+const PAGO_SIMPLE_VERSION = "v58_pago_simple_app";
+const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
+let pagoSimpleActualId = null;
+let pagoSimpleHistorialActual = [];
 
-function getEl(id) {
-  return document.getElementById(id);
+function fechaISO() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function fechaCortaPagoSimple(iso) {
+  if (!iso) return "";
+  const p = String(iso).slice(0, 10).split("-");
+  if (p.length !== 3) return String(iso).slice(0, 10);
+  return p[2] + "/" + p[1];
+}
+
+function tipoPagoSimpleDesdePedido(pedido) {
+  const simple = String(pedido?.pago_simple_tipo || "").toUpperCase().trim();
+  if (simple === "BCV" || simple === "DIVISA") return simple;
+
+  const tipo = String(pedido?.tipo_tasa_deuda || "").toUpperCase();
+  const moneda = String(pedido?.moneda_deuda || "").toUpperCase();
+  if (tipo.includes("BCV") || moneda === "BS") return "BCV";
+  return "DIVISA";
+}
+
+function totalPagoSimplePedido(pedido) {
+  // Para no arrastrar pagos viejos, el sistema nuevo solo toma pago_simple_total.
+  return numeroSeguro(pedido?.pago_simple_total || 0);
+}
+
+function pagadoPagoSimplePedido(pedido) {
+  // Para no arrastrar abonos viejos, el sistema nuevo solo toma pago_simple_pagado.
+  return numeroSeguro(pedido?.pago_simple_pagado || 0);
+}
+
+function tasaPagoSimplePedido(pedido) {
+  const t = numeroSeguro(pedido?.tasa_deuda || 0);
+  return t > 0 ? t : 0;
+}
+
+function estadoPagoSimpleDesdeMontos(total, pagado) {
+  total = numeroSeguro(total);
+  pagado = numeroSeguro(pagado);
+  if (total <= 0) return "SIN_MONTO";
+  if (pagado > total + 0.009) return "A_FAVOR";
+  if (pagado >= total - 0.009) return "PAGADO";
+  if (pagado > 0.009) return "ABONADO";
+  return "PENDIENTE";
+}
+
+function estadoSupabaseDesdePagoSimple(estado) {
+  const e = String(estado || "").toUpperCase();
+  if (e === "PAGADO" || e === "A_FAVOR") return "Pagado";
+  if (e === "ABONADO") return "Abonado";
+  return "Pendiente";
+}
+
+function textoTipoPagoSimple(item) {
+  if (item.tipo === "BCV") return item.tasa > 0 ? "BCV " + money(item.tasa) : "BCV";
+  return "Divisa";
+}
+
+function resumenPagoSimplePedido(pedido) {
+  const total = totalPagoSimplePedido(pedido);
+  const pagado = pagadoPagoSimplePedido(pedido);
+  const saldo = Math.max(total - pagado, 0);
+  const aFavor = Math.max(pagado - total, 0);
+  const tipo = tipoPagoSimpleDesdePedido(pedido);
+  const tasa = tasaPagoSimplePedido(pedido);
+  const estadoGuardado = String(pedido?.pago_simple_estado || "").toUpperCase();
+  const estado = estadoGuardado && estadoGuardado !== "PENDIENTE_PAGO"
+    ? estadoGuardado
+    : estadoPagoSimpleDesdeMontos(total, pagado);
+
+  return {
+    id: Number(pedido?.id || 0),
+    monto: total,
+    total,
+    pagado,
+    saldo,
+    aFavor,
+    favor: aFavor,
+    tipo,
+    tasa,
+    estado,
+    fecha: pedido?.pago_simple_fecha || ""
+  };
+}
+
+// Reemplazo del resumen viejo para búsquedas/filtros.
+function resumenDeudaPedido(pedido) {
+  const r = resumenPagoSimplePedido(pedido);
+  return {
+    esBs: r.tipo === "BCV",
+    tipo: r.tipo === "BCV" ? "BS_BCV" : "USD_FIJO",
+    tasa: r.tasa || 1,
+    total: r.total,
+    totalUsd: r.total,
+    totalBs: r.tipo === "BCV" && r.tasa > 0 ? r.total * r.tasa : 0,
+    pagado: r.pagado,
+    saldo: r.saldo,
+    estado: r.estado === "PAGADO" || r.estado === "A_FAVOR" ? "pagado" : (r.estado === "ABONADO" ? "abonado" : (r.estado === "PENDIENTE" ? "debe" : "sin_monto")),
+    totalTexto: formatoUsd(r.total),
+    pagadoTexto: formatoUsd(r.pagado),
+    saldoTexto: formatoUsd(r.saldo),
+    tipoTexto: textoTipoPagoSimple(r)
+  };
+}
+
+function payloadPagoSimpleInicial(deudaPayload, montoAbonado, fecha) {
+  const total = numeroSeguro(deudaPayload?.precio_total || 0);
+  const pagado = numeroSeguro(montoAbonado || 0);
+  const tipo = deudaPayload?.moneda_deuda === "BS" ? "BCV" : "DIVISA";
+  const estado = estadoPagoSimpleDesdeMontos(total, pagado);
+
+  return {
+    estatus_pago: estadoSupabaseDesdePagoSimple(estado),
+    pago_simple_total: total,
+    pago_simple_tipo: tipo,
+    pago_simple_pagado: pagado,
+    pago_simple_saldo: Math.max(total - pagado, 0),
+    pago_simple_a_favor: Math.max(pagado - total, 0),
+    pago_simple_estado: estado,
+    pago_simple_fecha: fecha || fechaISO(),
+    pago_simple_actualizado_en: new Date().toISOString()
+  };
+}
+
+function payloadPedidoSimple(itemFinal) {
+  const total = numeroSeguro(itemFinal.monto);
+  const pagado = numeroSeguro(itemFinal.pagado);
+  const tipo = itemFinal.tipo === "BCV" ? "BCV" : "DIVISA";
+  const tasa = tipo === "BCV" && numeroSeguro(itemFinal.tasa) > 0 ? numeroSeguro(itemFinal.tasa) : 1;
+  const estado = estadoPagoSimpleDesdeMontos(total, pagado);
+  const saldo = Math.max(total - pagado, 0);
+  const aFavor = Math.max(pagado - total, 0);
+
+  return {
+    precio_total: total,
+    monto_abonado: pagado,
+    estatus_pago: estadoSupabaseDesdePagoSimple(estado),
+    moneda_deuda: tipo === "BCV" ? "BS" : "USD",
+    tipo_tasa_deuda: tipo === "BCV" ? "BS_BCV" : "USD_FIJO",
+    tasa_deuda: tasa,
+    total_bs: tipo === "BCV" ? total * tasa : null,
+    monto_abonado_bs: tipo === "BCV" ? pagado * tasa : 0,
+    pago_simple_total: total,
+    pago_simple_tipo: tipo,
+    pago_simple_pagado: pagado,
+    pago_simple_saldo: saldo,
+    pago_simple_a_favor: aFavor,
+    pago_simple_estado: estado,
+    pago_simple_fecha: itemFinal.fecha || fechaISO(),
+    pago_simple_actualizado_en: new Date().toISOString()
+  };
+}
+
+function htmlBotonPagoSimple(id, pedido) {
+  const item = resumenPagoSimplePedido(pedido || getPedidoPorId(id));
+  let clase = "simple-sin";
+  let titulo = "Definir";
+  let sub = "Sin monto";
+
+  if (item.total > 0) {
+    if (item.aFavor > 0.009 || item.estado === "A_FAVOR") {
+      clase = "simple-favor";
+      titulo = "A favor $" + money(item.aFavor);
+      sub = "Pagó $" + money(item.pagado) + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
+    } else if (item.estado === "PAGADO" || item.pagado >= item.total - 0.009) {
+      clase = "simple-ok";
+      titulo = "Pagado $" + money(item.total);
+      sub = textoTipoPagoSimple(item) + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
+    } else if (item.estado === "ABONADO" || item.pagado > 0.009) {
+      clase = "simple-abono";
+      titulo = "Debe $" + money(item.saldo);
+      sub = "Abonó $" + money(item.pagado) + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
+    } else {
+      clase = "simple-debe";
+      titulo = "Debe $" + money(item.total);
+      sub = textoTipoPagoSimple(item) + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
+    }
+  }
+
+  return `<button class="pay-simple-btn ${clase}" type="button" data-simple-pago-id="${escapeHtml(id)}">
+    <span>${escapeHtml(titulo)}</span>
+    <small>${escapeHtml(sub)}</small>
+  </button>`;
+}
+
+// Reemplaza el botón viejo del app sin tocar el HTML.
+function botonPagoHtml(id, pedido) {
+  return htmlBotonPagoSimple(id, pedido);
+}
+
+function deudaCellHtml(pedido) {
+  const item = resumenPagoSimplePedido(pedido);
+  if (item.total <= 0) return `<span class="deuda-pill deuda-empty">Sin monto</span>`;
+  return `<div class="deuda-cell-wrap"><strong>${escapeHtml(formatoUsd(item.total))}</strong><span>${escapeHtml(textoTipoPagoSimple(item))}</span></div>`;
 }
 
 function getPedidoPorId(id) {
   return pedidosDB.find(p => Number(p.id) === Number(id)) || null;
 }
 
-function totalPedidoUSD(pedido) {
-  return totalBaseUsdPedido(pedido);
+function totalAbonosPagoSimple(abonos) {
+  return (Array.isArray(abonos) ? abonos : []).reduce((s, a) => s + numeroSeguro(a && a.monto), 0);
 }
 
-function pagadoPedidoUSD(pedido) {
-  return pagadoUsdPedido(pedido);
+function setTextPagoSimple(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
 }
 
-function saldoPedidoUSD(pedido) {
-  const total = totalPedidoUSD(pedido);
-  const pagado = pagadoPedidoUSD(pedido);
-  return Math.max(total - pagado, 0);
+function crearModalPagoSimple() {
+  if (document.getElementById("pagoSimpleBackdrop")) return;
+
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop";
+  modal.id = "pagoSimpleBackdrop";
+  modal.style.display = "none";
+  modal.innerHTML = `
+    <div class="modal pago-simple-modal" style="max-width:580px">
+      <div class="modal-header">
+        <h2>Pago del pedido</h2>
+        <button class="modal-close" type="button" id="pagoSimpleCerrar">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="simple-kpi-grid">
+          <div class="simple-kpi-card"><span>Total</span><strong id="pagoSimpleKpiTotal">$0.00</strong></div>
+          <div class="simple-kpi-card"><span>Pagado</span><strong id="pagoSimpleKpiPagado">$0.00</strong></div>
+          <div class="simple-kpi-card"><span>Saldo</span><strong id="pagoSimpleKpiSaldo">$0.00</strong></div>
+          <div class="simple-kpi-card simple-kpi-favor" id="pagoSimpleKpiFavorCard"><span>A favor</span><strong id="pagoSimpleKpiFavor">$0.00</strong></div>
+        </div>
+
+        <div class="simple-resumen" id="pagoSimpleResumen">Sin monto definido</div>
+
+        <div class="simple-grid-3">
+          <div class="field">
+            <label>Monto que debe</label>
+            <input type="number" id="pagoSimpleMonto" step="0.01" placeholder="Ej: 100.00"/>
+          </div>
+          <div class="field">
+            <label>Tipo</label>
+            <select id="pagoSimpleTipo">
+              <option value="DIVISA">Divisa</option>
+              <option value="BCV">BCV</option>
+            </select>
+          </div>
+          <div class="field" id="pagoSimpleTasaWrap">
+            <label>Tasa</label>
+            <input type="number" id="pagoSimpleTasa" step="0.0001" placeholder="Ej: 40.00"/>
+          </div>
+        </div>
+
+        <div class="simple-grid-3 simple-grid-action">
+          <div class="field simple-action-field">
+            <label>Acción</label>
+            <select id="pagoSimpleAccion">
+              <option value="PENDIENTE">Pendiente</option>
+              <option value="ABONO">Agregar abono</option>
+              <option value="LISTO">Listo / pagar restante</option>
+            </select>
+          </div>
+          <div class="field" id="pagoSimpleAbonoWrap">
+            <label>Nuevo abono</label>
+            <input type="number" id="pagoSimpleAbono" step="0.01" placeholder="Ej: 20.00"/>
+          </div>
+          <div class="field simple-date-field">
+            <label>Fecha</label>
+            <input type="date" id="pagoSimpleFecha"/>
+          </div>
+        </div>
+
+        <div class="simple-historial" id="pagoSimpleHistorial"></div>
+      </div>
+      <div class="modal-footer simple-modal-footer">
+        <button class="btn-add secondary" type="button" id="pagoSimpleCancelar">Cancelar</button>
+        <button class="btn-add" type="button" id="pagoSimpleGuardar">Guardar</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+
+  modal.addEventListener("click", e => {
+    const borrar = e.target && e.target.closest ? e.target.closest(".simple-delete-pay") : null;
+    if (borrar) {
+      e.preventDefault();
+      e.stopPropagation();
+      eliminarPagoSimple(Number(borrar.dataset.pagoId || 0));
+      return;
+    }
+    if (e.target === modal) cerrarModalPagoSimple();
+  });
+
+  document.getElementById("pagoSimpleCerrar")?.addEventListener("click", cerrarModalPagoSimple);
+  document.getElementById("pagoSimpleCancelar")?.addEventListener("click", cerrarModalPagoSimple);
+  document.getElementById("pagoSimpleGuardar")?.addEventListener("click", guardarPagoSimple);
+  ["pagoSimpleTipo", "pagoSimpleAccion", "pagoSimpleMonto", "pagoSimpleTasa", "pagoSimpleAbono", "pagoSimpleFecha"].forEach(id => {
+    document.getElementById(id)?.addEventListener("input", pintarModalPagoSimple);
+    document.getElementById(id)?.addEventListener("change", pintarModalPagoSimple);
+  });
 }
 
-function estatusPagoDesdeMontos(total, pagado) {
-  if (total > 0 && pagado >= (total - 0.009)) return "Pagado";
-  if (pagado > 0) return "Abonado";
-  return "Pendiente";
+async function cargarHistorialPagoSimple(id) {
+  if (!db()) return [];
+
+  try {
+    const { data, error } = await db()
+      .from("pedidos_pagos")
+      .select("id,monto_recibido,monto_aplicado,fecha_pago,tipo_movimiento,metodo_pago,nota,created_at")
+      .eq("pedido_id", id)
+      .eq("nota", PAGO_SIMPLE_NOTA)
+      .order("id", { ascending: true });
+
+    if (error) {
+      console.warn("No se pudo leer historial de pago simple:", error);
+      return [];
+    }
+
+    return (data || []).map(p => ({
+      pagoId: p.id,
+      monto: numeroSeguro(p.monto_aplicado || p.monto_recibido || 0),
+      fecha: String(p.fecha_pago || p.created_at || fechaISO()).slice(0, 10),
+      auto: String(p.tipo_movimiento || p.metodo_pago || "").toUpperCase().includes("LISTO")
+    })).filter(a => numeroSeguro(a.monto) > 0);
+  } catch (e) {
+    console.warn("Error leyendo historial de pago simple:", e);
+    return [];
+  }
 }
 
-function operadorActualNombre() {
-  const op = getOperadorSesionLocal();
-  return String(op && op.nombre ? op.nombre : "").trim();
+function itemModalPagoSimple() {
+  const pedido = getPedidoPorId(pagoSimpleActualId);
+  const base = resumenPagoSimplePedido(pedido || {});
+  const abonos = Array.isArray(pagoSimpleHistorialActual) ? pagoSimpleHistorialActual : [];
+  const pagadoHistorial = abonos.length ? totalAbonosPagoSimple(abonos) : base.pagado;
+
+  return {
+    id: pagoSimpleActualId,
+    monto: numeroSeguro(document.getElementById("pagoSimpleMonto")?.value || base.monto || 0),
+    tipo: document.getElementById("pagoSimpleTipo")?.value || base.tipo || "DIVISA",
+    tasa: numeroSeguro(document.getElementById("pagoSimpleTasa")?.value || base.tasa || 0),
+    pagado: pagadoHistorial,
+    estado: base.estado,
+    fecha: document.getElementById("pagoSimpleFecha")?.value || base.fecha || fechaISO(),
+    abonos
+  };
+}
+
+async function abrirModalPagoSimple(id) {
+  const pedido = getPedidoPorId(id);
+  if (!pedido) {
+    alert("No se encontró el pedido. Recarga la página y prueba de nuevo.");
+    return false;
+  }
+
+  crearModalPagoSimple();
+  pagoSimpleActualId = Number(id);
+  pagoSimpleHistorialActual = await cargarHistorialPagoSimple(id);
+
+  const item = resumenPagoSimplePedido(pedido);
+  const pagadoHistorial = pagoSimpleHistorialActual.length ? totalAbonosPagoSimple(pagoSimpleHistorialActual) : item.pagado;
+
+  document.getElementById("pagoSimpleMonto").value = item.monto > 0 ? money(item.monto) : "";
+  document.getElementById("pagoSimpleTipo").value = item.tipo || "DIVISA";
+  document.getElementById("pagoSimpleTasa").value = item.tasa > 0 ? money(item.tasa) : "";
+  document.getElementById("pagoSimpleAccion").value = item.monto > 0 && pagadoHistorial > 0 ? "ABONO" : "PENDIENTE";
+  document.getElementById("pagoSimpleFecha").value = item.fecha || fechaISO();
+  document.getElementById("pagoSimpleAbono").value = "";
+
+  pintarModalPagoSimple();
+  document.getElementById("pagoSimpleBackdrop").style.display = "flex";
+  return false;
+}
+
+function cerrarModalPagoSimple() {
+  const modal = document.getElementById("pagoSimpleBackdrop");
+  if (modal) modal.style.display = "none";
+  pagoSimpleActualId = null;
+  pagoSimpleHistorialActual = [];
+}
+
+function pintarModalPagoSimple() {
+  const item = itemModalPagoSimple();
+  const accion = document.getElementById("pagoSimpleAccion")?.value || "PENDIENTE";
+  const tipo = item.tipo || "DIVISA";
+  const wrapTasa = document.getElementById("pagoSimpleTasaWrap");
+  const wrapAbono = document.getElementById("pagoSimpleAbonoWrap");
+
+  if (wrapTasa) wrapTasa.style.display = tipo === "BCV" ? "" : "none";
+  if (wrapAbono) wrapAbono.style.display = accion === "ABONO" ? "" : "none";
+  if (document.getElementById("pagoSimpleFecha") && !document.getElementById("pagoSimpleFecha").value) {
+    document.getElementById("pagoSimpleFecha").value = fechaISO();
+  }
+
+  let pagadoPreview = item.pagado;
+  let accionTexto = "Se guardará como pendiente";
+  const nuevoAbono = accion === "ABONO" ? numeroSeguro(document.getElementById("pagoSimpleAbono")?.value || 0) : 0;
+
+  if (accion === "ABONO") {
+    pagadoPreview += nuevoAbono;
+    accionTexto = nuevoAbono > 0 ? "Se agregará abono de $" + money(nuevoAbono) : "Coloca el monto del abono";
+  }
+
+  if (accion === "LISTO") {
+    pagadoPreview = item.pagado > item.monto ? item.pagado : item.monto;
+    accionTexto = "Se completará automáticamente el saldo restante";
+  }
+
+  const saldo = Math.max(item.monto - pagadoPreview, 0);
+  const favor = Math.max(pagadoPreview - item.monto, 0);
+  const estadoTexto = favor > 0.009 ? "A favor $" + money(favor) : "Saldo $" + money(saldo);
+  const fecha = document.getElementById("pagoSimpleFecha")?.value || fechaISO();
+
+  setTextPagoSimple("pagoSimpleKpiTotal", "$" + money(item.monto));
+  setTextPagoSimple("pagoSimpleKpiPagado", "$" + money(pagadoPreview));
+  setTextPagoSimple("pagoSimpleKpiSaldo", "$" + money(saldo));
+  setTextPagoSimple("pagoSimpleKpiFavor", "$" + money(favor));
+
+  const favorCard = document.getElementById("pagoSimpleKpiFavorCard");
+  if (favorCard) favorCard.classList.toggle("is-active", favor > 0.009);
+
+  const resumen = item.monto > 0
+    ? `${estadoTexto} · ${textoTipoPagoSimple(item)} · Fecha ${fechaCortaPagoSimple(fecha)} · ${accionTexto}`
+    : "Coloca el monto que debe el cliente";
+  setTextPagoSimple("pagoSimpleResumen", resumen);
+
+  const hist = document.getElementById("pagoSimpleHistorial");
+  if (hist) {
+    const header = `<div class="simple-hist-title">Historial de abonos</div>`;
+    if (!item.abonos.length) {
+      hist.innerHTML = header + `<div class="simple-empty">Sin abonos registrados.</div>`;
+    } else {
+      hist.innerHTML = header + item.abonos.map((a, i) => `
+        <div class="simple-hist-row">
+          <span class="simple-hist-main">Abono ${i + 1}: $${money(a.monto)}</span>
+          <small>${escapeHtml(fechaCortaPagoSimple(a.fecha))}${a.auto ? " · automático" : ""}</small>
+          <button class="simple-delete-pay" type="button" data-pago-id="${escapeHtml(a.pagoId)}" title="Borrar este pago">✕</button>
+        </div>`).join("");
+    }
+  }
+}
+
+async function actualizarPedidoSimpleSupabase(id, itemFinal) {
+  if (!validarSupabase()) return false;
+
+  const payload = payloadPedidoSimple(itemFinal);
+  const { error } = await db()
+    .from("pedidos")
+    .update(payload)
+    .eq("id", id);
+
+  if (error) {
+    console.error("No se pudo actualizar pago simple:", error);
+    alert("No se pudo actualizar el saldo del pedido.\n\n" + error.message);
+    return false;
+  }
+
+  const local = getPedidoPorId(id);
+  if (local) Object.assign(local, payload);
+  return true;
 }
 
 function clienteIdPorPedido(pedido) {
@@ -1448,363 +1881,338 @@ function clienteIdPorPedido(pedido) {
   return cliente ? cliente.id : null;
 }
 
-function abrirBackdrop(id) {
-  const el = getEl(id);
-  if (el) {
-    el.style.display = "flex";
-    return true;
+async function registrarMovimientoPagoSimple(id, delta, itemFinal, auto, fechaPago) {
+  if (!db() || delta <= 0) return null;
+
+  const pedido = getPedidoPorId(id) || {};
+  const pagadoAntes = Math.max(numeroSeguro(itemFinal.pagado) - numeroSeguro(delta), 0);
+  const saldoAntes = Math.max(numeroSeguro(itemFinal.monto) - pagadoAntes, 0);
+  const saldoDespues = Math.max(numeroSeguro(itemFinal.monto) - numeroSeguro(itemFinal.pagado), 0);
+
+  const payload = {
+    pedido_id: id,
+    cliente_id: clienteIdPorPedido(pedido),
+    cliente_nombre: pedido.cliente || "",
+    pedido_descripcion: pedido.descripcion || "Pago simple",
+    monto_recibido: delta,
+    moneda: "USD",
+    tasa_usada: itemFinal.tipo === "BCV" && itemFinal.tasa > 0 ? itemFinal.tasa : 1,
+    equivalente_usd: delta,
+    metodo_pago: auto ? "Listo automático" : "Abono simple",
+    metodo_otro: null,
+    referencia: "",
+    nota: PAGO_SIMPLE_NOTA,
+    saldo_antes: saldoAntes,
+    saldo_despues: saldoDespues,
+    registrado_por: operadorActualNombre() || null,
+    fecha_pago: fechaPago || fechaISO(),
+    tipo_movimiento: auto ? "LISTO" : "ABONO",
+    monto_aplicado: delta,
+    saldo_despues_simple: saldoDespues,
+    a_favor_despues: Math.max(numeroSeguro(itemFinal.pagado) - numeroSeguro(itemFinal.monto), 0),
+    tipo_pago_simple: itemFinal.tipo,
+    moneda_deuda: itemFinal.tipo === "BCV" ? "BS" : "USD",
+    tipo_tasa_deuda: itemFinal.tipo === "BCV" ? "BS_BCV" : "USD_FIJO",
+    tasa_deuda: itemFinal.tipo === "BCV" && itemFinal.tasa > 0 ? itemFinal.tasa : 1,
+    total_deuda_usd: itemFinal.monto,
+    total_deuda_bs: itemFinal.tipo === "BCV" && itemFinal.tasa > 0 ? itemFinal.monto * itemFinal.tasa : null,
+    pago_aplicado_usd: delta,
+    pago_aplicado_bs: itemFinal.tipo === "BCV" && itemFinal.tasa > 0 ? delta * itemFinal.tasa : null,
+    saldo_antes_deuda: saldoAntes,
+    saldo_despues_deuda: saldoDespues
+  };
+
+  const { data, error } = await db()
+    .from("pedidos_pagos")
+    .insert([payload])
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("No se pudo registrar el abono:", error);
+    alert("No se pudo registrar el abono.\n\n" + error.message);
+    return null;
   }
 
-  console.error("No existe el backdrop/modal:", id);
-  alert("No existe el modal " + id + ". Revisa el index.html.");
-  return false;
+  return data && data.id ? data.id : null;
 }
 
-function setText(id, value) {
-  const el = getEl(id);
-  if (el) el.textContent = value;
-}
-
-function setValue(id, value) {
-  const el = getEl(id);
-  if (el) el.value = value;
-}
-
-function abrirModalPagoPedido(id) {
-  const pedido = getPedidoPorId(id);
-
-  if (!pedido) {
-    console.warn("No se encontró el pedido para registrar pago:", id, "Pedidos cargados:", pedidosDB.length);
-    alert("No se encontró el pedido para registrar pago. Recarga la página y prueba de nuevo.");
+async function guardarPagoSimple() {
+  if (!pagoSimpleActualId) {
+    alert("No hay pedido seleccionado.");
     return;
   }
 
-  pagoPedidoActualId = Number(id);
-  const deuda = resumenDeudaPedido(pedido);
+  const id = pagoSimpleActualId;
+  const item = itemModalPagoSimple();
+  const accion = document.getElementById("pagoSimpleAccion")?.value || "PENDIENTE";
+  const fechaPago = document.getElementById("pagoSimpleFecha")?.value || fechaISO();
 
-  setValue("pago_cliente", pedido.cliente || "");
-  setValue("pago_descripcion", pedido.descripcion || "");
+  if (item.monto <= 0) {
+    alert("Coloca el monto que debe el cliente.");
+    return;
+  }
 
-  setValue("pago_deuda_monto", deuda.totalUsd > 0 ? money(deuda.totalUsd) : "");
-  setValue("pago_deuda_tipo", deuda.tipo || "USD_FIJO");
-  setValue("pago_deuda_tasa", deuda.esBs ? money(deuda.tasa) : "");
-  onPagoTipoDeudaChange();
+  if (item.tipo === "BCV" && item.tasa <= 0) {
+    const ok = confirm("No colocaste tasa BCV. ¿Guardar igual solo como referencia BCV?");
+    if (!ok) return;
+  }
 
-  setText("pago_total", deuda.totalTexto);
-  setText("pago_pagado", deuda.pagadoTexto);
-  setText("pago_saldo", deuda.saldoTexto);
-  setText("pago_tipo_deuda", deuda.tipoTexto + (deuda.esBs ? " · base " + formatoUsd(deuda.totalUsd) : ""));
+  let pagado = numeroSeguro(item.pagado);
+  let abonos = Array.isArray(item.abonos) ? [...item.abonos] : [];
+  let delta = 0;
+  let auto = false;
 
-  setValue("pago_monto_recibido", "");
-  setValue("pago_moneda", deuda.esBs ? "BS" : "USD");
-  setValue("pago_tasa", deuda.esBs ? money(deuda.tasa) : "1");
-  setValue("pago_metodo", "");
-  setValue("pago_metodo_otro", "");
-  setValue("pago_referencia", "");
-  setValue("pago_nota", "");
+  if (accion === "ABONO") {
+    delta = numeroSeguro(document.getElementById("pagoSimpleAbono")?.value || 0);
+    if (delta <= 0) {
+      alert("Coloca el monto del abono.");
+      return;
+    }
+    pagado += delta;
+    auto = false;
+  } else if (accion === "LISTO") {
+    delta = Math.max(item.monto - pagado, 0);
+    pagado += delta;
+    auto = true;
+  }
 
-  onMetodoPagoChange();
-  calcularPagoModal();
-  abrirBackdrop("pagoBackdrop");
+  const itemFinal = {
+    monto: item.monto,
+    tipo: item.tipo,
+    tasa: item.tipo === "BCV" ? item.tasa : 0,
+    pagado,
+    fecha: fechaPago,
+    abonos
+  };
+  itemFinal.estado = estadoPagoSimpleDesdeMontos(itemFinal.monto, itemFinal.pagado);
+
+  if (delta > 0) {
+    const pagoId = await registrarMovimientoPagoSimple(id, delta, itemFinal, auto, fechaPago);
+    if (!pagoId) return;
+    abonos.push({ pagoId, monto: delta, fecha: fechaPago, auto });
+    itemFinal.abonos = abonos;
+  }
+
+  const ok = await actualizarPedidoSimpleSupabase(id, itemFinal);
+  if (!ok) return;
+
+  cerrarModalPagoSimple();
+  mostrarToast("Pago guardado ✅");
+  await cargarPedidos(false);
 }
 
-let ultimoPagoTapId = null;
-let ultimoPagoTapAt = 0;
+async function eliminarPagoSimple(pagoId) {
+  if (!pagoSimpleActualId || !pagoId) {
+    alert("No se encontró ese pago para borrar.");
+    return;
+  }
+
+  const pago = pagoSimpleHistorialActual.find(p => Number(p.pagoId) === Number(pagoId));
+  const montoTxt = pago ? "$" + money(pago.monto) : "este pago";
+  const okConfirm = confirm("¿Borrar " + montoTxt + "?\n\nEl saldo del pedido se recalculará automáticamente.");
+  if (!okConfirm) return;
+
+  const id = pagoSimpleActualId;
+
+  const { error } = await db()
+    .from("pedidos_pagos")
+    .delete()
+    .eq("id", pagoId)
+    .eq("pedido_id", id);
+
+  if (error) {
+    console.error("No se pudo borrar el pago:", error);
+    alert("No se pudo borrar el pago.\n\n" + error.message);
+    return;
+  }
+
+  pagoSimpleHistorialActual = await cargarHistorialPagoSimple(id);
+  const item = itemModalPagoSimple();
+  item.abonos = pagoSimpleHistorialActual;
+  item.pagado = totalAbonosPagoSimple(pagoSimpleHistorialActual);
+  item.estado = estadoPagoSimpleDesdeMontos(item.monto, item.pagado);
+
+  const ok = await actualizarPedidoSimpleSupabase(id, item);
+  if (!ok) return;
+
+  mostrarToast("Pago borrado ✅");
+  await cargarPedidos(false);
+
+  pagoSimpleActualId = id;
+  pagoSimpleHistorialActual = await cargarHistorialPagoSimple(id);
+  pintarModalPagoSimple();
+}
+
+function operadorActualNombre() {
+  const op = getOperadorSesionLocal();
+  return String(op && op.nombre ? op.nombre : "").trim();
+}
+
+let ultimoPagoSimpleTapId = null;
+let ultimoPagoSimpleTapAt = 0;
 
 function abrirPagoPedidoSeguro(id) {
   const pedidoId = Number(id);
-
   if (!pedidoId) {
     alert("No se encontró el ID del pedido para registrar pago.");
     return false;
   }
 
   const ahora = Date.now();
-  if (ultimoPagoTapId === pedidoId && (ahora - ultimoPagoTapAt) < 450) {
-    return false;
-  }
+  if (ultimoPagoSimpleTapId === pedidoId && (ahora - ultimoPagoSimpleTapAt) < 450) return false;
+  ultimoPagoSimpleTapId = pedidoId;
+  ultimoPagoSimpleTapAt = ahora;
 
-  ultimoPagoTapId = pedidoId;
-  ultimoPagoTapAt = ahora;
-  abrirModalPagoPedido(pedidoId);
+  abrirModalPagoSimple(pedidoId);
   return false;
 }
 
-window.openPagoPedidoSafe = abrirPagoPedidoSeguro;
-window.openPagoPedido = abrirPagoPedidoSeguro;
-
-function manejarBotonPagoPedido(e) {
-  const btn = e.target && e.target.closest ? e.target.closest(".pay-cell-btn") : null;
+function manejarBotonPagoSimple(e) {
+  const btn = e.target && e.target.closest ? e.target.closest(".pay-simple-btn") : null;
   if (!btn) return;
 
   e.preventDefault();
   e.stopPropagation();
   if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
 
-  const id = btn.dataset.pagoId || btn.getAttribute("data-pago-id") || btn.getAttribute("data-id");
-  abrirPagoPedidoSeguro(id);
+  abrirPagoPedidoSeguro(btn.dataset.simplePagoId);
 }
 
-["pointerdown", "mousedown", "touchstart", "click"].forEach(function(tipoEvento){
-  document.addEventListener(tipoEvento, manejarBotonPagoPedido, true);
+["pointerdown", "mousedown", "touchstart", "click"].forEach(tipoEvento => {
+  document.addEventListener(tipoEvento, manejarBotonPagoSimple, true);
 });
 
-function onMetodoPagoChange() {
-  const metodo = getEl("pago_metodo")?.value || "";
-  const wrap = getEl("pago_metodo_otro_wrap");
+function instalarCSSPagoSimple() {
+  if (document.getElementById("pago-simple-v58-css")) return;
 
-  if (!wrap) return;
+  const style = document.createElement("style");
+  style.id = "pago-simple-v58-css";
+  style.textContent = `
+    /* PAGO SIMPLE V58 APP */
+    #filterPago{display:none!important}
+    table{min-width:1238px!important}
+    table th:nth-child(9),table td:nth-child(9),
+    table th:nth-child(11),table td:nth-child(11),
+    table th:nth-child(12),table td:nth-child(12){display:none!important}
+    table th:nth-child(1),table td:nth-child(1){width:42px!important;min-width:42px!important}
+    table th:nth-child(2),table td:nth-child(2){width:78px!important;min-width:78px!important}
+    table th:nth-child(3),table td:nth-child(3){width:86px!important;min-width:86px!important}
+    table th:nth-child(4),table td:nth-child(4){width:140px!important;min-width:140px!important}
+    table th:nth-child(5),table td:nth-child(5){width:230px!important;min-width:230px!important;max-width:230px!important}
+    table th:nth-child(6),table td:nth-child(6){width:72px!important;min-width:72px!important}
+    table th:nth-child(7),table td:nth-child(7){width:104px!important;min-width:104px!important}
+    table th:nth-child(8),table td:nth-child(8){width:104px!important;min-width:104px!important}
+    table th:nth-child(10),table td:nth-child(10){width:96px!important;min-width:96px!important}
+    table th:nth-child(13),table td:nth-child(13){width:88px!important;min-width:88px!important;text-align:center!important}
+    table th:nth-child(14),table td:nth-child(14){width:128px!important;min-width:128px!important;text-align:center!important;overflow:visible!important}
+    table th:nth-child(15),table td:nth-child(15){width:70px!important;min-width:70px!important;text-align:center!important}
+    th{padding:8px 7px!important}
+    #orderTableBody td{height:40px!important;max-height:40px!important;padding:6px 7px!important}
+    #orderTableBody td:nth-child(5){line-height:1.18!important}
+    .pago-action-cell{overflow:visible!important}
+    .pago-simple-modal{border-radius:16px!important}
+    .pago-simple-modal .modal-body{gap:10px!important;padding:16px!important}
+    .pago-simple-modal .modal-header{padding:14px 16px!important}
+    .pago-simple-modal .modal-footer{padding:12px 16px!important}
+    .pago-simple-modal .field{gap:4px!important}
+    .pago-simple-modal .field label{font-size:9px!important;letter-spacing:.45px!important}
+    .pago-simple-modal input,.pago-simple-modal select{height:38px!important;min-height:38px!important;padding:8px 10px!important;border-radius:10px!important;font-size:13px!important}
+    .simple-grid-3{display:grid;grid-template-columns:1fr 105px 110px;gap:8px;align-items:end}
+    .simple-grid-action{grid-template-columns:1fr 1fr 116px}
+    .simple-date-field input{font-family:var(--mono);font-size:12px!important}
+    .pay-simple-btn{width:100%;min-height:32px;padding:4px 6px;border-radius:10px;border:1px solid #64748b;background:#64748b;color:#fff;cursor:pointer;font-family:var(--head);font-size:8px;font-weight:900;letter-spacing:.18px;text-transform:uppercase;line-height:1.03;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;white-space:nowrap;overflow:hidden}
+    .pay-simple-btn span,.pay-simple-btn small{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pay-simple-btn small{font-size:6.5px;opacity:.92;letter-spacing:.10px}
+    .pay-simple-btn.simple-debe{background:#dc2626;border-color:#dc2626;color:#fff}
+    .pay-simple-btn.simple-abono{background:#f59e0b;border-color:#f59e0b;color:#111827}
+    .pay-simple-btn.simple-ok{background:#16a34a;border-color:#16a34a;color:#fff}
+    .pay-simple-btn.simple-favor{background:#2563eb;border-color:#2563eb;color:#fff}
+    .pay-simple-btn.simple-sin{background:#64748b;border-color:#64748b;color:#fff}
+    .simple-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+    .simple-kpi-card{border:1px solid #d9deea;border-radius:12px;background:#f8f9ff;padding:9px 8px;min-width:0}
+    .simple-kpi-card span{display:block;font-family:var(--head);font-size:8px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;color:#64748b;margin-bottom:3px;white-space:nowrap}
+    .simple-kpi-card strong{display:block;font-family:var(--mono);font-size:14px;font-weight:900;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .simple-kpi-card.simple-kpi-favor strong{color:#2563eb}
+    .simple-kpi-card.simple-kpi-favor{background:#eff6ff;border-color:#bfdbfe;opacity:.45}
+    .simple-kpi-card.simple-kpi-favor.is-active{opacity:1;background:#dbeafe;border-color:#2563eb}
+    .simple-resumen{border:1px solid #d9deea;border-radius:12px;background:#f8f9ff;padding:10px 11px;font-weight:900;color:#111827;font-family:var(--mono);font-size:11px;line-height:1.35}
+    .simple-historial{border:1px solid #d9deea;border-radius:12px;background:#fff;overflow:hidden}
+    .simple-hist-title{padding:8px 10px;background:#eef1ff;color:#153bff;font-family:var(--head);font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.5px}
+    .simple-empty{padding:10px;color:#64748b;font-size:12px;font-weight:700}
+    .simple-hist-row{display:grid;grid-template-columns:minmax(0,1fr) auto 28px;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid #eef1ff;font-size:12px;font-weight:800;color:#111827}
+    .simple-hist-main{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .simple-hist-row small{color:#64748b;font-family:var(--mono);font-size:10px;white-space:nowrap}
+    .simple-delete-pay{width:26px;height:26px;border-radius:999px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;font-size:12px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1}
+    .simple-delete-pay:hover{background:#dc2626;color:#fff;border-color:#dc2626}
+    .simple-modal-footer .btn-add{min-height:36px!important;padding:8px 14px!important}
+    @media(max-width:980px){
+      table{min-width:912px!important}
+      table th:nth-child(4),table td:nth-child(4){width:160px!important;min-width:160px!important;padding-left:10px!important}
+      table th:nth-child(5),table td:nth-child(5){width:190px!important;min-width:190px!important;max-width:190px!important}
+      table th:nth-child(6),table td:nth-child(6){width:58px!important;min-width:58px!important}
+      table th:nth-child(7),table td:nth-child(7),table th:nth-child(8),table td:nth-child(8){width:86px!important;min-width:86px!important}
+      table th:nth-child(10),table td:nth-child(10){width:82px!important;min-width:82px!important}
+      table th:nth-child(13),table td:nth-child(13){width:74px!important;min-width:74px!important}
+      table th:nth-child(14),table td:nth-child(14){width:112px!important;min-width:112px!important}
+      table th:nth-child(15),table td:nth-child(15){width:54px!important;min-width:54px!important}
+      #orderTableBody td{height:32px!important;max-height:32px!important;padding:3px 4px!important}
+      .pay-simple-btn{min-height:28px;padding:3px 4px;font-size:6.9px}.pay-simple-btn small{font-size:5.5px}
+      .simple-kpi-grid{grid-template-columns:1fr 1fr;gap:6px}
+      .simple-grid-3,.simple-grid-action{grid-template-columns:1fr 1fr!important;gap:7px}
+      .simple-action-field{grid-column:1/-1}
+    }
+    @media(max-width:430px){
+      table{min-width:860px!important}
+      table th:nth-child(4),table td:nth-child(4){width:150px!important;min-width:150px!important}
+      table th:nth-child(5),table td:nth-child(5){width:178px!important;min-width:178px!important;max-width:178px!important}
+      table th:nth-child(14),table td:nth-child(14){width:106px!important;min-width:106px!important}
+      .pago-simple-modal .modal-body{padding:14px!important}
+      .simple-grid-3,.simple-grid-action{grid-template-columns:1fr!important}
+      .simple-kpi-grid{grid-template-columns:1fr 1fr}
+    }
+  `;
 
-  if (metodo === "Otro") wrap.classList.remove("pay-hidden");
-  else wrap.classList.add("pay-hidden");
+  document.head.appendChild(style);
 }
 
-function datosCalculoPagoActual() {
-  const pedido = getPedidoPorId(pagoPedidoActualId);
-  const montoRecibido = numeroSeguro(getEl("pago_monto_recibido")?.value || 0);
-  const moneda = getEl("pago_moneda")?.value || "USD";
-  let tasa = numeroSeguro(getEl("pago_tasa")?.value || 1);
-
-  if (tasa <= 0) tasa = 1;
-
-  const deuda = resumenDeudaPedido(pedidoConDeudaPagoModal(pedido));
-
-  setText("pago_total", deuda.totalTexto);
-  setText("pago_pagado", deuda.pagadoTexto);
-  setText("pago_saldo", deuda.saldoTexto);
-  setText("pago_tipo_deuda", deuda.tipoTexto + (deuda.esBs ? " · base " + formatoUsd(deuda.totalUsd) : ""));
-
-  const equivalenteUSD = moneda === "BS" ? (montoRecibido / tasa) : montoRecibido;
-  const pagoAplicadoDeuda = deuda.esBs
-    ? (moneda === "BS" ? montoRecibido : (montoRecibido * tasa))
-    : equivalenteUSD;
-
-  const saldoAntes = deuda.saldo;
-  const pagadoBruto = deuda.pagado + pagoAplicadoDeuda;
-  const pagadoNuevo = deuda.total > 0 ? Math.min(pagadoBruto, deuda.total) : pagadoBruto;
-  const saldoDespues = deuda.total > 0 ? Math.max(deuda.total - pagadoNuevo, 0) : 0;
-  const excedente = deuda.total > 0 ? Math.max(pagadoBruto - deuda.total, 0) : 0;
-  const estatus = estatusPagoDesdeMontos(deuda.total, pagadoNuevo);
-
-  let pagadoNuevoUsdResumen = 0;
-  let pagadoNuevoBsResumen = 0;
-
-  if (deuda.esBs) {
-    pagadoNuevoBsResumen = pagadoNuevo;
-    pagadoNuevoUsdResumen = deuda.total > 0 && deuda.totalUsd > 0
-      ? Math.min(deuda.totalUsd, deuda.totalUsd * (pagadoNuevo / deuda.total))
-      : equivalenteUSD;
-  } else {
-    pagadoNuevoUsdResumen = pagadoNuevo;
-    pagadoNuevoBsResumen = 0;
-  }
-
-  return {
-    pedido,
-    deuda,
-    montoRecibido,
-    moneda,
-    tasa,
-    equivalenteUSD,
-    pagoAplicadoDeuda,
-    total: deuda.total,
-    pagadoActual: deuda.pagado,
-    saldoAntes,
-    pagadoNuevo,
-    saldoDespues,
-    excedente,
-    estatus,
-    pagadoNuevoUsdResumen,
-    pagadoNuevoBsResumen
-  };
+function ajustarHeaderPagoSimple() {
+  const th = document.querySelector("table thead tr:first-child th:nth-child(14)");
+  if (th) th.textContent = "Pago";
 }
 
-function calcularPagoModal() {
-  const datos = datosCalculoPagoActual();
-
-  setValue("pago_equivalente", "$" + money(datos.equivalenteUSD));
-
-  if (!datos.pedido) {
-    setText("pago_resultado_monto", "$0.00");
-    setText("pago_resultado_texto", "Sin pedido seleccionado");
-    return;
-  }
-
-  const resultadoTexto = datos.deuda.esBs ? formatoBs(datos.saldoDespues) : formatoUsd(datos.saldoDespues);
-
-  if (datos.total <= 0) {
-    setText("pago_resultado_monto", resultadoTexto);
-    setText("pago_resultado_texto", datos.equivalenteUSD > 0 ? "Pago registrado, pero el pedido no tiene total definido" : "Coloca el monto recibido");
-    return;
-  }
-
-  setText("pago_resultado_monto", resultadoTexto);
-
-  let texto = datos.saldoDespues <= 0.009 ? "Pedido pagado completo" : "Saldo pendiente después del pago";
-  if (datos.excedente > 0) texto += " · Excedente: " + (datos.deuda.esBs ? formatoBs(datos.excedente) : formatoUsd(datos.excedente));
-
-  setText("pago_resultado_texto", texto);
+function instalarPagoSimpleV58() {
+  console.log("Pago simple app conectado", PAGO_SIMPLE_VERSION);
+  instalarCSSPagoSimple();
+  crearModalPagoSimple();
+  ajustarHeaderPagoSimple();
+  setTimeout(ajustarHeaderPagoSimple, 500);
+  setTimeout(ajustarHeaderPagoSimple, 1500);
 }
 
+// Compatibilidad con HTML anterior.
+function onMetodoPagoChange() {}
+function calcularPagoModal() {}
+function onPagoTipoDeudaChange() {}
+async function guardarDeudaPedido() { return guardarPagoSimple(); }
+async function aplicarPagoPedido() { return guardarPagoSimple(); }
 
-async function guardarDeudaPedido() {
-  if (!validarSupabase()) return;
+window.openPagoPedido = abrirPagoPedidoSeguro;
+window.openPagoPedidoSafe = abrirPagoPedidoSeguro;
+window.onMetodoPagoChange = onMetodoPagoChange;
+window.calcularPagoModal = calcularPagoModal;
+window.aplicarPagoPedido = aplicarPagoPedido;
+window.guardarDeudaPedido = guardarDeudaPedido;
+window.onPagoTipoDeudaChange = onPagoTipoDeudaChange;
+window.pagoSimpleAppV58 = {
+  abrir: abrirModalPagoSimple,
+  version: PAGO_SIMPLE_VERSION
+};
 
-  const pedido = getPedidoPorId(pagoPedidoActualId);
-  if (!pedido) {
-    alert("No hay pedido seleccionado.");
-    return;
-  }
-
-  const deudaPayload = payloadDeudaDesdePagoModal();
-  if (numeroSeguro(deudaPayload.precio_total) <= 0) {
-    alert("Coloca el monto que debe el cliente.");
-    return;
-  }
-
-  const pedidoSimulado = { ...pedido, ...deudaPayload };
-  let abonoBs = numeroSeguro(pedido.monto_abonado_bs || 0);
-
-  if (deudaPayload.moneda_deuda === "BS" && abonoBs <= 0 && numeroSeguro(pedido.monto_abonado || 0) > 0) {
-    abonoBs = numeroSeguro(pedido.monto_abonado || 0) * numeroSeguro(deudaPayload.tasa_deuda || 1);
-  }
-
-  if (deudaPayload.moneda_deuda !== "BS") abonoBs = 0;
-
-  const pedidoEstado = {
-    ...pedidoSimulado,
-    monto_abonado_bs: abonoBs
-  };
-
-  const deuda = resumenDeudaPedido(pedidoEstado);
-  const updatePayload = {
-    ...deudaPayload,
-    monto_abonado_bs: abonoBs,
-    estatus_pago: estatusPagoDesdeMontos(deuda.total, deuda.pagado)
-  };
-
-  const { error } = await db()
-    .from("pedidos")
-    .update(updatePayload)
-    .eq("id", pedido.id);
-
-  if (error) {
-    console.error("No se pudo guardar la deuda:", error);
-    alert("No se pudo guardar el monto que debe el cliente.\n\n" + error.message);
-    return;
-  }
-
-  mostrarToast("Monto guardado ✅");
-  await cargarPedidos(false);
-
-  const actualizado = getPedidoPorId(pedido.id) || { ...pedido, ...updatePayload };
-  pagoPedidoActualId = Number(pedido.id);
-  const deudaActual = resumenDeudaPedido(actualizado);
-  setValue("pago_deuda_monto", deudaActual.totalUsd > 0 ? money(deudaActual.totalUsd) : "");
-  setValue("pago_deuda_tipo", deudaActual.tipo || "USD_FIJO");
-  setValue("pago_deuda_tasa", deudaActual.esBs ? money(deudaActual.tasa) : "");
-  onPagoTipoDeudaChange();
-  calcularPagoModal();
-}
-
-async function aplicarPagoPedido() {
-  if (!validarSupabase()) return;
-
-  const datos = datosCalculoPagoActual();
-  const pedido = datos.pedido;
-
-  if (!pedido) {
-    alert("No hay pedido seleccionado.");
-    return;
-  }
-
-  if (datos.montoRecibido <= 0) {
-    alert("Coloca el monto recibido.");
-    return;
-  }
-
-  if (datos.moneda === "BS" && datos.tasa <= 0) {
-    alert("Coloca una tasa válida para Bs.");
-    return;
-  }
-
-  const metodo = getEl("pago_metodo")?.value || "";
-  const metodoOtro = String(getEl("pago_metodo_otro")?.value || "").trim();
-
-  if (!metodo) {
-    alert("Selecciona el método de pago.");
-    return;
-  }
-
-  if (metodo === "Otro" && !metodoOtro) {
-    alert("Especifica el otro método de pago.");
-    return;
-  }
-
-  const referencia = String(getEl("pago_referencia")?.value || "").trim();
-  const nota = String(getEl("pago_nota")?.value || "").trim();
-  const clienteId = clienteIdPorPedido(pedido);
-  const registradoPor = operadorActualNombre();
-
-  const pagoPayload = {
-    pedido_id: pedido.id,
-    cliente_id: clienteId,
-    cliente_nombre: pedido.cliente || "",
-    pedido_descripcion: pedido.descripcion || "",
-    monto_recibido: datos.montoRecibido,
-    moneda: datos.moneda,
-    tasa_usada: datos.tasa,
-    equivalente_usd: datos.equivalenteUSD,
-    metodo_pago: metodo,
-    metodo_otro: metodo === "Otro" ? metodoOtro : null,
-    referencia,
-    nota,
-    saldo_antes: datos.deuda.esBs && datos.deuda.tasa > 0 ? (datos.saldoAntes / datos.deuda.tasa) : datos.saldoAntes,
-    saldo_despues: datos.deuda.esBs && datos.deuda.tasa > 0 ? (datos.saldoDespues / datos.deuda.tasa) : datos.saldoDespues,
-    registrado_por: registradoPor || null,
-    moneda_deuda: datos.deuda.esBs ? "BS" : "USD",
-    tipo_tasa_deuda: datos.deuda.tipo,
-    tasa_deuda: datos.deuda.tasa,
-    total_deuda_usd: datos.deuda.totalUsd,
-    total_deuda_bs: datos.deuda.esBs ? datos.deuda.total : null,
-    pago_aplicado_usd: datos.equivalenteUSD,
-    pago_aplicado_bs: datos.deuda.esBs ? datos.pagoAplicadoDeuda : null,
-    saldo_antes_deuda: datos.saldoAntes,
-    saldo_despues_deuda: datos.saldoDespues
-  };
-
-  const { error: pagoError } = await db()
-    .from("pedidos_pagos")
-    .insert([pagoPayload]);
-
-  if (pagoError) {
-    console.error("Error registrando pago:", pagoError);
-    alert("No se pudo registrar el pago. Revisa que la tabla pedidos_pagos exista y tenga permisos/RLS.\n\n" + pagoError.message);
-    return;
-  }
-
-  const deudaPayload = payloadDeudaDesdePagoModal();
-  const updatePayload = {
-    ...deudaPayload,
-    monto_abonado: datos.pagadoNuevoUsdResumen,
-    monto_abonado_bs: datos.deuda.esBs ? datos.pagadoNuevoBsResumen : 0,
-    estatus_pago: datos.estatus
-  };
-
-  const { error: pedidoError } = await db()
-    .from("pedidos")
-    .update(updatePayload)
-    .eq("id", pedido.id);
-
-  if (pedidoError) {
-    console.error("Pago registrado, pero no se pudo actualizar el pedido:", pedidoError);
-    alert("El pago se registró, pero no se pudo actualizar el saldo del pedido.\n\n" + pedidoError.message);
-    return;
-  }
-
-  closeModal("pagoBackdrop");
-  await cargarPedidos(false);
-  mostrarToast("Pago registrado ✅");
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", instalarPagoSimpleV58);
+} else {
+  instalarPagoSimpleV58();
 }
 
 // ===========================
