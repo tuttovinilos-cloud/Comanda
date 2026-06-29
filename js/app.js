@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v65 pagado sin monto manual");
+console.log("APP JS conectado correctamente v66 listo sin monto confirmacion");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -1436,7 +1436,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v65_pago_simple_pagado_sin_monto_manual";
+const PAGO_SIMPLE_VERSION = "v66_pago_simple_listo_sin_monto_confirmacion";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
@@ -1606,8 +1606,8 @@ function htmlBotonPagoSimple(id, pedido) {
   // En ese caso deben verse como pagados, no como "Definir / Sin monto".
   if (item.estado === "PAGADO" && item.total <= 0.009) {
     clase = "simple-ok";
-    titulo = "Pagado";
-    sub = "Cerrado" + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
+    titulo = "Listo";
+    sub = "Sin monto" + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
   } else if (item.estado === "A_FAVOR" && item.total <= 0.009) {
     clase = "simple-favor";
     titulo = "A favor $" + money(item.aFavor);
@@ -1710,7 +1710,6 @@ function crearModalPagoSimple() {
               <option value="PENDIENTE">Pendiente</option>
               <option value="ABONO">Agregar abono</option>
               <option value="LISTO">Listo / pagar restante</option>
-              <option value="PAGADO_SIN_MONTO">Pagado sin monto</option>
             </select>
           </div>
           <div class="field" id="pagoSimpleAbonoWrap">
@@ -1816,7 +1815,7 @@ async function abrirModalPagoSimple(id) {
   document.getElementById("pagoSimpleMonto").value = item.monto > 0 ? money(item.monto) : "";
   document.getElementById("pagoSimpleTipo").value = item.tipo || "DIVISA";
   document.getElementById("pagoSimpleTasa").value = item.tasa > 0 ? money(item.tasa) : "";
-  document.getElementById("pagoSimpleAccion").value = item.estado === "PAGADO" && item.monto <= 0.009 ? "PAGADO_SIN_MONTO" : (item.monto > 0 && pagadoHistorial > 0 ? "ABONO" : "PENDIENTE");
+  document.getElementById("pagoSimpleAccion").value = item.monto > 0 && pagadoHistorial > 0 ? "ABONO" : "PENDIENTE";
   document.getElementById("pagoSimpleFecha").value = item.fecha || fechaISO();
   document.getElementById("pagoSimpleAbono").value = "";
 
@@ -1845,10 +1844,9 @@ function pintarModalPagoSimple() {
     document.getElementById("pagoSimpleFecha").value = fechaISO();
   }
 
-  const cierreSinMonto = accion === "PAGADO_SIN_MONTO";
-  let totalPreview = cierreSinMonto ? 0 : item.monto;
-  let pagadoPreview = cierreSinMonto ? 0 : item.pagado;
-  let accionTexto = cierreSinMonto ? "Se cerrará como pagado sin monto ni deuda" : "Se guardará como pendiente";
+  let totalPreview = item.monto;
+  let pagadoPreview = item.pagado;
+  let accionTexto = "Se guardará como pendiente";
   const nuevoAbono = accion === "ABONO" ? numeroSeguro(document.getElementById("pagoSimpleAbono")?.value || 0) : 0;
 
   if (accion === "ABONO") {
@@ -1874,11 +1872,9 @@ function pintarModalPagoSimple() {
   const favorCard = document.getElementById("pagoSimpleKpiFavorCard");
   if (favorCard) favorCard.classList.toggle("is-active", favor > 0.009);
 
-  const resumen = cierreSinMonto
-    ? `Pagado sin monto · Cerrado · Fecha ${fechaCortaPagoSimple(fecha)} · ${accionTexto}`
-    : (item.monto > 0
-      ? `${estadoTexto} · ${textoTipoPagoSimple(item)} · Fecha ${fechaCortaPagoSimple(fecha)} · ${accionTexto}`
-      : "Coloca el monto que debe el cliente o usa Pagado sin monto");
+  const resumen = item.monto > 0
+    ? `${estadoTexto} · ${textoTipoPagoSimple(item)} · Fecha ${fechaCortaPagoSimple(fecha)} · ${accionTexto}`
+    : `Sin monto · Fecha ${fechaCortaPagoSimple(fecha)} · Al guardar se preguntará si quieres ponerlo Listo sin agregar monto`;
   setTextPagoSimple("pagoSimpleResumen", resumen);
 
   const hist = document.getElementById("pagoSimpleHistorial");
@@ -1995,8 +1991,8 @@ async function guardarPagoSimple() {
   const accion = document.getElementById("pagoSimpleAccion")?.value || "PENDIENTE";
   const fechaPago = document.getElementById("pagoSimpleFecha")?.value || fechaISO();
 
-  if (accion === "PAGADO_SIN_MONTO") {
-    const okCierre = confirm("¿Marcar este pedido como pagado sin monto?\n\nNo registrará dinero, no quedará deuda y aparecerá como Pagado/Cerrado.");
+  if (item.monto <= 0) {
+    const okCierre = confirm("¿Quieres ponerlo Listo sin agregar monto?\n\nNo registrará dinero, no quedará deuda y aparecerá como Listo/Sin monto.");
     if (!okCierre) return;
 
     const itemFinal = {
@@ -2013,13 +2009,8 @@ async function guardarPagoSimple() {
     if (!ok) return;
 
     cerrarModalPagoSimple();
-    mostrarToast("Pedido cerrado como pagado sin monto ✅");
+    mostrarToast("Pedido listo sin monto ✅");
     await cargarPedidos(false);
-    return;
-  }
-
-  if (item.monto <= 0) {
-    alert("Coloca el monto que debe el cliente o selecciona Pagado sin monto.");
     return;
   }
 
