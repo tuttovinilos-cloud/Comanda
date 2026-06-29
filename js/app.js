@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v63 filtro pago visible");
+console.log("APP JS conectado correctamente v65 pagado sin monto manual");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -778,8 +778,8 @@ function pedidoCumpleFiltros(p) {
     // Filtro simple:
     // Pendiente = todo pedido que todavía debe, tenga abono o no.
     // Pagado = pedido saldado, incluyendo los que quedaron con saldo a favor.
-    const pendiente = total > 0.009 && saldo > 0.009;
-    const pagadoCompleto = total > 0.009 && saldo <= 0.009;
+    const pendiente = total > 0.009 && saldo > 0.009 && estadoSimple !== "PAGADO" && estadoSimple !== "A_FAVOR";
+    const pagadoCompleto = (total > 0.009 && saldo <= 0.009) || estadoSimple === "PAGADO";
     const pagadoOAFavor = pagadoCompleto || aFavor > 0.009 || estadoSimple === "A_FAVOR";
 
     if (f === "PENDIENTE" && !pendiente) return false;
@@ -1436,7 +1436,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v63_pago_simple_filtro_visible";
+const PAGO_SIMPLE_VERSION = "v65_pago_simple_pagado_sin_monto_manual";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
@@ -1570,9 +1570,11 @@ function payloadPedidoSimple(itemFinal) {
   const pagado = numeroSeguro(itemFinal.pagado);
   const tipo = itemFinal.tipo === "BCV" ? "BCV" : "DIVISA";
   const tasa = tipo === "BCV" && numeroSeguro(itemFinal.tasa) > 0 ? numeroSeguro(itemFinal.tasa) : 1;
-  const estado = estadoPagoSimpleDesdeMontos(total, pagado);
-  const saldo = Math.max(total - pagado, 0);
-  const aFavor = Math.max(pagado - total, 0);
+  const estadoManual = String(itemFinal.estado || "").toUpperCase();
+  const cierreSinMonto = estadoManual === "PAGADO" && total <= 0.009;
+  const estado = cierreSinMonto ? "PAGADO" : estadoPagoSimpleDesdeMontos(total, pagado);
+  const saldo = cierreSinMonto ? 0 : Math.max(total - pagado, 0);
+  const aFavor = cierreSinMonto ? 0 : Math.max(pagado - total, 0);
 
   return {
     precio_total: total,
@@ -1600,7 +1602,17 @@ function htmlBotonPagoSimple(id, pedido) {
   let titulo = "Definir";
   let sub = "Sin monto";
 
-  if (item.total > 0) {
+  // Los pedidos viejos cerrados pueden estar PAGADOS aunque no tengan monto.
+  // En ese caso deben verse como pagados, no como "Definir / Sin monto".
+  if (item.estado === "PAGADO" && item.total <= 0.009) {
+    clase = "simple-ok";
+    titulo = "Pagado";
+    sub = "Cerrado" + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
+  } else if (item.estado === "A_FAVOR" && item.total <= 0.009) {
+    clase = "simple-favor";
+    titulo = "A favor $" + money(item.aFavor);
+    sub = "Cerrado" + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
+  } else if (item.total > 0) {
     if (item.aFavor > 0.009 || item.estado === "A_FAVOR") {
       clase = "simple-favor";
       titulo = "A favor $" + money(item.aFavor);
@@ -1698,6 +1710,7 @@ function crearModalPagoSimple() {
               <option value="PENDIENTE">Pendiente</option>
               <option value="ABONO">Agregar abono</option>
               <option value="LISTO">Listo / pagar restante</option>
+              <option value="PAGADO_SIN_MONTO">Pagado sin monto</option>
             </select>
           </div>
           <div class="field" id="pagoSimpleAbonoWrap">
@@ -1803,7 +1816,7 @@ async function abrirModalPagoSimple(id) {
   document.getElementById("pagoSimpleMonto").value = item.monto > 0 ? money(item.monto) : "";
   document.getElementById("pagoSimpleTipo").value = item.tipo || "DIVISA";
   document.getElementById("pagoSimpleTasa").value = item.tasa > 0 ? money(item.tasa) : "";
-  document.getElementById("pagoSimpleAccion").value = item.monto > 0 && pagadoHistorial > 0 ? "ABONO" : "PENDIENTE";
+  document.getElementById("pagoSimpleAccion").value = item.estado === "PAGADO" && item.monto <= 0.009 ? "PAGADO_SIN_MONTO" : (item.monto > 0 && pagadoHistorial > 0 ? "ABONO" : "PENDIENTE");
   document.getElementById("pagoSimpleFecha").value = item.fecha || fechaISO();
   document.getElementById("pagoSimpleAbono").value = "";
 
@@ -1832,8 +1845,10 @@ function pintarModalPagoSimple() {
     document.getElementById("pagoSimpleFecha").value = fechaISO();
   }
 
-  let pagadoPreview = item.pagado;
-  let accionTexto = "Se guardará como pendiente";
+  const cierreSinMonto = accion === "PAGADO_SIN_MONTO";
+  let totalPreview = cierreSinMonto ? 0 : item.monto;
+  let pagadoPreview = cierreSinMonto ? 0 : item.pagado;
+  let accionTexto = cierreSinMonto ? "Se cerrará como pagado sin monto ni deuda" : "Se guardará como pendiente";
   const nuevoAbono = accion === "ABONO" ? numeroSeguro(document.getElementById("pagoSimpleAbono")?.value || 0) : 0;
 
   if (accion === "ABONO") {
@@ -1846,12 +1861,12 @@ function pintarModalPagoSimple() {
     accionTexto = "Se completará automáticamente el saldo restante";
   }
 
-  const saldo = Math.max(item.monto - pagadoPreview, 0);
-  const favor = Math.max(pagadoPreview - item.monto, 0);
+  const saldo = Math.max(totalPreview - pagadoPreview, 0);
+  const favor = Math.max(pagadoPreview - totalPreview, 0);
   const estadoTexto = favor > 0.009 ? "A favor $" + money(favor) : "Saldo $" + money(saldo);
   const fecha = document.getElementById("pagoSimpleFecha")?.value || fechaISO();
 
-  setTextPagoSimple("pagoSimpleKpiTotal", "$" + money(item.monto));
+  setTextPagoSimple("pagoSimpleKpiTotal", "$" + money(totalPreview));
   setTextPagoSimple("pagoSimpleKpiPagado", "$" + money(pagadoPreview));
   setTextPagoSimple("pagoSimpleKpiSaldo", "$" + money(saldo));
   setTextPagoSimple("pagoSimpleKpiFavor", "$" + money(favor));
@@ -1859,9 +1874,11 @@ function pintarModalPagoSimple() {
   const favorCard = document.getElementById("pagoSimpleKpiFavorCard");
   if (favorCard) favorCard.classList.toggle("is-active", favor > 0.009);
 
-  const resumen = item.monto > 0
-    ? `${estadoTexto} · ${textoTipoPagoSimple(item)} · Fecha ${fechaCortaPagoSimple(fecha)} · ${accionTexto}`
-    : "Coloca el monto que debe el cliente";
+  const resumen = cierreSinMonto
+    ? `Pagado sin monto · Cerrado · Fecha ${fechaCortaPagoSimple(fecha)} · ${accionTexto}`
+    : (item.monto > 0
+      ? `${estadoTexto} · ${textoTipoPagoSimple(item)} · Fecha ${fechaCortaPagoSimple(fecha)} · ${accionTexto}`
+      : "Coloca el monto que debe el cliente o usa Pagado sin monto");
   setTextPagoSimple("pagoSimpleResumen", resumen);
 
   const hist = document.getElementById("pagoSimpleHistorial");
@@ -1978,8 +1995,31 @@ async function guardarPagoSimple() {
   const accion = document.getElementById("pagoSimpleAccion")?.value || "PENDIENTE";
   const fechaPago = document.getElementById("pagoSimpleFecha")?.value || fechaISO();
 
+  if (accion === "PAGADO_SIN_MONTO") {
+    const okCierre = confirm("¿Marcar este pedido como pagado sin monto?\n\nNo registrará dinero, no quedará deuda y aparecerá como Pagado/Cerrado.");
+    if (!okCierre) return;
+
+    const itemFinal = {
+      monto: 0,
+      tipo: item.tipo,
+      tasa: item.tipo === "BCV" ? item.tasa : 0,
+      pagado: 0,
+      fecha: fechaPago,
+      abonos: Array.isArray(item.abonos) ? [...item.abonos] : [],
+      estado: "PAGADO"
+    };
+
+    const ok = await actualizarPedidoSimpleSupabase(id, itemFinal);
+    if (!ok) return;
+
+    cerrarModalPagoSimple();
+    mostrarToast("Pedido cerrado como pagado sin monto ✅");
+    await cargarPedidos(false);
+    return;
+  }
+
   if (item.monto <= 0) {
-    alert("Coloca el monto que debe el cliente.");
+    alert("Coloca el monto que debe el cliente o selecciona Pagado sin monto.");
     return;
   }
 
