@@ -2184,12 +2184,12 @@ window.closeModal = window.closeModal || function(id){
 <script>
 (function(){
   // =====================================================
-  // TEST PAGO SIMPLE V55 - SOLO INDEX PERFECTO
+  // PAGO SIMPLE V56 - SUPABASE BASE REAL
   // No modifica app.js. Oculta Pago/Abono viejos y usa una sola columna Pago.
   // =====================================================
-  const VERSION = 'v55_pago_simple_index_perfecto';
-  const STORE_KEY = 'comanda_pago_simple_v55';
-  const LEGACY_STORE_KEYS = ['comanda_pago_simple_v54', 'comanda_pago_simple_v53'];
+  const VERSION = 'v56_pago_simple_supabase_base';
+  const STORE_KEY = 'comanda_pago_simple_v56';
+  const LEGACY_STORE_KEYS = ['comanda_pago_simple_v55', 'comanda_pago_simple_v54', 'comanda_pago_simple_v53'];
   let cachePedidos = new Map();
   let pedidoActualId = null;
   let observerActivo = false;
@@ -2272,14 +2272,18 @@ window.closeModal = window.closeModal || function(id){
     const p = cachePedidos.get(Number(id)) || {};
     const local = itemLocal(id) || {};
 
-    const monto = num(local.monto || p.precio_total || p.precio || 0);
-    const tipo = local.tipo || tipoDesdePedido(p);
-    const tasa = num(local.tasa || p.tasa_deuda || 0);
-    const pagado = num(local.pagado ?? p.monto_abonado ?? 0);
-    const estadoBD = String(p.estatus_pago || '').toLowerCase();
+    const monto = num(local.monto ?? p.pago_simple_total ?? p.precio_total ?? p.precio ?? 0);
+    const tipo = local.tipo || p.pago_simple_tipo || tipoDesdePedido(p);
+    const tasa = num(local.tasa ?? p.tasa_deuda ?? 0);
+    const pagado = num(local.pagado ?? p.pago_simple_pagado ?? p.monto_abonado ?? 0);
+    const estadoBD = String(p.pago_simple_estado || p.estatus_pago || '').toLowerCase();
 
-    let estado = local.estado || 'SIN_MONTO';
-    if(!local.estado){
+    let estado = local.estado || p.pago_simple_estado || 'SIN_MONTO';
+    estado = String(estado || '').toUpperCase();
+    if(estado === 'PENDIENTE_PAGO') estado = 'PENDIENTE';
+    if(estado === 'PAGADO_COMPLETO') estado = 'PAGADO';
+
+    if(!local.estado && !p.pago_simple_estado){
       if(monto <= 0) estado = 'SIN_MONTO';
       else if(pagado > monto + 0.009) estado = 'A_FAVOR';
       else if(estadoBD === 'pagado' || pagado >= monto - 0.009) estado = 'PAGADO';
@@ -2294,7 +2298,7 @@ window.closeModal = window.closeModal || function(id){
       tasa,
       pagado,
       estado,
-      fecha: local.fecha || '',
+      fecha: local.fecha || p.pago_simple_fecha || '',
       abonos: Array.isArray(local.abonos) ? local.abonos : []
     };
   }
@@ -2383,7 +2387,7 @@ window.closeModal = window.closeModal || function(id){
     try{
       const { data, error } = await db()
         .from('pedidos')
-        .select('id,precio_total,precio,monto_abonado,estatus_pago,moneda_deuda,tipo_tasa_deuda,tasa_deuda,total_bs,monto_abonado_bs')
+        .select('id,precio_total,precio,monto_abonado,estatus_pago,moneda_deuda,tipo_tasa_deuda,tasa_deuda,total_bs,monto_abonado_bs,pago_simple_total,pago_simple_tipo,pago_simple_pagado,pago_simple_saldo,pago_simple_a_favor,pago_simple_estado,pago_simple_fecha')
         .range(0, 2500);
 
       if(error){
@@ -2412,7 +2416,7 @@ window.closeModal = window.closeModal || function(id){
       <div class="modal pago-simple-modal" style="max-width:580px">
         <div class="modal-handle"></div>
         <div class="modal-header">
-          <span class="modal-title">PAGO</span>
+          <span class="modal-title">PAGO SIMPLE</span>
           <button class="modal-close" type="button" id="pagoSimpleCerrar">✕</button>
         </div>
         <div class="modal-body">
@@ -2609,7 +2613,13 @@ window.closeModal = window.closeModal || function(id){
         equivalente_usd: delta,
         metodo_pago: auto ? 'Listo automático' : 'Abono simple',
         referencia: '',
-        nota: 'TEST_PAGO_SIMPLE_V55',
+        nota: 'PAGO_SIMPLE_V56',
+        fecha_pago: fechaPago || fechaISO(),
+        tipo_movimiento: auto ? 'LISTO' : 'ABONO',
+        monto_aplicado: delta,
+        saldo_despues_simple: saldoDespues,
+        a_favor_despues: Math.max(num(item.pagado) - num(item.monto), 0),
+        tipo_pago_simple: item.tipo,
         saldo_antes: saldoAntes,
         saldo_despues: saldoDespues,
         moneda_deuda: item.tipo === 'BCV' ? 'BCV' : 'USD',
@@ -2618,8 +2628,7 @@ window.closeModal = window.closeModal || function(id){
         total_deuda_usd: item.monto,
         pago_aplicado_usd: delta,
         saldo_antes_deuda: saldoAntes,
-        saldo_despues_deuda: saldoDespues,
-        created_at: (fechaPago || fechaISO()) + 'T12:00:00'
+        saldo_despues_deuda: saldoDespues
       }]);
     }catch(e){
       console.warn('Pago simple: no se pudo insertar historial en pedidos_pagos. Se mantiene local.', e);
@@ -2690,6 +2699,9 @@ window.closeModal = window.closeModal || function(id){
     const tipoSupabase = itemFinal.tipo === 'BCV' ? 'BS_BCV' : 'USD_FIJO';
     const tasa = itemFinal.tipo === 'BCV' && itemFinal.tasa > 0 ? itemFinal.tasa : 1;
     const estadoSupabase = (estado === 'PAGADO' || estado === 'A_FAVOR') ? 'Pagado' : (estado === 'ABONADO' ? 'Abonado' : 'Pendiente');
+    const saldoFinal = Math.max(itemFinal.monto - itemFinal.pagado, 0);
+    const favorFinal = Math.max(itemFinal.pagado - itemFinal.monto, 0);
+
     const payload = {
       precio_total: itemFinal.monto,
       monto_abonado: itemFinal.pagado,
@@ -2698,7 +2710,15 @@ window.closeModal = window.closeModal || function(id){
       tipo_tasa_deuda: tipoSupabase,
       tasa_deuda: tasa,
       total_bs: itemFinal.tipo === 'BCV' ? itemFinal.monto * tasa : null,
-      monto_abonado_bs: itemFinal.tipo === 'BCV' ? itemFinal.pagado * tasa : 0
+      monto_abonado_bs: itemFinal.tipo === 'BCV' ? itemFinal.pagado * tasa : 0,
+      pago_simple_total: itemFinal.monto,
+      pago_simple_tipo: itemFinal.tipo,
+      pago_simple_pagado: itemFinal.pagado,
+      pago_simple_saldo: saldoFinal,
+      pago_simple_a_favor: favorFinal,
+      pago_simple_estado: itemFinal.estado,
+      pago_simple_fecha: fechaPago,
+      pago_simple_actualizado_en: new Date().toISOString()
     };
 
     if(db()){
@@ -2761,7 +2781,7 @@ window.closeModal = window.closeModal || function(id){
     const style = document.createElement('style');
     style.id = 'pagoSimpleCss';
     style.textContent = `
-      /* TEST PAGO SIMPLE V55 */
+      /* PAGO SIMPLE V56 */
       #filterPago{display:none!important}
       table{min-width:1238px!important}
       table th:nth-child(9),table td:nth-child(9),
