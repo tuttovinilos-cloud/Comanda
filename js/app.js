@@ -1406,7 +1406,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v58_pago_simple_app";
+const PAGO_SIMPLE_VERSION = "v59_pago_simple_app_click_modal";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
@@ -1624,7 +1624,7 @@ function crearModalPagoSimple() {
   if (document.getElementById("pagoSimpleBackdrop")) return;
 
   const modal = document.createElement("div");
-  modal.className = "modal-backdrop";
+  modal.className = "backdrop modal-backdrop pago-simple-backdrop";
   modal.id = "pagoSimpleBackdrop";
   modal.style.display = "none";
   modal.innerHTML = `
@@ -2079,17 +2079,42 @@ function manejarBotonPagoSimple(e) {
   abrirPagoPedidoSeguro(btn.dataset.simplePagoId);
 }
 
-["pointerdown", "mousedown", "touchstart", "click"].forEach(tipoEvento => {
-  document.addEventListener(tipoEvento, manejarBotonPagoSimple, true);
-});
+// V59: usar solo click evita que pointerdown/touchstart abra el modal antes de tiempo
+// y deje los campos del modal sin poder tocarse en móvil.
+document.addEventListener("click", manejarBotonPagoSimple, true);
 
 function instalarCSSPagoSimple() {
-  if (document.getElementById("pago-simple-v58-css")) return;
+  if (document.getElementById("pago-simple-v59-css")) return;
 
   const style = document.createElement("style");
-  style.id = "pago-simple-v58-css";
+  style.id = "pago-simple-v59-css";
   style.textContent = `
-    /* PAGO SIMPLE V58 APP */
+    /* PAGO SIMPLE V59 APP - MODAL CLICK FIX */
+    #pagoSimpleBackdrop{
+      position:fixed!important;
+      inset:0!important;
+      z-index:99999!important;
+      align-items:center!important;
+      justify-content:center!important;
+      background:rgba(15,23,42,.42)!important;
+      padding:16px!important;
+      pointer-events:auto!important;
+    }
+    #pagoSimpleBackdrop .pago-simple-modal{
+      width:min(580px, calc(100vw - 24px))!important;
+      max-height:calc(100vh - 24px)!important;
+      overflow:auto!important;
+      pointer-events:auto!important;
+      position:relative!important;
+      z-index:100000!important;
+      background:#fff!important;
+    }
+    #pagoSimpleBackdrop input,
+    #pagoSimpleBackdrop select,
+    #pagoSimpleBackdrop button{
+      pointer-events:auto!important;
+      touch-action:manipulation!important;
+    }
     #filterPago{display:none!important}
     table{min-width:1238px!important}
     table th:nth-child(9),table td:nth-child(9),
