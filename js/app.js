@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v62 pago simple + filtro pendiente pagado");
+console.log("APP JS conectado correctamente v63 filtro pago visible");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -1436,7 +1436,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v62_pago_simple_pendiente_pagado";
+const PAGO_SIMPLE_VERSION = "v63_pago_simple_filtro_visible";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
@@ -2119,7 +2119,7 @@ function instalarCSSPagoSimple() {
   const style = document.createElement("style");
   style.id = "pago-simple-v59-css";
   style.textContent = `
-    /* PAGO SIMPLE V59 APP - MODAL CLICK FIX */
+    /* PAGO SIMPLE V63 APP - FILTRO PAGO VISIBLE */
     #pagoSimpleBackdrop{
       position:fixed!important;
       inset:0!important;
@@ -2145,7 +2145,7 @@ function instalarCSSPagoSimple() {
       pointer-events:auto!important;
       touch-action:manipulation!important;
     }
-    #filterPago{display:none!important}
+    #filterPago{display:inline-flex!important}
     table{min-width:1238px!important}
     table th:nth-child(9),table td:nth-child(9),
     table th:nth-child(11),table td:nth-child(11),
