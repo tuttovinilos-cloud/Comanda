@@ -2716,3 +2716,4 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (typeof aplicarPermisosComanda === "function") aplicarPermisosComanda();
 });
 
+
