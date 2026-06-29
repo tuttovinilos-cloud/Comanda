@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v58 pago simple definitivo");
+console.log("APP JS conectado correctamente v62 pago simple + filtro pendiente pagado");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -722,6 +722,7 @@ function pedidoCumpleFiltros(p) {
   const estatus = String(p.estatus_trabajo || "");
   const pago = String(p.estatus_pago || "");
   const deuda = resumenDeudaPedido(p);
+  const pagoSimple = typeof resumenPagoSimplePedido === "function" ? resumenPagoSimplePedido(p) : null;
   const ultimoPago = ultimosPagosPorPedido.get(Number(p.id));
 
   const contenido = normalizarBusqueda([
@@ -734,10 +735,20 @@ function pedidoCumpleFiltros(p) {
     p.tipo_impresion,
     p.precio,
     p.precio_total,
+    p.pago_simple_total,
+    p.pago_simple_pagado,
+    p.pago_simple_saldo,
+    p.pago_simple_a_favor,
+    p.pago_simple_estado,
+    p.pago_simple_tipo,
     p.moneda_deuda,
     p.tipo_tasa_deuda,
     deuda.totalTexto,
+    deuda.pagadoTexto,
     deuda.saldoTexto,
+    pagoSimple?.estado,
+    pagoSimple?.tipo,
+    pagoSimple?.fecha,
     ultimoPago?.metodo_pago,
     ultimoPago?.metodo_otro,
     ultimoPago?.referencia,
@@ -756,7 +767,26 @@ function pedidoCumpleFiltros(p) {
     return false;
   }
 
-  if (pagoFiltro && pago !== pagoFiltro) return false;
+  if (pagoFiltro) {
+    const f = String(pagoFiltro || "").toUpperCase();
+    const item = pagoSimple || resumenPagoSimplePedido(p);
+    const total = numeroSeguro(item.total || 0);
+    const saldo = numeroSeguro(item.saldo || 0);
+    const aFavor = numeroSeguro(item.aFavor || item.favor || 0);
+    const estadoSimple = String(item.estado || "").toUpperCase();
+
+    // Filtro simple:
+    // Pendiente = todo pedido que todavía debe, tenga abono o no.
+    // Pagado = pedido saldado, incluyendo los que quedaron con saldo a favor.
+    const pendiente = total > 0.009 && saldo > 0.009;
+    const pagadoCompleto = total > 0.009 && saldo <= 0.009;
+    const pagadoOAFavor = pagadoCompleto || aFavor > 0.009 || estadoSimple === "A_FAVOR";
+
+    if (f === "PENDIENTE" && !pendiente) return false;
+    else if (f === "PAGADO" && !pagadoOAFavor) return false;
+    else if (!["PENDIENTE","PAGADO"].includes(f) && pago !== pagoFiltro) return false;
+  }
+
   if (operadorFiltro && operador !== operadorFiltro) return false;
   if (desde && fecha < desde) return false;
   if (hasta && fecha > hasta) return false;
@@ -1406,7 +1436,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v59_pago_simple_app_click_modal";
+const PAGO_SIMPLE_VERSION = "v62_pago_simple_pendiente_pagado";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
