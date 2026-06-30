@@ -1,14 +1,12 @@
-console.log("MENU GLOBAL conectado v12");
+console.log("MENU GLOBAL conectado v42");
 
 /* =========================================================
-   MENU GLOBAL COMANDA / TUTTOVINILOS v11
+   MENU GLOBAL COMANDA / TUTTOVINILOS
    - Usa #authMenu
    - Usa .header-tabs / .tab-btn
-   - Crea botón móvil .mobile-menu-btn
+   - Crea o reutiliza botón móvil .mobile-menu-btn
    - Carga operadores en q_operador, f_operador, filterOperador
-   - Mueve badge SUPABASE al menú superior
-   - Evita delay visual agregando .menu-ready
-   - NO toca notificaciones ni #notiCount
+   - Respeta permisos del operador actual
 ========================================================= */
 
 (function(){
@@ -17,18 +15,22 @@ console.log("MENU GLOBAL conectado v12");
   const links = [
     { page:"index.html", label:"▣ Pedidos", permission:"puede_pedidos" },
     { page:"clientes.html", label:"♟ Clientes", permission:"puede_clientes" },
-    { page:"materiales.html", label:"$ Materiales", permission:"puede_materiales" },
-    { page:"precios.html", label:"💲 Precios", permission:"puede_precios" },
-    { page:"estadisticas.html", label:"▥ Estadísticas", permission:"puede_estadisticas" },
-    { page:"marketing.html", label:"◄ Marketing", permission:"puede_marketing" },
     { page:"Cotizador.html", label:"▣ Cotizador", permission:"puede_cotizador" },
     { page:"label.html", label:"🏷 Label", permission:"puede_label" },
     { page:"Organizador de ideas.html", label:"💡 Organizador", permission:"puede_organizador" },
-    { page:"configuracion.html", label:"⚙ Configuración", permission:"puede_configuracion" }
+    { page:"configuracion.html", label:"⚙ Configuración", permission:"puede_configuracion" },
+    { page:"materiales.html", label:"$ Materiales", permission:"puede_materiales" },
+    { page:"precios.html", label:"💲 Precios", permission:"puede_precios" },
+    { page:"estadisticas.html", label:"▥ Estadísticas", permission:"puede_estadisticas" },
+    { page:"marketing.html", label:"◄ Marketing", permission:"puede_marketing" }
   ];
 
   function getOp(){
     try{
+      if(typeof window.getSesionOperador === "function"){
+        const op = window.getSesionOperador();
+        if(op) return op;
+      }
       return JSON.parse(localStorage.getItem(AUTH_KEY) || "null");
     }catch(e){
       return null;
@@ -55,7 +57,6 @@ console.log("MENU GLOBAL conectado v12");
 
   function firstAllowed(op){
     if(isRoberto(op)) return "index.html";
-
     const item = links.find(l => op && op[l.permission] === true);
     return item ? item.page : "login.html";
   }
@@ -66,7 +67,7 @@ console.log("MENU GLOBAL conectado v12");
   }
 
   function samePage(a,b){
-    return String(a || "").toLowerCase() === String(b || "").toLowerCase();
+    return norm(a) === norm(b);
   }
 
   function logout(){
@@ -134,12 +135,14 @@ console.log("MENU GLOBAL conectado v12");
 
     syncStorageBadge();
 
-    if(visibles === 0){
-      console.warn("Operador sin permisos visibles:", op);
+    const currentItem = links.find(l => samePage(l.page, pageNow));
+    if(currentItem && !hasPermission(op, currentItem.permission)){
+      location.href = firstAllowed(op);
+      return;
     }
 
-    if(!hasPermission(op, "puede_pedidos") && samePage(pageNow, "index.html")){
-      location.href = firstAllowed(op);
+    if(visibles === 0){
+      console.warn("Operador sin permisos visibles:", op);
     }
   }
 
@@ -157,12 +160,6 @@ console.log("MENU GLOBAL conectado v12");
       btn.className = "mobile-menu-btn";
       btn.type = "button";
       btn.textContent = "☰ Menú";
-
-      /*
-        IMPORTANTE:
-        El botón móvil debe ir antes del menú, pero después del logo/campana si existe.
-        No debe insertarse antes de la campana porque desordena el header.
-      */
       header.insertBefore(btn, menu);
     }
 
@@ -179,6 +176,15 @@ console.log("MENU GLOBAL conectado v12");
         window.updateStickyOffsets();
       }
     };
+
+    document.addEventListener("click", function(e){
+      if(!menu.classList.contains("open")) return;
+      if(header.contains(e.target)) return;
+      menu.classList.remove("open");
+      btn.classList.remove("active");
+      btn.setAttribute("aria-expanded", "false");
+      btn.textContent = "☰ Menú";
+    });
   }
 
   function syncStorageBadge(){
