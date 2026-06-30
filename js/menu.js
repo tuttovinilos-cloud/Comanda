@@ -333,3 +333,4 @@ console.log("MENU GLOBAL conectado v44 orden visual correcto");
     window.__MENU_STORAGE_TIMER__ = setInterval(syncStorageBadge, 1500);
   });
 })();
+
