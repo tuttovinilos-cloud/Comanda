@@ -1,9 +1,16 @@
 // Auth centralizado COMANDA
 // Aplica control de sesión, permisos por página y filtrado de menú.
+// v26 · incluye index/clientes/cotizador/label/organizador/configuración.
 
 (function () {
   const AUTH_KEY = "comanda_operador_actual";
-  const PAGE = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+
+  function paginaActual() {
+    const raw = decodeURIComponent(location.pathname.split("/").pop() || "index.html");
+    return String(raw || "index.html").toLowerCase().split("?")[0].split("#")[0] || "index.html";
+  }
+
+  const PAGE = paginaActual();
 
   const PAGE_PERMISSIONS = {
     "index.html": "puede_pedidos",
@@ -11,23 +18,33 @@
     "materiales.html": "puede_materiales",
     "precios.html": "puede_precios",
     "estadisticas.html": "puede_estadisticas",
-    "configuracion.html": "puede_configuracion",
     "marketing.html": "puede_marketing",
     "cotizador.html": "puede_cotizador",
-    "organizador de ideas.html": "puede_organizador"
+    "label.html": "puede_label",
+    "organizador de ideas.html": "puede_organizador",
+    "configuracion.html": "puede_configuracion"
   };
 
   const PAGE_ORDER = [
     "index.html",
     "clientes.html",
+    "cotizador.html",
+    "label.html",
+    "organizador de ideas.html",
+    "configuracion.html",
     "materiales.html",
     "precios.html",
     "estadisticas.html",
-    "marketing.html",
-    "cotizador.html",
-    "organizador de ideas.html",
-    "configuracion.html"
+    "marketing.html"
   ];
+
+  function normalizar(v) {
+    return String(v || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+  }
 
   function getSesionOperador() {
     try {
@@ -46,7 +63,7 @@
   }
 
   function esRoberto(op) {
-    return String(op && op.nombre || "").trim().toLowerCase() === "roberto";
+    return normalizar(op && op.nombre) === "roberto";
   }
 
   function operadorActivo(op) {
@@ -79,7 +96,7 @@
     const items = Array.from(menu.querySelectorAll("a.tab-btn"));
     items.forEach(a => {
       const hrefRaw = a.getAttribute("href") || "";
-      const href = hrefRaw.toLowerCase().split("?")[0];
+      const href = decodeURIComponent(hrefRaw.toLowerCase().split("?")[0].split("#")[0]);
       const perm = PAGE_PERMISSIONS[href];
       if (!perm) return;
       a.style.display = tienePermiso(op, perm) ? "" : "none";
@@ -87,7 +104,6 @@
   }
 
   function aplicarPermisosComanda() {
-    // Login no se bloquea aquí.
     if (PAGE === "login.html") return true;
 
     const op = getSesionOperador();
@@ -112,7 +128,10 @@
   window.setSesionOperador = setSesionOperador;
   window.clearSesionOperador = clearSesionOperador;
   window.esRoberto = esRoberto;
+  window.operadorActivo = operadorActivo;
+  window.tienePermisoComanda = tienePermiso;
   window.aplicarPermisosComanda = aplicarPermisosComanda;
+  window.PAGE_PERMISSIONS_COMANDA = PAGE_PERMISSIONS;
 
   document.addEventListener("DOMContentLoaded", aplicarPermisosComanda);
 })();
