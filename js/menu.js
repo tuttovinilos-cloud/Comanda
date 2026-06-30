@@ -1,4 +1,4 @@
-console.log("MENU GLOBAL conectado v42");
+console.log("MENU GLOBAL conectado v44 orden visual correcto");
 
 /* =========================================================
    MENU GLOBAL COMANDA / TUTTOVINILOS
@@ -13,16 +13,16 @@ console.log("MENU GLOBAL conectado v42");
   const AUTH_KEY = "comanda_operador_actual";
 
   const links = [
-    { page:"index.html", label:"▣ Pedidos", permission:"puede_pedidos" },
-    { page:"clientes.html", label:"♟ Clientes", permission:"puede_clientes" },
-    { page:"Cotizador.html", label:"▣ Cotizador", permission:"puede_cotizador" },
+    { page:"index.html", label:"▣ Pedido", permission:"puede_pedidos" },
+    { page:"precios.html", label:"💲 Precio", permission:"puede_precios" },
+    { page:"clientes.html", label:"♟ Cliente", permission:"puede_clientes" },
     { page:"label.html", label:"🏷 Label", permission:"puede_label" },
+    { page:"Cotizador.html", label:"▣ Cotizador", permission:"puede_cotizador" },
     { page:"Organizador de ideas.html", label:"💡 Organizador", permission:"puede_organizador" },
-    { page:"configuracion.html", label:"⚙ Configuración", permission:"puede_configuracion" },
-    { page:"materiales.html", label:"$ Materiales", permission:"puede_materiales" },
-    { page:"precios.html", label:"💲 Precios", permission:"puede_precios" },
     { page:"estadisticas.html", label:"▥ Estadísticas", permission:"puede_estadisticas" },
-    { page:"marketing.html", label:"◄ Marketing", permission:"puede_marketing" }
+    { page:"marketing.html", label:"◄ Marketing", permission:"puede_marketing" },
+    { page:"materiales.html", label:"$ Materiales", permission:"puede_materiales" },
+    { page:"configuracion.html", label:"⚙ Configuración", permission:"puede_configuracion" }
   ];
 
   function getOp(){
