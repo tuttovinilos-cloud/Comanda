@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v62 notas ancho completo PDF");
+console.log("COTIZADOR JS conectado v63 BS item y miles");
 
 const $ = (id) => document.getElementById(id);
 
@@ -184,14 +184,74 @@ function crearNumeroDocumento(consecutivo, fechaISO){
   return `${pad2(consecutivo)}-${formatoFechaNumero(fechaISO)}`;
 }
 
-function currency(n){ return "$" + Number(n || 0).toFixed(2); }
+function parseNumeroLocal(valor){
+  if(typeof valor === "number") return Number.isFinite(valor) ? valor : 0;
 
-function currencyDocumento(n,tipoDocumento=""){
-  if(esFacturaTipo(tipoDocumento)){
-    return "BS " + moneyFactura(n,2);
+  let s = String(valor ?? "")
+    .trim()
+    .replace(/[^0-9,.-]/g, "");
+
+  if(!s || s === "-" || s === "." || s === ",") return 0;
+
+  const lastComma = s.lastIndexOf(",");
+  const lastDot = s.lastIndexOf(".");
+
+  if(lastComma >= 0 && lastDot >= 0){
+    if(lastComma > lastDot){
+      // Formato local: 1.000,50
+      s = s.replace(/\./g, "").replace(",", ".");
+    }else{
+      // Formato internacional: 1,000.50
+      s = s.replace(/,/g, "");
+    }
+  }else if(lastComma >= 0){
+    // Formato local con coma decimal: 1000,50
+    s = s.replace(/\./g, "").replace(",", ".");
+  }else if(lastDot >= 0){
+    const partes = s.split(".");
+    const ultimo = partes[partes.length - 1] || "";
+
+    // Si termina como 1.000 / 25.000 / 1.000.000, el punto es miles.
+    if(partes.length > 1 && ultimo.length === 3 && partes.every(p => p !== "")){
+      s = partes.join("");
+    }
   }
 
-  return currency(n);
+  const num = Number(s);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function formatoMiles(n,decimales=2){
+  return Number(n || 0).toLocaleString("es-VE",{
+    minimumFractionDigits:decimales,
+    maximumFractionDigits:decimales
+  });
+}
+
+function formatoCampoNumero(n,decimales=2){
+  const num = Number(n || 0);
+  const tieneDecimales = Math.abs(num - Math.trunc(num)) > 0.000001;
+
+  return num.toLocaleString("es-VE",{
+    minimumFractionDigits:tieneDecimales ? decimales : 0,
+    maximumFractionDigits:decimales
+  });
+}
+
+function currency(n){ return "$" + formatoMiles(n,2); }
+
+function monedaDocumento(n,tipoDocumento="",decimales=2){
+  return esFacturaTipo(tipoDocumento)
+    ? "BS " + formatoMiles(n,decimales)
+    : "$" + formatoMiles(n,decimales);
+}
+
+function etiquetaMonedaDocumento(tipoDocumento=""){
+  return esFacturaTipo(tipoDocumento) ? "BS" : "$";
+}
+
+function currencyDocumento(n,tipoDocumento=""){
+  return monedaDocumento(n,tipoDocumento,2);
 }
 
 function cleanText(v){ return String(v || "").trim(); }
@@ -453,6 +513,16 @@ function actualizarEtiquetaIva(tipo){
   if(resumen) resumen.textContent = label;
 }
 
+function actualizarEtiquetasMonedaItems(tipo){
+  const moneda = etiquetaMonedaDocumento(tipo || $("tipoDocumento")?.value || data.tipo);
+
+  const precio = $("thPrecioItem");
+  const total = $("thTotalItem");
+
+  if(precio) precio.textContent = `P. Unit (${moneda})`;
+  if(total) total.textContent = `Total (${moneda})`;
+}
+
 function calcularTotales(items=data.items, ivaAplicado=$("ivaCheck")?.checked, tipoDocumento=$("tipoDocumento")?.value || data.tipo){
   const subtotal = (items || []).reduce((acc,it) => {
     return acc + (it.kind === "item" ? itemTotal(it) : 0);
@@ -472,8 +542,9 @@ function updateTotals(){
   const t = calcularTotales(data.items, $("ivaCheck")?.checked, tipo);
 
   actualizarEtiquetaIva(tipo);
+  actualizarEtiquetasMonedaItems(tipo);
 
-  const formato = esFacturaTipo(tipo) ? (n => "BS " + moneyFactura(n,2)) : currency;
+  const formato = n => monedaDocumento(n,tipo,2);
 
   const subtotalEl = $("subtotal");
   const ivaEl = $("iva");
@@ -488,13 +559,15 @@ function updateItemVisualTotal(index){
   const item = data.items[index];
   if(!item) return;
 
+  const tipo = $("tipoDocumento")?.value || data.tipo;
   const total = itemTotal(item);
+  const totalTxt = monedaDocumento(total,tipo,2);
 
   document.querySelectorAll(`[data-total-index="${index}"]`).forEach(el => {
     if(el.tagName === "INPUT"){
-      el.value = total.toFixed(2);
+      el.value = totalTxt;
     }else{
-      el.textContent = currency(total);
+      el.textContent = totalTxt;
     }
   });
 }
@@ -910,6 +983,7 @@ function render(){
   if(creditName) creditName.textContent = data.responsable;
 
   actualizarEtiquetaIva(data.tipo);
+  actualizarEtiquetasMonedaItems(data.tipo);
   aplicarModoNumeroDocumento(data.tipo, false);
 
   tbody.innerHTML = "";
@@ -1011,6 +1085,8 @@ function render(){
 
     const number = visibleNumber++;
     const total = itemTotal(item);
+    const monedaItem = etiquetaMonedaDocumento(data.tipo);
+    const totalItemTexto = monedaDocumento(total,data.tipo,2);
 
     tbody.insertAdjacentHTML("beforeend", `
       <tr>
@@ -1019,13 +1095,13 @@ function render(){
           <input value="${html(item.desc)}" placeholder="Descripción" data-index="${index}" data-field="desc">
         </td>
         <td class="center">
-          <input type="number" min="0" step="0.01" value="${item.qty}" data-index="${index}" data-field="qty">
+          <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.qty,2)}" data-index="${index}" data-field="qty">
         </td>
         <td class="center">
-          <input type="number" min="0" step="0.01" value="${item.price}" data-index="${index}" data-field="price">
+          <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.price,2)}" data-index="${index}" data-field="price">
         </td>
         <td class="center total-cell">
-          <input readonly data-total-index="${index}" value="${total.toFixed(2)}">
+          <input readonly data-total-index="${index}" value="${totalItemTexto}">
         </td>
         <td class="center">
           <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
@@ -1049,18 +1125,18 @@ function render(){
           <div class="item-grid">
             <div class="field">
               <label>Cantidad</label>
-              <input type="number" min="0" step="0.01" value="${item.qty}" data-index="${index}" data-field="qty">
+              <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.qty,2)}" data-index="${index}" data-field="qty">
             </div>
 
             <div class="field">
-              <label>P. Unit ($)</label>
-              <input type="number" min="0" step="0.01" value="${item.price}" data-index="${index}" data-field="price">
+              <label>P. Unit (${monedaItem})</label>
+              <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.price,2)}" data-index="${index}" data-field="price">
             </div>
           </div>
 
           <div class="item-total">
             <span>Total ítem</span>
-            <b data-total-index="${index}">${currency(total)}</b>
+            <b data-total-index="${index}">${totalItemTexto}</b>
           </div>
         </div>
       </div>
@@ -1336,10 +1412,7 @@ function numeroFacturaVisible(numero){
 }
 
 function moneyFactura(n,decimales=2){
-  return Number(n || 0).toLocaleString("es-VE",{
-    minimumFractionDigits:decimales,
-    maximumFractionDigits:decimales
-  });
+  return formatoMiles(n,decimales);
 }
 
 function cantidadFactura(n){
@@ -1426,8 +1499,8 @@ function drawFacturaReferenciaTable(doc,items){
   drawTextFactura(doc,"#",(left+x1)/2,y+6.1,{ size:10.4, align:"center" });
   drawTextFactura(doc,"DESCRIPCION",(x1+x2)/2,y+6.1,{ size:10.4, align:"center" });
   drawTextFactura(doc,"CANT (m)",(x2+x3)/2,y+6.1,{ size:10.4, align:"center" });
-  drawTextFactura(doc,"P.U",(x3+x4)/2,y+6.1,{ size:10.4, align:"center" });
-  drawTextFactura(doc,"SUB TOTAL",(x4+right)/2,y+6.1,{ size:10.4, align:"center" });
+  drawTextFactura(doc,"P.U BS",(x3+x4)/2,y+6.1,{ size:10.4, align:"center" });
+  drawTextFactura(doc,"SUB TOTAL BS",(x4+right)/2,y+6.1,{ size:10.4, align:"center" });
 
   const visibles = (items || []).filter(it => it.kind === "item").slice(0,6);
   const filas = Math.max(1,visibles.length);
@@ -1453,8 +1526,8 @@ function drawFacturaReferenciaTable(doc,items){
     doc.setFontSize(facturaFontSize(10.4));
     doc.text(descLines,(x1+x2)/2,descY,{ align:"center" });
     drawTextFactura(doc,cantidadFactura(qty),(x2+x3)/2,rowY+9.4,{ size:10.4, align:"center" });
-    drawTextFactura(doc,moneyFactura(price,3),(x3+x4)/2,rowY+9.4,{ size:10.4, align:"center" });
-    drawTextFactura(doc,moneyFactura(total,2),right-1,rowY+9.4,{ size:10.4, align:"right" });
+    drawTextFactura(doc,"BS " + moneyFactura(price,3),(x3+x4)/2,rowY+9.4,{ size:9.2, align:"center" });
+    drawTextFactura(doc,"BS " + moneyFactura(total,2),right-1,rowY+9.4,{ size:9.2, align:"right" });
   }
 
   doc.setLineWidth(.2);
@@ -1698,9 +1771,9 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     body.push([
       String(count++),
       item.desc || "",
-      String(item.qty || 0),
-      "$"+Number(item.price || 0).toFixed(2),
-      "$"+total.toFixed(2)
+      formatoCampoNumero(item.qty,2),
+      monedaDocumento(item.price,form.tipo,2),
+      monedaDocumento(total,form.tipo,2)
     ]);
   });
 
@@ -2629,7 +2702,7 @@ function abrirDetalleCotizacion(id){
     return `
       <div class="detail-item">
         <b>${numero}. ${html(it.desc || "")}</b><br>
-        Cant: ${html(it.qty || 0)} · P.Unit: ${currency(it.price || 0)} · Total: ${currency(itemTotal(it))}
+        Cant: ${html(formatoCampoNumero(it.qty || 0,2))} · P.Unit: ${currencyDocumento(it.price || 0,form.tipo)} · Total: ${currencyDocumento(itemTotal(it),form.tipo)}
       </div>
     `;
   }).join("");
@@ -2656,9 +2729,9 @@ function abrirDetalleCotizacion(id){
       </div>
 
       <div class="detail-item">
-        <b>Subtotal:</b> ${currency(snap.totals.subtotal)}<br>
-        <b>IVA:</b> ${currency(snap.totals.iva)}<br>
-        <b>Total:</b> ${currency(snap.totals.total)}
+        <b>Subtotal:</b> ${currencyDocumento(snap.totals.subtotal,form.tipo)}<br>
+        <b>IVA:</b> ${currencyDocumento(snap.totals.iva,form.tipo)}<br>
+        <b>Total:</b> ${currencyDocumento(snap.totals.total,form.tipo)}
       </div>
     </div>
   `;
@@ -2801,13 +2874,24 @@ function bindEvents(){
 
       data.items[index][field] =
         field === "qty" || field === "price"
-          ? Number(value || 0)
+          ? parseNumeroLocal(value)
           : value;
 
       updateItemVisualTotal(index);
       updateTotals();
     }
   });
+
+  document.addEventListener("blur", e => {
+    if(e.target.matches("[data-index][data-field]")){
+      const index = Number(e.target.dataset.index);
+      const field = e.target.dataset.field;
+
+      if(field === "qty" || field === "price"){
+        e.target.value = formatoCampoNumero(data.items[index]?.[field] || 0,2);
+      }
+    }
+  }, true);
 
   document.addEventListener("change", async e => {
     if(e.target.matches("[data-image-add-index]")){
