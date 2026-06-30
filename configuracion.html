@@ -281,6 +281,22 @@ input,select,textarea{width:100%;background:#fff;border:1px solid var(--border);
 
   <div class="hint"><strong>Configuración:</strong> aquí controlas operadores, claves y permisos. Roberto siempre debe conservar acceso total para no bloquear la comanda.</div>
 
+  <section class="card" id="backupCard">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Respaldo de base de datos</div>
+        <div class="card-sub">Descarga una copia JSON de las tablas principales accesibles desde Supabase.</div>
+      </div>
+      <div class="card-actions">
+        <button class="btn success" id="btnBackupCompleto" type="button" onclick="descargarRespaldoCompleto()">⬇ Descargar respaldo</button>
+      </div>
+    </div>
+    <div style="padding:16px;display:grid;gap:10px">
+      <div class="hint"><strong>Nota:</strong> este respaldo descarga la información que la conexión actual tiene permiso de leer. Si alguna tabla tiene RLS/políticas bloqueando lectura, se reportará como error dentro del archivo.</div>
+      <div class="contact-line" id="backupStatus"><strong>Estado:</strong> listo para descargar.</div>
+    </div>
+  </section>
+
   <section class="card">
     <div class="card-header">
       <div><div class="card-title">Operadores y permisos</div><div class="card-sub">Crear, editar, activar/inactivar usuarios y definir módulos visibles.</div></div>
@@ -353,12 +369,12 @@ input,select,textarea{width:100%;background:#fff;border:1px solid var(--border);
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=29"></script>
-<script src="js/auth.js?v=26"></script>
-<script src="js/menu.js?v=42"></script>
+<script src="js/auth.js?v=27"></script>
+<script src="js/menu.js?v=43"></script>
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log('CONFIGURACION HTML conectado v37 header unificado');
+console.log('CONFIGURACION HTML conectado v38 respaldo completo');
 function cerrarNotificacionesModal(){const el=document.getElementById('notiBackdrop');if(el)el.style.display='none'}
 function cerrarNotiSiFondo(e){if(e&&e.target&&e.target.id==='notiBackdrop')cerrarNotificacionesModal()}
 const AUTH_KEY = 'comanda_operador_actual';
@@ -400,6 +416,123 @@ function datosFormulario(){const datos={nombre:document.getElementById('opNombre
 async function guardarOperador(){if(!validarSupabase())return;const id=document.getElementById('opId').value;const datos=datosFormulario();if(!datos.nombre){alert('Coloca el nombre del operador.');return}try{let res;if(id){res=await db().from('operadores').update(datos).eq('id',id).select().single()}else{const dup=operadoresDB.find(o=>normalizar(o.nombre)===normalizar(datos.nombre));if(dup&&!confirm('Ya existe un operador con nombre parecido. ¿Crear igual?'))return;res=await db().from('operadores').insert([datos]).select().single()}if(res.error)throw res.error;cerrarModal();await cargarOperadores();toast('Operador guardado','ok')}catch(error){console.error(error);alert('Error guardando operador: '+(error.message||error))}}
 async function toggleActivo(id){const op=operadoresDB.find(o=>Number(o.id)===Number(id));if(!op)return;if(normalizar(op.nombre)==='roberto'&&op.activo!==false){alert('No recomiendo inactivar a Roberto porque puedes bloquear la configuración.');return}const nuevo=op.activo===false;const {error}=await db().from('operadores').update({activo:nuevo}).eq('id',id);if(error){alert('Error actualizando estado: '+error.message);return}await cargarOperadores();toast(nuevo?'Operador activado':'Operador inactivado','ok')}
 async function eliminarOperador(id){const op=operadoresDB.find(o=>Number(o.id)===Number(id));if(!op)return;if(normalizar(op.nombre)==='roberto'){alert('No se debe eliminar Roberto.');return}if(!confirm(`¿Eliminar operador ${op.nombre}? Esta acción no borra pedidos existentes.`))return;const {error}=await db().from('operadores').delete().eq('id',id);if(error){alert('Error eliminando: '+error.message);return}await cargarOperadores();toast('Operador eliminado','ok')}
+
+const BACKUP_TABLAS = [
+  'pedidos',
+  'clientes',
+  'cotizaciones',
+  'pedidos_pagos',
+  'adjuntos-pedidos',
+  'operadores',
+  'notificaciones',
+  'configuracion_global',
+  'materiales',
+  'tipos_impresion',
+  'listado_categorias',
+  'listado_productos',
+  'listado_extras',
+  'prod_listas',
+  'prod_pedidos',
+  'prod_procesos_catalogo',
+  'prod_tipos_letrero',
+  'materia_categorias',
+  'materia_materiales',
+  'materia_precios',
+  'materia_compuestos',
+  'materia_compuesto_componentes',
+  'compras_proveedores',
+  'compras_materiales',
+  'compras_notas',
+  'compras_detalle',
+  'compras_movimientos',
+  'marketing_contenidos'
+];
+
+function actualizarEstadoBackup(texto){
+  const el=document.getElementById('backupStatus');
+  if(el)el.innerHTML=`<strong>Estado:</strong> ${escapeHtml(texto)}`;
+}
+
+function fechaArchivoBackup(){
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
+}
+
+async function leerTablaCompleta(nombreTabla){
+  const pageSize=1000;
+  let from=0;
+  let filas=[];
+  while(true){
+    const to=from+pageSize-1;
+    const {data,error}=await db().from(nombreTabla).select('*').range(from,to);
+    if(error)throw error;
+    const lote=data||[];
+    filas=filas.concat(lote);
+    if(lote.length<pageSize)break;
+    from+=pageSize;
+  }
+  return filas;
+}
+
+async function descargarRespaldoCompleto(){
+  if(!validarSupabase())return;
+  const sesion=getSesion();
+  if(!esRoberto(sesion)){
+    alert('Por seguridad, el respaldo completo solo lo puede descargar Roberto.');
+    return;
+  }
+
+  const btn=document.getElementById('btnBackupCompleto');
+  if(btn){btn.disabled=true;btn.textContent='Preparando respaldo...'}
+  actualizarEstadoBackup('preparando respaldo...');
+
+  const respaldo={
+    sistema:'Tuttovinilos Comanda',
+    tipo:'respaldo_supabase_frontend',
+    generado_en:new Date().toISOString(),
+    generado_por:sesion?.nombre||'',
+    nota:'Este respaldo contiene las tablas que la conexión actual pudo leer desde Supabase. Las tablas bloqueadas por permisos aparecen en errores.',
+    tablas:{},
+    errores:[]
+  };
+
+  try{
+    for(const tabla of BACKUP_TABLAS){
+      try{
+        actualizarEstadoBackup(`descargando ${tabla}...`);
+        const filas=await leerTablaCompleta(tabla);
+        respaldo.tablas[tabla]=filas;
+      }catch(error){
+        respaldo.errores.push({tabla, mensaje:error?.message||String(error)});
+        respaldo.tablas[tabla]=null;
+      }
+    }
+
+    const json=JSON.stringify(respaldo,null,2);
+    const blob=new Blob([json],{type:'application/json;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=`respaldo_tuttovinilos_${fechaArchivoBackup()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    const totalTablas=Object.keys(respaldo.tablas).length;
+    const conError=respaldo.errores.length;
+    actualizarEstadoBackup(`respaldo descargado. Tablas revisadas: ${totalTablas}. Errores: ${conError}.`);
+    toast('Respaldo descargado','ok');
+  }catch(error){
+    console.error(error);
+    actualizarEstadoBackup('error preparando respaldo.');
+    alert('Error preparando respaldo: '+(error.message||error));
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='⬇ Descargar respaldo'}
+  }
+}
+
 document.addEventListener('DOMContentLoaded',()=>{if(verificarAcceso())cargarOperadores()});
 </script>
 </body>
