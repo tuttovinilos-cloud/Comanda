@@ -1,6 +1,6 @@
 // Auth centralizado COMANDA
 // Aplica control de sesión, permisos por página y filtrado de menú.
-// v26 · incluye index/clientes/cotizador/label/organizador/configuración.
+// v28 · orden visual correcto: Pedido, Precio, Cliente, Label, Cotizador, Organizador, Estadísticas, Marketing, Materiales, Configuración.
 
 (function () {
   const AUTH_KEY = "comanda_operador_actual";
@@ -27,15 +27,15 @@
 
   const PAGE_ORDER = [
     "index.html",
-    "clientes.html",
-    "cotizador.html",
-    "label.html",
-    "organizador de ideas.html",
-    "configuracion.html",
-    "materiales.html",
     "precios.html",
+    "clientes.html",
+    "label.html",
+    "cotizador.html",
+    "organizador de ideas.html",
     "estadisticas.html",
-    "marketing.html"
+    "marketing.html",
+    "materiales.html",
+    "configuracion.html"
   ];
 
   function normalizar(v) {
