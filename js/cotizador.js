@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v63 BS item y miles");
+console.log("COTIZADOR JS conectado v64 precio unitario 5 decimales");
 
 const $ = (id) => document.getElementById(id);
 
@@ -1098,7 +1098,7 @@ function render(){
           <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.qty,2)}" data-index="${index}" data-field="qty">
         </td>
         <td class="center">
-          <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.price,10)}" data-index="${index}" data-field="price">
+          <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.price,5)}" data-index="${index}" data-field="price">
         </td>
         <td class="center total-cell">
           <input readonly data-total-index="${index}" value="${totalItemTexto}">
@@ -1130,7 +1130,7 @@ function render(){
 
             <div class="field">
               <label>P. Unit (${monedaItem})</label>
-              <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.price,2)}" data-index="${index}" data-field="price">
+              <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.price,5)}" data-index="${index}" data-field="price">
             </div>
           </div>
 
@@ -1526,7 +1526,7 @@ function drawFacturaReferenciaTable(doc,items){
     doc.setFontSize(facturaFontSize(10.4));
     doc.text(descLines,(x1+x2)/2,descY,{ align:"center" });
     drawTextFactura(doc,cantidadFactura(qty),(x2+x3)/2,rowY+9.4,{ size:10.4, align:"center" });
-    drawTextFactura(doc,"BS " + moneyFactura(price,3),(x3+x4)/2,rowY+9.4,{ size:9.2, align:"center" });
+    drawTextFactura(doc,"BS " + moneyFactura(price,5),(x3+x4)/2,rowY+9.4,{ size:9.2, align:"center" });
     drawTextFactura(doc,"BS " + moneyFactura(total,2),right-1,rowY+9.4,{ size:9.2, align:"right" });
   }
 
@@ -1772,7 +1772,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       String(count++),
       item.desc || "",
       formatoCampoNumero(item.qty,2),
-      monedaDocumento(item.price,form.tipo,2),
+      monedaDocumento(item.price,form.tipo,5),
       monedaDocumento(total,form.tipo,2)
     ]);
   });
@@ -2887,8 +2887,12 @@ function bindEvents(){
       const index = Number(e.target.dataset.index);
       const field = e.target.dataset.field;
 
-      if(field === "qty" || field === "price"){
+      if(field === "qty"){
         e.target.value = formatoCampoNumero(data.items[index]?.[field] || 0,2);
+      }
+
+      if(field === "price"){
+        e.target.value = formatoCampoNumero(data.items[index]?.[field] || 0,5);
       }
     }
   }, true);
