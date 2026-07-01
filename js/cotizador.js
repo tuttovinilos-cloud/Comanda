@@ -1098,7 +1098,7 @@ function render(){
           <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.qty,2)}" data-index="${index}" data-field="qty">
         </td>
         <td class="center">
-          <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.price,2)}" data-index="${index}" data-field="price">
+          <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.price,10)}" data-index="${index}" data-field="price">
         </td>
         <td class="center total-cell">
           <input readonly data-total-index="${index}" value="${totalItemTexto}">
