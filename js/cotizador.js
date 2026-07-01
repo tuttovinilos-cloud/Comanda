@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v64 precio unitario 5 decimales");
+console.log("COTIZADOR JS conectado v65 precio unitario hasta 10 decimales");
 
 const $ = (id) => document.getElementById(id);
 
@@ -18,6 +18,9 @@ let undoStack = [];
 let restaurandoDeshacer = false;
 const UNDO_MAX = 4;
 let eventosCotizadorVinculados = false;
+
+const PRECIO_UNIT_DECIMALES_MAX = 10;
+const CANTIDAD_DECIMALES_MAX = 2;
 
 let data = {
   tipo: "Cotización",
@@ -228,14 +231,31 @@ function formatoMiles(n,decimales=2){
   });
 }
 
-function formatoCampoNumero(n,decimales=2){
+function formatoCampoNumero(n,decimales=2,rellenarDecimales=true){
   const num = Number(n || 0);
-  const tieneDecimales = Math.abs(num - Math.trunc(num)) > 0.000001;
+  const tieneDecimales = Math.abs(num - Math.trunc(num)) > Number.EPSILON;
 
   return num.toLocaleString("es-VE",{
-    minimumFractionDigits:tieneDecimales ? decimales : 0,
+    minimumFractionDigits:(rellenarDecimales && tieneDecimales) ? decimales : 0,
     maximumFractionDigits:decimales
   });
+}
+
+function formatoMilesFlexible(n,maxDecimales=10){
+  return Number(n || 0).toLocaleString("es-VE",{
+    minimumFractionDigits:0,
+    maximumFractionDigits:maxDecimales
+  });
+}
+
+function formatoPrecioUnitario(n){
+  return formatoCampoNumero(n,PRECIO_UNIT_DECIMALES_MAX,false);
+}
+
+function monedaPrecioUnitario(n,tipoDocumento=""){
+  return esFacturaTipo(tipoDocumento)
+    ? "BS " + formatoMilesFlexible(n,PRECIO_UNIT_DECIMALES_MAX)
+    : "$" + formatoMilesFlexible(n,PRECIO_UNIT_DECIMALES_MAX);
 }
 
 function currency(n){ return "$" + formatoMiles(n,2); }
@@ -1098,7 +1118,7 @@ function render(){
           <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.qty,2)}" data-index="${index}" data-field="qty">
         </td>
         <td class="center">
-          <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.price,5)}" data-index="${index}" data-field="price">
+          <input type="text" inputmode="decimal" value="${formatoPrecioUnitario(item.price)}" data-index="${index}" data-field="price">
         </td>
         <td class="center total-cell">
           <input readonly data-total-index="${index}" value="${totalItemTexto}">
@@ -1130,7 +1150,7 @@ function render(){
 
             <div class="field">
               <label>P. Unit (${monedaItem})</label>
-              <input type="text" inputmode="decimal" value="${formatoCampoNumero(item.price,5)}" data-index="${index}" data-field="price">
+              <input type="text" inputmode="decimal" value="${formatoPrecioUnitario(item.price)}" data-index="${index}" data-field="price">
             </div>
           </div>
 
@@ -1415,6 +1435,10 @@ function moneyFactura(n,decimales=2){
   return formatoMiles(n,decimales);
 }
 
+function moneyFacturaPrecio(n){
+  return formatoMilesFlexible(n,PRECIO_UNIT_DECIMALES_MAX);
+}
+
 function cantidadFactura(n){
   const num = Number(n || 0);
   const tieneDecimales = Math.abs(num - Math.trunc(num)) > 0.000001;
@@ -1526,7 +1550,7 @@ function drawFacturaReferenciaTable(doc,items){
     doc.setFontSize(facturaFontSize(10.4));
     doc.text(descLines,(x1+x2)/2,descY,{ align:"center" });
     drawTextFactura(doc,cantidadFactura(qty),(x2+x3)/2,rowY+9.4,{ size:10.4, align:"center" });
-    drawTextFactura(doc,"BS " + moneyFactura(price,5),(x3+x4)/2,rowY+9.4,{ size:9.2, align:"center" });
+    drawTextFactura(doc,"BS " + moneyFacturaPrecio(price),(x3+x4)/2,rowY+9.4,{ size:9.2, align:"center" });
     drawTextFactura(doc,"BS " + moneyFactura(total,2),right-1,rowY+9.4,{ size:9.2, align:"right" });
   }
 
@@ -1772,7 +1796,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       String(count++),
       item.desc || "",
       formatoCampoNumero(item.qty,2),
-      monedaDocumento(item.price,form.tipo,5),
+      monedaPrecioUnitario(item.price,form.tipo),
       monedaDocumento(total,form.tipo,2)
     ]);
   });
@@ -2702,7 +2726,7 @@ function abrirDetalleCotizacion(id){
     return `
       <div class="detail-item">
         <b>${numero}. ${html(it.desc || "")}</b><br>
-        Cant: ${html(formatoCampoNumero(it.qty || 0,2))} · P.Unit: ${currencyDocumento(it.price || 0,form.tipo)} · Total: ${currencyDocumento(itemTotal(it),form.tipo)}
+        Cant: ${html(formatoCampoNumero(it.qty || 0,2))} · P.Unit: ${monedaPrecioUnitario(it.price || 0,form.tipo)} · Total: ${currencyDocumento(itemTotal(it),form.tipo)}
       </div>
     `;
   }).join("");
@@ -2892,7 +2916,7 @@ function bindEvents(){
       }
 
       if(field === "price"){
-        e.target.value = formatoCampoNumero(data.items[index]?.[field] || 0,5);
+        e.target.value = formatoPrecioUnitario(data.items[index]?.[field] || 0);
       }
     }
   }, true);
