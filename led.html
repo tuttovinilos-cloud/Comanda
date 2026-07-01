@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Control LED WLED - Tutto</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#111936;
+      --card2:#0f1730;
+      --line:rgba(255,255,255,.10);
+      --text:#eef3ff;
+      --muted:#96a3c0;
+      --accent:#3b82f6;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --radius:18px;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,.28), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(34,197,94,.13), transparent 30%),
+        var(--bg);
+      color:var(--text);
+    }
+
+    header{
+      position:sticky;
+      top:0;
+      z-index:20;
+      backdrop-filter:blur(18px);
+      background:rgba(11,16,32,.86);
+      border-bottom:1px solid var(--line);
+      padding:14px 16px;
+    }
+
+    .top{
+      max-width:1180px;
+      margin:auto;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    h1{
+      margin:0;
+      font-size:20px;
+      letter-spacing:.3px;
+    }
+
+    .status{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .dot{
+      width:11px;
+      height:11px;
+      border-radius:50%;
+      background:var(--warn);
+      box-shadow:0 0 16px currentColor;
+    }
+
+    .dot.ok{background:var(--ok)}
+    .dot.bad{background:var(--bad)}
+
+    main{
+      max-width:1180px;
+      margin:auto;
+      padding:18px 16px 34px;
+      display:grid;
+      grid-template-columns:repeat(12, 1fr);
+      gap:14px;
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:16px;
+      box-shadow:0 12px 30px rgba(0,0,0,.18);
+    }
+
+    .span-12{grid-column:span 12}
+    .span-8{grid-column:span 8}
+    .span-6{grid-column:span 6}
+    .span-4{grid-column:span 4}
+
+    @media(max-width:900px){
+      .span-8,.span-6,.span-4{grid-column:span 12}
+      header{position:static}
+    }
+
+    .card h2{
+      margin:0 0 12px;
+      font-size:16px;
+      color:#fff;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(12, 1fr);
+      gap:10px;
+    }
+
+    .field{grid-column:span 6}
+    .field.full{grid-column:span 12}
+    .field.third{grid-column:span 4}
+    .field.quarter{grid-column:span 3}
+
+    @media(max-width:700px){
+      .field,.field.third,.field.quarter{grid-column:span 12}
+    }
+
+    label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin:0 0 6px;
+    }
+
+    input, select, textarea, button{
+      font:inherit;
+    }
+
+    input[type="text"], input[type="number"], select, textarea{
+      width:100%;
+      background:#090f22;
+      color:var(--text);
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:11px 12px;
+      outline:none;
+    }
+
+    textarea{min-height:84px; resize:vertical}
+
+    input[type="color"]{
+      width:100%;
+      height:43px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#090f22;
+      padding:4px;
+    }
+
+    input[type="range"]{width:100%}
+
+    .value{
+      color:#fff;
+      font-weight:700;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    button{
+      border:0;
+      border-radius:13px;
+      padding:11px 14px;
+      cursor:pointer;
+      color:#fff;
+      background:#1f2a48;
+      border:1px solid var(--line);
+      transition:.15s ease;
+      min-height:42px;
+    }
+
+    button:hover{transform:translateY(-1px); filter:brightness(1.1)}
+    button.primary{background:linear-gradient(135deg, #2563eb, #3b82f6)}
+    button.ok{background:linear-gradient(135deg, #16a34a, #22c55e)}
+    button.bad{background:linear-gradient(135deg, #dc2626, #ef4444)}
+    button.warn{background:linear-gradient(135deg, #d97706, #f59e0b)}
+    button.ghost{background:transparent}
+    button.small{padding:8px 10px; min-height:35px; font-size:13px}
+
+    .preset-grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:8px;
+    }
+
+    @media(max-width:700px){
+      .preset-grid{grid-template-columns:repeat(2,1fr)}
+    }
+
+    .color-dot{
+      width:20px;
+      height:20px;
+      border-radius:50%;
+      display:inline-block;
+      border:1px solid rgba(255,255,255,.35);
+      vertical-align:middle;
+      margin-right:7px;
+    }
+
+    .hint{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    .log{
+      background:#050914;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px;
+      min-height:90px;
+      max-height:180px;
+      overflow:auto;
+      font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size:12px;
+      color:#b9c6e6;
+      white-space:pre-wrap;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--muted);
+      padding:7px 10px;
+      border-radius:999px;
+      font-size:12px;
+    }
+
+    .tabs{
+      display:flex;
+      gap:8px;
+      margin-bottom:12px;
+      flex-wrap:wrap;
+    }
+
+    .tab.active{
+      background:#2563eb;
+    }
+
+    .segment-card{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(0,0,0,.16);
+      margin-bottom:10px;
+    }
+
+    .quick-colors{
+      display:grid;
+      grid-template-columns:repeat(8,1fr);
+      gap:7px;
+    }
+
+    .quick-color{
+      height:34px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.22);
+      cursor:pointer;
+    }
+
+    .danger-zone{
+      border-color:rgba(239,68,68,.25);
+      background:rgba(239,68,68,.05);
+    }
+
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  </style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div>
+      <h1>Control LED WLED</h1>
+      <div class="status">
+        <span id="statusDot" class="dot"></span>
+        <span id="statusText">Sin conectar</span>
+      </div>
+    </div>
+    <div class="row">
+      <span class="pill">WS2812 / WS281x</span>
+      <span class="pill">12V</span>
+      <span class="pill">850 LEDs aprox.</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="card span-12">
+    <h2>Conexión al ESP32</h2>
+    <div class="grid">
+      <div class="field third">
+        <label>IP del ESP32 / WLED</label>
+        <input id="ip" type="text" placeholder="Ej: 192.168.68.120">
+      </div>
+      <div class="field third">
+        <label>Puerto</label>
+        <input id="port" type="number" value="80">
+      </div>
+      <div class="field third">
+        <label>URL detectada</label>
+        <input id="baseUrl" type="text" readonly>
+      </div>
+      <div class="field full row">
+        <button class="primary" onclick="saveConnection()">Guardar conexión</button>
+        <button onclick="testConnection()">Probar conexión</button>
+        <button onclick="syncState()">Leer estado actual</button>
+        <button class="ghost" onclick="openWled()">Abrir WLED original</button>
+      </div>
+    </div>
+    <p class="hint">El celular/PC y el ESP32 deben estar en la misma red WiFi. Si todavía no conoces la IP, búscala en tu router o en la app WLED.</p>
+  </section>
+
+  <section class="card span-4">
+    <h2>Control principal</h2>
+    <div class="row">
+      <button class="ok" onclick="setPower(true)">Encender</button>
+      <button class="bad" onclick="setPower(false)">Apagar</button>
+      <button onclick="togglePower()">Toggle</button>
+    </div>
+    <br>
+    <label>Brillo: <span id="briVal" class="value">128</span></label>
+    <input id="brightness" type="range" min="1" max="255" value="128" oninput="updateLabel('briVal', this.value)" onchange="setBrightness(this.value)">
+    <br><br>
+    <label>Límite de corriente estimado en WLED</label>
+    <input id="currentLimit" type="number" value="15000">
+    <p class="hint">Este campo es informativo en este panel. El límite real se configura en WLED: Config → LED Preferences → Maximum Current.</p>
+  </section>
+
+  <section class="card span-4">
+    <h2>Color fijo</h2>
+    <div class="grid">
+      <div class="field full">
+        <label>Color principal</label>
+        <input id="color1" type="color" value="#005DFF">
+      </div>
+      <div class="field full">
+        <label>Color secundario</label>
+        <input id="color2" type="color" value="#FFFFFF">
+      </div>
+      <div class="field full row">
+        <button class="primary" onclick="sendSolidColor()">Aplicar color principal</button>
+        <button onclick="sendTwoColors()">Aplicar 2 colores</button>
+      </div>
+    </div>
+    <br>
+    <div class="quick-colors">
+      <div class="quick-color" style="background:#ffffff" onclick="quickColor('#ffffff')"></div>
+      <div class="quick-color" style="background:#ff0000" onclick="quickColor('#ff0000')"></div>
+      <div class="quick-color" style="background:#00ff00" onclick="quickColor('#00ff00')"></div>
+      <div class="quick-color" style="background:#005dff" onclick="quickColor('#005dff')"></div>
+      <div class="quick-color" style="background:#ff9d00" onclick="quickColor('#ff9d00')"></div>
+      <div class="quick-color" style="background:#ff00d4" onclick="quickColor('#ff00d4')"></div>
+      <div class="quick-color" style="background:#00e5ff" onclick="quickColor('#00e5ff')"></div>
+      <div class="quick-color" style="background:#000000" onclick="quickColor('#000000')"></div>
+    </div>
+  </section>
+
+  <section class="card span-4">
+    <h2>Efectos</h2>
+    <div class="grid">
+      <div class="field full">
+        <label>Efecto</label>
+        <select id="effect">
+          <option value="0">0 - Fijo</option>
+          <option value="1">1 - Blink</option>
+          <option value="8">8 - Colorloop</option>
+          <option value="9">9 - Rainbow</option>
+          <option value="12">12 - Chase</option>
+          <option value="26">26 - Scan</option>
+          <option value="36">36 - Theater</option>
+          <option value="41">41 - Fireworks</option>
+          <option value="44">44 - Merry Christmas</option>
+          <option value="52">52 - Running</option>
+          <option value="63">63 - Pacifica</option>
+          <option value="67">67 - Pride</option>
+          <option value="74">74 - Colortwinkles</option>
+          <option value="76">76 - Meteor</option>
+          <option value="88">88 - Gravimeter</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>Velocidad: <span id="speedVal" class="value">128</span></label>
+        <input id="speed" type="range" min="0" max="255" value="128" oninput="updateLabel('speedVal', this.value)">
+      </div>
+      <div class="field full">
+        <label>Intensidad: <span id="intVal" class="value">128</span></label>
+        <input id="intensity" type="range" min="0" max="255" value="128" oninput="updateLabel('intVal', this.value)">
+      </div>
+      <div class="field full">
+        <label>Paleta</label>
+        <select id="palette">
+          <option value="0">0 - Default</option>
+          <option value="1">1 - Random Cycle</option>
+          <option value="2">2 - Primary Color</option>
+          <option value="3">3 - Based on Primary</option>
+          <option value="5">5 - Party</option>
+          <option value="11">11 - Rainbow</option>
+          <option value="35">35 - Sunset</option>
+          <option value="46">46 - C9</option>
+        </select>
+      </div>
+      <div class="field full row">
+        <button class="primary" onclick="sendEffect()">Aplicar efecto</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card span-8">
+    <h2>Presets rápidos para letreros</h2>
+    <div class="preset-grid">
+      <button onclick="preset('blancoFrontal')"><span class="color-dot" style="background:#fff"></span>Blanco frontal</button>
+      <button onclick="preset('azulTutto')"><span class="color-dot" style="background:#005dff"></span>Azul fuerte</button>
+      <button onclick="preset('rojoAlerta')"><span class="color-dot" style="background:#ff0000"></span>Rojo</button>
+      <button onclick="preset('calido')"><span class="color-dot" style="background:#ffb45c"></span>Cálido</button>
+      <button onclick="preset('respira')">Respira suave</button>
+      <button onclick="preset('barrido')">Barrido</button>
+      <button onclick="preset('arcoiris')">Arcoíris</button>
+      <button onclick="preset('showroom')">Showroom</button>
+    </div>
+  </section>
+
+  <section class="card span-4">
+    <h2>Configuración de cinta</h2>
+    <div class="grid">
+      <div class="field">
+        <label>Total LEDs físicos</label>
+        <input id="ledCount" type="number" value="850">
+      </div>
+      <div class="field">
+        <label>Voltaje</label>
+        <input id="voltage" type="text" value="12V" readonly>
+      </div>
+      <div class="field">
+        <label>GPIO recomendado</label>
+        <input id="gpio" type="number" value="16">
+      </div>
+      <div class="field">
+        <label>Orden color</label>
+        <select id="colorOrder">
+          <option>GRB</option>
+          <option>RGB</option>
+          <option>BRG</option>
+        </select>
+      </div>
+    </div>
+    <p class="hint">Esto es referencia para configurar WLED. La cantidad real de LEDs y GPIO se cambian en WLED → Config → LED Preferences.</p>
+  </section>
+
+  <section class="card span-12">
+    <h2>Segmentos</h2>
+    <p class="hint">Usa segmentos para dividir la cinta por letras, zonas o partes del letrero. Ejemplo: LED 0 a 120 para una palabra, 121 a 300 para otra.</p>
+
+    <div id="segments"></div>
+
+    <div class="row">
+      <button onclick="addSegment()">Añadir segmento</button>
+      <button class="primary" onclick="applySegments()">Aplicar segmentos</button>
+      <button class="warn" onclick="clearSegments()">Limpiar segmentos</button>
+    </div>
+  </section>
+
+  <section class="card span-6">
+    <h2>Guardar presets en WLED</h2>
+    <div class="grid">
+      <div class="field third">
+        <label>ID preset</label>
+        <input id="presetId" type="number" value="1" min="1" max="250">
+      </div>
+      <div class="field">
+        <label>Nombre</label>
+        <input id="presetName" type="text" value="Preset Tutto">
+      </div>
+      <div class="field full row">
+        <button class="primary" onclick="savePresetToWled()">Guardar estado actual como preset</button>
+        <button onclick="loadPresetFromWled()">Cargar preset</button>
+      </div>
+    </div>
+    <p class="hint">Primero aplica el color/efecto deseado, luego guárdalo como preset para llamarlo rápido.</p>
+  </section>
+
+  <section class="card span-6">
+    <h2>Temporizador básico</h2>
+    <div class="grid">
+      <div class="field">
+        <label>Apagar en minutos</label>
+        <input id="timerMinutes" type="number" value="30" min="1">
+      </div>
+      <div class="field">
+        <label>Acción</label>
+        <select id="timerAction">
+          <option value="off">Apagar</option>
+          <option value="on">Encender</option>
+        </select>
+      </div>
+      <div class="field full row">
+        <button onclick="startTimer()">Iniciar temporizador local</button>
+        <button class="bad" onclick="cancelTimer()">Cancelar</button>
+      </div>
+    </div>
+    <p id="timerInfo" class="hint">Sin temporizador activo.</p>
+  </section>
+
+  <section class="card span-12">
+    <h2>Comando JSON avanzado</h2>
+    <p class="hint">Para usuarios avanzados. Puedes enviar un JSON directo a <span class="mono">/json/state</span>.</p>
+    <textarea id="customJson">{
+  "on": true,
+  "bri": 180,
+  "seg": [
+    {
+      "id": 0,
+      "fx": 9,
+      "sx": 128,
+      "ix": 128,
+      "pal": 11
+    }
+  ]
+}</textarea>
+    <br><br>
+    <button class="primary" onclick="sendCustomJson()">Enviar JSON</button>
+  </section>
+
+  <section class="card span-12">
+    <h2>Registro</h2>
+    <div id="log" class="log">Listo.</div>
+  </section>
+
+  <section class="card span-12 danger-zone">
+    <h2>Notas de conexión importantes</h2>
+    <p class="hint">
+      La cinta LED debe alimentarse con 12V desde la fuente. El ESP32 se alimenta con 5V mediante buck o USB.
+      El GND de la fuente, la cinta y el ESP32 deben estar unidos. No conectes 12V directo al ESP32.
+      Para 10 metros, alimenta la cinta al inicio, mitad y final.
+    </p>
+  </section>
+</main>
+
+<script>
+  let timerHandle = null;
+
+  const $ = (id) => document.getElementById(id);
+
+  function log(msg){
+    const now = new Date().toLocaleTimeString();
+    $("log").textContent += `\n[${now}] ${msg}`;
+    $("log").scrollTop = $("log").scrollHeight;
+  }
+
+  function updateLabel(id, value){
+    $(id).textContent = value;
+  }
+
+  function getBaseUrl(){
+    const ip = $("ip").value.trim();
+    const port = $("port").value.trim() || "80";
+    if(!ip) return "";
+    return `http://${ip}${port === "80" ? "" : ":" + port}`;
+  }
+
+  function refreshBaseUrl(){
+    $("baseUrl").value = getBaseUrl();
+  }
+
+  function saveConnection(){
+    refreshBaseUrl();
+    localStorage.setItem("wled_ip", $("ip").value.trim());
+    localStorage.setItem("wled_port", $("port").value.trim() || "80");
+    log("Conexión guardada: " + getBaseUrl());
+  }
+
+  function loadConnection(){
+    $("ip").value = localStorage.getItem("wled_ip") || "";
+    $("port").value = localStorage.getItem("wled_port") || "80";
+    refreshBaseUrl();
+  }
+
+  async function wledPost(payload){
+    refreshBaseUrl();
+    const base = getBaseUrl();
+    if(!base){
+      setStatus("bad", "Falta IP del ESP32");
+      throw new Error("Falta IP del ESP32");
+    }
+
+    const res = await fetch(`${base}/json/state`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify(payload)
+    });
+
+    if(!res.ok){
+      setStatus("bad", "Error HTTP " + res.status);
+      throw new Error("HTTP " + res.status);
+    }
+
+    setStatus("ok", "Conectado");
+    log("Enviado: " + JSON.stringify(payload));
+    return res.json().catch(() => ({}));
+  }
+
+  async function wledGet(path="/json"){
+    refreshBaseUrl();
+    const base = getBaseUrl();
+    if(!base){
+      setStatus("bad", "Falta IP del ESP32");
+      throw new Error("Falta IP del ESP32");
+    }
+
+    const res = await fetch(`${base}${path}`);
+    if(!res.ok){
+      setStatus("bad", "Error HTTP " + res.status);
+      throw new Error("HTTP " + res.status);
+    }
+
+    setStatus("ok", "Conectado");
+    return res.json();
+  }
+
+  function setStatus(type, text){
+    const dot = $("statusDot");
+    dot.className = "dot";
+    if(type) dot.classList.add(type);
+    $("statusText").textContent = text;
+  }
+
+  function hexToRgb(hex){
+    const clean = hex.replace("#","");
+    return [
+      parseInt(clean.substring(0,2),16),
+      parseInt(clean.substring(2,4),16),
+      parseInt(clean.substring(4,6),16)
+    ];
+  }
+
+  async function testConnection(){
+    try{
+      const data = await wledGet("/json/info");
+      log(`Conexión OK. Nombre: ${data.name || "WLED"} | LEDs: ${data.leds?.count ?? "?"}`);
+    }catch(e){
+      log("No conecta. Revisa IP, WiFi o si WLED está encendido. " + e.message);
+    }
+  }
+
+  async function syncState(){
+    try{
+      const data = await wledGet("/json");
+      if(data.state){
+        $("brightness").value = data.state.bri || 128;
+        $("briVal").textContent = $("brightness").value;
+        log("Estado leído correctamente.");
+      }
+      if(data.info){
+        log(`Info: ${data.info.name || "WLED"} / versión ${data.info.ver || "?"}`);
+      }
+    }catch(e){
+      log("No se pudo leer estado: " + e.message);
+    }
+  }
+
+  function openWled(){
+    const base = getBaseUrl();
+    if(base) window.open(base, "_blank");
+  }
+
+  function setPower(on){
+    wledPost({on});
+  }
+
+  async function togglePower(){
+    try{
+      const data = await wledGet("/json/state");
+      wledPost({on: !data.on});
+    }catch(e){
+      log("No se pudo alternar: " + e.message);
+    }
+  }
+
+  function setBrightness(value){
+    wledPost({bri: Number(value)});
+  }
+
+  function sendSolidColor(){
+    const color = hexToRgb($("color1").value);
+    const bri = Number($("brightness").value);
+    wledPost({
+      on:true,
+      bri,
+      seg:[{
+        id:0,
+        fx:0,
+        col:[color]
+      }]
+    });
+  }
+
+  function sendTwoColors(){
+    const color1 = hexToRgb($("color1").value);
+    const color2 = hexToRgb($("color2").value);
+    const bri = Number($("brightness").value);
+    wledPost({
+      on:true,
+      bri,
+      seg:[{
+        id:0,
+        col:[color1, color2],
+        fx:Number($("effect").value || 0),
+        sx:Number($("speed").value),
+        ix:Number($("intensity").value),
+        pal:Number($("palette").value)
+      }]
+    });
+  }
+
+  function quickColor(hex){
+    $("color1").value = hex;
+    sendSolidColor();
+  }
+
+  function sendEffect(){
+    const color1 = hexToRgb($("color1").value);
+    const color2 = hexToRgb($("color2").value);
+    wledPost({
+      on:true,
+      bri:Number($("brightness").value),
+      seg:[{
+        id:0,
+        fx:Number($("effect").value),
+        sx:Number($("speed").value),
+        ix:Number($("intensity").value),
+        pal:Number($("palette").value),
+        col:[color1, color2]
+      }]
+    });
+  }
+
+  function preset(name){
+    const presets = {
+      blancoFrontal:{
+        on:true,bri:220,
+        seg:[{id:0,fx:0,col:[[255,255,255]]}]
+      },
+      azulTutto:{
+        on:true,bri:210,
+        seg:[{id:0,fx:0,col:[[0,93,255]]}]
+      },
+      rojoAlerta:{
+        on:true,bri:200,
+        seg:[{id:0,fx:0,col:[[255,0,0]]}]
+      },
+      calido:{
+        on:true,bri:190,
+        seg:[{id:0,fx:0,col:[[255,180,92]]}]
+      },
+      respira:{
+        on:true,bri:180,
+        seg:[{id:0,fx:2,sx:80,ix:120,col:[[0,93,255],[255,255,255]],pal:2}]
+      },
+      barrido:{
+        on:true,bri:180,
+        seg:[{id:0,fx:12,sx:120,ix:130,col:[[0,93,255],[255,255,255]],pal:0}]
+      },
+      arcoiris:{
+        on:true,bri:160,
+        seg:[{id:0,fx:9,sx:120,ix:128,pal:11}]
+      },
+      showroom:{
+        on:true,bri:190,
+        seg:[{id:0,fx:63,sx:90,ix:120,pal:35,col:[[0,93,255],[255,255,255]]}]
+      }
+    };
+
+    wledPost(presets[name]);
+  }
+
+  function addSegment(data={}){
+    const wrap = document.createElement("div");
+    wrap.className = "segment-card";
+    const id = document.querySelectorAll(".segment-card").length;
+
+    wrap.innerHTML = `
+      <div class="grid">
+        <div class="field quarter">
+          <label>Segmento ID</label>
+          <input class="seg-id" type="number" value="${data.id ?? id}">
+        </div>
+        <div class="field quarter">
+          <label>Inicio LED</label>
+          <input class="seg-start" type="number" value="${data.start ?? 0}">
+        </div>
+        <div class="field quarter">
+          <label>Final LED</label>
+          <input class="seg-stop" type="number" value="${data.stop ?? 100}">
+        </div>
+        <div class="field quarter">
+          <label>Color</label>
+          <input class="seg-color" type="color" value="${data.color ?? "#005dff"}">
+        </div>
+        <div class="field third">
+          <label>Efecto</label>
+          <select class="seg-fx">
+            <option value="0">Fijo</option>
+            <option value="9">Rainbow</option>
+            <option value="12">Chase</option>
+            <option value="52">Running</option>
+            <option value="76">Meteor</option>
+          </select>
+        </div>
+        <div class="field third">
+          <label>Velocidad</label>
+          <input class="seg-sx" type="number" min="0" max="255" value="${data.sx ?? 128}">
+        </div>
+        <div class="field third">
+          <label>Intensidad</label>
+          <input class="seg-ix" type="number" min="0" max="255" value="${data.ix ?? 128}">
+        </div>
+        <div class="field full row">
+          <button class="small bad" onclick="this.closest('.segment-card').remove()">Eliminar segmento</button>
+        </div>
+      </div>
+    `;
+
+    $("segments").appendChild(wrap);
+    const fx = wrap.querySelector(".seg-fx");
+    fx.value = data.fx ?? 0;
+  }
+
+  function applySegments(){
+    const cards = [...document.querySelectorAll(".segment-card")];
+    if(cards.length === 0){
+      log("No hay segmentos para aplicar.");
+      return;
+    }
+
+    const seg = cards.map(card => ({
+      id:Number(card.querySelector(".seg-id").value),
+      start:Number(card.querySelector(".seg-start").value),
+      stop:Number(card.querySelector(".seg-stop").value),
+      fx:Number(card.querySelector(".seg-fx").value),
+      sx:Number(card.querySelector(".seg-sx").value),
+      ix:Number(card.querySelector(".seg-ix").value),
+      col:[hexToRgb(card.querySelector(".seg-color").value)]
+    }));
+
+    wledPost({
+      on:true,
+      bri:Number($("brightness").value),
+      seg
+    });
+  }
+
+  function clearSegments(){
+    $("segments").innerHTML = "";
+    log("Segmentos limpiados en el panel. No cambia WLED hasta aplicar otro estado.");
+  }
+
+  function savePresetToWled(){
+    const psave = Number($("presetId").value);
+    const n = $("presetName").value || `Preset ${psave}`;
+    wledPost({
+      psave,
+      n
+    });
+  }
+
+  function loadPresetFromWled(){
+    const ps = Number($("presetId").value);
+    wledPost({ps});
+  }
+
+  function startTimer(){
+    cancelTimer(false);
+    const minutes = Number($("timerMinutes").value);
+    const action = $("timerAction").value;
+    if(!minutes || minutes < 1){
+      log("Minutos inválidos.");
+      return;
+    }
+
+    const end = new Date(Date.now() + minutes * 60000);
+    $("timerInfo").textContent = `Temporizador activo hasta ${end.toLocaleTimeString()}. Acción: ${action === "off" ? "Apagar" : "Encender"}.`;
+
+    timerHandle = setTimeout(() => {
+      setPower(action === "on");
+      $("timerInfo").textContent = "Temporizador ejecutado.";
+      timerHandle = null;
+    }, minutes * 60000);
+
+    log(`Temporizador iniciado: ${minutes} min.`);
+  }
+
+  function cancelTimer(showLog=true){
+    if(timerHandle){
+      clearTimeout(timerHandle);
+      timerHandle = null;
+    }
+    $("timerInfo").textContent = "Sin temporizador activo.";
+    if(showLog) log("Temporizador cancelado.");
+  }
+
+  function sendCustomJson(){
+    try{
+      const payload = JSON.parse($("customJson").value);
+      wledPost(payload);
+    }catch(e){
+      log("JSON inválido: " + e.message);
+    }
+  }
+
+  $("ip").addEventListener("input", refreshBaseUrl);
+  $("port").addEventListener("input", refreshBaseUrl);
+
+  loadConnection();
+
+  addSegment({id:0,start:0,stop:280,color:"#005dff",fx:0});
+  addSegment({id:1,start:280,stop:560,color:"#ffffff",fx:0});
+  addSegment({id:2,start:560,stop:850,color:"#005dff",fx:12,sx:120,ix:130});
+</script>
+</body>
+</html>
