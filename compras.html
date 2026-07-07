@@ -357,10 +357,13 @@ function prepararMaterialNuevo(){
 }
 
 function renderNuevaHelpers(){
-  const proveedorId=num($('newProveedorId').value);
-  const ordenados=[...materiales].sort((a,b)=>(favoritosMateriales.includes(b.id)-favoritosMateriales.includes(a.id))||String(a.nombre||'').localeCompare(String(b.nombre||'')));
-  $('ayudasMaterial').innerHTML=ordenados.slice(0,12).map(m=>`<span class="help-chip" onclick="seleccionarMaterial(${num(m.id)})">${favoritosMateriales.includes(m.id)?'★ ':''}${esc(m.nombre||'')}</span>`).join('')+
-    `<span class="help-chip" onclick="$('buscarMaterial').focus()">+ Buscar otro</span><div class="search-hint">${proveedorId?'Los códigos y precios mostrados corresponden al proveedor seleccionado.':'Selecciona un proveedor para cargar su código y último precio.'}</div>`;
+  // La búsqueda sigue mostrando sugerencias únicamente mientras se escribe.
+  // No se muestran materiales guardados permanentemente debajo del buscador.
+  const box=$('ayudasMaterial');
+  if(box){
+    box.innerHTML='';
+    box.style.display='none';
+  }
 }
 
 function renderFacturas(nf,df){
