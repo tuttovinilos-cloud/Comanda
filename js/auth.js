@@ -1,6 +1,6 @@
 // Auth centralizado COMANDA
 // Aplica control de sesión, permisos por página y filtrado de menú.
-// v28 · orden visual correcto: Pedido, Precio, Cliente, Label, Cotizador, Organizador, Estadísticas, Marketing, Materiales, Configuración.
+// v29 · agrega Compras y Contabilidad con permisos independientes.
 
 (function () {
   const AUTH_KEY = "comanda_operador_actual";
@@ -19,6 +19,8 @@
     "precios.html": "puede_precios",
     "estadisticas.html": "puede_estadisticas",
     "marketing.html": "puede_marketing",
+    "compras.html": "puede_compras",
+    "contabilidad.html": "puede_contabilidad",
     "cotizador.html": "puede_cotizador",
     "label.html": "puede_label",
     "organizador de ideas.html": "puede_organizador",
@@ -35,6 +37,8 @@
     "estadisticas.html",
     "marketing.html",
     "materiales.html",
+    "compras.html",
+    "contabilidad.html",
     "configuracion.html"
   ];
 
