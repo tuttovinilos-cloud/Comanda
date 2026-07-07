@@ -1016,118 +1016,57 @@ html.menu-ready .header-tabs,
 
 
 /* =========================================================
-   DESPLIEGUE PROFESIONAL DE PRODUCTO
-   1er clic: muestra todas las notas y adicionales.
-   Botón Opciones: muestra WhatsApp, Editar y Duplicar.
+   PRODUCTOS · NOTAS Y EXTRAS SIEMPRE VISIBLES
+   Al hacer clic en la tarjeta aparecen WhatsApp, Editar y Duplicar.
 ========================================================= */
-.item-head-summary{
-  display:flex;
-  flex-wrap:wrap;
-  gap:5px;
+.mini-extras,.mini-notes{
   margin-top:7px;
-}
-.item-head-summary .mini-pill{
-  margin:0;
-}
-.detail-section{
-  margin-bottom:12px;
-}
-.detail-section:last-of-type{
-  margin-bottom:0;
-}
-.detail-section-title{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin-bottom:7px;
-  color:var(--muted);
-  font-size:10px;
-  font-weight:900;
-  letter-spacing:1.4px;
-  text-transform:uppercase;
-}
-.detail-section-title span{
-  min-width:22px;
-  height:22px;
-  padding:0 7px;
-  border-radius:999px;
-  background:#eef1ff;
-  color:var(--blue);
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  font-size:10px;
-  letter-spacing:0;
-}
-.note-list{
   display:grid;
-  gap:7px;
+  gap:4px;
 }
-.note-row{
-  position:relative;
-  background:#eef5ff;
-  border:1px solid #cfe0ff;
-  border-radius:10px;
-  padding:9px 10px 9px 27px;
-  color:#2563eb;
-  font-size:12px;
-  line-height:1.4;
+.mini-extra-line,.mini-note-line{
+  display:block;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  line-height:1.35;
+}
+.mini-extra-line small{
+  display:block;
+  margin-top:2px;
+  color:#9a3412;
+  font-size:10px;
   font-weight:750;
 }
-.note-row::before{
-  content:'•';
-  position:absolute;
-  left:11px;
-  top:8px;
-  color:#2563eb;
-  font-size:15px;
-  font-weight:900;
-}
-.product-options-toggle{
-  width:100%;
-  margin-top:12px;
-  border:1px solid #cbd3e6;
-  background:#f8f9ff;
-  color:var(--blue);
-  border-radius:12px;
-  padding:11px 12px;
-  font-family:var(--head);
-  font-size:11px;
-  font-weight:900;
-  letter-spacing:.35px;
-  text-transform:uppercase;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:7px;
-}
-.product-options-toggle:hover{
-  background:#eef1ff;
-  border-color:#aeb9ff;
-}
-.product-options-toggle .options-chevron{
-  transition:transform .18s ease;
-}
-.item.actions-open .product-options-toggle .options-chevron{
-  transform:rotate(180deg);
+.item.expanded .mini-extra-line small{
+  color:#fed7aa;
 }
 .product-action-panel{
-  display:none;
-  margin-top:10px;
-  padding-top:10px;
-  border-top:1px solid var(--border);
-}
-.item.actions-open .product-action-panel{
   display:block;
-  animation:catShow .16s ease;
+  margin-top:0;
 }
 .product-action-panel .copy-btn{
   margin:0;
 }
+.item-head{
+  align-items:flex-start;
+}
+.item-head .price-box,
+.item-head .chev{
+  margin-top:2px;
+}
+.item.expanded .chev{
+  transform:rotate(180deg);
+}
+.item .detail{
+  border-top:1px solid var(--border);
+}
+.item.expanded .detail{
+  animation:catShow .16s ease;
+}
 @media(max-width:620px){
-  .product-options-toggle{min-height:42px}
+  .item-head{gap:9px;padding:13px 11px}
+  .mini-extra-line,.mini-note-line{font-size:10.5px}
 }
 </style>
 
@@ -2205,6 +2144,19 @@ function renderItemCard(item){
     .map(n => n.trim())
     .filter(Boolean);
 
+  const extrasPreview = extras.length
+    ? `<div class="mini-extras">${extras.map(ex => `
+        <div class="mini-extra-line">
+          ${escapeHTML(ex.nombre)} · +${moneyExtra(ex.precio)} / ${escapeHTML(ex.unidad || '')}
+          ${ex.nota ? `<small>${escapeHTML(ex.nota)}</small>` : ''}
+        </div>
+      `).join('')}</div>`
+    : '';
+
+  const notasPreview = notas.length
+    ? `<div class="mini-notes">${notas.map(n => `<div class="mini-note-line">${escapeHTML(n)}</div>`).join('')}</div>`
+    : '';
+
   const isVariable = item.tipoPrecio === 'variable';
   let priceText = moneyBrecha(item.precio);
   let unitText = '/' + escapeHTML(item.unidad || '');
@@ -2243,24 +2195,17 @@ function renderItemCard(item){
     variablePreview = `<div class="item-preview"><span class="mini-pill">Fijo</span></div>`;
   }
 
-  const summaryCounts = (extras.length || notas.length)
-    ? `<div class="item-head-summary">
-        ${extras.length ? `<span class="mini-pill orange">${extras.length} extra${extras.length === 1 ? '' : 's'}</span>` : ''}
-        ${notas.length ? `<span class="mini-pill">${notas.length} nota${notas.length === 1 ? '' : 's'}</span>` : ''}
-      </div>`
-    : '';
-
-  const isExpanded = expandedId === item.id;
   const actionsOpen = actionMenuId === item.id;
 
   return `
-    <div class="item ${isExpanded ? 'expanded' : ''} ${actionsOpen ? 'actions-open' : ''}">
-      <div class="item-head" onclick="toggleItem('${item.id}')">
+    <div class="item ${actionsOpen ? 'expanded actions-open' : ''}">
+      <div class="item-head" onclick="toggleItemActions('${item.id}')">
         <div class="item-info">
           <div class="item-name">${escapeHTML(item.nombre)}</div>
           <div class="item-cat">${escapeHTML(item.categoria || 'Sin categoría')}</div>
           ${variablePreview}
-          ${summaryCounts}
+          ${extrasPreview}
+          ${notasPreview}
         </div>
         <div class="price-box">
           <div class="price">${priceText}</div>
@@ -2271,37 +2216,6 @@ function renderItemCard(item){
 
       <div class="detail">
         ${variableDetail}
-
-        ${notas.length ? `
-          <div class="detail-section">
-            <div class="detail-section-title">Notas <span>${notas.length}</span></div>
-            <div class="note-list">
-              ${notas.map(n => `<div class="note-row">${escapeHTML(n)}</div>`).join('')}
-            </div>
-          </div>
-        ` : ''}
-
-        ${extras.length ? `
-          <div class="detail-section extra-list">
-            <div class="detail-section-title">Adicionales <span>${extras.length}</span></div>
-            ${extras.map(ex => `
-              <div class="extra-card">
-                <div>
-                  <b>${escapeHTML(ex.nombre)}</b>
-                  ${ex.nota ? `<small>${escapeHTML(ex.nota)}</small>` : ''}
-                </div>
-                <div class="extra-price">+${moneyExtra(ex.precio)} / ${escapeHTML(ex.unidad || '')}</div>
-              </div>
-            `).join('')}
-          </div>
-        ` : ''}
-
-        ${!notas.length && !extras.length ? `<div class="note">Este producto no tiene notas ni adicionales registrados.</div>` : ''}
-
-        <button class="product-options-toggle" type="button" onclick="event.stopPropagation(); toggleItemActions('${item.id}')">
-          <span>${actionsOpen ? 'Ocultar opciones' : 'Ver opciones del producto'}</span>
-          <span class="options-chevron">▾</span>
-        </button>
 
         <div class="product-action-panel">
           <button class="copy-btn" type="button" onclick="event.stopPropagation(); copyItem('${item.id}')">📋 Copiar para WhatsApp</button>
@@ -2317,17 +2231,13 @@ function renderItemCard(item){
 }
 
 function toggleItem(id){
-  const opening = expandedId !== id;
-  expandedId = opening ? id : null;
-  actionMenuId = null;
-  renderResults();
+  toggleItemActions(id);
 }
 
 function toggleItemActions(id){
-  if(expandedId !== id){
-    expandedId = id;
-  }
-  actionMenuId = actionMenuId === id ? null : id;
+  const opening = actionMenuId !== id;
+  actionMenuId = opening ? id : null;
+  expandedId = actionMenuId;
   renderResults();
 }
 
