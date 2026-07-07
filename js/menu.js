@@ -1,4 +1,4 @@
-console.log("MENU GLOBAL conectado v44 orden visual correcto");
+console.log("MENU GLOBAL conectado v45 compras y contabilidad");
 
 /* =========================================================
    MENU GLOBAL COMANDA / TUTTOVINILOS
@@ -22,6 +22,8 @@ console.log("MENU GLOBAL conectado v44 orden visual correcto");
     { page:"estadisticas.html", label:"▥ Estadísticas", permission:"puede_estadisticas" },
     { page:"marketing.html", label:"◄ Marketing", permission:"puede_marketing" },
     { page:"materiales.html", label:"$ Materiales", permission:"puede_materiales" },
+    { page:"compras.html", label:"🛒 Compras", permission:"puede_compras" },
+    { page:"contabilidad.html", label:"▤ Contabilidad", permission:"puede_contabilidad" },
     { page:"configuracion.html", label:"⚙ Configuración", permission:"puede_configuracion" }
   ];
 
