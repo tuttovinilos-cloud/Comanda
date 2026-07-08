@@ -378,7 +378,7 @@ function renderFacturas(nf,df){
   const itemCount={}; df.forEach(x=>itemCount[num(x.nota_id)]=(itemCount[num(x.nota_id)]||0)+1);
   const porProv={};
   nf.forEach(n=>{ const p=n.proveedor||'Sin proveedor'; if(!porProv[p])porProv[p]=[]; porProv[p].push(n); });
-  const html=Object.entries(porProv).sort((a,b)=>b[1].reduce((s,n)=>s+num(n.total),0)-a[1].reduce((s,n)=>s+num(n.total),0)).map(([prov,arr],idx)=>{
+  const html=Object.entries(porProv).sort((a,b)=>b[1].reduce((s,n)=>s+num(n.total),0)-a[1].reduce((s,n)=>s+num(n.total),0)).map(([prov,arr])=>{
     const totalProv=arr.reduce((s,n)=>s+num(n.total),0);
     const itemsProv=arr.reduce((s,n)=>s+(itemCount[num(n.id)]||0),0);
     const facturasHtml=arr.map(n=>{
@@ -388,7 +388,7 @@ function renderFacturas(nf,df){
       const accionEstadoMovil=botonEstadoNota(n,'estado-mobile');
       return `<div class="invoice-card"><div class="invoice-card-head" onclick="this.closest('.invoice-card').classList.toggle('open')"><b>${esc(n.fecha||'')}</b><span class="badge doc">${tipoDoc(n)}</span><span><b>${esc(n.nro_nota||'')}</b><br><small>${itemCount[num(n.id)]||0} items</small></span><span class="money">${money(n.total)}</span><span class="hide-sm">${accionEstado}</span><button class="mini hide-sm" type="button">Abrir</button></div><div class="invoice-detail"><div class="invoice-detail-actions">${accionEstadoMovil}</div>${detalleHtml}</div></div>`;
     }).join('');
-    return `<div class="invoice-group ${idx===0?'open':''}"><div class="invoice-group-head" onclick="this.closest('.invoice-group').classList.toggle('open')"><div><b>${esc(prov)}</b><small>${arr.length} documentos · ${itemsProv} items</small></div><b class="money">${money(totalProv)}</b></div><div class="invoice-group-body">${facturasHtml}</div></div>`;
+    return `<div class="invoice-group"><div class="invoice-group-head" onclick="this.closest('.invoice-group').classList.toggle('open')"><div><b>${esc(prov)}</b><small>${arr.length} documentos · ${itemsProv} items</small></div><b class="money">${money(totalProv)}</b></div><div class="invoice-group-body">${facturasHtml}</div></div>`;
   }).join('');
   $('facturasAgrupadas').innerHTML=html||'<div class="empty">Sin facturas o notas en este filtro</div>';
 }
