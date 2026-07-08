@@ -909,7 +909,7 @@ function agregarLinea(){
     es_nuevo:materialNuevoConfirmado,
     codigo:$('lineCodigo').value.trim(),
     material,
-    categoria:$('lineCategoria').value.trim(),
+    categoria:$('lineCategoria').value.trim()||'Sin categoría',
     unidad:$('lineUnidad').value.trim()||'Und',
     cantidad:num($('lineCantidad').value)||1,
     precio_unitario:num($('linePrecio').value)||0
@@ -933,7 +933,7 @@ async function upsertMaterial(l){
   const db=getDb();
   if(l.material_id)return l.material_id;
   const ex=materiales.find(m=>normNombre(m.nombre)===normNombre(l.material)); if(ex)return ex.id;
-  const payload={codigo:null,nombre:l.material,categoria:l.categoria||null,unidad:l.unidad||'Und',ultimo_precio:l.precio_unitario,activo:true};
+  const payload={codigo:null,nombre:l.material,categoria:l.categoria||'Sin categoría',unidad:l.unidad||'Und',ultimo_precio:l.precio_unitario,activo:true};
   const {data,error}=await db.from('compras_materiales').insert(payload).select('id').single(); if(error)throw error; return data.id;
 }
 async function guardarRelacionMaterialProveedor(materialId,proveedorId,l,fecha){
@@ -986,7 +986,7 @@ async function guardarFactura(){
         codigo:l.codigo||null,
         material:l.material,
         material_nombre:l.material,
-        categoria:l.categoria||null,
+        categoria:l.categoria||'Sin categoría',
         cantidad:l.cantidad,
         unidad:l.unidad||'Und',
         precio_unitario:l.precio_unitario
