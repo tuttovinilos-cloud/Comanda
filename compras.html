@@ -710,7 +710,9 @@ function renderGeneral(){
     const tipoTexto=esCompra?'Compra':'Gasto fijo';
     const estadoBtn=esCompra?botonEstadoNota(t.nota):botonEstadoGastoGeneral(t.pago);
     const detalleHtml=esCompra?detalleGeneralCompra(t):detalleGeneralGasto(t);
-    const eliminarBtn=esCompra?'':`<button type="button" class="general-delete-btn" title="Eliminar este gasto del mes" onclick="event.stopPropagation();quitarGastoDelMes(${num(t.pago?.id)},this)">×</button>`;
+    const eliminarBtn=esCompra
+      ? `<button type="button" class="general-delete-btn" title="Eliminar esta compra" onclick="event.stopPropagation();eliminarCompra(${num(t.nota?.id)},this)">×</button>`
+      : `<button type="button" class="general-delete-btn" title="Eliminar este gasto del mes" onclick="event.stopPropagation();quitarGastoDelMes(${num(t.pago?.id)},this)">×</button>`;
     return `<div class="general-item"><div class="general-item-head" onclick="this.closest('.general-item').classList.toggle('open')"><div class="general-date">${esc(t.fecha)}</div><span class="general-type ${tipoClase}">${tipoTexto}</span><div class="general-description"><b>${esc(t.titulo)}</b><small>${esCompra?`${t.detalles.length} items`:'Agregado manualmente'}</small></div><div class="general-origin general-hide-mobile">${esc(t.origen)}<small>${esc(t.documento)}</small></div><div class="general-document general-hide-mobile">${esc(t.documento)}</div><div class="general-hide-mobile">${estadoBtn}</div><div class="general-amount">${money(t.monto)}</div><div class="general-delete-slot">${eliminarBtn}</div></div><div class="general-detail">${detalleHtml}</div></div>`;
   }).join('')||'<div class="general-empty">Sin transacciones para este filtro</div>';
 }
@@ -757,6 +759,38 @@ async function cambiarEstadoNota(id,nuevoEstado,boton){
     botones.forEach(b=>b.disabled=false);
     if(boton)boton.disabled=false;
     toast('No se pudo actualizar el estado: '+(err.message||err));
+  }
+}
+
+async function eliminarCompra(notaId,boton){
+  const db=getDb(); if(!db)return;
+  const nota=notas.find(n=>num(n.id)===num(notaId));
+  if(!nota){toast('No se encontró la compra');return;}
+
+  const tipo=tipoDoc(nota)==='F'?'Factura':'Nota';
+  const numero=numeroDocumentoVisible(nota.nro_nota)||'S/N';
+  const proveedor=nota.proveedor||'Sin proveedor';
+
+  if(!window.confirm(`¿Quieres eliminar la ${tipo} ${numero} de ${proveedor}?\n\nSe eliminarán sus materiales y movimientos. Esta acción no se puede deshacer.`))return;
+
+  if(boton)boton.disabled=true;
+  try{
+    const {error:e1}=await db.from('compras_movimientos').delete().eq('nota_id',notaId);
+    if(e1)throw e1;
+
+    const {error:e2}=await db.from('compras_detalle').delete().eq('nota_id',notaId);
+    if(e2)throw e2;
+
+    const {error:e3}=await db.from('compras_notas').delete().eq('id',notaId);
+    if(e3)throw e3;
+
+    await cargarTodo();
+    showTab('general');
+    toast(`${tipo} ${numero} eliminada`);
+  }catch(err){
+    console.error('Error eliminando compra:',err);
+    toast('No se pudo eliminar la compra: '+(err.message||err));
+    if(boton)boton.disabled=false;
   }
 }
 
