@@ -494,6 +494,7 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
               <th>Unidad</th>
               <th>Precio unitario</th>
               <th>Total línea</th>
+              <th>Acción</th>
             </tr>
           </thead>
           <tbody id="historialMaterialBody"></tbody>
@@ -1072,6 +1073,12 @@ async function eliminarCompra(notaId,boton){
   const tipo=tipoDoc(nota)==='F'?'Factura':'Nota';
   const numero=numeroDocumentoVisible(nota.nro_nota)||'S/N';
   const proveedor=nota.proveedor||'Sin proveedor';
+  const materialIdsAfectados=[...new Set(
+    detalle
+      .filter(d=>num(d.nota_id)===num(notaId))
+      .map(d=>num(d.material_id))
+      .filter(Boolean)
+  )];
 
   if(!window.confirm(`¿Quieres eliminar la ${tipo} ${numero} de ${proveedor}?\n\nSe eliminarán sus materiales y movimientos. Esta acción no se puede deshacer.`))return;
 
@@ -1087,6 +1094,10 @@ async function eliminarCompra(notaId,boton){
     if(e3)throw e3;
 
     await cargarTodo();
+    if(materialIdsAfectados.length){
+      await recalcularUltimosPreciosMateriales(materialIdsAfectados);
+      await cargarTodo();
+    }
     showTab('general');
     toast(`${tipo} ${numero} eliminada`);
   }catch(err){
@@ -1255,6 +1266,32 @@ function filasHistorialMaterial(materialId){
     })
     .sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha))||num(b.nota?.id)-num(a.nota?.id));
 }
+
+function eliminarRegistroDesdeHistorial(detalleId,boton){
+  const linea=detalle.find(d=>num(d.id)===num(detalleId));
+  if(!linea){toast('No se encontró ese registro');return;}
+
+  const nota=notas.find(n=>num(n.id)===num(linea.nota_id));
+  if(!nota){toast('No se encontró la factura o nota');return;}
+
+  const lineasDocumento=detalle.filter(d=>num(d.nota_id)===num(nota.id));
+
+  if(lineasDocumento.length>1){
+    const abrir=confirm(`Este documento contiene ${lineasDocumento.length} materiales.
+
+Para no eliminar los demás materiales, se abrirá la factura/nota en modo edición. Allí puedes quitar solamente esta línea y guardar los cambios.
+
+¿Deseas abrirla para editar?`);
+    if(!abrir)return;
+    cerrarHistorialMaterial();
+    prepararEdicionCompra(nota.id);
+    return;
+  }
+
+  cerrarHistorialMaterial();
+  eliminarCompra(nota.id,boton);
+}
+
 function abrirHistorialMaterial(id){
   const m=materialPorId(id);
   if(!m){toast('No se encontró el material');return;}
@@ -1286,8 +1323,9 @@ function abrirHistorialMaterial(id){
       <td>${esc(f.unidad)}</td>
       <td class="money">${money(f.precio)}</td>
       <td class="money">${money(f.cantidad*f.precio)}</td>
+      <td><button type="button" class="general-delete-btn" title="Eliminar este registro de prueba" onclick="eliminarRegistroDesdeHistorial(${num(f.detalle?.id)},this)">×</button></td>
     </tr>
-  `).join('')||'<tr><td colspan="8" class="empty">Este material todavía no tiene compras registradas</td></tr>';
+  `).join('')||'<tr><td colspan="9" class="empty">Este material todavía no tiene compras registradas</td></tr>';
 
   $('historialMaterialModal').classList.add('show');
 }
@@ -2286,7 +2324,11 @@ async function recalcularUltimosPreciosMateriales(materialIds){
       .filter(x=>x.nota)
       .sort((a,b)=>String(b.nota.fecha||'').localeCompare(String(a.nota.fecha||''))||num(b.nota.id)-num(a.nota.id)||num(b.d.id)-num(a.d.id));
 
-    if(!filas.length)continue;
+    if(!filas.length){
+      const {error:eSinHistorial}=await db.from('compras_materiales').update({ultimo_precio:0}).eq('id',materialId);
+      if(eSinHistorial)throw eSinHistorial;
+      continue;
+    }
 
     const ultima=filas[0];
     await db.from('compras_materiales').update({ultimo_precio:num(ultima.d.precio_unitario)}).eq('id',materialId);
