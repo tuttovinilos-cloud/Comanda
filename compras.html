@@ -112,6 +112,15 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
 .material-history-kpi strong{display:block;font-family:var(--mono);font-size:17px;font-weight:900;color:var(--blue);margin-top:4px}
 .material-history-meta{font-size:10px;color:var(--muted);font-weight:800;margin-top:4px}
 .material-action-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.purchase-edit-banner{display:none;margin-bottom:11px;border:1px solid #c7d2fe;background:#eef1ff;border-radius:13px;padding:10px 12px;align-items:center;justify-content:space-between;gap:12px}
+.purchase-edit-banner.show{display:flex}
+.purchase-edit-banner b{display:block;font-family:var(--head);font-size:11px;color:var(--blue);text-transform:uppercase}
+.purchase-edit-banner small{display:block;color:#475569;font-size:10px;font-weight:800;margin-top:2px}
+.line-form-actions{display:flex;align-items:end;gap:6px}
+.line-form-actions .btn{width:100%}
+.invoice-edit-btn{border:1px solid #c7d2fe;background:#fff;color:var(--blue);border-radius:8px;padding:6px 9px;font-family:var(--head);font-size:9px;font-weight:900;text-transform:uppercase;white-space:nowrap}
+.invoice-edit-btn:hover{background:#eef1ff}
+
 @media(max-width:1160px){.provider-toolbar{grid-template-columns:1fr 1fr}.provider-count{grid-column:1/-1}.provider-card{grid-template-columns:1fr 1fr}.supplier-form-grid{grid-template-columns:1fr 1fr}.catalog-toolbar{grid-template-columns:1fr 1fr}.catalog-count{grid-column:1/-1}.filters{grid-template-columns:repeat(4,1fr)}.form-grid{grid-template-columns:repeat(3,1fr)}.full{grid-column:1/-1}.compare{grid-template-columns:repeat(3,1fr)}.fixed-form-grid{grid-template-columns:repeat(3,1fr)}.fixed-item{grid-template-columns:1fr 120px 150px minmax(260px,1fr)}.general-toolbar{grid-template-columns:repeat(3,1fr)}.general-item-head{grid-template-columns:95px 82px minmax(210px,1fr) 150px 105px 110px 85px 34px}}
 @media(max-width:760px){.material-history-kpis{grid-template-columns:1fr 1fr}.provider-toolbar{grid-template-columns:1fr}.provider-card{grid-template-columns:1fr}.provider-actions{justify-content:flex-start}.supplier-form-grid{grid-template-columns:1fr}.catalog-toolbar{grid-template-columns:1fr}.header{flex-wrap:wrap!important;height:auto!important;min-height:58px!important;overflow:visible!important}.header .logo{min-width:120px!important}.header .logo img{width:118px!important;max-width:118px!important}.page{padding:10px}.page-head{flex-direction:column}.actions,.btn{width:100%}.filters{grid-template-columns:1fr 1fr}.compare{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.full{grid-column:1}.title{font-size:20px}table{min-width:800px}.invoice-card-head{grid-template-columns:76px 36px 1fr 76px;gap:6px}.invoice-card-head .hide-sm{display:none}.estado-mobile{display:inline-flex}.invoice-detail-actions{display:flex;justify-content:flex-start}.invoice-detail-row{grid-template-columns:1fr 62px 70px}.invoice-detail-row .hide-sm{display:none}.stat-group{grid-template-columns:1fr}.lookup-field .suggest-list{position:fixed;left:10px;right:10px;top:auto;max-height:45vh}.fixed-kpis{grid-template-columns:1fr 1fr}.fixed-toolbar{align-items:stretch}.fixed-toolbar .field{width:100%}.fixed-form-grid{grid-template-columns:1fr}.fixed-form-grid .wide{grid-column:1}.fixed-form-actions{flex-direction:column}.fixed-item{grid-template-columns:1fr}.fixed-amount,.fixed-due{text-align:left}.fixed-actions{justify-content:flex-start}.fixed-actions .mini,.fixed-actions .estado-btn{width:auto}.period-label{font-size:11px}.general-toolbar{grid-template-columns:1fr 1fr}.general-kpis{grid-template-columns:1fr 1fr}.general-item-head{grid-template-columns:82px 74px 1fr 82px 34px}.general-item-head .general-hide-mobile{display:none}.general-amount{text-align:right}.general-detail-row{grid-template-columns:1fr 78px 82px}.general-detail-row .general-hide-mobile{display:none}.general-pagination{flex-wrap:wrap}.general-pagination .btn{width:auto;min-width:100px}}
 </style>
@@ -129,7 +138,7 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
       <div class="subtitle">Facturas, notas, proveedores y catálogo único de materiales conectado con Supabase.</div>
     </div>
     <div class="actions">
-      <button class="btn primary" onclick="showTab('nueva')">+ Nueva factura / nota</button>
+      <button class="btn primary" onclick="iniciarNuevaCompra()">+ Nueva factura / nota</button>
       <button class="btn green" onclick="abrirNuevoGastoFijo()">+ Añadir gasto fijo</button>
       <button class="btn orange" onclick="cargarTodo()">Actualizar</button>
     </div>
@@ -165,7 +174,7 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
     <div class="card">
       <div class="card-head">
         <div><div class="card-title">General</div><div class="card-sub">Lista cronológica de compras y gastos agregados manualmente al mes.</div></div>
-        <button class="btn primary" onclick="showTab('nueva')">+ Nueva compra</button>
+        <button class="btn primary" onclick="iniciarNuevaCompra()">+ Nueva compra</button>
       </div>
       <div class="card-body">
         <div class="general-toolbar">
@@ -198,7 +207,7 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
     <div class="card">
       <div class="card-head">
         <div><div class="card-title">Facturas / notas por proveedor</div><div class="card-sub">Cada documento se identifica como F de factura o N de nota.</div></div>
-        <button class="btn primary" onclick="showTab('nueva')">+ Nueva</button>
+        <button class="btn primary" onclick="iniciarNuevaCompra()">+ Nueva</button>
       </div>
       <div class="card-body" id="facturasAgrupadas"></div>
     </div>
@@ -303,8 +312,12 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
 
   <div id="nueva" class="panel">
     <div class="card">
-      <div class="card-head"><div><div class="card-title">Nueva factura / nota de compra</div><div class="card-sub">Usa un solo material general y guarda por separado el código o nombre que utiliza cada proveedor.</div></div></div>
+      <div class="card-head"><div><div class="card-title" id="compraFormTitulo">Nueva factura / nota de compra</div><div class="card-sub" id="compraFormSubtitulo">Usa un solo material general y guarda por separado el código o nombre que utiliza cada proveedor.</div></div></div>
       <div class="card-body">
+        <div class="purchase-edit-banner" id="compraEditBanner">
+          <div><b id="compraEditBannerTitulo">Editando compra</b><small id="compraEditBannerTexto">Los cambios sustituirán los datos actuales del documento.</small></div>
+          <button class="btn light" type="button" onclick="cancelarEdicionCompra()">Cancelar edición</button>
+        </div>
         <div class="form-grid">
           <div class="field lookup-field">
             <label>Proveedor</label>
@@ -334,13 +347,19 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
           <div class="field"><label>Cantidad</label><input id="lineCantidad" type="number" step="0.01" value="1"></div>
           <div class="field"><label>Precio unitario</label><input id="linePrecio" type="number" step="0.01" value="0"></div>
           <div class="field"><label>Total línea</label><input id="lineTotal" readonly value="$0.00"></div>
-          <div class="field" style="display:flex;align-items:end"><button class="btn light" style="width:100%" onclick="agregarLinea()">+ Añadir línea</button></div>
+          <div class="field line-form-actions">
+            <button class="btn light" id="btnAgregarLinea" type="button" onclick="agregarLinea()">+ Añadir línea</button>
+            <button class="mini" id="btnCancelarLinea" type="button" onclick="cancelarEdicionLinea()" style="display:none">Cancelar</button>
+          </div>
         </div>
 
         <div class="table-wrap" style="margin-top:10px">
           <table><thead><tr><th>Código proveedor</th><th>Alias proveedor</th><th>Material general</th><th>Categoría</th><th>Cantidad</th><th>Unidad</th><th>Precio</th><th>Total</th><th></th></tr></thead><tbody id="tbodyNueva"></tbody></table>
         </div>
-        <div class="actions" style="justify-content:flex-start;margin-top:10px"><button class="btn primary" onclick="guardarFactura()">Guardar compra</button><button class="btn light" onclick="limpiarNueva()">Limpiar</button></div>
+        <div class="actions" style="justify-content:flex-start;margin-top:10px">
+          <button class="btn primary" id="btnGuardarCompra" type="button" onclick="guardarFactura()">Guardar compra</button>
+          <button class="btn light" id="btnCancelarCompra" type="button" onclick="cancelarEdicionCompra()">Limpiar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -525,6 +544,8 @@ let proveedores = [], materiales = [], notas = [], detalle = [], movimientos = [
 let gastosFijos = [], gastosFijosPagos = [];
 let gastosFijosDisponibles = true;
 let lineasNueva = [];
+let compraEditandoId = null;
+let lineaEditandoIndex = null;
 let materialNuevoConfirmado = false;
 let materialSeleccionadoId = null;
 let favoritosMateriales = JSON.parse(localStorage.getItem('compras_favoritos_materiales') || '[]');
@@ -892,7 +913,7 @@ function botonEstadoGastoGeneral(p){
   return `<button type="button" class="estado-btn ${clase}" onclick="event.stopPropagation();cambiarEstadoGastoFijo(${num(p.id)},'${nuevo}',this)">${etiqueta}</button>`;
 }
 function detalleGeneralCompra(t){
-  const acciones=`<div class="invoice-detail-actions" style="display:flex;justify-content:flex-start">${botonEstadoNota(t.nota)}</div>`;
+  const acciones=`<div class="invoice-detail-actions" style="display:flex;justify-content:flex-start">${botonEstadoNota(t.nota)}<button type="button" class="invoice-edit-btn" onclick="event.stopPropagation();prepararEdicionCompra(${num(t.nota?.id)})">Editar compra</button></div>`;
   const filas=t.detalles.map(x=>`<div class="general-detail-row"><span class="general-hide-mobile">${esc(x.codigo||'')}</span><span>${esc(x.material||x.material_nombre||'')}</span><span>${num(x.cantidad).toLocaleString('es-VE')} ${esc(x.unidad||'')}</span><b class="money">${money(num(x.cantidad)*num(x.precio_unitario))}</b></div>`).join('');
   return acciones+(filas||'<div class="general-expense-note">Sin materiales registrados.</div>');
 }
@@ -1004,7 +1025,8 @@ function renderFacturas(nf,df){
       const detalleHtml=dets.map(x=>`<div class="invoice-detail-row"><span class="hide-sm">${esc(x.codigo||'')}</span><span>${esc(x.material||x.material_nombre||'')}</span><span>${num(x.cantidad).toLocaleString('es-VE')} ${esc(x.unidad||'')}</span><span class="hide-sm">${money(x.precio_unitario)}</span><b class="money">${money(num(x.cantidad)*num(x.precio_unitario))}</b></div>`).join('')||'<div class="empty">Sin detalle</div>';
       const accionEstado=botonEstadoNota(n,'hide-sm');
       const accionEstadoMovil=botonEstadoNota(n,'estado-mobile');
-      return `<div class="invoice-card"><div class="invoice-card-head" onclick="this.closest('.invoice-card').classList.toggle('open')"><b>${esc(n.fecha||'')}</b><span class="badge doc">${tipoDoc(n)}</span><span><b>${esc(numeroDocumentoVisible(n.nro_nota))}</b><br><small>${itemCount[num(n.id)]||0} items</small></span><span class="money">${money(n.total)}</span><span class="hide-sm">${accionEstado}</span><button class="mini hide-sm" type="button">Abrir</button></div><div class="invoice-detail"><div class="invoice-detail-actions">${accionEstadoMovil}</div>${detalleHtml}</div></div>`;
+      const accionEditar=`<button type="button" class="invoice-edit-btn" onclick="event.stopPropagation();prepararEdicionCompra(${num(n.id)})">Editar</button>`;
+      return `<div class="invoice-card"><div class="invoice-card-head" onclick="this.closest('.invoice-card').classList.toggle('open')"><b>${esc(n.fecha||'')}</b><span class="badge doc">${tipoDoc(n)}</span><span><b>${esc(numeroDocumentoVisible(n.nro_nota))}</b><br><small>${itemCount[num(n.id)]||0} items</small></span><span class="money">${money(n.total)}</span><span class="hide-sm">${accionEstado}</span><button class="mini hide-sm" type="button" onclick="event.stopPropagation();prepararEdicionCompra(${num(n.id)})">Editar</button></div><div class="invoice-detail"><div class="invoice-detail-actions">${accionEstadoMovil}${accionEditar}</div>${detalleHtml}</div></div>`;
     }).join('');
     return `<div class="invoice-group"><div class="invoice-group-head" onclick="this.closest('.invoice-group').classList.toggle('open')"><div><b>${esc(prov)}</b><small>${arr.length} documentos · ${itemsProv} items</small></div><b class="money">${money(totalProv)}</b></div><div class="invoice-group-body">${facturasHtml}</div></div>`;
   }).join('');
@@ -1960,8 +1982,123 @@ function renderEstadisticas(df){
 function normalizarCategoria(c){ const v=norm(c); if(v==='tintas')return'Tinta'; if(v==='acrilico')return'Acrílico'; if(v==='consumibles')return'Consumible'; return c||'Sin categoría'; }
 function agrupar(arr,keyFn,valFn){ return arr.reduce((o,x)=>{ const k=keyFn(x)||'Sin dato'; o[k]=(o[k]||0)+valFn(x); return o; },{}); }
 
+
+function actualizarModoFormularioCompra(){
+  const editando=!!compraEditandoId;
+  const nota=editando?notas.find(n=>num(n.id)===num(compraEditandoId)):null;
+
+  if($('compraFormTitulo'))$('compraFormTitulo').textContent=editando?'Editar factura / nota de compra':'Nueva factura / nota de compra';
+  if($('compraFormSubtitulo'))$('compraFormSubtitulo').textContent=editando
+    ? 'Puedes modificar proveedor, documento, fecha, estado y todas las líneas de materiales.'
+    : 'Usa un solo material general y guarda por separado el código o nombre que utiliza cada proveedor.';
+
+  if($('btnGuardarCompra'))$('btnGuardarCompra').textContent=editando?'Guardar cambios':'Guardar compra';
+  if($('btnCancelarCompra'))$('btnCancelarCompra').textContent=editando?'Cancelar edición':'Limpiar';
+
+  const banner=$('compraEditBanner');
+  if(banner){
+    banner.classList.toggle('show',editando);
+    if(editando&&nota){
+      const tipo=tipoDoc(nota)==='F'?'Factura':'Nota';
+      $('compraEditBannerTitulo').textContent=`Editando ${tipo} ${numeroDocumentoVisible(nota.nro_nota)}`;
+      $('compraEditBannerTexto').textContent=`Proveedor: ${nota.proveedor||'Sin proveedor'} · Fecha: ${nota.fecha||'Sin fecha'} · Las líneas actuales serán sustituidas al guardar.`;
+    }
+  }
+}
+function iniciarNuevaCompra(){
+  const tieneDatos=compraEditandoId||lineasNueva.length||$('newProveedor')?.value.trim()||$('newNota')?.value.trim();
+  if(tieneDatos&&!confirm('¿Deseas iniciar una compra nueva? Los cambios que no hayas guardado se perderán.'))return;
+  limpiarNueva();
+  showTab('nueva');
+}
+function cancelarEdicionCompra(){
+  if(compraEditandoId&&!confirm('¿Cancelar la edición? Los cambios que no hayas guardado se perderán.'))return;
+  limpiarNueva();
+}
+function prepararEdicionCompra(notaId){
+  const nota=notas.find(n=>num(n.id)===num(notaId));
+  if(!nota){toast('No se encontró la factura o nota');return;}
+
+  if((compraEditandoId||lineasNueva.length)&&!confirm('Hay datos en el formulario. ¿Deseas sustituirlos para editar este documento?'))return;
+
+  compraEditandoId=num(notaId);
+  lineaEditandoIndex=null;
+
+  $('newProveedor').value=nota.proveedor||'';
+  $('newProveedorId').value=nota.proveedor_id||'';
+  $('newTipoDocumento').value=tipoDoc(nota);
+  $('newNota').value=numeroDocumentoVisible(nota.nro_nota)==='S/N'?'':numeroDocumentoVisible(nota.nro_nota);
+  $('newFecha').value=String(nota.fecha||'').slice(0,10);
+  $('newEstado').value=nota.estado||'Pendiente';
+
+  const dets=detalle
+    .filter(d=>num(d.nota_id)===num(notaId))
+    .sort((a,b)=>num(a.id)-num(b.id));
+
+  lineasNueva=dets.map(d=>{
+    const rel=relacionMaterialProveedor(d.material_id,nota.proveedor_id);
+    const materialExiste=!!materialPorId(d.material_id);
+    return {
+      material_id:materialExiste?num(d.material_id):null,
+      es_nuevo:!materialExiste,
+      codigo:d.codigo||rel?.codigo_proveedor||'',
+      alias_proveedor:d.alias_proveedor||rel?.alias_proveedor||'',
+      material:d.material||d.material_nombre||materialPorId(d.material_id)?.nombre||'Material',
+      categoria:d.categoria||materialPorId(d.material_id)?.categoria||'Sin categoría',
+      unidad:d.unidad||materialPorId(d.material_id)?.unidad||'Und',
+      cantidad:num(d.cantidad)||1,
+      precio_unitario:num(d.precio_unitario)
+    };
+  });
+
+  limpiarLinea();
+  renderLineasNueva();
+  actualizarRequisitosCompra();
+  actualizarModoFormularioCompra();
+  showTab('nueva');
+  window.scrollTo({top:0,behavior:'smooth'});
+  toast('Documento cargado para edición');
+}
+function editarLineaCompra(index){
+  const l=lineasNueva[index];
+  if(!l)return;
+
+  lineaEditandoIndex=index;
+  materialSeleccionadoId=l.material_id||null;
+  materialNuevoConfirmado=!!l.es_nuevo;
+
+  $('buscarMaterial').value=l.material||'';
+  $('lineCodigo').value=l.codigo||'';
+  $('lineAliasProveedor').value=l.alias_proveedor||'';
+  $('lineMaterial').value=l.material||'';
+  $('lineMaterial').readOnly=!l.es_nuevo;
+  if(l.material_id)$('lineMaterial').dataset.materialId=l.material_id;
+  else delete $('lineMaterial').dataset.materialId;
+  $('lineCategoria').value=l.categoria||'Sin categoría';
+  $('lineUnidad').value=l.unidad||'Und';
+  $('lineCantidad').value=l.cantidad;
+  $('linePrecio').value=l.precio_unitario;
+
+  $('materialSeleccionadoInfo').innerHTML=`Editando la línea ${index+1}. Modifica los datos y pulsa “Actualizar línea”.`;
+  $('materialSeleccionadoInfo').classList.add('show');
+  $('btnAgregarLinea').textContent='Actualizar línea';
+  $('btnCancelarLinea').style.display='inline-flex';
+  calcularLinea();
+  $('buscarMaterial').focus();
+}
+function cancelarEdicionLinea(){
+  limpiarLinea();
+}
+function eliminarLineaCompra(index){
+  lineasNueva.splice(index,1);
+  if(lineaEditandoIndex===index)limpiarLinea();
+  else if(lineaEditandoIndex!==null&&lineaEditandoIndex>index)lineaEditandoIndex--;
+  renderLineasNueva();
+}
+
 function calcularLinea(){ $('lineTotal').value=money(num($('lineCantidad').value)*num($('linePrecio').value)); }
 function limpiarLinea(){
+  lineaEditandoIndex=null;
   materialSeleccionadoId=null; materialNuevoConfirmado=false;
   $('buscarMaterial').value='';
   $('lineCodigo').value='';
@@ -1970,13 +2107,22 @@ function limpiarLinea(){
   $('lineMaterial').readOnly=true;
   delete $('lineMaterial').dataset.materialId;
   $('lineCategoria').value=''; $('lineUnidad').value=''; $('lineCantidad').value=1; $('linePrecio').value=0;
-  $('materialSeleccionadoInfo').classList.remove('show'); $('materialSeleccionadoInfo').innerHTML=''; calcularLinea();
+  $('materialSeleccionadoInfo').classList.remove('show'); $('materialSeleccionadoInfo').innerHTML='';
+  if($('btnAgregarLinea'))$('btnAgregarLinea').textContent='+ Añadir línea';
+  if($('btnCancelarLinea'))$('btnCancelarLinea').style.display='none';
+  calcularLinea();
 }
 function agregarLinea(){
   const material=$('lineMaterial').value.trim();
+  const cantidad=num($('lineCantidad').value);
+  const precio=num($('linePrecio').value);
+
   if(!material){toast('Selecciona un material existente o confirma uno nuevo');return;}
   if(!materialSeleccionadoId&&!materialNuevoConfirmado){toast('Debes seleccionar el material de la lista o usar “Crear material nuevo”');return;}
-  lineasNueva.push({
+  if(cantidad<=0){toast('La cantidad debe ser mayor que cero');return;}
+  if(precio<0){toast('El precio no puede ser negativo');return;}
+
+  const linea={
     material_id:materialSeleccionadoId||null,
     es_nuevo:materialNuevoConfirmado,
     codigo:$('lineCodigo').value.trim(),
@@ -1984,16 +2130,48 @@ function agregarLinea(){
     material,
     categoria:$('lineCategoria').value.trim()||'Sin categoría',
     unidad:$('lineUnidad').value.trim()||'Und',
-    cantidad:num($('lineCantidad').value)||1,
-    precio_unitario:num($('linePrecio').value)||0
-  });
-  renderLineasNueva(); limpiarLinea();
+    cantidad,
+    precio_unitario:precio
+  };
+
+  if(lineaEditandoIndex!==null){
+    lineasNueva[lineaEditandoIndex]=linea;
+    toast('Línea actualizada');
+  }else{
+    lineasNueva.push(linea);
+  }
+
+  renderLineasNueva();
+  limpiarLinea();
 }
 function renderLineasNueva(){
-  $('tbodyNueva').innerHTML=lineasNueva.map((l,i)=>`<tr><td>${esc(l.codigo)}</td><td>${esc(l.alias_proveedor)}</td><td>${esc(l.material)}${l.es_nuevo?' <span class="badge cat">Nuevo</span>':''}</td><td>${esc(l.categoria)}</td><td>${l.cantidad}</td><td>${esc(l.unidad)}</td><td class="money">${money(l.precio_unitario)}</td><td class="money">${money(l.cantidad*l.precio_unitario)}</td><td><button class="mini" onclick="lineasNueva.splice(${i},1);renderLineasNueva()">X</button></td></tr>`).join('')||'<tr><td colspan="9" class="empty">Sin líneas</td></tr>';
+  $('tbodyNueva').innerHTML=lineasNueva.map((l,i)=>`<tr>
+    <td>${esc(l.codigo)}</td>
+    <td>${esc(l.alias_proveedor)}</td>
+    <td>${esc(l.material)}${l.es_nuevo?' <span class="badge cat">Nuevo</span>':''}</td>
+    <td>${esc(l.categoria)}</td>
+    <td>${num(l.cantidad).toLocaleString('es-VE')}</td>
+    <td>${esc(l.unidad)}</td>
+    <td class="money">${money(l.precio_unitario)}</td>
+    <td class="money">${money(l.cantidad*l.precio_unitario)}</td>
+    <td><div class="material-action-row"><button class="mini" type="button" onclick="editarLineaCompra(${i})">Editar</button><button class="mini" type="button" onclick="eliminarLineaCompra(${i})">X</button></div></td>
+  </tr>`).join('')||'<tr><td colspan="9" class="empty">Sin líneas</td></tr>';
 }
 function limpiarNueva(){
-  lineasNueva=[]; renderLineasNueva(); $('newProveedor').value=''; $('newProveedorId').value=''; $('newNota').value=''; $('newTipoDocumento').value='F'; $('newEstado').value='Pagado'; $('newFecha').value=fechaLocal(); limpiarLinea(); actualizarRequisitosCompra(); renderNuevaHelpers();
+  compraEditandoId=null;
+  lineaEditandoIndex=null;
+  lineasNueva=[];
+  renderLineasNueva();
+  $('newProveedor').value='';
+  $('newProveedorId').value='';
+  $('newNota').value='';
+  $('newTipoDocumento').value='F';
+  $('newEstado').value='Pagado';
+  $('newFecha').value=fechaLocal();
+  limpiarLinea();
+  actualizarRequisitosCompra();
+  actualizarModoFormularioCompra();
+  renderNuevaHelpers();
 }
 
 async function upsertProveedor(nombre){
@@ -2012,18 +2190,147 @@ async function upsertMaterial(l){
 async function guardarRelacionMaterialProveedor(materialId,proveedorId,l,fecha){
   const db=getDb();
   const relacionActual=relacionMaterialProveedor(materialId,proveedorId);
+  const fechaAnterior=String(relacionActual?.fecha_ultimo_precio||'').slice(0,10);
+  const esMasReciente=!fechaAnterior||String(fecha)>=fechaAnterior;
   const payload={
     material_id:materialId,
     proveedor_id:proveedorId,
     codigo_proveedor:l.codigo||relacionActual?.codigo_proveedor||null,
     alias_proveedor:l.alias_proveedor||relacionActual?.alias_proveedor||null,
-    ultimo_precio:l.precio_unitario,
-    fecha_ultimo_precio:fecha,
+    ultimo_precio:esMasReciente?l.precio_unitario:num(relacionActual?.ultimo_precio),
+    fecha_ultimo_precio:esMasReciente?fecha:relacionActual?.fecha_ultimo_precio||fecha,
     activo:true,
     updated_at:new Date().toISOString()
   };
-  const {error}=await db.from('compras_materiales_proveedores').upsert(payload,{onConflict:'material_id,proveedor_id'}); if(error)throw error;
-  await db.from('compras_materiales').update({ultimo_precio:l.precio_unitario}).eq('id',materialId);
+  const {error}=await db.from('compras_materiales_proveedores').upsert(payload,{onConflict:'material_id,proveedor_id'});
+  if(error)throw error;
+  if(esMasReciente){
+    const {error:eMaterial}=await db.from('compras_materiales').update({ultimo_precio:l.precio_unitario}).eq('id',materialId);
+    if(eMaterial)throw eMaterial;
+  }
+}
+async function recalcularUltimosPreciosMateriales(materialIds){
+  const db=getDb(); if(!db)return;
+  const ids=[...new Set((materialIds||[]).map(num).filter(Boolean))];
+
+  for(const materialId of ids){
+    const filas=detalle
+      .filter(d=>num(d.material_id)===materialId)
+      .map(d=>({d,nota:notas.find(n=>num(n.id)===num(d.nota_id))}))
+      .filter(x=>x.nota)
+      .sort((a,b)=>String(b.nota.fecha||'').localeCompare(String(a.nota.fecha||''))||num(b.nota.id)-num(a.nota.id)||num(b.d.id)-num(a.d.id));
+
+    if(!filas.length)continue;
+
+    const ultima=filas[0];
+    await db.from('compras_materiales').update({ultimo_precio:num(ultima.d.precio_unitario)}).eq('id',materialId);
+
+    const proveedorIds=[...new Set(filas.map(x=>num(x.nota.proveedor_id)).filter(Boolean))];
+    for(const proveedorId of proveedorIds){
+      const ultimaProveedor=filas.find(x=>num(x.nota.proveedor_id)===proveedorId);
+      if(!ultimaProveedor)continue;
+      const rel=relacionMaterialProveedor(materialId,proveedorId);
+      const payload={
+        material_id:materialId,
+        proveedor_id:proveedorId,
+        codigo_proveedor:ultimaProveedor.d.codigo||rel?.codigo_proveedor||null,
+        alias_proveedor:ultimaProveedor.d.alias_proveedor||rel?.alias_proveedor||null,
+        ultimo_precio:num(ultimaProveedor.d.precio_unitario),
+        fecha_ultimo_precio:String(ultimaProveedor.nota.fecha||'').slice(0,10),
+        activo:rel?.activo!==false,
+        updated_at:new Date().toISOString()
+      };
+      const {error}=await db.from('compras_materiales_proveedores').upsert(payload,{onConflict:'material_id,proveedor_id'});
+      if(error)throw error;
+    }
+  }
+}
+function payloadDetalleCompra(d){
+  return {
+    nota_id:d.nota_id,
+    material_id:d.material_id,
+    codigo:d.codigo||null,
+    alias_proveedor:d.alias_proveedor||null,
+    material:d.material||d.material_nombre||'Material',
+    material_nombre:d.material_nombre||d.material||'Material',
+    categoria:d.categoria||'Sin categoría',
+    cantidad:num(d.cantidad),
+    unidad:d.unidad||'Und',
+    precio_unitario:num(d.precio_unitario)
+  };
+}
+function payloadMovimientoCompra(m){
+  return {
+    material_id:m.material_id,
+    nota_id:m.nota_id,
+    fecha:m.fecha,
+    tipo:m.tipo||'ENTRADA',
+    cantidad:num(m.cantidad),
+    unidad:m.unidad||'Und',
+    observacion:m.observacion||null
+  };
+}
+async function prepararLineasParaGuardar(notaId,proveedorId,fecha,tipo,nroVisible){
+  const detallesInsertar=[];
+  const movimientosInsertar=[];
+  const materialIds=[];
+
+  for(const l of lineasNueva){
+    const material_id=await upsertMaterial(l);
+    materialIds.push(material_id);
+    await guardarRelacionMaterialProveedor(material_id,proveedorId,l,fecha);
+
+    detallesInsertar.push({
+      nota_id:notaId,
+      material_id,
+      codigo:l.codigo||null,
+      alias_proveedor:l.alias_proveedor||null,
+      material:l.material,
+      material_nombre:l.material,
+      categoria:l.categoria||'Sin categoría',
+      cantidad:l.cantidad,
+      unidad:l.unidad||'Und',
+      precio_unitario:l.precio_unitario
+    });
+
+    movimientosInsertar.push({
+      material_id,
+      nota_id:notaId,
+      fecha,
+      tipo:'ENTRADA',
+      cantidad:l.cantidad,
+      unidad:l.unidad||'Und',
+      observacion:`${tipo} ${nroVisible}`
+    });
+  }
+
+  return {detallesInsertar,movimientosInsertar,materialIds};
+}
+async function restaurarCompraAnterior(notaAnterior,detallesAnteriores,movimientosAnteriores){
+  const db=getDb(); if(!db)return;
+  try{
+    await db.from('compras_movimientos').delete().eq('nota_id',notaAnterior.id);
+    await db.from('compras_detalle').delete().eq('nota_id',notaAnterior.id);
+
+    if(detallesAnteriores.length){
+      await db.from('compras_detalle').insert(detallesAnteriores.map(payloadDetalleCompra));
+    }
+    if(movimientosAnteriores.length){
+      await db.from('compras_movimientos').insert(movimientosAnteriores.map(payloadMovimientoCompra));
+    }
+
+    await db.from('compras_notas').update({
+      proveedor_id:notaAnterior.proveedor_id,
+      proveedor:notaAnterior.proveedor,
+      tipo_documento:tipoDoc(notaAnterior),
+      nro_nota:notaAnterior.nro_nota,
+      fecha:notaAnterior.fecha,
+      estado:notaAnterior.estado,
+      total:num(notaAnterior.total)
+    }).eq('id',notaAnterior.id);
+  }catch(rollbackError){
+    console.error('No se pudo restaurar completamente la compra anterior:',rollbackError);
+  }
 }
 async function guardarFactura(){
   const db=getDb(); if(!db)return;
@@ -2032,68 +2339,125 @@ async function guardarFactura(){
   const fecha=$('newFecha').value;
   const estado=$('newEstado').value||'Pagado';
   const tipo=$('newTipoDocumento').value||'F';
+  const notaAnterior=compraEditandoId?notas.find(n=>num(n.id)===num(compraEditandoId)):null;
 
   if(!proveedor){toast('Falta seleccionar o escribir el proveedor');return;}
   if(!fecha){toast('Falta la fecha de la compra');return;}
   if(!lineasNueva.length){toast('Debes añadir al menos un material a la tabla');return;}
   if(tipo==='F'&&!nroIngresado){toast('La factura requiere número de documento');return;}
 
-  const nroGuardado=nroIngresado||(tipo==='N'?generarNumeroNotaSinDocumento():'');
+  const nroGuardado=nroIngresado||(
+    tipo==='N'
+      ? (notaAnterior&&numeroDocumentoVisible(notaAnterior.nro_nota)==='S/N'
+          ? notaAnterior.nro_nota
+          : generarNumeroNotaSinDocumento())
+      : ''
+  );
   const nroVisible=nroIngresado||'S/N';
+  const btn=$('btnGuardarCompra');
+  if(btn){btn.disabled=true;btn.textContent=compraEditandoId?'Guardando cambios...':'Guardando...';}
 
   try{
     const proveedor_id=await upsertProveedor(proveedor);
-    const existente=await db.from('compras_notas').select('id').eq('proveedor_id',proveedor_id).eq('tipo_documento',tipo).eq('nro_nota',nroGuardado).maybeSingle();
+
+    let consultaDuplicado=db.from('compras_notas')
+      .select('id')
+      .eq('proveedor_id',proveedor_id)
+      .eq('tipo_documento',tipo)
+      .eq('nro_nota',nroGuardado);
+
+    if(compraEditandoId)consultaDuplicado=consultaDuplicado.neq('id',compraEditandoId);
+
+    const existente=await consultaDuplicado.limit(1).maybeSingle();
     if(existente.error)throw existente.error;
     if(existente.data){toast(`Ya existe ${tipo} ${nroVisible} para este proveedor`);return;}
 
-    const total=lineasNueva.reduce((s,l)=>s+l.cantidad*l.precio_unitario,0);
-    const {data:nota,error:errNota}=await db.from('compras_notas').insert({
-      proveedor_id,
-      proveedor,
-      tipo_documento:tipo,
-      nro_nota:nroGuardado,
-      fecha,
-      estado,
-      total
-    }).select('id').single();
-    if(errNota)throw errNota;
+    const total=lineasNueva.reduce((s,l)=>s+num(l.cantidad)*num(l.precio_unitario),0);
 
-    for(const l of lineasNueva){
-      const material_id=await upsertMaterial(l);
-      await guardarRelacionMaterialProveedor(material_id,proveedor_id,l,fecha);
-      const det={
-        nota_id:nota.id,
-        material_id,
-        codigo:l.codigo||null,
-        alias_proveedor:l.alias_proveedor||null,
-        material:l.material,
-        material_nombre:l.material,
-        categoria:l.categoria||'Sin categoría',
-        cantidad:l.cantidad,
-        unidad:l.unidad||'Und',
-        precio_unitario:l.precio_unitario
-      };
-      const {error:e1}=await db.from('compras_detalle').insert(det); if(e1)throw e1;
-      const {error:e2}=await db.from('compras_movimientos').insert({
-        material_id,
-        nota_id:nota.id,
+    if(!compraEditandoId){
+      const {data:nota,error:errNota}=await db.from('compras_notas').insert({
+        proveedor_id,
+        proveedor,
+        tipo_documento:tipo,
+        nro_nota:nroGuardado,
         fecha,
-        tipo:'ENTRADA',
-        cantidad:l.cantidad,
-        unidad:l.unidad||'Und',
-        observacion:`${tipo} ${nroVisible}`
-      });
-      if(e2)throw e2;
+        estado,
+        total
+      }).select('id').single();
+      if(errNota)throw errNota;
+
+      try{
+        const preparados=await prepararLineasParaGuardar(nota.id,proveedor_id,fecha,tipo,nroVisible);
+        const {error:eDetalle}=await db.from('compras_detalle').insert(preparados.detallesInsertar);
+        if(eDetalle)throw eDetalle;
+        const {error:eMovimientos}=await db.from('compras_movimientos').insert(preparados.movimientosInsertar);
+        if(eMovimientos)throw eMovimientos;
+      }catch(lineError){
+        await db.from('compras_movimientos').delete().eq('nota_id',nota.id);
+        await db.from('compras_detalle').delete().eq('nota_id',nota.id);
+        await db.from('compras_notas').delete().eq('id',nota.id);
+        throw lineError;
+      }
+
+      toast(`${tipo==='F'?'Factura':'Nota'} guardada correctamente`);
+    }else{
+      if(!notaAnterior)throw new Error('No se encontró el documento original para editar');
+
+      const detallesAnteriores=detalle.filter(d=>num(d.nota_id)===num(compraEditandoId)).map(d=>({...d}));
+      const movimientosAnteriores=movimientos.filter(m=>num(m.nota_id)===num(compraEditandoId)).map(m=>({...m}));
+      const idsMaterialesAnteriores=detallesAnteriores.map(d=>num(d.material_id)).filter(Boolean);
+
+      try{
+        const preparados=await prepararLineasParaGuardar(compraEditandoId,proveedor_id,fecha,tipo,nroVisible);
+
+        const {error:eBorrarMov}=await db.from('compras_movimientos').delete().eq('nota_id',compraEditandoId);
+        if(eBorrarMov)throw eBorrarMov;
+
+        const {error:eBorrarDet}=await db.from('compras_detalle').delete().eq('nota_id',compraEditandoId);
+        if(eBorrarDet)throw eBorrarDet;
+
+        const {error:eDetalle}=await db.from('compras_detalle').insert(preparados.detallesInsertar);
+        if(eDetalle)throw eDetalle;
+
+        const {error:eMovimientos}=await db.from('compras_movimientos').insert(preparados.movimientosInsertar);
+        if(eMovimientos)throw eMovimientos;
+
+        const {error:eNota}=await db.from('compras_notas').update({
+          proveedor_id,
+          proveedor,
+          tipo_documento:tipo,
+          nro_nota:nroGuardado,
+          fecha,
+          estado,
+          total
+        }).eq('id',compraEditandoId);
+        if(eNota)throw eNota;
+
+        const materialesARecalcular=[...idsMaterialesAnteriores,...preparados.materialIds];
+
+        await cargarTodo();
+        await recalcularUltimosPreciosMateriales(materialesARecalcular);
+        await cargarTodo();
+
+        toast(`${tipo==='F'?'Factura':'Nota'} actualizada correctamente`);
+      }catch(editError){
+        await restaurarCompraAnterior(notaAnterior,detallesAnteriores,movimientosAnteriores);
+        await cargarTodo();
+        throw editError;
+      }
     }
 
-    toast(`${tipo==='F'?'Factura':'Nota'} guardada correctamente`);
     limpiarNueva();
     await cargarTodo();
     showTab('general');
   }catch(err){
     console.error(err);
     toast('Error guardando: '+(err.message||err));
+  }finally{
+    if(btn){
+      btn.disabled=false;
+      btn.textContent=compraEditandoId?'Guardar cambios':'Guardar compra';
+    }
   }
 }
 
@@ -2132,7 +2496,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('DOMContentLoaded',()=>{
   const today=new Date(), first=new Date(today.getFullYear(),0,1);
   $('desde').value=first.toISOString().slice(0,10); $('hasta').value=fechaLocal(); $('newFecha').value=fechaLocal(); $('gastoPeriodo').value=periodoActual(); $('generalPeriodo').value=periodoActual();
-  $('newEstado').value='Pagado'; actualizarRequisitosCompra(); actualizarCamposFrecuencia(); renderLineasNueva(); calcularLinea(); cargarTodo();
+  $('newEstado').value='Pagado'; actualizarRequisitosCompra(); actualizarCamposFrecuencia(); actualizarModoFormularioCompra(); renderLineasNueva(); calcularLinea(); cargarTodo();
 });
 </script>
 </body>
