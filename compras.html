@@ -303,7 +303,7 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
 
   <div id="nueva" class="panel">
     <div class="card">
-      <div class="card-head"><div><div class="card-title">Nueva factura / nota de compra</div><div class="card-sub">Selecciona primero el proveedor y luego reutiliza un material existente o crea uno nuevo.</div></div></div>
+      <div class="card-head"><div><div class="card-title">Nueva factura / nota de compra</div><div class="card-sub">Usa un solo material general y guarda por separado el código o nombre que utiliza cada proveedor.</div></div></div>
       <div class="card-body">
         <div class="form-grid">
           <div class="field lookup-field">
@@ -326,8 +326,9 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
         </div>
 
         <div class="form-grid" style="margin-top:10px">
-          <div class="field"><label>Código del proveedor <span class="muted">(opcional)</span></label><input id="lineCodigo" placeholder="Opcional"></div>
-          <div class="field"><label>Material</label><input id="lineMaterial" readonly placeholder="Selecciona o crea un material"></div>
+          <div class="field"><label>Código del proveedor <span class="muted">(opcional)</span></label><input id="lineCodigo" placeholder="Ej: 01031017"></div>
+          <div class="field"><label>Nombre / alias del proveedor <span class="muted">(opcional)</span></label><input id="lineAliasProveedor" placeholder="Ej: Vynil-Holographic"></div>
+          <div class="field"><label>Material general</label><input id="lineMaterial" readonly placeholder="Nombre único interno"></div>
           <div class="field"><label>Categoría <span class="muted">(opcional)</span></label><input id="lineCategoria"></div>
           <div class="field"><label>Unidad <span class="muted">(opcional)</span></label><input id="lineUnidad"></div>
           <div class="field"><label>Cantidad</label><input id="lineCantidad" type="number" step="0.01" value="1"></div>
@@ -337,7 +338,7 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
         </div>
 
         <div class="table-wrap" style="margin-top:10px">
-          <table><thead><tr><th>Código proveedor</th><th>Material</th><th>Categoría</th><th>Cantidad</th><th>Unidad</th><th>Precio</th><th>Total</th><th></th></tr></thead><tbody id="tbodyNueva"></tbody></table>
+          <table><thead><tr><th>Código proveedor</th><th>Alias proveedor</th><th>Material general</th><th>Categoría</th><th>Cantidad</th><th>Unidad</th><th>Precio</th><th>Total</th><th></th></tr></thead><tbody id="tbodyNueva"></tbody></table>
         </div>
         <div class="actions" style="justify-content:flex-start;margin-top:10px"><button class="btn primary" onclick="guardarFactura()">Guardar compra</button><button class="btn light" onclick="limpiarNueva()">Limpiar</button></div>
       </div>
@@ -462,6 +463,7 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
               <th>Fecha</th>
               <th>Proveedor</th>
               <th>Documento</th>
+              <th>Referencia proveedor</th>
               <th>Cantidad</th>
               <th>Unidad</th>
               <th>Precio unitario</th>
@@ -740,18 +742,34 @@ function usarProveedorNuevo(){ $('newProveedorId').value=''; $('proveedorSug').c
 
 function materialTextoBusqueda(m){
   const rels=relacionesDeMaterial(m.id);
-  const codigos=rels.map(r=>r.codigo_proveedor||'').join(' ');
-  return norm((m.nombre||'')+' '+(m.categoria||'')+' '+(m.codigo||'')+' '+codigos);
+  const referencias=rels.map(r=>`${r.codigo_proveedor||''} ${r.alias_proveedor||''}`).join(' ');
+  return norm((m.nombre||'')+' '+(m.categoria||'')+' '+(m.codigo||'')+' '+referencias);
+}
+function materialCoincideExacto(m,valor){
+  const q=normNombre(valor);
+  if(!q)return false;
+  if(normNombre(m.nombre)===q||normNombre(m.codigo)===q)return true;
+  return relacionesDeMaterial(m.id).some(r=>
+    normNombre(r.codigo_proveedor)===q||
+    normNombre(r.alias_proveedor)===q
+  );
 }
 function resumenMaterialProveedor(m,proveedorId){
   const rel=proveedorId?relacionMaterialProveedor(m.id,proveedorId):null;
-  if(rel){ return `${rel.codigo_proveedor||'Sin código'} · Último ${money(rel.ultimo_precio)}`; }
+  if(rel){
+    const referencia=[rel.alias_proveedor,rel.codigo_proveedor].filter(Boolean).join(' · ')||'Sin referencia';
+    return `${referencia} · Último ${money(rel.ultimo_precio)}`;
+  }
   const rels=relacionesDeMaterial(m.id);
   if(rels.length){
-    const textos=rels.slice(0,3).map(r=>{ const p=proveedorPorId(r.proveedor_id); return `${p?.nombre||'Proveedor'}: ${r.codigo_proveedor||'sin código'}`; });
+    const textos=rels.slice(0,3).map(r=>{
+      const p=proveedorPorId(r.proveedor_id);
+      const referencia=[r.alias_proveedor,r.codigo_proveedor].filter(Boolean).join(' / ')||'sin referencia';
+      return `${p?.nombre||'Proveedor'}: ${referencia}`;
+    });
     return textos.join(' · ');
   }
-  return `${m.categoria||'Sin categoría'} · ${m.unidad||'Sin unidad'} · Sin código de proveedor`;
+  return `${m.categoria||'Sin categoría'} · ${m.unidad||'Sin unidad'} · Sin referencia de proveedor`;
 }
 function renderMaterialSugerencias(){
   const q=norm($('buscarMaterial').value), box=$('materialSug');
@@ -759,38 +777,61 @@ function renderMaterialSugerencias(){
   const proveedorId=num($('newProveedorId').value);
   const arr=materiales.filter(m=>materialTextoBusqueda(m).includes(q)).sort((a,b)=>(favoritosMateriales.includes(b.id)-favoritosMateriales.includes(a.id))||String(a.nombre||'').localeCompare(String(b.nombre||''))).slice(0,12);
   let html=arr.map(m=>`<div class="suggest-item" onclick="seleccionarMaterial(${num(m.id)})"><div><b>${favoritosMateriales.includes(m.id)?'★ ':''}${esc(m.nombre||'')}</b><br><small>${esc(resumenMaterialProveedor(m,proveedorId))}</small></div><span class="suggest-action">Usar</span></div>`).join('');
-  const exacto=materiales.some(m=>normNombre(m.nombre)===normNombre($('buscarMaterial').value));
+  const exacto=materiales.some(m=>materialCoincideExacto(m,$('buscarMaterial').value));
   if(!exacto) html+=`<div class="suggest-item" onclick="prepararMaterialNuevo()"><div><b>+ Crear material nuevo</b><br><small>${esc($('buscarMaterial').value)}</small></div><span class="suggest-action">Crear</span></div>`;
   box.innerHTML=html||`<div class="suggest-item" onclick="prepararMaterialNuevo()"><div><b>+ Crear material nuevo</b><br><small>${esc($('buscarMaterial').value)}</small></div><span class="suggest-action">Crear</span></div>`;
   box.classList.add('show');
 }
 function seleccionarMaterial(id){
   const m=materialPorId(id); if(!m)return;
+  const textoBuscado=$('buscarMaterial').value.trim();
   const proveedorId=num($('newProveedorId').value);
   const rel=proveedorId?relacionMaterialProveedor(id,proveedorId):null;
   materialSeleccionadoId=num(id); materialNuevoConfirmado=false;
-  $('buscarMaterial').value=m.nombre||''; $('lineMaterial').value=m.nombre||''; $('lineMaterial').dataset.materialId=m.id;
+  $('buscarMaterial').value=m.nombre||'';
+  $('lineMaterial').value=m.nombre||'';
+  $('lineMaterial').readOnly=true;
+  $('lineMaterial').dataset.materialId=m.id;
   $('lineCodigo').value=rel?.codigo_proveedor||'';
+  $('lineAliasProveedor').value=rel?.alias_proveedor||
+    (textoBuscado&&normNombre(textoBuscado)!==normNombre(m.nombre)?textoBuscado:'');
   $('lineCategoria').value=normalizarCategoria(m.categoria||'');
   $('lineUnidad').value=m.unidad||'';
   $('linePrecio').value=num(rel?.ultimo_precio||m.ultimo_precio||0);
   $('materialSug').classList.remove('show');
   const info=proveedorId
-    ? (rel?`Se usará el código <b>${esc(rel.codigo_proveedor||'sin código')}</b> guardado para este proveedor.`:'Este material todavía no tiene código guardado para el proveedor seleccionado. Puedes escribirlo ahora.')
-    : 'Selecciona un proveedor para cargar automáticamente su código y último precio.';
+    ? (rel
+      ? `Material general: <b>${esc(m.nombre||'')}</b>. Para este proveedor: <b>${esc(rel.alias_proveedor||'sin alias')}</b> · código <b>${esc(rel.codigo_proveedor||'sin código')}</b>.`
+      : `Material general: <b>${esc(m.nombre||'')}</b>. Este proveedor todavía no tiene alias ni código guardado; puedes añadirlos ahora.`)
+    : `Material general: <b>${esc(m.nombre||'')}</b>. Selecciona un proveedor para cargar su alias, código y último precio.`;
   $('materialSeleccionadoInfo').innerHTML=info; $('materialSeleccionadoInfo').classList.add('show');
   calcularLinea();
 }
 function prepararMaterialNuevo(){
-  const nombre=$('buscarMaterial').value.trim(); if(!nombre){toast('Escribe el nombre del material');return;}
-  const parecido=materiales.find(m=>normNombre(m.nombre)===normNombre(nombre));
-  if(parecido){ seleccionarMaterial(parecido.id); toast('Ese material ya existe y fue seleccionado'); return; }
-  materialSeleccionadoId=null; materialNuevoConfirmado=true;
-  $('lineMaterial').value=nombre; delete $('lineMaterial').dataset.materialId;
-  $('lineCodigo').value=''; $('lineCategoria').value=''; $('lineUnidad').value=''; $('linePrecio').value=0;
+  const textoProveedor=$('buscarMaterial').value.trim();
+  if(!textoProveedor){toast('Escribe el nombre, alias o código del material');return;}
+
+  const parecido=materiales.find(m=>materialCoincideExacto(m,textoProveedor));
+  if(parecido){
+    seleccionarMaterial(parecido.id);
+    toast('Esa referencia ya pertenece a un material existente');
+    return;
+  }
+
+  materialSeleccionadoId=null;
+  materialNuevoConfirmado=true;
+  $('lineMaterial').readOnly=false;
+  $('lineMaterial').value=textoProveedor;
+  delete $('lineMaterial').dataset.materialId;
+  $('lineCodigo').value='';
+  $('lineAliasProveedor').value=textoProveedor;
+  $('lineCategoria').value='';
+  $('lineUnidad').value='';
+  $('linePrecio').value=0;
   $('materialSug').classList.remove('show');
-  $('materialSeleccionadoInfo').innerHTML='Material nuevo confirmado. Al guardar se añadirá una sola vez al catálogo general y el código quedará asociado al proveedor.';
+  $('materialSeleccionadoInfo').innerHTML='Material nuevo. En <b>Material general</b> escribe el nombre único que usarás internamente. En <b>Alias del proveedor</b> deja el nombre con el que este proveedor lo identifica.';
   $('materialSeleccionadoInfo').classList.add('show');
+  setTimeout(()=>$('lineMaterial').focus(),40);
   calcularLinea();
 }
 
@@ -1029,7 +1070,7 @@ async function eliminarCompra(notaId,boton){
 function textoCatalogoMaterial(m,rels){
   const proveedoresTxt=rels.map(r=>{
     const p=proveedorPorId(r.proveedor_id);
-    return `${p?.nombre||''} ${r.codigo_proveedor||''} ${r.ultimo_precio||''}`;
+    return `${p?.nombre||''} ${r.codigo_proveedor||''} ${r.alias_proveedor||''} ${r.ultimo_precio||''}`;
   }).join(' ');
   return normNombre(`${m.nombre||''} ${m.categoria||''} ${m.unidad||''} ${m.codigo||''} ${proveedoresTxt}`);
 }
@@ -1176,6 +1217,8 @@ function filasHistorialMaterial(materialId){
         fecha:String(nota?.fecha||'').slice(0,10),
         proveedor:nota?.proveedor||'Sin proveedor',
         documento:nota?`${tipoDoc(nota)} ${numeroDocumentoVisible(nota.nro_nota)}`:'Sin documento',
+        alias_proveedor:d.alias_proveedor||relacionMaterialProveedor(materialId,nota?.proveedor_id)?.alias_proveedor||'',
+        codigo_proveedor:d.codigo||relacionMaterialProveedor(materialId,nota?.proveedor_id)?.codigo_proveedor||'',
         cantidad:num(d.cantidad),
         unidad:d.unidad||'Und',
         precio:num(d.precio_unitario)
@@ -1209,12 +1252,13 @@ function abrirHistorialMaterial(id){
       <td><b>${esc(f.fecha||'Sin fecha')}</b></td>
       <td>${esc(f.proveedor)}</td>
       <td><span class="badge doc">${esc(f.documento)}</span></td>
+      <td>${esc([f.alias_proveedor,f.codigo_proveedor].filter(Boolean).join(' · ')||'Sin referencia')}</td>
       <td>${f.cantidad.toLocaleString('es-VE')}</td>
       <td>${esc(f.unidad)}</td>
       <td class="money">${money(f.precio)}</td>
       <td class="money">${money(f.cantidad*f.precio)}</td>
     </tr>
-  `).join('')||'<tr><td colspan="7" class="empty">Este material todavía no tiene compras registradas</td></tr>';
+  `).join('')||'<tr><td colspan="8" class="empty">Este material todavía no tiene compras registradas</td></tr>';
 
   $('historialMaterialModal').classList.add('show');
 }
@@ -1239,7 +1283,8 @@ function resumenMaterialFusion(id){
   const proveedoresTxt=rels.length
     ? rels.slice(0,4).map(r=>{
         const p=proveedorPorId(r.proveedor_id);
-        return `${p?.nombre||'Proveedor'}: ${r.codigo_proveedor||'sin código'}`;
+        const referencia=[r.alias_proveedor,r.codigo_proveedor].filter(Boolean).join(' / ')||'sin referencia';
+        return `${p?.nombre||'Proveedor'}: ${referencia}`;
       }).join(' · ')
     : 'Sin códigos por proveedor';
   return `<b>${esc(m.nombre||'Sin nombre')}</b><small>Categoría: ${esc(m.categoria||'Sin categoría')} · Unidad: ${esc(m.unidad||'Und')}</small><small>${compras} líneas de compra · ${movs} movimientos · ${rels.length} proveedor(es)</small><small>${esc(proveedoresTxt)}</small>`;
@@ -1276,6 +1321,7 @@ async function moverRelacionesMaterialProveedor(origenId,destinoId){
     if(relDestino){
       const payload={
         codigo_proveedor:relDestino.codigo_proveedor||rel.codigo_proveedor||null,
+        alias_proveedor:relDestino.alias_proveedor||rel.alias_proveedor||null,
         ultimo_precio:num(relDestino.ultimo_precio||0)||num(rel.ultimo_precio||0)||null,
         fecha_ultimo_precio:relDestino.fecha_ultimo_precio||rel.fecha_ultimo_precio||null,
         activo:relDestino.activo!==false,
@@ -1352,7 +1398,11 @@ function renderMateriales(){
   if($('materialCatalogoConteo'))$('materialCatalogoConteo').textContent=`${filas.length} / ${materiales.length}`;
 
   $('tbodyMateriales').innerHTML=filas.map(({m,rels})=>{
-    const codigos=rels.length?rels.map(r=>{ const p=proveedorPorId(r.proveedor_id); return `<span class="provider-code"><b>${esc(p?.nombre||'Proveedor')}</b> · <small>${esc(r.codigo_proveedor||'SIN CÓDIGO')}</small> · ${money(r.ultimo_precio)}</span>`; }).join(''):'<span class="muted">Sin códigos por proveedor</span>';
+    const codigos=rels.length?rels.map(r=>{
+      const p=proveedorPorId(r.proveedor_id);
+      const alias=r.alias_proveedor?` · ${esc(r.alias_proveedor)}`:'';
+      return `<span class="provider-code"><b>${esc(p?.nombre||'Proveedor')}</b>${alias}<br><small>${esc(r.codigo_proveedor||'SIN CÓDIGO')}</small> · ${money(r.ultimo_precio)}</span>`;
+    }).join(''):'<span class="muted">Sin referencias por proveedor</span>';
     const fav=favoritosMateriales.includes(m.id);
     return `<tr><td><b>${esc(m.nombre||'')}</b></td><td><span class="badge cat editable" title="Clic para cambiar categoría" onclick="abrirEditarMaterial(${num(m.id)})">${esc(m.categoria||'Sin categoría')}</span></td><td>${esc(m.unidad||'')}</td><td>${codigos}</td><td class="money">${money(m.ultimo_precio)}</td><td>${num(m.stock_actual).toLocaleString('es-VE')}</td><td><div class="material-action-row"><button class="fav-btn ${fav?'on':''}" onclick="toggleFavorito(${num(m.id)})" title="Favorito">★</button><button class="mini" onclick="abrirEditarMaterial(${num(m.id)})">Editar</button><button class="mini" onclick="abrirHistorialMaterial(${num(m.id)})">Historial</button><button class="mini" onclick="abrirFusionMateriales(${num(m.id)})">Fusionar</button></div></td></tr>`;
   }).join('')||'<tr><td colspan="7" class="empty">Sin materiales en este filtro</td></tr>';
@@ -1532,6 +1582,7 @@ async function moverRelacionesProveedor(origenId,destinoId){
     if(relDestino){
       const payload={
         codigo_proveedor:relDestino.codigo_proveedor||rel.codigo_proveedor||null,
+        alias_proveedor:relDestino.alias_proveedor||rel.alias_proveedor||null,
         ultimo_precio:num(relDestino.ultimo_precio||0)||num(rel.ultimo_precio||0)||null,
         fecha_ultimo_precio:relDestino.fecha_ultimo_precio||rel.fecha_ultimo_precio||null,
         activo:relDestino.activo!==false,
@@ -1912,7 +1963,12 @@ function agrupar(arr,keyFn,valFn){ return arr.reduce((o,x)=>{ const k=keyFn(x)||
 function calcularLinea(){ $('lineTotal').value=money(num($('lineCantidad').value)*num($('linePrecio').value)); }
 function limpiarLinea(){
   materialSeleccionadoId=null; materialNuevoConfirmado=false;
-  $('buscarMaterial').value=''; $('lineCodigo').value=''; $('lineMaterial').value=''; delete $('lineMaterial').dataset.materialId;
+  $('buscarMaterial').value='';
+  $('lineCodigo').value='';
+  $('lineAliasProveedor').value='';
+  $('lineMaterial').value='';
+  $('lineMaterial').readOnly=true;
+  delete $('lineMaterial').dataset.materialId;
   $('lineCategoria').value=''; $('lineUnidad').value=''; $('lineCantidad').value=1; $('linePrecio').value=0;
   $('materialSeleccionadoInfo').classList.remove('show'); $('materialSeleccionadoInfo').innerHTML=''; calcularLinea();
 }
@@ -1924,6 +1980,7 @@ function agregarLinea(){
     material_id:materialSeleccionadoId||null,
     es_nuevo:materialNuevoConfirmado,
     codigo:$('lineCodigo').value.trim(),
+    alias_proveedor:$('lineAliasProveedor').value.trim(),
     material,
     categoria:$('lineCategoria').value.trim()||'Sin categoría',
     unidad:$('lineUnidad').value.trim()||'Und',
@@ -1933,7 +1990,7 @@ function agregarLinea(){
   renderLineasNueva(); limpiarLinea();
 }
 function renderLineasNueva(){
-  $('tbodyNueva').innerHTML=lineasNueva.map((l,i)=>`<tr><td>${esc(l.codigo)}</td><td>${esc(l.material)}${l.es_nuevo?' <span class="badge cat">Nuevo</span>':''}</td><td>${esc(l.categoria)}</td><td>${l.cantidad}</td><td>${esc(l.unidad)}</td><td class="money">${money(l.precio_unitario)}</td><td class="money">${money(l.cantidad*l.precio_unitario)}</td><td><button class="mini" onclick="lineasNueva.splice(${i},1);renderLineasNueva()">X</button></td></tr>`).join('')||'<tr><td colspan="8" class="empty">Sin líneas</td></tr>';
+  $('tbodyNueva').innerHTML=lineasNueva.map((l,i)=>`<tr><td>${esc(l.codigo)}</td><td>${esc(l.alias_proveedor)}</td><td>${esc(l.material)}${l.es_nuevo?' <span class="badge cat">Nuevo</span>':''}</td><td>${esc(l.categoria)}</td><td>${l.cantidad}</td><td>${esc(l.unidad)}</td><td class="money">${money(l.precio_unitario)}</td><td class="money">${money(l.cantidad*l.precio_unitario)}</td><td><button class="mini" onclick="lineasNueva.splice(${i},1);renderLineasNueva()">X</button></td></tr>`).join('')||'<tr><td colspan="9" class="empty">Sin líneas</td></tr>';
 }
 function limpiarNueva(){
   lineasNueva=[]; renderLineasNueva(); $('newProveedor').value=''; $('newProveedorId').value=''; $('newNota').value=''; $('newTipoDocumento').value='F'; $('newEstado').value='Pagado'; $('newFecha').value=fechaLocal(); limpiarLinea(); actualizarRequisitosCompra(); renderNuevaHelpers();
@@ -1955,7 +2012,16 @@ async function upsertMaterial(l){
 async function guardarRelacionMaterialProveedor(materialId,proveedorId,l,fecha){
   const db=getDb();
   const relacionActual=relacionMaterialProveedor(materialId,proveedorId);
-  const payload={material_id:materialId,proveedor_id:proveedorId,codigo_proveedor:l.codigo||relacionActual?.codigo_proveedor||null,ultimo_precio:l.precio_unitario,fecha_ultimo_precio:fecha,activo:true,updated_at:new Date().toISOString()};
+  const payload={
+    material_id:materialId,
+    proveedor_id:proveedorId,
+    codigo_proveedor:l.codigo||relacionActual?.codigo_proveedor||null,
+    alias_proveedor:l.alias_proveedor||relacionActual?.alias_proveedor||null,
+    ultimo_precio:l.precio_unitario,
+    fecha_ultimo_precio:fecha,
+    activo:true,
+    updated_at:new Date().toISOString()
+  };
   const {error}=await db.from('compras_materiales_proveedores').upsert(payload,{onConflict:'material_id,proveedor_id'}); if(error)throw error;
   await db.from('compras_materiales').update({ultimo_precio:l.precio_unitario}).eq('id',materialId);
 }
@@ -2000,6 +2066,7 @@ async function guardarFactura(){
         nota_id:nota.id,
         material_id,
         codigo:l.codigo||null,
+        alias_proveedor:l.alias_proveedor||null,
         material:l.material,
         material_nombre:l.material,
         categoria:l.categoria||'Sin categoría',
