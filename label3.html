@@ -186,12 +186,12 @@ function proportionalSize(w,h,reduceMM){const max=Math.max(w,h),next=max-reduceM
 
       if(!candidateResult)continue;
 
-      const fewerCuts=candidateResult.cuts<r.cuts;
-      const shorterLength=candidateResult.length<r.length-0.01;
-      const morePerRow=candidateResult.c>r.c;
-      const betterUtil=candidateResult.util>r.util+0.01;
+      const extraPerRow=candidateResult.c-r.c;
 
-      if(fewerCuts||shorterLength||morePerRow||betterUtil){
+      // En producción por cantidad la optimización prioriza exclusivamente
+      // el ancho: solo se recomienda una reducción si permite añadir al
+      // menos una etiqueta adicional por fila.
+      if(extraPerRow>0){
         improvements.push({
           reduce,
           w:size.w,
@@ -203,10 +203,7 @@ function proportionalSize(w,h,reduceMM){const max=Math.max(w,h),next=max-reduceM
           total:candidateResult.total,
           util:candidateResult.util,
           usefulCutLength:candidateResult.usefulCutLength,
-          fewerCuts,
-          shorterLength,
-          morePerRow,
-          betterUtil
+          extraPerRow
         });
       }
     }
@@ -219,19 +216,17 @@ function proportionalSize(w,h,reduceMM){const max=Math.max(w,h),next=max-reduceM
 
     if(improvements.length){
       html+=improvements.map((it,i)=>{
-        const changes=[];
-        if(it.morePerRow)changes.push(`${it.cols} por fila`);
-        if(it.fewerCuts)changes.push(`${it.cuts} tramos`);
-        if(it.shorterLength)changes.push(`${fmt(it.length/1000)} m totales`);
-        if(it.betterUtil)changes.push(`${fmt(it.util)}% aprovechamiento`);
+        const extraText=it.extraPerRow===1
+          ? 'cabe 1 etiqueta más por fila'
+          : `caben ${it.extraPerRow} etiquetas más por fila`;
 
         return `<button class="optimization-item" type="button" data-prod-opt="${i}">
-          <strong>Reduciendo ${it.reduce} mm mejora la producción</strong>
-          <small>${smart(it.w)} × ${smart(it.h)} mm · ${changes.join(' · ')}</small>
+          <strong>Reduciendo ${it.reduce} mm, ${extraText}</strong>
+          <small>${smart(it.w)} × ${smart(it.h)} mm · pasa de ${r.c} a ${it.cols} por fila · ${it.cuts} tramos · ${fmt(it.length/1000)} m totales</small>
         </button>`;
       }).join('');
     }else{
-      html+='<div class="optimization-empty">Reducir proporcionalmente entre 1 mm y 5 mm no mejora los tramos, el largo total ni la cantidad por fila.</div>';
+      html+='<div class="optimization-empty">Reducir proporcionalmente entre 1 mm y 5 mm no permite añadir otra etiqueta en el ancho.</div>';
     }
 
     html+='</div>';
