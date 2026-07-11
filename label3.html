@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <meta name="theme-color" content="#153bff"/>
 <title>Label · Tuttovinilos</title>
-<!-- label.html v67 · tramos inteligentes + modo seguro para etiquetas pequeñas -->
+<!-- label.html v68 · tramos inteligentes sin tabla detallada -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -113,12 +113,6 @@ button:disabled{cursor:not-allowed;opacity:.48}
 .alert.warn{background:#fff7ed;border:1px solid #fed7aa;color:#9a4a08}
 .alert.good{background:#ecfdf3;border:1px solid #bbf7d0;color:#166534}
 
-.table-wrap{margin-top:10px;border:1px solid var(--border);border-radius:12px;overflow:auto}
-.cut-table{width:100%;border-collapse:collapse;min-width:620px;background:#fff}
-.cut-table th,.cut-table td{padding:9px 10px;border-bottom:1px solid var(--border);text-align:right;font-family:var(--mono);font-size:10px;white-space:nowrap}
-.cut-table th{background:#f8f9ff;color:var(--muted);font-family:var(--head);font-size:8px;text-transform:uppercase;letter-spacing:.35px}
-.cut-table th:first-child,.cut-table td:first-child{text-align:left}
-.cut-table tr:last-child td{border-bottom:0}
 
 .preview{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;box-shadow:var(--sh-1)}
 .preview-canvas{width:100%;max-width:680px;margin:0 auto;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--panel2);overflow:hidden}
@@ -277,23 +271,6 @@ button:disabled{cursor:not-allowed;opacity:.48}
 
             <div class="alert info" id="accumulationNote"></div>
             <div class="alert good" id="commercialSuggestion"></div>
-
-            <div class="table-wrap">
-              <table class="cut-table">
-                <thead>
-                  <tr>
-                    <th>Tramo</th>
-                    <th>Filas</th>
-                    <th>Capacidad</th>
-                    <th>Solicitadas</th>
-                    <th>Etiquetas</th>
-                    <th>Guías</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody id="cutTableBody"></tbody>
-              </table>
-            </div>
           </div>
 
           <div class="copy-box">
@@ -691,7 +668,6 @@ function renderResults(r){
     if(r.invalid){
       $('accumulationNote').innerHTML='<b>No cabe:</b> la etiqueta supera el ancho útil o no entra dentro del largo máximo configurado.';
       $('commercialSuggestion').innerHTML='<b>Revisa:</b> orientación, ancho útil, largo máximo o pérdida de guías.';
-      $('cutTableBody').innerHTML='<tr><td colspan="7">Sin acomodo posible</td></tr>';
     }else{
       const safeText=r.isSmallLabel
         ? `Como la etiqueta tiene un avance pequeño, se aplica un tramo seguro máximo de <b>${fmt2(r.safeRegularLimit_mm/10)} cm</b>.`
@@ -710,17 +686,6 @@ function renderResults(r){
         $('commercialSuggestion').innerHTML=
           `<b>Siguiente cantidad eficiente:</b> ${nextQty} unidades. Requiere al menos una fila adicional.`;
       }
-
-      $('cutTableBody').innerHTML=r.cutDetails.map(c=>`
-        <tr>
-          <td>Tramo ${c.index}</td>
-          <td>${c.rows}</td>
-          <td>${c.capacity}</td>
-          <td>${c.requestedQty}</td>
-          <td>${fmt2(c.layoutLength/10)} cm</td>
-          <td>${fmt2(c.guideLoss/10)} cm</td>
-          <td><b>${fmt2(c.totalLength/10)} cm</b></td>
-        </tr>`).join('');
     }
 
     $('copyText').innerHTML=
