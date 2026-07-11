@@ -165,7 +165,117 @@ function capacity(x){const u=useful(x),lw=num('lw'),lh=num('lh'),sp=num('sp',x.s
 function candidate(x,rot){const u=useful(x),lw=num('lw'),lh=num('lh'),sp=num('sp',x.spacing),qty=Math.max(1,Math.ceil(num('qty',1))),pw=rot?lh:lw,ph=rot?lw:lh,c=fit(u.w,pw,sp);if(!c)return null;const rows=Math.ceil(qty/c);const requestedLimit=Math.max(100,num('optimalCutLength',userOptimalCutLength));const safeLimit=Math.min(x.max||requestedLimit,requestedLimit);const maxRows=fit(Math.max(0,safeLimit-x.loss),ph,sp);if(!maxRows)return null;let options=[];for(let reg=1;reg<=maxRows;reg++){const count=Math.ceil(rows/reg);const usefulCutLength=used(reg,ph,sp);const guide=count*x.loss;const length=(usefulCutLength*count)+guide;const capacity=count*reg*c;const empty=capacity-qty;const physicalCutLength=usefulCutLength+x.loss;const distanceToSafe=Math.abs(safeLimit-physicalCutLength);options.push({rot,pw,ph,c,rows,reg,count,length,capacity,empty,guide,limit:safeLimit,usefulCutLength,physicalCutLength,distanceToSafe})}options.sort((a,b)=>a.distanceToSafe-b.distanceToSafe||a.length-b.length||a.empty-b.empty||b.reg-a.reg);return options[0]}
 function production(x){if(x.type!=='roll')return null;const a=[candidate(x,false),candidate(x,true)].filter(Boolean).sort((a,b)=>a.distanceToSafe-b.distanceToSafe||a.length-b.length||a.empty-b.empty)[0];if(!a)return null;const u=useful(x),lw=num('lw'),lh=num('lh'),qty=Math.max(1,Math.ceil(num('qty',1))),real=x.width*a.length/1e6,step=num('round',.25);return{prod:true,x,u,lw,lh,sp:num('sp',x.spacing),requested:qty,rot:a.rot,pw:a.pw,ph:a.ph,c:a.c,r:a.rows,total:a.capacity,empty:a.empty,area:qty*lw*lh/1e6,util:real?(qty*lw*lh/1e6)/real*100:0,rowsCut:a.reg,cuts:a.count,length:a.length,guide:a.guide,bill:Math.max(num('minimum',1),Math.ceil((real-1e-9)/step)*step),limit:a.limit,usefulCutLength:a.usefulCutLength,physicalCutLength:a.physicalCutLength,finalFree:0}}
 function compute(){const x=mat(selected);if(!x)return;if(mode==='quantity'&&x.type!=='roll'){alert('Este material se calcula por pliego, no como rollo continuo.');setMode('capacity');return}last=mode==='quantity'?production(x):capacity(x);render(last)}
-function proportionalSize(w,h,reduceMM){const max=Math.max(w,h),next=max-reduceMM;if(next<=0)return null;const f=next/max;return{w:+(w*f).toFixed(2),h:+(h*f).toFixed(2)}}function capacitySize(x,w,h,sp){const u=useful(x),e=rot=>{const pw=rot?h:w,ph=rot?w:h,c=fit(u.w,pw,sp),rr=fit(u.h,ph,sp);return{rot,pw,ph,c,rr,total:c*rr,len:used(rr,ph,sp)}};const a=e(false),b=e(true);return a.total!==b.total?(a.total>b.total?a:b):(a.len<=b.len?a:b)}function renderOptimization(r){if(r.prod){$('optimization').innerHTML=`<div class="optimization-list"><div class="optimization-item"><strong>Largo indicado: ${fmt(r.limit/10)} cm</strong><small>Recomendación: ${r.rowsCut} filas y ${fmt(r.usefulCutLength/10)} cm útiles por paño.</small></div><div class="optimization-item"><strong>${r.cuts} tramos · capacidad ${r.total}</strong><small>${r.empty?r.empty+' espacios disponibles.':'Acomodo exacto.'}</small></div></div>`;return}const improvements=[];for(const reduce of [1,2,3,4,5]){const size=proportionalSize(r.lw,r.lh,reduce);if(!size)continue;const q=capacitySize(r.x,size.w,size.h,r.sp),gain=q.total-r.total;if(gain>0)improvements.push({reduce,w:size.w,h:size.h,total:q.total,gain,c:q.c,r:q.rr,rot:q.rot})}if(!improvements.length){$('optimization').innerHTML='<div class="optimization-empty">Reducir proporcionalmente entre 1 mm y 5 mm no aumenta la cantidad de etiquetas en este formato.</div>';return}$('optimization').innerHTML='<div class="optimization-list">'+improvements.map((it,i)=>`<button class="optimization-item" type="button" data-opt="${i}"><strong>Reduciendo ${it.reduce} mm ganas +${it.gain} etiquetas</strong><small>${it.w} × ${it.h} mm · total ${it.total} · ${it.c} por fila × ${it.r} filas · ${it.rot?'rotada':'normal'}</small></button>`).join('')+'</div>';document.querySelectorAll('[data-opt]').forEach(b=>b.onclick=()=>{const it=improvements[Number(b.dataset.opt)];sharedLabel.w=it.w;sharedLabel.h=it.h;applySharedLabel();compute()})}function render(r){if(!r)return;$('resultTitle').textContent=r.prod?'Producción por tramos':'Etiquetas por formato';$('total').textContent=r.prod?r.requested:r.total;$('cols').textContent=r.c;$('rows').textContent=r.r;$('placed').textContent=`${r.pw} × ${r.ph} mm`;$('badge').textContent=r.rot?'ROTADA':'NORMAL';$('prod').classList.toggle('hidden',!r.prod);if(r.prod){const totalArea=(r.x.width*r.length)/1000000;const usefulCutLength=r.usefulCutLength;$('areaLabel').textContent='Área total';$('area').textContent=fmt(totalArea)+' m²';$('wasteLabel').textContent='Tramos';$('waste').textContent=String(r.cuts);$('waste').className='val';$('util').textContent=fmt(r.util)+'%';$('cutMeasure').textContent=fmt(usefulCutLength/10)+' cm';$('cutWaste').textContent=fmt(r.guide/10)+' cm';$('length').textContent=fmt(r.length/1000)+' m';$('prodNote').innerHTML=`<b>Largo objetivo indicado:</b> ${fmt(r.limit/10)} cm. El sistema recomienda ${r.rowsCut} filas por paño y una medida útil de <b>${fmt(usefulCutLength/10)} cm</b>, sin superar el largo indicado. Cada paño lleva aparte <b>${fmt(r.x.loss/10)} cm</b> de pérdida por guías.`;$('commercial').innerHTML=r.empty?`<b>Recomendación:</b> ${r.cuts} paños de ${fmt(usefulCutLength/10)} cm útiles. Capacidad total: <b>${r.total} unidades</b>; quedan ${r.empty} espacios disponibles.`:`<b>Recomendación:</b> ${r.cuts} paños de ${fmt(usefulCutLength/10)} cm útiles. El acomodo queda exacto.`}else{$('areaLabel').textContent='Área etiquetas';$('area').textContent=fmt(r.area)+' m²';$('wasteLabel').textContent='Sobrante largo';$('waste').textContent=fmt(r.waste/10)+' cm';$('waste').className='val orange';$('util').textContent=fmt(r.util)+'%'}const drawRows=r.prod?r.rowsCut:r.r,H=r.prod?used(drawRows,r.ph,r.sp)+r.x.loss:r.u.h;let rects='';for(let y=0;y<drawRows;y++)for(let z=0;z<r.c;z++)rects+=`<rect x="${z*(r.pw+r.sp)}" y="${y*(r.ph+r.sp)}" width="${r.pw}" height="${r.ph}" rx="2" fill="#153bff" opacity=".88"/>`;$('preview').style.aspectRatio=`${r.u.w}/${Math.max(H,1)}`;$('preview').innerHTML=`<svg viewBox="0 0 ${r.u.w} ${H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto"><rect width="100%" height="100%" fill="#f8f9ff"/><rect width="100%" height="100%" fill="none" stroke="#ff8616" stroke-width="4" stroke-dasharray="20 10"/>${rects}</svg>`;$('meta').textContent=`${r.x.name} · total ${cm(r.x.width)} × ${cm(r.x.length)} cm · útil ${cm(r.u.w)} × ${cm(r.u.h)} cm`;renderOptimization(r)}
+function proportionalSize(w,h,reduceMM){const max=Math.max(w,h),next=max-reduceMM;if(next<=0)return null;const f=next/max;return{w:+(w*f).toFixed(2),h:+(h*f).toFixed(2)}}function capacitySize(x,w,h,sp){const u=useful(x),e=rot=>{const pw=rot?h:w,ph=rot?w:h,c=fit(u.w,pw,sp),rr=fit(u.h,ph,sp);return{rot,pw,ph,c,rr,total:c*rr,len:used(rr,ph,sp)}};const a=e(false),b=e(true);return a.total!==b.total?(a.total>b.total?a:b):(a.len<=b.len?a:b)}function renderOptimization(r){
+  const improvements=[];
+
+  if(r.prod){
+    for(const reduce of [1,2,3,4,5]){
+      const size=proportionalSize(r.lw,r.lh,reduce);
+      if(!size)continue;
+
+      const oldW=$('lw').value;
+      const oldH=$('lh').value;
+
+      $('lw').value=size.w;
+      $('lh').value=size.h;
+
+      const candidateResult=production(r.x);
+
+      $('lw').value=oldW;
+      $('lh').value=oldH;
+
+      if(!candidateResult)continue;
+
+      const fewerCuts=candidateResult.cuts<r.cuts;
+      const shorterLength=candidateResult.length<r.length-0.01;
+      const morePerRow=candidateResult.c>r.c;
+      const betterUtil=candidateResult.util>r.util+0.01;
+
+      if(fewerCuts||shorterLength||morePerRow||betterUtil){
+        improvements.push({
+          reduce,
+          w:size.w,
+          h:size.h,
+          cuts:candidateResult.cuts,
+          length:candidateResult.length,
+          cols:candidateResult.c,
+          rowsCut:candidateResult.rowsCut,
+          total:candidateResult.total,
+          util:candidateResult.util,
+          usefulCutLength:candidateResult.usefulCutLength,
+          fewerCuts,
+          shorterLength,
+          morePerRow,
+          betterUtil
+        });
+      }
+    }
+
+    let html=`<div class="optimization-list">
+      <div class="optimization-item">
+        <strong>Largo indicado: ${fmt(r.limit/10)} cm</strong>
+        <small>Recomendación actual: ${r.rowsCut} filas y ${fmt(r.usefulCutLength/10)} cm útiles por paño.</small>
+      </div>`;
+
+    if(improvements.length){
+      html+=improvements.map((it,i)=>{
+        const changes=[];
+        if(it.morePerRow)changes.push(`${it.cols} por fila`);
+        if(it.fewerCuts)changes.push(`${it.cuts} tramos`);
+        if(it.shorterLength)changes.push(`${fmt(it.length/1000)} m totales`);
+        if(it.betterUtil)changes.push(`${fmt(it.util)}% aprovechamiento`);
+
+        return `<button class="optimization-item" type="button" data-prod-opt="${i}">
+          <strong>Reduciendo ${it.reduce} mm mejora la producción</strong>
+          <small>${smart(it.w)} × ${smart(it.h)} mm · ${changes.join(' · ')}</small>
+        </button>`;
+      }).join('');
+    }else{
+      html+='<div class="optimization-empty">Reducir proporcionalmente entre 1 mm y 5 mm no mejora los tramos, el largo total ni la cantidad por fila.</div>';
+    }
+
+    html+='</div>';
+    $('optimization').innerHTML=html;
+
+    document.querySelectorAll('[data-prod-opt]').forEach(btn=>{
+      btn.onclick=()=>{
+        const it=improvements[Number(btn.dataset.prodOpt)];
+        sharedLabel.w=it.w;
+        sharedLabel.h=it.h;
+        applySharedLabel();
+        compute();
+      };
+    });
+    return;
+  }
+
+  for(const reduce of [1,2,3,4,5]){
+    const size=proportionalSize(r.lw,r.lh,reduce);
+    if(!size)continue;
+    const q=capacitySize(r.x,size.w,size.h,r.sp);
+    const gain=q.total-r.total;
+    if(gain>0)improvements.push({reduce,w:size.w,h:size.h,total:q.total,gain,c:q.c,r:q.rr,rot:q.rot});
+  }
+
+  if(!improvements.length){
+    $('optimization').innerHTML='<div class="optimization-empty">Reducir proporcionalmente entre 1 mm y 5 mm no aumenta la cantidad de etiquetas en este formato.</div>';
+    return;
+  }
+
+  $('optimization').innerHTML='<div class="optimization-list">'+improvements.map((it,i)=>`
+    <button class="optimization-item" type="button" data-opt="${i}">
+      <strong>Reduciendo ${it.reduce} mm ganas +${it.gain} etiquetas</strong>
+      <small>${it.w} × ${it.h} mm · total ${it.total} · ${it.c} por fila × ${it.r} filas · ${it.rot?'rotada':'normal'}</small>
+    </button>`).join('')+'</div>';
+
+  document.querySelectorAll('[data-opt]').forEach(b=>b.onclick=()=>{
+    const it=improvements[Number(b.dataset.opt)];
+    sharedLabel.w=it.w;
+    sharedLabel.h=it.h;
+    applySharedLabel();
+    compute();
+  });
+}function render(r){if(!r)return;$('resultTitle').textContent=r.prod?'Producción por tramos':'Etiquetas por formato';$('total').textContent=r.prod?r.requested:r.total;$('cols').textContent=r.c;$('rows').textContent=r.r;$('placed').textContent=`${r.pw} × ${r.ph} mm`;$('badge').textContent=r.rot?'ROTADA':'NORMAL';$('prod').classList.toggle('hidden',!r.prod);if(r.prod){const totalArea=(r.x.width*r.length)/1000000;const usefulCutLength=r.usefulCutLength;$('areaLabel').textContent='Área total';$('area').textContent=fmt(totalArea)+' m²';$('wasteLabel').textContent='Tramos';$('waste').textContent=String(r.cuts);$('waste').className='val';$('util').textContent=fmt(r.util)+'%';$('cutMeasure').textContent=fmt(usefulCutLength/10)+' cm';$('cutWaste').textContent=fmt(r.guide/10)+' cm';$('length').textContent=fmt(r.length/1000)+' m';$('prodNote').innerHTML=`<b>Largo objetivo indicado:</b> ${fmt(r.limit/10)} cm. El sistema recomienda ${r.rowsCut} filas por paño y una medida útil de <b>${fmt(usefulCutLength/10)} cm</b>, sin superar el largo indicado. Cada paño lleva aparte <b>${fmt(r.x.loss/10)} cm</b> de pérdida por guías.`;$('commercial').innerHTML=r.empty?`<b>Recomendación:</b> ${r.cuts} paños de ${fmt(usefulCutLength/10)} cm útiles. Capacidad total: <b>${r.total} unidades</b>; quedan ${r.empty} espacios disponibles.`:`<b>Recomendación:</b> ${r.cuts} paños de ${fmt(usefulCutLength/10)} cm útiles. El acomodo queda exacto.`}else{$('areaLabel').textContent='Área etiquetas';$('area').textContent=fmt(r.area)+' m²';$('wasteLabel').textContent='Sobrante largo';$('waste').textContent=fmt(r.waste/10)+' cm';$('waste').className='val orange';$('util').textContent=fmt(r.util)+'%'}const drawRows=r.prod?r.rowsCut:r.r,H=r.prod?used(drawRows,r.ph,r.sp)+r.x.loss:r.u.h;let rects='';for(let y=0;y<drawRows;y++)for(let z=0;z<r.c;z++)rects+=`<rect x="${z*(r.pw+r.sp)}" y="${y*(r.ph+r.sp)}" width="${r.pw}" height="${r.ph}" rx="2" fill="#153bff" opacity=".88"/>`;$('preview').style.aspectRatio=`${r.u.w}/${Math.max(H,1)}`;$('preview').innerHTML=`<svg viewBox="0 0 ${r.u.w} ${H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto"><rect width="100%" height="100%" fill="#f8f9ff"/><rect width="100%" height="100%" fill="none" stroke="#ff8616" stroke-width="4" stroke-dasharray="20 10"/>${rects}</svg>`;$('meta').textContent=`${r.x.name} · total ${cm(r.x.width)} × ${cm(r.x.length)} cm · útil ${cm(r.u.w)} × ${cm(r.u.h)} cm`;renderOptimization(r)}
 function setMode(m){
   readSharedLabel();
   mode=m;
