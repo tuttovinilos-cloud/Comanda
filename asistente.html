@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutto Asistente Interno</title>
+  <style>
+    :root{
+      --azul:#153bff;
+      --azul2:#0e2ec9;
+      --naranja:#ff7a00;
+      --fondo:#f3f5fb;
+      --panel:#ffffff;
+      --texto:#111827;
+      --muted:#6b7280;
+      --borde:#dde3f0;
+      --verde:#15a36d;
+      --sombra:0 14px 40px rgba(23,43,77,.10);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,Arial,sans-serif;
+      background:var(--fondo);
+      color:var(--texto);
+    }
+
+    .app{
+      min-height:100vh;
+      display:grid;
+      grid-template-columns:280px 1fr;
+    }
+
+    .sidebar{
+      background:linear-gradient(180deg,#102fce,#173fff);
+      color:#fff;
+      padding:22px;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:6px;
+    }
+
+    .logo{
+      width:46px;
+      height:46px;
+      border-radius:14px;
+      background:#fff;
+      color:var(--azul);
+      display:grid;
+      place-items:center;
+      font-weight:900;
+      font-size:21px;
+      box-shadow:0 8px 20px rgba(0,0,0,.18);
+    }
+
+    .brand h1{
+      font-size:18px;
+      margin:0;
+    }
+
+    .brand span{
+      display:block;
+      font-size:12px;
+      opacity:.75;
+      margin-top:3px;
+    }
+
+    .section-title{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      opacity:.65;
+      margin-top:8px;
+    }
+
+    .nav-btn{
+      width:100%;
+      border:0;
+      color:#fff;
+      background:rgba(255,255,255,.10);
+      padding:13px 14px;
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      cursor:pointer;
+      text-align:left;
+      font-size:14px;
+      font-weight:700;
+      transition:.2s;
+    }
+
+    .nav-btn:hover,
+    .nav-btn.active{
+      background:#fff;
+      color:var(--azul);
+      transform:translateY(-1px);
+    }
+
+    .sidebar-note{
+      margin-top:auto;
+      padding:14px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.15);
+      border-radius:14px;
+      font-size:12px;
+      line-height:1.5;
+    }
+
+    .main{
+      padding:24px;
+      display:grid;
+      grid-template-rows:auto 1fr;
+      gap:18px;
+      min-width:0;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+    }
+
+    .topbar h2{
+      margin:0;
+      font-size:25px;
+    }
+
+    .topbar p{
+      margin:5px 0 0;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .status{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      background:#eaf9f2;
+      color:#0f7a54;
+      border:1px solid #c6efdd;
+      padding:10px 13px;
+      border-radius:999px;
+      font-weight:800;
+      font-size:13px;
+    }
+
+    .dot{
+      width:9px;
+      height:9px;
+      background:var(--verde);
+      border-radius:50%;
+      box-shadow:0 0 0 4px rgba(21,163,109,.13);
+    }
+
+    .workspace{
+      min-height:0;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 320px;
+      gap:18px;
+    }
+
+    .chat-card,
+    .side-card{
+      background:var(--panel);
+      border:1px solid var(--borde);
+      border-radius:20px;
+      box-shadow:var(--sombra);
+    }
+
+    .chat-card{
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+      min-height:720px;
+      overflow:hidden;
+    }
+
+    .chat-head{
+      padding:18px 20px;
+      border-bottom:1px solid var(--borde);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .assistant-name{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .avatar{
+      width:42px;
+      height:42px;
+      border-radius:14px;
+      background:linear-gradient(135deg,var(--azul),var(--naranja));
+      display:grid;
+      place-items:center;
+      color:#fff;
+      font-weight:900;
+    }
+
+    .assistant-name strong{
+      display:block;
+      font-size:15px;
+    }
+
+    .assistant-name small{
+      color:var(--muted);
+    }
+
+    .chat-messages{
+      padding:22px;
+      overflow:auto;
+      background:
+        radial-gradient(circle at top right, rgba(21,59,255,.05), transparent 28%),
+        #fbfcff;
+    }
+
+    .message{
+      max-width:78%;
+      margin-bottom:14px;
+      padding:13px 15px;
+      border-radius:16px;
+      line-height:1.5;
+      font-size:14px;
+      white-space:pre-wrap;
+    }
+
+    .message.assistant{
+      background:#fff;
+      border:1px solid var(--borde);
+      border-top-left-radius:5px;
+    }
+
+    .message.user{
+      margin-left:auto;
+      background:var(--azul);
+      color:#fff;
+      border-top-right-radius:5px;
+    }
+
+    .quick-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+    }
+
+    .quick-chip{
+      border:1px solid var(--borde);
+      background:#fff;
+      color:var(--azul);
+      padding:9px 11px;
+      border-radius:999px;
+      font-weight:800;
+      cursor:pointer;
+      font-size:12px;
+    }
+
+    .quick-chip:hover{
+      border-color:var(--azul);
+      background:#f3f6ff;
+    }
+
+    .chat-input{
+      padding:16px;
+      border-top:1px solid var(--borde);
+      display:flex;
+      gap:10px;
+      background:#fff;
+    }
+
+    .chat-input textarea{
+      flex:1;
+      resize:none;
+      min-height:52px;
+      max-height:120px;
+      border:1px solid var(--borde);
+      border-radius:14px;
+      padding:14px;
+      font:inherit;
+      outline:none;
+    }
+
+    .chat-input textarea:focus{
+      border-color:var(--azul);
+      box-shadow:0 0 0 3px rgba(21,59,255,.10);
+    }
+
+    .send{
+      width:56px;
+      border:0;
+      border-radius:14px;
+      background:var(--azul);
+      color:#fff;
+      font-size:22px;
+      cursor:pointer;
+      font-weight:900;
+    }
+
+    .right-column{
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+
+    .side-card{
+      padding:18px;
+    }
+
+    .side-card h3{
+      margin:0 0 12px;
+      font-size:16px;
+    }
+
+    .side-card p{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.5;
+    }
+
+    .area-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .area{
+      border:1px solid var(--borde);
+      background:#fff;
+      border-radius:14px;
+      padding:13px;
+      cursor:pointer;
+      transition:.2s;
+    }
+
+    .area:hover{
+      border-color:var(--azul);
+      transform:translateY(-2px);
+    }
+
+    .area strong{
+      display:block;
+      font-size:13px;
+      margin-top:6px;
+    }
+
+    .metric{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:11px 0;
+      border-bottom:1px solid var(--borde);
+      font-size:13px;
+    }
+
+    .metric:last-child{border-bottom:0}
+    .metric b{color:var(--azul)}
+
+    .warning{
+      background:#fff7ed;
+      border:1px solid #fed7aa;
+      color:#9a4d00;
+      padding:12px;
+      border-radius:13px;
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    @media(max-width:980px){
+      .app{grid-template-columns:1fr}
+      .sidebar{display:none}
+      .workspace{grid-template-columns:1fr}
+      .right-column{display:grid;grid-template-columns:1fr 1fr}
+    }
+
+    @media(max-width:700px){
+      .main{padding:12px}
+      .workspace{display:block}
+      .right-column{display:block;margin-top:14px}
+      .side-card{margin-bottom:14px}
+      .chat-card{min-height:72vh}
+      .message{max-width:90%}
+      .topbar{align-items:flex-start}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">T</div>
+        <div>
+          <h1>Tutto Asistente</h1>
+          <span>Asistente interno empresarial</span>
+        </div>
+      </div>
+
+      <div class="section-title">Áreas</div>
+      <button class="nav-btn active" data-mode="general">🏠 General</button>
+      <button class="nav-btn" data-mode="pedidos">📦 Pedidos</button>
+      <button class="nav-btn" data-mode="produccion">🏭 Producción</button>
+      <button class="nav-btn" data-mode="cotizacion">💵 Cotización</button>
+      <button class="nav-btn" data-mode="materiales">🧱 Materiales</button>
+      <button class="nav-btn" data-mode="soporte">🛠 Soporte técnico</button>
+
+      <div class="sidebar-note">
+        <strong>Modo prueba</strong><br>
+        Esta versión responde con reglas locales simuladas. La siguiente etapa sería conectarla a Supabase.
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2>Centro de asistencia interna</h2>
+          <p>Consulta procesos, pedidos, materiales y criterios de fabricación.</p>
+        </div>
+        <div class="status"><span class="dot"></span> Disponible</div>
+      </header>
+
+      <section class="workspace">
+        <div class="chat-card">
+          <div class="chat-head">
+            <div class="assistant-name">
+              <div class="avatar">AI</div>
+              <div>
+                <strong>Tutto Asistente</strong>
+                <small id="modeLabel">Modo general</small>
+              </div>
+            </div>
+            <button class="quick-chip" id="clearChat">Limpiar chat</button>
+          </div>
+
+          <div class="chat-messages" id="chat">
+            <div class="message assistant">
+Hola. Soy el asistente interno de Tuttovinilos.
+
+Puedo ayudarte con pedidos, materiales, producción, cotización y dudas técnicas.
+
+Prueba escribiendo algo como:
+            </div>
+
+            <div class="quick-actions">
+              <button class="quick-chip">¿Cómo fabrico letras corpóreas?</button>
+              <button class="quick-chip">¿Qué materiales necesito?</button>
+              <button class="quick-chip">¿Cómo calculo un precio?</button>
+              <button class="quick-chip">¿Qué pedido debería salir primero?</button>
+            </div>
+          </div>
+
+          <div class="chat-input">
+            <textarea id="input" placeholder="Escribe tu consulta interna..."></textarea>
+            <button class="send" id="sendBtn">➜</button>
+          </div>
+        </div>
+
+        <div class="right-column">
+          <div class="side-card">
+            <h3>Accesos rápidos</h3>
+            <div class="area-grid">
+              <div class="area" data-prompt="Muéstrame los pedidos pendientes">📦<strong>Pedidos</strong></div>
+              <div class="area" data-prompt="Ayúdame a preparar producción">🏭<strong>Producción</strong></div>
+              <div class="area" data-prompt="Ayúdame a cotizar un trabajo">💵<strong>Cotizar</strong></div>
+              <div class="area" data-prompt="Calcula materiales necesarios">🧱<strong>Materiales</strong></div>
+            </div>
+          </div>
+
+          <div class="side-card">
+            <h3>Resumen del día</h3>
+            <div class="metric"><span>Pedidos activos</span><b>18</b></div>
+            <div class="metric"><span>Urgentes</span><b>4</b></div>
+            <div class="metric"><span>En producción</span><b>7</b></div>
+            <div class="metric"><span>Con datos incompletos</span><b>3</b></div>
+          </div>
+
+          <div class="side-card">
+            <h3>Estado de conexión</h3>
+            <div class="warning">
+              Supabase todavía no está conectado. Los datos visibles son demostrativos y sirven para probar la interfaz y el flujo.
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const chat = document.getElementById("chat");
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("sendBtn");
+    const modeLabel = document.getElementById("modeLabel");
+    let currentMode = "general";
+
+    const responses = {
+      corporeas: `Para fabricar letras corpóreas de aproximadamente 40 cm:
+
+1. Define material frontal, cuerpo, profundidad y tipo de iluminación.
+2. Para frontal iluminado, puedes usar acrílico de 3 mm.
+3. Para cuerpo, PVC de 10 mm o banda de aluminio según el acabado.
+4. Distribuye módulos LED evitando puntos oscuros.
+5. Confirma fuente, fijación, instalación y acabado antes de producir.
+
+En una versión conectada, también podría generar automáticamente la lista de materiales.`,
+
+      materiales: `Para calcular materiales necesito:
+
+• Medidas finales.
+• Cantidad de piezas.
+• Material y espesor.
+• Tipo de estructura.
+• Si lleva iluminación.
+• Lugar de instalación.
+• Margen de desperdicio.
+
+Ejemplo: con esos datos puedo estimar PVC, acrílico, banda, módulos LED, fuente, adhesivos y tornillería.`,
+
+      cotizacion: `Para cotizar correctamente separaría:
+
+• Material principal.
+• Material secundario.
+• Mano de obra.
+• Impresión o corte.
+• Iluminación.
+• Instalación.
+• Transporte.
+• Desperdicio.
+• Margen de ganancia.
+
+La versión conectada podría consultar tus precios reales desde Supabase y generar el total automáticamente.`,
+
+      pedidos: `Para ordenar pedidos usaría esta prioridad:
+
+1. Fecha prometida.
+2. Pedido atrasado.
+3. Material disponible.
+4. Tiempo estimado de producción.
+5. Dependencia de terceros.
+6. Nivel de pago o aprobación.
+7. Capacidad de máquina.
+
+Al conectarlo a Supabase podría mostrar los pedidos reales y señalar cuál debe salir primero.`,
+
+      default: `Entendí tu consulta.
+
+En esta prueba todavía no estoy conectado a los datos reales, pero puedo orientarte según reglas internas.
+
+La versión completa podría:
+• consultar pedidos,
+• revisar materiales,
+• generar listas,
+• detectar datos faltantes,
+• cambiar estados,
+• y preparar instrucciones de producción.`
+    };
+
+    function addMessage(text, type){
+      const div = document.createElement("div");
+      div.className = "message " + type;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function getResponse(text){
+      const t = text.toLowerCase();
+
+      if(t.includes("corpórea") || t.includes("corporea") || t.includes("letras")) return responses.corporeas;
+      if(t.includes("material")) return responses.materiales;
+      if(t.includes("cotiz") || t.includes("precio")) return responses.cotizacion;
+      if(t.includes("pedido") || t.includes("primero") || t.includes("urgente")) return responses.pedidos;
+
+      if(currentMode === "produccion") return responses.corporeas;
+      if(currentMode === "materiales") return responses.materiales;
+      if(currentMode === "cotizacion") return responses.cotizacion;
+      if(currentMode === "pedidos") return responses.pedidos;
+
+      return responses.default;
+    }
+
+    function sendMessage(prefill){
+      const text = (prefill || input.value).trim();
+      if(!text) return;
+
+      addMessage(text, "user");
+      input.value = "";
+
+      setTimeout(() => {
+        addMessage(getResponse(text), "assistant");
+      }, 250);
+    }
+
+    sendBtn.addEventListener("click", () => sendMessage());
+
+    input.addEventListener("keydown", e => {
+      if(e.key === "Enter" && !e.shiftKey){
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    document.querySelectorAll(".quick-chip").forEach(btn => {
+      if(btn.id === "clearChat") return;
+      btn.addEventListener("click", () => sendMessage(btn.textContent));
+    });
+
+    document.querySelectorAll(".area").forEach(card => {
+      card.addEventListener("click", () => sendMessage(card.dataset.prompt));
+    });
+
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentMode = btn.dataset.mode;
+        modeLabel.textContent = "Modo " + btn.textContent.trim().replace(/^[^\wÁÉÍÓÚáéíóú]+/, "").toLowerCase();
+        addMessage("Modo cambiado a: " + modeLabel.textContent.replace("Modo ", ""), "assistant");
+      });
+    });
+
+    document.getElementById("clearChat").addEventListener("click", () => {
+      chat.innerHTML = "";
+      addMessage("Chat reiniciado. ¿En qué área necesitas ayuda?", "assistant");
+    });
+  </script>
+</body>
+</html>
