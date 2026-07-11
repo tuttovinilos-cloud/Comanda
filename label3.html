@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <meta name="theme-color" content="#153bff"/>
 <title>Label · Tuttovinilos</title>
-<!-- label.html v66 · módulos comerciales + producción por tramos inteligentes -->
+<!-- label.html v67 · tramos inteligentes + modo seguro para etiquetas pequeñas -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -223,9 +223,11 @@ button:disabled{cursor:not-allowed;opacity:.48}
               <div class="input-field"><label>Redondear cobro</label><div class="control"><select id="billingStep"><option value="0.25">0,25 m²</option><option value="0.5">0,50 m²</option><option value="1">1,00 m²</option></select></div></div>
               <div class="input-field"><label>Mínimo facturable</label><div class="control"><input id="minimumBilling" type="number" value="1" min="0" step="0.25"><span class="unit">m²</span></div></div>
               <div class="input-field"><label>Tramo mínimo cómodo</label><div class="control"><input id="preferredMinLength" type="number" value="700" min="0" step="10"><span class="unit">mm</span></div></div>
+              <div class="input-field"><label>Etiqueta pequeña hasta</label><div class="control"><input id="smallLabelThreshold" type="number" value="150" min="1" step="10"><span class="unit">mm de avance</span></div></div>
+              <div class="input-field solo"><label>Tramo seguro para etiquetas pequeñas</label><div class="control"><input id="smallCutTarget" type="number" value="750" min="100" step="10"><span class="unit">mm total</span></div></div>
             </div>
             <div class="hint">
-              Cada tramo incluye sus propias guías. El sistema busca filas completas, evita tiras demasiado largas y permite un tramo final más corto cuando conviene.
+              Cada tramo incluye sus propias guías. Cuando la altura de avance de la etiqueta es pequeña, el sistema limita automáticamente los tramos regulares a una longitud más segura, normalmente cercana a 70–75 cm. El último tramo puede ser más corto.
             </div>
           </div>
         </div>
@@ -367,7 +369,9 @@ let state = {
   minimumBilling:1,
   maxCutLength:1500,
   guideLoss:20,
-  preferredMinLength:700
+  preferredMinLength:700,
+  smallLabelThreshold:150,
+  smallCutTarget:750
 };
 
 let lastResult = null;
@@ -459,7 +463,16 @@ function evaluateProductionOrientation(material,rotated=false){
   if(cols<=0)return null;
 
   const totalRows=Math.ceil(state.requestedQty/cols);
-  const maxLayoutLength=Math.max(0,state.maxCutLength-state.guideLoss);
+
+  // En etiquetas pequeñas se priorizan tramos cortos y seguros.
+  // El límite general sigue siendo maxCutLength, pero los tramos regulares
+  // se reducen automáticamente para disminuir el riesgo de perder material.
+  const isSmallLabel=placedH<=state.smallLabelThreshold;
+  const safeRegularLimit=isSmallLabel
+    ? Math.min(state.maxCutLength,state.smallCutTarget)
+    : state.maxCutLength;
+
+  const maxLayoutLength=Math.max(0,safeRegularLimit-state.guideLoss);
   const maxRowsPerCut=rowsInLength(maxLayoutLength,placedH,state.spacing);
   if(maxRowsPerCut<=0)return null;
 
@@ -516,7 +529,9 @@ function evaluateProductionOrientation(material,rotated=false){
       totalGuideLoss,
       totalCapacity,
       emptySlots,
-      shortRegularPenalty
+      shortRegularPenalty,
+      isSmallLabel,
+      safeRegularLimit
     });
   }
 
@@ -592,7 +607,9 @@ function buildProductionResult(material,chosen){
     totalGuideLoss_mm:chosen.totalGuideLoss,
     rowsPerCut:chosen.regularRows,
     regularCutLength_mm:chosen.regularTotalLength,
-    finalFreeLength_mm:finalFreeLength
+    finalFreeLength_mm:finalFreeLength,
+    isSmallLabel:chosen.isSmallLabel,
+    safeRegularLimit_mm:chosen.safeRegularLimit
   };
 }
 
@@ -676,9 +693,13 @@ function renderResults(r){
       $('commercialSuggestion').innerHTML='<b>Revisa:</b> orientación, ancho útil, largo máximo o pérdida de guías.';
       $('cutTableBody').innerHTML='<tr><td colspan="7">Sin acomodo posible</td></tr>';
     }else{
+      const safeText=r.isSmallLabel
+        ? `Como la etiqueta tiene un avance pequeño, se aplica un tramo seguro máximo de <b>${fmt2(r.safeRegularLimit_mm/10)} cm</b>.`
+        : `El tramo regular puede utilizar hasta <b>${fmt2(state.maxCutLength/10)} cm</b>.`;
+
       $('accumulationNote').innerHTML=
         `<b>Tramos inteligentes:</b> se recomiendan ${r.rowsPerCut} filas por tramo regular. `+
-        `Cada tramo incluye ${fmt2(state.guideLoss/10)} cm de pérdida por guías y nunca supera ${fmt2(state.maxCutLength/10)} cm.`;
+        `${safeText} Cada tramo incluye ${fmt2(state.guideLoss/10)} cm de pérdida por guías.`;
 
       if(r.emptySlots>0){
         $('commercialSuggestion').innerHTML=
@@ -923,7 +944,9 @@ document.querySelectorAll('.format-btn').forEach(btn=>{
   ['minimumBilling','minimumBilling',v=>v>=0],
   ['maxCutLength','maxCutLength',v=>v>0],
   ['guideLoss','guideLoss',v=>v>=0],
-  ['preferredMinLength','preferredMinLength',v=>v>=0]
+  ['preferredMinLength','preferredMinLength',v=>v>=0],
+  ['smallLabelThreshold','smallLabelThreshold',v=>v>0],
+  ['smallCutTarget','smallCutTarget',v=>v>0]
 ].forEach(([id,key,valid])=>{
   $(id).addEventListener('input',e=>{
     const v=parseFloat(e.target.value);
