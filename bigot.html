@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>Bigot · Control Producción</title>
+<title>Bigot · Control Producción v3</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
@@ -42,6 +42,13 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px
 .actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.subtle{color:var(--muted);font-size:13px;line-height:1.45}
 .sqlbox{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:12px;overflow:auto;font-family:Consolas,monospace;font-size:12px;white-space:pre;max-height:420px}
 details{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}summary{cursor:pointer;font-weight:900}
+.choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.choice-btn{background:#eef2f7;color:#111827;border:1px solid var(--line);padding:10px;text-align:left;min-height:58px}
+.choice-btn b{display:block;font-size:15px;margin-bottom:3px}
+.choice-btn small{display:block;color:var(--muted);font-weight:600;line-height:1.25}
+.choice-btn.selected{background:var(--blue);color:#fff;border-color:var(--blue)}
+.choice-btn.selected small{color:#e8ecff}
+@media(max-width:520px){.choice-grid{grid-template-columns:1fr}}
 @media(max-width:900px){.grid{display:block}.card{margin-bottom:12px}.kpis,.pieces-grid{grid-template-columns:1fr 1fr}.row,.row3,.actions{grid-template-columns:1fr}}
 </style>
 </head>
@@ -94,7 +101,7 @@ details{border:1px solid var(--line);border-radius:14px;padding:12px;background:
           <button class="green" onclick="showTab('ensamblado')">Agregar ensamblado</button>
           <button class="orange" onclick="cargarAvanceActual()">Cargar avance actual</button>
         </div>
-        <p class="subtle">Avance actual: B75=20/37, B30=9/38, B8=8/16, B6=6/6, B38=0/37. También carga 80 grandes y 80 pequeños en “Acrílico + laterales”.</p>
+        <p class="subtle"><b>Avance cargado automáticamente:</b> B75=20/37, B30=9/38, B8=8/16, B6=6/6 y B38=0/37. También se cargan 80 grandes y 80 pequeños en “Acrílico + laterales”.</p>
       </div>
 
       <div class="card col-12">
@@ -110,7 +117,14 @@ details{border:1px solid var(--line);border-radius:14px;padding:12px;background:
         <h2>Agregar avance de corte</h2>
         <div class="field">
           <label>Tipo de corte</label>
-          <select id="corteCodigo"></select>
+          <input id="corteCodigo" type="hidden" value="B75">
+          <div id="corteOpciones" class="choice-grid">
+            <button type="button" class="choice-btn selected" data-value="B75" onclick="seleccionarCorte('B75')"><b>B75</b><small>4 GP + 4 GF + 1 PP</small></button>
+            <button type="button" class="choice-btn" data-value="B38" onclick="seleccionarCorte('B38')"><b>B38</b><small>4 GP + 4 GF + 1 PF</small></button>
+            <button type="button" class="choice-btn" data-value="B8" onclick="seleccionarCorte('B8')"><b>B8</b><small>12 PF + 12 PP</small></button>
+            <button type="button" class="choice-btn" data-value="B30" onclick="seleccionarCorte('B30')"><b>B30</b><small>20 GL + 20 PL</small></button>
+            <button type="button" class="choice-btn" data-value="B6" onclick="seleccionarCorte('B6')"><b>B6</b><small>20 GS + 20 PS</small></button>
+          </div>
         </div>
         <div class="field">
           <label>Cantidad cortada</label>
@@ -140,7 +154,18 @@ details{border:1px solid var(--line);border-radius:14px;padding:12px;background:
       <div class="card col-4">
         <h2>Agregar avance de ensamblado</h2>
         <div class="field"><label>Tamaño</label><select id="ensTamano"><option value="grande">Grande</option><option value="pequeno">Pequeño</option></select></div>
-        <div class="field"><label>Etapa</label><select id="ensEtapa"></select></div>
+        <div class="field">
+          <label>Etapa</label>
+          <input id="ensEtapa" type="hidden" value="acrilico_laterales">
+          <div id="etapaOpciones" class="choice-grid">
+            <button type="button" class="choice-btn selected" data-value="acrilico_laterales" onclick="seleccionarEtapa('acrilico_laterales')"><b>Acrílico + laterales</b><small>Primera etapa</small></button>
+            <button type="button" class="choice-btn" data-value="superior" onclick="seleccionarEtapa('superior')"><b>Superior</b><small>Colocar pieza superior</small></button>
+            <button type="button" class="choice-btn" data-value="vinil_laterales" onclick="seleccionarEtapa('vinil_laterales')"><b>Vinil laterales</b><small>Aplicar tiras laterales</small></button>
+            <button type="button" class="choice-btn" data-value="vinil_superiores" onclick="seleccionarEtapa('vinil_superiores')"><b>Vinil superiores</b><small>Aplicar tiras superiores</small></button>
+            <button type="button" class="choice-btn" data-value="gancho" onclick="seleccionarEtapa('gancho')"><b>Gancho</b><small>Colocar gancho</small></button>
+            <button type="button" class="choice-btn" data-value="doble_faz" onclick="seleccionarEtapa('doble_faz')"><b>Doble faz</b><small>Etapa final</small></button>
+          </div>
+        </div>
         <div class="field"><label>Cantidad</label><input id="ensCantidad" type="number" min="1" step="1" value="1"></div>
         <div class="field"><label>Nota opcional</label><textarea id="ensNota" placeholder="Ejemplo: turno tarde"></textarea></div>
         <button class="green" onclick="guardarEnsamblado()">Guardar ensamblado</button>
@@ -342,6 +367,25 @@ function initLocal(){
  proyecto=defaultProyecto(); cortes=[...CORTES_DEFAULT]; etapas=[...ETAPAS_DEFAULT];
  avancesCorte=JSON.parse(localStorage.getItem('bigot_local_corte')||'[]');
  avancesEns=JSON.parse(localStorage.getItem('bigot_local_ens')||'[]');
+
+ if(localStorage.getItem('bigot_local_inicial')!=='1' && avancesCorte.length===0 && avancesEns.length===0){
+  const now=new Date().toISOString();
+  avancesCorte=[
+   {id:Date.now()+1,codigo:'B75',cantidad:20,nota:'Avance actual inicial',created_at:now},
+   {id:Date.now()+2,codigo:'B30',cantidad:9,nota:'Avance actual inicial',created_at:now},
+   {id:Date.now()+3,codigo:'B8',cantidad:8,nota:'Avance actual inicial',created_at:now},
+   {id:Date.now()+4,codigo:'B6',cantidad:6,nota:'Avance actual inicial',created_at:now}
+  ];
+  avancesEns=[
+   {id:Date.now()+101,tamano:'grande',etapa_codigo:'acrilico_laterales',cantidad:80,nota:'Avance actual inicial',created_at:now},
+   {id:Date.now()+102,tamano:'pequeno',etapa_codigo:'acrilico_laterales',cantidad:80,nota:'Avance actual inicial',created_at:now}
+  ];
+  localStorage.setItem('bigot_local_inicial','1');
+  localStorage.setItem('bigot_local_corte',JSON.stringify(avancesCorte));
+  localStorage.setItem('bigot_local_ens',JSON.stringify(avancesEns));
+  proyecto.avance_inicial_cargado=true;
+ }
+
  fillConfig(); fillSelectors(); renderAll();
 }
 function guardarLocal(){
@@ -379,6 +423,26 @@ async function cargarTodo(){
  }
  proyecto=p.data||defaultProyecto(); cortes=c.data?.length?c.data:[...CORTES_DEFAULT]; etapas=e.data?.length?e.data:[...ETAPAS_DEFAULT];
  avancesCorte=ac.data||[]; avancesEns=ae.data||[];
+
+ if(avancesCorte.length===0 && avancesEns.length===0 && !proyecto.avance_inicial_cargado){
+  const cortesIni=[
+   {codigo:'B75',cantidad:20,nota:'Avance actual inicial'},
+   {codigo:'B30',cantidad:9,nota:'Avance actual inicial'},
+   {codigo:'B8',cantidad:8,nota:'Avance actual inicial'},
+   {codigo:'B6',cantidad:6,nota:'Avance actual inicial'}
+  ];
+  const ensIni=[
+   {tamano:'grande',etapa_codigo:'acrilico_laterales',cantidad:80,nota:'Avance actual inicial'},
+   {tamano:'pequeno',etapa_codigo:'acrilico_laterales',cantidad:80,nota:'Avance actual inicial'}
+  ];
+  const seedC=await sb.from('bigot_avances_corte').insert(cortesIni);
+  const seedE=await sb.from('bigot_avances_ensamblado').insert(ensIni);
+  if(!seedC.error && !seedE.error){
+   await sb.from('bigot_proyectos').update({avance_inicial_cargado:true}).eq('id',1);
+   return await cargarTodo();
+  }
+ }
+
  fillConfig();fillSelectors();renderAll();msg('Conectado y datos cargados.');
 }
 function fillConfig(){
@@ -392,8 +456,16 @@ function fillConfig(){
  document.getElementById('fechaInicio').value=d.toISOString().slice(0,16);
 }
 function fillSelectors(){
- document.getElementById('corteCodigo').innerHTML=cortes.map(c=>`<option value="${c.codigo}">${c.codigo} · ${c.descripcion}</option>`).join('');
- document.getElementById('ensEtapa').innerHTML=etapas.map(e=>`<option value="${e.codigo}">${e.nombre}</option>`).join('');
+ seleccionarCorte(document.getElementById('corteCodigo').value || 'B75');
+ seleccionarEtapa(document.getElementById('ensEtapa').value || 'acrilico_laterales');
+}
+function seleccionarCorte(codigo){
+ document.getElementById('corteCodigo').value=codigo;
+ document.querySelectorAll('#corteOpciones .choice-btn').forEach(b=>b.classList.toggle('selected',b.dataset.value===codigo));
+}
+function seleccionarEtapa(codigo){
+ document.getElementById('ensEtapa').value=codigo;
+ document.querySelectorAll('#etapaOpciones .choice-btn').forEach(b=>b.classList.toggle('selected',b.dataset.value===codigo));
 }
 async function guardarProyecto(){
  proyecto.meta_grandes=parseInt(document.getElementById('metaGrandes').value||300);
