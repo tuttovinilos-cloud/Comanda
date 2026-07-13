@@ -26,25 +26,18 @@
   <header>
     <div class="wrap top">
       <div><h1>Control de producción Bigot</h1><div class="sub">Cortes, ensamblado, inventario y fecha final estimada</div></div>
-      <div class="pill" id="sessionStatus">Sin conectar</div>
+      <div class="pill" id="sessionStatus">Conexión pendiente</div>
     </div>
   </header>
 
   <main class="wrap">
     <div id="configBox" class="card">
       <h2>Conectar con Supabase</h2>
-      <p class="small">Pega tu URL y publishable/anon key. Queda guardado solo en este navegador.</p>
+      <p class="small">Pega tu URL y anon key. No usa usuario ni contraseña; queda guardado solo en este navegador.</p>
       <div class="row">
         <label>Supabase URL<input id="supabaseUrl" placeholder="https://xxxxx.supabase.co"></label>
         <label>Publishable / anon key<input id="supabaseKey" placeholder="eyJ..."></label>
         <button id="saveConfig">Guardar conexión</button>
-      </div>
-      <hr>
-      <div class="row">
-        <label>Email<input id="email" type="email"></label>
-        <label>Contraseña<input id="password" type="password"></label>
-        <button id="loginBtn">Entrar</button>
-        <button id="logoutBtn" class="secondary">Salir</button>
       </div>
       <div id="msg" class="notice"></div>
     </div>
@@ -128,7 +121,7 @@
     const PROJECT_ID = '00000000-0000-4000-8000-00000000b190';
     const PARTS = ['GP','GF','PF','PP','GL','PL','GS','PS'];
     const PART_NAMES = {GP:'Grande frontal',GF:'Grande posterior',PF:'Pequeño frontal',PP:'Pequeño posterior',GL:'Laterales grandes',PL:'Laterales pequeños',GS:'Superior grande',PS:'Superior pequeño'};
-    let sb=null, user=null, project=null, cuts=[], cutRows=[], stages=[], asm=[];
+    let sb=null, project=null, cuts=[], cutRows=[], stages=[], asm=[];
     const $ = id => document.getElementById(id);
     const fmt = n => new Intl.NumberFormat('es-DO').format(Math.max(0, Math.round(n || 0)));
     const pct = (a,b) => b ? Math.max(0, Math.min(100, (a/b)*100)) : 0;
@@ -137,16 +130,15 @@
     function initClient(){
       const url=localStorage.getItem('bigot_url')||''; const key=localStorage.getItem('bigot_key')||'';
       $('supabaseUrl').value=url; $('supabaseKey').value=key;
-      if(url && key) sb = supabase.createClient(url,key);
-    }
-    async function refreshSession(){
-      if(!sb) return;
-      const {data}=await sb.auth.getSession();
-      user=data.session?.user || null;
-      $('sessionStatus').textContent = user ? 'Conectado: '+user.email : 'Sin sesión';
+      if(url && key){
+        sb = supabase.createClient(url,key);
+        $('sessionStatus').textContent = 'Conectado a Supabase';
+      } else {
+        $('sessionStatus').textContent = 'Conexión pendiente';
+      }
     }
     async function loadAll(){
-      if(!sb || !user) return;
+      if(!sb) return;
       const [p,cc,cr,st,ar] = await Promise.all([
         sb.from('bigot_proyectos').select('*').eq('id',PROJECT_ID).single(),
         sb.from('bigot_cortes_catalogo').select('*').order('orden'),
@@ -154,7 +146,7 @@
         sb.from('bigot_etapas_catalogo').select('*').order('orden'),
         sb.from('bigot_avances_ensamblado').select('*').eq('proyecto_id',PROJECT_ID).order('created_at',{ascending:false})
       ]);
-      if(p.error){msg('No pude leer el proyecto. Revisa que ejecutaste el SQL y que tu email está en bigot_miembros.'); return;}
+      if(p.error){msg('No pude leer el proyecto. Revisa que ejecutaste el SQL nuevo sin login y que la URL/key estén correctas.'); return;}
       project=p.data; cuts=cc.data||[]; cutRows=cr.data||[]; stages=st.data||[]; asm=ar.data||[];
       fillSelects(); render(); msg('');
     }
@@ -245,12 +237,12 @@
       await loadAll();
     }
     async function addCut(){
-      const row={proyecto_id:PROJECT_ID,codigo_corte:$('cutCode').value,cantidad:Number($('cutQty').value),nota:$('cutNote').value||null,created_by:user.id};
+      const row={proyecto_id:PROJECT_ID,codigo_corte:$('cutCode').value,cantidad:Number($('cutQty').value),nota:$('cutNote').value||null,operador:'Página Bigot'};
       const {error}=await sb.from('bigot_avances_corte').insert(row); if(error) return msg(error.message);
       $('cutNote').value=''; await loadAll();
     }
     async function addAsm(){
-      const row={proyecto_id:PROJECT_ID,tamano:$('asmSize').value,etapa:$('asmStage').value,cantidad:Number($('asmQty').value),nota:$('asmNote').value||null,created_by:user.id};
+      const row={proyecto_id:PROJECT_ID,tamano:$('asmSize').value,etapa:$('asmStage').value,cantidad:Number($('asmQty').value),nota:$('asmNote').value||null,operador:'Página Bigot'};
       const {error}=await sb.from('bigot_avances_ensamblado').insert(row); if(error) return msg(error.message);
       $('asmNote').value=''; await loadAll();
     }
@@ -262,19 +254,16 @@
     async function loadInitial(){
       if(!confirm('Esto cargará el avance inicial una sola vez. ¿Continuar?')) return;
       const already=cutRows.length+asm.length; if(already>0 && !confirm('Ya hay registros. ¿Deseas cargarlo de todos modos?')) return;
-      const cutData=[['B75',20],['B30',8],['B8',8],['B6',6]].map(x=>({proyecto_id:PROJECT_ID,codigo_corte:x[0],cantidad:x[1],nota:'Avance inicial',created_by:user.id}));
-      const asmData=[['G',80],['P',80]].map(x=>({proyecto_id:PROJECT_ID,tamano:x[0],etapa:'ARMADO_BASE',cantidad:x[1],nota:'Avance inicial',created_by:user.id}));
+      const cutData=[['B75',20],['B30',8],['B8',8],['B6',6]].map(x=>({proyecto_id:PROJECT_ID,codigo_corte:x[0],cantidad:x[1],nota:'Avance inicial',operador:'Página Bigot'}));
+      const asmData=[['G',80],['P',80]].map(x=>({proyecto_id:PROJECT_ID,tamano:x[0],etapa:'ARMADO_BASE',cantidad:x[1],nota:'Avance inicial',operador:'Página Bigot'}));
       const e1=await sb.from('bigot_avances_corte').insert(cutData); if(e1.error) return msg(e1.error.message);
       const e2=await sb.from('bigot_avances_ensamblado').insert(asmData); if(e2.error) return msg(e2.error.message);
       await loadAll();
     }
     document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,section').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active');});
-    $('saveConfig').onclick=()=>{localStorage.setItem('bigot_url',$('supabaseUrl').value.trim());localStorage.setItem('bigot_key',$('supabaseKey').value.trim());initClient();msg('Conexión guardada. Ahora inicia sesión.');};
-    $('loginBtn').onclick=async()=>{if(!sb) return msg('Primero guarda la conexión.'); const {error}=await sb.auth.signInWithPassword({email:$('email').value,password:$('password').value}); if(error) return msg(error.message); await refreshSession(); await loadAll();};
-    $('logoutBtn').onclick=async()=>{if(sb) await sb.auth.signOut(); user=null; $('sessionStatus').textContent='Sin sesión';};
+    $('saveConfig').onclick=async()=>{localStorage.setItem('bigot_url',$('supabaseUrl').value.trim());localStorage.setItem('bigot_key',$('supabaseKey').value.trim());initClient();msg('Conexión guardada. Cargando datos...'); await loadAll();};
     $('addCut').onclick=addCut; $('addAsm').onclick=addAsm; $('saveProject').onclick=saveProject; $('loadInitial').onclick=loadInitial;
-    initClient(); refreshSession().then(loadAll);
+    initClient(); loadAll();
   </script>
 </body>
 </html>
-
