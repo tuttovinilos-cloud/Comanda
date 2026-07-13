@@ -1,1 +1,280 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Control Bigot</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.3/dist/umd/supabase.min.js"></script>
+  <style>
+    :root{--blue:#0b63ce;--blue2:#084a9c;--sky:#eaf4ff;--ink:#102033;--muted:#64748b;--line:#dbe7f3;--ok:#16a34a;--warn:#f59e0b;--bad:#dc2626;--card:#fff}
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#f4faff,#fff);font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;color:var(--ink)}
+    header{background:linear-gradient(135deg,var(--blue),var(--blue2));color:white;padding:22px 18px}
+    .wrap{max-width:1180px;margin:auto}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+    h1{margin:0;font-size:28px}.sub{opacity:.9;margin-top:4px}.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:8px 12px;background:rgba(255,255,255,.12)}
+    main{padding:18px}.grid{display:grid;gap:14px}.cards{grid-template-columns:repeat(4,minmax(0,1fr))}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:1fr 1fr 1fr}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 10px 25px rgba(15,78,140,.06)}
+    .metric{font-size:28px;font-weight:800}.label{color:var(--muted);font-size:13px}.small{font-size:12px;color:var(--muted)}.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+    nav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.tab{border:1px solid var(--line);background:white;color:var(--ink);padding:10px 13px;border-radius:999px;cursor:pointer;font-weight:700}.tab.active{background:var(--blue);color:white;border-color:var(--blue)}
+    section{display:none}section.active{display:block} table{width:100%;border-collapse:collapse;background:white;border-radius:14px;overflow:hidden} th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle} th{background:#f0f7ff;font-size:12px;text-transform:uppercase;color:#385675} tr:last-child td{border-bottom:0}
+    input,select,button,textarea{font:inherit} input,select,textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;background:white} button{border:0;border-radius:12px;padding:10px 14px;background:var(--blue);color:white;font-weight:800;cursor:pointer}button.secondary{background:#e2efff;color:var(--blue2)}button.danger{background:#fee2e2;color:#991b1b}button:disabled{opacity:.55;cursor:not-allowed}
+    .row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.row>*{flex:1;min-width:150px}.progress{height:12px;background:#e8f0f8;border-radius:999px;overflow:hidden}.bar{height:100%;background:linear-gradient(90deg,var(--blue),#38bdf8);width:0%}.bar.okbar{background:linear-gradient(90deg,#16a34a,#86efac)}
+    .notice{border-left:4px solid var(--blue);background:var(--sky);padding:12px;border-radius:12px;margin:12px 0}.hide{display:none!important}
+    @media(max-width:900px){.cards,.two,.three{grid-template-columns:1fr} th,td{font-size:13px}.metric{font-size:24px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap top">
+      <div><h1>Control de producción Bigot</h1><div class="sub">Cortes, ensamblado, inventario y fecha final estimada</div></div>
+      <div class="pill" id="sessionStatus">Sin conectar</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div id="configBox" class="card">
+      <h2>Conectar con Supabase</h2>
+      <p class="small">Pega tu URL y publishable/anon key. Queda guardado solo en este navegador.</p>
+      <div class="row">
+        <label>Supabase URL<input id="supabaseUrl" placeholder="https://xxxxx.supabase.co"></label>
+        <label>Publishable / anon key<input id="supabaseKey" placeholder="eyJ..."></label>
+        <button id="saveConfig">Guardar conexión</button>
+      </div>
+      <hr>
+      <div class="row">
+        <label>Email<input id="email" type="email"></label>
+        <label>Contraseña<input id="password" type="password"></label>
+        <button id="loginBtn">Entrar</button>
+        <button id="logoutBtn" class="secondary">Salir</button>
+      </div>
+      <div id="msg" class="notice"></div>
+    </div>
+
+    <nav>
+      <button class="tab active" data-tab="resumen">Resumen</button>
+      <button class="tab" data-tab="corte">Corte</button>
+      <button class="tab" data-tab="ensamblado">Ensamblado</button>
+      <button class="tab" data-tab="historial">Historial</button>
+      <button class="tab" data-tab="ajustes">Configuración</button>
+    </nav>
+
+    <section id="resumen" class="active">
+      <div class="grid cards" id="summaryCards"></div>
+      <div class="grid two" style="margin-top:14px">
+        <div class="card"><h3>Piezas disponibles por corte</h3><div id="partsTable"></div></div>
+        <div class="card"><h3>Estado final por tamaño</h3><div id="finishTable"></div></div>
+      </div>
+    </section>
+
+    <section id="corte">
+      <div class="card">
+        <h3>Agregar avance de corte</h3>
+        <div class="row">
+          <label>Lámina<select id="cutCode"></select></label>
+          <label>Cantidad cortada<input id="cutQty" type="number" step="1" min="1" value="1"></label>
+          <label>Nota<input id="cutNote" placeholder="opcional"></label>
+          <button id="addCut">Guardar corte</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px"><h3>Progreso de láminas</h3><div id="cutTable"></div></div>
+    </section>
+
+    <section id="ensamblado">
+      <div class="card">
+        <h3>Agregar avance de ensamblado</h3>
+        <div class="row">
+          <label>Tamaño<select id="asmSize"><option value="G">Grande</option><option value="P">Pequeño</option></select></label>
+          <label>Etapa<select id="asmStage"></select></label>
+          <label>Cantidad<input id="asmQty" type="number" step="1" min="1" value="1"></label>
+          <label>Nota<input id="asmNote" placeholder="opcional"></label>
+          <button id="addAsm">Guardar ensamblado</button>
+        </div>
+        <p class="small">Las etapas se suman por separado: puedes tener 80 solo con laterales, 20 con ganchos, etc.</p>
+      </div>
+      <div class="card" style="margin-top:14px"><h3>Matriz de ensamblado</h3><div id="asmTable"></div></div>
+    </section>
+
+    <section id="historial">
+      <div class="grid two">
+        <div class="card"><h3>Historial corte</h3><div id="cutHistory"></div></div>
+        <div class="card"><h3>Historial ensamblado</h3><div id="asmHistory"></div></div>
+      </div>
+    </section>
+
+    <section id="ajustes">
+      <div class="card">
+        <h3>Configuración del proyecto</h3>
+        <div class="row">
+          <label>Fecha/hora inicio<input id="startDate" type="datetime-local"></label>
+          <label>Meta grandes<input id="goalG" type="number" min="1"></label>
+          <label>Meta pequeños<input id="goalP" type="number" min="1"></label>
+          <button id="saveProject">Guardar proyecto</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <label>Inicio labor<input id="workStart" type="time"></label>
+          <label>Fin labor<input id="workEnd" type="time"></label>
+          <label>Peso corte<input id="weightCut" type="number" min="0" max="1" step="0.05"></label>
+          <label>Peso ensamblado<input id="weightAsm" type="number" min="0" max="1" step="0.05"></label>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Cargar avance inicial</h3>
+        <p class="small">Inserta una sola vez: B75=20, B30=8, B8=8, B6=6, y 80 grandes + 80 pequeños en “Acrílico + laterales”.</p>
+        <button id="loadInitial">Cargar avance inicial</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const PROJECT_ID = '00000000-0000-4000-8000-00000000b190';
+    const PARTS = ['GP','GF','PF','PP','GL','PL','GS','PS'];
+    const PART_NAMES = {GP:'Grande frontal',GF:'Grande posterior',PF:'Pequeño frontal',PP:'Pequeño posterior',GL:'Laterales grandes',PL:'Laterales pequeños',GS:'Superior grande',PS:'Superior pequeño'};
+    let sb=null, user=null, project=null, cuts=[], cutRows=[], stages=[], asm=[];
+    const $ = id => document.getElementById(id);
+    const fmt = n => new Intl.NumberFormat('es-DO').format(Math.max(0, Math.round(n || 0)));
+    const pct = (a,b) => b ? Math.max(0, Math.min(100, (a/b)*100)) : 0;
+    function msg(t){$('msg').textContent=t || '';}
+
+    function initClient(){
+      const url=localStorage.getItem('bigot_url')||''; const key=localStorage.getItem('bigot_key')||'';
+      $('supabaseUrl').value=url; $('supabaseKey').value=key;
+      if(url && key) sb = supabase.createClient(url,key);
+    }
+    async function refreshSession(){
+      if(!sb) return;
+      const {data}=await sb.auth.getSession();
+      user=data.session?.user || null;
+      $('sessionStatus').textContent = user ? 'Conectado: '+user.email : 'Sin sesión';
+    }
+    async function loadAll(){
+      if(!sb || !user) return;
+      const [p,cc,cr,st,ar] = await Promise.all([
+        sb.from('bigot_proyectos').select('*').eq('id',PROJECT_ID).single(),
+        sb.from('bigot_cortes_catalogo').select('*').order('orden'),
+        sb.from('bigot_avances_corte').select('*').eq('proyecto_id',PROJECT_ID).order('created_at',{ascending:false}),
+        sb.from('bigot_etapas_catalogo').select('*').order('orden'),
+        sb.from('bigot_avances_ensamblado').select('*').eq('proyecto_id',PROJECT_ID).order('created_at',{ascending:false})
+      ]);
+      if(p.error){msg('No pude leer el proyecto. Revisa que ejecutaste el SQL y que tu email está en bigot_miembros.'); return;}
+      project=p.data; cuts=cc.data||[]; cutRows=cr.data||[]; stages=st.data||[]; asm=ar.data||[];
+      fillSelects(); render(); msg('');
+    }
+    function fillSelects(){
+      $('cutCode').innerHTML = cuts.map(c=>`<option value="${c.codigo}">${c.codigo} - ${c.descripcion}</option>`).join('');
+      $('asmStage').innerHTML = stages.map(s=>`<option value="${s.codigo}">${s.nombre}</option>`).join('');
+      $('startDate').value = toLocalInput(project.fecha_inicio);
+      $('goalG').value = project.meta_grandes; $('goalP').value = project.meta_pequenos;
+      $('workStart').value = (project.hora_labor_inicio||'08:00').slice(0,5);
+      $('workEnd').value = (project.hora_labor_fin||'18:00').slice(0,5);
+      $('weightCut').value = project.peso_corte; $('weightAsm').value = project.peso_ensamblado;
+    }
+    function toLocalInput(iso){ const d=new Date(iso); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); }
+    function cutTotals(){ const out={}; cuts.forEach(c=>out[c.codigo]=0); cutRows.forEach(r=>out[r.codigo_corte]=(out[r.codigo_corte]||0)+r.cantidad); return out; }
+    function partTotals(){
+      const totals=Object.fromEntries(PARTS.map(p=>[p,0])); const ct=cutTotals();
+      cuts.forEach(c=>{ const y=c.rendimiento||{}; Object.keys(y).forEach(p=>totals[p]=(totals[p]||0)+(ct[c.codigo]||0)*Number(y[p]||0)); });
+      return totals;
+    }
+    function asmTotals(){
+      const out={G:{},P:{}}; stages.forEach(s=>{out.G[s.codigo]=0; out.P[s.codigo]=0;});
+      asm.forEach(r=>out[r.tamano][r.etapa]=(out[r.tamano][r.etapa]||0)+r.cantidad);
+      return out;
+    }
+    function capacityFromParts(parts){
+      return {
+        G: Math.min(parts.GP, parts.GF, Math.floor(parts.GL/2), parts.GS),
+        P: Math.min(parts.PF, parts.PP, Math.floor(parts.PL/2), parts.PS)
+      };
+    }
+    function finished(a, size){ return Math.min(...stages.map(s=>a[size][s.codigo]||0)); }
+    function progressData(){
+      const ct=cutTotals(); const a=asmTotals(); const goalCut = cuts.reduce((s,c)=>s+c.objetivo_laminas,0);
+      const doneCut = cuts.reduce((s,c)=>s+Math.min(ct[c.codigo]||0,c.objetivo_laminas),0);
+      const targetStages=(project.meta_grandes+project.meta_pequenos)*stages.length;
+      const doneStages=stages.reduce((sum,s)=>sum+Math.min(a.G[s.codigo]||0,project.meta_grandes)+Math.min(a.P[s.codigo]||0,project.meta_pequenos),0);
+      const cutP=goalCut?doneCut/goalCut:0, asmP=targetStages?doneStages/targetStages:0;
+      const total=(cutP*Number(project.peso_corte||.35))+(asmP*Number(project.peso_ensamblado||.65));
+      return {cutP, asmP, total};
+    }
+    function etaText(){
+      const p=progressData().total; if(p<=0.01) return 'Aún sin ritmo suficiente';
+      const start=new Date(project.fecha_inicio).getTime(); const now=Date.now(); const elapsed=Math.max(1, now-start);
+      const totalMs=elapsed/p; const end=new Date(start+totalMs);
+      return end.toLocaleString('es-DO',{dateStyle:'medium',timeStyle:'short'});
+    }
+    function render(){
+      const parts=partTotals(), cap=capacityFromParts(parts), a=asmTotals(), gDone=finished(a,'G'), pDone=finished(a,'P'), pr=progressData();
+      $('summaryCards').innerHTML = [
+        card('Grandes terminados', `${fmt(gDone)} / ${project.meta_grandes}`, pct(gDone,project.meta_grandes)),
+        card('Pequeños terminados', `${fmt(pDone)} / ${project.meta_pequenos}`, pct(pDone,project.meta_pequenos)),
+        card('Progreso total', `${Math.round(pr.total*100)}%`, pr.total*100),
+        `<div class="card"><div class="label">Fecha final estimada</div><div class="metric">${etaText()}</div><div class="small">Se recalcula con cada avance.</div></div>`
+      ].join('');
+      renderParts(parts,cap); renderFinish(a); renderCuts(); renderAsm(a); renderHistory();
+    }
+    function card(label,value,percent){return `<div class="card"><div class="label">${label}</div><div class="metric">${value}</div><div class="progress"><div class="bar okbar" style="width:${percent}%"></div></div><div class="small">${Math.round(percent)}%</div></div>`}
+    function renderParts(parts,cap){
+      const req={GP:project.meta_grandes,GF:project.meta_grandes,GL:project.meta_grandes*2,GS:project.meta_grandes,PF:project.meta_pequenos,PP:project.meta_pequenos,PL:project.meta_pequenos*2,PS:project.meta_pequenos};
+      $('partsTable').innerHTML = `<table><thead><tr><th>Pieza</th><th>Hecho</th><th>Necesario</th><th>Resta</th></tr></thead><tbody>${PARTS.map(p=>`<tr><td>${p} - ${PART_NAMES[p]}</td><td>${fmt(parts[p])}</td><td>${fmt(req[p])}</td><td class="${parts[p]>=req[p]?'ok':'warn'}">${fmt(req[p]-parts[p])}</td></tr>`).join('')}</tbody></table><p class="small">Capacidad por piezas completas: ${fmt(cap.G)} grandes y ${fmt(cap.P)} pequeños.</p>`;
+    }
+    function renderFinish(a){
+      $('finishTable').innerHTML = `<table><thead><tr><th>Tamaño</th><th>Terminados</th><th>Resta</th><th>Base armada</th></tr></thead><tbody>
+        <tr><td>Grandes</td><td>${fmt(finished(a,'G'))}</td><td>${fmt(project.meta_grandes-finished(a,'G'))}</td><td>${fmt(a.G.ARMADO_BASE)}</td></tr>
+        <tr><td>Pequeños</td><td>${fmt(finished(a,'P'))}</td><td>${fmt(project.meta_pequenos-finished(a,'P'))}</td><td>${fmt(a.P.ARMADO_BASE)}</td></tr>
+      </tbody></table>`;
+    }
+    function renderCuts(){
+      const ct=cutTotals();
+      $('cutTable').innerHTML = `<table><thead><tr><th>Lámina</th><th>Hechas</th><th>Objetivo</th><th>Restan</th><th>Progreso</th></tr></thead><tbody>${cuts.map(c=>`<tr><td><b>${c.codigo}</b><br><span class="small">${c.descripcion}</span></td><td>${fmt(ct[c.codigo])}</td><td>${fmt(c.objetivo_laminas)}</td><td class="${ct[c.codigo]>=c.objetivo_laminas?'ok':'warn'}">${fmt(c.objetivo_laminas-ct[c.codigo])}</td><td><div class="progress"><div class="bar" style="width:${pct(ct[c.codigo],c.objetivo_laminas)}%"></div></div></td></tr>`).join('')}</tbody></table>`;
+    }
+    function renderAsm(a){
+      const row = (size,goal)=>stages.map(s=>`<tr><td>${size==='G'?'Grande':'Pequeño'}</td><td>${s.nombre}</td><td>${fmt(a[size][s.codigo])}</td><td>${fmt(goal)}</td><td class="${a[size][s.codigo]>=goal?'ok':'warn'}">${fmt(goal-a[size][s.codigo])}</td></tr>`).join('');
+      $('asmTable').innerHTML = `<table><thead><tr><th>Tamaño</th><th>Etapa</th><th>Hecho</th><th>Meta</th><th>Resta</th></tr></thead><tbody>${row('G',project.meta_grandes)}${row('P',project.meta_pequenos)}</tbody></table>`;
+    }
+    function renderHistory(){
+      $('cutHistory').innerHTML = histTable(cutRows.map(r=>({id:r.id,kind:'cut',when:r.created_at,what:r.codigo_corte,qty:r.cantidad,note:r.nota})));
+      $('asmHistory').innerHTML = histTable(asm.map(r=>({id:r.id,kind:'asm',when:r.created_at,what:(r.tamano==='G'?'Grande':'Pequeño')+' - '+(stages.find(s=>s.codigo===r.etapa)?.nombre||r.etapa),qty:r.cantidad,note:r.nota})));
+      document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteRow(b.dataset.kind,b.dataset.del));
+    }
+    function histTable(rows){
+      if(!rows.length) return '<p class="small">Sin registros.</p>';
+      return `<table><thead><tr><th>Fecha</th><th>Detalle</th><th>Cant.</th><th></th></tr></thead><tbody>${rows.slice(0,80).map(r=>`<tr><td>${new Date(r.when).toLocaleString('es-DO')}</td><td>${r.what}<br><span class="small">${r.note||''}</span></td><td>${r.qty}</td><td><button class="danger" data-kind="${r.kind}" data-del="${r.id}">Borrar</button></td></tr>`).join('')}</tbody></table>`;
+    }
+    async function deleteRow(kind,id){
+      if(!confirm('¿Borrar este registro?')) return;
+      await sb.from(kind==='cut'?'bigot_avances_corte':'bigot_avances_ensamblado').delete().eq('id',id);
+      await loadAll();
+    }
+    async function addCut(){
+      const row={proyecto_id:PROJECT_ID,codigo_corte:$('cutCode').value,cantidad:Number($('cutQty').value),nota:$('cutNote').value||null,created_by:user.id};
+      const {error}=await sb.from('bigot_avances_corte').insert(row); if(error) return msg(error.message);
+      $('cutNote').value=''; await loadAll();
+    }
+    async function addAsm(){
+      const row={proyecto_id:PROJECT_ID,tamano:$('asmSize').value,etapa:$('asmStage').value,cantidad:Number($('asmQty').value),nota:$('asmNote').value||null,created_by:user.id};
+      const {error}=await sb.from('bigot_avances_ensamblado').insert(row); if(error) return msg(error.message);
+      $('asmNote').value=''; await loadAll();
+    }
+    async function saveProject(){
+      const update={fecha_inicio:new Date($('startDate').value).toISOString(),meta_grandes:Number($('goalG').value),meta_pequenos:Number($('goalP').value),hora_labor_inicio:$('workStart').value,hora_labor_fin:$('workEnd').value,peso_corte:Number($('weightCut').value),peso_ensamblado:Number($('weightAsm').value)};
+      const {error}=await sb.from('bigot_proyectos').update(update).eq('id',PROJECT_ID); if(error) return msg(error.message);
+      await loadAll();
+    }
+    async function loadInitial(){
+      if(!confirm('Esto cargará el avance inicial una sola vez. ¿Continuar?')) return;
+      const already=cutRows.length+asm.length; if(already>0 && !confirm('Ya hay registros. ¿Deseas cargarlo de todos modos?')) return;
+      const cutData=[['B75',20],['B30',8],['B8',8],['B6',6]].map(x=>({proyecto_id:PROJECT_ID,codigo_corte:x[0],cantidad:x[1],nota:'Avance inicial',created_by:user.id}));
+      const asmData=[['G',80],['P',80]].map(x=>({proyecto_id:PROJECT_ID,tamano:x[0],etapa:'ARMADO_BASE',cantidad:x[1],nota:'Avance inicial',created_by:user.id}));
+      const e1=await sb.from('bigot_avances_corte').insert(cutData); if(e1.error) return msg(e1.error.message);
+      const e2=await sb.from('bigot_avances_ensamblado').insert(asmData); if(e2.error) return msg(e2.error.message);
+      await loadAll();
+    }
+    document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,section').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active');});
+    $('saveConfig').onclick=()=>{localStorage.setItem('bigot_url',$('supabaseUrl').value.trim());localStorage.setItem('bigot_key',$('supabaseKey').value.trim());initClient();msg('Conexión guardada. Ahora inicia sesión.');};
+    $('loginBtn').onclick=async()=>{if(!sb) return msg('Primero guarda la conexión.'); const {error}=await sb.auth.signInWithPassword({email:$('email').value,password:$('password').value}); if(error) return msg(error.message); await refreshSession(); await loadAll();};
+    $('logoutBtn').onclick=async()=>{if(sb) await sb.auth.signOut(); user=null; $('sessionStatus').textContent='Sin sesión';};
+    $('addCut').onclick=addCut; $('addAsm').onclick=addAsm; $('saveProject').onclick=saveProject; $('loadInitial').onclick=loadInitial;
+    initClient(); refreshSession().then(loadAll);
+  </script>
+</body>
+</html>
 
