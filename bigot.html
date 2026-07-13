@@ -124,6 +124,7 @@
     let sb=null, project=null, cuts=[], cutRows=[], stages=[], asm=[];
     const $ = id => document.getElementById(id);
     const fmt = n => new Intl.NumberFormat('es-DO').format(Math.max(0, Math.round(n || 0)));
+    const clamp = (n,min,max) => Math.max(min, Math.min(max, Number(n || 0)));
     const pct = (a,b) => b ? Math.max(0, Math.min(100, (a/b)*100)) : 0;
     function msg(t){$('msg').textContent=t || '';}
 
@@ -184,13 +185,65 @@
       const targetStages=(project.meta_grandes+project.meta_pequenos)*stages.length;
       const doneStages=stages.reduce((sum,s)=>sum+Math.min(a.G[s.codigo]||0,project.meta_grandes)+Math.min(a.P[s.codigo]||0,project.meta_pequenos),0);
       const cutP=goalCut?doneCut/goalCut:0, asmP=targetStages?doneStages/targetStages:0;
-      const total=(cutP*Number(project.peso_corte||.35))+(asmP*Number(project.peso_ensamblado||.65));
+      const rawCut=clamp(project.peso_corte,.01,1), rawAsm=clamp(project.peso_ensamblado,.01,1), weightTotal=rawCut+rawAsm;
+      const total=(cutP*(rawCut/weightTotal))+(asmP*(rawAsm/weightTotal));
       return {cutP, asmP, total};
+    }
+    function timeParts(value){
+      const [h,m]=(value||'08:00').slice(0,5).split(':').map(Number);
+      return {h:h||0,m:m||0};
+    }
+    function dayStart(date){
+      const d=new Date(date); d.setHours(0,0,0,0); return d;
+    }
+    function workWindow(date){
+      const s=timeParts(project.hora_labor_inicio), e=timeParts(project.hora_labor_fin);
+      const start=dayStart(date), end=dayStart(date);
+      start.setHours(s.h,s.m,0,0); end.setHours(e.h,e.m,0,0);
+      return {start,end};
+    }
+    function isWorkday(date){
+      const jsDay=date.getDay(); const isoDay=jsDay===0?7:jsDay;
+      return (project.dias_labor||[1,2,3,4,5,6]).includes(isoDay);
+    }
+    function workingMsBetween(start,end){
+      if(end<=start) return 0;
+      let total=0, d=dayStart(start), guard=0;
+      while(d<end && guard<20000){
+        if(isWorkday(d)){
+          const w=workWindow(d);
+          const a=new Date(Math.max(start,w.start));
+          const b=new Date(Math.min(end,w.end));
+          if(b>a) total += b-a;
+        }
+        d.setDate(d.getDate()+1); guard++;
+      }
+      return total;
+    }
+    function addWorkingMs(start,ms){
+      let d=new Date(start), remaining=Math.max(0,ms), guard=0;
+      while(remaining>0 && guard<20000){
+        if(isWorkday(d)){
+          const w=workWindow(d);
+          if(d<w.start) d=new Date(w.start);
+          if(d>=w.start && d<w.end){
+            const available=w.end-d;
+            if(remaining<=available) return new Date(d.getTime()+remaining);
+            remaining-=available;
+          }
+        }
+        d=dayStart(d); d.setDate(d.getDate()+1);
+        const next=workWindow(d); d=new Date(next.start); guard++;
+      }
+      return d;
     }
     function etaText(){
       const p=progressData().total; if(p<=0.01) return 'Aún sin ritmo suficiente';
-      const start=new Date(project.fecha_inicio).getTime(); const now=Date.now(); const elapsed=Math.max(1, now-start);
-      const totalMs=elapsed/p; const end=new Date(start+totalMs);
+      const start=new Date(project.fecha_inicio), now=new Date();
+      if(now<=start) return 'Aún no inicia';
+      const elapsed=Math.max(1, workingMsBetween(start,now));
+      const totalMs=elapsed/p;
+      const end=addWorkingMs(start,totalMs);
       return end.toLocaleString('es-DO',{dateStyle:'medium',timeStyle:'short'});
     }
     function render(){
