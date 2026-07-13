@@ -3,63 +3,174 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>Bigot · Control Producción v3</title>
+<title>BIGOT · Producción · Tuttovinilos</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{box-sizing:border-box}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f2f4f8;--card:#fff;--card2:#f8fafc;--text:#111827;--muted:#64748b;
-  --line:#dbe1ec;--blue:#153bff;--green:#16a34a;--red:#dc2626;--orange:#f97316;--dark:#0f172a;
+  --bg:#eef1f7;--panel:#fff;--soft:#f8f9fd;--border:#dbe1ed;--border2:#cbd4e4;
+  --text:#111827;--muted:#6b7280;--muted2:#475569;--accent:#153bff;--accent2:#0b1f7a;
+  --red:#dc2626;--yellow:#f59e0b;--green:#16a34a;--orange:#ff8616;
+  --mono:'Roboto Mono',monospace;--head:'Montserrat',Arial,sans-serif;--body:'Inter',Arial,sans-serif;
 }
-body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;font-size:14px}
-header{background:var(--blue);color:#fff;padding:15px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-header h1{margin:0;font-size:20px;font-weight:900}header small{opacity:.9}
-.app{max-width:1380px;margin:auto;padding:14px}
-.tabs{display:flex;gap:8px;overflow:auto;padding:8px 0 14px}
-.tab{border:0;background:#e7ebf5;color:#111827;padding:10px 14px;border-radius:999px;cursor:pointer;font-weight:900;white-space:nowrap}
-.tab.active{background:var(--blue);color:#fff}
+html{scroll-behavior:smooth;background:var(--bg);color-scheme:light}
+body{
+  min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--body);
+  font-size:14px;line-height:1.35;padding-bottom:30px;overflow-x:hidden;
+}
+button,input,select,textarea{font:inherit;color-scheme:light}
+button{touch-action:manipulation}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:#edf0f7}
+::-webkit-scrollbar-thumb{background:#c9d1e2;border-radius:10px}
+
+.header{
+  position:sticky;top:0;z-index:900;
+  min-height:60px;padding:10px 14px;
+  background:#172bd8;color:#fff;
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;
+  box-shadow:0 8px 22px rgba(21,59,255,.18);
+}
+.header h1{
+  font-family:var(--head);font-size:18px;font-weight:900;letter-spacing:.2px;text-transform:uppercase;
+}
+.header small{display:block;margin-top:2px;font-size:10px;font-weight:700;color:rgba(255,255,255,.76)}
+.app{max-width:1400px;margin:auto;padding:12px 14px 20px}
+.tabs{
+  position:sticky;top:60px;z-index:700;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;
+  padding:10px 0;background:rgba(238,241,247,.96);backdrop-filter:blur(8px);
+}
+.tab{
+  min-height:34px;padding:8px 10px;border-radius:999px;border:1px solid var(--border2);
+  background:#fff;color:#153bff;cursor:pointer;
+  font-family:var(--head);font-size:9px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;
+}
+.tab.active{background:#153bff;color:#fff;border-color:#153bff}
 .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 3px 12px rgba(15,23,42,.05)}
+.card{
+  background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px;
+  box-shadow:0 8px 24px rgba(15,23,42,.07);
+}
 .col-12{grid-column:span 12}.col-8{grid-column:span 8}.col-6{grid-column:span 6}.col-4{grid-column:span 4}
-h2,h3{margin:0 0 12px}h2{font-size:18px}h3{font-size:15px}
-label{display:block;font-weight:900;font-size:12px;margin:0 0 5px}
-input,select,textarea,button{width:100%;border-radius:10px;border:1px solid var(--line);padding:10px;font-size:14px;font-family:inherit}
-select{background:#fff;color:#111827;min-height:42px;appearance:auto;-webkit-appearance:menulist}
-textarea{min-height:80px;resize:vertical}
-button{border:0;background:var(--dark);color:#fff;font-weight:900;cursor:pointer}
-button.blue{background:var(--blue)}button.green{background:var(--green)}button.red{background:var(--red)}button.orange{background:var(--orange)}button.gray{background:#e5e7eb;color:#111827}
-button.small{padding:7px 9px;font-size:12px;border-radius:8px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.field{margin-bottom:10px}
+h2,h3{
+  font-family:var(--head);font-weight:900;color:#153bff;text-transform:uppercase;letter-spacing:.35px;
+}
+h2{font-size:15px;margin-bottom:12px}
+h3{font-size:12px;margin-bottom:8px}
+label{
+  display:block;margin-bottom:5px;font-family:var(--head);font-size:9px;font-weight:900;
+  letter-spacing:.35px;text-transform:uppercase;color:#6b7280;
+}
+input,select,textarea{
+  width:100%;min-height:38px;background:#fff;border:1px solid var(--border);color:#111827;
+  border-radius:9px;padding:8px 10px;font-size:12px;outline:none;
+}
+input:focus,select:focus,textarea:focus{border-color:#153bff;box-shadow:0 0 0 3px rgba(21,59,255,.1)}
+textarea{resize:vertical;min-height:82px}
+button{
+  width:100%;min-height:36px;border-radius:10px;border:1px solid #153bff;
+  background:#153bff;color:#fff;cursor:pointer;
+  font-family:var(--head);font-size:9px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;
+}
+button.green{background:#16a34a;border-color:#16a34a}
+button.red{background:#dc2626;border-color:#dc2626}
+button.orange{background:#ff8616;border-color:#ff8616}
+button.gray{background:#fff;color:#153bff;border-color:#cbd3e6}
+button.small{width:auto;min-height:30px;padding:6px 9px;border-radius:8px;font-size:8px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{margin-bottom:10px}
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.kpi{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px}
-.kpi small{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}.kpi strong{font-size:24px;font-weight:900}.kpi .sub{font-size:12px;color:var(--muted);margin-top:4px}
-.progress{width:100%;height:12px;border-radius:999px;background:#e5e7eb;overflow:hidden}.bar{height:100%;width:0%;background:var(--blue)}.bar.green{background:var(--green)}.bar.orange{background:var(--orange)}.bar.red{background:var(--red)}
-table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}th{background:#f8fafc;font-size:12px;color:#334155}
-.badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:900}.badge.green{background:#dcfce7;color:#166534}.badge.red{background:#fee2e2;color:#991b1b}.badge.orange{background:#ffedd5;color:#9a3412}.badge.blue{background:#dbeafe;color:#1d4ed8}.badge.gray{background:#e5e7eb;color:#374151}
-.notice{padding:10px;border-radius:12px;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;margin-bottom:12px}.ok{padding:10px;border-radius:12px;border:1px solid #bbf7d0;background:#ecfdf5;color:#166534;margin-bottom:12px}
-.hidden{display:none!important}.scroll{overflow:auto;max-height:460px;border:1px solid var(--line);border-radius:12px}
-.pieces-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.piece-card{border:1px solid var(--line);background:#fff;border-radius:13px;padding:10px}.piece-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}.piece-head b{font-size:16px}
-.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.subtle{color:var(--muted);font-size:13px;line-height:1.45}
-.sqlbox{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:12px;overflow:auto;font-family:Consolas,monospace;font-size:12px;white-space:pre;max-height:420px}
-details{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}summary{cursor:pointer;font-weight:900}
+.kpi{
+  min-height:116px;padding:13px;border-radius:14px;background:#fff;border:1px solid var(--border);
+  box-shadow:0 6px 18px rgba(15,23,42,.05);
+}
+.kpi.featured{
+  background:linear-gradient(135deg,#111827,#172bd8);color:#fff;border-color:transparent;
+}
+.kpi.featured small,.kpi.featured .sub{color:rgba(255,255,255,.72)}
+.kpi.featured strong{color:#fff}
+.kpi small{
+  display:block;margin-bottom:8px;font-family:var(--head);font-size:8px;font-weight:900;
+  letter-spacing:.7px;text-transform:uppercase;color:#6b7280;
+}
+.kpi strong{font-family:var(--mono);font-size:25px;font-weight:900;color:#0b1f7a}
+.kpi .sub{margin-top:6px;font-size:10px;font-weight:700;color:#64748b}
+.progress{width:100%;height:9px;border-radius:999px;background:#e7ebf5;overflow:hidden}
+.kpi.featured .progress{background:rgba(255,255,255,.2)}
+.bar{height:100%;width:0;background:#153bff;border-radius:999px;transition:width .25s ease}
+.bar.green{background:#16a34a}.bar.orange{background:#ff8616}.bar.red{background:#dc2626}.bar.white{background:#fff}
+.scroll{
+  position:relative;overflow:auto;max-height:500px;border:1px solid var(--border);
+  border-radius:14px;background:#fff;-webkit-overflow-scrolling:touch;
+}
+table{width:100%;border-collapse:collapse;background:#fff}
+thead{position:sticky;top:0;z-index:20}
+th{
+  padding:9px;background:#eef1ff;border-bottom:1px solid var(--border);
+  font-family:var(--head);font-size:8px;font-weight:900;letter-spacing:.4px;
+  text-transform:uppercase;color:#5b6474;text-align:left;white-space:nowrap;
+}
+td{padding:9px;border-bottom:1px solid #e6eaf2;font-size:11px;color:#111827;vertical-align:middle}
+tbody tr:nth-child(even) td{background:#fbfcff}
+tbody tr:hover td{background:#f3f6ff}
+tbody tr:last-child td{border-bottom:0}
+.badge{
+  display:inline-flex;align-items:center;justify-content:center;min-height:24px;padding:4px 9px;border-radius:999px;
+  font-family:var(--head);font-size:8px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;
+}
+.badge.green{background:#dcfce7;color:#166534}.badge.red{background:#fee2e2;color:#991b1b}
+.badge.orange{background:#ffedd5;color:#9a3412}.badge.blue{background:#dbeafe;color:#1d4ed8}
+.badge.gray{background:#e5e7eb;color:#374151}
+.notice,.ok{
+  margin-bottom:12px;padding:11px 13px;border-radius:12px;font-size:12px;font-weight:700;
+}
+.notice{border:1px solid #fed7aa;background:#fff7ed;color:#9a3412}
+.ok{border:1px solid #bbf7d0;background:#ecfdf5;color:#166534}
+.hidden{display:none!important}
+.pieces-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.piece-card{padding:11px;border:1px solid var(--border);border-radius:13px;background:#f8f9ff}
+.piece-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.piece-head b{font-family:var(--head);font-size:14px;font-weight:900;color:#153bff}
+.piece-card>div:nth-child(2){font-size:10px;font-weight:700;color:#475569}
 .choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.choice-btn{background:#eef2f7;color:#111827;border:1px solid var(--line);padding:10px;text-align:left;min-height:58px}
-.choice-btn b{display:block;font-size:15px;margin-bottom:3px}
-.choice-btn small{display:block;color:var(--muted);font-weight:600;line-height:1.25}
-.choice-btn.selected{background:var(--blue);color:#fff;border-color:var(--blue)}
-.choice-btn.selected small{color:#e8ecff}
-@media(max-width:520px){.choice-grid{grid-template-columns:1fr}}
-@media(max-width:900px){.grid{display:block}.card{margin-bottom:12px}.kpis,.pieces-grid{grid-template-columns:1fr 1fr}.row,.row3,.actions{grid-template-columns:1fr}}
+.choice-btn{
+  min-height:58px;padding:9px 10px;text-align:left;border-radius:10px;
+  background:#fff;color:#111827;border:1px solid var(--border);
+}
+.choice-btn b{display:block;font-family:var(--head);font-size:11px;font-weight:900;color:#153bff;margin-bottom:3px}
+.choice-btn small{display:block;color:#64748b;font-size:9px;font-weight:700;line-height:1.25}
+.choice-btn.selected{background:#153bff;color:#fff;border-color:#153bff}
+.choice-btn.selected b,.choice-btn.selected small{color:#fff}
+.subtle{color:var(--muted);font-size:12px;line-height:1.45}
+@media(max-width:980px){
+  .header{min-height:50px;padding:8px 10px}
+  .header h1{font-size:14px}.header small{font-size:8px}
+  .app{padding:8px}
+  .tabs{top:50px;grid-template-columns:repeat(4,120px);overflow-x:auto;padding:7px 0}
+  .tab{font-size:8px;min-height:31px}
+  .grid{display:block}.card{margin-bottom:10px;border-radius:13px;padding:11px}
+  .kpis,.pieces-grid{grid-template-columns:1fr 1fr}
+  .row,.actions{grid-template-columns:1fr}
+}
+@media(max-width:520px){
+  .kpis,.pieces-grid,.choice-grid{grid-template-columns:1fr}
+  .header{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
 
-<header>
+<header class="header">
   <div>
-    <h1>Bigot · Control de Producción</h1>
-    <small>Corte · Ensamblado · Piezas · Historial · Estimación</small>
+    <h1>BIGOT · PRODUCCIÓN</h1>
+    <small>Tuttovinilos · Corte · Ensamblado · Historial</small>
   </div>
-  <div id="connBadge" class="badge gray">Modo local</div>
+  <span id="dbBadge" class="badge gray">Conectando...</span>
 </header>
 
 <div class="app">
@@ -68,40 +179,46 @@ details{border:1px solid var(--line);border-radius:14px;padding:12px;background:
     <button class="tab" data-tab="corte" onclick="showTab('corte')">Corte</button>
     <button class="tab" data-tab="ensamblado" onclick="showTab('ensamblado')">Ensamblado</button>
     <button class="tab" data-tab="historial" onclick="showTab('historial')">Historial</button>
-    <button class="tab" data-tab="config" onclick="showTab('config')">Configuración</button>
   </div>
 
   <div id="mainMsg"></div>
 
   <section id="tab-resumen">
     <div class="kpis">
-      <div class="kpi"><small>Grandes terminados</small><strong id="kpiGrandes">0</strong><div class="sub">Meta <span id="metaG1">300</span></div></div>
-      <div class="kpi"><small>Pequeños terminados</small><strong id="kpiPequenos">0</strong><div class="sub">Meta <span id="metaP1">300</span></div></div>
-      <div class="kpi"><small>Progreso total</small><strong id="kpiTotal">0%</strong><div class="progress"><div id="barTotal" class="bar"></div></div></div>
-      <div class="kpi"><small>Fecha estimada</small><strong id="kpiFecha" style="font-size:17px">—</strong><div class="sub" id="kpiRitmo">Esperando avances</div></div>
+      <div class="kpi featured">
+        <small>Avance de grandes</small>
+        <strong id="pctGrandes">0%</strong>
+        <div class="progress"><div id="barGrandes" class="bar white"></div></div>
+        <div class="sub"><span id="cantGrandes">0</span> carteles posibles de 300</div>
+      </div>
+      <div class="kpi featured">
+        <small>Avance de pequeños</small>
+        <strong id="pctPequenos">0%</strong>
+        <div class="progress"><div id="barPequenos" class="bar white"></div></div>
+        <div class="sub"><span id="cantPequenos">0</span> carteles posibles de 300</div>
+      </div>
+      <div class="kpi">
+        <small>Avance total de corte</small>
+        <strong id="pctCorte">0%</strong>
+        <div class="progress"><div id="barCorte" class="bar"></div></div>
+        <div class="sub">Promedio de los 5 archivos</div>
+      </div>
+      <div class="kpi">
+        <small>Láminas cortadas</small>
+        <strong id="totalCortes">0</strong>
+        <div class="sub">De <span id="totalObjetivo">0</span> planificadas</div>
+      </div>
     </div>
 
     <div class="grid" style="margin-top:12px">
-      <div class="card col-6">
-        <h2>Avance general</h2>
-        <table>
-          <tbody>
-            <tr><td>Corte</td><td><b id="txtCortePct">0%</b></td><td><div class="progress"><div id="barCorte" class="bar"></div></div></td></tr>
-            <tr><td>Ensamblado</td><td><b id="txtEnsPct">0%</b></td><td><div class="progress"><div id="barEns" class="bar green"></div></div></td></tr>
-            <tr><td>Etapa atrasada grandes</td><td colspan="2" id="slowG">—</td></tr>
-            <tr><td>Etapa atrasada pequeños</td><td colspan="2" id="slowP">—</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="card col-6">
-        <h2>Acciones rápidas</h2>
-        <div class="actions">
-          <button class="blue" onclick="showTab('corte')">Agregar corte</button>
-          <button class="green" onclick="showTab('ensamblado')">Agregar ensamblado</button>
-          <button class="orange" onclick="cargarAvanceActual()">Cargar avance actual</button>
+      <div class="card col-12">
+        <h2>Lista actual de corte</h2>
+        <div class="scroll">
+          <table>
+            <thead><tr><th>Código</th><th>Produce</th><th>Cortado</th><th>Objetivo</th><th>Falta</th><th>Avance</th></tr></thead>
+            <tbody id="tablaCortes"></tbody>
+          </table>
         </div>
-        <p class="subtle"><b>Avance cargado automáticamente:</b> B75=20/37, B30=9/38, B8=8/16, B6=6/6 y B38=0/37. También se cargan 80 grandes y 80 pequeños en “Acrílico + laterales”.</p>
       </div>
 
       <div class="card col-12">
@@ -127,14 +244,15 @@ details{border:1px solid var(--line);border-radius:14px;padding:12px;background:
           </div>
         </div>
         <div class="field">
-          <label>Cantidad cortada</label>
+          <label>Cantidad adicional</label>
           <input id="corteCantidad" type="number" min="1" step="1" value="1">
         </div>
         <div class="field">
           <label>Nota opcional</label>
           <textarea id="corteNota" placeholder="Ejemplo: corte turno mañana"></textarea>
         </div>
-        <button class="blue" onclick="guardarCorte()">Guardar corte</button>
+        <button onclick="guardarCorte()">Guardar corte</button>
+        <button class="orange" style="margin-top:8px" onclick="resetearLista()">Restablecer lista actual</button>
       </div>
 
       <div class="card col-8">
@@ -142,7 +260,7 @@ details{border:1px solid var(--line);border-radius:14px;padding:12px;background:
         <div class="scroll">
           <table>
             <thead><tr><th>Código</th><th>Produce</th><th>Cortado</th><th>Objetivo</th><th>Falta</th><th>%</th></tr></thead>
-            <tbody id="tablaCortes"></tbody>
+            <tbody id="tablaCortes2"></tbody>
           </table>
         </div>
       </div>
@@ -153,26 +271,34 @@ details{border:1px solid var(--line);border-radius:14px;padding:12px;background:
     <div class="grid">
       <div class="card col-4">
         <h2>Agregar avance de ensamblado</h2>
-        <div class="field"><label>Tamaño</label><select id="ensTamano"><option value="grande">Grande</option><option value="pequeno">Pequeño</option></select></div>
+        <div class="field">
+          <label>Tamaño</label>
+          <select id="ensTamano"><option value="grande">Grande</option><option value="pequeno">Pequeño</option></select>
+        </div>
         <div class="field">
           <label>Etapa</label>
-          <input id="ensEtapa" type="hidden" value="acrilico_laterales">
-          <div id="etapaOpciones" class="choice-grid">
-            <button type="button" class="choice-btn selected" data-value="acrilico_laterales" onclick="seleccionarEtapa('acrilico_laterales')"><b>Acrílico + laterales</b><small>Primera etapa</small></button>
-            <button type="button" class="choice-btn" data-value="superior" onclick="seleccionarEtapa('superior')"><b>Superior</b><small>Colocar pieza superior</small></button>
-            <button type="button" class="choice-btn" data-value="vinil_laterales" onclick="seleccionarEtapa('vinil_laterales')"><b>Vinil laterales</b><small>Aplicar tiras laterales</small></button>
-            <button type="button" class="choice-btn" data-value="vinil_superiores" onclick="seleccionarEtapa('vinil_superiores')"><b>Vinil superiores</b><small>Aplicar tiras superiores</small></button>
-            <button type="button" class="choice-btn" data-value="gancho" onclick="seleccionarEtapa('gancho')"><b>Gancho</b><small>Colocar gancho</small></button>
-            <button type="button" class="choice-btn" data-value="doble_faz" onclick="seleccionarEtapa('doble_faz')"><b>Doble faz</b><small>Etapa final</small></button>
-          </div>
+          <select id="ensEtapa">
+            <option value="acrilico_laterales">Acrílico + laterales</option>
+            <option value="superior">Superior</option>
+            <option value="vinil_laterales">Vinil laterales</option>
+            <option value="vinil_superiores">Vinil superiores</option>
+            <option value="gancho">Gancho</option>
+            <option value="doble_faz">Doble faz</option>
+          </select>
         </div>
-        <div class="field"><label>Cantidad</label><input id="ensCantidad" type="number" min="1" step="1" value="1"></div>
-        <div class="field"><label>Nota opcional</label><textarea id="ensNota" placeholder="Ejemplo: turno tarde"></textarea></div>
+        <div class="field">
+          <label>Cantidad adicional</label>
+          <input id="ensCantidad" type="number" min="1" step="1" value="1">
+        </div>
+        <div class="field">
+          <label>Nota opcional</label>
+          <textarea id="ensNota" placeholder="Ejemplo: turno tarde"></textarea>
+        </div>
         <button class="green" onclick="guardarEnsamblado()">Guardar ensamblado</button>
       </div>
 
       <div class="card col-8">
-        <h2>Progreso por etapa</h2>
+        <h2>Avance de ensamblado</h2>
         <div class="scroll">
           <table>
             <thead><tr><th>Tamaño</th><th>Etapa</th><th>Avance</th><th>Meta</th><th>Falta</th><th>%</th></tr></thead>
@@ -199,405 +325,285 @@ details{border:1px solid var(--line);border-radius:14px;padding:12px;background:
       </div>
     </div>
   </section>
-
-  <section id="tab-config" class="hidden">
-    <div class="grid">
-      <div class="card col-6">
-        <h2>Conexión Supabase</h2>
-        <div class="notice">
-          Para usarlo con base de datos: 1) Ejecuta el SQL en Supabase. 2) Coloca URL y anon key. 3) Presiona conectar.
-          Si no conectas Supabase, igual funciona en modo local en este navegador.
-        </div>
-        <div class="field"><label>Supabase URL</label><input id="supabaseUrl" placeholder="https://xxxx.supabase.co"></div>
-        <div class="field"><label>Supabase anon key</label><input id="supabaseKey" placeholder="eyJ..." type="password"></div>
-        <div class="row"><button class="blue" onclick="connectSupabase()">Conectar</button><button class="gray" onclick="guardarCredenciales()">Guardar datos</button></div>
-      </div>
-
-      <div class="card col-6">
-        <h2>Configuración del proyecto</h2>
-        <div class="row"><div class="field"><label>Meta grandes</label><input id="metaGrandes" type="number" value="300"></div><div class="field"><label>Meta pequeños</label><input id="metaPequenos" type="number" value="300"></div></div>
-        <div class="field"><label>Fecha/hora de inicio</label><input id="fechaInicio" type="datetime-local"></div>
-        <div class="row"><div class="field"><label>Inicio laboral</label><input id="horaInicio" type="time" value="08:00"></div><div class="field"><label>Fin laboral</label><input id="horaFin" type="time" value="18:00"></div></div>
-        <div class="row"><div class="field"><label>Peso corte %</label><input id="pesoCorte" type="number" value="35"></div><div class="field"><label>Peso ensamblado %</label><input id="pesoEnsamblado" type="number" value="65"></div></div>
-        <button class="green" onclick="guardarProyecto()">Guardar configuración</button>
-      </div>
-
-      <div class="card col-12">
-        <h2>Crear tablas en Supabase</h2>
-        <p class="subtle">Esto solo se usa una vez. Haz clic para ver el SQL, copiarlo y pegarlo en Supabase → SQL Editor.</p>
-        <details>
-          <summary>Ver SQL de tablas bigot_</summary>
-          <div id="sqlText" class="sqlbox" style="margin-top:10px"></div>
-          <button class="gray" style="margin-top:10px" onclick="copiarSQL()">Copiar SQL</button>
-        </details>
-      </div>
-    </div>
-  </section>
 </div>
 
 <script>
-let sb=null, modoLocal=true, cortes=[], avancesCorte=[], etapas=[], avancesEns=[], proyecto=null;
+const SUPABASE_URL = 'https://ujfdsabypflseijatxba.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZmRzYWJ5cGZsc2VpamF0eGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNjcxNTIsImV4cCI6MjA5MTg0MzE1Mn0.Tyi_TeKaVG0PMA4R-aO8GPgP525GLZcqipB-tXmFq5c';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const CORTES_DEFAULT=[
- {codigo:'B75',objetivo:37,descripcion:'4 GP + 4 GF + 1 PP',gp:4,gf:4,pf:0,pp:1,gl:0,pl:0,gs:0,ps:0},
- {codigo:'B38',objetivo:37,descripcion:'4 GP + 4 GF + 1 PF',gp:4,gf:4,pf:1,pp:0,gl:0,pl:0,gs:0,ps:0},
- {codigo:'B8',objetivo:16,descripcion:'12 PF + 12 PP',gp:0,gf:0,pf:12,pp:12,gl:0,pl:0,gs:0,ps:0},
- {codigo:'B30',objetivo:38,descripcion:'20 GL + 20 PL',gp:0,gf:0,pf:0,pp:0,gl:20,pl:20,gs:0,ps:0},
- {codigo:'B6',objetivo:6,descripcion:'20 GS + 20 PS',gp:0,gf:0,pf:0,pp:0,gl:0,pl:0,gs:20,ps:20}
-];
-const ETAPAS_DEFAULT=[
- {codigo:'acrilico_laterales',nombre:'Acrílico + laterales',orden:1},
- {codigo:'superior',nombre:'Superior',orden:2},
- {codigo:'vinil_laterales',nombre:'Vinil laterales',orden:3},
- {codigo:'vinil_superiores',nombre:'Vinil superiores',orden:4},
- {codigo:'gancho',nombre:'Gancho',orden:5},
- {codigo:'doble_faz',nombre:'Doble faz',orden:6}
+const META = 300;
+
+const CORTES = [
+  {codigo:'B75',objetivo:37,descripcion:'4 GP + 4 GF + 1 PP',gp:4,gf:4,pf:0,pp:1,gl:0,pl:0,gs:0,ps:0},
+  {codigo:'B30',objetivo:30,descripcion:'20 GL + 20 PL',gp:0,gf:0,pf:0,pp:0,gl:20,pl:20,gs:0,ps:0},
+  {codigo:'B8',objetivo:16,descripcion:'12 PF + 12 PP',gp:0,gf:0,pf:12,pp:12,gl:0,pl:0,gs:0,ps:0},
+  {codigo:'B6',objetivo:6,descripcion:'20 GS + 20 PS',gp:0,gf:0,pf:0,pp:0,gl:0,pl:0,gs:20,ps:20},
+  {codigo:'B38',objetivo:38,descripcion:'4 GP + 4 GF + 1 PF',gp:4,gf:4,pf:1,pp:0,gl:0,pl:0,gs:0,ps:0}
 ];
 
-const SQL_SCHEMA=`-- BIGOT · TABLAS SUPABASE
+const ETAPAS = [
+  {codigo:'acrilico_laterales',nombre:'Acrílico + laterales'},
+  {codigo:'superior',nombre:'Superior'},
+  {codigo:'vinil_laterales',nombre:'Vinil laterales'},
+  {codigo:'vinil_superiores',nombre:'Vinil superiores'},
+  {codigo:'gancho',nombre:'Gancho'},
+  {codigo:'doble_faz',nombre:'Doble faz'}
+];
 
-create table if not exists bigot_proyectos (
-  id bigint generated by default as identity primary key,
-  nombre text not null default 'Bigot',
-  meta_grandes int not null default 300,
-  meta_pequenos int not null default 300,
-  fecha_inicio timestamptz not null default now(),
-  hora_inicio_laboral time not null default '08:00',
-  hora_fin_laboral time not null default '18:00',
-  peso_corte numeric not null default 35,
-  peso_ensamblado numeric not null default 65,
-  avance_inicial_cargado boolean not null default false,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists bigot_cortes_catalogo (
-  codigo text primary key,
-  objetivo int not null,
-  descripcion text,
-  gp int not null default 0,
-  gf int not null default 0,
-  pf int not null default 0,
-  pp int not null default 0,
-  gl int not null default 0,
-  pl int not null default 0,
-  gs int not null default 0,
-  ps int not null default 0
-);
-
-create table if not exists bigot_avances_corte (
-  id bigint generated by default as identity primary key,
-  codigo text not null references bigot_cortes_catalogo(codigo) on update cascade,
-  cantidad int not null check (cantidad > 0),
-  nota text,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists bigot_etapas_catalogo (
-  codigo text primary key,
-  nombre text not null,
-  orden int not null
-);
-
-create table if not exists bigot_avances_ensamblado (
-  id bigint generated by default as identity primary key,
-  tamano text not null check (tamano in ('grande','pequeno')),
-  etapa_codigo text not null references bigot_etapas_catalogo(codigo) on update cascade,
-  cantidad int not null check (cantidad > 0),
-  nota text,
-  created_at timestamptz not null default now()
-);
-
-alter table bigot_proyectos enable row level security;
-alter table bigot_cortes_catalogo enable row level security;
-alter table bigot_avances_corte enable row level security;
-alter table bigot_etapas_catalogo enable row level security;
-alter table bigot_avances_ensamblado enable row level security;
-
-drop policy if exists "bigot_public_all_proyectos" on bigot_proyectos;
-drop policy if exists "bigot_public_all_cortes_catalogo" on bigot_cortes_catalogo;
-drop policy if exists "bigot_public_all_avances_corte" on bigot_avances_corte;
-drop policy if exists "bigot_public_all_etapas_catalogo" on bigot_etapas_catalogo;
-drop policy if exists "bigot_public_all_avances_ensamblado" on bigot_avances_ensamblado;
-
-create policy "bigot_public_all_proyectos" on bigot_proyectos for all using (true) with check (true);
-create policy "bigot_public_all_cortes_catalogo" on bigot_cortes_catalogo for all using (true) with check (true);
-create policy "bigot_public_all_avances_corte" on bigot_avances_corte for all using (true) with check (true);
-create policy "bigot_public_all_etapas_catalogo" on bigot_etapas_catalogo for all using (true) with check (true);
-create policy "bigot_public_all_avances_ensamblado" on bigot_avances_ensamblado for all using (true) with check (true);
-
-insert into bigot_proyectos (id,nombre,meta_grandes,meta_pequenos,peso_corte,peso_ensamblado)
-values (1,'Bigot',300,300,35,65)
-on conflict (id) do nothing;
-
-insert into bigot_cortes_catalogo (codigo,objetivo,descripcion,gp,gf,pf,pp,gl,pl,gs,ps) values
-('B75',37,'4 GP + 4 GF + 1 PP',4,4,0,1,0,0,0,0),
-('B38',37,'4 GP + 4 GF + 1 PF',4,4,1,0,0,0,0,0),
-('B8',16,'12 PF + 12 PP',0,0,12,12,0,0,0,0),
-('B30',38,'20 GL + 20 PL',0,0,0,0,20,20,0,0),
-('B6',6,'20 GS + 20 PS',0,0,0,0,0,0,20,20)
-on conflict (codigo) do update set
-objetivo=excluded.objetivo, descripcion=excluded.descripcion,
-gp=excluded.gp,gf=excluded.gf,pf=excluded.pf,pp=excluded.pp,
-gl=excluded.gl,pl=excluded.pl,gs=excluded.gs,ps=excluded.ps;
-
-insert into bigot_etapas_catalogo (codigo,nombre,orden) values
-('acrilico_laterales','Acrílico + laterales',1),
-('superior','Superior',2),
-('vinil_laterales','Vinil laterales',3),
-('vinil_superiores','Vinil superiores',4),
-('gancho','Gancho',5),
-('doble_faz','Doble faz',6)
-on conflict (codigo) do update set nombre=excluded.nombre, orden=excluded.orden;`;
-
-document.getElementById('sqlText').textContent=SQL_SCHEMA;
+let avancesCorte = [];
+let avancesEns = [];
 
 function showTab(name){
- document.querySelectorAll('section[id^="tab-"]').forEach(s=>s.classList.add('hidden'));
- document.getElementById('tab-'+name).classList.remove('hidden');
- document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  document.querySelectorAll('section[id^="tab-"]').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('tab-'+name).classList.remove('hidden');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
 }
-function msg(text,type='ok'){
- document.getElementById('mainMsg').innerHTML=`<div class="${type==='ok'?'ok':'notice'}">${text}</div>`;
- setTimeout(()=>document.getElementById('mainMsg').innerHTML='',5000);
-}
-function defaultProyecto(){
- return {id:1,nombre:'Bigot',meta_grandes:300,meta_pequenos:300,fecha_inicio:new Date().toISOString(),hora_inicio_laboral:'08:00',hora_fin_laboral:'18:00',peso_corte:35,peso_ensamblado:65,avance_inicial_cargado:localStorage.getItem('bigot_local_inicial')==='1'};
-}
-function initLocal(){
- proyecto=defaultProyecto(); cortes=[...CORTES_DEFAULT]; etapas=[...ETAPAS_DEFAULT];
- avancesCorte=JSON.parse(localStorage.getItem('bigot_local_corte')||'[]');
- avancesEns=JSON.parse(localStorage.getItem('bigot_local_ens')||'[]');
 
- if(localStorage.getItem('bigot_local_inicial')!=='1' && avancesCorte.length===0 && avancesEns.length===0){
-  const now=new Date().toISOString();
-  avancesCorte=[
-   {id:Date.now()+1,codigo:'B75',cantidad:20,nota:'Avance actual inicial',created_at:now},
-   {id:Date.now()+2,codigo:'B30',cantidad:9,nota:'Avance actual inicial',created_at:now},
-   {id:Date.now()+3,codigo:'B8',cantidad:8,nota:'Avance actual inicial',created_at:now},
-   {id:Date.now()+4,codigo:'B6',cantidad:6,nota:'Avance actual inicial',created_at:now}
-  ];
-  avancesEns=[
-   {id:Date.now()+101,tamano:'grande',etapa_codigo:'acrilico_laterales',cantidad:80,nota:'Avance actual inicial',created_at:now},
-   {id:Date.now()+102,tamano:'pequeno',etapa_codigo:'acrilico_laterales',cantidad:80,nota:'Avance actual inicial',created_at:now}
-  ];
-  localStorage.setItem('bigot_local_inicial','1');
-  localStorage.setItem('bigot_local_corte',JSON.stringify(avancesCorte));
-  localStorage.setItem('bigot_local_ens',JSON.stringify(avancesEns));
-  proyecto.avance_inicial_cargado=true;
- }
-
- fillConfig(); fillSelectors(); renderAll();
-}
-function guardarLocal(){
- localStorage.setItem('bigot_local_corte',JSON.stringify(avancesCorte));
- localStorage.setItem('bigot_local_ens',JSON.stringify(avancesEns));
-}
-function loadCredenciales(){
- document.getElementById('supabaseUrl').value=localStorage.getItem('bigot_url')||'';
- document.getElementById('supabaseKey').value=localStorage.getItem('bigot_key')||'';
-}
-function guardarCredenciales(){
- localStorage.setItem('bigot_url',document.getElementById('supabaseUrl').value.trim());
- localStorage.setItem('bigot_key',document.getElementById('supabaseKey').value.trim());
- msg('Datos guardados en este navegador.');
-}
-async function connectSupabase(){
- const url=document.getElementById('supabaseUrl').value.trim(), key=document.getElementById('supabaseKey').value.trim();
- if(!url||!key){msg('Coloca Supabase URL y anon key. Mientras tanto funciona en modo local.','warn');return}
- sb=window.supabase.createClient(url,key); modoLocal=false; guardarCredenciales();
- document.getElementById('connBadge').textContent='Conectado a Supabase'; document.getElementById('connBadge').className='badge green';
- await cargarTodo();
-}
-async function cargarTodo(){
- const [p,c,ac,e,ae]=await Promise.all([
-  sb.from('bigot_proyectos').select('*').eq('id',1).maybeSingle(),
-  sb.from('bigot_cortes_catalogo').select('*').order('codigo'),
-  sb.from('bigot_avances_corte').select('*').order('created_at',{ascending:false}),
-  sb.from('bigot_etapas_catalogo').select('*').order('orden'),
-  sb.from('bigot_avances_ensamblado').select('*').order('created_at',{ascending:false})
- ]);
- if(p.error||c.error||ac.error||e.error||ae.error){
-  console.error(p.error,c.error,ac.error,e.error,ae.error);
-  modoLocal=true;document.getElementById('connBadge').textContent='Modo local';document.getElementById('connBadge').className='badge gray';
-  initLocal();msg('No pude conectar con las tablas. Ejecuta el SQL primero.','warn');return;
- }
- proyecto=p.data||defaultProyecto(); cortes=c.data?.length?c.data:[...CORTES_DEFAULT]; etapas=e.data?.length?e.data:[...ETAPAS_DEFAULT];
- avancesCorte=ac.data||[]; avancesEns=ae.data||[];
-
- if(avancesCorte.length===0 && avancesEns.length===0 && !proyecto.avance_inicial_cargado){
-  const cortesIni=[
-   {codigo:'B75',cantidad:20,nota:'Avance actual inicial'},
-   {codigo:'B30',cantidad:9,nota:'Avance actual inicial'},
-   {codigo:'B8',cantidad:8,nota:'Avance actual inicial'},
-   {codigo:'B6',cantidad:6,nota:'Avance actual inicial'}
-  ];
-  const ensIni=[
-   {tamano:'grande',etapa_codigo:'acrilico_laterales',cantidad:80,nota:'Avance actual inicial'},
-   {tamano:'pequeno',etapa_codigo:'acrilico_laterales',cantidad:80,nota:'Avance actual inicial'}
-  ];
-  const seedC=await sb.from('bigot_avances_corte').insert(cortesIni);
-  const seedE=await sb.from('bigot_avances_ensamblado').insert(ensIni);
-  if(!seedC.error && !seedE.error){
-   await sb.from('bigot_proyectos').update({avance_inicial_cargado:true}).eq('id',1);
-   return await cargarTodo();
-  }
- }
-
- fillConfig();fillSelectors();renderAll();msg('Conectado y datos cargados.');
-}
-function fillConfig(){
- document.getElementById('metaGrandes').value=proyecto.meta_grandes;
- document.getElementById('metaPequenos').value=proyecto.meta_pequenos;
- document.getElementById('horaInicio').value=(proyecto.hora_inicio_laboral||'08:00').slice(0,5);
- document.getElementById('horaFin').value=(proyecto.hora_fin_laboral||'18:00').slice(0,5);
- document.getElementById('pesoCorte').value=proyecto.peso_corte;
- document.getElementById('pesoEnsamblado').value=proyecto.peso_ensamblado;
- const d=new Date(proyecto.fecha_inicio);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
- document.getElementById('fechaInicio').value=d.toISOString().slice(0,16);
-}
-function fillSelectors(){
- seleccionarCorte(document.getElementById('corteCodigo').value || 'B75');
- seleccionarEtapa(document.getElementById('ensEtapa').value || 'acrilico_laterales');
-}
 function seleccionarCorte(codigo){
- document.getElementById('corteCodigo').value=codigo;
- document.querySelectorAll('#corteOpciones .choice-btn').forEach(b=>b.classList.toggle('selected',b.dataset.value===codigo));
+  document.getElementById('corteCodigo').value=codigo;
+  document.querySelectorAll('#corteOpciones .choice-btn').forEach(b=>b.classList.toggle('selected',b.dataset.value===codigo));
 }
-function seleccionarEtapa(codigo){
- document.getElementById('ensEtapa').value=codigo;
- document.querySelectorAll('#etapaOpciones .choice-btn').forEach(b=>b.classList.toggle('selected',b.dataset.value===codigo));
+
+function mensaje(text,tipo='ok'){
+  document.getElementById('mainMsg').innerHTML=`<div class="${tipo==='ok'?'ok':'notice'}">${text}</div>`;
+  setTimeout(()=>document.getElementById('mainMsg').innerHTML='',4000);
 }
-async function guardarProyecto(){
- proyecto.meta_grandes=parseInt(document.getElementById('metaGrandes').value||300);
- proyecto.meta_pequenos=parseInt(document.getElementById('metaPequenos').value||300);
- proyecto.fecha_inicio=new Date(document.getElementById('fechaInicio').value).toISOString();
- proyecto.hora_inicio_laboral=document.getElementById('horaInicio').value;
- proyecto.hora_fin_laboral=document.getElementById('horaFin').value;
- proyecto.peso_corte=parseFloat(document.getElementById('pesoCorte').value||35);
- proyecto.peso_ensamblado=parseFloat(document.getElementById('pesoEnsamblado').value||65);
- if(modoLocal||!sb){renderAll();msg('Configuración aplicada en modo local.');return}
- const {error}=await sb.from('bigot_proyectos').upsert(proyecto);
- if(error){msg('Error guardando configuración: '+error.message,'warn');return}
- await cargarTodo();
+
+function setDbBadge(ok,text){
+  const el=document.getElementById('dbBadge');
+  el.textContent=text;
+  el.className=ok?'badge green':'badge red';
 }
+
+async function init(){
+  await cargarTodo();
+}
+
+async function cargarTodo(){
+  setDbBadge(false,'Cargando...');
+  const [corteRes,ensRes] = await Promise.all([
+    db.from('bigot_avances_corte').select('*').order('created_at',{ascending:false}),
+    db.from('bigot_avances_ensamblado').select('*').order('created_at',{ascending:false})
+  ]);
+
+  if(corteRes.error || ensRes.error){
+    console.error(corteRes.error,ensRes.error);
+    setDbBadge(false,'Error de conexión');
+    mensaje('No se pudieron cargar los datos. Ejecuta primero el SQL de tablas y políticas.','warn');
+    return;
+  }
+
+  avancesCorte=corteRes.data||[];
+  avancesEns=ensRes.data||[];
+  setDbBadge(true,'Supabase conectado');
+  renderAll();
+}
+
 async function guardarCorte(){
- const data={codigo:document.getElementById('corteCodigo').value,cantidad:parseInt(document.getElementById('corteCantidad').value||0),nota:document.getElementById('corteNota').value.trim(),created_at:new Date().toISOString()};
- if(!data.codigo||data.cantidad<=0){msg('Cantidad inválida.','warn');return}
- if(modoLocal||!sb){data.id=Date.now();avancesCorte.unshift(data);guardarLocal();limpiarCorte();renderAll();msg('Corte guardado en modo local.');return}
- const {error}=await sb.from('bigot_avances_corte').insert({codigo:data.codigo,cantidad:data.cantidad,nota:data.nota});
- if(error){msg('Error guardando corte: '+error.message,'warn');return}
- limpiarCorte();await cargarTodo();
+  const codigo=document.getElementById('corteCodigo').value;
+  const cantidad=parseInt(document.getElementById('corteCantidad').value||0);
+  const nota=document.getElementById('corteNota').value.trim();
+  if(!codigo||cantidad<=0){mensaje('Cantidad inválida.','warn');return}
+
+  const {error}=await db.from('bigot_avances_corte').insert({codigo,cantidad,nota});
+  if(error){mensaje('No se pudo guardar: '+error.message,'warn');return}
+
+  document.getElementById('corteCantidad').value=1;
+  document.getElementById('corteNota').value='';
+  await cargarTodo();
+  mensaje('Avance de corte guardado.');
 }
-function limpiarCorte(){document.getElementById('corteCantidad').value=1;document.getElementById('corteNota').value=''}
+
 async function guardarEnsamblado(){
- const data={tamano:document.getElementById('ensTamano').value,etapa_codigo:document.getElementById('ensEtapa').value,cantidad:parseInt(document.getElementById('ensCantidad').value||0),nota:document.getElementById('ensNota').value.trim(),created_at:new Date().toISOString()};
- if(!data.etapa_codigo||data.cantidad<=0){msg('Cantidad inválida.','warn');return}
- if(modoLocal||!sb){data.id=Date.now();avancesEns.unshift(data);guardarLocal();limpiarEns();renderAll();msg('Ensamblado guardado en modo local.');return}
- const {error}=await sb.from('bigot_avances_ensamblado').insert({tamano:data.tamano,etapa_codigo:data.etapa_codigo,cantidad:data.cantidad,nota:data.nota});
- if(error){msg('Error guardando ensamblado: '+error.message,'warn');return}
- limpiarEns();await cargarTodo();
+  const tamano=document.getElementById('ensTamano').value;
+  const etapa_codigo=document.getElementById('ensEtapa').value;
+  const cantidad=parseInt(document.getElementById('ensCantidad').value||0);
+  const nota=document.getElementById('ensNota').value.trim();
+  if(cantidad<=0){mensaje('Cantidad inválida.','warn');return}
+
+  const {error}=await db.from('bigot_avances_ensamblado').insert({tamano,etapa_codigo,cantidad,nota});
+  if(error){mensaje('No se pudo guardar: '+error.message,'warn');return}
+
+  document.getElementById('ensCantidad').value=1;
+  document.getElementById('ensNota').value='';
+  await cargarTodo();
+  mensaje('Avance de ensamblado guardado.');
 }
-function limpiarEns(){document.getElementById('ensCantidad').value=1;document.getElementById('ensNota').value=''}
-async function cargarAvanceActual(){
- if((modoLocal&&localStorage.getItem('bigot_local_inicial')==='1')||(!modoLocal&&proyecto.avance_inicial_cargado)){msg('El avance actual ya fue cargado.','warn');return}
- if(!confirm('¿Cargar avance actual? B75=20, B30=9, B8=8, B6=6 y 80 ensambles iniciales.'))return;
- const cortesIni=[{codigo:'B75',cantidad:20,nota:'Avance actual'},{codigo:'B30',cantidad:9,nota:'Avance actual'},{codigo:'B8',cantidad:8,nota:'Avance actual'},{codigo:'B6',cantidad:6,nota:'Avance actual'}];
- const ensIni=[{tamano:'grande',etapa_codigo:'acrilico_laterales',cantidad:80,nota:'Avance actual'},{tamano:'pequeno',etapa_codigo:'acrilico_laterales',cantidad:80,nota:'Avance actual'}];
- if(modoLocal||!sb){
-  const now=new Date().toISOString();
-  avancesCorte.unshift(...cortesIni.map((x,i)=>({...x,id:Date.now()+i,created_at:now})));
-  avancesEns.unshift(...ensIni.map((x,i)=>({...x,id:Date.now()+100+i,created_at:now})));
-  localStorage.setItem('bigot_local_inicial','1');proyecto.avance_inicial_cargado=true;guardarLocal();renderAll();msg('Avance actual cargado en modo local.');return;
- }
- let a=await sb.from('bigot_avances_corte').insert(cortesIni);if(a.error){msg('Error: '+a.error.message,'warn');return}
- let b=await sb.from('bigot_avances_ensamblado').insert(ensIni);if(b.error){msg('Error: '+b.error.message,'warn');return}
- await sb.from('bigot_proyectos').update({avance_inicial_cargado:true}).eq('id',1);await cargarTodo();
+
+async function resetearLista(){
+  if(!confirm('¿Borrar todos los cortes anteriores y cargar exactamente B75 20/37, B30 9/30, B8 8/16, B6 6/6 y B38 0/38?')) return;
+
+  const del=await db.from('bigot_avances_corte').delete().gte('id',0);
+  if(del.error){mensaje('No se pudo borrar la lista anterior: '+del.error.message,'warn');return}
+
+  const nuevos=[
+    {codigo:'B75',cantidad:20,nota:'Lista actual'},
+    {codigo:'B30',cantidad:9,nota:'Lista actual'},
+    {codigo:'B8',cantidad:8,nota:'Lista actual'},
+    {codigo:'B6',cantidad:6,nota:'Lista actual'}
+  ];
+
+  const ins=await db.from('bigot_avances_corte').insert(nuevos);
+  if(ins.error){mensaje('No se pudo cargar la lista actual: '+ins.error.message,'warn');return}
+
+  await cargarTodo();
+  mensaje('Lista anterior eliminada y lista actual cargada.');
 }
+
 async function borrarCorte(id){
- if(!confirm('¿Borrar este corte?'))return;
- if(modoLocal||!sb){avancesCorte=avancesCorte.filter(x=>x.id!==id);guardarLocal();renderAll();return}
- await sb.from('bigot_avances_corte').delete().eq('id',id);await cargarTodo();
+  if(!confirm('¿Borrar este registro?'))return;
+  const {error}=await db.from('bigot_avances_corte').delete().eq('id',id);
+  if(error){mensaje('No se pudo borrar: '+error.message,'warn');return}
+  await cargarTodo();
 }
+
 async function borrarEns(id){
- if(!confirm('¿Borrar este avance?'))return;
- if(modoLocal||!sb){avancesEns=avancesEns.filter(x=>x.id!==id);guardarLocal();renderAll();return}
- await sb.from('bigot_avances_ensamblado').delete().eq('id',id);await cargarTodo();
+  if(!confirm('¿Borrar este registro?'))return;
+  const {error}=await db.from('bigot_avances_ensamblado').delete().eq('id',id);
+  if(error){mensaje('No se pudo borrar: '+error.message,'warn');return}
+  await cargarTodo();
 }
-function totalsCortes(){
- const byCode={};avancesCorte.forEach(a=>byCode[a.codigo]=(byCode[a.codigo]||0)+Number(a.cantidad||0));
- const piezas={gp:0,gf:0,pf:0,pp:0,gl:0,pl:0,gs:0,ps:0};
- cortes.forEach(c=>{const cant=byCode[c.codigo]||0;['gp','gf','pf','pp','gl','pl','gs','ps'].forEach(k=>piezas[k]+=Number(c[k]||0)*cant)});
- return {byCode,piezas};
+
+function totalesCorte(){
+  const byCode={};
+  avancesCorte.forEach(a=>byCode[a.codigo]=(byCode[a.codigo]||0)+Number(a.cantidad||0));
+  const piezas={gp:0,gf:0,pf:0,pp:0,gl:0,pl:0,gs:0,ps:0};
+  CORTES.forEach(c=>{
+    const cant=byCode[c.codigo]||0;
+    Object.keys(piezas).forEach(k=>piezas[k]+=Number(c[k]||0)*cant);
+  });
+  return {byCode,piezas};
 }
-function totalsEns(){
- const out={grande:{},pequeno:{}};etapas.forEach(e=>{out.grande[e.codigo]=0;out.pequeno[e.codigo]=0});
- avancesEns.forEach(a=>{if(out[a.tamano]&&out[a.tamano][a.etapa_codigo]!=null)out[a.tamano][a.etapa_codigo]+=Number(a.cantidad||0)});
- return out;
+
+function totalesEns(){
+  const out={grande:{},pequeno:{}};
+  ETAPAS.forEach(e=>{out.grande[e.codigo]=0;out.pequeno[e.codigo]=0});
+  avancesEns.forEach(a=>{
+    if(out[a.tamano]) out[a.tamano][a.etapa_codigo]=(out[a.tamano][a.etapa_codigo]||0)+Number(a.cantidad||0);
+  });
+  return out;
 }
-function metasPiezas(){
- const mg=Number(proyecto.meta_grandes||300),mp=Number(proyecto.meta_pequenos||300);
- return {gp:mg,gf:mg,gl:mg*2,gs:mg,pf:mp,pp:mp,pl:mp*2,ps:mp};
-}
+
 function renderAll(){
- const tc=totalsCortes(),te=totalsEns(),mg=Number(proyecto.meta_grandes||300),mp=Number(proyecto.meta_pequenos||300);
- const cortePct=calcCortePct(tc.byCode),ensPct=calcEnsPct(te,mg,mp);
- const totalPct=cortePct*(Number(proyecto.peso_corte||35)/100)+ensPct*(Number(proyecto.peso_ensamblado||65)/100);
- document.getElementById('kpiGrandes').textContent=terminado(te.grande,mg);
- document.getElementById('kpiPequenos').textContent=terminado(te.pequeno,mp);
- document.getElementById('kpiTotal').textContent=pct(totalPct);
- setBar('barTotal',totalPct);setBar('barCorte',cortePct);setBar('barEns',ensPct);
- document.getElementById('txtCortePct').textContent=pct(cortePct);document.getElementById('txtEnsPct').textContent=pct(ensPct);
- document.getElementById('metaG1').textContent=mg;document.getElementById('metaP1').textContent=mp;
- document.getElementById('slowG').textContent=slowStage(te.grande,mg);document.getElementById('slowP').textContent=slowStage(te.pequeno,mp);
- renderPieces(tc.piezas);renderCortes(tc.byCode);renderEnsamblado(te,mg,mp);renderHistorial();renderFecha(totalPct);
+  const tc=totalesCorte();
+  const te=totalesEns();
+
+  const grandesPosibles=Math.min(
+    tc.piezas.gp,
+    tc.piezas.gf,
+    Math.floor(tc.piezas.gl/2),
+    tc.piezas.gs
+  );
+
+  const pequenosPosibles=Math.min(
+    tc.piezas.pf,
+    tc.piezas.pp,
+    Math.floor(tc.piezas.pl/2),
+    tc.piezas.ps
+  );
+
+  const pctG=Math.min(grandesPosibles/META*100,100);
+  const pctP=Math.min(pequenosPosibles/META*100,100);
+
+  const totalHecho=CORTES.reduce((s,c)=>s+(tc.byCode[c.codigo]||0),0);
+  const totalObjetivo=CORTES.reduce((s,c)=>s+c.objetivo,0);
+  const pctC=CORTES.reduce((s,c)=>s+Math.min((tc.byCode[c.codigo]||0)/c.objetivo,1),0)/CORTES.length*100;
+
+  document.getElementById('pctGrandes').textContent=formatoPct(pctG);
+  document.getElementById('pctPequenos').textContent=formatoPct(pctP);
+  document.getElementById('cantGrandes').textContent=grandesPosibles;
+  document.getElementById('cantPequenos').textContent=pequenosPosibles;
+  document.getElementById('barGrandes').style.width=pctG+'%';
+  document.getElementById('barPequenos').style.width=pctP+'%';
+  document.getElementById('pctCorte').textContent=formatoPct(pctC);
+  document.getElementById('barCorte').style.width=pctC+'%';
+  document.getElementById('totalCortes').textContent=totalHecho;
+  document.getElementById('totalObjetivo').textContent=totalObjetivo;
+
+  renderCortes(tc.byCode);
+  renderPiezas(tc.piezas);
+  renderEnsamblado(te);
+  renderHistorial();
 }
-function terminado(obj,meta){const vals=etapas.map(e=>Math.min(obj[e.codigo]||0,meta));return vals.length?Math.min(...vals):0}
-function slowStage(obj,meta){let min=Infinity,name='—';etapas.forEach(e=>{const v=obj[e.codigo]||0;if(v<min){min=v;name=`${e.nombre} (${v}/${meta})`}});return name}
-function calcCortePct(byCode){let sum=0;cortes.forEach(c=>sum+=Math.min((byCode[c.codigo]||0)/c.objetivo,1));return cortes.length?sum/cortes.length*100:0}
-function calcEnsPct(te,mg,mp){let total=etapas.length*2,sum=0;etapas.forEach(e=>{sum+=Math.min((te.grande[e.codigo]||0)/mg,1);sum+=Math.min((te.pequeno[e.codigo]||0)/mp,1)});return total?sum/total*100:0}
-function renderPieces(piezas){
- const metas=metasPiezas(),labels={gp:'GP frontal grande',gf:'GF posterior grande',gl:'GL laterales grandes',gs:'GS superior grande',pf:'PF frontal pequeño',pp:'PP posterior pequeño',pl:'PL laterales pequeños',ps:'PS superior pequeño'};
- document.getElementById('piecesWrap').innerHTML=Object.keys(metas).map(k=>{const have=piezas[k]||0,need=metas[k],falta=Math.max(need-have,0),p=Math.min(have/need*100,100);return `<div class="piece-card"><div class="piece-head"><b>${k.toUpperCase()}</b><span class="${falta?'badge orange':'badge green'}">${falta?'Falta '+falta:'Completo'}</span></div><div>${labels[k]}</div><div style="margin:8px 0"><div class="progress"><div class="bar ${falta?'orange':'green'}" style="width:${p}%"></div></div></div><small>${have} / ${need}</small></div>`}).join('');
-}
+
 function renderCortes(byCode){
- document.getElementById('tablaCortes').innerHTML=cortes.map(c=>{const done=byCode[c.codigo]||0,falta=Math.max(c.objetivo-done,0),p=Math.min(done/c.objetivo*100,100);return `<tr><td><b>${c.codigo}</b></td><td>${c.descripcion}</td><td>${done}</td><td>${c.objetivo}</td><td>${falta}</td><td><b>${pct(p)}</b><div class="progress"><div class="bar" style="width:${p}%"></div></div></td></tr>`}).join('');
+  const rows=CORTES.map(c=>{
+    const done=byCode[c.codigo]||0;
+    const falta=Math.max(c.objetivo-done,0);
+    const p=Math.min(done/c.objetivo*100,100);
+    return `<tr>
+      <td><b>${c.codigo}</b></td>
+      <td>${c.descripcion}</td>
+      <td>${done}</td>
+      <td>${c.objetivo}</td>
+      <td>${falta}</td>
+      <td><b>${formatoPct(p)}</b><div class="progress"><div class="bar" style="width:${p}%"></div></div></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tablaCortes').innerHTML=rows;
+  document.getElementById('tablaCortes2').innerHTML=rows;
 }
-function renderEnsamblado(te,mg,mp){
- let rows='';['grande','pequeno'].forEach(t=>{const meta=t==='grande'?mg:mp;etapas.forEach(e=>{const done=te[t][e.codigo]||0,falta=Math.max(meta-done,0),p=Math.min(done/meta*100,100);rows+=`<tr><td><b>${t==='grande'?'Grande':'Pequeño'}</b></td><td>${e.nombre}</td><td>${done}</td><td>${meta}</td><td>${falta}</td><td><b>${pct(p)}</b><div class="progress"><div class="bar green" style="width:${p}%"></div></div></td></tr>`})});
- document.getElementById('tablaEnsamblado').innerHTML=rows;
+
+function renderPiezas(p){
+  const metas={gp:300,gf:300,gl:600,gs:300,pf:300,pp:300,pl:600,ps:300};
+  const labels={
+    gp:'GP frontal grande',gf:'GF posterior grande',gl:'GL laterales grandes',gs:'GS superior grande',
+    pf:'PF frontal pequeño',pp:'PP posterior pequeño',pl:'PL laterales pequeños',ps:'PS superior pequeño'
+  };
+  document.getElementById('piecesWrap').innerHTML=Object.keys(metas).map(k=>{
+    const have=p[k]||0,need=metas[k],falta=Math.max(need-have,0),porc=Math.min(have/need*100,100);
+    return `<div class="piece-card">
+      <div class="piece-head"><b>${k.toUpperCase()}</b><span class="${falta?'badge orange':'badge green'}">${falta?'Falta '+falta:'Completo'}</span></div>
+      <div>${labels[k]}</div>
+      <div style="margin:8px 0"><div class="progress"><div class="bar ${falta?'orange':'green'}" style="width:${porc}%"></div></div></div>
+      <small>${have} / ${need}</small>
+    </div>`;
+  }).join('');
 }
+
+function renderEnsamblado(te){
+  let rows='';
+  ['grande','pequeno'].forEach(t=>{
+    ETAPAS.forEach(e=>{
+      const done=te[t][e.codigo]||0;
+      const falta=Math.max(META-done,0);
+      const p=Math.min(done/META*100,100);
+      rows+=`<tr>
+        <td><b>${t==='grande'?'Grande':'Pequeño'}</b></td>
+        <td>${e.nombre}</td>
+        <td>${done}</td><td>${META}</td><td>${falta}</td>
+        <td><b>${formatoPct(p)}</b><div class="progress"><div class="bar green" style="width:${p}%"></div></div></td>
+      </tr>`;
+    });
+  });
+  document.getElementById('tablaEnsamblado').innerHTML=rows;
+}
+
 function renderHistorial(){
- const etapaMap=Object.fromEntries(etapas.map(e=>[e.codigo,e.nombre]));
- document.getElementById('histCorte').innerHTML=avancesCorte.map(a=>`<tr><td>${fmtDate(a.created_at)}</td><td><b>${a.codigo}</b></td><td>${a.cantidad}</td><td>${a.nota||''}</td><td><button class="red small" onclick="borrarCorte(${a.id})">Borrar</button></td></tr>`).join('');
- document.getElementById('histEns').innerHTML=avancesEns.map(a=>`<tr><td>${fmtDate(a.created_at)}</td><td>${a.tamano==='grande'?'Grande':'Pequeño'}</td><td>${etapaMap[a.etapa_codigo]||a.etapa_codigo}</td><td>${a.cantidad}</td><td>${a.nota||''}</td><td><button class="red small" onclick="borrarEns(${a.id})">Borrar</button></td></tr>`).join('');
+  const etapaMap=Object.fromEntries(ETAPAS.map(e=>[e.codigo,e.nombre]));
+  document.getElementById('histCorte').innerHTML=avancesCorte.map(a=>`
+    <tr>
+      <td>${fecha(a.created_at)}</td><td><b>${a.codigo}</b></td><td>${a.cantidad}</td><td>${a.nota||''}</td>
+      <td><button class="red small" onclick="borrarCorte(${a.id})">Borrar</button></td>
+    </tr>`).join('');
+
+  document.getElementById('histEns').innerHTML=avancesEns.map(a=>`
+    <tr>
+      <td>${fecha(a.created_at)}</td><td>${a.tamano==='grande'?'Grande':'Pequeño'}</td>
+      <td>${etapaMap[a.etapa_codigo]||a.etapa_codigo}</td><td>${a.cantidad}</td><td>${a.nota||''}</td>
+      <td><button class="red small" onclick="borrarEns(${a.id})">Borrar</button></td>
+    </tr>`).join('');
 }
-function renderFecha(totalPct){
- const el=document.getElementById('kpiFecha'),sub=document.getElementById('kpiRitmo');
- if(totalPct<=0){el.textContent='—';sub.textContent='Esperando avances';return}
- if(totalPct>=100){el.textContent='Completado';sub.textContent='Proyecto terminado';return}
- const start=new Date(proyecto.fecha_inicio),now=new Date(),worked=workingHoursBetween(start,now);
- if(worked<=0){el.textContent='—';sub.textContent='Sin horas laborales acumuladas';return}
- const totalH=worked/(totalPct/100),rem=Math.max(totalH-worked,0),est=addWorkingHours(now,rem);
- el.textContent=fmtDate(est);sub.textContent=`Ritmo: ${pct(totalPct)} en ${worked.toFixed(1)} h laborales`;
+
+function formatoPct(n){
+  return `${Math.round((Number(n)||0)*10)/10}%`;
 }
-function workingHoursBetween(start,end){
- const [sh,sm]=(proyecto.hora_inicio_laboral||'08:00').split(':').map(Number),[eh,em]=(proyecto.hora_fin_laboral||'18:00').split(':').map(Number);
- let cur=new Date(start),hours=0;
- while(cur<end){const ds=new Date(cur);ds.setHours(sh,sm,0,0);const de=new Date(cur);de.setHours(eh,em,0,0);const a=new Date(Math.max(cur,ds));const b=new Date(Math.min(end,de));if(b>a)hours+=(b-a)/36e5;cur.setDate(cur.getDate()+1);cur.setHours(0,0,0,0)}
- return hours;
+function fecha(d){
+  return new Date(d).toLocaleString('es-VE',{dateStyle:'short',timeStyle:'short'});
 }
-function addWorkingHours(from,hours){
- const [sh,sm]=(proyecto.hora_inicio_laboral||'08:00').split(':').map(Number),[eh,em]=(proyecto.hora_fin_laboral||'18:00').split(':').map(Number);
- let cur=new Date(from),left=hours;
- while(left>0){const ds=new Date(cur);ds.setHours(sh,sm,0,0);const de=new Date(cur);de.setHours(eh,em,0,0);if(cur<ds)cur=ds;if(cur>=de){cur.setDate(cur.getDate()+1);cur.setHours(sh,sm,0,0);continue}const avail=(de-cur)/36e5;if(left<=avail){cur=new Date(cur.getTime()+left*36e5);left=0}else{left-=avail;cur.setDate(cur.getDate()+1);cur.setHours(sh,sm,0,0)}}
- return cur;
-}
-function pct(n){return `${Math.round((Number(n)||0)*10)/10}%`}
-function setBar(id,n){document.getElementById(id).style.width=Math.max(0,Math.min(Number(n)||0,100))+'%'}
-function fmtDate(d){if(!d)return'—';return new Date(d).toLocaleString('es-VE',{dateStyle:'short',timeStyle:'short'})}
-function copiarSQL(){navigator.clipboard.writeText(SQL_SCHEMA);msg('SQL copiado.')}
-loadCredenciales();initLocal();
-if(localStorage.getItem('bigot_url')&&localStorage.getItem('bigot_key'))connectSupabase();
+
+init();
 </script>
 </body>
 </html>
