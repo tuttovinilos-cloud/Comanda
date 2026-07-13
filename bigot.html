@@ -25,7 +25,7 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--b
 .header small{display:block;margin-top:3px;font-size:10px;opacity:.78}
 .badge{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.15);font-family:var(--head);font-size:9px;font-weight:900}
 .app{max-width:1100px;margin:auto;padding:14px}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
 .tab{
  min-height:38px;border-radius:999px;border:1px solid #cbd4e4;background:#fff;color:#153bff;
  font-family:var(--head);font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer
@@ -82,7 +82,7 @@ button.save{
 <header class="header">
  <div>
   <h1>BIGOT · PRODUCCIÓN</h1>
-  <small>Tuttovinilos · Corte · Ensamblado · Listos</small>
+  <small>Tuttovinilos · Corte · Ensamblado · Laminado · Listos</small>
  </div>
  <div id="dbBadge" class="badge">Conectando...</div>
 </header>
@@ -93,6 +93,7 @@ button.save{
  <div class="tabs">
   <button class="tab active" onclick="showTab('corte',this)">Corte</button>
   <button class="tab" onclick="showTab('ensamblado',this)">Ensamblado</button>
+  <button class="tab" onclick="showTab('laminado',this)">Laminado</button>
   <button class="tab" onclick="showTab('listos',this)">Listos</button>
  </div>
 
@@ -137,6 +138,43 @@ button.save{
     </div>
    </div>
    <button class="save" onclick="guardarEstado('ensamblado')">Guardar ensamblado</button>
+  </div>
+ </section>
+
+
+ <section id="laminado" class="section">
+  <div class="summary-grid">
+   <div class="summary-box">
+    <small>Laminado grande</small>
+    <strong id="lamGrandePct">0%</strong>
+    <div class="progress"><div id="lamGrandeBar" class="bar" style="width:0%"></div></div>
+    <div class="sub"><span id="lamGrandeTxt">0</span> de 300</div>
+   </div>
+   <div class="summary-box">
+    <small>Laminado pequeño</small>
+    <strong id="lamPeqPct">0%</strong>
+    <div class="progress"><div id="lamPeqBar" class="bar" style="width:0%"></div></div>
+    <div class="sub"><span id="lamPeqTxt">0</span> de 300</div>
+   </div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+   <h2>Cantidades laminadas</h2>
+   <div class="list">
+    <div class="row">
+     <div class="row-title"><b>Grande</b><small>Meta: 300 unidades</small></div>
+     <div class="value">Actual</div>
+     <input id="lamGrande" type="number" min="0" max="300" value="0">
+     <div class="value">/ 300</div>
+    </div>
+    <div class="row">
+     <div class="row-title"><b>Pequeño</b><small>Meta: 300 unidades</small></div>
+     <div class="value">Actual</div>
+     <input id="lamPequeno" type="number" min="0" max="300" value="0">
+     <div class="value">/ 300</div>
+    </div>
+   </div>
+   <button class="save" onclick="guardarEstado('laminado')">Guardar laminado</button>
   </div>
  </section>
 
@@ -224,11 +262,15 @@ function renderCorte(){
 function updateCards(){
  const eg=Number(document.getElementById('ensGrande').value)||0;
  const ep=Number(document.getElementById('ensPequeno').value)||0;
+ const lamg=Number(document.getElementById('lamGrande').value)||0;
+ const lamp=Number(document.getElementById('lamPequeno').value)||0;
  const lg=Number(document.getElementById('listoGrande').value)||0;
  const lp=Number(document.getElementById('listoPequeno').value)||0;
 
  setCard('ensGrande',eg);
  setCard('ensPeq',ep);
+ setCard('lamGrande',lamg);
+ setCard('lamPeq',lamp);
  setCard('listoGrande',lg);
  setCard('listoPeq',lp);
 }
@@ -266,6 +308,10 @@ async function cargar(){
   document.getElementById('ensGrande').value=estados.ensamblado.grande;
   document.getElementById('ensPequeno').value=estados.ensamblado.pequeno;
  }
+ if(estados.laminado){
+  document.getElementById('lamGrande').value=estados.laminado.grande;
+  document.getElementById('lamPequeno').value=estados.laminado.pequeno;
+ }
  if(estados.listos){
   document.getElementById('listoGrande').value=estados.listos.grande;
   document.getElementById('listoPequeno').value=estados.listos.pequeno;
@@ -288,19 +334,26 @@ async function guardarCorte(){
 }
 
 async function guardarEstado(tipo){
- const grande=Number(document.getElementById(tipo==='ensamblado'?'ensGrande':'listoGrande').value)||0;
- const pequeno=Number(document.getElementById(tipo==='ensamblado'?'ensPequeno':'listoPequeno').value)||0;
+ const ids = tipo==='ensamblado'
+  ? ['ensGrande','ensPequeno']
+  : tipo==='laminado'
+    ? ['lamGrande','lamPequeno']
+    : ['listoGrande','listoPequeno'];
+ const grande=Number(document.getElementById(ids[0]).value)||0;
+ const pequeno=Number(document.getElementById(ids[1]).value)||0;
 
  const {error}=await db.from('bigot_estado_resumen').upsert({
   tipo,grande,pequeno,meta_grande:300,meta_pequeno:300,updated_at:new Date().toISOString()
  },{onConflict:'tipo'});
 
  if(error){notice('No se pudo guardar: '+error.message,'err');return}
- updateCards();notice(tipo==='ensamblado'?'Ensamblado guardado.':'Listos guardados.');
+ updateCards();
+ const texto = tipo==='ensamblado' ? 'Ensamblado guardado.' : tipo==='laminado' ? 'Laminado guardado.' : 'Listos guardados.';
+ notice(texto);
 }
 
 document.addEventListener('input',e=>{
- if(['ensGrande','ensPequeno','listoGrande','listoPequeno'].includes(e.target.id))updateCards();
+ if(['ensGrande','ensPequeno','lamGrande','lamPequeno','listoGrande','listoPequeno'].includes(e.target.id))updateCards();
 });
 
 renderCorte();
