@@ -127,6 +127,11 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
 .line-form-actions .btn{width:100%}
 .invoice-edit-btn{border:1px solid #c7d2fe;background:#fff;color:var(--blue);border-radius:8px;padding:6px 9px;font-family:var(--head);font-size:9px;font-weight:900;text-transform:uppercase;white-space:nowrap}
 .invoice-edit-btn:hover{background:#eef1ff}
+.form-grid.purchase-header-grid{grid-template-columns:1.35fr .9fr .55fr 1fr .9fr .8fr}
+.provider-tax-hint{font-size:9px;color:var(--muted);font-weight:800;margin-top:4px}
+.provider-tax-hint.required{color:var(--red)}
+@media(max-width:1160px){.form-grid.purchase-header-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.form-grid.purchase-header-grid{grid-template-columns:1fr}}
 
 @media(max-width:1160px){.provider-toolbar{grid-template-columns:1fr 1fr}.provider-count{grid-column:1/-1}.provider-card{grid-template-columns:1fr 1fr}.supplier-form-grid{grid-template-columns:1fr 1fr}.catalog-toolbar{grid-template-columns:1fr 1fr}.catalog-count{grid-column:1/-1}.filters{grid-template-columns:repeat(4,1fr)}.form-grid{grid-template-columns:repeat(3,1fr)}.full{grid-column:1/-1}.compare{grid-template-columns:repeat(3,1fr)}.fixed-form-grid{grid-template-columns:repeat(3,1fr)}.fixed-item{grid-template-columns:1fr 120px 150px minmax(260px,1fr)}.general-toolbar{grid-template-columns:repeat(3,1fr)}.general-item-head{grid-template-columns:95px 82px minmax(210px,1fr) 150px 105px 110px 85px 34px}}
 @media(max-width:760px){.material-history-kpis{grid-template-columns:1fr 1fr}.provider-toolbar{grid-template-columns:1fr}.provider-card{grid-template-columns:1fr}.provider-actions{justify-content:flex-start}.supplier-form-grid{grid-template-columns:1fr}.catalog-toolbar{grid-template-columns:1fr}.header{flex-wrap:wrap!important;height:auto!important;min-height:58px!important;overflow:visible!important}.header .logo{min-width:120px!important}.header .logo img{width:118px!important;max-width:118px!important}.page{padding:10px}.page-head{flex-direction:column}.actions,.btn{width:100%}.filters{grid-template-columns:1fr 1fr}.compare{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.full{grid-column:1}.title{font-size:20px}table{min-width:800px}.invoice-card-head{grid-template-columns:76px 36px 1fr 76px;gap:6px}.invoice-card-head .hide-sm{display:none}.estado-mobile{display:inline-flex}.invoice-detail-actions{display:flex;justify-content:flex-start}.invoice-detail-row{grid-template-columns:1fr 62px 70px}.invoice-detail-row .hide-sm{display:none}.stat-group{grid-template-columns:1fr}.lookup-field .suggest-list{position:fixed;left:10px;right:10px;top:auto;max-height:45vh}.fixed-kpis{grid-template-columns:1fr 1fr}.fixed-toolbar{align-items:stretch}.fixed-toolbar .field{width:100%}.fixed-form-grid{grid-template-columns:1fr}.fixed-form-grid .wide{grid-column:1}.fixed-form-actions{flex-direction:column}.fixed-item{grid-template-columns:1fr}.fixed-amount,.fixed-due{text-align:left}.fixed-actions{justify-content:flex-start}.fixed-actions .mini,.fixed-actions .estado-btn{width:auto}.period-label{font-size:11px}.general-toolbar{grid-template-columns:1fr 1fr}.general-kpis{grid-template-columns:1fr 1fr}.general-item-head{grid-template-columns:82px 74px 1fr 82px 34px}.general-item-head .general-hide-mobile{display:none}.general-amount{text-align:right}.general-detail-row{grid-template-columns:1fr 78px 82px}.general-detail-row .general-hide-mobile{display:none}.general-pagination{flex-wrap:wrap}.general-pagination .btn{width:auto;min-width:100px}}
@@ -325,12 +330,17 @@ button,input,select,textarea{font:inherit;color-scheme:light}button{cursor:point
           <div><b id="compraEditBannerTitulo">Editando compra</b><small id="compraEditBannerTexto">Los cambios sustituirán los datos actuales del documento.</small></div>
           <button class="btn light" type="button" onclick="cancelarEdicionCompra()">Cancelar edición</button>
         </div>
-        <div class="form-grid">
+        <div class="form-grid purchase-header-grid">
           <div class="field lookup-field">
             <label>Proveedor</label>
             <input id="newProveedor" autocomplete="off" placeholder="Buscar o escribir proveedor...">
             <input id="newProveedorId" type="hidden">
             <div class="suggest-list" id="proveedorSug"></div>
+          </div>
+          <div class="field">
+            <label id="newProveedorRifLabel">RIF / Cédula <span class="muted">(obligatorio en F)</span></label>
+            <input id="newProveedorRif" autocomplete="off" placeholder="J-00000000-0 / V-00000000">
+            <div class="provider-tax-hint required" id="newProveedorRifAyuda">Se guardará en los datos del proveedor.</div>
           </div>
           <div class="field"><label>Tipo</label><select id="newTipoDocumento"><option value="F">F</option><option value="N">N</option></select></div>
           <div class="field"><label id="newNotaLabel">Nro. documento <span class="muted">(obligatorio en F)</span></label><input id="newNota" placeholder="Obligatorio para factura"></div>
@@ -622,6 +632,17 @@ function generarNumeroNotaSinDocumento(){
   const d=new Date(), p=v=>String(v).padStart(2,'0'), ms=String(d.getMilliseconds()).padStart(3,'0');
   return `SIN-NRO-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}${ms}`;
 }
+function normalizarDocumentoFiscal(valor){
+  return String(valor||'').trim().toUpperCase().replace(/\s+/g,'');
+}
+function claveDocumentoFiscal(valor){
+  return normalizarDocumentoFiscal(valor).replace(/[^A-Z0-9]/g,'');
+}
+function proveedorPorDocumentoFiscal(valor){
+  const clave=claveDocumentoFiscal(valor);
+  if(!clave)return null;
+  return proveedores.find(p=>claveDocumentoFiscal(p.rif)===clave)||null;
+}
 function actualizarRequisitosCompra(){
   const esFactura=$('newTipoDocumento').value==='F';
   $('newNota').required=esFactura;
@@ -629,6 +650,27 @@ function actualizarRequisitosCompra(){
   $('newNotaLabel').innerHTML=esFactura
     ? 'Nro. documento <span class="muted">(obligatorio en F)</span>'
     : 'Nro. documento <span class="muted">(opcional en N)</span>';
+
+  const rifInput=$('newProveedorRif');
+  const rifLabel=$('newProveedorRifLabel');
+  const rifAyuda=$('newProveedorRifAyuda');
+  if(rifInput){
+    rifInput.required=esFactura;
+    rifInput.placeholder=esFactura
+      ? 'Obligatorio: J-00000000-0 / V-00000000'
+      : 'Opcional para nota';
+  }
+  if(rifLabel){
+    rifLabel.innerHTML=esFactura
+      ? 'RIF / Cédula <span class="muted">(obligatorio en F)</span>'
+      : 'RIF / Cédula <span class="muted">(opcional en N)</span>';
+  }
+  if(rifAyuda){
+    rifAyuda.textContent=esFactura
+      ? 'Necesario para guardar una factura. Quedará registrado en el proveedor.'
+      : 'Opcional para notas. Si lo colocas, también quedará guardado en el proveedor.';
+    rifAyuda.classList.toggle('required',esFactura);
+  }
 }
 function showTab(tab){ document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active')); document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('active')); const panel=$(tab); if(panel)panel.classList.add('active'); const btn=document.querySelector('.view-tab[data-tab="'+tab+'"]'); if(btn)btn.classList.add('active'); }
 
@@ -756,18 +798,35 @@ function renderProveedorNuevaSugerencias(){
   const q=norm($('newProveedor').value), box=$('proveedorSug');
   $('newProveedorId').value='';
   if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
-  const arr=proveedores.filter(p=>norm(p.nombre||p.proveedor).includes(q)).slice(0,10);
-  let html=arr.map(p=>`<div class="suggest-item" onclick="seleccionarProveedorNueva(${num(p.id)})"><div><b>${esc(p.nombre||p.proveedor||'')}</b><br><small>Proveedor guardado</small></div><span class="suggest-action">Usar</span></div>`).join('');
-  if(!arr.length) html=`<div class="suggest-item" onclick="usarProveedorNuevo()"><div><b>Crear proveedor nuevo</b><br><small>${esc($('newProveedor').value)}</small></div><span class="suggest-action">Crear</span></div>`;
-  box.innerHTML=html; box.classList.add('show');
+
+  const arr=proveedores.filter(p=>{
+    return norm(p.nombre||p.proveedor).includes(q)
+      || norm(p.rif).includes(q)
+      || claveDocumentoFiscal(p.rif).includes(claveDocumentoFiscal(q));
+  }).slice(0,10);
+
+  let html=arr.map(p=>`<div class="suggest-item" onclick="seleccionarProveedorNueva(${num(p.id)})"><div><b>${esc(p.nombre||p.proveedor||'')}</b><br><small>${esc(p.rif||'Sin RIF / cédula')}</small></div><span class="suggest-action">Usar</span></div>`).join('');
+  if(!arr.length) html=`<div class="suggest-item" onclick="usarProveedorNuevo()"><div><b>Crear proveedor nuevo</b><br><small>${esc($('newProveedor').value)} · completa RIF/cédula si es factura</small></div><span class="suggest-action">Crear</span></div>`;
+  box.innerHTML=html;
+  box.classList.add('show');
 }
 function seleccionarProveedorNueva(id){
   const p=proveedorPorId(id); if(!p)return;
-  $('newProveedor').value=p.nombre||p.proveedor||''; $('newProveedorId').value=p.id; $('proveedorSug').classList.remove('show');
+  $('newProveedor').value=p.nombre||p.proveedor||'';
+  $('newProveedorId').value=p.id;
+  $('newProveedorRif').value=p.rif||'';
+  $('proveedorSug').classList.remove('show');
   if(materialSeleccionadoId) seleccionarMaterial(materialSeleccionadoId);
   renderNuevaHelpers();
 }
-function usarProveedorNuevo(){ $('newProveedorId').value=''; $('proveedorSug').classList.remove('show'); toast('El proveedor se creará al guardar la compra'); }
+function usarProveedorNuevo(){
+  $('newProveedorId').value='';
+  $('proveedorSug').classList.remove('show');
+  toast($('newTipoDocumento').value==='F'
+    ? 'El proveedor se creará al guardar. Completa su RIF o cédula.'
+    : 'El proveedor se creará al guardar. El RIF o cédula es opcional en notas.');
+  setTimeout(()=>$('newProveedorRif')?.focus(),40);
+}
 
 function materialTextoBusqueda(m){
   const rels=relacionesDeMaterial(m.id);
@@ -2110,7 +2169,7 @@ function actualizarModoFormularioCompra(){
   }
 }
 function iniciarNuevaCompra(){
-  const tieneDatos=compraEditandoId||lineasNueva.length||$('newProveedor')?.value.trim()||$('newNota')?.value.trim();
+  const tieneDatos=compraEditandoId||lineasNueva.length||$('newProveedor')?.value.trim()||$('newProveedorRif')?.value.trim()||$('newNota')?.value.trim();
   if(tieneDatos&&!confirm('¿Deseas iniciar una compra nueva? Los cambios que no hayas guardado se perderán.'))return;
   limpiarNueva();
   showTab('nueva');
@@ -2128,8 +2187,10 @@ function prepararEdicionCompra(notaId){
   compraEditandoId=num(notaId);
   lineaEditandoIndex=null;
 
-  $('newProveedor').value=nota.proveedor||'';
+  const proveedorActual=proveedorPorId(nota.proveedor_id);
+  $('newProveedor').value=nota.proveedor||nombreProveedor(proveedorActual)||'';
   $('newProveedorId').value=nota.proveedor_id||'';
+  $('newProveedorRif').value=proveedorActual?.rif||'';
   $('newTipoDocumento').value=tipoDoc(nota);
   $('newNota').value=numeroDocumentoVisible(nota.nro_nota)==='S/N'?'':numeroDocumentoVisible(nota.nro_nota);
   $('newFecha').value=String(nota.fecha||'').slice(0,10);
@@ -2268,6 +2329,7 @@ function limpiarNueva(){
   renderLineasNueva();
   $('newProveedor').value='';
   $('newProveedorId').value='';
+  $('newProveedorRif').value='';
   $('newNota').value='';
   $('newTipoDocumento').value='F';
   $('newEstado').value='Pagado';
@@ -2278,11 +2340,50 @@ function limpiarNueva(){
   renderNuevaHelpers();
 }
 
-async function upsertProveedor(nombre){
+async function upsertProveedor(nombre,documentoFiscal){
   const db=getDb();
-  const idSeleccionado=num($('newProveedorId').value); if(idSeleccionado)return idSeleccionado;
-  const ex=proveedores.find(p=>normNombre(p.nombre||p.proveedor)===normNombre(nombre)); if(ex)return ex.id;
-  const {data,error}=await db.from('compras_proveedores').insert({nombre}).select('id').single(); if(error)throw error; return data.id;
+  const rif=normalizarDocumentoFiscal(documentoFiscal);
+  const idSeleccionado=num($('newProveedorId').value);
+  const proveedorRif=rif?proveedorPorDocumentoFiscal(rif):null;
+
+  if(proveedorRif&&(!idSeleccionado||num(proveedorRif.id)!==idSeleccionado)){
+    throw new Error(`El RIF o cédula ${rif} ya pertenece al proveedor "${nombreProveedor(proveedorRif)}"`);
+  }
+
+  if(idSeleccionado){
+    const seleccionado=proveedorPorId(idSeleccionado);
+    if(!seleccionado)throw new Error('No se encontró el proveedor seleccionado');
+
+    if(rif&&normalizarDocumentoFiscal(seleccionado.rif)!==rif){
+      const {error}=await db.from('compras_proveedores').update({
+        rif,
+        updated_at:new Date().toISOString()
+      }).eq('id',idSeleccionado);
+      if(error)throw error;
+      seleccionado.rif=rif;
+    }
+    return idSeleccionado;
+  }
+
+  const ex=proveedores.find(p=>normNombre(p.nombre||p.proveedor)===normNombre(nombre));
+  if(ex){
+    if(rif&&normalizarDocumentoFiscal(ex.rif)!==rif){
+      const {error}=await db.from('compras_proveedores').update({
+        rif,
+        updated_at:new Date().toISOString()
+      }).eq('id',ex.id);
+      if(error)throw error;
+      ex.rif=rif;
+    }
+    return ex.id;
+  }
+
+  const {data,error}=await db.from('compras_proveedores').insert({
+    nombre,
+    rif:rif||null
+  }).select('id').single();
+  if(error)throw error;
+  return data.id;
 }
 async function upsertMaterial(l){
   const db=getDb();
@@ -2443,6 +2544,7 @@ async function restaurarCompraAnterior(notaAnterior,detallesAnteriores,movimient
 async function guardarFactura(){
   const db=getDb(); if(!db)return;
   const proveedor=$('newProveedor').value.trim();
+  const proveedorRif=normalizarDocumentoFiscal($('newProveedorRif').value);
   const nroIngresado=$('newNota').value.trim();
   const fecha=$('newFecha').value;
   const estado=$('newEstado').value||'Pagado';
@@ -2450,6 +2552,8 @@ async function guardarFactura(){
   const notaAnterior=compraEditandoId?notas.find(n=>num(n.id)===num(compraEditandoId)):null;
 
   if(!proveedor){toast('Falta seleccionar o escribir el proveedor');return;}
+  if(tipo==='F'&&!proveedorRif){toast('La factura requiere RIF o cédula del proveedor');$('newProveedorRif').focus();return;}
+  if(tipo==='F'&&claveDocumentoFiscal(proveedorRif).length<5){toast('Revisa el RIF o cédula del proveedor');$('newProveedorRif').focus();return;}
   if(!fecha){toast('Falta la fecha de la compra');return;}
   if(!lineasNueva.length){toast('Debes añadir al menos un material a la tabla');return;}
   if(tipo==='F'&&!nroIngresado){toast('La factura requiere número de documento');return;}
@@ -2466,7 +2570,7 @@ async function guardarFactura(){
   if(btn){btn.disabled=true;btn.textContent=compraEditandoId?'Guardando cambios...':'Guardando...';}
 
   try{
-    const proveedor_id=await upsertProveedor(proveedor);
+    const proveedor_id=await upsertProveedor(proveedor,proveedorRif);
 
     let consultaDuplicado=db.from('compras_notas')
       .select('id')
@@ -2577,6 +2681,9 @@ $('proveedorFiltroInput').addEventListener('focus',renderProveedorFiltroSugerenc
 $('newProveedor').addEventListener('input',renderProveedorNuevaSugerencias);
 $('newProveedor').addEventListener('focus',renderProveedorNuevaSugerencias);
 $('newTipoDocumento').addEventListener('change',actualizarRequisitosCompra);
+$('newProveedorRif').addEventListener('blur',()=>{
+  $('newProveedorRif').value=normalizarDocumentoFiscal($('newProveedorRif').value);
+});
 $('buscarMaterial').addEventListener('input',renderMaterialSugerencias);
 $('buscarMaterial').addEventListener('focus',renderMaterialSugerencias);
 $('lineCantidad').addEventListener('input',calcularLinea);
