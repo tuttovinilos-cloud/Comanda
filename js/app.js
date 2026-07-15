@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v66 listo sin monto confirmacion");
+console.log("APP JS conectado correctamente v67 forma de entrega");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -547,6 +547,24 @@ function claseAbono(valor) {
   return "abono-zero";
 }
 
+function claseEntrega(valor) {
+  const tipo = normalizarBusqueda(valor);
+  if (tipo === "retiro en tienda" || tipo === "retiro") return "entrega-retiro";
+  if (tipo === "delivery") return "entrega-delivery";
+  if (tipo === "envio") return "entrega-envio";
+  return "";
+}
+
+function opcionesEntregaHtml(valorActual) {
+  const actual = String(valorActual || "");
+  return `
+    <option value="" ${!actual ? "selected" : ""}>Por definir</option>
+    <option value="Retiro en tienda" ${actual === "Retiro en tienda" ? "selected" : ""}>🏪 Retiro</option>
+    <option value="Delivery" ${actual === "Delivery" ? "selected" : ""}>🛵 Delivery</option>
+    <option value="Envío" ${actual === "Envío" ? "selected" : ""}>📦 Envío</option>
+  `;
+}
+
 // ===========================
 // NOTIFICACIONES
 // ===========================
@@ -733,6 +751,7 @@ function pedidoCumpleFiltros(p) {
     p.cantidad,
     p.material,
     p.tipo_impresion,
+    p.tipo_entrega,
     p.precio,
     p.precio_total,
     p.pago_simple_total,
@@ -1051,6 +1070,7 @@ function pedidoFilaHTML(p) {
   const cantidadDisabled = puedeModificarCantidadLocal() ? "" : "disabled";
   const st = String(p.estatus_trabajo || "Solicitud");
   const pg = String(p.estatus_pago || "Pendiente");
+  const entrega = String(p.tipo_entrega || "");
   const abono = numeroSeguro(p.monto_abonado || 0);
 
   return `
@@ -1073,7 +1093,16 @@ function pedidoFilaHTML(p) {
 
       <td>${chipCatalogo(p.material, "material")}</td>
       <td>${chipCatalogo(p.tipo_impresion, "impresion")}</td>
-      <td>${deudaCellHtml(p)}</td>
+      <td class="tipo-entrega-cell">
+        <select
+          class="cell-select entrega-select ${claseEntrega(entrega)}"
+          onchange="actualizarCampoPedido(${id}, 'tipo_entrega', this.value); this.className='cell-select entrega-select ' + claseEntrega(this.value)"
+          onclick="event.stopPropagation()"
+          title="Forma de entrega"
+        >
+          ${opcionesEntregaHtml(entrega)}
+        </select>
+      </td>
 
       <td>
         <select 
@@ -1203,6 +1232,7 @@ async function saveQuickOrder() {
   const cantidad = document.getElementById("q_cantidad")?.value || "";
   const material = document.getElementById("q_material")?.value || "";
   const tipo_impresion = document.getElementById("q_impresion")?.value || "";
+  const tipo_entrega = document.getElementById("q_tipo_entrega")?.value || "";
   const monto_abonado = numeroSeguro(document.getElementById("q_monto_abonado")?.value || 0);
   const estatus_trabajo = document.getElementById("q_estatus_trabajo")?.value || "Solicitud";
   let estatus_pago = document.getElementById("q_estatus_pago")?.value || "Pendiente";
@@ -1239,6 +1269,7 @@ async function saveQuickOrder() {
       cantidad,
       material,
       tipo_impresion,
+      tipo_entrega,
       estatus_trabajo,
       estatus_pago,
       monto_abonado,
@@ -1280,6 +1311,7 @@ async function saveOrder() {
   const cantidad = document.getElementById("f_cantidad")?.value || "";
   const material = document.getElementById("f_material")?.value || "";
   const tipo_impresion = document.getElementById("f_impresion")?.value || "";
+  const tipo_entrega = document.getElementById("f_tipo_entrega")?.value || "";
   const monto_abonado = numeroSeguro(document.getElementById("f_monto_abonado")?.value || 0);
   const fecha_entrega = document.getElementById("f_entrega")?.value || null;
   const deudaPayload = payloadDeudaDesdeFormulario("f");
@@ -1305,6 +1337,7 @@ async function saveOrder() {
     descripcion,
     material,
     tipo_impresion,
+    tipo_entrega,
     monto_abonado,
     fecha_entrega,
     ...deudaPayload,
@@ -1436,7 +1469,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v66_pago_simple_listo_sin_monto_confirmacion";
+const PAGO_SIMPLE_VERSION = "v67_pago_simple_forma_entrega";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
@@ -2177,8 +2210,7 @@ function instalarCSSPagoSimple() {
       touch-action:manipulation!important;
     }
     #filterPago{display:inline-flex!important}
-    table{min-width:1238px!important}
-    table th:nth-child(9),table td:nth-child(9),
+    table{min-width:1350px!important}
     table th:nth-child(11),table td:nth-child(11),
     table th:nth-child(12),table td:nth-child(12){display:none!important}
     table th:nth-child(1),table td:nth-child(1){width:42px!important;min-width:42px!important}
@@ -2189,6 +2221,7 @@ function instalarCSSPagoSimple() {
     table th:nth-child(6),table td:nth-child(6){width:72px!important;min-width:72px!important}
     table th:nth-child(7),table td:nth-child(7){width:104px!important;min-width:104px!important}
     table th:nth-child(8),table td:nth-child(8){width:104px!important;min-width:104px!important}
+    table th:nth-child(9),table td:nth-child(9){display:table-cell!important;width:112px!important;min-width:112px!important;text-align:center!important}
     table th:nth-child(10),table td:nth-child(10){width:96px!important;min-width:96px!important}
     table th:nth-child(13),table td:nth-child(13){width:88px!important;min-width:88px!important;text-align:center!important}
     table th:nth-child(14),table td:nth-child(14){width:128px!important;min-width:128px!important;text-align:center!important;overflow:visible!important}
@@ -2207,6 +2240,11 @@ function instalarCSSPagoSimple() {
     .simple-grid-3{display:grid;grid-template-columns:1fr 105px 110px;gap:8px;align-items:end}
     .simple-grid-action{grid-template-columns:1fr 1fr 116px}
     .simple-date-field input{font-family:var(--mono);font-size:12px!important}
+    .tipo-entrega-cell{overflow:visible!important}
+    .entrega-select{width:100%!important;min-height:30px!important;border-radius:999px!important;text-align:center!important;text-align-last:center!important;font-family:var(--head)!important;font-size:8px!important;font-weight:900!important;padding:4px 20px 4px 6px!important;background:#f8f9ff!important;color:#64748b!important;border-color:#d9deea!important}
+    .entrega-select.entrega-retiro{background:#eef1ff!important;color:#153bff!important;border-color:#c7d2fe!important}
+    .entrega-select.entrega-delivery{background:#fff7ed!important;color:#c2410c!important;border-color:#fdba74!important}
+    .entrega-select.entrega-envio{background:#ecfdf5!important;color:#047857!important;border-color:#6ee7b7!important}
     .pay-simple-btn{width:100%;min-height:32px;padding:4px 6px;border-radius:10px;border:1px solid #64748b;background:#64748b;color:#fff;cursor:pointer;font-family:var(--head);font-size:8px;font-weight:900;letter-spacing:.18px;text-transform:uppercase;line-height:1.03;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;white-space:nowrap;overflow:hidden}
     .pay-simple-btn span,.pay-simple-btn small{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .pay-simple-btn small{font-size:6.5px;opacity:.92;letter-spacing:.10px}
@@ -2233,23 +2271,25 @@ function instalarCSSPagoSimple() {
     .simple-delete-pay:hover{background:#dc2626;color:#fff;border-color:#dc2626}
     .simple-modal-footer .btn-add{min-height:36px!important;padding:8px 14px!important}
     @media(max-width:980px){
-      table{min-width:912px!important}
+      table{min-width:1004px!important}
       table th:nth-child(4),table td:nth-child(4){width:160px!important;min-width:160px!important;padding-left:10px!important}
       table th:nth-child(5),table td:nth-child(5){width:190px!important;min-width:190px!important;max-width:190px!important}
       table th:nth-child(6),table td:nth-child(6){width:58px!important;min-width:58px!important}
       table th:nth-child(7),table td:nth-child(7),table th:nth-child(8),table td:nth-child(8){width:86px!important;min-width:86px!important}
+      table th:nth-child(9),table td:nth-child(9){width:92px!important;min-width:92px!important}
       table th:nth-child(10),table td:nth-child(10){width:82px!important;min-width:82px!important}
       table th:nth-child(13),table td:nth-child(13){width:74px!important;min-width:74px!important}
       table th:nth-child(14),table td:nth-child(14){width:112px!important;min-width:112px!important}
       table th:nth-child(15),table td:nth-child(15){width:54px!important;min-width:54px!important}
       #orderTableBody td{height:32px!important;max-height:32px!important;padding:3px 4px!important}
+      .entrega-select{min-height:27px!important;height:27px!important;font-size:6.8px!important;padding:3px 15px 3px 3px!important}
       .pay-simple-btn{min-height:28px;padding:3px 4px;font-size:6.9px}.pay-simple-btn small{font-size:5.5px}
       .simple-kpi-grid{grid-template-columns:1fr 1fr;gap:6px}
       .simple-grid-3,.simple-grid-action{grid-template-columns:1fr 1fr!important;gap:7px}
       .simple-action-field{grid-column:1/-1}
     }
     @media(max-width:430px){
-      table{min-width:860px!important}
+      table{min-width:952px!important}
       table th:nth-child(4),table td:nth-child(4){width:150px!important;min-width:150px!important}
       table th:nth-child(5),table td:nth-child(5){width:178px!important;min-width:178px!important;max-width:178px!important}
       table th:nth-child(14),table td:nth-child(14){width:106px!important;min-width:106px!important}
@@ -2322,6 +2362,7 @@ function openEditOrder(id) {
   document.getElementById("f_cantidad").value = pedido.cantidad || "";
   document.getElementById("f_material").value = pedido.material || "";
   document.getElementById("f_impresion").value = pedido.tipo_impresion || "";
+  document.getElementById("f_tipo_entrega").value = pedido.tipo_entrega || "";
   document.getElementById("f_monto_abonado").value = money(pedido.monto_abonado || 0);
   document.getElementById("f_entrega").value = pedido.fecha_entrega || "";
   aplicarFormularioDeuda("f", pedido);
@@ -2371,6 +2412,7 @@ function openOrderModal() {
   document.getElementById("f_cantidad").value = "";
   document.getElementById("f_material").value = "";
   document.getElementById("f_impresion").value = "";
+  document.getElementById("f_tipo_entrega").value = "";
   document.getElementById("f_monto_abonado").value = "";
   document.getElementById("f_entrega").value = "";
   document.getElementById("f_precio_total").value = "";
@@ -2443,6 +2485,7 @@ function limpiarFilaRapida() {
     "q_cliente",
     "q_descripcion",
     "q_cantidad",
+    "q_tipo_entrega",
     "q_monto_abonado",
     "q_entrega",
     "q_precio_total",
@@ -2664,6 +2707,7 @@ window.aplicarPagoPedido = aplicarPagoPedido;
 window.actualizarVisibilidadTasaDeuda = actualizarVisibilidadTasaDeuda;
 window.onPagoTipoDeudaChange = onPagoTipoDeudaChange;
 window.guardarDeudaPedido = guardarDeudaPedido;
+window.claseEntrega = claseEntrega;
 window.resolverNombreClienteIdAntesDeGuardar = resolverNombreClienteIdAntesDeGuardar;
 
 // ===========================
