@@ -72,10 +72,8 @@
 </style>
 <style>
 /* VISTA REAL DEL RESPALDO ACRILICO */
-.backboard-shape-text{position:absolute;z-index:1;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;padding:0 25px;text-align:center;white-space:pre-line;line-height:1.15;overflow-wrap:anywhere;pointer-events:none;transition:.2s;color:rgba(225,239,255,.18);-webkit-text-stroke-color:rgba(235,245,255,.42);paint-order:stroke fill;filter:drop-shadow(0 10px 13px #0007)}
+.backboard-shape-text{position:absolute;z-index:1;inset:0;width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 10px 13px #0007)}
 .sign-wrap:not(.board-contour):not(.board-letter) .backboard-shape-text{display:none}
-.sign-wrap.board-contour .backboard-shape-text{-webkit-text-stroke-width:20px}
-.sign-wrap.board-letter .backboard-shape-text{-webkit-text-stroke-width:8px}
 .backboard.contour,.backboard.letter{display:none}
 .backboard.stand{inset:7% 8% 13%;border-radius:5px}
 .backboard.stand:after{content:"";position:absolute;left:20%;right:20%;bottom:-13px;height:9px;border-radius:2px 2px 8px 8px;background:inherit;border:1px solid rgba(255,255,255,.35);box-shadow:0 8px 12px #0006}
@@ -91,7 +89,7 @@
 .board-card[data-board="letter"] .mini-acrylic{-webkit-text-stroke:5px #c5cbd1aa}
 .board-card[data-board="stand"] .mini-acrylic{inset:7px 12px 14px}.board-card[data-board="stand"] .mini-acrylic:after{content:"";position:absolute;left:22%;right:22%;bottom:-8px;height:5px;background:#cfd6df;border-radius:4px}
 .board-card[data-board="openbox"] .mini-acrylic{inset:7px 10px;border:4px double #87909e;background:transparent}
-@media(max-width:600px){.sign-wrap.board-contour .backboard-shape-text{-webkit-text-stroke-width:14px}.sign-wrap.board-letter .backboard-shape-text{-webkit-text-stroke-width:6px}}
+@media(max-width:600px){.backboard-shape-text{filter:drop-shadow(0 7px 9px #0007)}}
 </style>
 </head>
 <body>
@@ -121,7 +119,7 @@
         <div class="wall-line"></div>
         <div class="sign-wrap" id="signWrap">
           <div class="backboard contour" id="backboard" data-board-color="clear"></div>
-          <div class="backboard-shape-text" id="backboardShapeText">Tutto Vinilos</div>
+          <canvas class="backboard-shape-text" id="backboardShapeText" aria-hidden="true"></canvas>
           <div class="neon-text" id="neonText">Tutto Vinilos</div>
         </div>
         <div class="measurement measure-w" id="measureW">100 cm</div>
@@ -208,7 +206,26 @@ function fontSample(){return safeText().replace(/\n/g,' · ')}
 function renderFonts(){const q=$('fontSearch').value.toLowerCase().trim(),cat=$('fontFilter').value,box=$('fontGrid');box.innerHTML='';const list=fonts.filter(f=>(cat==='all'||f.cat===cat)&&f.name.toLowerCase().includes(q));if(!list.length){box.innerHTML='<div class="empty-font">No se encontraron tipografías.</div>';return}list.forEach(f=>{const b=document.createElement('button');b.className='font-card'+(state.font.name===f.name?' active':'');b.innerHTML=`<span class="font-tag">${f.cat}</span><div class="font-name">${f.name}</div><div class="font-sample" style="font-family:'${f.family}'">${escapeHtml(fontSample())}</div>`;b.onclick=()=>{state.font=f;renderFonts();update()};box.appendChild(b)})}
 function renderColors(){const box=$('colors');box.innerHTML='';palette.forEach(c=>{const b=document.createElement('button');b.className='color-btn'+(state.color.name===c.name?' active':'');b.style.setProperty('--c',c.hex);b.style.background=c.hex;b.title=c.name;b.onclick=()=>{state.color=c;renderColors();update()};box.appendChild(b)})}
 function calcHeight(){const lines=Math.max(1,safeText().split('\n').length),longest=Math.max(...safeText().split('\n').map(x=>x.length),1);let h=state.width*state.font.ratio*(lines>1?lines*.82:1)*Math.min(1.42,Math.max(.72,8/longest));return Math.max(15,Math.min(220,Math.round(h)))}
-function update(){const h=calcHeight(),text=$('neonText'),shape=$('backboardShapeText'),tone=boardTones[state.boardColor]||boardTones.clear;text.textContent=safeText();text.style.fontFamily=`'${state.font.family}'`;text.style.color=state.color.hex;const visual=Math.max(32,Math.min(92,620/(Math.max(...safeText().split('\n').map(x=>x.length),4))));text.style.fontSize=visual+'px';shape.textContent=safeText();shape.style.fontFamily=`'${state.font.family}'`;shape.style.fontSize=visual+'px';shape.style.color=tone.fill;shape.style.webkitTextStrokeColor=tone.stroke;$('signWrap').className='sign-wrap board-'+state.board;$('stage').classList.toggle('off',!state.power);$('stage').dataset.bg=state.bg;$('backboard').className='backboard '+state.board;$('backboard').dataset.boardColor=state.boardColor;$('measureW').textContent=state.width+' cm';$('measureH').textContent=h+' cm';$('heightInput').value=h+' cm';$('charCount').textContent=$('textInput').value.length;$('colorName').textContent=state.color.name;$('summaryFont').textContent=state.font.name;$('summarySize').textContent=state.width+' × '+h+' cm';$('summaryColor').textContent=state.color.name;$('summaryBoard').textContent=labels[state.board];renderFonts()}
+function drawAcrylicShape(fontSize){
+ const canvas=$('backboardShapeText'),wrap=$('signWrap');
+ if(!canvas||!wrap)return;
+ const w=Math.max(1,wrap.clientWidth),h=Math.max(1,wrap.clientHeight),dpr=Math.min(2,window.devicePixelRatio||1);
+ canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
+ const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+ if(state.board!=='contour'&&state.board!=='letter')return;
+ const tone=boardTones[state.boardColor]||boardTones.clear,lines=safeText().split('\n'),px=fontSize*dpr,lineH=fontSize*1.15*dpr,totalH=lineH*lines.length,startY=(canvas.height-totalH)/2+lineH*.78;
+ function mask(stroke){
+  const c=document.createElement('canvas');c.width=canvas.width;c.height=canvas.height;
+  const m=c.getContext('2d');m.font=`${px}px '${state.font.family}'`;m.textAlign='center';m.textBaseline='alphabetic';m.lineJoin='round';m.lineCap='round';m.strokeStyle='#fff';m.fillStyle='#fff';m.lineWidth=stroke*dpr;
+  lines.forEach((line,i)=>{const y=startY+i*lineH;m.strokeText(line||' ',canvas.width/2,y);m.fillText(line||' ',canvas.width/2,y)});
+  return c;
+ }
+ const innerSize=state.board==='contour'?20:7,outerSize=state.board==='contour'?25:10,inner=mask(innerSize),outer=mask(outerSize),ring=document.createElement('canvas');ring.width=canvas.width;ring.height=canvas.height;
+ const r=ring.getContext('2d');r.drawImage(outer,0,0);r.globalCompositeOperation='destination-out';r.drawImage(inner,0,0);r.globalCompositeOperation='source-in';r.fillStyle=tone.stroke;r.fillRect(0,0,ring.width,ring.height);r.globalCompositeOperation='source-over';
+ ctx.drawImage(inner,0,0);ctx.globalCompositeOperation='source-in';ctx.fillStyle=tone.fill;ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.globalCompositeOperation='source-over';ctx.drawImage(ring,0,0);
+}
+function update(){const h=calcHeight(),text=$('neonText');text.textContent=safeText();text.style.fontFamily=`'${state.font.family}'`;text.style.color=state.color.hex;const visual=Math.max(32,Math.min(92,620/(Math.max(...safeText().split('\n').map(x=>x.length),4))));text.style.fontSize=visual+'px';$('signWrap').className='sign-wrap board-'+state.board;$('stage').classList.toggle('off',!state.power);$('stage').dataset.bg=state.bg;$('backboard').className='backboard '+state.board;$('backboard').dataset.boardColor=state.boardColor;$('measureW').textContent=state.width+' cm';$('measureH').textContent=h+' cm';$('heightInput').value=h+' cm';$('charCount').textContent=$('textInput').value.length;$('colorName').textContent=state.color.name;$('summaryFont').textContent=state.font.name;$('summarySize').textContent=state.width+' × '+h+' cm';$('summaryColor').textContent=state.color.name;$('summaryBoard').textContent=labels[state.board];renderFonts();requestAnimationFrame(()=>drawAcrylicShape(visual));if(document.fonts&&document.fonts.load)document.fonts.load(`${visual}px '${state.font.family}'`).then(()=>drawAcrylicShape(visual)).catch(()=>{})}
 function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 function setWidth(v){state.width=Math.max(30,Math.min(400,Number(v)||100));$('widthInput').value=state.width;$('widthRange').value=state.width;update()}
 $('textInput').oninput=()=>{renderFonts();update()};$('fontSearch').oninput=renderFonts;$('fontFilter').onchange=renderFonts;$('widthInput').oninput=e=>setWidth(e.target.value);$('widthRange').oninput=e=>setWidth(e.target.value);$('boardColor').onchange=e=>{state.boardColor=e.target.value;update()};
@@ -218,6 +235,7 @@ document.querySelectorAll('[data-bg]').forEach(b=>{if(!b.classList.contains('sta
 $('saveBtn').onclick=()=>{const data={texto:safeText(),tipografia:state.font.name,color:state.color.name,ancho_cm:state.width,alto_cm:calcHeight(),acrilico:labels[state.board],color_acrilico:state.boardColor,fecha:new Date().toISOString()};localStorage.setItem('tutto_neon_diseno',JSON.stringify(data));showToast('Diseño guardado en este navegador')};
 $('resetBtn').onclick=()=>{$('textInput').value='Tutto Vinilos';$('fontSearch').value='';$('fontFilter').value='all';$('boardColor').value='clear';Object.assign(state,{font:fonts[0],color:palette[0],board:'contour',boardColor:'clear',bg:'dark',power:true,width:100});document.querySelectorAll('[data-power]').forEach(x=>x.classList.toggle('active',x.dataset.power==='on'));document.querySelectorAll('[data-board]').forEach(x=>x.classList.toggle('active',x.dataset.board==='contour'));document.querySelectorAll('.bg-btn').forEach(x=>x.classList.toggle('active',x.dataset.bg==='dark'));setWidth(100);renderColors();update()};
 function showToast(msg){$('toast').textContent=msg;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2200)}
+window.addEventListener('resize',()=>{clearTimeout(window.__neonResize);window.__neonResize=setTimeout(update,120)});
 renderFonts();renderColors();update();
 })();
 </script>
