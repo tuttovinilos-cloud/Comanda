@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v67 forma de entrega");
+console.log("APP JS conectado correctamente v68 WhatsApp Hello World");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -661,6 +661,48 @@ async function crearNotificacionPedidoListoFallback(id, pedidoBase, estadoAnteri
     }
   } catch (e) {
     console.error("Error creando notificación fallback:", e);
+  }
+}
+
+
+// ===========================
+// WHATSAPP · PRUEBA HELLO WORLD
+// ===========================
+async function enviarHelloWorldCuandoPedidoListo(id, pedidoBase, estadoAnterior, estadoNuevo) {
+  const anterior = normalizarEstadoNotificacion(estadoAnterior);
+  const nuevo = normalizarEstadoNotificacion(estadoNuevo);
+
+  // Solo se envía cuando el pedido pasa:
+  // Solicitud → Listo
+  // Revisado → Listo
+  if (!["solicitud", "revisado"].includes(anterior)) return;
+  if (nuevo !== "listo") return;
+  if (!db()) return;
+
+  try {
+    const { data, error } = await db().functions.invoke("enviar-whatsapp", {
+      body: {
+        to: "584144143004",
+        template: "hello_world",
+        language: "en_US"
+      }
+    });
+
+    if (error) throw error;
+
+    if (!data || data.ok !== true) {
+      throw new Error(
+        data?.error?.message ||
+        data?.meta_response?.error?.message ||
+        "Meta no confirmó el envío"
+      );
+    }
+
+    console.log("WhatsApp Hello World enviado para pedido:", id, data);
+    mostrarToast("Pedido listo · WhatsApp enviado ✅");
+  } catch (error) {
+    console.error("No se pudo enviar WhatsApp para el pedido " + id + ":", error);
+    mostrarToast("Pedido listo, pero falló WhatsApp ⚠️");
   }
 }
 
@@ -1433,6 +1475,7 @@ async function actualizarCampoPedido(id, campo, valor) {
 
   if (campo === "estatus_trabajo") {
     await crearNotificacionPedidoListoFallback(id, pedidoOriginal, valorAnteriorPedidoOriginal, valor);
+    await enviarHelloWorldCuandoPedidoListo(id, pedidoOriginal, valorAnteriorPedidoOriginal, valor);
   }
 }
 
