@@ -2269,8 +2269,7 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
         <div id="contactoClienteForm" class="contacto-form" hidden>
           <input type="hidden" id="contactoClienteIndice" value="-1"/>
           <div class="form-grid">
-            <div class="field"><label>Nombre</label><input id="contactoNombre" type="text" list="contactosSugeridos" autocomplete="off" placeholder="Escribe o busca un contacto" oninput="autocompletarContactoExistente(false)" onchange="autocompletarContactoExistente(true)"/><datalist id="contactosSugeridos"></datalist></div>
-            <div class="field"><label>Apellido</label><input id="contactoApellido" type="text" placeholder="Apellido"/></div>
+            <div class="field form-full"><label>Nombre completo</label><input id="contactoNombre" type="text" list="contactosSugeridos" autocomplete="off" placeholder="Nombre y apellido del contacto" oninput="autocompletarContactoExistente(false)" onchange="autocompletarContactoExistente(true)"/><datalist id="contactosSugeridos"></datalist></div>
             <div class="field"><label>Teléfono</label><input id="contactoTelefono" type="tel" value="+58" placeholder="+58 412 0000000" onfocus="asegurarPrefijo58(this)"/></div>
             <div class="field"><label>Teléfono alternativo</label><input id="contactoTelefonoAlt" type="tel" placeholder="+58 412 0000000" onfocus="asegurarPrefijo58(this)"/></div>
             <div class="field"><label>Correo</label><input id="contactoCorreo" type="email" placeholder="correo@ejemplo.com"/></div>
@@ -3104,7 +3103,7 @@ async function cargarContactosDisponibles(){
 
   const {data:contactos, error:errorContactos} = await db()
     .from('contactos')
-    .select('id,nombre,apellido,telefono,telefono_alternativo,correo,cedula,cargo,notas,activo')
+    .select('id,nombre,apellido,telefono,telefono_alternativo,correo,cedula,cargo,notas,activo,cliente_origen_id')
     .eq('activo', true)
     .order('nombre', {ascending:true});
 
@@ -3165,8 +3164,7 @@ function autocompletarContactoExistente(forzar=false){
   if(coincidencias.length!==1) return;
 
   const c=coincidencias[0];
-  document.getElementById('contactoNombre').value=limpiarDatoCliente(c.nombre);
-  document.getElementById('contactoApellido').value=limpiarDatoCliente(c.apellido);
+  document.getElementById('contactoNombre').value=nombreContactoCompleto(c);
   document.getElementById('contactoTelefono').value=limpiarDatoCliente(c.telefono) || '+58';
   document.getElementById('contactoTelefonoAlt').value=limpiarDatoCliente(c.telefono_alternativo);
   document.getElementById('contactoCorreo').value=limpiarDatoCliente(c.correo);
@@ -3178,6 +3176,8 @@ function autocompletarContactoExistente(forzar=false){
   const indice=Number(document.getElementById('contactoClienteIndice').value);
   if(indice<0 && c.origen==='contacto') input.dataset.contactoId=String(c.id);
   else delete input.dataset.contactoId;
+  if(c.origen==='cliente' && c.id_cliente_origen) input.dataset.clienteOrigenId=String(c.id_cliente_origen);
+  else delete input.dataset.clienteOrigenId;
 }
 
 let contactosClienteEdicion = [];
@@ -3194,6 +3194,7 @@ function contactoLimpio(c={}){
     relacion_id: c.relacion_id || null,
     nombre: limpiarDatoCliente(c.nombre),
     apellido: limpiarDatoCliente(c.apellido),
+    cliente_origen_id: c.cliente_origen_id || null,
     telefono: limpiarDatoCliente(c.telefono),
     telefono_alternativo: limpiarDatoCliente(c.telefono_alternativo),
     correo: limpiarDatoCliente(c.correo),
@@ -3215,7 +3216,7 @@ function renderContactosCliente(){
   box.innerHTML = contactosClienteEdicion.map((c,i)=>`
     <div class="contacto-card ${c.es_principal?'principal':''}">
       <div class="contacto-info">
-        <strong>${escapeHtml([c.nombre,c.apellido].filter(Boolean).join(' ') || 'Sin nombre')}${c.es_principal?'<span class="contacto-badge">PRINCIPAL</span>':''}</strong>
+        <strong>${escapeHtml(nombreContactoCompleto(c) || 'Sin nombre')}${c.es_principal?'<span class="contacto-badge">PRINCIPAL</span>':''}</strong>
         <div class="contacto-meta">
           ${c.cargo?escapeHtml(c.cargo)+' · ':''}${c.telefono?'📞 '+escapeHtml(c.telefono):'Sin teléfono'}
           ${c.correo?'<br>✉️ '+escapeHtml(c.correo):''}
@@ -3230,9 +3231,10 @@ function renderContactosCliente(){
 
 function limpiarFormularioContacto(){
   document.getElementById("contactoClienteIndice").value='-1';
-  ['contactoNombre','contactoApellido','contactoTelefonoAlt','contactoCorreo','contactoCedula','contactoCargo','contactoNotas'].forEach(id=>document.getElementById(id).value='');
+  ['contactoNombre','contactoTelefonoAlt','contactoCorreo','contactoCedula','contactoCargo','contactoNotas'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('contactoTelefono').value='+58';
   delete document.getElementById('contactoNombre').dataset.contactoId;
+  delete document.getElementById('contactoNombre').dataset.clienteOrigenId;
   document.getElementById("contactoPrincipal").value='false';
 }
 async function nuevoContactoCliente(){ limpiarFormularioContacto(); document.getElementById("contactoClienteForm").hidden=false; await cargarContactosDisponibles(); setTimeout(()=>document.getElementById("contactoNombre").focus(),80); }
@@ -3240,9 +3242,10 @@ function cancelarContactoCliente(){ document.getElementById("contactoClienteForm
 function editarContactoCliente(i){
   const c=contactosClienteEdicion[i]; if(!c) return;
   delete document.getElementById('contactoNombre').dataset.contactoId;
+  delete document.getElementById('contactoNombre').dataset.clienteOrigenId;
   document.getElementById("contactoClienteIndice").value=String(i);
-  document.getElementById("contactoNombre").value=c.nombre||'';
-  document.getElementById("contactoApellido").value=c.apellido||'';
+  document.getElementById("contactoNombre").value=nombreContactoCompleto(c);
+  if(c.cliente_origen_id) document.getElementById('contactoNombre').dataset.clienteOrigenId=String(c.cliente_origen_id);
   document.getElementById("contactoTelefono").value=c.telefono||'';
   document.getElementById("contactoTelefonoAlt").value=c.telefono_alternativo||'';
   document.getElementById("contactoCorreo").value=c.correo||'';
@@ -3254,12 +3257,15 @@ function editarContactoCliente(i){
 }
 function confirmarContactoCliente(){
   const indice=Number(document.getElementById("contactoClienteIndice").value);
-  const contactoSeleccionadoId=document.getElementById('contactoNombre').dataset.contactoId || null;
+  const nombreInput=document.getElementById('contactoNombre');
+  const contactoSeleccionadoId=nombreInput.dataset.contactoId || null;
+  const clienteOrigenId=nombreInput.dataset.clienteOrigenId || null;
   const c=contactoLimpio({
     ...(indice>=0?contactosClienteEdicion[indice]:{}),
     ...(indice<0 && contactoSeleccionadoId ? {id:Number(contactoSeleccionadoId)} : {}),
     nombre:document.getElementById("contactoNombre").value,
-    apellido:document.getElementById("contactoApellido").value,
+    apellido:'',
+    cliente_origen_id: clienteOrigenId ? Number(clienteOrigenId) : (indice>=0 ? contactosClienteEdicion[indice]?.cliente_origen_id : null),
     telefono:document.getElementById("contactoTelefono").value,
     telefono_alternativo:document.getElementById("contactoTelefonoAlt").value,
     correo:document.getElementById("contactoCorreo").value,
@@ -3278,9 +3284,9 @@ function quitarContactoCliente(i){ if(confirm('¿Quitar este contacto del client
 async function cargarContactosCliente(clienteId){
   contactosClienteEdicion=[];
   if(!clienteId){ renderContactosCliente(); return; }
-  const {data,error}=await db().from('clientes_contactos').select('id, es_principal, activo, contacto:contactos(id,nombre,apellido,telefono,telefono_alternativo,correo,cedula,cargo,notas,activo)').eq('cliente_id',clienteId).eq('activo',true);
+  const {data,error}=await db().from('clientes_contactos').select('id, es_principal, activo, contacto:contactos(id,nombre,apellido,telefono,telefono_alternativo,correo,cedula,cargo,notas,activo,cliente_origen_id)').eq('cliente_id',clienteId).eq('activo',true);
   if(error){ console.warn('No se pudieron cargar contactos:',error); renderContactosCliente(); return; }
-  contactosClienteEdicion=(data||[]).filter(r=>r.contacto).map(r=>contactoLimpio({...r.contacto,relacion_id:r.id,es_principal:r.es_principal}));
+  contactosClienteEdicion=(data||[]).filter(r=>r.contacto).map(r=>contactoLimpio({...r.contacto,nombre:nombreContactoCompleto(r.contacto),apellido:'',relacion_id:r.id,es_principal:r.es_principal}));
   renderContactosCliente();
 }
 
@@ -3289,10 +3295,25 @@ async function guardarContactosCliente(clienteId){
   if(errRel) throw errRel;
   const conservarRel=[];
   for(const item of contactosClienteEdicion){
-    const payload={nombre:item.nombre,apellido:item.apellido||null,cedula:item.cedula||null,telefono:item.telefono||null,telefono_alternativo:item.telefono_alternativo||null,correo:item.correo||null,cargo:item.cargo||null,notas:item.notas||null,activo:true,updated_at:new Date().toISOString()};
+    const payload={nombre:item.nombre,apellido:item.apellido||null,cedula:item.cedula||null,telefono:item.telefono||null,telefono_alternativo:item.telefono_alternativo||null,correo:item.correo||null,cargo:item.cargo||null,notas:item.notas||null,cliente_origen_id:item.cliente_origen_id||null,activo:true,updated_at:new Date().toISOString()};
     let contactoId=item.id;
     if(contactoId){ const {error}=await db().from('contactos').update(payload).eq('id',contactoId); if(error) throw error; }
     else { const {data,error}=await db().from('contactos').insert([payload]).select('id').single(); if(error) throw error; contactoId=data.id; item.id=contactoId; }
+
+    // Si el contacto fue tomado de un cliente existente, actualiza también ese registro original.
+    if(item.cliente_origen_id){
+      const clientePayload={
+        nombre:item.nombre,
+        telefono:item.telefono||null,
+        telefono_general:item.telefono||null,
+        correo:item.correo||null,
+        correo_general:item.correo||null,
+        rif_cedula:item.cedula||null,
+        notas:item.notas||null
+      };
+      const {error:errorClienteOrigen}=await db().from('clientes').update(clientePayload).eq('id',Number(item.cliente_origen_id));
+      if(errorClienteOrigen) throw errorClienteOrigen;
+    }
     if(item.relacion_id){
       const {error}=await db().from('clientes_contactos').update({es_principal:item.es_principal,activo:true}).eq('id',item.relacion_id); if(error) throw error; conservarRel.push(Number(item.relacion_id));
     }else{
