@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v68 WhatsApp Hello World");
+console.log("APP JS conectado correctamente v70 WhatsApp pedido listo detallado");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -666,23 +666,130 @@ async function crearNotificacionPedidoListoFallback(id, pedidoBase, estadoAnteri
 
 
 // ===========================
-// WHATSAPP · PRUEBA HELLO WORLD
+// WHATSAPP · PEDIDO LISTO DETALLADO
 // ===========================
-async function enviarHelloWorldCuandoPedidoListo(id, pedidoBase, estadoAnterior, estadoNuevo) {
+function normalizarTelefonoWhatsApp(telefono) {
+  let numero = String(telefono || "").replace(/\D/g, "");
+  if (!numero) return "";
+
+  // Venezuela: 0414XXXXXXX → 58414XXXXXXX
+  if (numero.length === 11 && numero.startsWith("0")) {
+    numero = "58" + numero.slice(1);
+  } else if (numero.length === 10 && !numero.startsWith("58")) {
+    numero = "58" + numero;
+  }
+
+  return numero;
+}
+
+function textoEntregaWhatsApp(valor) {
+  const entrega = normalizarBusqueda(valor || "");
+  if (entrega === "retiro" || entrega === "retiro en tienda") return "Retiro en tienda";
+  if (entrega === "delivery") return "Delivery";
+  if (entrega === "envio") return "Envío";
+  return "Por definir";
+}
+
+function datosPagoWhatsApp(pedido) {
+  const deuda = resumenDeudaPedido(pedido || {});
+
+  if (deuda.estado === "sin_monto") {
+    return {
+      estado: "Sin monto",
+      saldo: "Sin monto definido"
+    };
+  }
+
+  if (deuda.estado === "pagado") {
+    return {
+      estado: "Pagado",
+      saldo: "Sin saldo pendiente"
+    };
+  }
+
+  if (deuda.estado === "abonado") {
+    return {
+      estado: "Abonado",
+      saldo: deuda.saldoTexto
+    };
+  }
+
+  return {
+    estado: "Pendiente",
+    saldo: deuda.saldoTexto
+  };
+}
+
+async function obtenerClienteWhatsApp(pedido) {
+  if (!pedido || !db()) return null;
+
+  const clienteId = pedido.cliente_id || clienteIdPorPedido(pedido);
+
+  if (clienteId) {
+    const local = clientesBusquedaDB.find(c => String(c.id) === String(clienteId));
+    if (local) return local;
+
+    const { data, error } = await db()
+      .from("clientes")
+      .select("id,nombre,telefono")
+      .eq("id", clienteId)
+      .maybeSingle();
+
+    if (!error && data) return data;
+  }
+
+  const nombre = normalizarBusqueda(pedido.cliente || "");
+  if (!nombre) return null;
+
+  const localPorNombre = clientesBusquedaDB.find(c => normalizarBusqueda(c.nombre) === nombre);
+  if (localPorNombre) return localPorNombre;
+
+  const { data, error } = await db()
+    .from("clientes")
+    .select("id,nombre,telefono")
+    .ilike("nombre", String(pedido.cliente || "").trim())
+    .limit(1)
+    .maybeSingle();
+
+  if (error) console.warn("No se pudo buscar el cliente para WhatsApp:", error);
+  return data || null;
+}
+
+async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, estadoNuevo) {
   const anterior = normalizarEstadoNotificacion(estadoAnterior);
   const nuevo = normalizarEstadoNotificacion(estadoNuevo);
 
-  // Se envía cuando el pedido pasa de cualquier estado distinto de Listo a Listo.
+  // Se envía cuando pasa de cualquier estado distinto de Listo a Listo.
   if (nuevo !== "listo") return;
   if (anterior === "listo") return;
   if (!db()) return;
 
   try {
+    const pedidoActual = pedidosDB.find(p => Number(p.id) === Number(id)) || pedidoBase || {};
+    const cliente = await obtenerClienteWhatsApp(pedidoActual);
+    const telefono = normalizarTelefonoWhatsApp(cliente?.telefono);
+
+    if (!telefono) {
+      console.warn("WhatsApp omitido: el cliente no tiene teléfono registrado.", pedidoActual.cliente);
+      mostrarToast("Pedido listo · cliente sin teléfono ℹ️");
+      return;
+    }
+
+    const nombreCliente = String(cliente?.nombre || pedidoActual.cliente || "Cliente").trim();
+    const entrega = textoEntregaWhatsApp(pedidoActual.tipo_entrega);
+    const pago = datosPagoWhatsApp(pedidoActual);
+
     const { data, error } = await db().functions.invoke("enviar-whatsapp", {
       body: {
-        to: "584144143004",
-        template: "hello_world",
-        language: "en_US"
+        to: telefono,
+        template: "pedido_listo_detalle",
+        language: "es",
+        parameters: [
+          nombreCliente,
+          entrega,
+          pago.estado,
+          pago.saldo
+        ]
       }
     });
 
@@ -691,12 +798,12 @@ async function enviarHelloWorldCuandoPedidoListo(id, pedidoBase, estadoAnterior,
     if (!data || data.ok !== true) {
       throw new Error(
         data?.error?.message ||
-        data?.meta_response?.error?.message ||
+        data?.data?.error?.message ||
         "Meta no confirmó el envío"
       );
     }
 
-    console.log("WhatsApp Hello World enviado para pedido:", id, data);
+    console.log("WhatsApp de pedido listo enviado:", id, telefono, data);
     mostrarToast("Pedido listo · WhatsApp enviado ✅");
   } catch (error) {
     console.error("No se pudo enviar WhatsApp para el pedido " + id + ":", error);
@@ -1473,7 +1580,7 @@ async function actualizarCampoPedido(id, campo, valor) {
 
   if (campo === "estatus_trabajo") {
     await crearNotificacionPedidoListoFallback(id, pedidoOriginal, valorAnteriorPedidoOriginal, valor);
-    await enviarHelloWorldCuandoPedidoListo(id, pedidoOriginal, valorAnteriorPedidoOriginal, valor);
+    await enviarWhatsAppCuandoPedidoListo(id, pedidoOriginal, valorAnteriorPedidoOriginal, valor);
   }
 }
 
@@ -1510,7 +1617,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v69_whatsapp_cualquier_estado_listo";
+const PAGO_SIMPLE_VERSION = "v70_whatsapp_pedido_listo_detalle";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
