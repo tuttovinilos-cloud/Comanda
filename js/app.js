@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v71 WhatsApp plantilla activa");
+console.log("APP JS conectado correctamente v72 WhatsApp número fijo");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -765,19 +765,13 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
   if (!db()) return;
 
   try {
-    const pedidoActual = pedidosDB.find(p => Number(p.id) === Number(id)) || pedidoBase || {};
-    const cliente = await obtenerClienteWhatsApp(pedidoActual);
-    const telefono = normalizarTelefonoWhatsApp(cliente?.telefono);
+    const pedidoActual =
+      pedidosDB.find(p => Number(p.id) === Number(id)) ||
+      pedidoBase ||
+      {};
 
-    if (!telefono) {
-      console.warn("WhatsApp omitido: el cliente no tiene teléfono registrado.", pedidoActual.cliente);
-      mostrarToast("Pedido listo · cliente sin teléfono ℹ️");
-      return;
-    }
-
-    const nombreCliente = String(cliente?.nombre || pedidoActual.cliente || "Cliente").trim();
-    const entrega = textoEntregaWhatsApp(pedidoActual.tipo_entrega);
-    const pago = datosPagoWhatsApp(pedidoActual);
+    // Número fijo de prueba. Todos los avisos llegan aquí.
+    const telefono = "584144143004";
 
     const { data, error } = await db().functions.invoke("enviar-whatsapp", {
       body: {
@@ -797,7 +791,13 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       );
     }
 
-    console.log("WhatsApp de pedido listo enviado:", id, telefono, data);
+    console.log("WhatsApp de pedido listo enviado:", {
+      pedidoId: id,
+      cliente: pedidoActual.cliente || "",
+      telefono,
+      respuesta: data
+    });
+
     mostrarToast("Pedido listo · WhatsApp enviado ✅");
   } catch (error) {
     console.error("No se pudo enviar WhatsApp para el pedido " + id + ":", error);
@@ -1611,7 +1611,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v71_whatsapp_plantilla_activa";
+const PAGO_SIMPLE_VERSION = "v72_whatsapp_numero_fijo";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
