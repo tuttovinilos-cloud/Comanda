@@ -42,12 +42,12 @@ html{background:var(--bg);color-scheme:light}body{min-height:100vh;background:va
       <div class="card-head"><h2>Generar QR</h2><p>El enlace de destino ya está configurado.</p></div>
       <div class="card-body">
         <div class="field"><label>Nombre interno</label><input id="qrName" value="Instagram Tuttovinilos" maxlength="80"></div>
-        <div class="field"><label>Dirección pública de QR.html</label><input id="publicUrl" spellcheck="false"></div>
+        <div class="field"><label>Enlace de seguimiento</label><input id="publicUrl" spellcheck="false" readonly></div>
         <div class="field"><label>Código de seguimiento</label><input id="trackingCode" value="instagram-general" maxlength="60"></div>
         <div class="qrbox" id="qrBox"><span style="color:#6b7280">Generando QR…</span></div>
         <div class="actions"><button class="btn primary" id="downloadBtn">Descargar PNG</button><button class="btn soft" id="copyBtn">Copiar enlace</button></div>
         <div class="link-preview" id="trackedLink"></div>
-        <div class="notice"><strong>Importante:</strong> este archivo debe estar publicado en tu página. El QR apunta a <code>QR.html?r=instagram-general</code>, registra la visita y después abre Instagram.</div>
+        <div class="notice"><strong>Listo para usar:</strong> el QR apunta directamente a la función segura de Supabase, registra la apertura y después abre Instagram.</div>
       </div>
     </article>
 
@@ -68,29 +68,50 @@ html{background:var(--bg);color-scheme:light}body{min-height:100vh;background:va
   </section>
 </main>
 <div class="toast" id="toast"></div>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=24"></script>
 <script src="js/auth.js?v=26"></script>
 <script>
 const DESTINATION_URL = 'https://www.instagram.com/tuttovinilos?igsh=eXlwbHJxdzJ2M2xq&utm_source=qr';
+const TRACKING_ENDPOINT = 'https://ujfdsabypflseijatxba.supabase.co/functions/v1/qr';
 const TABLE = 'qr_visitas';
 const $ = s => document.querySelector(s);
 let qrCanvas = null;
 
 function waitForDb(timeout=8000){return new Promise((resolve,reject)=>{const start=Date.now();(function check(){if(window.supabaseClient)return resolve(window.supabaseClient);if(Date.now()-start>timeout)return reject(new Error('Supabase no disponible'));setTimeout(check,80)})()})}
 function cleanCode(v){return String(v||'instagram-general').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60)||'instagram-general'}
-function getTrackedUrl(){const base=$('#publicUrl').value.trim().replace(/[?#].*$/,'');const code=cleanCode($('#trackingCode').value);return `${base}?r=${encodeURIComponent(code)}`}
+function getTrackedUrl(){const code=cleanCode($('#trackingCode').value);return `${TRACKING_ENDPOINT}?c=${encodeURIComponent(code)}`}
 function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200)}
 function parseDevice(ua){ua=ua||'';if(/iPhone/i.test(ua))return 'iPhone';if(/iPad/i.test(ua))return 'iPad';if(/Android/i.test(ua))return 'Android';if(/Windows/i.test(ua))return 'Windows';if(/Macintosh|Mac OS/i.test(ua))return 'Mac';return 'Otro'}
 function parseBrowser(ua){ua=ua||'';if(/CriOS|Chrome/i.test(ua)&&!/Edg/i.test(ua))return 'Chrome';if(/Safari/i.test(ua)&&!/Chrome|CriOS/i.test(ua))return 'Safari';if(/Firefox|FxiOS/i.test(ua))return 'Firefox';if(/Edg/i.test(ua))return 'Edge';return 'Otro'}
 function fmtDate(v){return new Intl.DateTimeFormat('es-VE',{dateStyle:'short',timeStyle:'short'}).format(new Date(v))}
 
 async function renderQR(){
-  const url=getTrackedUrl(); $('#trackedLink').textContent=url; $('#trackingCode').value=cleanCode($('#trackingCode').value);
-  const box=$('#qrBox'); box.innerHTML='';
-  qrCanvas=document.createElement('canvas'); box.appendChild(qrCanvas);
-  try{await QRCode.toCanvas(qrCanvas,url,{width:290,margin:2,errorCorrectionLevel:'M'});}catch(e){box.innerHTML='<span style="color:#dc2626">No se pudo generar el QR.</span>'}
+  const url=getTrackedUrl();
+  $('#trackedLink').textContent=url;
+  $('#publicUrl').value=TRACKING_ENDPOINT;
+  $('#trackingCode').value=cleanCode($('#trackingCode').value);
+  const box=$('#qrBox');
+  box.innerHTML='';
+  qrCanvas=null;
+  try{
+    new QRCode(box,{text:url,width:290,height:290,correctLevel:QRCode.CorrectLevel.H});
+    await new Promise(r=>setTimeout(r,80));
+    qrCanvas=box.querySelector('canvas');
+    if(!qrCanvas){
+      const img=box.querySelector('img');
+      if(img){
+        const c=document.createElement('canvas');
+        c.width=img.naturalWidth||290;c.height=img.naturalHeight||290;
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        qrCanvas=c;
+      }
+    }
+  }catch(e){
+    console.error(e);
+    box.innerHTML='<span style="color:#dc2626">No se pudo generar el QR.</span>';
+  }
 }
 
 async function redirectMode(code){
@@ -100,27 +121,55 @@ async function redirectMode(code){
   location.replace(DESTINATION_URL);
 }
 
+async function countSince(db, code, iso){
+  let q=db.from(TABLE).select('id',{count:'exact',head:true}).eq('codigo',code);
+  if(iso)q=q.gte('created_at',iso);
+  const {count,error}=await q;
+  if(error)throw error;
+  return count||0;
+}
+
 async function loadStats(){
-  const db=await waitForDb(); $('#dbDot').classList.add('ok'); $('#dbStatus').textContent='Supabase conectado';
+  const db=await waitForDb();
+  $('#dbDot').classList.add('ok');
+  $('#dbStatus').textContent='Supabase conectado';
   const limit=Number($('#rangeSelect').value||50);
-  const {data,error}=await db.from(TABLE).select('id,codigo,created_at,dispositivo,navegador').order('created_at',{ascending:false}).limit(limit);
-  if(error){$('#setupNotice').style.display='block'; $('#visitsBody').innerHTML='<tr><td colspan="5" class="empty">No se pudo leer qr_visitas.</td></tr>'; throw error}
-  $('#setupNotice').style.display='none'; const rows=data||[]; const now=Date.now();
-  $('#totalCount').textContent=rows.length < limit ? rows.length : `${rows.length}+`;
-  $('#todayCount').textContent=rows.filter(x=>new Date(x.created_at).toDateString()===new Date().toDateString()).length;
-  $('#weekCount').textContent=rows.filter(x=>now-new Date(x.created_at).getTime()<=7*86400000).length;
-  $('#monthCount').textContent=rows.filter(x=>now-new Date(x.created_at).getTime()<=30*86400000).length;
+  const code=cleanCode($('#trackingCode').value);
+  const now=new Date();
+  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const week=new Date(now.getTime()-7*86400000);
+  const month=new Date(now.getTime()-30*86400000);
+
+  const [total,todayTotal,weekTotal,monthTotal,result]=await Promise.all([
+    countSince(db,code,null),
+    countSince(db,code,today.toISOString()),
+    countSince(db,code,week.toISOString()),
+    countSince(db,code,month.toISOString()),
+    db.from(TABLE).select('id,codigo,created_at,dispositivo,navegador').eq('codigo',code).order('created_at',{ascending:false}).limit(limit)
+  ]);
+
+  if(result.error){
+    $('#setupNotice').style.display='block';
+    $('#setupNotice').innerHTML='<strong>No se pudieron leer las visitas.</strong> Verifica que hayas iniciado sesión en Comanda y vuelve a cargar.';
+    $('#visitsBody').innerHTML='<tr><td colspan="5" class="empty">No se pudo cargar el historial.</td></tr>';
+    throw result.error;
+  }
+
+  $('#setupNotice').style.display='none';
+  const rows=result.data||[];
+  $('#totalCount').textContent=total;
+  $('#todayCount').textContent=todayTotal;
+  $('#weekCount').textContent=weekTotal;
+  $('#monthCount').textContent=monthTotal;
   $('#lastOpen').textContent=rows[0]?`Última: ${fmtDate(rows[0].created_at)}`:'Sin aperturas';
   $('#visitsBody').innerHTML=rows.length?rows.map(x=>`<tr><td>${fmtDate(x.created_at)}</td><td><strong>${x.codigo||'-'}</strong></td><td>${x.dispositivo||'-'}</td><td>${x.navegador||'-'}</td><td><span class="badge">Abierto</span></td></tr>`).join(''):'<tr><td colspan="5" class="empty">Todavía no se ha abierto este QR.</td></tr>';
 }
 
 (async function init(){
-  const params=new URLSearchParams(location.search); const redirectCode=params.get('r');
-  if(redirectCode){await redirectMode(redirectCode);return}
-  const cleanLocation=location.href.split(/[?#]/)[0]; $('#publicUrl').value=cleanLocation;
+  $('#publicUrl').value=TRACKING_ENDPOINT;
   await renderQR();
-  $('#publicUrl').addEventListener('input',renderQR); $('#trackingCode').addEventListener('input',renderQR);
-  $('#downloadBtn').onclick=()=>{if(!qrCanvas)return;const a=document.createElement('a');a.download=`QR-${cleanCode($('#trackingCode').value)}.png`;a.href=qrCanvas.toDataURL('image/png');a.click()};
+  $('#trackingCode').addEventListener('input',()=>{renderQR();loadStats().catch(()=>{});});
+  $('#downloadBtn').onclick=()=>{if(!qrCanvas){toast('Espera a que se genere el QR');return;}const a=document.createElement('a');a.download=`QR-${cleanCode($('#trackingCode').value)}.png`;a.href=qrCanvas.toDataURL('image/png');a.click()};
   $('#copyBtn').onclick=async()=>{try{await navigator.clipboard.writeText(getTrackedUrl());toast('Enlace copiado')}catch{toast('No se pudo copiar')}};
   $('#refreshBtn').onclick=()=>loadStats().catch(e=>toast(e.message)); $('#rangeSelect').onchange=()=>loadStats().catch(()=>{});
   loadStats().catch(e=>{console.error(e);$('#dbStatus').textContent='Revisar Supabase'});
@@ -175,7 +224,7 @@ USO
 2. Publícalo junto con el resto de la página.
 3. Abre QR.html desde Comanda.
 4. Descarga el PNG generado.
-5. Al escanearlo se registrará la visita y se abrirá Instagram.
+5. Al escanearlo, Supabase registrará la visita y abrirá Instagram automáticamente.
 -->
 </body>
 </html>
