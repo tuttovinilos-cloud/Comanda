@@ -1306,6 +1306,23 @@ html.menu-ready .header-tabs,
   }
 }
 
+
+/* ETAPA 1 · CLIENTES Y CONTACTOS */
+.contactos-box{margin-top:18px;border:1px solid #dbe2ee;border-radius:14px;background:#f8fafc;padding:14px}
+.contactos-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.contactos-title{font-weight:900;color:#14213d;font-family:var(--head)}
+.contactos-list{display:grid;gap:10px}
+.contacto-card{border:1px solid #dbe2ee;border-radius:12px;background:#fff;padding:12px;display:grid;grid-template-columns:1fr auto;gap:10px}
+.contacto-card.principal{border-color:#153bff;box-shadow:0 0 0 2px rgba(21,59,255,.08)}
+.contacto-info strong{display:block;font-size:13px;margin-bottom:4px}
+.contacto-meta{font-size:12px;color:#64748b;line-height:1.5}
+.contacto-actions{display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.contacto-form{margin-top:12px;border-top:1px dashed #cbd5e1;padding-top:12px}
+.contacto-form[hidden]{display:none!important}
+.contacto-empty{padding:14px;text-align:center;color:#64748b;border:1px dashed #cbd5e1;border-radius:10px;background:#fff}
+.contacto-badge{display:inline-flex;padding:3px 7px;border-radius:999px;background:#e8edff;color:#153bff;font-size:10px;font-weight:900;margin-left:6px}
+@media(max-width:700px){.contacto-card{grid-template-columns:1fr}.contacto-actions{justify-content:flex-start}}
+
 </style>
 
 <link rel="stylesheet" href="css/menu.css?v=35">
@@ -2194,7 +2211,15 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
       <div class="form-grid">
         <div class="field form-full">
           <label>Nombre del cliente</label>
-          <input id="clienteNombre" type="text" placeholder="Ej: Armando Framed"/>
+          <input id="clienteNombre" type="text" placeholder="Ej: Empresa ABC o María Pérez"/>
+        </div>
+
+        <div class="field">
+          <label>Naturaleza</label>
+          <select id="clienteNaturaleza" onchange="actualizarEtiquetasNaturaleza()">
+            <option value="empresa">Empresa</option>
+            <option value="persona">Persona</option>
+          </select>
         </div>
 
         <div class="field">
@@ -2216,12 +2241,12 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
         </div>
 
         <div class="field">
-          <label>Teléfono</label>
-          <input id="clienteTelefono" type="text" placeholder="Teléfono"/>
+          <label>Teléfono general</label>
+          <input id="clienteTelefono" type="text" placeholder="Teléfono general o principal"/>
         </div>
 
         <div class="field">
-          <label>Correo</label>
+          <label>Correo general</label>
           <input id="clienteCorreo" type="email" placeholder="correo@ejemplo.com"/>
         </div>
 
@@ -2245,6 +2270,36 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
           <textarea id="clienteNotas" placeholder="Notas importantes del cliente..."></textarea>
         </div>
       </div>
+
+      <section class="contactos-box">
+        <div class="contactos-head">
+          <div>
+            <div class="contactos-title">Contactos del cliente</div>
+            <div class="contacto-meta">Personas que escriben, compran o reciben información en nombre del cliente.</div>
+          </div>
+          <button type="button" class="mini-btn" onclick="nuevoContactoCliente()">+ Agregar contacto</button>
+        </div>
+        <div id="contactosClienteLista" class="contactos-list"></div>
+
+        <div id="contactoClienteForm" class="contacto-form" hidden>
+          <input type="hidden" id="contactoClienteIndice" value="-1"/>
+          <div class="form-grid">
+            <div class="field"><label>Nombre</label><input id="contactoNombre" type="text" placeholder="Nombre del contacto"/></div>
+            <div class="field"><label>Apellido</label><input id="contactoApellido" type="text" placeholder="Apellido"/></div>
+            <div class="field"><label>Teléfono</label><input id="contactoTelefono" type="text" placeholder="WhatsApp o teléfono"/></div>
+            <div class="field"><label>Teléfono alternativo</label><input id="contactoTelefonoAlt" type="text" placeholder="Opcional"/></div>
+            <div class="field"><label>Correo</label><input id="contactoCorreo" type="email" placeholder="correo@ejemplo.com"/></div>
+            <div class="field"><label>Cédula</label><input id="contactoCedula" type="text" placeholder="V-00000000"/></div>
+            <div class="field"><label>Cargo / área</label><input id="contactoCargo" type="text" placeholder="Ej: Compras, Gerente"/></div>
+            <div class="field"><label>Contacto principal</label><select id="contactoPrincipal"><option value="false">No</option><option value="true">Sí</option></select></div>
+            <div class="field form-full"><label>Notas</label><input id="contactoNotas" type="text" placeholder="Preferencias o información útil"/></div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+            <button type="button" class="btn secondary" onclick="cancelarContactoCliente()">Cancelar</button>
+            <button type="button" class="btn success" onclick="confirmarContactoCliente()">Guardar contacto</button>
+          </div>
+        </div>
+      </section>
     </div>
 
     <div class="modal-footer">
@@ -2687,7 +2742,7 @@ async function cargarClientes(){
 
   const { data, error } = await db()
     .from("clientes")
-    .select("id, nombre, tipo_cliente, precio_especial, telefono, correo, notas, activo, rif_cedula, direccion")
+    .select("id, nombre, tipo_cliente, precio_especial, telefono, correo, notas, activo, rif_cedula, direccion, naturaleza_cliente, telefono_general, correo_general")
     .order("nombre", { ascending:true });
 
   if(error){
@@ -2725,8 +2780,8 @@ function filtrarClientes(){
     const contenido = normalizar([
       c.nombre,
       c.tipo_cliente,
-      c.telefono,
-      c.correo,
+      c.telefono_general || c.telefono,
+      c.correo_general || c.correo,
       c.notas
     ].join(" "));
 
@@ -2941,8 +2996,8 @@ function renderClientes(lista){
       : `<span class="badge off">Inactivo</span>`;
 
     const tipo = limpiarDatoCliente(c.tipo_cliente) || "Cliente Standar";
-    const telefono = limpiarDatoCliente(c.telefono) || "Sin teléfono";
-    const correo = limpiarDatoCliente(c.correo) || "Sin correo";
+    const telefono = limpiarDatoCliente(c.telefono_general || c.telefono) || "Sin teléfono";
+    const correo = limpiarDatoCliente(c.correo_general || c.correo) || "Sin correo";
     const rif = limpiarDatoCliente(c.rif_cedula);
     const direccion = limpiarDatoCliente(c.direccion);
     const precioEspecial = c.precio_especial !== null && c.precio_especial !== undefined && String(c.precio_especial) !== "" ? Number(c.precio_especial) : null;
@@ -3048,10 +3103,129 @@ function actualizarHintFusion(){
   }
 }
 
+let contactosClienteEdicion = [];
+
+function actualizarEtiquetasNaturaleza(){
+  const naturaleza = document.getElementById("clienteNaturaleza")?.value || "empresa";
+  const label = document.querySelector('label[for="clienteNombre"]');
+  if(label) label.textContent = naturaleza === "persona" ? "Nombre de la persona" : "Nombre de la empresa";
+}
+
+function contactoLimpio(c={}){
+  return {
+    id: c.id || null,
+    relacion_id: c.relacion_id || null,
+    nombre: limpiarDatoCliente(c.nombre),
+    apellido: limpiarDatoCliente(c.apellido),
+    telefono: limpiarDatoCliente(c.telefono),
+    telefono_alternativo: limpiarDatoCliente(c.telefono_alternativo),
+    correo: limpiarDatoCliente(c.correo),
+    cedula: limpiarDatoCliente(c.cedula),
+    cargo: limpiarDatoCliente(c.cargo),
+    notas: limpiarDatoCliente(c.notas),
+    es_principal: c.es_principal === true,
+    activo: c.activo !== false
+  };
+}
+
+function renderContactosCliente(){
+  const box = document.getElementById("contactosClienteLista");
+  if(!box) return;
+  if(!contactosClienteEdicion.length){
+    box.innerHTML = '<div class="contacto-empty">Todavía no hay contactos agregados.</div>';
+    return;
+  }
+  box.innerHTML = contactosClienteEdicion.map((c,i)=>`
+    <div class="contacto-card ${c.es_principal?'principal':''}">
+      <div class="contacto-info">
+        <strong>${escapeHtml([c.nombre,c.apellido].filter(Boolean).join(' ') || 'Sin nombre')}${c.es_principal?'<span class="contacto-badge">PRINCIPAL</span>':''}</strong>
+        <div class="contacto-meta">
+          ${c.cargo?escapeHtml(c.cargo)+' · ':''}${c.telefono?'📞 '+escapeHtml(c.telefono):'Sin teléfono'}
+          ${c.correo?'<br>✉️ '+escapeHtml(c.correo):''}
+        </div>
+      </div>
+      <div class="contacto-actions">
+        <button type="button" class="mini-btn" onclick="editarContactoCliente(${i})">Editar</button>
+        <button type="button" class="mini-btn danger" onclick="quitarContactoCliente(${i})">Quitar</button>
+      </div>
+    </div>`).join('');
+}
+
+function limpiarFormularioContacto(){
+  document.getElementById("contactoClienteIndice").value='-1';
+  ['contactoNombre','contactoApellido','contactoTelefono','contactoTelefonoAlt','contactoCorreo','contactoCedula','contactoCargo','contactoNotas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById("contactoPrincipal").value='false';
+}
+function nuevoContactoCliente(){ limpiarFormularioContacto(); document.getElementById("contactoClienteForm").hidden=false; setTimeout(()=>document.getElementById("contactoNombre").focus(),80); }
+function cancelarContactoCliente(){ document.getElementById("contactoClienteForm").hidden=true; limpiarFormularioContacto(); }
+function editarContactoCliente(i){
+  const c=contactosClienteEdicion[i]; if(!c) return;
+  document.getElementById("contactoClienteIndice").value=String(i);
+  document.getElementById("contactoNombre").value=c.nombre||'';
+  document.getElementById("contactoApellido").value=c.apellido||'';
+  document.getElementById("contactoTelefono").value=c.telefono||'';
+  document.getElementById("contactoTelefonoAlt").value=c.telefono_alternativo||'';
+  document.getElementById("contactoCorreo").value=c.correo||'';
+  document.getElementById("contactoCedula").value=c.cedula||'';
+  document.getElementById("contactoCargo").value=c.cargo||'';
+  document.getElementById("contactoNotas").value=c.notas||'';
+  document.getElementById("contactoPrincipal").value=c.es_principal?'true':'false';
+  document.getElementById("contactoClienteForm").hidden=false;
+}
+function confirmarContactoCliente(){
+  const indice=Number(document.getElementById("contactoClienteIndice").value);
+  const c=contactoLimpio({
+    ...(indice>=0?contactosClienteEdicion[indice]:{}),
+    nombre:document.getElementById("contactoNombre").value,
+    apellido:document.getElementById("contactoApellido").value,
+    telefono:document.getElementById("contactoTelefono").value,
+    telefono_alternativo:document.getElementById("contactoTelefonoAlt").value,
+    correo:document.getElementById("contactoCorreo").value,
+    cedula:document.getElementById("contactoCedula").value,
+    cargo:document.getElementById("contactoCargo").value,
+    notas:document.getElementById("contactoNotas").value,
+    es_principal:document.getElementById("contactoPrincipal").value==='true'
+  });
+  if(!c.nombre){ alert('Coloca el nombre del contacto.'); return; }
+  if(c.es_principal) contactosClienteEdicion=contactosClienteEdicion.map(x=>({...x,es_principal:false}));
+  if(indice>=0) contactosClienteEdicion[indice]=c; else contactosClienteEdicion.push(c);
+  cancelarContactoCliente(); renderContactosCliente();
+}
+function quitarContactoCliente(i){ if(confirm('¿Quitar este contacto del cliente?')){ contactosClienteEdicion.splice(i,1); renderContactosCliente(); } }
+
+async function cargarContactosCliente(clienteId){
+  contactosClienteEdicion=[];
+  if(!clienteId){ renderContactosCliente(); return; }
+  const {data,error}=await db().from('clientes_contactos').select('id, es_principal, activo, contacto:contactos(id,nombre,apellido,telefono,telefono_alternativo,correo,cedula,cargo,notas,activo)').eq('cliente_id',clienteId).eq('activo',true);
+  if(error){ console.warn('No se pudieron cargar contactos:',error); renderContactosCliente(); return; }
+  contactosClienteEdicion=(data||[]).filter(r=>r.contacto).map(r=>contactoLimpio({...r.contacto,relacion_id:r.id,es_principal:r.es_principal}));
+  renderContactosCliente();
+}
+
+async function guardarContactosCliente(clienteId){
+  const {data:relActuales,error:errRel}=await db().from('clientes_contactos').select('id,contacto_id').eq('cliente_id',clienteId);
+  if(errRel) throw errRel;
+  const conservarRel=[];
+  for(const item of contactosClienteEdicion){
+    const payload={nombre:item.nombre,apellido:item.apellido||null,cedula:item.cedula||null,telefono:item.telefono||null,telefono_alternativo:item.telefono_alternativo||null,correo:item.correo||null,cargo:item.cargo||null,notas:item.notas||null,activo:true,updated_at:new Date().toISOString()};
+    let contactoId=item.id;
+    if(contactoId){ const {error}=await db().from('contactos').update(payload).eq('id',contactoId); if(error) throw error; }
+    else { const {data,error}=await db().from('contactos').insert([payload]).select('id').single(); if(error) throw error; contactoId=data.id; item.id=contactoId; }
+    if(item.relacion_id){
+      const {error}=await db().from('clientes_contactos').update({es_principal:item.es_principal,activo:true}).eq('id',item.relacion_id); if(error) throw error; conservarRel.push(Number(item.relacion_id));
+    }else{
+      const {data,error}=await db().from('clientes_contactos').insert([{cliente_id:Number(clienteId),contacto_id:Number(contactoId),es_principal:item.es_principal,activo:true}]).select('id').single(); if(error) throw error; item.relacion_id=data.id; conservarRel.push(Number(data.id));
+    }
+  }
+  const quitar=(relActuales||[]).filter(r=>!conservarRel.includes(Number(r.id)));
+  for(const r of quitar){ const {error}=await db().from('clientes_contactos').update({activo:false,es_principal:false}).eq('id',r.id); if(error) throw error; }
+}
+
 function nuevoCliente(){
   document.getElementById("clienteModalTitle").textContent = "Nuevo cliente";
   document.getElementById("clienteId").value = "";
   document.getElementById("clienteNombre").value = "";
+  document.getElementById("clienteNaturaleza").value = "empresa";
   document.getElementById("clienteTipo").value = "Cliente Standar";
   document.getElementById("clienteTelefono").value = "";
   document.getElementById("clienteCorreo").value = "";
@@ -3060,6 +3234,9 @@ function nuevoCliente(){
   document.getElementById("clientePrecioEspecial").value = "";
   document.getElementById("clienteNotas").value = "";
   document.getElementById("clienteActivo").value = "true";
+  contactosClienteEdicion = [];
+  renderContactosCliente();
+  cancelarContactoCliente();
 
   document.getElementById("clienteBackdrop").style.display = "flex";
 
@@ -3079,9 +3256,10 @@ function editarCliente(id){
   document.getElementById("clienteModalTitle").textContent = "Editar cliente";
   document.getElementById("clienteId").value = cliente.id;
   document.getElementById("clienteNombre").value = cliente.nombre || "";
+  document.getElementById("clienteNaturaleza").value = cliente.naturaleza_cliente || "empresa";
   document.getElementById("clienteTipo").value = cliente.tipo_cliente || "Cliente Standar";
-  document.getElementById("clienteTelefono").value = limpiarDatoCliente(cliente.telefono);
-  document.getElementById("clienteCorreo").value = limpiarDatoCliente(cliente.correo);
+  document.getElementById("clienteTelefono").value = limpiarDatoCliente(cliente.telefono_general || cliente.telefono);
+  document.getElementById("clienteCorreo").value = limpiarDatoCliente(cliente.correo_general || cliente.correo);
   document.getElementById("clienteRifCedula").value = limpiarDatoCliente(cliente.rif_cedula);
   document.getElementById("clienteDireccion").value = limpiarDatoCliente(cliente.direccion);
   document.getElementById("clientePrecioEspecial").value = cliente.precio_especial ?? "";
@@ -3089,6 +3267,7 @@ function editarCliente(id){
   document.getElementById("clienteActivo").value = cliente.activo === true ? "true" : "false";
 
   document.getElementById("clienteBackdrop").style.display = "flex";
+  cargarContactosCliente(cliente.id);
 }
 
 function cerrarModalCliente(){
@@ -3281,6 +3460,9 @@ async function guardarClienteModal(){
     nombre,
     tipo_cliente: limpiarDatoCliente(document.getElementById("clienteTipo").value) || "Cliente Standar",
     precio_especial: precioEspecialInput === "" ? null : numeroCliente(precioEspecialInput),
+    naturaleza_cliente: document.getElementById("clienteNaturaleza").value || "empresa",
+    telefono_general: limpiarDatoCliente(document.getElementById("clienteTelefono").value),
+    correo_general: limpiarDatoCliente(document.getElementById("clienteCorreo").value),
     telefono: limpiarDatoCliente(document.getElementById("clienteTelefono").value),
     correo: limpiarDatoCliente(document.getElementById("clienteCorreo").value),
     rif_cedula: limpiarDatoCliente(document.getElementById("clienteRifCedula").value),
@@ -3299,6 +3481,7 @@ async function guardarClienteModal(){
 
   try{
     let mensaje = "Cliente guardado";
+    let clienteIdGuardado = id ? Number(id) : null;
 
     if(duplicado){
       // Si el nombre nuevo ya existe, NO crea otro registro. Fusiona en el cliente existente.
@@ -3310,6 +3493,7 @@ async function guardarClienteModal(){
         .eq("id", duplicado.id);
 
       if(updateError) throw updateError;
+      clienteIdGuardado = Number(duplicado.id);
 
       if(clienteOriginal){
         await actualizarPedidosDeCliente(clienteOriginal.nombre, nombre, duplicado.id);
@@ -3329,6 +3513,7 @@ async function guardarClienteModal(){
         .eq("id", id);
 
       if(updateError) throw updateError;
+      clienteIdGuardado = Number(id);
 
       if(clienteOriginal && normalizar(clienteOriginal.nombre) !== normalizar(nombre)){
         await actualizarPedidosDeCliente(clienteOriginal.nombre, nombre, id);
@@ -3338,12 +3523,17 @@ async function guardarClienteModal(){
       await fusionarDuplicadosExactosCliente(nombre, id);
     }else{
       // Cliente nuevo: antes de insertar ya se validó que no exista igual.
-      const { error:insertError } = await db()
+      const { data:clienteCreado, error:insertError } = await db()
         .from("clientes")
-        .insert([datos]);
+        .insert([datos])
+        .select("id")
+        .single();
 
       if(insertError) throw insertError;
+      clienteIdGuardado = Number(clienteCreado.id);
     }
+
+    if(clienteIdGuardado) await guardarContactosCliente(clienteIdGuardado);
 
     cerrarModalCliente();
     await cargarPedidos();
