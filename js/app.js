@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v70 WhatsApp pedido listo detallado");
+console.log("APP JS conectado correctamente v71 WhatsApp plantilla activa");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -782,14 +782,8 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
     const { data, error } = await db().functions.invoke("enviar-whatsapp", {
       body: {
         to: telefono,
-        template: "pedido_listo_detalle",
-        language: "es",
-        parameters: [
-          nombreCliente,
-          entrega,
-          pago.estado,
-          pago.saldo
-        ]
+        template: "pedido_listo_prueba",
+        language: "es"
       }
     });
 
@@ -1617,7 +1611,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v70_whatsapp_pedido_listo_detalle";
+const PAGO_SIMPLE_VERSION = "v71_whatsapp_plantilla_activa";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
