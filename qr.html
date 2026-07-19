@@ -121,46 +121,29 @@ async function redirectMode(code){
   location.replace(DESTINATION_URL);
 }
 
-async function countSince(db, code, iso){
-  let q=db.from(TABLE).select('id',{count:'exact',head:true}).eq('codigo',code);
-  if(iso)q=q.gte('created_at',iso);
-  const {count,error}=await q;
-  if(error)throw error;
-  return count||0;
-}
-
 async function loadStats(){
   const db=await waitForDb();
   $('#dbDot').classList.add('ok');
   $('#dbStatus').textContent='Supabase conectado';
+
   const limit=Number($('#rangeSelect').value||50);
   const code=cleanCode($('#trackingCode').value);
-  const now=new Date();
-  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-  const week=new Date(now.getTime()-7*86400000);
-  const month=new Date(now.getTime()-30*86400000);
+  const {data,error}=await db.rpc('get_qr_stats',{p_codigo:code,p_limit:limit});
 
-  const [total,todayTotal,weekTotal,monthTotal,result]=await Promise.all([
-    countSince(db,code,null),
-    countSince(db,code,today.toISOString()),
-    countSince(db,code,week.toISOString()),
-    countSince(db,code,month.toISOString()),
-    db.from(TABLE).select('id,codigo,created_at,dispositivo,navegador').eq('codigo',code).order('created_at',{ascending:false}).limit(limit)
-  ]);
-
-  if(result.error){
+  if(error){
     $('#setupNotice').style.display='block';
-    $('#setupNotice').innerHTML='<strong>No se pudieron leer las visitas.</strong> Verifica que hayas iniciado sesión en Comanda y vuelve a cargar.';
+    $('#setupNotice').innerHTML='<strong>No se pudieron leer las visitas.</strong> Pulsa Actualizar. Si continúa, revisa que js/supabase.js tenga la URL y clave pública correctas.';
     $('#visitsBody').innerHTML='<tr><td colspan="5" class="empty">No se pudo cargar el historial.</td></tr>';
-    throw result.error;
+    throw error;
   }
 
+  const stats=data||{};
+  const rows=Array.isArray(stats.rows)?stats.rows:[];
   $('#setupNotice').style.display='none';
-  const rows=result.data||[];
-  $('#totalCount').textContent=total;
-  $('#todayCount').textContent=todayTotal;
-  $('#weekCount').textContent=weekTotal;
-  $('#monthCount').textContent=monthTotal;
+  $('#totalCount').textContent=Number(stats.total||0);
+  $('#todayCount').textContent=Number(stats.today||0);
+  $('#weekCount').textContent=Number(stats.week||0);
+  $('#monthCount').textContent=Number(stats.month||0);
   $('#lastOpen').textContent=rows[0]?`Última: ${fmtDate(rows[0].created_at)}`:'Sin aperturas';
   $('#visitsBody').innerHTML=rows.length?rows.map(x=>`<tr><td>${fmtDate(x.created_at)}</td><td><strong>${x.codigo||'-'}</strong></td><td>${x.dispositivo||'-'}</td><td>${x.navegador||'-'}</td><td><span class="badge">Abierto</span></td></tr>`).join(''):'<tr><td colspan="5" class="empty">Todavía no se ha abierto este QR.</td></tr>';
 }
