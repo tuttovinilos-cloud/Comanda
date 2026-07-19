@@ -3259,7 +3259,22 @@ function confirmarContactoCliente(){
   const indice=Number(document.getElementById("contactoClienteIndice").value);
   const nombreInput=document.getElementById('contactoNombre');
   const contactoSeleccionadoId=nombreInput.dataset.contactoId || null;
-  const clienteOrigenId=nombreInput.dataset.clienteOrigenId || null;
+  let clienteOrigenId=nombreInput.dataset.clienteOrigenId || null;
+
+  // Si el contacto ya existía en la tabla contactos pero todavía no estaba
+  // enlazado con su registro original de clientes, intenta localizarlo por
+  // nombre completo. Solo enlaza cuando existe una única coincidencia exacta.
+  if(!clienteOrigenId){
+    const nombreBuscado=normalizar(nombreInput.value);
+    const clientesCoincidentes=(clientesDB||[]).filter(cliente=>
+      cliente.activo!==false && normalizar(cliente.nombre)===nombreBuscado
+    );
+    if(clientesCoincidentes.length===1){
+      clienteOrigenId=String(clientesCoincidentes[0].id);
+      nombreInput.dataset.clienteOrigenId=clienteOrigenId;
+    }
+  }
+
   const c=contactoLimpio({
     ...(indice>=0?contactosClienteEdicion[indice]:{}),
     ...(indice<0 && contactoSeleccionadoId ? {id:Number(contactoSeleccionadoId)} : {}),
@@ -3309,7 +3324,24 @@ async function guardarContactosCliente(clienteId){
     if(contactoId){ const {error}=await db().from('contactos').update(payload).eq('id',contactoId); if(error) throw error; }
     else { const {data,error}=await db().from('contactos').insert([payload]).select('id').single(); if(error) throw error; contactoId=data.id; item.id=contactoId; }
 
-    // Si el contacto fue tomado de un cliente existente, actualiza también ese registro original.
+    // Si la relación de origen falta en un contacto antiguo, intenta recuperarla
+    // mediante una coincidencia exacta y única del nombre en la tabla clientes.
+    if(!item.cliente_origen_id){
+      const nombreBuscado=normalizar(nombreContactoCompleto(item));
+      const clientesCoincidentes=(clientesDB||[]).filter(cliente=>
+        cliente.activo!==false && normalizar(cliente.nombre)===nombreBuscado
+      );
+      if(clientesCoincidentes.length===1){
+        item.cliente_origen_id=Number(clientesCoincidentes[0].id);
+        const {error:errorEnlaceOrigen}=await db().from('contactos')
+          .update({cliente_origen_id:item.cliente_origen_id,updated_at:new Date().toISOString()})
+          .eq('id',Number(contactoId));
+        if(errorEnlaceOrigen) throw errorEnlaceOrigen;
+      }
+    }
+
+    // Si el contacto corresponde a un cliente existente, actualiza también
+    // teléfono, correo, documento y notas en ese cliente original.
     if(item.cliente_origen_id){
       const clientePayload={
         nombre:item.nombre,
