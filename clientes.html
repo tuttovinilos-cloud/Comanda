@@ -2223,16 +2223,6 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
         </div>
 
         <div class="field">
-          <label>Tipo de cliente</label>
-          <select id="clienteTipo">
-            <option value="Cliente Standar">Cliente Standar</option>
-            <option value="Cliente VIP">Cliente VIP</option>
-            <option value="Cliente Básico">Cliente Básico</option>
-            <option value="Cliente Editado">Cliente Editado</option>
-          </select>
-        </div>
-
-        <div class="field">
           <label>Estado</label>
           <select id="clienteActivo">
             <option value="true">Activo</option>
@@ -2242,7 +2232,7 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 
         <div class="field">
           <label>Teléfono general</label>
-          <input id="clienteTelefono" type="text" placeholder="Teléfono general o principal"/>
+          <input id="clienteTelefono" type="tel" value="+58" placeholder="+58 412 0000000" onfocus="asegurarPrefijo58(this)"/>
         </div>
 
         <div class="field">
@@ -2253,11 +2243,6 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
         <div class="field">
           <label>RIF / Cédula</label>
           <input id="clienteRifCedula" type="text" placeholder="J-00000000-0 / V-00000000"/>
-        </div>
-
-        <div class="field">
-          <label>Precio especial</label>
-          <input id="clientePrecioEspecial" type="number" step="0.01" placeholder="0.00"/>
         </div>
 
         <div class="field form-full">
@@ -2284,10 +2269,10 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
         <div id="contactoClienteForm" class="contacto-form" hidden>
           <input type="hidden" id="contactoClienteIndice" value="-1"/>
           <div class="form-grid">
-            <div class="field"><label>Nombre</label><input id="contactoNombre" type="text" placeholder="Nombre del contacto"/></div>
+            <div class="field"><label>Nombre</label><input id="contactoNombre" type="text" list="contactosSugeridos" autocomplete="off" placeholder="Escribe o busca un contacto" oninput="autocompletarContactoExistente(false)" onchange="autocompletarContactoExistente(true)"/><datalist id="contactosSugeridos"></datalist></div>
             <div class="field"><label>Apellido</label><input id="contactoApellido" type="text" placeholder="Apellido"/></div>
-            <div class="field"><label>Teléfono</label><input id="contactoTelefono" type="text" placeholder="WhatsApp o teléfono"/></div>
-            <div class="field"><label>Teléfono alternativo</label><input id="contactoTelefonoAlt" type="text" placeholder="Opcional"/></div>
+            <div class="field"><label>Teléfono</label><input id="contactoTelefono" type="tel" value="+58" placeholder="+58 412 0000000" onfocus="asegurarPrefijo58(this)"/></div>
+            <div class="field"><label>Teléfono alternativo</label><input id="contactoTelefonoAlt" type="tel" placeholder="+58 412 0000000" onfocus="asegurarPrefijo58(this)"/></div>
             <div class="field"><label>Correo</label><input id="contactoCorreo" type="email" placeholder="correo@ejemplo.com"/></div>
             <div class="field"><label>Cédula</label><input id="contactoCedula" type="text" placeholder="V-00000000"/></div>
             <div class="field"><label>Cargo / área</label><input id="contactoCargo" type="text" placeholder="Ej: Compras, Gerente"/></div>
@@ -3103,6 +3088,98 @@ function actualizarHintFusion(){
   }
 }
 
+let contactosDisponibles = [];
+
+function asegurarPrefijo58(input){
+  if(!input) return;
+  if(!String(input.value || '').trim()) input.value = '+58';
+}
+
+function nombreContactoCompleto(c={}){
+  return [limpiarDatoCliente(c.nombre), limpiarDatoCliente(c.apellido)].filter(Boolean).join(' ').trim();
+}
+
+async function cargarContactosDisponibles(){
+  const resultados = [];
+
+  const {data:contactos, error:errorContactos} = await db()
+    .from('contactos')
+    .select('id,nombre,apellido,telefono,telefono_alternativo,correo,cedula,cargo,notas,activo')
+    .eq('activo', true)
+    .order('nombre', {ascending:true});
+
+  if(!errorContactos){
+    for(const c of contactos || []) resultados.push({...c, origen:'contacto'});
+  }
+
+  // También permite reutilizar una persona que anteriormente estaba guardada como cliente.
+  for(const c of clientesDB || []){
+    if(c.activo === false || !c.nombre) continue;
+    resultados.push({
+      id_cliente_origen:c.id,
+      nombre:c.nombre,
+      apellido:'',
+      telefono:limpiarDatoCliente(c.telefono_general || c.telefono),
+      telefono_alternativo:'',
+      correo:limpiarDatoCliente(c.correo_general || c.correo),
+      cedula:limpiarDatoCliente(c.rif_cedula),
+      cargo:'',
+      notas:limpiarDatoCliente(c.notas),
+      origen:'cliente'
+    });
+  }
+
+  const vistos = new Set();
+  contactosDisponibles = resultados.filter(c=>{
+    const llave=[normalizar(nombreContactoCompleto(c)), limpiarDatoCliente(c.telefono), limpiarDatoCliente(c.correo)].join('|');
+    if(vistos.has(llave)) return false;
+    vistos.add(llave);
+    return true;
+  });
+
+  const lista=document.getElementById('contactosSugeridos');
+  if(lista){
+    lista.innerHTML=contactosDisponibles.map(c=>{
+      const nombre=nombreContactoCompleto(c);
+      const detalle=[c.telefono,c.correo].filter(Boolean).join(' · ');
+      return `<option value="${escapeHtml(nombre)}">${escapeHtml(detalle)}</option>`;
+    }).join('');
+  }
+}
+
+function autocompletarContactoExistente(forzar=false){
+  const input=document.getElementById('contactoNombre');
+  if(!input) return;
+  const buscado=normalizar(input.value);
+  if(!buscado) return;
+
+  let coincidencias=contactosDisponibles.filter(c=>{
+    const completo=normalizar(nombreContactoCompleto(c));
+    const primero=normalizar(c.nombre);
+    return completo===buscado || primero===buscado;
+  });
+
+  if(!coincidencias.length && forzar){
+    coincidencias=contactosDisponibles.filter(c=>normalizar(nombreContactoCompleto(c)).startsWith(buscado));
+  }
+  if(coincidencias.length!==1) return;
+
+  const c=coincidencias[0];
+  document.getElementById('contactoNombre').value=limpiarDatoCliente(c.nombre);
+  document.getElementById('contactoApellido').value=limpiarDatoCliente(c.apellido);
+  document.getElementById('contactoTelefono').value=limpiarDatoCliente(c.telefono) || '+58';
+  document.getElementById('contactoTelefonoAlt').value=limpiarDatoCliente(c.telefono_alternativo);
+  document.getElementById('contactoCorreo').value=limpiarDatoCliente(c.correo);
+  document.getElementById('contactoCedula').value=limpiarDatoCliente(c.cedula);
+  document.getElementById('contactoCargo').value=limpiarDatoCliente(c.cargo);
+  document.getElementById('contactoNotas').value=limpiarDatoCliente(c.notas);
+
+  // Solo reutiliza directamente el ID cuando ya existe en la tabla contactos.
+  const indice=Number(document.getElementById('contactoClienteIndice').value);
+  if(indice<0 && c.origen==='contacto') input.dataset.contactoId=String(c.id);
+  else delete input.dataset.contactoId;
+}
+
 let contactosClienteEdicion = [];
 
 function actualizarEtiquetasNaturaleza(){
@@ -3153,13 +3230,16 @@ function renderContactosCliente(){
 
 function limpiarFormularioContacto(){
   document.getElementById("contactoClienteIndice").value='-1';
-  ['contactoNombre','contactoApellido','contactoTelefono','contactoTelefonoAlt','contactoCorreo','contactoCedula','contactoCargo','contactoNotas'].forEach(id=>document.getElementById(id).value='');
+  ['contactoNombre','contactoApellido','contactoTelefonoAlt','contactoCorreo','contactoCedula','contactoCargo','contactoNotas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('contactoTelefono').value='+58';
+  delete document.getElementById('contactoNombre').dataset.contactoId;
   document.getElementById("contactoPrincipal").value='false';
 }
-function nuevoContactoCliente(){ limpiarFormularioContacto(); document.getElementById("contactoClienteForm").hidden=false; setTimeout(()=>document.getElementById("contactoNombre").focus(),80); }
+async function nuevoContactoCliente(){ limpiarFormularioContacto(); document.getElementById("contactoClienteForm").hidden=false; await cargarContactosDisponibles(); setTimeout(()=>document.getElementById("contactoNombre").focus(),80); }
 function cancelarContactoCliente(){ document.getElementById("contactoClienteForm").hidden=true; limpiarFormularioContacto(); }
 function editarContactoCliente(i){
   const c=contactosClienteEdicion[i]; if(!c) return;
+  delete document.getElementById('contactoNombre').dataset.contactoId;
   document.getElementById("contactoClienteIndice").value=String(i);
   document.getElementById("contactoNombre").value=c.nombre||'';
   document.getElementById("contactoApellido").value=c.apellido||'';
@@ -3174,8 +3254,10 @@ function editarContactoCliente(i){
 }
 function confirmarContactoCliente(){
   const indice=Number(document.getElementById("contactoClienteIndice").value);
+  const contactoSeleccionadoId=document.getElementById('contactoNombre').dataset.contactoId || null;
   const c=contactoLimpio({
     ...(indice>=0?contactosClienteEdicion[indice]:{}),
+    ...(indice<0 && contactoSeleccionadoId ? {id:Number(contactoSeleccionadoId)} : {}),
     nombre:document.getElementById("contactoNombre").value,
     apellido:document.getElementById("contactoApellido").value,
     telefono:document.getElementById("contactoTelefono").value,
@@ -3226,12 +3308,10 @@ function nuevoCliente(){
   document.getElementById("clienteId").value = "";
   document.getElementById("clienteNombre").value = "";
   document.getElementById("clienteNaturaleza").value = "empresa";
-  document.getElementById("clienteTipo").value = "Cliente Standar";
-  document.getElementById("clienteTelefono").value = "";
+  document.getElementById("clienteTelefono").value = "+58";
   document.getElementById("clienteCorreo").value = "";
   document.getElementById("clienteRifCedula").value = "";
   document.getElementById("clienteDireccion").value = "";
-  document.getElementById("clientePrecioEspecial").value = "";
   document.getElementById("clienteNotas").value = "";
   document.getElementById("clienteActivo").value = "true";
   contactosClienteEdicion = [];
@@ -3257,12 +3337,10 @@ function editarCliente(id){
   document.getElementById("clienteId").value = cliente.id;
   document.getElementById("clienteNombre").value = cliente.nombre || "";
   document.getElementById("clienteNaturaleza").value = cliente.naturaleza_cliente || "empresa";
-  document.getElementById("clienteTipo").value = cliente.tipo_cliente || "Cliente Standar";
-  document.getElementById("clienteTelefono").value = limpiarDatoCliente(cliente.telefono_general || cliente.telefono);
+  document.getElementById("clienteTelefono").value = limpiarDatoCliente(cliente.telefono_general || cliente.telefono) || "+58";
   document.getElementById("clienteCorreo").value = limpiarDatoCliente(cliente.correo_general || cliente.correo);
   document.getElementById("clienteRifCedula").value = limpiarDatoCliente(cliente.rif_cedula);
   document.getElementById("clienteDireccion").value = limpiarDatoCliente(cliente.direccion);
-  document.getElementById("clientePrecioEspecial").value = cliente.precio_especial ?? "";
   document.getElementById("clienteNotas").value = limpiarDatoCliente(cliente.notas);
   document.getElementById("clienteActivo").value = cliente.activo === true ? "true" : "false";
 
@@ -3454,12 +3532,8 @@ async function guardarClienteModal(){
     return;
   }
 
-  const precioEspecialInput = document.getElementById("clientePrecioEspecial").value;
-
   const datos = {
     nombre,
-    tipo_cliente: limpiarDatoCliente(document.getElementById("clienteTipo").value) || "Cliente Standar",
-    precio_especial: precioEspecialInput === "" ? null : numeroCliente(precioEspecialInput),
     naturaleza_cliente: document.getElementById("clienteNaturaleza").value || "empresa",
     telefono_general: limpiarDatoCliente(document.getElementById("clienteTelefono").value),
     correo_general: limpiarDatoCliente(document.getElementById("clienteCorreo").value),
@@ -4193,7 +4267,6 @@ document.addEventListener("DOMContentLoaded", function(){
 </script>
 </body>
 </html>
-
 
 
 
