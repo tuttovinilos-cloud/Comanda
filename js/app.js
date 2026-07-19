@@ -672,11 +672,9 @@ async function enviarHelloWorldCuandoPedidoListo(id, pedidoBase, estadoAnterior,
   const anterior = normalizarEstadoNotificacion(estadoAnterior);
   const nuevo = normalizarEstadoNotificacion(estadoNuevo);
 
-  // Solo se envía cuando el pedido pasa:
-  // Solicitud → Listo
-  // Revisado → Listo
-  if (!["solicitud", "revisado"].includes(anterior)) return;
+  // Se envía cuando el pedido pasa de cualquier estado distinto de Listo a Listo.
   if (nuevo !== "listo") return;
+  if (anterior === "listo") return;
   if (!db()) return;
 
   try {
@@ -1512,7 +1510,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v67_pago_simple_forma_entrega";
+const PAGO_SIMPLE_VERSION = "v69_whatsapp_cualquier_estado_listo";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
