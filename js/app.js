@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v72 WhatsApp número fijo");
+console.log("APP JS conectado correctamente v73 WhatsApp número fijo es_ES");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -777,7 +777,7 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       body: {
         to: telefono,
         template: "pedido_listo_prueba",
-        language: "es"
+        language: "es_ES"
       }
     });
 
@@ -1611,7 +1611,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v72_whatsapp_numero_fijo";
+const PAGO_SIMPLE_VERSION = "v73_whatsapp_numero_fijo_es_ES";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
