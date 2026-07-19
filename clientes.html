@@ -2416,6 +2416,7 @@ console.log("CLIENTES HTML conectado v62 header igual a index");
 let clientesDB = [];
 let pedidosDB = [];
 let clientesDeudaMap = new Map();
+let clientesContactosBusquedaMap = new Map();
 let clientesSeleccionados = new Set();
 const CLIENTES_FUSION_UNDO_KEY = "tutto_ultima_fusion_clientes_v1";
 
@@ -2740,6 +2741,41 @@ async function cargarClientes(){
   clientesDB = data || [];
 }
 
+async function cargarContactosParaBusqueda(){
+  clientesContactosBusquedaMap = new Map();
+  if(!validarSupabase()) return;
+
+  const { data, error } = await db()
+    .from("clientes_contactos")
+    .select("cliente_id, activo, contacto:contactos(nombre, apellido, telefono, telefono_alternativo, correo, cargo, notas, activo)")
+    .eq("activo", true);
+
+  if(error){
+    console.warn("No se pudieron cargar los contactos para el buscador:", error);
+    return;
+  }
+
+  for(const relacion of data || []){
+    const contacto = relacion.contacto;
+    if(!contacto || contacto.activo === false) continue;
+
+    const clienteId = Number(relacion.cliente_id || 0);
+    if(!clienteId) continue;
+
+    const textoContacto = [
+      nombreContactoCompleto(contacto),
+      contacto.telefono,
+      contacto.telefono_alternativo,
+      contacto.correo,
+      contacto.cargo,
+      contacto.notas
+    ].filter(Boolean).join(" ");
+
+    const anterior = clientesContactosBusquedaMap.get(clienteId) || "";
+    clientesContactosBusquedaMap.set(clienteId, `${anterior} ${textoContacto}`.trim());
+  }
+}
+
 async function inicializarClientes(){
   if(!validarSupabase()) return;
 
@@ -2747,6 +2783,7 @@ async function inicializarClientes(){
   await cargarClientes();
   await crearClientesDesdePedidos();
   await cargarClientes();
+  await cargarContactosParaBusqueda();
   await cargarDeudasClientes();
 
   filtrarClientes();
@@ -2766,7 +2803,8 @@ function filtrarClientes(){
       c.tipo_cliente,
       c.telefono_general || c.telefono,
       c.correo_general || c.correo,
-      c.notas
+      c.notas,
+      clientesContactosBusquedaMap.get(Number(c.id)) || ""
     ].join(" "));
 
     if(texto && !contenido.includes(texto)) return false;
@@ -2941,6 +2979,7 @@ async function deshacerUltimaFusionClientes(){
     limpiarSeleccionClientes(false);
     await cargarPedidos();
     await cargarClientes();
+    await cargarContactosParaBusqueda();
     await cargarDeudasClientes();
     filtrarClientes();
 
