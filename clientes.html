@@ -3293,6 +3293,15 @@ async function cargarContactosCliente(clienteId){
 async function guardarContactosCliente(clienteId){
   const {data:relActuales,error:errRel}=await db().from('clientes_contactos').select('id,contacto_id').eq('cliente_id',clienteId);
   if(errRel) throw errRel;
+
+  // Evita el error de clave duplicada: primero desmarca cualquier contacto principal
+  // y luego, durante el recorrido, marca únicamente el contacto elegido.
+  const {error:errorDesmarcarPrincipal}=await db()
+    .from('clientes_contactos')
+    .update({es_principal:false})
+    .eq('cliente_id',Number(clienteId));
+  if(errorDesmarcarPrincipal) throw errorDesmarcarPrincipal;
+
   const conservarRel=[];
   for(const item of contactosClienteEdicion){
     const payload={nombre:item.nombre,apellido:item.apellido||null,cedula:item.cedula||null,telefono:item.telefono||null,telefono_alternativo:item.telefono_alternativo||null,correo:item.correo||null,cargo:item.cargo||null,notas:item.notas||null,cliente_origen_id:item.cliente_origen_id||null,activo:true,updated_at:new Date().toISOString()};
@@ -4288,7 +4297,6 @@ document.addEventListener("DOMContentLoaded", function(){
 </script>
 </body>
 </html>
-
 
 
 
