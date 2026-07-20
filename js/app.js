@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v77 WhatsApp plantilla Meta confirmada");
+console.log("APP JS conectado correctamente v78 WhatsApp pedido listo detalle");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -773,26 +773,24 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
     // Número fijo de prueba. Todos los avisos llegan aquí.
     const telefono = "584144143004";
 
-    // Plantilla confirmada manualmente en Meta Developers.
-    // Parámetros:
-    // 1) Nombre del cliente
-    // 2) Número del pedido
-    // 3) Fecha
-    const fechaMensaje = new Date().toLocaleDateString("en-US", {
-      month: "short",
-      day: "2-digit",
-      year: "numeric"
-    });
+    // Plantilla personalizada aprobada en Meta.
+    // Variables:
+    // 1) Cliente
+    // 2) Entrega
+    // 3) Estado del pago
+    // 4) Saldo pendiente
+    const pagoWhatsApp = datosPagoWhatsApp(pedidoActual);
 
     const { data, error } = await db().functions.invoke("enviar-whatsapp", {
       body: {
         to: telefono,
-        template: "jaspers_market_order_confirmation_v1",
-        language: "en_US",
+        template: "pedido_listo_detalle",
+        language: "es",
         parameters: [
           String(pedidoActual.cliente || "Cliente"),
-          String(pedidoActual.id || id || "000000"),
-          fechaMensaje
+          textoEntregaWhatsApp(pedidoActual.tipo_entrega),
+          pagoWhatsApp.estado,
+          pagoWhatsApp.saldo
         ]
       }
     });
@@ -821,8 +819,8 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       pedidoId: id,
       cliente: pedidoActual.cliente || "",
       telefono,
-      template: "jaspers_market_order_confirmation_v1",
-      language: "en_US",
+      template: "pedido_listo_detalle",
+      language: "es",
       mensajeId,
       estadoMeta,
       respuestaCompleta: data
@@ -1641,7 +1639,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v77_whatsapp_meta_confirmada";
+const PAGO_SIMPLE_VERSION = "v78_whatsapp_pedido_listo_detalle";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
