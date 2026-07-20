@@ -818,7 +818,7 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
     // Número fijo de prueba. Todos los avisos llegan aquí.
     const telefono = "584144143004";
 
-    // Plantilla original activa en Meta: pedido_listo_detalle.
+    // PRUEBA TEMPORAL: plantilla pedido_listo_prueba.
     // Variables:
     // 1) Cliente
     // 2) Entrega
@@ -830,14 +830,9 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       body: {
         pedido_id: Number(id),
         to: telefono,
-        template: "pedido_listo_detalle",
+        template: "pedido_listo_prueba",
         language: "es_ES",
-        parameters: [
-          String(pedidoActual.cliente || "Cliente"),
-          textoEntregaWhatsApp(pedidoActual.tipo_entrega),
-          pagoWhatsApp.estado,
-          pagoWhatsApp.saldo
-        ]
+        parameters: []
       }
     });
 
@@ -865,7 +860,7 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       pedidoId: id,
       cliente: pedidoActual.cliente || "",
       telefono,
-      template: "pedido_listo_detalle",
+      template: "pedido_listo_prueba",
       language: "es_ES",
       mensajeId,
       estadoMeta,
@@ -1703,7 +1698,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v78_whatsapp_pedido_listo_detalle";
+const PAGO_SIMPLE_VERSION = "v78_prueba_pedido_listo_prueba";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
