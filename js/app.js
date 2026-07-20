@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v74 WhatsApp detalle activo");
+console.log("APP JS conectado correctamente v75 WhatsApp diagnóstico");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -797,14 +797,28 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       );
     }
 
-    console.log("WhatsApp de pedido listo enviado:", {
+    const metaData = data?.data || data;
+    const mensajeId =
+      metaData?.messages?.[0]?.id ||
+      data?.messages?.[0]?.id ||
+      null;
+    const estadoMeta =
+      metaData?.messages?.[0]?.message_status ||
+      data?.messages?.[0]?.message_status ||
+      "accepted";
+
+    console.log("WhatsApp aceptado por Meta:", {
       pedidoId: id,
       cliente: pedidoActual.cliente || "",
       telefono,
-      respuesta: data
+      template: "pedido_listo_detalle",
+      language: "es_ES",
+      mensajeId,
+      estadoMeta,
+      respuestaCompleta: data
     });
 
-    mostrarToast("Pedido listo · WhatsApp enviado ✅");
+    mostrarToast("Pedido listo · WhatsApp aceptado por Meta ✅");
   } catch (error) {
     console.error("No se pudo enviar WhatsApp para el pedido " + id + ":", error);
     mostrarToast("Pedido listo, pero falló WhatsApp ⚠️");
@@ -1617,7 +1631,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v74_whatsapp_detalle_activo";
+const PAGO_SIMPLE_VERSION = "v75_whatsapp_diagnostico";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
