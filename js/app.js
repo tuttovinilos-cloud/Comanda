@@ -755,6 +755,51 @@ async function obtenerClienteWhatsApp(pedido) {
   return data || null;
 }
 
+async function verificarEntregaWhatsApp(wamid) {
+  const idMensaje = String(wamid || "").trim();
+  if (!idMensaje || !db()) return;
+
+  for (let intento = 0; intento < 12; intento++) {
+    await new Promise(resolve => setTimeout(resolve, 2500));
+
+    try {
+      const { data, error } = await db()
+        .from("whatsapp_mensajes")
+        .select("estado,error_code,error_title,error_message")
+        .eq("wamid", idMensaje)
+        .maybeSingle();
+
+      if (error || !data) continue;
+
+      const estado = String(data.estado || "").toLowerCase();
+
+      if (estado === "delivered" || estado === "read") {
+        mostrarToast(
+          estado === "read"
+            ? "WhatsApp entregado y leído ✅"
+            : "WhatsApp entregado ✅"
+        );
+        return;
+      }
+
+      if (estado === "failed") {
+        const detalle =
+          data.error_message ||
+          data.error_title ||
+          (data.error_code ? "Código " + data.error_code : "Meta no pudo entregar el mensaje");
+
+        mostrarToast("WhatsApp no entregado: " + String(detalle).slice(0, 120));
+        console.error("Fallo de entrega WhatsApp:", data);
+        return;
+      }
+    } catch (e) {
+      console.warn("No se pudo consultar el estado de entrega:", e);
+    }
+  }
+
+  mostrarToast("WhatsApp aceptado · entrega aún pendiente");
+}
+
 async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, estadoNuevo) {
   const anterior = normalizarEstadoNotificacion(estadoAnterior);
   const nuevo = normalizarEstadoNotificacion(estadoNuevo);
@@ -773,7 +818,7 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
     // Número fijo de prueba. Todos los avisos llegan aquí.
     const telefono = "584144143004";
 
-    // Plantilla personalizada aprobada en Meta.
+    // Nueva plantilla transaccional de categoría Utility.
     // Variables:
     // 1) Cliente
     // 2) Entrega
@@ -783,9 +828,10 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
 
     const { data, error } = await db().functions.invoke("enviar-whatsapp", {
       body: {
+        pedido_id: Number(id),
         to: telefono,
-        template: "pedido_listo_detalle",
-        language: "es_ES",
+        template: "pedido_listo_tuttovinilos",
+        language: "es",
         parameters: [
           String(pedidoActual.cliente || "Cliente"),
           textoEntregaWhatsApp(pedidoActual.tipo_entrega),
@@ -819,14 +865,15 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       pedidoId: id,
       cliente: pedidoActual.cliente || "",
       telefono,
-      template: "pedido_listo_detalle",
+      template: "pedido_listo_tuttovinilos",
       language: "es",
       mensajeId,
       estadoMeta,
       respuestaCompleta: data
     });
 
-    mostrarToast("Pedido listo · WhatsApp enviado a Meta ✅");
+    mostrarToast("WhatsApp aceptado por Meta · verificando entrega…");
+    if (mensajeId) verificarEntregaWhatsApp(mensajeId);
   } catch (error) {
     console.error("No se pudo enviar WhatsApp para el pedido " + id + ":", error);
 
