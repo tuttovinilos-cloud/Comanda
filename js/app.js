@@ -785,7 +785,7 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       body: {
         to: telefono,
         template: "pedido_listo_detalle",
-        language: "es",
+        language: "es_ES",
         parameters: [
           String(pedidoActual.cliente || "Cliente"),
           textoEntregaWhatsApp(pedidoActual.tipo_entrega),
