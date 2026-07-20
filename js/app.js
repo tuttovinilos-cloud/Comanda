@@ -829,7 +829,24 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
     mostrarToast("Pedido listo · WhatsApp enviado a Meta ✅");
   } catch (error) {
     console.error("No se pudo enviar WhatsApp para el pedido " + id + ":", error);
-    mostrarToast("Pedido listo, pero falló WhatsApp ⚠️");
+
+    let detalle = "Error desconocido";
+
+    try {
+      detalle =
+        error?.context?.data?.data?.error?.message ||
+        error?.context?.data?.error?.message ||
+        error?.context?.data?.error ||
+        error?.message ||
+        String(error);
+    } catch (e) {
+      detalle = error?.message || String(error);
+    }
+
+    console.error("Detalle exacto de Meta:", detalle);
+
+    const mensajeCorto = String(detalle || "Error desconocido").slice(0, 140);
+    mostrarToast("WhatsApp falló: " + mensajeCorto);
   }
 }
 
