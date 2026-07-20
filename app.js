@@ -1,3703 +1,2955 @@
-<!DOCTYPE html>
-<html lang="es" class="loading-menu">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>COMANDA · Producción · Tuttovinilos</title>
-<link rel="icon" href="data:,">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f0f2f9;
-  --panel:#ffffff;
-  --panel2:#f8f9ff;
-  --border:#d9deea;
-  --border2:#cbd3e6;
-  --text:#111827;
-  --muted:#6b7280;
-  --muted2:#475569;
-  --accent:#153bff;
-  --accent2:#0b1f7a;
-  --red:#dc2626;
-  --yellow:#f59e0b;
-  --green:#16a34a;
-  --orange:#ff8616;
-  --mono:'Roboto Mono',monospace;
-  --head:'Montserrat',Arial,sans-serif;
-  --body:'Inter',Arial,sans-serif;
-  --sticky-head-top:58px;
-  --sticky-quick-top:96px;
-}
-html{scroll-behavior:smooth}
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:var(--body);
-  min-height:100vh;
-  -webkit-tap-highlight-color:transparent;
-  padding-bottom:110px;
-}
-button,input,select,textarea{font:inherit}
-button{touch-action:manipulation}
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
-/* HEADER */
-.header{
-  background:var(--panel);
-  border-bottom:2px solid var(--accent);
-  padding:10px 16px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  min-height:58px;
-  position:sticky;
-  top:0;
-  z-index:300;
-  box-shadow:0 4px 24px #0009;
-  flex-wrap:wrap;
-}
-.logo{
-  font-family:var(--head);
-  font-size:21px;
-  font-weight:900;
-  letter-spacing:3px;
-  color:var(--accent2);
-  text-transform:uppercase;
-  white-space:nowrap;
-}
-.logo small{
-  color:var(--muted);
-  font-weight:400;
-  font-size:11px;
-  letter-spacing:1px;
-  margin-left:6px;
-}
-.header-tabs{
-  display:flex;
-  gap:6px;
-  margin-left:auto;
-  align-items:center;
-  flex-wrap:wrap;
-}
-.tab-btn{
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:700;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-  padding:7px 14px;
-  border:1px solid var(--border2);
-  background:transparent;
-  color:var(--muted2);
-  cursor:pointer;
-  border-radius:6px;
-  transition:all .2s;
-  text-decoration:none;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-}
-.tab-btn:hover{
-  border-color:var(--accent);
-  color:var(--accent2);
-  background:#3b82f611;
-}
-.tab-btn.active{
-  background:var(--accent);
-  color:#fff;
-  border-color:var(--accent);
-  box-shadow:0 0 14px #3b82f644;
-}
-.mobile-menu-btn{
-  display:none;
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-  padding:8px 12px;
-  border:1px solid var(--border2);
-  background:var(--panel2);
-  color:var(--accent2);
-  border-radius:7px;
-  cursor:pointer;
-  margin-left:auto;
-}
-.mobile-menu-extra{display:none}
-.menu-action-btn{width:100%}
-/* TOOLBAR */
-.toolbar{
-  display:flex;
-  gap:8px;
-  padding:12px 16px;
-  flex-wrap:wrap;
-  border-bottom:1px solid var(--border);
-  align-items:center;
-  background:var(--bg);
-  position:relative;
-  z-index:50;
-}
-.search-wrap{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  background:var(--panel);
-  border:1px solid var(--border2);
-  border-radius:7px;
-  padding:9px 12px;
-  flex:1;
-  min-width:260px;
-  min-height:40px;
-}
-.search-wrap input{
-  background:none;
-  border:none;
-  outline:none;
-  color:var(--text);
-  font-family:var(--mono);
-  font-size:13px;
-  width:100%;
-}
-.search-wrap input::placeholder{color:var(--muted)}
-.filter-sel{
-  background:var(--panel);
-  border:1px solid var(--border2);
-  color:var(--text);
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:700;
-  letter-spacing:1px;
-  padding:8px 10px;
-  border-radius:7px;
-  outline:none;
-  cursor:pointer;
-  min-height:40px;
-}
-.btn-add{
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:700;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-  padding:9px 14px;
-  background:var(--accent);
-  color:#fff;
-  border:none;
-  border-radius:7px;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  white-space:nowrap;
-  transition:all .2s;
-  text-decoration:none;
-  min-height:40px;
-}
-.btn-add:hover{filter:brightness(1.1)}
-.btn-add.secondary{
-  background:transparent;
-  color:var(--muted2);
-  border:1px solid var(--border2);
-}
-.storage-badge{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  background:var(--panel);
-  border:1px solid var(--border2);
-  border-radius:7px;
-  padding:8px 10px;
-  white-space:nowrap;
-  min-height:40px;
-}
-.storage-dot{
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:var(--yellow);
-}
-.storage-badge.ok .storage-dot{background:var(--green)}
-.storage-badge span{
-  font-family:var(--head);
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:1px;
-  color:var(--muted2);
-  text-transform:uppercase;
-}
-.desktop-only{display:flex}
-/* TABLE */
-.table-wrap{
-  overflow-x:auto;
-  margin-top:0;
-  padding:0 0 130px;
-  -webkit-overflow-scrolling:touch;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  min-width:1180px;
-}
-thead tr{
-  border-bottom:2px solid var(--border2);
-  background:var(--panel);
-}
-th{
-  position:static;
-  top:auto;
-  z-index:40;
-  background:var(--panel);
-  font-family:var(--head);
-  font-size:10px;
-  font-weight:700;
-  letter-spacing:2px;
-  text-transform:uppercase;
-  color:var(--muted);
-  padding:10px;
-  text-align:left;
-  white-space:nowrap;
-}
-td{
-  padding:10px;
-  font-size:13px;
-  vertical-align:middle;
-  border-bottom:1px solid rgba(255,255,255,0.06);
-}
-tbody tr{
-  transition:background .12s;
-  cursor:pointer;
-}
-tbody tr:nth-child(even){background:rgba(255,255,255,0.015)}
-tbody tr:hover{background:rgba(59,130,246,0.08)}
-tbody::before{
-  content:"";
-  display:block;
-  height:6px;
-}
-#orderTableBody td:nth-child(2){
-  color:#7f8ea3;
-  font-size:12px;
-  font-family:var(--mono);
-}
-#orderTableBody td:nth-child(3){
-  font-weight:700;
-  font-family:var(--head);
-  letter-spacing:.5px;
-  color:#8ec5ff;
-}
-#orderTableBody td:nth-child(4){
-  color:#5ea8ff;
-  font-weight:700;
-}
-#orderTableBody td:nth-child(5){
-  color:#e5edf8;
-  line-height:1.25;
-}
-.cell-edit,
-.cell-select,
-.quick-input,
-.quick-select,
-.quick-btn{
-  width:100%;
-  background:var(--bg);
-  border:1px solid var(--border2);
-  color:var(--text);
-  border-radius:7px;
-  padding:7px 8px;
-  font-family:var(--body);
-  font-size:12px;
-  outline:none;
-}
-.cell-edit:focus,
-.cell-select:focus,
-.quick-input:focus,
-.quick-select:focus{
-  border-color:var(--accent);
-  box-shadow:0 0 0 2px #3b82f622;
-}
-.cell-select option,
-.quick-select option{
-  background:var(--panel);
-  color:var(--text);
-}
-.cell-edit:disabled,
-.quick-input:disabled,
-.quick-select:disabled{
-  opacity:.55;
-  cursor:not-allowed;
-}
-.quick-entry-row th{
-  background:var(--panel2);
-  padding:6px;
-  border-bottom:1px solid var(--border2);
-  position:static;
-  top:auto;
-  z-index:20;
-}
-.quick-btn{
-  font-family:var(--head);
-  font-weight:800;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  background:var(--accent);
-  border-color:var(--accent);
-  cursor:pointer;
-  color:#fff;
-  min-height:34px;
-}
-.quick-btn.secondary{
-  background:transparent;
-  color:var(--muted2);
-  border-color:var(--border2);
-}
-.quick-textarea{
-  min-height:34px;
-  resize:vertical;
-  line-height:1.25;
-}
-.quick-textarea:focus{min-height:90px}
-.quick-hint{
-  font-size:10px;
-  color:var(--muted);
-  margin-top:2px;
-  text-align:left;
-}
-.quick-mini-btn{
-  width:34px;
-  min-width:34px;
-  height:34px;
-  border-radius:7px;
-  border:1px dashed var(--border2);
-  background:transparent;
-  color:var(--accent2);
-  cursor:pointer;
-  font-weight:700;
-}
-.quick-mini-btn:hover{
-  border-color:var(--accent);
-  background:#3b82f611;
-}
-.add-symbol-btn{
-  font-size:24px;
-  font-weight:900;
-  line-height:1;
-  padding:4px 8px;
-  width:70%;
-  min-width:34px;
-  margin-inline:auto;
-}
-/* STATUS */
-.status-solicitud{color:var(--red);border-color:#FF3B3044;background:#FF3B3011}
-.status-revisado{color:var(--yellow);border-color:#FFD60A44;background:#FFD60A11}
-.status-listo{color:var(--green);border-color:#30D15844;background:#30D15811}
-.pago-pendiente{color:var(--red);border-color:#FF3B3044;background:#FF3B3011}
-.pago-abonado{color:var(--orange);border-color:#FF9F0A44;background:#FF9F0A11}
-.pago-pagado{color:var(--green);border-color:#30D15844;background:#30D15811}
-.empty{
-  text-align:center;
-  padding:60px 20px;
-  color:var(--muted);
-  font-family:var(--head);
-  font-size:15px;
-  letter-spacing:2px;
-}
-.file-link-chip,
-.quick-attach-link{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:6px 10px;
-  border:1px solid var(--border2);
-  border-radius:7px;
-  background:transparent;
-  color:var(--accent2);
-  cursor:pointer;
-  font-family:var(--head);
-  font-size:11px;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  text-decoration:none;
-  transition:all .2s;
-}
-.file-link-chip:hover,
-.quick-attach-link:hover{
-  border-color:var(--accent);
-  background:#3b82f611;
-}
-/* MODAL */
-.backdrop{
-  position:fixed;
-  inset:0;
-  background:#000b;
-  z-index:500;
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-  backdrop-filter:blur(3px);
-  padding:0;
-}
-.modal{
-  background:var(--panel);
-  border:1px solid var(--border2);
-  width:100%;
-  max-width:560px;
-  max-height:94vh;
-  overflow-y:auto;
-  border-radius:14px 14px 0 0;
-  box-shadow:0 -8px 60px #000c;
-  animation:slideUp .22s ease;
-}
-@keyframes slideUp{
-  from{transform:translateY(50px);opacity:0}
-  to{transform:none;opacity:1}
-}
-.modal-handle{
-  width:36px;
-  height:4px;
-  background:var(--border2);
-  border-radius:2px;
-  margin:10px auto 0;
-}
-.modal-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:16px 20px;
-  border-bottom:1px solid var(--border);
-}
-.modal-title{
-  font-family:var(--head);
-  font-size:18px;
-  font-weight:900;
-  letter-spacing:2px;
-  text-transform:uppercase;
-}
-.modal-close{
-  width:32px;
-  height:32px;
-  border-radius:7px;
-  border:1px solid var(--border2);
-  background:transparent;
-  color:var(--muted);
-  cursor:pointer;
-  font-size:16px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  transition:all .2s;
-}
-.modal-close:hover{
-  border-color:var(--red);
-  color:var(--red);
-}
-.modal-body{
-  padding:20px;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
-.modal-footer{
-  padding:14px 20px;
-  border-top:1px solid var(--border);
-  display:flex;
-  gap:8px;
-  justify-content:flex-end;
-  flex-wrap:wrap;
-}
-.form-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-.form-full{grid-column:1/-1}
-.field{
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-}
-.field label{
-  font-family:var(--head);
-  font-size:10px;
-  font-weight:700;
-  letter-spacing:2px;
-  color:var(--muted);
-  text-transform:uppercase;
-}
-.field input,
-.field select,
-.field textarea{
-  background:var(--bg);
-  border:1px solid var(--border2);
-  color:var(--text);
-  border-radius:8px;
-  padding:10px 12px;
-  font-family:var(--body);
-  font-size:14px;
-  outline:none;
-  transition:border .2s;
-  width:100%;
-}
-.field input:focus,
-.field select:focus,
-.field textarea:focus{
-  border-color:var(--accent);
-  box-shadow:0 0 0 2px #3b82f622;
-}
-.field input:disabled,
-.field select:disabled,
-.field textarea:disabled{
-  opacity:.55;
-  cursor:not-allowed;
-}
-.field textarea{
-  resize:vertical;
-  min-height:76px;
-}
-.field select option{background:var(--panel)}
-.file-drop{
-  border:2px dashed var(--border2);
-  border-radius:10px;
-  padding:20px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  transition:border-color .2s,background .2s;
-  min-height:90px;
-}
-.file-drop:hover{
-  border-color:var(--accent);
-  background:#3b82f611;
-}
-.file-preview-box{
-  border:1px solid var(--border2);
-  border-radius:10px;
-  overflow:hidden;
-  position:relative;
-  background:var(--bg);
-  min-height:90px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.file-remove-btn{
-  position:absolute;
-  top:6px;
-  right:6px;
-  width:28px;
-  height:28px;
-  border-radius:50%;
-  background:#0009;
-  border:1px solid #ffffff22;
-  color:#fff;
-  font-size:12px;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.file-remove-btn:hover{background:#FF3B30cc}
-#rowFileInput{display:none}
-/* NOTIFICACIONES */
-.noti-btn{
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:800;
-  letter-spacing:1.2px;
-  text-transform:uppercase;
-  padding:8px 12px;
-  border:1px solid var(--border2);
-  background:var(--panel2);
-  color:var(--accent2);
-  border-radius:7px;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  min-height:38px;
-  white-space:nowrap;
-}
-.noti-btn:hover{
-  border-color:var(--accent);
-  background:#3b82f611;
-}
-.noti-count{
-  min-width:22px;
-  height:22px;
-  padding:0 6px;
-  border-radius:999px;
-  background:var(--red);
-  color:#fff;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  font-family:var(--mono);
-  font-size:11px;
-}
-.noti-count.empty{
-  background:var(--border2);
-  color:var(--muted2);
-}
-.noti-list{
-  display:grid;
-  gap:10px;
-}
-.noti-item{
-  border:1px solid var(--border2);
-  background:var(--bg);
-  border-radius:10px;
-  padding:12px;
-  display:grid;
-  gap:6px;
-}
-.noti-item-title{
-  font-family:var(--head);
-  font-size:16px;
-  font-weight:900;
-  letter-spacing:1px;
-  color:var(--accent2);
-  text-transform:uppercase;
-}
-.noti-item-msg{
-  color:var(--text);
-  line-height:1.35;
-  font-size:13px;
-}
-.noti-item-meta{
-  color:var(--muted2);
-  font-family:var(--mono);
-  font-size:11px;
-}
-.noti-actions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-top:4px;
+console.log("APP JS conectado correctamente v76 WhatsApp plantilla confirmada");
+console.log("Supabase window:", window.supabaseClient);
+
+let pedidoEditandoId = null;
+let pedidosDB = [];
+let paginaActualPedidos = 1;
+let pedidosPorPagina = 40;
+let archivoSeleccionado = null;
+let materialesDB = [];
+let tiposImpresionDB = [];
+let materialesMap = new Map();
+let tiposImpresionMap = new Map();
+let clientesBusquedaDB = [];
+let clientesCatalogoDB = [];
+let ultimosPagosPorPedido = new Map();
+
+// Las funciones globales de pago se asignan al final del archivo,
+ // cuando ya existen las funciones internas. Así evitamos recursión.
+
+// ===========================
+// SUPABASE SEGURO
+// ===========================
+function db() {
+  return window.supabaseClient;
 }
 
-.toast{
-  position:fixed;
-  left:50%;
-  bottom:84px;
-  transform:translateX(-50%);
-  background:var(--panel2);
-  color:var(--text);
-  border:1px solid var(--border2);
-  border-radius:10px;
-  padding:10px 16px;
-  z-index:999999;
-  display:none;
-  box-shadow:0 12px 35px #0008;
-  font-family:var(--head);
-  font-size:13px;
-  font-weight:800;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  max-width:90vw;
-  text-align:center;
+function validarSupabase() {
+  if (!db()) {
+    console.error("No existe window.supabaseClient. Revisa /js/supabase.js");
+    alert("No existe conexión Supabase. Revisa /js/supabase.js");
+    return false;
+  }
+
+  return true;
 }
-/* DESKTOP MODAL */
-@media(min-width:600px){
-  .backdrop{
-    align-items:center;
-    padding:16px;
-  }
-  .modal{
-    border-radius:12px;
-    animation:popIn .18s ease;
-  }
-  @keyframes popIn{
-    from{transform:scale(.96) translateY(10px);opacity:0}
-    to{transform:none;opacity:1}
-  }
+
+// ===========================
+// INDICADOR SUPABASE
+// ===========================
+function marcarSupabaseActivo() {
+  const badge = document.getElementById("storageBadgeText");
+  if (badge) badge.textContent = "SUPABASE";
+
+  const badgeBox = document.getElementById("storageBadge");
+  if (badgeBox) badgeBox.classList.add("ok");
+
+  const badgeMobile = document.getElementById("storageBadgeTextMobile");
+  if (badgeMobile) badgeMobile.textContent = "SUPABASE";
+
+  const badgeMobileBox = document.getElementById("storageBadgeMobile");
+  if (badgeMobileBox) badgeMobileBox.classList.add("ok");
 }
-/* TABLET */
-@media(max-width:980px){
-  .header{
-    align-items:center;
-  }
-  .header-tabs{
-    width:100%;
-    margin-left:0;
-  }
-  .tab-btn{
-    flex:1 1 calc(50% - 6px);
-    justify-content:center;
-    font-size:11px;
-    padding:9px 8px;
-  }
+
+// ===========================
+// UTILIDADES
+// ===========================
+function normalizarBusqueda(valor) {
+  return String(valor || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
-/* MOBILE */
-@media(max-width:760px){
-  body{
-    padding-bottom:130px;
-  }
-  .header{
-    padding:10px 12px;
-    align-items:center;
-  }
-  .logo{
-    font-size:19px;
-  }
-  .mobile-menu-btn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .header-tabs{
-    display:none;
-    width:100%;
-    margin-left:0;
-    padding-top:8px;
-    border-top:1px solid var(--border);
-  }
-  .header-tabs.open{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:7px;
-  }
-  .tab-btn{
-    width:100%;
-    justify-content:center;
-    font-size:11px;
-    min-height:38px;
-    padding:8px 6px;
-  }
-  .toolbar{
-    padding:10px;
-    gap:7px;
-  }
-  .search-wrap{
-    min-width:100%;
-    flex:1 1 100%;
-    order:1;
-  }
-  #filterStatus,
-  #filterPago,
-  #filterFechaDesde,
-  #filterFechaHasta,
-  #filterOperador{
-    flex:1 1 calc(20% - 7px);
-    min-width:0;
-    order:2;
-    font-size:8.5px;
-    padding:7px 2px;
-  }
-  .desktop-only{
-    display:none !important;
-  }
-  .mobile-menu-extra{
-    display:flex;
-    flex-direction:column;
-    gap:7px;
-    grid-column:1 / -1;
-    padding-top:8px;
-    border-top:1px solid var(--border);
-  }
-  .mobile-menu-extra .storage-badge{
-    width:100%;
-    justify-content:center;
-  }
-  .mobile-menu-extra .btn-add{
-    width:100%;
-  }
-  .add-symbol-btn{
-    width:70%;
-    max-width:42px;
-    min-width:38px;
-  }
-  th{
-    position:static;
-    top:auto;
-  }
-  .quick-entry-row th{
-    position:static;
-    top:auto;
-  }
-  thead tr:first-child th{
-    position:sticky;
-    top:0;
-    z-index:40;
-  }
-  .table-wrap{
-    margin-top:0;
-    padding-bottom:140px;
-  }
-  tbody::before{
-    height:8px;
-  }
-  table{
-    min-width:1050px;
-  }
-  .quick-input,
-  .quick-select,
-  .quick-btn{
-    min-height:36px;
-  }
+
+function nombreBonito(valor) {
+  const limpio = String(valor || "").trim().replace(/\s+/g, " ");
+  if (!limpio) return "";
+
+  return limpio
+    .split(" ")
+    .map(p => p ? (p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()) : "")
+    .join(" ");
 }
-/* IPHONE SE */
-@media(max-width:430px){
-  .header-tabs.open{
-    grid-template-columns:1fr;
+
+function escapeHtml(valor) {
+  return String(valor ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function numeroSeguro(valor) {
+  const n = Number(String(valor ?? "").replace(/[^0-9,.-]/g, "").replace(",", "."));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function money(n) {
+  return Number(n || 0).toFixed(2);
+}
+
+function mostrarToast(mensaje) {
+  const toast = document.getElementById("toast");
+
+  if (!toast) {
+    console.log(mensaje);
+    return;
   }
-  .logo small{
-    display:none;
-  }
-  #filterStatus,
-  #filterPago,
-  #filterFechaDesde,
-  #filterFechaHasta,
-  #filterOperador{
-    flex:1 1 calc(20% - 7px);
-    min-width:0;
-    font-size:8px;
-    padding:7px 2px;
-  }
-  .quick-input,
-  .quick-select,
-  .quick-btn{
-    font-size:11px;
-    padding:7px 6px;
-  }
-  .modal-body{
-    padding:16px;
-  }
-  .form-grid{
-    grid-template-columns:1fr;
+
+  toast.textContent = mensaje;
+  toast.style.display = "block";
+
+  setTimeout(() => {
+    toast.style.display = "none";
+  }, 2200);
+}
+
+// ===========================
+// SESIÓN / PERMISOS
+// ===========================
+function getOperadorSesionLocal() {
+  try {
+    return JSON.parse(localStorage.getItem("comanda_operador_actual") || "null");
+  } catch (e) {
+    return null;
   }
 }
 
-
-/* ═══════════════════════════════════════════════════
-   TEMA CLARO · ESTILO COTIZADOR TUTTOVINILOS
-   Solo cambia apariencia. No toca lógica ni scripts.
-   ═══════════════════════════════════════════════════ */
-body{
-  background:var(--bg)!important;
-  color:var(--text)!important;
-}
-::-webkit-scrollbar-track{background:#eef1ff!important}
-::-webkit-scrollbar-thumb{background:#cbd3e6!important}
-.header{
-  background:linear-gradient(135deg,#153bff,#0b1f7a)!important;
-  border-bottom:none!important;
-  box-shadow:0 8px 24px rgba(21,59,255,.24)!important;
-}
-.logo{
-  color:#fff!important;
-  border:2px dashed rgba(255,255,255,.45);
-  border-radius:12px;
-  padding:7px 12px;
-  letter-spacing:2px!important;
-}
-.logo small{color:rgba(255,255,255,.78)!important}
-.mobile-menu-btn,
-.noti-btn{
-  background:rgba(255,255,255,.12)!important;
-  color:#fff!important;
-  border-color:rgba(255,255,255,.28)!important;
-  border-radius:999px!important;
-}
-.header-tabs{gap:8px!important}
-.tab-btn{
-  background:rgba(255,255,255,.10)!important;
-  color:rgba(255,255,255,.86)!important;
-  border-color:rgba(255,255,255,.24)!important;
-  border-radius:999px!important;
-  box-shadow:none!important;
-}
-.tab-btn:hover{
-  background:rgba(255,255,255,.18)!important;
-  color:#fff!important;
-  border-color:rgba(255,255,255,.40)!important;
-}
-.tab-btn.active{
-  background:#fff!important;
-  color:#153bff!important;
-  border-color:#fff!important;
-  box-shadow:0 8px 20px rgba(0,0,0,.14)!important;
-}
-.toolbar{
-  background:#fff!important;
-  border-bottom:1px solid var(--border)!important;
-  box-shadow:0 4px 18px rgba(0,0,0,.045);
-}
-.search-wrap,
-.storage-badge,
-.filter-sel,
-.quick-input,
-.quick-select,
-.cell-edit,
-.cell-select,
-.field input,
-.field select,
-.field textarea{
-  background:#fff!important;
-  color:#111827!important;
-  border-color:#d9deea!important;
-  box-shadow:none!important;
-}
-.search-wrap{
-  border-radius:14px!important;
-}
-.search-wrap input{color:#111827!important}
-.search-wrap input::placeholder,
-.quick-input::placeholder,
-.field input::placeholder,
-.field textarea::placeholder{
-  color:#8a94a6!important;
-}
-.filter-sel{
-  border-radius:999px!important;
-  font-weight:800!important;
-  color:#153bff!important;
-}
-.quick-input:focus,
-.quick-select:focus,
-.cell-edit:focus,
-.cell-select:focus,
-.field input:focus,
-.field select:focus,
-.field textarea:focus{
-  border-color:#153bff!important;
-  box-shadow:0 0 0 3px rgba(21,59,255,.10)!important;
-}
-.table-wrap{
-  background:#f0f2f9!important;
-}
-table{
-  background:#fff!important;
-}
-thead tr,
-.quick-entry-row th{
-  background:#eef1ff!important;
-  border-bottom:1px solid #d9deea!important;
-}
-th{
-  background:#eef1ff!important;
-  color:#6b7280!important;
-}
-td{
-  color:#111827!important;
-  border-bottom:1px solid #e5e7f0!important;
-  background:#fff;
-}
-tbody tr:nth-child(even) td,
-tbody tr:nth-child(even){
-  background:#f8f9ff!important;
-}
-tbody tr:hover td,
-tbody tr:hover{
-  background:#eef1ff!important;
-}
-#orderTableBody td:nth-child(2){color:#6b7280!important}
-#orderTableBody td:nth-child(3){color:#0b1f7a!important}
-#orderTableBody td:nth-child(4),
-.td-client{color:#153bff!important}
-#orderTableBody td:nth-child(5),
-.td-desc{color:#374151!important}
-.quick-btn,
-.btn-add{
-  background:#153bff!important;
-  color:#fff!important;
-  border-color:#153bff!important;
-  border-radius:12px!important;
-  box-shadow:0 6px 16px rgba(21,59,255,.18);
-}
-.quick-btn.secondary,
-.btn-add.secondary,
-.quick-mini-btn,
-.modal-close,
-.btn-icon{
-  background:#fff!important;
-  color:#153bff!important;
-  border-color:#cbd3e6!important;
-  box-shadow:none!important;
-}
-.quick-mini-btn:hover,
-.btn-icon:hover{
-  background:#eef1ff!important;
-  border-color:#153bff!important;
-  color:#153bff!important;
-}
-.add-symbol-btn{
-  background:#153bff!important;
-  color:#fff!important;
-  border-radius:14px!important;
-}
-.quick-hint,
-.storage-badge span,
-.field label{
-  color:#6b7280!important;
-}
-.backdrop{
-  background:rgba(17,24,39,.35)!important;
-}
-.modal{
-  background:#fff!important;
-  border-color:#d9deea!important;
-  box-shadow:0 24px 80px rgba(17,24,39,.22)!important;
-}
-.modal-header,
-.modal-footer{
-  border-color:#d9deea!important;
-  background:#fff!important;
-}
-.modal-title{
-  color:#153bff!important;
-}
-.modal-handle{
-  background:#cbd3e6!important;
-}
-.file-drop,
-.file-preview-box,
-.noti-item{
-  background:#f8f9ff!important;
-  border-color:#d9deea!important;
-  color:#111827!important;
-}
-.noti-item-title{color:#153bff!important}
-.noti-item-msg{color:#111827!important}
-.noti-item-meta{color:#6b7280!important}
-.toast{
-  background:#111827!important;
-  color:#fff!important;
-  border-color:#111827!important;
-}
-.empty{
-  color:#6b7280!important;
-}
-.status-solicitud,
-.pago-pendiente{
-  color:#dc2626!important;
-  border-color:#fecaca!important;
-  background:#fee2e2!important;
-}
-.status-revisado,
-.pago-abonado{
-  color:#b45309!important;
-  border-color:#fde68a!important;
-  background:#fef3c7!important;
-}
-.status-listo,
-.pago-pagado{
-  color:#16a34a!important;
-  border-color:#86efac!important;
-  background:#dcfce7!important;
-}
-.file-link-chip,
-.quick-attach-link{
-  color:#153bff!important;
-  background:#eef1ff!important;
-  border-color:#cbd3e6!important;
-  border-radius:999px!important;
-}
-.file-link-chip:hover,
-.quick-attach-link:hover{
-  border-color:#153bff!important;
-  background:#e4e9ff!important;
-}
-@media(max-width:760px){
-  .header-tabs{
-    border-top:1px solid rgba(255,255,255,.22)!important;
-  }
-  .mobile-menu-extra{
-    border-top:1px solid rgba(255,255,255,.22)!important;
-  }
-  .mobile-menu-extra .storage-badge{
-    background:rgba(255,255,255,.12)!important;
-    border-color:rgba(255,255,255,.24)!important;
-  }
-  .mobile-menu-extra .storage-badge span{color:#fff!important}
+function esRobertoLocal(op) {
+  return String(op && op.nombre ? op.nombre : "")
+    .trim()
+    .toLowerCase() === "roberto";
 }
 
-
-
-/* === SAFE PATCH v4: solo visual. No toca JS, Supabase ni guardado === */
-.logo{letter-spacing:2px;font-size:20px}
-.logo small{font-family:var(--head);font-weight:800;letter-spacing:.8px}
-.tab-btn,.btn-add,.filter-sel,.quick-btn,.field label,.modal-title,th{
-  letter-spacing:.35px!important;
-}
-.header{
-  background:linear-gradient(135deg,#153bff,#0b1f7a)!important;
-  border-bottom:0!important;
-  box-shadow:0 8px 24px rgba(21,59,255,.24)!important;
-}
-.logo{color:#fff!important}
-.logo small{color:rgba(255,255,255,.74)!important}
-.tab-btn{border-color:rgba(255,255,255,.24)!important;color:rgba(255,255,255,.88)!important;background:rgba(255,255,255,.08)!important}
-.tab-btn.active{background:#fff!important;color:#153bff!important;border-color:#fff!important}
-.noti-btn{background:rgba(255,255,255,.10)!important;color:#fff!important;border-color:rgba(255,255,255,.25)!important}
-body{font-size:14px;line-height:1.35}
-.table-wrap{background:#f0f2f9}
-table{table-layout:fixed;min-width:1410px}
-th,td{font-size:12px;line-height:1.25}
-th{color:#5b6474!important;font-weight:900!important;background:#eef1ff!important}
-thead tr{background:#eef1ff!important;border-bottom:1px solid #d9deea!important}
-.quick-entry-row th{background:#f8f9ff!important}
-td{background:#fff;border-bottom:1px solid #e4e8f2;color:#111827}
-tbody tr:nth-child(even) td{background:#fbfcff}
-tbody tr:hover td{background:#f3f6ff!important}
-#orderTableBody td:nth-child(2){font-family:var(--mono);font-size:11px;color:#4b5563}
-#orderTableBody td:nth-child(3){font-family:var(--body);font-size:12px;color:#111827;font-weight:700}
-#orderTableBody td:nth-child(4){font-size:12px;color:#0b1f7a;font-weight:800}
-#orderTableBody td:nth-child(5){font-size:12px;color:#111827;line-height:1.3}
-
-/* Anchos controlados: sin crear columnas nuevas */
-th:nth-child(1),td:nth-child(1){width:44px;min-width:44px;text-align:center}
-th:nth-child(2),td:nth-child(2){width:90px;min-width:90px}
-th:nth-child(3),td:nth-child(3){width:110px;min-width:110px}
-th:nth-child(4),td:nth-child(4){width:145px;min-width:145px}
-th:nth-child(5),td:nth-child(5){width:225px;min-width:225px;max-width:225px}
-th:nth-child(6),td:nth-child(6){width:105px;min-width:105px}
-th:nth-child(7),td:nth-child(7){width:130px;min-width:130px}
-th:nth-child(8),td:nth-child(8){width:130px;min-width:130px}
-th:nth-child(9),td:nth-child(9){width:85px;min-width:85px;text-align:center}
-th:nth-child(10),td:nth-child(10){width:110px;min-width:110px}
-th:nth-child(11),td:nth-child(11){width:110px;min-width:110px}
-th:nth-child(12),td:nth-child(12){width:90px;min-width:90px;text-align:center}
-th:nth-child(13),td:nth-child(13){width:105px;min-width:105px}
-th:nth-child(14),td:nth-child(14){width:90px;min-width:90px;text-align:center}
-.abono-cell{font-weight:900;color:#0b1f7a!important;text-align:center}
-.quick-money{text-align:center;font-family:var(--mono)}
-
-/* Descripción compacta: se ve una línea y al pasar/clicar en escritorio se expande visualmente */
-#orderTableBody td:nth-child(5){
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  cursor:help;
-}
-#orderTableBody td:nth-child(5):hover{
-  white-space:normal;
-  overflow:visible;
-  position:relative;
-  z-index:20;
-  box-shadow:0 8px 24px rgba(0,0,0,.16);
-  border-radius:8px;
-}
-.cell-edit,.cell-select,.quick-input,.quick-select,.quick-btn{
-  background:#fff!important;
-  color:#111827!important;
-  border-color:#d9deea!important;
-  border-radius:10px!important;
-  font-size:12px!important;
-}
-.quick-textarea{min-height:38px;max-height:54px}
-.quick-textarea:focus{min-height:78px;max-height:120px}
-.search-wrap,.storage-badge,.modal,.card{
-  background:#fff!important;
-  border-color:#d9deea!important;
-  box-shadow:0 4px 18px rgba(0,0,0,.055);
-}
-.toast{font-family:var(--head);letter-spacing:.35px!important}
-@media(max-width:760px){
-  table{min-width:1220px}
-  .logo{font-size:18px}
+function puedeModificarOperadorLocal() {
+  const op = getOperadorSesionLocal();
+  if (!op) return false;
+  if (esRobertoLocal(op)) return true;
+  return op.puede_modificar_operador === true;
 }
 
-
-
-/* V6 · Colores de estados y abonos */
-.status-solicitud,
-.estado-solicitud,
-td.estado-solicitud,
-select.estado-solicitud{
-  color:#dc2626!important;
-  border-color:#fecaca!important;
-  background:#fee2e2!important;
-  font-weight:800!important;
-}
-.status-en-curso,
-.status-encurso,
-.estado-en-curso,
-td.estado-en-curso,
-select.estado-en-curso{
-  color:#ffffff!important;
-  border-color:#111827!important;
-  background:#111827!important;
-  font-weight:800!important;
-}
-.status-revisado,
-.estado-revisado,
-td.estado-revisado,
-select.estado-revisado{
-  color:#92400e!important;
-  border-color:#fde68a!important;
-  background:#fef3c7!important;
-  font-weight:800!important;
-}
-.status-listo,
-.estado-listo,
-td.estado-listo,
-select.estado-listo{
-  color:#166534!important;
-  border-color:#86efac!important;
-  background:#dcfce7!important;
-  font-weight:800!important;
-}
-.pago-pendiente,
-td.pago-pendiente,
-select.pago-pendiente{
-  color:#dc2626!important;
-  border-color:#fecaca!important;
-  background:#fee2e2!important;
-  font-weight:800!important;
-}
-.pago-abonado,
-td.pago-abonado,
-select.pago-abonado{
-  color:#92400e!important;
-  border-color:#fde68a!important;
-  background:#fef3c7!important;
-  font-weight:800!important;
-}
-.pago-pagado,
-td.pago-pagado,
-select.pago-pagado{
-  color:#166534!important;
-  border-color:#86efac!important;
-  background:#dcfce7!important;
-  font-weight:800!important;
-}
-.abono-cell{
-  font-weight:900!important;
-  text-align:center!important;
-  font-variant-numeric:tabular-nums!important;
-}
-.abono-pos{color:#16a34a!important;background:#dcfce7!important;}
-.abono-neg{color:#dc2626!important;background:#fee2e2!important;}
-.abono-zero{color:#6b7280!important;background:#f8f9ff!important;}
-.abono-edit{
-  width:92px!important;
-  min-height:32px!important;
-  text-align:center!important;
-  font-weight:900!important;
-  border-radius:10px!important;
-  padding:6px 8px!important;
-  font-variant-numeric:tabular-nums!important;
-}
-.abono-edit.abono-pos{color:#16a34a!important;border-color:#86efac!important;background:#f0fdf4!important;}
-.abono-edit.abono-neg{color:#dc2626!important;border-color:#fecaca!important;background:#fef2f2!important;}
-.abono-edit.abono-zero{color:#6b7280!important;border-color:#d9deea!important;background:#f8f9ff!important;}
-#q_monto_abonado.abono-pos,
-#f_monto_abonado.abono-pos{color:#16a34a!important;border-color:#86efac!important;background:#f0fdf4!important;}
-#q_monto_abonado.abono-neg,
-#f_monto_abonado.abono-neg{color:#dc2626!important;border-color:#fecaca!important;background:#fef2f2!important;}
-
-
-
-/* V7 · Limpieza visual: el color queda solo en el selector/pastilla, no en todo el TD */
-#orderTableBody td.estado-solicitud,
-#orderTableBody td.estado-en-curso,
-#orderTableBody td.estado-revisado,
-#orderTableBody td.estado-listo,
-#orderTableBody td.pago-pendiente,
-#orderTableBody td.pago-abonado,
-#orderTableBody td.pago-pagado{
-  background:inherit!important;
-  border-color:#e4e8f2!important;
-}
-#orderTableBody tr:nth-child(even) td.estado-solicitud,
-#orderTableBody tr:nth-child(even) td.estado-en-curso,
-#orderTableBody tr:nth-child(even) td.estado-revisado,
-#orderTableBody tr:nth-child(even) td.estado-listo,
-#orderTableBody tr:nth-child(even) td.pago-pendiente,
-#orderTableBody tr:nth-child(even) td.pago-abonado,
-#orderTableBody tr:nth-child(even) td.pago-pagado{
-  background:#fbfcff!important;
-}
-#orderTableBody td select.estado-solicitud,
-#orderTableBody td select.estado-en-curso,
-#orderTableBody td select.estado-revisado,
-#orderTableBody td select.estado-listo,
-#orderTableBody td select.pago-pendiente,
-#orderTableBody td select.pago-abonado,
-#orderTableBody td select.pago-pagado{
-  border-radius:999px!important;
-  min-height:34px!important;
-  text-align:center!important;
-  text-align-last:center!important;
-  padding-left:10px!important;
-  padding-right:26px!important;
-  box-shadow:none!important;
-}
-.quick-entry-row select.estado-solicitud,
-.quick-entry-row select.estado-en-curso,
-.quick-entry-row select.estado-revisado,
-.quick-entry-row select.estado-listo,
-.quick-entry-row select.pago-pendiente,
-.quick-entry-row select.pago-abonado,
-.quick-entry-row select.pago-pagado{
-  border-radius:999px!important;
-  text-align-last:center!important;
+function puedeModificarCantidadLocal() {
+  const op = getOperadorSesionLocal();
+  if (!op) return false;
+  if (esRobertoLocal(op)) return true;
+  return op.puede_modificar_cantidad === true;
 }
 
+// ===========================
+// CLIENTES
+// ===========================
+async function asegurarClienteExiste(nombreCliente) {
+  const nombre = String(nombreCliente || "").trim();
+  if (!nombre) return { id: null, nombre: "" };
 
+  const nombreNormalizado = normalizarBusqueda(nombre);
 
-/* =========================================================
-   MENU GLOBAL v6 · Logo + COMANDA + precio oculto
-   - Logo a la izquierda
-   - Menú en una sola línea escritorio
-   - Botones tipo pastilla como referencia
-   - Badge SUPABASE dentro del menú
-========================================================= */
-.header{
-  background:#1428c6!important;
-  border-bottom:0!important;
-  box-shadow:0 8px 22px rgba(20,40,198,.22)!important;
-  min-height:72px!important;
-  padding:16px 22px!important;
-  gap:14px!important;
-  flex-wrap:nowrap!important;
-  align-items:center!important;
-}
-.header .logo{
-  display:flex!important;
-  align-items:center!important;
-  gap:8px!important;
-  flex:0 0 auto!important;
-  width:auto!important;
-  min-width:210px!important;
-  color:#fff!important;
-  border:0!important;
-  padding:0!important;
-  margin:0!important;
-  letter-spacing:0!important;
-}
-.header .logo img{
-  display:block!important;
-  width:112px!important;
-  max-width:112px!important;
-  height:auto!important;
-  object-fit:contain!important;
-  filter:drop-shadow(0 4px 8px rgba(0,0,0,.18));
-}
-.header .logo small{
-  display:none!important;
-}
-.header-tabs{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:flex-end!important;
-  gap:5px!important;
-  flex:1 1 auto!important;
-  width:auto!important;
-  margin-left:auto!important;
-  flex-wrap:nowrap!important;
-  min-width:0!important;
-}
-.header-tabs .tab-btn,
-.header-tabs .storage-pill{
-  height:30px!important;
-  min-height:30px!important;
-  padding:0 10px!important;
-  border-radius:999px!important;
-  border:1px solid rgba(255,255,255,.28)!important;
-  background:rgba(255,255,255,.09)!important;
-  color:#ffffff!important;
-  font-family:var(--head,Montserrat,Arial,sans-serif)!important;
-  font-size:9.8px!important;
-  line-height:1!important;
-  font-weight:900!important;
-  letter-spacing:.38px!important;
-  text-transform:uppercase!important;
-  text-decoration:none!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:5px!important;
-  white-space:nowrap!important;
-  cursor:pointer!important;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035)!important;
-}
-.header-tabs .tab-btn:hover,
-.header-tabs .storage-pill:hover{
-  background:rgba(255,255,255,.16)!important;
-  border-color:rgba(255,255,255,.45)!important;
-  color:#fff!important;
-}
-.header-tabs .tab-btn.active{
-  background:#ffffff!important;
-  color:#153bff!important;
-  border-color:#ffffff!important;
-  box-shadow:0 8px 18px rgba(0,0,0,.12)!important;
-}
-.header-tabs button.tab-btn{
-  appearance:none!important;
-}
-.header-tabs .storage-pill{
-  cursor:default!important;
-  background:rgba(255,255,255,.12)!important;
-}
-.header-tabs .storage-pill .storage-dot{
-  width:7px!important;
-  height:7px!important;
-  border-radius:50%!important;
-  background:#22c55e!important;
-  flex:0 0 auto!important;
-}
-.header-tabs .storage-pill span{
-  color:#ffffff!important;
-  font-family:var(--head,Montserrat,Arial,sans-serif)!important;
-  font-size:9.8px!important;
-  font-weight:900!important;
-  letter-spacing:.38px!important;
-  text-transform:uppercase!important;
-}
-.header .noti-btn{
-  display:none!important;
-}
-.toolbar > #storageBadge{
-  display:none!important;
-}
-.mobile-menu-btn{
-  display:none!important;
-}
-@media(max-width:1180px){
-  .header{padding:14px 14px!important;gap:10px!important;min-height:64px!important;}
-  .header .logo img{width:94px!important;max-width:94px!important;}
-  .header .logo{min-width:94px!important;}
-  .header .logo small{display:none!important;}
-  .header-tabs{gap:4px!important;}
-  .header-tabs .tab-btn,
-  .header-tabs .storage-pill{
-    padding:0 8px!important;
-    font-size:9.2px!important;
-    gap:4px!important;
-    letter-spacing:.28px!important;
-  }
-  .header-tabs .storage-pill span{font-size:9.2px!important;}
-}
-@media(max-width:980px){
-  .header{
-    flex-wrap:wrap!important;
-    padding:12px!important;
-    min-height:58px!important;
-    justify-content:space-between!important;
-  }
-  .header .logo{
-    display:flex!important;
-    min-width:120px!important;
-  }
-  .header .logo img{
-    width:118px!important;
-    max-width:118px!important;
-  }
-  .mobile-menu-btn{
-    display:inline-flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-    margin-left:auto!important;
-    color:#fff!important;
-    background:rgba(255,255,255,.12)!important;
-    border:1px solid rgba(255,255,255,.28)!important;
-    border-radius:999px!important;
-    min-height:34px!important;
-    padding:8px 14px!important;
-  }
-  .header-tabs{
-    display:none!important;
-    width:100%!important;
-    flex:1 1 100%!important;
-    margin-left:0!important;
-    padding-top:10px!important;
-    border-top:1px solid rgba(255,255,255,.22)!important;
-    grid-template-columns:1fr!important;
-    gap:8px!important;
-  }
-  .header-tabs.open{
-    display:grid!important;
-  }
-  .header-tabs .tab-btn,
-  .header-tabs .storage-pill{
-    width:100%!important;
-    min-height:42px!important;
-    height:42px!important;
-    font-size:11px!important;
-    justify-content:center!important;
-  }
-  .header-tabs .storage-pill span{font-size:11px!important;}
-}
+  const { data, error } = await db()
+    .from("clientes")
+    .select("id, nombre")
+    .limit(1000);
 
-
-/* =========================================================
-   V5 · Ocultar columna PRECIO temporalmente
-   No borra datos, solo oculta la columna visualmente.
-   Columnas: 1 #, 2 Fecha, 3 Operador, 4 Cliente,
-   5 Descripción, 6 Cantidad, 7 Material, 8 Impresión, 9 Precio.
-========================================================= */
-table th:nth-child(9),
-table td:nth-child(9){
-  display:none!important;
-}
-
-/* Ajuste visual después de ocultar precio */
-table{
-  min-width:1325px!important;
-}
-@media(max-width:760px){
-  table{min-width:1135px!important;}
-}
-
-/* FIX parpadeo negro al cambiar de pestaña */
-.header{
-  box-shadow:0 8px 20px rgba(21,59,255,.20)!important;
-  transition:none!important;
-}
-.header *,
-.header-tabs *,
-.tab-btn,
-.mobile-menu-btn{
-  transition:none!important;
-}
-html,body{
-  background:#f0f2f9!important;
-}
-
-
-
-/* =========================================================
-   FIX v6 · COMANDA COMPLETO
-   - Fuerza controles nativos en modo claro
-   - Quita cuadro negro en desplegables/select
-   - Mantiene el header sin parpadeo negro
-   - Mantiene columna PRECIO oculta temporalmente
-========================================================= */
-html,
-body{
-  background:#f0f2f9!important;
-  color-scheme:light!important;
-}
-
-input,
-select,
-textarea,
-button{
-  color-scheme:light!important;
-  -webkit-tap-highlight-color:transparent!important;
-}
-
-/* Desplegable nativo blanco */
-select,
-select option,
-select optgroup,
-.cell-select option,
-.quick-select option,
-.filter-sel option,
-#q_estatus_trabajo option,
-#q_estatus_pago option,
-#f_estatus_trabajo option,
-#f_estatus_pago option{
-  background:#ffffff!important;
-  background-color:#ffffff!important;
-  color:#111827!important;
-}
-
-select:focus,
-select:active,
-select:hover{
-  color-scheme:light!important;
-}
-
-#orderTableBody select,
-.quick-select,
-.cell-select,
-.filter-sel{
-  color-scheme:light!important;
-}
-
-/* Mantener los select de estatus tipo pastilla cuando están cerrados */
-#orderTableBody td select.estado-solicitud{
-  color:#dc2626!important;
-  border-color:#fecaca!important;
-  background:#fee2e2!important;
-}
-
-#orderTableBody td select.estado-en-curso{
-  color:#ffffff!important;
-  border-color:#111827!important;
-  background:#111827!important;
-}
-
-#orderTableBody td select.estado-revisado{
-  color:#92400e!important;
-  border-color:#fde68a!important;
-  background:#fef3c7!important;
-}
-
-#orderTableBody td select.estado-listo{
-  color:#166534!important;
-  border-color:#86efac!important;
-  background:#dcfce7!important;
-}
-
-#orderTableBody td select.pago-pendiente{
-  color:#dc2626!important;
-  border-color:#fecaca!important;
-  background:#fee2e2!important;
-}
-
-#orderTableBody td select.pago-abonado{
-  color:#92400e!important;
-  border-color:#fde68a!important;
-  background:#fef3c7!important;
-}
-
-#orderTableBody td select.pago-pagado{
-  color:#166534!important;
-  border-color:#86efac!important;
-  background:#dcfce7!important;
-}
-
-/* Header limpio sin flash negro */
-.header{
-  box-shadow:0 8px 20px rgba(21,59,255,.20)!important;
-  background:#172bd8!important;
-  transition:none!important;
-}
-
-.header *,
-.header-tabs *,
-.tab-btn,
-.mobile-menu-btn{
-  transition:none!important;
-}
-
-/* PRECIO oculto temporalmente */
-table th:nth-child(9),
-table td:nth-child(9),
-.quick-entry-row th:nth-child(9){
-  display:none!important;
-}
-
-table{
-  min-width:1320px!important;
-}
-
-@media(max-width:760px){
-  table{
-    min-width:1160px!important;
-  }
-}
-
-
-
-/* =========================================================
-   FIX v7 · Menú estable sin salto visual
-   - El menú se arma antes de mostrarse
-   - Evita que se vea desplegado/desordenado al cargar
-   - Mantiene el header con altura estable
-========================================================= */
-.header{
-  min-height:64px!important;
-  height:64px!important;
-  overflow:hidden!important;
-  background:#172bd8!important;
-  box-shadow:0 8px 20px rgba(21,59,255,.18)!important;
-}
-.header-tabs{
-  min-height:34px!important;
-  opacity:0!important;
-  visibility:hidden!important;
-}
-.header.menu-ready .header-tabs{
-  opacity:1!important;
-  visibility:visible!important;
-}
-.header,
-.header *,
-.header-tabs,
-.header-tabs *,
-.tab-btn,
-.storage-pill,
-.mobile-menu-btn{
-  transition:none!important;
-  animation:none!important;
-}
-.logo{
-  flex-shrink:0!important;
-}
-.logo img{
-  display:block!important;
-  height:32px!important;
-  width:auto!important;
-}
-.logo small{
-  color:#fff!important;
-  font-weight:900!important;
-  letter-spacing:1.4px!important;
-}
-.header-tabs .tab-btn,
-.header-tabs .storage-pill{
-  min-height:31px!important;
-  height:31px!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  white-space:nowrap!important;
-}
-@media(max-width:980px){
-  .header{
-    height:auto!important;
-    min-height:64px!important;
-    overflow:visible!important;
-  }
-  .header-tabs{
-    opacity:1!important;
-    visibility:visible!important;
-  }
-}
-
-</style>
-<link rel="stylesheet" href="css/menu.css?v=34">
-
-<style>
-/* =========================================================
-   PAGINACIÓN v31 · 1-20 / 1-40 / 1-100
-   Corregida desde app.js, sin doble render.
-========================================================= */
-.pagination-bar{
-  position:sticky;
-  left:0;
-  bottom:0;
-  z-index:120;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  flex-wrap:wrap;
-  padding:12px 14px;
-  background:rgba(255,255,255,.96);
-  border-top:1px solid #d9deea;
-  box-shadow:0 -8px 24px rgba(15,23,42,.08);
-  backdrop-filter:blur(8px);
-}
-
-.page-btn,
-.page-select,
-.page-info{
-  min-height:36px;
-  border-radius:999px;
-  border:1px solid #cbd3e6;
-  background:#fff;
-  color:#153bff;
-  font-family:var(--head,Montserrat,Arial,sans-serif);
-  font-size:11px;
-  font-weight:900;
-  letter-spacing:.45px;
-  text-transform:uppercase;
-  padding:8px 12px;
-  white-space:nowrap;
-}
-
-.page-btn,
-.page-select{
-  cursor:pointer;
-}
-
-.page-btn:hover{
-  background:#eef1ff;
-  border-color:#153bff;
-}
-
-.page-btn:disabled{
-  opacity:.45;
-  cursor:not-allowed;
-  filter:grayscale(1);
-}
-
-.page-info{
-  background:#eef1ff;
-  color:#0b1f7a;
-  border-color:#c7d2fe;
-}
-
-/* Reduce movimientos visuales mientras se actualizan filas */
-#orderTableBody,
-#orderTableBody tr,
-#orderTableBody td,
-.cell-edit,
-.cell-select,
-.quick-input,
-.quick-select{
-  transition:none!important;
-  animation:none!important;
-}
-
-@media(max-width:760px){
-  .pagination-bar{
-    position:relative;
-    bottom:auto;
-    padding:10px;
-    gap:6px;
+  if (error) {
+    console.warn("No se pudo verificar cliente:", error);
+    return { id: null, nombre: nombreBonito(nombre) };
   }
 
-  .page-btn,
-  .page-info,
-  .page-select{
-    flex:1 1 calc(50% - 6px);
-    font-size:10px;
-    padding:8px 8px;
+  const clienteExistente = (data || []).find(c => normalizarBusqueda(c.nombre) === nombreNormalizado);
+
+  if (clienteExistente) {
+    return {
+      id: clienteExistente.id || null,
+      nombre: String(clienteExistente.nombre || nombreBonito(nombre)).trim()
+    };
   }
-}
-</style>
 
+  const nombreFinal = nombreBonito(nombre);
 
-<style>
-/* =========================================================
-   FIX v33 · actualización limpia sin flash visual
-========================================================= */
-#orderTableBody,
-#orderTableBody tr,
-#orderTableBody td,
-.cell-edit,
-.cell-select{
-  transition:none!important;
-  animation:none!important;
-}
+  const { data: nuevoCliente, error: insertError } = await db()
+    .from("clientes")
+    .insert([{
+      nombre: nombreFinal,
+      tipo_cliente: "Cliente Standar",
+      telefono: "",
+      correo: "",
+      notas: "",
+      activo: true
+    }])
+    .select("id, nombre")
+    .single();
 
-.cell-select:focus,
-.cell-select:active,
-.cell-edit:focus,
-.cell-edit:active{
-  outline:none!important;
-  box-shadow:0 0 0 3px rgba(21,59,255,.10)!important;
-}
+  if (insertError) {
+    console.warn("No se pudo crear cliente automáticamente:", insertError);
+    return { id: null, nombre: nombreFinal };
+  }
 
-/* Evita que el select cambie bruscamente de tamaño al actualizar clase de estado */
-.cell-select{
-  min-width:98px!important;
-}
-</style>
-
-
-<style>
-/* =========================================================
-   CATÁLOGOS v34 · sin flash al pintar Material / Impresión
-========================================================= */
-.catalog-pill{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  border-radius:999px!important;
-  padding:5px 9px!important;
-  font-size:11px!important;
-  font-weight:800!important;
-  line-height:1!important;
-  min-width:54px!important;
-  min-height:24px!important;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)!important;
-  white-space:nowrap!important;
-  transition:none!important;
-  animation:none!important;
+  console.log("Cliente creado automáticamente:", nombreFinal, "ID:", nuevoCliente?.id);
+  return {
+    id: nuevoCliente?.id || null,
+    nombre: String(nuevoCliente?.nombre || nombreFinal).trim()
+  };
 }
 
-.catalog-select-colored{
-  font-weight:800!important;
-  border-radius:10px!important;
-  transition:none!important;
-  animation:none!important;
+async function cargarClientesBusqueda() {
+  const { data, error } = await db()
+    .from("clientes")
+    .select("id, nombre, telefono, correo, notas, activo")
+    .eq("activo", true)
+    .order("nombre", { ascending: true });
+
+  if (error) {
+    console.warn("No se pudieron cargar clientes para búsqueda:", error);
+    clientesBusquedaDB = [];
+    clientesCatalogoDB = [];
+    return;
+  }
+
+  clientesBusquedaDB = data || [];
+  clientesCatalogoDB = [...clientesBusquedaDB];
+  renderClienteDatalist();
 }
 
-#q_material,
-#q_impresion,
-#f_material,
-#f_impresion{
-  transition:none!important;
-  animation:none!important;
+function renderClienteDatalist() {
+  const datalist = document.getElementById("clientesDatalist");
+  if (!datalist) return;
+
+  datalist.innerHTML = "";
+
+  const usados = new Set();
+
+  clientesCatalogoDB.forEach(c => {
+    const nombre = String(c.nombre || "").trim();
+    if (!nombre) return;
+
+    const key = normalizarBusqueda(nombre);
+    if (!key || usados.has(key)) return;
+
+    usados.add(key);
+
+    const opt = document.createElement("option");
+    opt.value = nombre;
+    datalist.appendChild(opt);
+  });
 }
-</style>
 
-</head>
-<body>
-<header class="header">
-  <div class="logo">
-    <img src="Logo tutto1.svg" alt="Tutto Vinilos">
-    <small>COMANDA</small>
-  </div>
+function buscarClienteExactoNormalizado(nombre) {
+  const norm = normalizarBusqueda(nombre);
+  if (!norm) return null;
+  return clientesCatalogoDB.find(c => normalizarBusqueda(c.nombre) === norm) || null;
+}
 
-  <button class="noti-btn" id="notiBtnGlobal" type="button" onclick="abrirNotificaciones()">
-    🔔 <span class="noti-count empty" id="notiCount">0</span>
-  </button>
+async function resolverNombreClienteAntesDeGuardar(nombreIngresado) {
+  const nombre = String(nombreIngresado || "").trim();
 
-  <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menú">☰ Menú</button>
+  if (!nombre) return { ok: true, nombreFinal: "" };
 
-  <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
-</header>
-<div class="toolbar">
-  <div class="search-wrap">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="11" cy="11" r="8"/>
-      <path d="m21 21-4.35-4.35"/>
-    </svg>
-    <input id="searchInput" type="text" placeholder="Nombre, teléfono o descripción..." oninput="onSearch()"/>
-  </div>
-  <select class="filter-sel" id="filterStatus" onchange="onSearch()">
-    <option value="">Estado</option>
-    <option value="Solicitud">🔴 Solicitud</option>
-    <option value="Revisado">🟡 Revisado</option>
-    <option value="Listo">🟢 Listo</option>
-  </select>
-  <select class="filter-sel" id="filterPago" onchange="onSearch()">
-    <option value="">Pago</option>
-    <option value="Pendiente">Pendiente</option>
-    <option value="Abonado">Abonado</option>
-    <option value="Pagado">Pagado</option>
-  </select>
-  <input class="filter-sel" id="filterFechaDesde" type="date" onchange="onSearch()" title="Desde"/>
-  <input class="filter-sel" id="filterFechaHasta" type="date" onchange="onSearch()" title="Hasta"/>
-  <select class="filter-sel" id="filterOperador" onchange="onSearch()">
-    <option value="">Operador</option>
-  </select>
-  <div class="storage-badge desktop-only" id="storageBadge">
-    <div class="storage-dot"></div>
-    <span id="storageBadgeText">Local</span>
-  </div>
-</div>
-<div class="table-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Fecha</th>
-        <th>Operador</th>
-        <th>Cliente</th>
-        <th>Descripción</th>
-        <th>Cantidad</th>
-        <th>Material</th>
-        <th>Impresión</th>
-        <th>Precio</th>
-        <th>Estatus</th>
-        <th>Pago</th>
-        <th>Abono</th>
-        <th>Entrega</th>
-        <th>Archivo</th>
-      </tr>
-      <tr class="quick-entry-row">
-        <th>
-          <button class="quick-btn secondary" type="button" onclick="clearQuickEntry()">✕</button>
-        </th>
-        <th>
-          <input class="quick-input" id="q_fecha" type="date"/>
-        </th>
-        <th>
-          <select class="quick-select" id="q_operador">
-            <option value="">Operador</option>
-          </select>
-        </th>
-        <th>
-          <input class="quick-input" id="q_cliente" type="text" placeholder="Cliente" list="clientesDatalist" autocomplete="off"/>
-          <datalist id="clientesDatalist"></datalist>
-          <div class="quick-hint" id="quickClientHint"></div>
-        </th>
-        <th>
-          <textarea class="quick-input quick-textarea" id="q_descripcion" placeholder="Descripción"></textarea>
-        </th>
-        <th>
-          <input class="quick-input" id="q_cantidad" type="text" placeholder="Cantidad / m"/>
-        </th>
-        <th>
-          <select class="quick-select" id="q_material">
-            <option value="">Material</option>
-          </select>
-        </th>
-        <th>
-          <select class="quick-select" id="q_impresion">
-            <option value="">Impresión</option>
-          </select>
-        </th>
-        <th>
-          <div class="quick-hint" id="q_precio_preview">$0.00</div>
-        </th>
-        <th>
-          <select class="quick-select" id="q_estatus_trabajo">
-            <option selected>Solicitud</option>
-            <option>En curso</option>
-            <option>Revisado</option>
-            <option>Listo</option>
-          </select>
-        </th>
-        <th>
-          <select class="quick-select" id="q_estatus_pago">
-            <option selected>Pendiente</option>
-            <option>Abonado</option>
-            <option>Pagado</option>
-          </select>
-        </th>
-        <th>
-          <input class="quick-input quick-money" id="q_monto_abonado" type="number" step="0.01" placeholder="0.00"/>
-        </th>
-        <th>
-          <input class="quick-input" id="q_entrega" type="date"/>
-        </th>
-        <th>
-          <button class="quick-mini-btn" type="button" title="Adjuntar archivo" onclick="openQuickAttach()">📎</button>
-          <button class="quick-btn add-symbol-btn" type="button" onclick="saveQuickOrder()" style="margin-top:5px" title="Guardar pedido">+</button>
-        </th>
-      </tr>
-    </thead>
-    <tbody id="orderTableBody"></tbody>
-  </table>
-  <div id="emptyState" class="empty" style="display:none">— SIN PEDIDOS —</div>
-  <div id="paginationBar" class="pagination-bar"></div>
-</div>
-<div class="backdrop" id="orderBackdrop" style="display:none" onclick="bdClick(event,'orderBackdrop')">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <span class="modal-title" id="orderModalTitle">NUEVO PEDIDO</span>
-      <button class="modal-close" type="button" onclick="closeModal('orderBackdrop')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="field">
-          <label>Fecha</label>
-          <input type="date" id="f_fecha"/>
-        </div>
-        <div class="field">
-          <label>Operador</label>
-          <select id="f_operador">
-            <option value="">Seleccionar…</option>
-          </select>
-        </div>
-      </div>
-      <div class="field">
-        <label>Cliente</label>
-        <input type="text" id="f_cliente" placeholder="Nombre del cliente..." autocomplete="off" list="clientesDatalist"/>
-      </div>
-      <div class="field form-full">
-        <label>Descripción del trabajo</label>
-        <textarea id="f_descripcion" placeholder="Ej: Banner exterior 3x1m..." rows="3"></textarea>
-      </div>
-      <div class="form-grid">
-        <div class="field">
-          <label>Cantidad / Metros</label>
-          <input type="text" id="f_cantidad" placeholder="Ej: 5 m² / 1200 stickers"/>
-        </div>
-        <div class="field">
-          <label>Monto abonado</label>
-          <input type="number" id="f_monto_abonado" step="0.01" placeholder="0.00"/>
-        </div>
-        <div class="field form-full">
-          <label>Fecha de entrega</label>
-          <input type="date" id="f_entrega"/>
-        </div>
-      </div>
-      <div class="form-grid">
-        <div class="field">
-          <label>Material</label>
-          <select id="f_material">
-            <option value="">Material</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Tipo de impresión</label>
-          <select id="f_impresion">
-            <option value="">Impresión</option>
-          </select>
-        </div>
-      </div>
-      <div class="field">
-        <label>Imagen / Archivo de referencia</label>
-        <div id="filePreviewArea" onclick="document.getElementById('f_archivo').click()" style="cursor:pointer">
-          <div id="fileEmpty" class="file-drop">
-            <span style="font-size:28px">📎</span>
-            <span style="font-family:var(--head);font-size:12px;letter-spacing:1px;color:var(--muted)">TOCA PARA ADJUNTAR</span>
-            <span style="font-size:11px;color:var(--muted)">Imagen, PDF o archivo</span>
-          </div>
-          <div id="filePreview" style="display:none" class="file-preview-box">
-            <img id="fileImg" style="display:none;max-height:160px;border-radius:6px;object-fit:contain;width:100%"/>
-            <div id="fileGeneric" style="display:none;text-align:center;padding:16px">
-              <div id="fileIconBig" style="font-size:40px"></div>
-              <div id="fileName" style="font-size:12px;color:var(--muted2);margin-top:6px;word-break:break-all"></div>
-            </div>
-            <button class="file-remove-btn" type="button" onclick="event.stopPropagation();removeFile()" title="Quitar archivo">✕</button>
-          </div>
-        </div>
-        <input type="file" id="f_archivo" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" style="display:none" onchange="handleFileSelect(event)"/>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-add secondary" type="button" onclick="closeModal('orderBackdrop')">Cancelar</button>
-      <button class="btn-add" type="button" onclick="saveOrder()">Guardar</button>
-    </div>
-  </div>
-</div>
-<input type="file" id="rowFileInput" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" onchange="handleRowFileSelect(event)"/>
+  const exacto = buscarClienteExactoNormalizado(nombre);
 
-<div class="backdrop" id="notiBackdrop" style="display:none" onclick="bdClick(event,'notiBackdrop')">
-  <div class="modal" style="max-width:660px">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <span class="modal-title">NOTIFICACIONES</span>
-      <button class="modal-close" type="button" onclick="closeModal('notiBackdrop')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="noti-list" id="notiList">
-        <div class="empty">Cargando notificaciones...</div>
-      </div>
-    </div>
-  </div>
-</div>
+  if (exacto) {
+    return { ok: true, nombreFinal: String(exacto.nombre || "").trim() };
+  }
 
-<div class="toast" id="toast"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=24"></script>
-<script src="js/auth.js?v=24"></script>
-<script src="js/menu.js?v=40"></script>
-<script src="js/app.js?v=35"></script>
+  return { ok: true, nombreFinal: nombreBonito(nombre) };
+}
 
-<script>
-window.bdClick = window.bdClick || function(e,id){
-  if(e && e.target && e.target.id === id){
+async function resolverNombreClienteIdAntesDeGuardar(nombreIngresado) {
+  const decision = await resolverNombreClienteAntesDeGuardar(nombreIngresado);
+  if (!decision.ok) return { ok: false, id: null, nombreFinal: "" };
+
+  const clienteInfo = await asegurarClienteExiste(decision.nombreFinal || nombreIngresado);
+
+  return {
+    ok: true,
+    id: clienteInfo && clienteInfo.id ? clienteInfo.id : null,
+    nombreFinal: clienteInfo && clienteInfo.nombre ? clienteInfo.nombre : (decision.nombreFinal || nombreBonito(nombreIngresado))
+  };
+}
+
+// ===========================
+// OPERADORES
+// ===========================
+async function cargarOperadoresComandaDesdeSupabase() {
+  const fallback = [
+    { nombre: "Roberto" },
+    { nombre: "Ricardo" },
+    { nombre: "Chico" },
+    { nombre: "Carlos" },
+    { nombre: "Alejandro" },
+    { nombre: "Ruben" },
+    { nombre: "Ana" },
+    { nombre: "Miguel" }
+  ];
+
+  let operadores = fallback;
+
+  try {
+    const { data, error } = await db()
+      .from("operadores")
+      .select("id, nombre, activo")
+      .eq("activo", true)
+      .order("nombre", { ascending: true });
+
+    if (!error && Array.isArray(data) && data.length) operadores = data;
+  } catch (e) {
+    console.warn("No se pudieron cargar operadores:", e);
+  }
+
+  llenarSelectOperadores(document.getElementById("q_operador"), operadores, "Operador");
+  llenarSelectOperadores(document.getElementById("f_operador"), operadores, "Seleccionar…");
+  llenarSelectOperadores(document.getElementById("filterOperador"), operadores, "Operador");
+  aplicarOperadorSesion();
+}
+
+function llenarSelectOperadores(select, operadores, placeholder) {
+  if (!select) return;
+
+  const actual = select.value;
+  select.innerHTML = `<option value="">${placeholder}</option>`;
+
+  operadores.forEach(op => {
+    const opt = document.createElement("option");
+    opt.value = op.nombre;
+    opt.textContent = op.nombre;
+    select.appendChild(opt);
+  });
+
+  if (actual) select.value = actual;
+}
+
+function aplicarOperadorSesion() {
+  const op = getOperadorSesionLocal();
+  if (!op || !op.nombre) return;
+
+  const puedeCambiar = puedeModificarOperadorLocal();
+
+  ["q_operador", "f_operador"].forEach(id => {
     const el = document.getElementById(id);
-    if(el) el.style.display = "none";
-  }
-};
+    if (!el) return;
+    el.value = op.nombre;
+    el.disabled = !puedeCambiar;
+  });
+}
 
-window.closeModal = window.closeModal || function(id){
+// ===========================
+// CATÁLOGOS
+// ===========================
+function normalizarCatalogo(v) {
+  return String(v || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function colorSeguro(v, fallback) {
+  const s = String(v || "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(s) ? s : fallback;
+}
+
+function catalogCfg(mapa, nombre) {
+  return mapa.get(normalizarCatalogo(nombre)) || {
+    color_fondo: "#e5e7eb",
+    color_texto: "#111827"
+  };
+}
+
+function chipCatalogo(nombre, tipo) {
+  const raw = String(nombre || "").trim();
+  if (!raw || raw === "—") return escapeHtml(raw || "—");
+
+  const mapa = tipo === "impresion" ? tiposImpresionMap : materialesMap;
+  const cfg = catalogCfg(mapa, raw);
+
+  return `<span class="catalog-pill" style="background:${escapeHtml(cfg.color_fondo)};color:${escapeHtml(cfg.color_texto)}">${escapeHtml(raw)}</span>`;
+}
+
+function opcionesCatalogoIguales(select, lista, placeholder) {
+  if (!select) return true;
+
+  const actuales = [...select.options].map(o => o.value).join("|");
+  const nuevos = ["", ...lista.map(x => x.nombre)].join("|");
+
+  return actuales === nuevos && select.options[0]?.textContent === placeholder;
+}
+
+function pintarSelectCatalogo(select, mapa) {
+  if (!select) return;
+
+  const cfg = catalogCfg(mapa, select.value);
+
+  if (select.value) {
+    select.classList.add("catalog-select-colored");
+    select.style.background = cfg.color_fondo;
+    select.style.color = cfg.color_texto;
+    select.style.borderColor = cfg.color_fondo;
+  } else {
+    select.classList.remove("catalog-select-colored");
+    select.style.background = "";
+    select.style.color = "";
+    select.style.borderColor = "";
+  }
+}
+
+function pintarSelectsCatalogos() {
+  pintarSelectCatalogo(document.getElementById("q_material"), materialesMap);
+  pintarSelectCatalogo(document.getElementById("f_material"), materialesMap);
+  pintarSelectCatalogo(document.getElementById("q_impresion"), tiposImpresionMap);
+  pintarSelectCatalogo(document.getElementById("f_impresion"), tiposImpresionMap);
+}
+
+document.addEventListener("change", function(e) {
+  if (e.target && ["q_material", "f_material", "q_impresion", "f_impresion"].includes(e.target.id)) {
+    pintarSelectsCatalogos();
+  }
+});
+
+// ===========================
+// MATERIALES
+// ===========================
+async function cargarMateriales() {
+  let res = await db()
+    .from("materiales")
+    .select("id, nombre, precio_base, activo, color_fondo, color_texto")
+    .eq("activo", true)
+    .order("nombre", { ascending: true });
+
+  if (res.error) {
+    const msg = String(res.error.message || "");
+    if (msg.includes("color_fondo") || msg.includes("color_texto") || msg.includes("schema cache")) {
+      res = await db()
+        .from("materiales")
+        .select("id, nombre, precio_base, activo")
+        .eq("activo", true)
+        .order("nombre", { ascending: true });
+    }
+  }
+
+  if (res.error) {
+    console.error("Error cargando materiales:", res.error);
+    return;
+  }
+
+  materialesDB = res.data || [];
+
+  materialesMap = new Map(materialesDB.map(m => [
+    normalizarCatalogo(m.nombre),
+    {
+      color_fondo: colorSeguro(m.color_fondo, "#e5e7eb"),
+      color_texto: colorSeguro(m.color_texto, "#111827")
+    }
+  ]));
+
+  [document.getElementById("q_material"), document.getElementById("f_material")].forEach(select => {
+    if (!select) return;
+
+    const valorActual = select.value;
+
+    if (!opcionesCatalogoIguales(select, materialesDB, "Material")) {
+      select.innerHTML = `<option value="">Material</option>`;
+      materialesDB.forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m.nombre;
+        opt.textContent = m.nombre;
+        select.appendChild(opt);
+      });
+    }
+
+    if (valorActual) select.value = valorActual;
+  });
+
+  pintarSelectsCatalogos();
+}
+
+// ===========================
+// TIPOS DE IMPRESIÓN
+// ===========================
+async function cargarTiposImpresion() {
+  let res = await db()
+    .from("tipos_impresion")
+    .select("id, nombre, precio_extra, activo, color_fondo, color_texto")
+    .eq("activo", true)
+    .order("nombre", { ascending: true });
+
+  if (res.error) {
+    const msg = String(res.error.message || "");
+    if (msg.includes("color_fondo") || msg.includes("color_texto") || msg.includes("schema cache")) {
+      res = await db()
+        .from("tipos_impresion")
+        .select("id, nombre, precio_extra, activo")
+        .eq("activo", true)
+        .order("nombre", { ascending: true });
+    }
+  }
+
+  if (res.error) {
+    console.error("Error cargando tipos de impresión:", res.error);
+    return;
+  }
+
+  tiposImpresionDB = res.data || [];
+
+  tiposImpresionMap = new Map(tiposImpresionDB.map(t => [
+    normalizarCatalogo(t.nombre),
+    {
+      color_fondo: colorSeguro(t.color_fondo, "#e5e7eb"),
+      color_texto: colorSeguro(t.color_texto, "#111827")
+    }
+  ]));
+
+  [document.getElementById("q_impresion"), document.getElementById("f_impresion")].forEach(select => {
+    if (!select) return;
+
+    const valorActual = select.value;
+
+    if (!opcionesCatalogoIguales(select, tiposImpresionDB, "Impresión")) {
+      select.innerHTML = `<option value="">Impresión</option>`;
+      tiposImpresionDB.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.nombre;
+        opt.textContent = t.nombre;
+        select.appendChild(opt);
+      });
+    }
+
+    if (valorActual) select.value = valorActual;
+  });
+
+  pintarSelectsCatalogos();
+}
+
+// ===========================
+// COLORES DE ESTATUS
+// ===========================
+function claseTrabajo(valor) {
+  const estado = valor || "";
+  if (estado === "Solicitud") return "status-solicitud";
+  if (estado === "En curso") return "status-en-curso estado-en-curso";
+  if (estado === "Revisado") return "status-revisado";
+  if (estado === "Listo") return "status-listo";
+  return "";
+}
+
+function clasePago(valor) {
+  const estado = valor || "";
+  if (estado === "Pendiente") return "pago-pendiente";
+  if (estado === "Abonado") return "pago-abonado";
+  if (estado === "Pagado") return "pago-pagado";
+  return "";
+}
+
+function claseAbono(valor) {
+  const n = numeroSeguro(valor);
+  if (n > 0) return "abono-pos";
+  if (n < 0) return "abono-neg";
+  return "abono-zero";
+}
+
+function claseEntrega(valor) {
+  const tipo = normalizarBusqueda(valor);
+  if (tipo === "retiro en tienda" || tipo === "retiro") return "entrega-retiro";
+  if (tipo === "delivery") return "entrega-delivery";
+  if (tipo === "envio") return "entrega-envio";
+  return "";
+}
+
+function opcionesEntregaHtml(valorActual) {
+  const actual = String(valorActual || "");
+  return `
+    <option value="" ${!actual ? "selected" : ""}>Por definir</option>
+    <option value="Retiro en tienda" ${actual === "Retiro en tienda" ? "selected" : ""}>🏪 Retiro</option>
+    <option value="Delivery" ${actual === "Delivery" ? "selected" : ""}>🛵 Delivery</option>
+    <option value="Envío" ${actual === "Envío" ? "selected" : ""}>📦 Envío</option>
+  `;
+}
+
+// ===========================
+// NOTIFICACIONES
+// ===========================
+function normalizarEstadoNotificacion(valor) {
+  return String(valor || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function esEstadoListo(valor) {
+  return normalizarEstadoNotificacion(valor) === "listo";
+}
+
+async function resolverOperadorIdPorNombre(nombre) {
+  const nombreBuscado = normalizarEstadoNotificacion(nombre);
+  if (!nombreBuscado || !db()) return null;
+
+  try {
+    const { data, error } = await db()
+      .from("operadores")
+      .select("id,nombre")
+      .eq("activo", true);
+
+    if (error) throw error;
+
+    const encontrado = (data || []).find(op => {
+      const n = normalizarEstadoNotificacion(op.nombre);
+      const primero = n.split(" ")[0];
+      const buscadoPrimero = nombreBuscado.split(" ")[0];
+      return n === nombreBuscado || (primero && buscadoPrimero && primero === buscadoPrimero);
+    });
+
+    return encontrado ? Number(encontrado.id) : null;
+  } catch (e) {
+    console.warn("No se pudo resolver operador_id:", e);
+    return null;
+  }
+}
+
+async function crearNotificacionPedidoListoFallback(id, pedidoBase, estadoAnterior, estadoNuevo) {
+  if (!db()) return;
+  if (!esEstadoListo(estadoNuevo)) return;
+  if (esEstadoListo(estadoAnterior)) return;
+
+  const pedido = pedidoBase || pedidosDB.find(p => Number(p.id) === Number(id)) || {};
+  const operadorDestino = String(pedido.operador || "").trim();
+
+  if (!operadorDestino) {
+    console.warn("No se creó notificación: pedido sin operador", id);
+    return;
+  }
+
+  try {
+    const { data: existente } = await db()
+      .from("notificaciones")
+      .select("id")
+      .eq("pedido_id", id)
+      .eq("tipo", "pedido_listo")
+      .limit(1);
+
+    if (Array.isArray(existente) && existente.length) return;
+
+    const cliente = String(pedido.cliente || "").trim();
+    const descripcion = String(pedido.descripcion || "").trim();
+    const operadorDestinoId = await resolverOperadorIdPorNombre(operadorDestino);
+
+    const { error } = await db()
+      .from("notificaciones")
+      .insert([{
+        pedido_id: id,
+        destinatario_id: operadorDestinoId,
+        para_operador_id: operadorDestinoId,
+        destinatario: operadorDestino,
+        para_operador: operadorDestino,
+        cliente: cliente || null,
+        descripcion: descripcion || null,
+        mensaje: "El pedido de " + (cliente || "cliente sin nombre") + " ya está listo.",
+        visto: false,
+        leida: false,
+        tipo: "pedido_listo",
+        titulo: "Pedido listo"
+      }]);
+
+    if (error) {
+      console.error("No se pudo crear notificación de pedido listo:", error);
+      return;
+    }
+
+    if (typeof window.leerNotificaciones === "function") {
+      setTimeout(() => window.leerNotificaciones(true), 300);
+    }
+  } catch (e) {
+    console.error("Error creando notificación fallback:", e);
+  }
+}
+
+
+// ===========================
+// WHATSAPP · PEDIDO LISTO DETALLADO
+// ===========================
+function normalizarTelefonoWhatsApp(telefono) {
+  let numero = String(telefono || "").replace(/\D/g, "");
+  if (!numero) return "";
+
+  // Venezuela: 0414XXXXXXX → 58414XXXXXXX
+  if (numero.length === 11 && numero.startsWith("0")) {
+    numero = "58" + numero.slice(1);
+  } else if (numero.length === 10 && !numero.startsWith("58")) {
+    numero = "58" + numero;
+  }
+
+  return numero;
+}
+
+function textoEntregaWhatsApp(valor) {
+  const entrega = normalizarBusqueda(valor || "");
+  if (entrega === "retiro" || entrega === "retiro en tienda") return "Retiro en tienda";
+  if (entrega === "delivery") return "Delivery";
+  if (entrega === "envio") return "Envío";
+  return "Por definir";
+}
+
+function datosPagoWhatsApp(pedido) {
+  const deuda = resumenDeudaPedido(pedido || {});
+
+  if (deuda.estado === "sin_monto") {
+    return {
+      estado: "Sin monto",
+      saldo: "Sin monto definido"
+    };
+  }
+
+  if (deuda.estado === "pagado") {
+    return {
+      estado: "Pagado",
+      saldo: "Sin saldo pendiente"
+    };
+  }
+
+  if (deuda.estado === "abonado") {
+    return {
+      estado: "Abonado",
+      saldo: deuda.saldoTexto
+    };
+  }
+
+  return {
+    estado: "Pendiente",
+    saldo: deuda.saldoTexto
+  };
+}
+
+async function obtenerClienteWhatsApp(pedido) {
+  if (!pedido || !db()) return null;
+
+  const clienteId = pedido.cliente_id || clienteIdPorPedido(pedido);
+
+  if (clienteId) {
+    const local = clientesBusquedaDB.find(c => String(c.id) === String(clienteId));
+    if (local) return local;
+
+    const { data, error } = await db()
+      .from("clientes")
+      .select("id,nombre,telefono")
+      .eq("id", clienteId)
+      .maybeSingle();
+
+    if (!error && data) return data;
+  }
+
+  const nombre = normalizarBusqueda(pedido.cliente || "");
+  if (!nombre) return null;
+
+  const localPorNombre = clientesBusquedaDB.find(c => normalizarBusqueda(c.nombre) === nombre);
+  if (localPorNombre) return localPorNombre;
+
+  const { data, error } = await db()
+    .from("clientes")
+    .select("id,nombre,telefono")
+    .ilike("nombre", String(pedido.cliente || "").trim())
+    .limit(1)
+    .maybeSingle();
+
+  if (error) console.warn("No se pudo buscar el cliente para WhatsApp:", error);
+  return data || null;
+}
+
+async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, estadoNuevo) {
+  const anterior = normalizarEstadoNotificacion(estadoAnterior);
+  const nuevo = normalizarEstadoNotificacion(estadoNuevo);
+
+  // Se envía cuando pasa de cualquier estado distinto de Listo a Listo.
+  if (nuevo !== "listo") return;
+  if (anterior === "listo") return;
+  if (!db()) return;
+
+  try {
+    const pedidoActual =
+      pedidosDB.find(p => Number(p.id) === Number(id)) ||
+      pedidoBase ||
+      {};
+
+    // Número fijo de prueba. Todos los avisos llegan aquí.
+    const telefono = "584144143004";
+
+    // Plantilla oficial de prueba confirmada manualmente en Meta.
+    // Se usa sin parámetros para asegurar la entrega mientras se corrige
+    // la plantilla personalizada pedido_listo_detalle.
+    const { data, error } = await db().functions.invoke("enviar-whatsapp", {
+      body: {
+        to: telefono,
+        template: "hello_world",
+        language: "en_US",
+        parameters: []
+      }
+    });
+
+    if (error) throw error;
+
+    if (!data || data.ok !== true) {
+      throw new Error(
+        data?.error?.message ||
+        data?.data?.error?.message ||
+        "Meta no confirmó el envío"
+      );
+    }
+
+    const metaData = data?.data || data;
+    const mensajeId =
+      metaData?.messages?.[0]?.id ||
+      data?.messages?.[0]?.id ||
+      null;
+    const estadoMeta =
+      metaData?.messages?.[0]?.message_status ||
+      data?.messages?.[0]?.message_status ||
+      "accepted";
+
+    console.log("WhatsApp aceptado por Meta:", {
+      pedidoId: id,
+      cliente: pedidoActual.cliente || "",
+      telefono,
+      template: "hello_world",
+      language: "en_US",
+      mensajeId,
+      estadoMeta,
+      respuestaCompleta: data
+    });
+
+    mostrarToast("Pedido listo · WhatsApp de prueba enviado ✅");
+  } catch (error) {
+    console.error("No se pudo enviar WhatsApp para el pedido " + id + ":", error);
+    mostrarToast("Pedido listo, pero falló WhatsApp ⚠️");
+  }
+}
+
+// ===========================
+// CARGAR PEDIDOS
+// ===========================
+async function cargarUltimosPagosPedidos() {
+  ultimosPagosPorPedido = new Map();
+
+  if (!validarSupabase()) return;
+
+  try {
+    const { data, error } = await db()
+      .from("pedidos_pagos")
+      .select("id,pedido_id,monto_recibido,moneda,equivalente_usd,metodo_pago,metodo_otro,referencia,created_at")
+      .order("created_at", { ascending: false })
+      .limit(5000);
+
+    if (error) {
+      console.warn("No se pudieron cargar últimos pagos:", error);
+      return;
+    }
+
+    (data || []).forEach(pago => {
+      const key = Number(pago.pedido_id || 0);
+      if (!key || ultimosPagosPorPedido.has(key)) return;
+      ultimosPagosPorPedido.set(key, pago);
+    });
+  } catch (e) {
+    console.warn("No se pudo cargar historial de pagos:", e);
+  }
+}
+
+async function cargarPedidos(resetPage = true) {
+  if (!validarSupabase()) return;
+
+  const { data, error } = await db()
+    .from("pedidos")
+    .select("*")
+    .order("id", { ascending: false });
+
+  if (error) {
+    console.error("Error cargando pedidos:", error);
+    alert("Error cargando pedidos: " + error.message);
+    return;
+  }
+
+  pedidosDB = data || [];
+  console.log("Pedidos cargados:", pedidosDB.length);
+
+  await cargarUltimosPagosPedidos();
+  renderPedidosPaginados(resetPage);
+
+  if (typeof aplicarPermisosComanda === "function") aplicarPermisosComanda();
+}
+
+function getClienteExtraBusqueda(nombreCliente) {
+  try {
+    const clienteNorm = normalizarBusqueda(nombreCliente);
+    const clienteRelacionado = clientesBusquedaDB.find(c => normalizarBusqueda(c.nombre) === clienteNorm);
+    return clienteRelacionado ? [clienteRelacionado.telefono, clienteRelacionado.correo, clienteRelacionado.notas].join(" ") : "";
+  } catch (e) {
+    return "";
+  }
+}
+
+function pedidoCumpleFiltros(p) {
+  const texto = normalizarBusqueda(document.getElementById("searchInput")?.value || "");
+  const estadoFiltro = document.getElementById("filterStatus")?.value || "";
+  const pagoFiltro = document.getElementById("filterPago")?.value || "";
+  const desde = document.getElementById("filterFechaDesde")?.value || "";
+  const hasta = document.getElementById("filterFechaHasta")?.value || "";
+  const operadorFiltro = document.getElementById("filterOperador")?.value || "";
+
+  const fecha = String(p.fecha || "");
+  const operador = String(p.operador || "");
+  const estatus = String(p.estatus_trabajo || "");
+  const pago = String(p.estatus_pago || "");
+  const deuda = resumenDeudaPedido(p);
+  const pagoSimple = typeof resumenPagoSimplePedido === "function" ? resumenPagoSimplePedido(p) : null;
+  const ultimoPago = ultimosPagosPorPedido.get(Number(p.id));
+
+  const contenido = normalizarBusqueda([
+    p.id,
+    p.fecha,
+    p.cliente,
+    p.descripcion,
+    p.cantidad,
+    p.material,
+    p.tipo_impresion,
+    p.tipo_entrega,
+    p.precio,
+    p.precio_total,
+    p.pago_simple_total,
+    p.pago_simple_pagado,
+    p.pago_simple_saldo,
+    p.pago_simple_a_favor,
+    p.pago_simple_estado,
+    p.pago_simple_tipo,
+    p.moneda_deuda,
+    p.tipo_tasa_deuda,
+    deuda.totalTexto,
+    deuda.pagadoTexto,
+    deuda.saldoTexto,
+    pagoSimple?.estado,
+    pagoSimple?.tipo,
+    pagoSimple?.fecha,
+    ultimoPago?.metodo_pago,
+    ultimoPago?.metodo_otro,
+    ultimoPago?.referencia,
+    p.estatus_trabajo,
+    p.estatus_pago,
+    p.fecha_entrega,
+    p.archivo_nombre,
+    getClienteExtraBusqueda(p.cliente)
+  ].join(" "));
+
+  if (texto && !contenido.includes(texto)) return false;
+
+  if (estadoFiltro === "Procesos") {
+    if (!["Solicitud", "En curso", "Revisado"].includes(estatus)) return false;
+  } else if (estadoFiltro && estatus !== estadoFiltro) {
+    return false;
+  }
+
+  if (pagoFiltro) {
+    const f = String(pagoFiltro || "").toUpperCase();
+    const item = pagoSimple || resumenPagoSimplePedido(p);
+    const total = numeroSeguro(item.total || 0);
+    const saldo = numeroSeguro(item.saldo || 0);
+    const aFavor = numeroSeguro(item.aFavor || item.favor || 0);
+    const estadoSimple = String(item.estado || "").toUpperCase();
+
+    // Filtro simple:
+    // Pendiente = todo pedido que todavía debe, tenga abono o no.
+    // Pagado = pedido saldado, incluyendo los que quedaron con saldo a favor.
+    const pendiente = total > 0.009 && saldo > 0.009 && estadoSimple !== "PAGADO" && estadoSimple !== "A_FAVOR";
+    const pagadoCompleto = (total > 0.009 && saldo <= 0.009) || estadoSimple === "PAGADO";
+    const pagadoOAFavor = pagadoCompleto || aFavor > 0.009 || estadoSimple === "A_FAVOR";
+
+    if (f === "PENDIENTE" && !pendiente) return false;
+    else if (f === "PAGADO" && !pagadoOAFavor) return false;
+    else if (!["PENDIENTE","PAGADO"].includes(f) && pago !== pagoFiltro) return false;
+  }
+
+  if (operadorFiltro && operador !== operadorFiltro) return false;
+  if (desde && fecha < desde) return false;
+  if (hasta && fecha > hasta) return false;
+
+  return true;
+}
+
+function tipoDeudaNormalizado(valor) {
+  const v = String(valor || "USD_FIJO").toUpperCase();
+  if (v === "BCV" || v === "BS_BCV") return "BS_BCV";
+  if (v === "MANUAL" || v === "BS_MANUAL") return "BS_MANUAL";
+  return "USD_FIJO";
+}
+
+function esDeudaBs(pedido) {
+  const tipo = tipoDeudaNormalizado(pedido?.tipo_tasa_deuda || pedido?.tipo_deuda);
+  const moneda = String(pedido?.moneda_deuda || "").toUpperCase();
+  return moneda === "BS" || tipo === "BS_BCV" || tipo === "BS_MANUAL";
+}
+
+function tasaDeudaPedido(pedido) {
+  const t = numeroSeguro(pedido?.tasa_deuda || 0);
+  return t > 0 ? t : 1;
+}
+
+function totalBaseUsdPedido(pedido) {
+  if (!pedido) return 0;
+
+  const posibles = [
+    pedido.precio_total,
+    pedido.total,
+    pedido.precio,
+    pedido.precio_unitario_calculado
+  ];
+
+  for (const valor of posibles) {
+    const n = numeroSeguro(valor);
+    if (n > 0) return n;
+  }
+
+  return 0;
+}
+
+function totalBsPedido(pedido) {
+  if (!pedido) return 0;
+  const guardado = numeroSeguro(pedido.total_bs || 0);
+  if (guardado > 0) return guardado;
+  return totalBaseUsdPedido(pedido) * tasaDeudaPedido(pedido);
+}
+
+function pagadoUsdPedido(pedido) {
+  return numeroSeguro(pedido ? pedido.monto_abonado : 0);
+}
+
+function pagadoBsPedido(pedido) {
+  if (!pedido) return 0;
+  const guardado = numeroSeguro(pedido.monto_abonado_bs || 0);
+  if (guardado > 0) return guardado;
+  if (esDeudaBs(pedido)) return pagadoUsdPedido(pedido) * tasaDeudaPedido(pedido);
+  return 0;
+}
+
+function formatoBs(valor) {
+  return "Bs " + money(valor);
+}
+
+function formatoUsd(valor) {
+  return "$" + money(valor);
+}
+
+function etiquetaTipoDeuda(pedido) {
+  const tipo = tipoDeudaNormalizado(pedido?.tipo_tasa_deuda || pedido?.tipo_deuda);
+  const tasa = tasaDeudaPedido(pedido);
+
+  if (tipo === "BS_BCV") return "BCV " + money(tasa);
+  if (tipo === "BS_MANUAL") return "Tasa " + money(tasa);
+  return "Dólares ($)";
+}
+
+function resumenDeudaPedido(pedido) {
+  const bs = esDeudaBs(pedido);
+  const totalUsd = totalBaseUsdPedido(pedido);
+  const tasa = tasaDeudaPedido(pedido);
+  const total = bs ? totalBsPedido(pedido) : totalUsd;
+  const pagado = bs ? pagadoBsPedido(pedido) : pagadoUsdPedido(pedido);
+  const saldo = Math.max(total - pagado, 0);
+  const estado = total <= 0 ? "sin_monto" : (saldo <= 0.009 ? "pagado" : (pagado > 0 ? "abonado" : "debe"));
+
+  return {
+    esBs: bs,
+    tipo: tipoDeudaNormalizado(pedido?.tipo_tasa_deuda || pedido?.tipo_deuda),
+    tasa,
+    total,
+    totalUsd,
+    totalBs: bs ? total : 0,
+    pagado,
+    saldo,
+    estado,
+    totalTexto: bs ? formatoBs(total) : formatoUsd(total),
+    pagadoTexto: bs ? formatoBs(pagado) : formatoUsd(pagado),
+    saldoTexto: bs ? formatoBs(saldo) : formatoUsd(saldo),
+    tipoTexto: etiquetaTipoDeuda(pedido)
+  };
+}
+
+function payloadDeudaDesdeFormulario(prefijo) {
+  const montoBaseUsd = numeroSeguro(document.getElementById(prefijo + "_precio_total")?.value || 0);
+  const tipo = tipoDeudaNormalizado(document.getElementById(prefijo + "_tipo_deuda")?.value || "USD_FIJO");
+  let tasa = numeroSeguro(document.getElementById(prefijo + "_tasa_deuda")?.value || 1);
+
+  if (tipo === "USD_FIJO") tasa = 1;
+  if (tasa <= 0) tasa = 1;
+
+  const esBs = tipo === "BS_BCV" || tipo === "BS_MANUAL";
+
+  return {
+    precio_total: montoBaseUsd,
+    moneda_deuda: esBs ? "BS" : "USD",
+    tipo_tasa_deuda: tipo,
+    tasa_deuda: tasa,
+    total_bs: esBs ? (montoBaseUsd * tasa) : null
+  };
+}
+
+function aplicarFormularioDeuda(prefijo, pedido) {
+  const monto = totalBaseUsdPedido(pedido);
+  const tipo = tipoDeudaNormalizado(pedido?.tipo_tasa_deuda || (esDeudaBs(pedido) ? "BS_BCV" : "USD_FIJO"));
+  const tasa = tasaDeudaPedido(pedido);
+
+  const montoEl = document.getElementById(prefijo + "_precio_total");
+  const tipoEl = document.getElementById(prefijo + "_tipo_deuda");
+  const tasaEl = document.getElementById(prefijo + "_tasa_deuda");
+
+  if (montoEl) montoEl.value = monto > 0 ? money(monto) : "";
+  if (tipoEl) tipoEl.value = tipo;
+  if (tasaEl) tasaEl.value = tipo === "USD_FIJO" ? "" : money(tasa);
+
+  actualizarVisibilidadTasaDeuda(prefijo);
+}
+
+function actualizarVisibilidadTasaDeuda(prefijo) {
+  const tipoEl = document.getElementById(prefijo + "_tipo_deuda");
+  const tasaEl = document.getElementById(prefijo + "_tasa_deuda");
+  const wrap = document.getElementById(prefijo + "_tasa_deuda_wrap");
+
+  const tipo = tipoDeudaNormalizado(tipoEl?.value || "USD_FIJO");
+  const mostrar = tipo !== "USD_FIJO";
+
+  if (tasaEl) {
+    tasaEl.style.display = mostrar ? "" : "none";
+    if (!mostrar) tasaEl.value = "";
+  }
+
+  if (wrap) wrap.style.display = mostrar ? "" : "none";
+}
+
+
+function onPagoTipoDeudaChange() {
+  const tipo = tipoDeudaNormalizado(getEl("pago_deuda_tipo")?.value || "USD_FIJO");
+  const wrap = getEl("pago_deuda_tasa_wrap");
+  const tasaEl = getEl("pago_deuda_tasa");
+
+  if (wrap) wrap.style.display = tipo === "USD_FIJO" ? "none" : "";
+  if (tasaEl && tipo === "USD_FIJO") tasaEl.value = "";
+}
+
+function payloadDeudaDesdePagoModal() {
+  const montoBaseUsd = numeroSeguro(getEl("pago_deuda_monto")?.value || 0);
+  const tipo = tipoDeudaNormalizado(getEl("pago_deuda_tipo")?.value || "USD_FIJO");
+  let tasa = numeroSeguro(getEl("pago_deuda_tasa")?.value || 1);
+
+  if (tipo === "USD_FIJO") tasa = 1;
+  if (tasa <= 0) tasa = 1;
+
+  const esBs = tipo === "BS_BCV" || tipo === "BS_MANUAL";
+
+  return {
+    precio_total: montoBaseUsd,
+    moneda_deuda: esBs ? "BS" : "USD",
+    tipo_tasa_deuda: tipo,
+    tasa_deuda: tasa,
+    total_bs: esBs ? (montoBaseUsd * tasa) : null
+  };
+}
+
+function pedidoConDeudaPagoModal(pedido) {
+  if (!pedido) return pedido;
+  const modal = getEl("pagoBackdrop");
+  const montoEl = getEl("pago_deuda_monto");
+  if (!modal || !montoEl) return pedido;
+  return { ...pedido, ...payloadDeudaDesdePagoModal() };
+}
+
+function inputAbonoHtml(id, monto) {
+  return `
+    <div class="abono-wrap">
+      <input class="cell-edit abono-edit ${claseAbono(monto)}" data-abono-id="${escapeHtml(id)}" type="number" step="0.01" value="${money(monto)}" title="Editar abono equivalente USD" onclick="event.stopPropagation()"/>
+    </div>
+  `;
+}
+
+function ultimoPagoTexto(id) {
+  const pago = ultimosPagosPorPedido.get(Number(id));
+  if (!pago) return "";
+
+  const metodo = String(pago.metodo_otro || pago.metodo_pago || "").trim();
+  const ref = String(pago.referencia || "").trim();
+  const monto = pago.moneda === "BS" ? formatoBs(pago.monto_recibido) : formatoUsd(pago.monto_recibido);
+
+  const partes = [monto, metodo, ref ? "Ref. " + ref : ""].filter(Boolean);
+  return partes.join(" · ");
+}
+
+function botonPagoHtml(id, pedido) {
+  const deuda = resumenDeudaPedido(pedido);
+  let texto = "Definir";
+  let clase = "pay-sinmonto";
+
+  if (deuda.estado === "pagado") {
+    texto = "Pagado";
+    clase = "pay-pagado";
+  } else if (deuda.estado === "abonado") {
+    texto = "Debe " + deuda.saldoTexto;
+    clase = "pay-abonado";
+  } else if (deuda.estado === "debe") {
+    texto = "Debe " + deuda.saldoTexto;
+    clase = "pay-debe";
+  }
+
+  const ultimo = ultimoPagoTexto(id);
+
+  return `
+    <div class="payment-action-wrap">
+      <button class="pay-cell-btn ${clase}" type="button" data-pago-id="${escapeHtml(id)}" title="Registrar pago">
+        <span>${escapeHtml(texto)}</span>
+        <small>${escapeHtml(deuda.tipoTexto)}</small>
+      </button>
+      ${ultimo ? `<div class="pay-last-info" title="${escapeHtml(ultimo)}">${escapeHtml(ultimo)}</div>` : ""}
+    </div>
+  `;
+}
+
+function deudaCellHtml(pedido) {
+  const deuda = resumenDeudaPedido(pedido);
+  if (deuda.total <= 0) return `<span class="deuda-pill deuda-empty">Sin monto</span>`;
+
+  return `
+    <div class="deuda-cell-wrap">
+      <strong>${escapeHtml(deuda.totalTexto)}</strong>
+      <span>${escapeHtml(deuda.tipoTexto)}</span>
+    </div>
+  `;
+}
+
+function pedidoFilaHTML(p) {
+  const id = Number(p.id);
+
+  const archivo = p.archivo_url
+    ? `<a class="file-link-chip" href="${escapeHtml(p.archivo_url)}" target="_blank" onclick="event.stopPropagation()">📎 ${escapeHtml(p.archivo_nombre || "Archivo")}</a>`
+    : "—";
+
+  const cantidadDisabled = puedeModificarCantidadLocal() ? "" : "disabled";
+  const st = String(p.estatus_trabajo || "Solicitud");
+  const pg = String(p.estatus_pago || "Pendiente");
+  const entrega = String(p.tipo_entrega || "");
+  const abono = numeroSeguro(p.monto_abonado || 0);
+
+  return `
+    <tr onclick="openEditOrder(${id})">
+      <td>${escapeHtml(p.id)}</td>
+      <td>${escapeHtml(p.fecha)}</td>
+      <td>${escapeHtml(p.operador)}</td>
+      <td>${escapeHtml(p.cliente)}</td>
+      <td title="${escapeHtml(p.descripcion)}">${escapeHtml(p.descripcion)}</td>
+
+      <td>
+        <input 
+          class="cell-edit"
+          value="${escapeHtml(p.cantidad)}" 
+          onchange="actualizarCampoPedido(${id}, 'cantidad', this.value)"
+          onclick="event.stopPropagation()"
+          ${cantidadDisabled}
+        />
+      </td>
+
+      <td>${chipCatalogo(p.material, "material")}</td>
+      <td>${chipCatalogo(p.tipo_impresion, "impresion")}</td>
+      <td class="tipo-entrega-cell">
+        <select
+          class="cell-select entrega-select ${claseEntrega(entrega)}"
+          onchange="actualizarCampoPedido(${id}, 'tipo_entrega', this.value); this.className='cell-select entrega-select ' + claseEntrega(this.value)"
+          onclick="event.stopPropagation()"
+          title="Forma de entrega"
+        >
+          ${opcionesEntregaHtml(entrega)}
+        </select>
+      </td>
+
+      <td>
+        <select 
+          class="cell-select ${claseTrabajo(st)}"
+          onchange="actualizarCampoPedido(${id}, 'estatus_trabajo', this.value); this.className='cell-select ' + claseTrabajo(this.value)"
+          onclick="event.stopPropagation()"
+        >
+          <option ${st === "Solicitud" ? "selected" : ""}>Solicitud</option>
+          <option ${st === "En curso" ? "selected" : ""}>En curso</option>
+          <option ${st === "Revisado" ? "selected" : ""}>Revisado</option>
+          <option ${st === "Listo" ? "selected" : ""}>Listo</option>
+        </select>
+      </td>
+
+      <td>
+        <select 
+          class="cell-select ${clasePago(pg)}"
+          onchange="actualizarCampoPedido(${id}, 'estatus_pago', this.value); this.className='cell-select ' + clasePago(this.value)"
+          onclick="event.stopPropagation()"
+        >
+          <option ${pg === "Pendiente" ? "selected" : ""}>Pendiente</option>
+          <option ${pg === "Abonado" ? "selected" : ""}>Abonado</option>
+          <option ${pg === "Pagado" ? "selected" : ""}>Pagado</option>
+        </select>
+      </td>
+
+      <td class="abono-cell">${inputAbonoHtml(id, abono)}</td>
+      <td class="entrega-cell">${escapeHtml(p.fecha_entrega || "—")}</td>
+      <td class="pago-action-cell">${botonPagoHtml(id, p)}</td>
+      <td>${archivo}</td>
+    </tr>
+  `;
+}
+
+
+function renderPaginacionPedidos(total, paginas, inicio, fin) {
+  const bar = document.getElementById("paginationBar");
+  if (!bar) return;
+
+  if (!total) {
+    bar.innerHTML = `<span class="page-info">0 pedidos</span>`;
+    return;
+  }
+
+  bar.innerHTML = `
+    <button class="page-btn" type="button" onclick="cambiarPaginaPedidos(-1)" ${paginaActualPedidos <= 1 ? "disabled" : ""}>← Anterior</button>
+    <span class="page-info">${inicio + 1}-${fin} de ${total}</span>
+    <span class="page-info">Página ${paginaActualPedidos} / ${paginas}</span>
+    <button class="page-btn" type="button" onclick="cambiarPaginaPedidos(1)" ${paginaActualPedidos >= paginas ? "disabled" : ""}>Siguiente →</button>
+    <select class="page-select" onchange="cambiarTamanoPaginaPedidos(this.value)">
+      <option value="20" ${pedidosPorPagina === 20 ? "selected" : ""}>1-20 por página</option>
+      <option value="40" ${pedidosPorPagina === 40 ? "selected" : ""}>1-40 por página</option>
+      <option value="100" ${pedidosPorPagina === 100 ? "selected" : ""}>1-100 por página</option>
+    </select>
+  `;
+}
+
+function renderPedidosPaginados(resetPage = false) {
+  const tabla = document.getElementById("orderTableBody");
+  const emptyState = document.getElementById("emptyState");
+
+  if (!tabla) return;
+
+  const filtrados = pedidosDB
+    .filter(pedidoCumpleFiltros)
+    .sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+
+  const total = filtrados.length;
+  const paginas = Math.max(1, Math.ceil(total / pedidosPorPagina));
+
+  if (resetPage) paginaActualPedidos = 1;
+  if (paginaActualPedidos < 1) paginaActualPedidos = 1;
+  if (paginaActualPedidos > paginas) paginaActualPedidos = paginas;
+
+  const inicio = (paginaActualPedidos - 1) * pedidosPorPagina;
+  const fin = Math.min(inicio + pedidosPorPagina, total);
+  const pagina = filtrados.slice(inicio, fin);
+
+  tabla.innerHTML = "";
+
+  if (!total) {
+    if (emptyState) {
+      emptyState.style.display = "block";
+      emptyState.textContent = "— SIN PEDIDOS EN ESTE FILTRO —";
+    }
+    renderPaginacionPedidos(0, 1, 0, 0);
+    return;
+  }
+
+  if (emptyState) {
+    emptyState.style.display = "none";
+    emptyState.textContent = "— SIN PEDIDOS —";
+  }
+
+  tabla.innerHTML = pagina.map(pedidoFilaHTML).join("");
+  renderPaginacionPedidos(total, paginas, inicio, fin);
+
+  if (typeof aplicarPermisosComanda === "function") aplicarPermisosComanda();
+  if (typeof aplicarColoresEstadosYAbonos === "function") setTimeout(aplicarColoresEstadosYAbonos, 30);
+}
+
+function cambiarPaginaPedidos(delta) {
+  paginaActualPedidos += Number(delta || 0);
+  renderPedidosPaginados(false);
+}
+
+function cambiarTamanoPaginaPedidos(valor) {
+  pedidosPorPagina = Number(valor || 40);
+  paginaActualPedidos = 1;
+  renderPedidosPaginados(false);
+}
+
+window.cambiarPaginaPedidos = cambiarPaginaPedidos;
+window.cambiarTamanoPaginaPedidos = cambiarTamanoPaginaPedidos;
+window.renderPedidosPaginados = renderPedidosPaginados;
+
+// ===========================
+// GUARDAR FILA RÁPIDA
+// ===========================
+async function saveQuickOrder() {
+  if (!validarSupabase()) return;
+
+  let fecha = document.getElementById("q_fecha")?.value || "";
+  let operador = document.getElementById("q_operador")?.value || "";
+  let cliente = document.getElementById("q_cliente")?.value || "";
+  const descripcion = document.getElementById("q_descripcion")?.value || "";
+  const cantidad = document.getElementById("q_cantidad")?.value || "";
+  const material = document.getElementById("q_material")?.value || "";
+  const tipo_impresion = document.getElementById("q_impresion")?.value || "";
+  const tipo_entrega = document.getElementById("q_tipo_entrega")?.value || "";
+  const monto_abonado = numeroSeguro(document.getElementById("q_monto_abonado")?.value || 0);
+  const estatus_trabajo = document.getElementById("q_estatus_trabajo")?.value || "Solicitud";
+  let estatus_pago = document.getElementById("q_estatus_pago")?.value || "Pendiente";
+  const fecha_entrega = document.getElementById("q_entrega")?.value || null;
+  const deudaPayload = payloadDeudaDesdeFormulario("q");
+
+  const opSesion = getOperadorSesionLocal();
+
+  if (!puedeModificarOperadorLocal() && opSesion && opSesion.nombre) operador = opSesion.nombre;
+  if (!fecha) fecha = new Date().toISOString().split("T")[0];
+  if (monto_abonado > 0 && estatus_pago === "Pendiente") estatus_pago = "Abonado";
+
+  if (!cliente && !descripcion) {
+    alert("Coloca al menos cliente o descripción.");
+    return;
+  }
+
+  const archivoData = await subirArchivoPedido();
+
+  const decisionCliente = await resolverNombreClienteIdAntesDeGuardar(cliente);
+  if (!decisionCliente.ok) return;
+
+  cliente = decisionCliente.nombreFinal || cliente;
+  const cliente_id = decisionCliente.id || null;
+
+  const { error } = await db()
+    .from("pedidos")
+    .insert([{
+      fecha,
+      operador,
+      cliente_id,
+      cliente,
+      descripcion,
+      cantidad,
+      material,
+      tipo_impresion,
+      tipo_entrega,
+      estatus_trabajo,
+      estatus_pago,
+      monto_abonado,
+      fecha_entrega,
+      ...deudaPayload,
+      monto_abonado_bs: deudaPayload.moneda_deuda === "BS" ? (monto_abonado * deudaPayload.tasa_deuda) : 0,
+      ...payloadPagoSimpleInicial(deudaPayload, monto_abonado, fecha),
+      archivo_url: archivoData.archivo_url,
+      archivo_nombre: archivoData.archivo_nombre
+    }]);
+
+  if (error) {
+    console.error("Error guardando pedido rápido:", error);
+    alert("Error guardando pedido: " + error.message);
+    return;
+  }
+
+  archivoSeleccionado = null;
+  limpiarFilaRapida();
+  ponerFechaHoy();
+
+  await cargarClientesBusqueda();
+  await cargarPedidos();
+
+  mostrarToast("Pedido agregado ✅");
+  animarGuardadoRapido();
+}
+
+// ===========================
+// GUARDAR MODAL
+// ===========================
+async function saveOrder() {
+  if (!validarSupabase()) return;
+
+  let fecha = document.getElementById("f_fecha")?.value || "";
+  let operador = document.getElementById("f_operador")?.value || "";
+  let cliente = document.getElementById("f_cliente")?.value || "";
+  const descripcion = document.getElementById("f_descripcion")?.value || "";
+  const cantidad = document.getElementById("f_cantidad")?.value || "";
+  const material = document.getElementById("f_material")?.value || "";
+  const tipo_impresion = document.getElementById("f_impresion")?.value || "";
+  const tipo_entrega = document.getElementById("f_tipo_entrega")?.value || "";
+  const monto_abonado = numeroSeguro(document.getElementById("f_monto_abonado")?.value || 0);
+  const fecha_entrega = document.getElementById("f_entrega")?.value || null;
+  const deudaPayload = payloadDeudaDesdeFormulario("f");
+
+  const opSesion = getOperadorSesionLocal();
+
+  if (!puedeModificarOperadorLocal() && opSesion && opSesion.nombre) operador = opSesion.nombre;
+  if (!fecha) fecha = new Date().toISOString().split("T")[0];
+
+  const decisionCliente = await resolverNombreClienteIdAntesDeGuardar(cliente);
+  if (!decisionCliente.ok) return;
+
+  cliente = decisionCliente.nombreFinal || cliente;
+  const cliente_id = decisionCliente.id || null;
+
+  const archivoData = await subirArchivoPedido();
+
+  const datosPedido = {
+    fecha,
+    operador,
+    cliente_id,
+    cliente,
+    descripcion,
+    material,
+    tipo_impresion,
+    tipo_entrega,
+    monto_abonado,
+    fecha_entrega,
+    ...deudaPayload,
+    monto_abonado_bs: deudaPayload.moneda_deuda === "BS" ? (monto_abonado * deudaPayload.tasa_deuda) : 0,
+    ...payloadPagoSimpleInicial(deudaPayload, monto_abonado, fecha)
+  };
+
+  if (monto_abonado > 0) {
+    datosPedido.estatus_pago = estadoSupabaseDesdePagoSimple(estadoPagoSimpleDesdeMontos(deudaPayload.precio_total, monto_abonado));
+  }
+  if (puedeModificarCantidadLocal() || !pedidoEditandoId) datosPedido.cantidad = cantidad;
+
+  if (archivoData.archivo_url) {
+    datosPedido.archivo_url = archivoData.archivo_url;
+    datosPedido.archivo_nombre = archivoData.archivo_nombre;
+  }
+
+  let error;
+
+  if (pedidoEditandoId) {
+    const respuesta = await db()
+      .from("pedidos")
+      .update(datosPedido)
+      .eq("id", pedidoEditandoId);
+
+    error = respuesta.error;
+  } else {
+    datosPedido.estatus_trabajo = "Solicitud";
+    datosPedido.estatus_pago = monto_abonado > 0 ? "Abonado" : "Pendiente";
+
+    const respuesta = await db()
+      .from("pedidos")
+      .insert([datosPedido]);
+
+    error = respuesta.error;
+  }
+
+  if (error) {
+    console.error("Error guardando pedido:", error);
+    alert("Error guardando pedido: " + error.message);
+    return;
+  }
+
+  pedidoEditandoId = null;
+  archivoSeleccionado = null;
+  closeModal("orderBackdrop");
+
+  await cargarClientesBusqueda();
+  await cargarPedidos();
+
+  mostrarToast("Pedido guardado ✅");
+}
+
+// ===========================
+// ACTUALIZAR CAMPO RÁPIDO
+// ===========================
+async function actualizarCampoPedido(id, campo, valor) {
+  if (!validarSupabase()) return;
+
+  const pedidoOriginal = pedidosDB.find(p => Number(p.id) === Number(id));
+  const valorAnteriorPedidoOriginal = pedidoOriginal ? pedidoOriginal[campo] : undefined;
+
+  if (campo === "cantidad" && !puedeModificarCantidadLocal()) {
+    alert("No tienes permiso para modificar cantidad.");
+    await cargarPedidos(false);
+    return;
+  }
+
+  if (campo === "operador" && !puedeModificarOperadorLocal()) {
+    alert("No tienes permiso para modificar operador.");
+    await cargarPedidos(false);
+    return;
+  }
+
+  window.__COMANDA_SUPRIMIR_REFRESH_PEDIDOS_HASTA = Date.now() + 2500;
+
+  const pedidoLocal = pedidosDB.find(p => Number(p.id) === Number(id));
+  const valorAnteriorLocal = pedidoLocal ? pedidoLocal[campo] : undefined;
+
+  if (pedidoLocal) pedidoLocal[campo] = valor;
+
+  const { error } = await db()
+    .from("pedidos")
+    .update({ [campo]: valor })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error actualizando campo:", error);
+    if (pedidoLocal) pedidoLocal[campo] = valorAnteriorLocal;
+    alert("Error actualizando: " + error.message);
+    return;
+  }
+
+  if (campo === "estatus_trabajo") {
+    await crearNotificacionPedidoListoFallback(id, pedidoOriginal, valorAnteriorPedidoOriginal, valor);
+    await enviarWhatsAppCuandoPedidoListo(id, pedidoOriginal, valorAnteriorPedidoOriginal, valor);
+  }
+}
+
+async function actualizarAbonoPedido(id, monto) {
+  if (!validarSupabase()) return;
+
+  const valor = numeroSeguro(monto);
+  const payload = { monto_abonado: valor };
+  if (valor > 0) payload.estatus_pago = "Abonado";
+
+  const pedidoLocal = pedidosDB.find(p => Number(p.id) === Number(id));
+  if (pedidoLocal) {
+    pedidoLocal.monto_abonado = valor;
+    if (valor > 0) pedidoLocal.estatus_pago = "Abonado";
+  }
+
+  const { error } = await db()
+    .from("pedidos")
+    .update(payload)
+    .eq("id", id);
+
+  if (error) {
+    console.error("No se pudo actualizar abono:", error);
+    alert("No se pudo actualizar abono. Revisa Supabase.");
+    await cargarPedidos(false);
+    return;
+  }
+
+  mostrarToast("Abono actualizado");
+  renderPedidosPaginados(false);
+}
+
+
+// ===========================
+// PAGO SIMPLE DEFINITIVO V58
+// ===========================
+const PAGO_SIMPLE_VERSION = "v76_whatsapp_hello_world";
+const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
+let pagoSimpleActualId = null;
+let pagoSimpleHistorialActual = [];
+
+function fechaISO() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function fechaCortaPagoSimple(iso) {
+  if (!iso) return "";
+  const p = String(iso).slice(0, 10).split("-");
+  if (p.length !== 3) return String(iso).slice(0, 10);
+  return p[2] + "/" + p[1];
+}
+
+function tipoPagoSimpleDesdePedido(pedido) {
+  const simple = String(pedido?.pago_simple_tipo || "").toUpperCase().trim();
+  if (simple === "BCV" || simple === "DIVISA") return simple;
+
+  const tipo = String(pedido?.tipo_tasa_deuda || "").toUpperCase();
+  const moneda = String(pedido?.moneda_deuda || "").toUpperCase();
+  if (tipo.includes("BCV") || moneda === "BS") return "BCV";
+  return "DIVISA";
+}
+
+function totalPagoSimplePedido(pedido) {
+  // Para no arrastrar pagos viejos, el sistema nuevo solo toma pago_simple_total.
+  return numeroSeguro(pedido?.pago_simple_total || 0);
+}
+
+function pagadoPagoSimplePedido(pedido) {
+  // Para no arrastrar abonos viejos, el sistema nuevo solo toma pago_simple_pagado.
+  return numeroSeguro(pedido?.pago_simple_pagado || 0);
+}
+
+function tasaPagoSimplePedido(pedido) {
+  const t = numeroSeguro(pedido?.tasa_deuda || 0);
+  return t > 0 ? t : 0;
+}
+
+function estadoPagoSimpleDesdeMontos(total, pagado) {
+  total = numeroSeguro(total);
+  pagado = numeroSeguro(pagado);
+  if (total <= 0) return "SIN_MONTO";
+  if (pagado > total + 0.009) return "A_FAVOR";
+  if (pagado >= total - 0.009) return "PAGADO";
+  if (pagado > 0.009) return "ABONADO";
+  return "PENDIENTE";
+}
+
+function estadoSupabaseDesdePagoSimple(estado) {
+  const e = String(estado || "").toUpperCase();
+  if (e === "PAGADO" || e === "A_FAVOR") return "Pagado";
+  if (e === "ABONADO") return "Abonado";
+  return "Pendiente";
+}
+
+function textoTipoPagoSimple(item) {
+  if (item.tipo === "BCV") return item.tasa > 0 ? "BCV " + money(item.tasa) : "BCV";
+  return "Divisa";
+}
+
+function resumenPagoSimplePedido(pedido) {
+  const total = totalPagoSimplePedido(pedido);
+  const pagado = pagadoPagoSimplePedido(pedido);
+  const saldo = Math.max(total - pagado, 0);
+  const aFavor = Math.max(pagado - total, 0);
+  const tipo = tipoPagoSimpleDesdePedido(pedido);
+  const tasa = tasaPagoSimplePedido(pedido);
+  const estadoGuardado = String(pedido?.pago_simple_estado || "").toUpperCase();
+  const estado = estadoGuardado && estadoGuardado !== "PENDIENTE_PAGO"
+    ? estadoGuardado
+    : estadoPagoSimpleDesdeMontos(total, pagado);
+
+  return {
+    id: Number(pedido?.id || 0),
+    monto: total,
+    total,
+    pagado,
+    saldo,
+    aFavor,
+    favor: aFavor,
+    tipo,
+    tasa,
+    estado,
+    fecha: pedido?.pago_simple_fecha || ""
+  };
+}
+
+// Reemplazo del resumen viejo para búsquedas/filtros.
+function resumenDeudaPedido(pedido) {
+  const r = resumenPagoSimplePedido(pedido);
+  return {
+    esBs: r.tipo === "BCV",
+    tipo: r.tipo === "BCV" ? "BS_BCV" : "USD_FIJO",
+    tasa: r.tasa || 1,
+    total: r.total,
+    totalUsd: r.total,
+    totalBs: r.tipo === "BCV" && r.tasa > 0 ? r.total * r.tasa : 0,
+    pagado: r.pagado,
+    saldo: r.saldo,
+    estado: r.estado === "PAGADO" || r.estado === "A_FAVOR" ? "pagado" : (r.estado === "ABONADO" ? "abonado" : (r.estado === "PENDIENTE" ? "debe" : "sin_monto")),
+    totalTexto: formatoUsd(r.total),
+    pagadoTexto: formatoUsd(r.pagado),
+    saldoTexto: formatoUsd(r.saldo),
+    tipoTexto: textoTipoPagoSimple(r)
+  };
+}
+
+function payloadPagoSimpleInicial(deudaPayload, montoAbonado, fecha) {
+  const total = numeroSeguro(deudaPayload?.precio_total || 0);
+  const pagado = numeroSeguro(montoAbonado || 0);
+  const tipo = deudaPayload?.moneda_deuda === "BS" ? "BCV" : "DIVISA";
+  const estado = estadoPagoSimpleDesdeMontos(total, pagado);
+
+  return {
+    estatus_pago: estadoSupabaseDesdePagoSimple(estado),
+    pago_simple_total: total,
+    pago_simple_tipo: tipo,
+    pago_simple_pagado: pagado,
+    pago_simple_saldo: Math.max(total - pagado, 0),
+    pago_simple_a_favor: Math.max(pagado - total, 0),
+    pago_simple_estado: estado,
+    pago_simple_fecha: fecha || fechaISO(),
+    pago_simple_actualizado_en: new Date().toISOString()
+  };
+}
+
+function payloadPedidoSimple(itemFinal) {
+  const total = numeroSeguro(itemFinal.monto);
+  const pagado = numeroSeguro(itemFinal.pagado);
+  const tipo = itemFinal.tipo === "BCV" ? "BCV" : "DIVISA";
+  const tasa = tipo === "BCV" && numeroSeguro(itemFinal.tasa) > 0 ? numeroSeguro(itemFinal.tasa) : 1;
+  const estadoManual = String(itemFinal.estado || "").toUpperCase();
+  const cierreSinMonto = estadoManual === "PAGADO" && total <= 0.009;
+  const estado = cierreSinMonto ? "PAGADO" : estadoPagoSimpleDesdeMontos(total, pagado);
+  const saldo = cierreSinMonto ? 0 : Math.max(total - pagado, 0);
+  const aFavor = cierreSinMonto ? 0 : Math.max(pagado - total, 0);
+
+  return {
+    precio_total: total,
+    monto_abonado: pagado,
+    estatus_pago: estadoSupabaseDesdePagoSimple(estado),
+    moneda_deuda: tipo === "BCV" ? "BS" : "USD",
+    tipo_tasa_deuda: tipo === "BCV" ? "BS_BCV" : "USD_FIJO",
+    tasa_deuda: tasa,
+    total_bs: tipo === "BCV" ? total * tasa : null,
+    monto_abonado_bs: tipo === "BCV" ? pagado * tasa : 0,
+    pago_simple_total: total,
+    pago_simple_tipo: tipo,
+    pago_simple_pagado: pagado,
+    pago_simple_saldo: saldo,
+    pago_simple_a_favor: aFavor,
+    pago_simple_estado: estado,
+    pago_simple_fecha: itemFinal.fecha || fechaISO(),
+    pago_simple_actualizado_en: new Date().toISOString()
+  };
+}
+
+function htmlBotonPagoSimple(id, pedido) {
+  const item = resumenPagoSimplePedido(pedido || getPedidoPorId(id));
+  let clase = "simple-sin";
+  let titulo = "Definir";
+  let sub = "Sin monto";
+
+  // Los pedidos viejos cerrados pueden estar PAGADOS aunque no tengan monto.
+  // En ese caso deben verse como pagados, no como "Definir / Sin monto".
+  if (item.estado === "PAGADO" && item.total <= 0.009) {
+    clase = "simple-ok";
+    titulo = "Listo";
+    sub = "Sin monto" + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
+  } else if (item.estado === "A_FAVOR" && item.total <= 0.009) {
+    clase = "simple-favor";
+    titulo = "A favor $" + money(item.aFavor);
+    sub = "Cerrado" + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
+  } else if (item.total > 0) {
+    if (item.aFavor > 0.009 || item.estado === "A_FAVOR") {
+      clase = "simple-favor";
+      titulo = "A favor $" + money(item.aFavor);
+      sub = "Pagó $" + money(item.pagado) + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
+    } else if (item.estado === "PAGADO" || item.pagado >= item.total - 0.009) {
+      clase = "simple-ok";
+      titulo = "Pagado $" + money(item.total);
+      sub = textoTipoPagoSimple(item) + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
+    } else if (item.estado === "ABONADO" || item.pagado > 0.009) {
+      clase = "simple-abono";
+      titulo = "Debe $" + money(item.saldo);
+      sub = "Abonó $" + money(item.pagado) + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
+    } else {
+      clase = "simple-debe";
+      titulo = "Debe $" + money(item.total);
+      sub = textoTipoPagoSimple(item) + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
+    }
+  }
+
+  return `<button class="pay-simple-btn ${clase}" type="button" data-simple-pago-id="${escapeHtml(id)}">
+    <span>${escapeHtml(titulo)}</span>
+    <small>${escapeHtml(sub)}</small>
+  </button>`;
+}
+
+// Reemplaza el botón viejo del app sin tocar el HTML.
+function botonPagoHtml(id, pedido) {
+  return htmlBotonPagoSimple(id, pedido);
+}
+
+function deudaCellHtml(pedido) {
+  const item = resumenPagoSimplePedido(pedido);
+  if (item.total <= 0) return `<span class="deuda-pill deuda-empty">Sin monto</span>`;
+  return `<div class="deuda-cell-wrap"><strong>${escapeHtml(formatoUsd(item.total))}</strong><span>${escapeHtml(textoTipoPagoSimple(item))}</span></div>`;
+}
+
+function getPedidoPorId(id) {
+  return pedidosDB.find(p => Number(p.id) === Number(id)) || null;
+}
+
+function totalAbonosPagoSimple(abonos) {
+  return (Array.isArray(abonos) ? abonos : []).reduce((s, a) => s + numeroSeguro(a && a.monto), 0);
+}
+
+function setTextPagoSimple(id, value) {
   const el = document.getElementById(id);
-  if(el) el.style.display = "none";
+  if (el) el.textContent = value;
+}
+
+function crearModalPagoSimple() {
+  if (document.getElementById("pagoSimpleBackdrop")) return;
+
+  const modal = document.createElement("div");
+  modal.className = "backdrop modal-backdrop pago-simple-backdrop";
+  modal.id = "pagoSimpleBackdrop";
+  modal.style.display = "none";
+  modal.innerHTML = `
+    <div class="modal pago-simple-modal" style="max-width:580px">
+      <div class="modal-header">
+        <h2>Pago del pedido</h2>
+        <button class="modal-close" type="button" id="pagoSimpleCerrar">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="simple-kpi-grid">
+          <div class="simple-kpi-card"><span>Total</span><strong id="pagoSimpleKpiTotal">$0.00</strong></div>
+          <div class="simple-kpi-card"><span>Pagado</span><strong id="pagoSimpleKpiPagado">$0.00</strong></div>
+          <div class="simple-kpi-card"><span>Saldo</span><strong id="pagoSimpleKpiSaldo">$0.00</strong></div>
+          <div class="simple-kpi-card simple-kpi-favor" id="pagoSimpleKpiFavorCard"><span>A favor</span><strong id="pagoSimpleKpiFavor">$0.00</strong></div>
+        </div>
+
+        <div class="simple-resumen" id="pagoSimpleResumen">Sin monto definido</div>
+
+        <div class="simple-grid-3">
+          <div class="field">
+            <label>Monto que debe</label>
+            <input type="number" id="pagoSimpleMonto" step="0.01" placeholder="Ej: 100.00"/>
+          </div>
+          <div class="field">
+            <label>Tipo</label>
+            <select id="pagoSimpleTipo">
+              <option value="DIVISA">Divisa</option>
+              <option value="BCV">BCV</option>
+            </select>
+          </div>
+          <div class="field" id="pagoSimpleTasaWrap">
+            <label>Tasa</label>
+            <input type="number" id="pagoSimpleTasa" step="0.0001" placeholder="Ej: 40.00"/>
+          </div>
+        </div>
+
+        <div class="simple-grid-3 simple-grid-action">
+          <div class="field simple-action-field">
+            <label>Acción</label>
+            <select id="pagoSimpleAccion">
+              <option value="PENDIENTE">Pendiente</option>
+              <option value="ABONO">Agregar abono</option>
+              <option value="LISTO">Listo / pagar restante</option>
+            </select>
+          </div>
+          <div class="field" id="pagoSimpleAbonoWrap">
+            <label>Nuevo abono</label>
+            <input type="number" id="pagoSimpleAbono" step="0.01" placeholder="Ej: 20.00"/>
+          </div>
+          <div class="field simple-date-field">
+            <label>Fecha</label>
+            <input type="date" id="pagoSimpleFecha"/>
+          </div>
+        </div>
+
+        <div class="simple-historial" id="pagoSimpleHistorial"></div>
+      </div>
+      <div class="modal-footer simple-modal-footer">
+        <button class="btn-add secondary" type="button" id="pagoSimpleCancelar">Cancelar</button>
+        <button class="btn-add" type="button" id="pagoSimpleGuardar">Guardar</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+
+  modal.addEventListener("click", e => {
+    const borrar = e.target && e.target.closest ? e.target.closest(".simple-delete-pay") : null;
+    if (borrar) {
+      e.preventDefault();
+      e.stopPropagation();
+      eliminarPagoSimple(Number(borrar.dataset.pagoId || 0));
+      return;
+    }
+    if (e.target === modal) cerrarModalPagoSimple();
+  });
+
+  document.getElementById("pagoSimpleCerrar")?.addEventListener("click", cerrarModalPagoSimple);
+  document.getElementById("pagoSimpleCancelar")?.addEventListener("click", cerrarModalPagoSimple);
+  document.getElementById("pagoSimpleGuardar")?.addEventListener("click", guardarPagoSimple);
+  ["pagoSimpleTipo", "pagoSimpleAccion", "pagoSimpleMonto", "pagoSimpleTasa", "pagoSimpleAbono", "pagoSimpleFecha"].forEach(id => {
+    document.getElementById(id)?.addEventListener("input", pintarModalPagoSimple);
+    document.getElementById(id)?.addEventListener("change", pintarModalPagoSimple);
+  });
+}
+
+async function cargarHistorialPagoSimple(id) {
+  if (!db()) return [];
+
+  try {
+    const { data, error } = await db()
+      .from("pedidos_pagos")
+      .select("id,monto_recibido,monto_aplicado,fecha_pago,tipo_movimiento,metodo_pago,nota,created_at")
+      .eq("pedido_id", id)
+      .eq("nota", PAGO_SIMPLE_NOTA)
+      .order("id", { ascending: true });
+
+    if (error) {
+      console.warn("No se pudo leer historial de pago simple:", error);
+      return [];
+    }
+
+    return (data || []).map(p => ({
+      pagoId: p.id,
+      monto: numeroSeguro(p.monto_aplicado || p.monto_recibido || 0),
+      fecha: String(p.fecha_pago || p.created_at || fechaISO()).slice(0, 10),
+      auto: String(p.tipo_movimiento || p.metodo_pago || "").toUpperCase().includes("LISTO")
+    })).filter(a => numeroSeguro(a.monto) > 0);
+  } catch (e) {
+    console.warn("Error leyendo historial de pago simple:", e);
+    return [];
+  }
+}
+
+function itemModalPagoSimple() {
+  const pedido = getPedidoPorId(pagoSimpleActualId);
+  const base = resumenPagoSimplePedido(pedido || {});
+  const abonos = Array.isArray(pagoSimpleHistorialActual) ? pagoSimpleHistorialActual : [];
+  const pagadoHistorial = abonos.length ? totalAbonosPagoSimple(abonos) : base.pagado;
+
+  return {
+    id: pagoSimpleActualId,
+    monto: numeroSeguro(document.getElementById("pagoSimpleMonto")?.value || base.monto || 0),
+    tipo: document.getElementById("pagoSimpleTipo")?.value || base.tipo || "DIVISA",
+    tasa: numeroSeguro(document.getElementById("pagoSimpleTasa")?.value || base.tasa || 0),
+    pagado: pagadoHistorial,
+    estado: base.estado,
+    fecha: document.getElementById("pagoSimpleFecha")?.value || base.fecha || fechaISO(),
+    abonos
+  };
+}
+
+async function abrirModalPagoSimple(id) {
+  const pedido = getPedidoPorId(id);
+  if (!pedido) {
+    alert("No se encontró el pedido. Recarga la página y prueba de nuevo.");
+    return false;
+  }
+
+  crearModalPagoSimple();
+  pagoSimpleActualId = Number(id);
+  pagoSimpleHistorialActual = await cargarHistorialPagoSimple(id);
+
+  const item = resumenPagoSimplePedido(pedido);
+  const pagadoHistorial = pagoSimpleHistorialActual.length ? totalAbonosPagoSimple(pagoSimpleHistorialActual) : item.pagado;
+
+  document.getElementById("pagoSimpleMonto").value = item.monto > 0 ? money(item.monto) : "";
+  document.getElementById("pagoSimpleTipo").value = item.tipo || "DIVISA";
+  document.getElementById("pagoSimpleTasa").value = item.tasa > 0 ? money(item.tasa) : "";
+  document.getElementById("pagoSimpleAccion").value = item.monto > 0 && pagadoHistorial > 0 ? "ABONO" : "PENDIENTE";
+  document.getElementById("pagoSimpleFecha").value = item.fecha || fechaISO();
+  document.getElementById("pagoSimpleAbono").value = "";
+
+  pintarModalPagoSimple();
+  document.getElementById("pagoSimpleBackdrop").style.display = "flex";
+  return false;
+}
+
+function cerrarModalPagoSimple() {
+  const modal = document.getElementById("pagoSimpleBackdrop");
+  if (modal) modal.style.display = "none";
+  pagoSimpleActualId = null;
+  pagoSimpleHistorialActual = [];
+}
+
+function pintarModalPagoSimple() {
+  const item = itemModalPagoSimple();
+  const accion = document.getElementById("pagoSimpleAccion")?.value || "PENDIENTE";
+  const tipo = item.tipo || "DIVISA";
+  const wrapTasa = document.getElementById("pagoSimpleTasaWrap");
+  const wrapAbono = document.getElementById("pagoSimpleAbonoWrap");
+
+  if (wrapTasa) wrapTasa.style.display = tipo === "BCV" ? "" : "none";
+  if (wrapAbono) wrapAbono.style.display = accion === "ABONO" ? "" : "none";
+  if (document.getElementById("pagoSimpleFecha") && !document.getElementById("pagoSimpleFecha").value) {
+    document.getElementById("pagoSimpleFecha").value = fechaISO();
+  }
+
+  let totalPreview = item.monto;
+  let pagadoPreview = item.pagado;
+  let accionTexto = "Se guardará como pendiente";
+  const nuevoAbono = accion === "ABONO" ? numeroSeguro(document.getElementById("pagoSimpleAbono")?.value || 0) : 0;
+
+  if (accion === "ABONO") {
+    pagadoPreview += nuevoAbono;
+    accionTexto = nuevoAbono > 0 ? "Se agregará abono de $" + money(nuevoAbono) : "Coloca el monto del abono";
+  }
+
+  if (accion === "LISTO") {
+    pagadoPreview = item.pagado > item.monto ? item.pagado : item.monto;
+    accionTexto = "Se completará automáticamente el saldo restante";
+  }
+
+  const saldo = Math.max(totalPreview - pagadoPreview, 0);
+  const favor = Math.max(pagadoPreview - totalPreview, 0);
+  const estadoTexto = favor > 0.009 ? "A favor $" + money(favor) : "Saldo $" + money(saldo);
+  const fecha = document.getElementById("pagoSimpleFecha")?.value || fechaISO();
+
+  setTextPagoSimple("pagoSimpleKpiTotal", "$" + money(totalPreview));
+  setTextPagoSimple("pagoSimpleKpiPagado", "$" + money(pagadoPreview));
+  setTextPagoSimple("pagoSimpleKpiSaldo", "$" + money(saldo));
+  setTextPagoSimple("pagoSimpleKpiFavor", "$" + money(favor));
+
+  const favorCard = document.getElementById("pagoSimpleKpiFavorCard");
+  if (favorCard) favorCard.classList.toggle("is-active", favor > 0.009);
+
+  const resumen = item.monto > 0
+    ? `${estadoTexto} · ${textoTipoPagoSimple(item)} · Fecha ${fechaCortaPagoSimple(fecha)} · ${accionTexto}`
+    : `Sin monto · Fecha ${fechaCortaPagoSimple(fecha)} · Al guardar se preguntará si quieres ponerlo Listo sin agregar monto`;
+  setTextPagoSimple("pagoSimpleResumen", resumen);
+
+  const hist = document.getElementById("pagoSimpleHistorial");
+  if (hist) {
+    const header = `<div class="simple-hist-title">Historial de abonos</div>`;
+    if (!item.abonos.length) {
+      hist.innerHTML = header + `<div class="simple-empty">Sin abonos registrados.</div>`;
+    } else {
+      hist.innerHTML = header + item.abonos.map((a, i) => `
+        <div class="simple-hist-row">
+          <span class="simple-hist-main">Abono ${i + 1}: $${money(a.monto)}</span>
+          <small>${escapeHtml(fechaCortaPagoSimple(a.fecha))}${a.auto ? " · automático" : ""}</small>
+          <button class="simple-delete-pay" type="button" data-pago-id="${escapeHtml(a.pagoId)}" title="Borrar este pago">✕</button>
+        </div>`).join("");
+    }
+  }
+}
+
+async function actualizarPedidoSimpleSupabase(id, itemFinal) {
+  if (!validarSupabase()) return false;
+
+  const payload = payloadPedidoSimple(itemFinal);
+  const { error } = await db()
+    .from("pedidos")
+    .update(payload)
+    .eq("id", id);
+
+  if (error) {
+    console.error("No se pudo actualizar pago simple:", error);
+    alert("No se pudo actualizar el saldo del pedido.\n\n" + error.message);
+    return false;
+  }
+
+  const local = getPedidoPorId(id);
+  if (local) Object.assign(local, payload);
+  return true;
+}
+
+function clienteIdPorPedido(pedido) {
+  if (!pedido) return null;
+  if (pedido.cliente_id) return pedido.cliente_id;
+
+  const nombre = normalizarBusqueda(pedido.cliente || "");
+  if (!nombre) return null;
+
+  const cliente = clientesBusquedaDB.find(c => normalizarBusqueda(c.nombre) === nombre);
+  return cliente ? cliente.id : null;
+}
+
+async function registrarMovimientoPagoSimple(id, delta, itemFinal, auto, fechaPago) {
+  if (!db() || delta <= 0) return null;
+
+  const pedido = getPedidoPorId(id) || {};
+  const pagadoAntes = Math.max(numeroSeguro(itemFinal.pagado) - numeroSeguro(delta), 0);
+  const saldoAntes = Math.max(numeroSeguro(itemFinal.monto) - pagadoAntes, 0);
+  const saldoDespues = Math.max(numeroSeguro(itemFinal.monto) - numeroSeguro(itemFinal.pagado), 0);
+
+  const payload = {
+    pedido_id: id,
+    cliente_id: clienteIdPorPedido(pedido),
+    cliente_nombre: pedido.cliente || "",
+    pedido_descripcion: pedido.descripcion || "Pago simple",
+    monto_recibido: delta,
+    moneda: "USD",
+    tasa_usada: itemFinal.tipo === "BCV" && itemFinal.tasa > 0 ? itemFinal.tasa : 1,
+    equivalente_usd: delta,
+    metodo_pago: auto ? "Listo automático" : "Abono simple",
+    metodo_otro: null,
+    referencia: "",
+    nota: PAGO_SIMPLE_NOTA,
+    saldo_antes: saldoAntes,
+    saldo_despues: saldoDespues,
+    registrado_por: operadorActualNombre() || null,
+    fecha_pago: fechaPago || fechaISO(),
+    tipo_movimiento: auto ? "LISTO" : "ABONO",
+    monto_aplicado: delta,
+    saldo_despues_simple: saldoDespues,
+    a_favor_despues: Math.max(numeroSeguro(itemFinal.pagado) - numeroSeguro(itemFinal.monto), 0),
+    tipo_pago_simple: itemFinal.tipo,
+    moneda_deuda: itemFinal.tipo === "BCV" ? "BS" : "USD",
+    tipo_tasa_deuda: itemFinal.tipo === "BCV" ? "BS_BCV" : "USD_FIJO",
+    tasa_deuda: itemFinal.tipo === "BCV" && itemFinal.tasa > 0 ? itemFinal.tasa : 1,
+    total_deuda_usd: itemFinal.monto,
+    total_deuda_bs: itemFinal.tipo === "BCV" && itemFinal.tasa > 0 ? itemFinal.monto * itemFinal.tasa : null,
+    pago_aplicado_usd: delta,
+    pago_aplicado_bs: itemFinal.tipo === "BCV" && itemFinal.tasa > 0 ? delta * itemFinal.tasa : null,
+    saldo_antes_deuda: saldoAntes,
+    saldo_despues_deuda: saldoDespues
+  };
+
+  const { data, error } = await db()
+    .from("pedidos_pagos")
+    .insert([payload])
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("No se pudo registrar el abono:", error);
+    alert("No se pudo registrar el abono.\n\n" + error.message);
+    return null;
+  }
+
+  return data && data.id ? data.id : null;
+}
+
+async function guardarPagoSimple() {
+  if (!pagoSimpleActualId) {
+    alert("No hay pedido seleccionado.");
+    return;
+  }
+
+  const id = pagoSimpleActualId;
+  const item = itemModalPagoSimple();
+  const accion = document.getElementById("pagoSimpleAccion")?.value || "PENDIENTE";
+  const fechaPago = document.getElementById("pagoSimpleFecha")?.value || fechaISO();
+
+  if (item.monto <= 0) {
+    const okCierre = confirm("¿Quieres ponerlo Listo sin agregar monto?\n\nNo registrará dinero, no quedará deuda y aparecerá como Listo/Sin monto.");
+    if (!okCierre) return;
+
+    const itemFinal = {
+      monto: 0,
+      tipo: item.tipo,
+      tasa: item.tipo === "BCV" ? item.tasa : 0,
+      pagado: 0,
+      fecha: fechaPago,
+      abonos: Array.isArray(item.abonos) ? [...item.abonos] : [],
+      estado: "PAGADO"
+    };
+
+    const ok = await actualizarPedidoSimpleSupabase(id, itemFinal);
+    if (!ok) return;
+
+    cerrarModalPagoSimple();
+    mostrarToast("Pedido listo sin monto ✅");
+    await cargarPedidos(false);
+    return;
+  }
+
+  if (item.tipo === "BCV" && item.tasa <= 0) {
+    const ok = confirm("No colocaste tasa BCV. ¿Guardar igual solo como referencia BCV?");
+    if (!ok) return;
+  }
+
+  let pagado = numeroSeguro(item.pagado);
+  let abonos = Array.isArray(item.abonos) ? [...item.abonos] : [];
+  let delta = 0;
+  let auto = false;
+
+  if (accion === "ABONO") {
+    delta = numeroSeguro(document.getElementById("pagoSimpleAbono")?.value || 0);
+    if (delta <= 0) {
+      alert("Coloca el monto del abono.");
+      return;
+    }
+    pagado += delta;
+    auto = false;
+  } else if (accion === "LISTO") {
+    delta = Math.max(item.monto - pagado, 0);
+    pagado += delta;
+    auto = true;
+  }
+
+  const itemFinal = {
+    monto: item.monto,
+    tipo: item.tipo,
+    tasa: item.tipo === "BCV" ? item.tasa : 0,
+    pagado,
+    fecha: fechaPago,
+    abonos
+  };
+  itemFinal.estado = estadoPagoSimpleDesdeMontos(itemFinal.monto, itemFinal.pagado);
+
+  if (delta > 0) {
+    const pagoId = await registrarMovimientoPagoSimple(id, delta, itemFinal, auto, fechaPago);
+    if (!pagoId) return;
+    abonos.push({ pagoId, monto: delta, fecha: fechaPago, auto });
+    itemFinal.abonos = abonos;
+  }
+
+  const ok = await actualizarPedidoSimpleSupabase(id, itemFinal);
+  if (!ok) return;
+
+  cerrarModalPagoSimple();
+  mostrarToast("Pago guardado ✅");
+  await cargarPedidos(false);
+}
+
+async function eliminarPagoSimple(pagoId) {
+  if (!pagoSimpleActualId || !pagoId) {
+    alert("No se encontró ese pago para borrar.");
+    return;
+  }
+
+  const pago = pagoSimpleHistorialActual.find(p => Number(p.pagoId) === Number(pagoId));
+  const montoTxt = pago ? "$" + money(pago.monto) : "este pago";
+  const okConfirm = confirm("¿Borrar " + montoTxt + "?\n\nEl saldo del pedido se recalculará automáticamente.");
+  if (!okConfirm) return;
+
+  const id = pagoSimpleActualId;
+
+  const { error } = await db()
+    .from("pedidos_pagos")
+    .delete()
+    .eq("id", pagoId)
+    .eq("pedido_id", id);
+
+  if (error) {
+    console.error("No se pudo borrar el pago:", error);
+    alert("No se pudo borrar el pago.\n\n" + error.message);
+    return;
+  }
+
+  pagoSimpleHistorialActual = await cargarHistorialPagoSimple(id);
+  const item = itemModalPagoSimple();
+  item.abonos = pagoSimpleHistorialActual;
+  item.pagado = totalAbonosPagoSimple(pagoSimpleHistorialActual);
+  item.estado = estadoPagoSimpleDesdeMontos(item.monto, item.pagado);
+
+  const ok = await actualizarPedidoSimpleSupabase(id, item);
+  if (!ok) return;
+
+  mostrarToast("Pago borrado ✅");
+  await cargarPedidos(false);
+
+  pagoSimpleActualId = id;
+  pagoSimpleHistorialActual = await cargarHistorialPagoSimple(id);
+  pintarModalPagoSimple();
+}
+
+function operadorActualNombre() {
+  const op = getOperadorSesionLocal();
+  return String(op && op.nombre ? op.nombre : "").trim();
+}
+
+let ultimoPagoSimpleTapId = null;
+let ultimoPagoSimpleTapAt = 0;
+
+function abrirPagoPedidoSeguro(id) {
+  const pedidoId = Number(id);
+  if (!pedidoId) {
+    alert("No se encontró el ID del pedido para registrar pago.");
+    return false;
+  }
+
+  const ahora = Date.now();
+  if (ultimoPagoSimpleTapId === pedidoId && (ahora - ultimoPagoSimpleTapAt) < 450) return false;
+  ultimoPagoSimpleTapId = pedidoId;
+  ultimoPagoSimpleTapAt = ahora;
+
+  abrirModalPagoSimple(pedidoId);
+  return false;
+}
+
+function manejarBotonPagoSimple(e) {
+  const btn = e.target && e.target.closest ? e.target.closest(".pay-simple-btn") : null;
+  if (!btn) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+  if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+
+  abrirPagoPedidoSeguro(btn.dataset.simplePagoId);
+}
+
+// V59: usar solo click evita que pointerdown/touchstart abra el modal antes de tiempo
+// y deje los campos del modal sin poder tocarse en móvil.
+document.addEventListener("click", manejarBotonPagoSimple, true);
+
+function instalarCSSPagoSimple() {
+  if (document.getElementById("pago-simple-v59-css")) return;
+
+  const style = document.createElement("style");
+  style.id = "pago-simple-v59-css";
+  style.textContent = `
+    /* PAGO SIMPLE V63 APP - FILTRO PAGO VISIBLE */
+    #pagoSimpleBackdrop{
+      position:fixed!important;
+      inset:0!important;
+      z-index:99999!important;
+      align-items:center!important;
+      justify-content:center!important;
+      background:rgba(15,23,42,.42)!important;
+      padding:16px!important;
+      pointer-events:auto!important;
+    }
+    #pagoSimpleBackdrop .pago-simple-modal{
+      width:min(580px, calc(100vw - 24px))!important;
+      max-height:calc(100vh - 24px)!important;
+      overflow:auto!important;
+      pointer-events:auto!important;
+      position:relative!important;
+      z-index:100000!important;
+      background:#fff!important;
+    }
+    #pagoSimpleBackdrop input,
+    #pagoSimpleBackdrop select,
+    #pagoSimpleBackdrop button{
+      pointer-events:auto!important;
+      touch-action:manipulation!important;
+    }
+    #filterPago{display:inline-flex!important}
+    table{min-width:1350px!important}
+    table th:nth-child(11),table td:nth-child(11),
+    table th:nth-child(12),table td:nth-child(12){display:none!important}
+    table th:nth-child(1),table td:nth-child(1){width:42px!important;min-width:42px!important}
+    table th:nth-child(2),table td:nth-child(2){width:78px!important;min-width:78px!important}
+    table th:nth-child(3),table td:nth-child(3){width:86px!important;min-width:86px!important}
+    table th:nth-child(4),table td:nth-child(4){width:140px!important;min-width:140px!important}
+    table th:nth-child(5),table td:nth-child(5){width:230px!important;min-width:230px!important;max-width:230px!important}
+    table th:nth-child(6),table td:nth-child(6){width:72px!important;min-width:72px!important}
+    table th:nth-child(7),table td:nth-child(7){width:104px!important;min-width:104px!important}
+    table th:nth-child(8),table td:nth-child(8){width:104px!important;min-width:104px!important}
+    table th:nth-child(9),table td:nth-child(9){display:table-cell!important;width:112px!important;min-width:112px!important;text-align:center!important}
+    table th:nth-child(10),table td:nth-child(10){width:96px!important;min-width:96px!important}
+    table th:nth-child(13),table td:nth-child(13){width:88px!important;min-width:88px!important;text-align:center!important}
+    table th:nth-child(14),table td:nth-child(14){width:128px!important;min-width:128px!important;text-align:center!important;overflow:visible!important}
+    table th:nth-child(15),table td:nth-child(15){width:70px!important;min-width:70px!important;text-align:center!important}
+    th{padding:8px 7px!important}
+    #orderTableBody td{height:40px!important;max-height:40px!important;padding:6px 7px!important}
+    #orderTableBody td:nth-child(5){line-height:1.18!important}
+    .pago-action-cell{overflow:visible!important}
+    .pago-simple-modal{border-radius:16px!important}
+    .pago-simple-modal .modal-body{gap:10px!important;padding:16px!important}
+    .pago-simple-modal .modal-header{padding:14px 16px!important}
+    .pago-simple-modal .modal-footer{padding:12px 16px!important}
+    .pago-simple-modal .field{gap:4px!important}
+    .pago-simple-modal .field label{font-size:9px!important;letter-spacing:.45px!important}
+    .pago-simple-modal input,.pago-simple-modal select{height:38px!important;min-height:38px!important;padding:8px 10px!important;border-radius:10px!important;font-size:13px!important}
+    .simple-grid-3{display:grid;grid-template-columns:1fr 105px 110px;gap:8px;align-items:end}
+    .simple-grid-action{grid-template-columns:1fr 1fr 116px}
+    .simple-date-field input{font-family:var(--mono);font-size:12px!important}
+    .tipo-entrega-cell{overflow:visible!important}
+    .entrega-select{width:100%!important;min-height:30px!important;border-radius:999px!important;text-align:center!important;text-align-last:center!important;font-family:var(--head)!important;font-size:8px!important;font-weight:900!important;padding:4px 20px 4px 6px!important;background:#f8f9ff!important;color:#64748b!important;border-color:#d9deea!important}
+    .entrega-select.entrega-retiro{background:#eef1ff!important;color:#153bff!important;border-color:#c7d2fe!important}
+    .entrega-select.entrega-delivery{background:#fff7ed!important;color:#c2410c!important;border-color:#fdba74!important}
+    .entrega-select.entrega-envio{background:#ecfdf5!important;color:#047857!important;border-color:#6ee7b7!important}
+    .pay-simple-btn{width:100%;min-height:32px;padding:4px 6px;border-radius:10px;border:1px solid #64748b;background:#64748b;color:#fff;cursor:pointer;font-family:var(--head);font-size:8px;font-weight:900;letter-spacing:.18px;text-transform:uppercase;line-height:1.03;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;white-space:nowrap;overflow:hidden}
+    .pay-simple-btn span,.pay-simple-btn small{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pay-simple-btn small{font-size:6.5px;opacity:.92;letter-spacing:.10px}
+    .pay-simple-btn.simple-debe{background:#dc2626;border-color:#dc2626;color:#fff}
+    .pay-simple-btn.simple-abono{background:#f59e0b;border-color:#f59e0b;color:#111827}
+    .pay-simple-btn.simple-ok{background:#16a34a;border-color:#16a34a;color:#fff}
+    .pay-simple-btn.simple-favor{background:#2563eb;border-color:#2563eb;color:#fff}
+    .pay-simple-btn.simple-sin{background:#64748b;border-color:#64748b;color:#fff}
+    .simple-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+    .simple-kpi-card{border:1px solid #d9deea;border-radius:12px;background:#f8f9ff;padding:9px 8px;min-width:0}
+    .simple-kpi-card span{display:block;font-family:var(--head);font-size:8px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;color:#64748b;margin-bottom:3px;white-space:nowrap}
+    .simple-kpi-card strong{display:block;font-family:var(--mono);font-size:14px;font-weight:900;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .simple-kpi-card.simple-kpi-favor strong{color:#2563eb}
+    .simple-kpi-card.simple-kpi-favor{background:#eff6ff;border-color:#bfdbfe;opacity:.45}
+    .simple-kpi-card.simple-kpi-favor.is-active{opacity:1;background:#dbeafe;border-color:#2563eb}
+    .simple-resumen{border:1px solid #d9deea;border-radius:12px;background:#f8f9ff;padding:10px 11px;font-weight:900;color:#111827;font-family:var(--mono);font-size:11px;line-height:1.35}
+    .simple-historial{border:1px solid #d9deea;border-radius:12px;background:#fff;overflow:hidden}
+    .simple-hist-title{padding:8px 10px;background:#eef1ff;color:#153bff;font-family:var(--head);font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.5px}
+    .simple-empty{padding:10px;color:#64748b;font-size:12px;font-weight:700}
+    .simple-hist-row{display:grid;grid-template-columns:minmax(0,1fr) auto 28px;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid #eef1ff;font-size:12px;font-weight:800;color:#111827}
+    .simple-hist-main{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .simple-hist-row small{color:#64748b;font-family:var(--mono);font-size:10px;white-space:nowrap}
+    .simple-delete-pay{width:26px;height:26px;border-radius:999px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;font-size:12px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1}
+    .simple-delete-pay:hover{background:#dc2626;color:#fff;border-color:#dc2626}
+    .simple-modal-footer .btn-add{min-height:36px!important;padding:8px 14px!important}
+    @media(max-width:980px){
+      table{min-width:1004px!important}
+      table th:nth-child(4),table td:nth-child(4){width:160px!important;min-width:160px!important;padding-left:10px!important}
+      table th:nth-child(5),table td:nth-child(5){width:190px!important;min-width:190px!important;max-width:190px!important}
+      table th:nth-child(6),table td:nth-child(6){width:58px!important;min-width:58px!important}
+      table th:nth-child(7),table td:nth-child(7),table th:nth-child(8),table td:nth-child(8){width:86px!important;min-width:86px!important}
+      table th:nth-child(9),table td:nth-child(9){width:92px!important;min-width:92px!important}
+      table th:nth-child(10),table td:nth-child(10){width:82px!important;min-width:82px!important}
+      table th:nth-child(13),table td:nth-child(13){width:74px!important;min-width:74px!important}
+      table th:nth-child(14),table td:nth-child(14){width:112px!important;min-width:112px!important}
+      table th:nth-child(15),table td:nth-child(15){width:54px!important;min-width:54px!important}
+      #orderTableBody td{height:32px!important;max-height:32px!important;padding:3px 4px!important}
+      .entrega-select{min-height:27px!important;height:27px!important;font-size:6.8px!important;padding:3px 15px 3px 3px!important}
+      .pay-simple-btn{min-height:28px;padding:3px 4px;font-size:6.9px}.pay-simple-btn small{font-size:5.5px}
+      .simple-kpi-grid{grid-template-columns:1fr 1fr;gap:6px}
+      .simple-grid-3,.simple-grid-action{grid-template-columns:1fr 1fr!important;gap:7px}
+      .simple-action-field{grid-column:1/-1}
+    }
+    @media(max-width:430px){
+      table{min-width:952px!important}
+      table th:nth-child(4),table td:nth-child(4){width:150px!important;min-width:150px!important}
+      table th:nth-child(5),table td:nth-child(5){width:178px!important;min-width:178px!important;max-width:178px!important}
+      table th:nth-child(14),table td:nth-child(14){width:106px!important;min-width:106px!important}
+      .pago-simple-modal .modal-body{padding:14px!important}
+      .simple-grid-3,.simple-grid-action{grid-template-columns:1fr!important}
+      .simple-kpi-grid{grid-template-columns:1fr 1fr}
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
+function ajustarHeaderPagoSimple() {
+  const th = document.querySelector("table thead tr:first-child th:nth-child(14)");
+  if (th) th.textContent = "Pago";
+}
+
+function instalarPagoSimpleV58() {
+  console.log("Pago simple app conectado", PAGO_SIMPLE_VERSION);
+  instalarCSSPagoSimple();
+  crearModalPagoSimple();
+  ajustarHeaderPagoSimple();
+  setTimeout(ajustarHeaderPagoSimple, 500);
+  setTimeout(ajustarHeaderPagoSimple, 1500);
+}
+
+// Compatibilidad con HTML anterior.
+function onMetodoPagoChange() {}
+function calcularPagoModal() {}
+function onPagoTipoDeudaChange() {}
+async function guardarDeudaPedido() { return guardarPagoSimple(); }
+async function aplicarPagoPedido() { return guardarPagoSimple(); }
+
+window.openPagoPedido = abrirPagoPedidoSeguro;
+window.openPagoPedidoSafe = abrirPagoPedidoSeguro;
+window.onMetodoPagoChange = onMetodoPagoChange;
+window.calcularPagoModal = calcularPagoModal;
+window.aplicarPagoPedido = aplicarPagoPedido;
+window.guardarDeudaPedido = guardarDeudaPedido;
+window.onPagoTipoDeudaChange = onPagoTipoDeudaChange;
+window.pagoSimpleAppV58 = {
+  abrir: abrirModalPagoSimple,
+  version: PAGO_SIMPLE_VERSION
 };
-</script>
 
-<script src="js/notificaciones.js?v=35"></script>
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", instalarPagoSimpleV58);
+} else {
+  instalarPagoSimpleV58();
+}
 
-<script>
-(function(){
-  const ABONO_FIELD = "monto_abonado";
-  let pintandoAbonos = false;
-  let timerAbono = null;
+// ===========================
+// EDITAR PEDIDO
+// ===========================
+function openEditOrder(id) {
+  const pedido = pedidosDB.find(p => Number(p.id) === Number(id));
 
-  function $(id){ return document.getElementById(id); }
-  function money(n){ return Number(n || 0).toFixed(2); }
-  function num(v){
-    const n = Number(String(v ?? "").replace(",", "."));
-    return Number.isFinite(n) ? n : 0;
-  }
-  function esc(v){
-    return String(v ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-  function toast(msg){
-    const t = $("toast");
-    if(!t){ console.log(msg); return; }
-    t.textContent = msg;
-    t.style.display = "block";
-    setTimeout(()=> t.style.display = "none", 2200);
-  }
-  function leerAbonoRapido(){ return num($("q_monto_abonado")?.value); }
-  function leerAbonoModal(){ return num($("f_monto_abonado")?.value); }
-  function setPagoAbonadoSiAplica(){
-    const abono = leerAbonoRapido();
-    const pago = $("q_estatus_pago");
-    if(abono > 0 && pago && pago.value === "Pendiente") pago.value = "Abonado";
-  }
-  function datosBusquedaDesdeQuick(){
-    return {
-      fecha: $("q_fecha")?.value || "",
-      operador: $("q_operador")?.value || "",
-      cliente: $("q_cliente")?.value || "",
-      descripcion: $("q_descripcion")?.value || ""
-    };
-  }
-  function datosBusquedaDesdeModal(){
-    return {
-      fecha: $("f_fecha")?.value || "",
-      operador: $("f_operador")?.value || "",
-      cliente: $("f_cliente")?.value || "",
-      descripcion: $("f_descripcion")?.value || ""
-    };
-  }
-  async function buscarPedidoReciente(datos){
-    if(!window.supabaseClient) return null;
-    let q = window.supabaseClient
-      .from("pedidos")
-      .select("id,fecha,operador,cliente,descripcion")
-      .order("id", { ascending:false })
-      .limit(12);
-    if(datos.fecha) q = q.eq("fecha", datos.fecha);
-    if(datos.cliente) q = q.eq("cliente", datos.cliente);
-    if(datos.operador) q = q.eq("operador", datos.operador);
-    const { data, error } = await q;
-    if(error) throw error;
-    const desc = String(datos.descripcion || "").trim();
-    return (data || []).find(p => String(p.descripcion || "").trim() === desc) || (data || [])[0] || null;
-  }
-  async function guardarAbonoPedido(datos, monto){
-    if(!window.supabaseClient || monto === 0) return;
-    const pedido = await buscarPedidoReciente(datos);
-    if(!pedido) return;
-    await guardarAbonoDirecto(pedido.id, monto);
-  }
-  async function guardarAbonoDirecto(id, monto){
-    if(!window.supabaseClient || !id) return;
-    const payload = { [ABONO_FIELD]: monto };
-    if(monto > 0) payload.estatus_pago = "Abonado";
-    const { error } = await window.supabaseClient
-      .from("pedidos")
-      .update(payload)
-      .eq("id", id);
-    if(error) throw error;
-  }
-  function claseAbono(monto){
-    const n = num(monto);
-    if(n > 0) return "abono-pos";
-    if(n < 0) return "abono-neg";
-    return "abono-zero";
-  }
-  function inputAbonoHtml(id, monto){
-    return `<input class="cell-edit abono-edit ${claseAbono(monto)}" data-abono-id="${esc(id)}" type="number" step="0.01" value="${money(monto)}" title="Editar abono"/>`;
-  }
-  async function leerAbonosMap(){
-    if(!window.supabaseClient) return new Map();
-    const { data, error } = await window.supabaseClient
-      .from("pedidos")
-      .select("id,monto_abonado")
-      .order("id", { ascending:false })
-      .limit(600);
-    if(error){ console.warn("No se pudo leer monto_abonado:", error); return new Map(); }
-    return new Map((data || []).map(p => [String(p.id), p.monto_abonado || 0]));
-  }
-  async function pintarAbonosEnTabla(){
-    if(pintandoAbonos) return;
-    const tbody = $("orderTableBody");
-    if(!tbody || !window.supabaseClient) return;
-    const rows = [...tbody.querySelectorAll("tr")];
-    if(!rows.length) return;
-
-    pintandoAbonos = true;
-    try{
-      const abonos = await leerAbonosMap();
-      rows.forEach(tr => {
-        const cells = [...tr.children];
-        if(cells.length < 13) return;
-        if(cells.length >= 14) return;
-        const id = String(cells[0]?.textContent || "").trim();
-        const monto = abonos.get(id) || 0;
-        const td = document.createElement("td");
-        td.className = "abono-cell";
-        td.innerHTML = inputAbonoHtml(id, monto);
-        tr.insertBefore(td, cells[11]);
-      });
-    }catch(error){
-      console.warn("pintarAbonosEnTabla error:", error);
-    }finally{
-      pintandoAbonos = false;
-    }
-  }
-  function programarPintarAbonos(){
-    clearTimeout(timerAbono);
-    timerAbono = setTimeout(pintarAbonosEnTabla, 350);
-  }
-  function instalarWrapperAbono(){
-    if(window.__abonoWrapperInstalado) return;
-    if(typeof window.saveQuickOrder !== "function" && typeof window.saveOrder !== "function") return;
-    window.__abonoWrapperInstalado = true;
-
-    if(typeof window.saveQuickOrder === "function"){
-      const originalQuick = window.saveQuickOrder;
-      window.saveQuickOrder = async function(){
-        setPagoAbonadoSiAplica();
-        const monto = leerAbonoRapido();
-        const datos = datosBusquedaDesdeQuick();
-        const res = await originalQuick.apply(this, arguments);
-        try{
-          await new Promise(r => setTimeout(r, 450));
-          await guardarAbonoPedido(datos, monto);
-          if(monto > 0) toast("Abono guardado");
-          programarPintarAbonos();
-        }catch(error){
-          console.error("No se pudo guardar abono:", error);
-          toast("Pedido guardado, pero no se guardó el abono. Revisa SQL monto_abonado.");
-        }
-        return res;
-      };
-    }
-
-    if(typeof window.saveOrder === "function"){
-      const originalSave = window.saveOrder;
-      window.saveOrder = async function(){
-        const monto = leerAbonoModal();
-        const datos = datosBusquedaDesdeModal();
-        const res = await originalSave.apply(this, arguments);
-        try{
-          await new Promise(r => setTimeout(r, 450));
-          await guardarAbonoPedido(datos, monto);
-          if(monto > 0) toast("Abono guardado");
-          programarPintarAbonos();
-        }catch(error){
-          console.error("No se pudo guardar abono modal:", error);
-          toast("Pedido guardado, pero no se guardó el abono. Revisa SQL monto_abonado.");
-        }
-        return res;
-      };
-    }
+  if (!pedido) {
+    alert("No se encontró el pedido.");
+    return;
   }
 
-  document.addEventListener("input", function(e){
-    if(e.target && e.target.id === "q_monto_abonado") setPagoAbonadoSiAplica();
-    if(e.target && e.target.classList && e.target.classList.contains("abono-edit")){
-      e.target.classList.remove("abono-pos", "abono-neg", "abono-zero");
-      e.target.classList.add(claseAbono(e.target.value));
-    }
+  pedidoEditandoId = pedido.id;
+  archivoSeleccionado = null;
+
+  document.getElementById("f_fecha").value = pedido.fecha || "";
+  document.getElementById("f_operador").value = pedido.operador || "";
+  document.getElementById("f_cliente").value = pedido.cliente || "";
+  document.getElementById("f_descripcion").value = pedido.descripcion || "";
+  document.getElementById("f_cantidad").value = pedido.cantidad || "";
+  document.getElementById("f_material").value = pedido.material || "";
+  document.getElementById("f_impresion").value = pedido.tipo_impresion || "";
+  document.getElementById("f_tipo_entrega").value = pedido.tipo_entrega || "";
+  document.getElementById("f_monto_abonado").value = money(pedido.monto_abonado || 0);
+  document.getElementById("f_entrega").value = pedido.fecha_entrega || "";
+  aplicarFormularioDeuda("f", pedido);
+
+  pintarSelectsCatalogos();
+
+  const cantidadInput = document.getElementById("f_cantidad");
+  if (cantidadInput) cantidadInput.disabled = !puedeModificarCantidadLocal();
+
+  const operadorInput = document.getElementById("f_operador");
+  if (operadorInput) operadorInput.disabled = !puedeModificarOperadorLocal();
+
+  const titulo = document.getElementById("orderModalTitle");
+  if (titulo) titulo.textContent = "EDITAR PEDIDO #" + pedido.id;
+
+  const fileName = document.getElementById("fileName");
+  const fileGeneric = document.getElementById("fileGeneric");
+  const filePreview = document.getElementById("filePreview");
+  const fileEmpty = document.getElementById("fileEmpty");
+  const fileIconBig = document.getElementById("fileIconBig");
+
+  if (pedido.archivo_url) {
+    if (fileEmpty) fileEmpty.style.display = "none";
+    if (filePreview) filePreview.style.display = "flex";
+    if (fileGeneric) fileGeneric.style.display = "block";
+    if (fileIconBig) fileIconBig.textContent = "📎";
+    if (fileName) fileName.textContent = pedido.archivo_nombre || "Archivo adjunto";
+  } else {
+    if (fileEmpty) fileEmpty.style.display = "flex";
+    if (filePreview) filePreview.style.display = "none";
+    if (fileGeneric) fileGeneric.style.display = "none";
+    if (fileName) fileName.textContent = "";
+  }
+
+  const modal = document.getElementById("orderBackdrop");
+  if (modal) modal.style.display = "flex";
+}
+
+function openOrderModal() {
+  pedidoEditandoId = null;
+  archivoSeleccionado = null;
+
+  document.getElementById("f_fecha").value = new Date().toISOString().split("T")[0];
+  document.getElementById("f_operador").value = "";
+  document.getElementById("f_cliente").value = "";
+  document.getElementById("f_descripcion").value = "";
+  document.getElementById("f_cantidad").value = "";
+  document.getElementById("f_material").value = "";
+  document.getElementById("f_impresion").value = "";
+  document.getElementById("f_tipo_entrega").value = "";
+  document.getElementById("f_monto_abonado").value = "";
+  document.getElementById("f_entrega").value = "";
+  document.getElementById("f_precio_total").value = "";
+  document.getElementById("f_tipo_deuda").value = "USD_FIJO";
+  document.getElementById("f_tasa_deuda").value = "";
+  actualizarVisibilidadTasaDeuda("f");
+
+  pintarSelectsCatalogos();
+
+  const cantidadInput = document.getElementById("f_cantidad");
+  if (cantidadInput) cantidadInput.disabled = false;
+
+  const operadorInput = document.getElementById("f_operador");
+  if (operadorInput) operadorInput.disabled = !puedeModificarOperadorLocal();
+
+  const opSesion = getOperadorSesionLocal();
+  if (opSesion && opSesion.nombre && operadorInput) operadorInput.value = opSesion.nombre;
+
+  const titulo = document.getElementById("orderModalTitle");
+  if (titulo) titulo.textContent = "NUEVO PEDIDO";
+
+  const fileEmpty = document.getElementById("fileEmpty");
+  const filePreview = document.getElementById("filePreview");
+  const fileGeneric = document.getElementById("fileGeneric");
+  const fileName = document.getElementById("fileName");
+
+  if (fileEmpty) fileEmpty.style.display = "flex";
+  if (filePreview) filePreview.style.display = "none";
+  if (fileGeneric) fileGeneric.style.display = "none";
+  if (fileName) fileName.textContent = "";
+
+  const modal = document.getElementById("orderBackdrop");
+  if (modal) modal.style.display = "flex";
+}
+
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) modal.style.display = "none";
+
+  pedidoEditandoId = null;
+
+  const cantidadInput = document.getElementById("f_cantidad");
+  if (cantidadInput) cantidadInput.disabled = false;
+
+  const operadorInput = document.getElementById("f_operador");
+  if (operadorInput) operadorInput.disabled = false;
+
+  aplicarOperadorSesion();
+}
+
+function bdClick(event, id) {
+  if (event.target.id === id) closeModal(id);
+}
+
+// ===========================
+// FECHA / LIMPIEZA
+// ===========================
+function ponerFechaHoy() {
+  const hoy = new Date().toISOString().split("T")[0];
+
+  const qFecha = document.getElementById("q_fecha");
+  if (qFecha && !qFecha.value) qFecha.value = hoy;
+
+  const fFecha = document.getElementById("f_fecha");
+  if (fFecha && !fFecha.value) fFecha.value = hoy;
+}
+
+function limpiarFilaRapida() {
+  const campos = [
+    "q_cliente",
+    "q_descripcion",
+    "q_cantidad",
+    "q_tipo_entrega",
+    "q_monto_abonado",
+    "q_entrega",
+    "q_precio_total",
+    "q_tasa_deuda"
+  ];
+
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
   });
-  document.addEventListener("keydown", function(e){
-    if(e.target && e.target.classList && e.target.classList.contains("abono-edit") && e.key === "Enter"){
-      e.preventDefault();
-      e.target.blur();
+
+  const estatusTrabajo = document.getElementById("q_estatus_trabajo");
+  if (estatusTrabajo) estatusTrabajo.value = "Solicitud";
+
+  const estatusPago = document.getElementById("q_estatus_pago");
+  if (estatusPago) estatusPago.value = "Pendiente";
+
+  const tipoDeuda = document.getElementById("q_tipo_deuda");
+  if (tipoDeuda) tipoDeuda.value = "USD_FIJO";
+  actualizarVisibilidadTasaDeuda("q");
+
+  const rowFileInput = document.getElementById("rowFileInput");
+  if (rowFileInput) rowFileInput.value = "";
+
+  archivoSeleccionado = null;
+  aplicarOperadorSesion();
+}
+
+function clearQuickEntry() {
+  limpiarFilaRapida();
+  ponerFechaHoy();
+}
+
+// ===========================
+// ARCHIVOS
+// ===========================
+function handleFileSelect(event) {
+  archivoSeleccionado = event.target.files[0] || null;
+  if (!archivoSeleccionado) return;
+
+  const fileEmpty = document.getElementById("fileEmpty");
+  const filePreview = document.getElementById("filePreview");
+  const fileGeneric = document.getElementById("fileGeneric");
+  const fileName = document.getElementById("fileName");
+  const fileIconBig = document.getElementById("fileIconBig");
+
+  if (fileEmpty) fileEmpty.style.display = "none";
+  if (filePreview) filePreview.style.display = "flex";
+  if (fileGeneric) fileGeneric.style.display = "block";
+  if (fileIconBig) fileIconBig.textContent = "📎";
+  if (fileName) fileName.textContent = archivoSeleccionado.name;
+}
+
+function openQuickAttach() {
+  const input = document.getElementById("rowFileInput");
+  if (input) input.click();
+}
+
+function handleRowFileSelect(event) {
+  archivoSeleccionado = event.target.files[0] || null;
+  if (archivoSeleccionado) mostrarToast("Archivo seleccionado");
+}
+
+function removeFile() {
+  archivoSeleccionado = null;
+
+  const input = document.getElementById("f_archivo");
+  if (input) input.value = "";
+
+  const fileEmpty = document.getElementById("fileEmpty");
+  const filePreview = document.getElementById("filePreview");
+  const fileGeneric = document.getElementById("fileGeneric");
+  const fileName = document.getElementById("fileName");
+
+  if (fileEmpty) fileEmpty.style.display = "flex";
+  if (filePreview) filePreview.style.display = "none";
+  if (fileGeneric) fileGeneric.style.display = "none";
+  if (fileName) fileName.textContent = "";
+}
+
+async function subirArchivoPedido() {
+  if (!archivoSeleccionado) return { archivo_url: null, archivo_nombre: null };
+
+  const nombreLimpio = archivoSeleccionado.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w.\-]+/g, "_");
+
+  const ruta = `pedidos/${Date.now()}_${nombreLimpio}`;
+
+  const { error } = await db().storage
+    .from("adjuntos-pedidos")
+    .upload(ruta, archivoSeleccionado);
+
+  if (error) {
+    console.error("Error subiendo archivo:", error);
+    alert("Error subiendo archivo: " + error.message);
+    return { archivo_url: null, archivo_nombre: null };
+  }
+
+  const { data } = db().storage
+    .from("adjuntos-pedidos")
+    .getPublicUrl(ruta);
+
+  const resultado = {
+    archivo_url: data.publicUrl,
+    archivo_nombre: archivoSeleccionado.name
+  };
+
+  archivoSeleccionado = null;
+  return resultado;
+}
+
+// ===========================
+// BUSCAR / FILTRAR
+// ===========================
+function onSearch() {
+  renderPedidosPaginados(true);
+}
+
+// ===========================
+// UX EXTRA
+// ===========================
+function asegurarOpcionesFiltroEstado() {
+  const filtro = document.getElementById("filterStatus");
+  if (!filtro) return;
+
+  const valores = [...filtro.options].map(o => o.value);
+
+  if (!valores.includes("Procesos")) {
+    const opt = document.createElement("option");
+    opt.value = "Procesos";
+    opt.textContent = "⚙️ Procesos";
+    filtro.insertBefore(opt, filtro.options[1] || null);
+  }
+
+  if (!valores.includes("En curso")) {
+    const opt = document.createElement("option");
+    opt.value = "En curso";
+    opt.textContent = "⚫ En curso";
+    const listo = [...filtro.options].find(o => o.value === "Listo");
+    filtro.insertBefore(opt, listo || null);
+  }
+}
+
+function animarGuardadoRapido() {
+  const btn = document.querySelector(".add-symbol-btn");
+  if (btn) {
+    btn.classList.remove("quick-save-ok");
+    void btn.offsetWidth;
+    btn.classList.add("quick-save-ok");
+    setTimeout(() => btn.classList.remove("quick-save-ok"), 900);
+  }
+
+  const primeraFila = document.querySelector("#orderTableBody tr");
+  if (primeraFila) {
+    primeraFila.classList.remove("fila-guardada-ok");
+    void primeraFila.offsetWidth;
+    primeraFila.classList.add("fila-guardada-ok");
+    setTimeout(() => primeraFila.classList.remove("fila-guardada-ok"), 1600);
+  }
+}
+
+function inyectarEstilosAppFinal() {
+  if (document.getElementById("app-final-v42-styles")) return;
+
+  const style = document.createElement("style");
+  style.id = "app-final-v42-styles";
+  style.textContent = `
+    .status-en-curso,
+    .estado-en-curso,
+    select.status-en-curso,
+    select.estado-en-curso{
+      color:#ffffff!important;
+      border-color:#111827!important;
+      background:#111827!important;
+      font-weight:900!important;
     }
-  });
-  document.addEventListener("change", async function(e){
-    if(!(e.target && e.target.classList && e.target.classList.contains("abono-edit"))) return;
-    const id = e.target.dataset.abonoId;
-    const monto = num(e.target.value);
-    try{
-      e.target.disabled = true;
-      await guardarAbonoDirecto(id, monto);
-      e.target.value = money(monto);
-      e.target.classList.remove("abono-pos", "abono-neg", "abono-zero");
-      e.target.classList.add(claseAbono(monto));
-      toast("Abono actualizado");
-    }catch(error){
-      console.error("No se pudo actualizar abono:", error);
-      toast("No se pudo actualizar abono. Revisa Supabase.");
-    }finally{
-      e.target.disabled = false;
+    .fila-guardada-ok td{
+      animation:filaGuardadaOkComanda 1.35s ease both!important;
     }
-  });
-  window.addEventListener("load", function(){
-    setTimeout(instalarWrapperAbono, 800);
-    setTimeout(programarPintarAbonos, 1600);
-    const tbody = $("orderTableBody");
-    if(tbody && window.MutationObserver){
-      const obs = new MutationObserver(programarPintarAbonos);
-      obs.observe(tbody, { childList:true });
+    @keyframes filaGuardadaOkComanda{
+      0%{background:#dcfce7!important;box-shadow:inset 0 0 0 2px #16a34a!important;}
+      60%{background:#dcfce7!important;}
+      100%{background:inherit!important;box-shadow:none!important;}
     }
-  });
-})();
-</script>
-
-<script>
-(function(){
-  function norm(v){
-    return String(v || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .trim();
-  }
-  function num(v){
-    const n = Number(String(v ?? "").replace(/[^0-9,.-]/g, "").replace(",", "."));
-    return Number.isFinite(n) ? n : 0;
-  }
-  function limpiarClases(el, prefijos){
-    if(!el) return;
-    [...el.classList].forEach(c => {
-      if(prefijos.some(p => c.startsWith(p))) el.classList.remove(c);
-    });
-  }
-  function aplicarClaseEstado(el, valor){
-    if(!el) return;
-    const n = norm(valor);
-    limpiarClases(el, ["estado-", "status-"]);
-    if(n === "solicitud") el.classList.add("estado-solicitud");
-    else if(n === "en curso" || n === "encurso") el.classList.add("estado-en-curso");
-    else if(n === "revisado") el.classList.add("estado-revisado");
-    else if(n === "listo") el.classList.add("estado-listo");
-  }
-  function aplicarClasePago(el, valor){
-    if(!el) return;
-    const n = norm(valor);
-    limpiarClases(el, ["pago-"]);
-    if(n === "pendiente") el.classList.add("pago-pendiente");
-    else if(n === "abonado") el.classList.add("pago-abonado");
-    else if(n === "pagado") el.classList.add("pago-pagado");
-  }
-  function aplicarClaseAbono(el, valor){
-    if(!el) return;
-    const n = num(valor);
-    el.classList.remove("abono-pos", "abono-neg", "abono-zero");
-    if(n > 0) el.classList.add("abono-pos");
-    else if(n < 0) el.classList.add("abono-neg");
-    else el.classList.add("abono-zero");
-  }
-  function valorCelda(td){
-    const control = td?.querySelector?.("select,input,textarea");
-    return control ? control.value : (td?.textContent || "");
-  }
-  function colorearTabla(){
-    const tbody = document.getElementById("orderTableBody");
-    if(!tbody) return;
-    [...tbody.querySelectorAll("tr")].forEach(tr => {
-      const cells = [...tr.children];
-      if(cells.length < 11) return;
-      const estatusCell = cells[9];
-      const pagoCell = cells[10];
-      const abonoCell = cells[11];
-      aplicarClaseEstado(estatusCell, valorCelda(estatusCell));
-      const estatusControl = estatusCell?.querySelector?.("select,input");
-      if(estatusControl) aplicarClaseEstado(estatusControl, estatusControl.value);
-      aplicarClasePago(pagoCell, valorCelda(pagoCell));
-      const pagoControl = pagoCell?.querySelector?.("select,input");
-      if(pagoControl) aplicarClasePago(pagoControl, pagoControl.value);
-      if(abonoCell && abonoCell.classList.contains("abono-cell")) aplicarClaseAbono(abonoCell, valorCelda(abonoCell));
-    });
-  }
-  function colorearInputsAbono(){
-    aplicarClaseAbono(document.getElementById("q_monto_abonado"), document.getElementById("q_monto_abonado")?.value);
-    aplicarClaseAbono(document.getElementById("f_monto_abonado"), document.getElementById("f_monto_abonado")?.value);
-  }
-  function aplicarTodo(){
-    colorearTabla();
-    colorearInputsAbono();
-  }
-  document.addEventListener("input", function(e){
-    if(e.target && (e.target.id === "q_monto_abonado" || e.target.id === "f_monto_abonado")) colorearInputsAbono();
-  });
-  document.addEventListener("change", function(e){
-    const t = e.target;
-    if(!t) return;
-    if(t.matches("select,input")) setTimeout(aplicarTodo, 30);
-  });
-  window.addEventListener("load", function(){
-    setTimeout(aplicarTodo, 500);
-    setTimeout(aplicarTodo, 1500);
-    const tbody = document.getElementById("orderTableBody");
-    if(tbody && window.MutationObserver){
-      const obs = new MutationObserver(() => setTimeout(aplicarTodo, 40));
-      obs.observe(tbody, {childList:true, subtree:true, characterData:true});
+    .quick-save-ok{
+      animation:botonGuardarOkComanda .75s ease both!important;
     }
-  });
-  window.aplicarColoresEstadosYAbonos = aplicarTodo;
-})();
-</script>
-
-
-<script>
-/* V9 · Comportamiento seguro de tabla:
-   - Solo abrir edición al hacer clic en CLIENTE.
-   - Descripción muestra vista rápida.
-   - Abono editable directo sin abrir modal.
-   - El modal toma/sincroniza el abono del pedido. */
-(function(){
-  const ABONO_FIELD = "monto_abonado";
-  let pedidoActivoParaModal = null;
-
-  function $(id){ return document.getElementById(id); }
-  function num(v){
-    const n = Number(String(v ?? "").replace(/[^0-9,.-]/g, "").replace(",", "."));
-    return Number.isFinite(n) ? n : 0;
-  }
-  function money(n){ return Number(n || 0).toFixed(2); }
-  function esc(v){
-    return String(v ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-  function claseAbono(monto){
-    const n = num(monto);
-    if(n > 0) return "abono-pos";
-    if(n < 0) return "abono-neg";
-    return "abono-zero";
-  }
-  function aplicarClaseAbonoInput(input, valor){
-    if(!input) return;
-    input.classList.remove("abono-pos", "abono-neg", "abono-zero");
-    input.classList.add(claseAbono(valor));
-  }
-  function getRowFromTarget(target){ return target?.closest?.("#orderTableBody tr") || null; }
-  function getPedidoIdFromRow(tr){ return String(tr?.children?.[0]?.textContent || "").trim(); }
-  function getDescripcionFromRow(tr){ return String(tr?.children?.[4]?.textContent || "").trim(); }
-  function toast(msg){
-    const t = $("toast");
-    if(!t){ console.log(msg); return; }
-    t.textContent = msg;
-    t.style.display = "block";
-    setTimeout(()=> t.style.display = "none", 2300);
-  }
-
-  function abrirVistaDescripcion(texto){
-    let bd = $("descPreviewBackdrop");
-    if(!bd){
-      bd = document.createElement("div");
-      bd.id = "descPreviewBackdrop";
-      bd.className = "backdrop";
-      bd.style.display = "none";
-      bd.innerHTML = `
-        <div class="modal" style="max-width:520px">
-          <div class="modal-handle"></div>
-          <div class="modal-header">
-            <span class="modal-title">DESCRIPCIÓN</span>
-            <button class="modal-close" type="button" id="cerrarDescPreview">✕</button>
-          </div>
-          <div class="modal-body">
-            <div id="descPreviewText" style="white-space:pre-wrap;line-height:1.45;font-size:15px;color:var(--text)"></div>
-          </div>
-        </div>`;
-      document.body.appendChild(bd);
-      bd.addEventListener("click", function(e){ if(e.target === bd) bd.style.display = "none"; });
-      bd.querySelector("#cerrarDescPreview").addEventListener("click", function(){ bd.style.display = "none"; });
+    @keyframes botonGuardarOkComanda{
+      0%{transform:scale(1);}
+      35%{transform:scale(1.12);background:#16a34a!important;border-color:#16a34a!important;}
+      100%{transform:scale(1);}
     }
-    $("descPreviewText").innerHTML = esc(texto || "Sin descripción");
-    bd.style.display = "flex";
-  }
-
-  async function leerAbonoPedido(id){
-    if(!window.supabaseClient || !id) return 0;
-    const { data, error } = await window.supabaseClient
-      .from("pedidos")
-      .select(`id,${ABONO_FIELD}`)
-      .eq("id", id)
-      .single();
-    if(error){ console.warn("No se pudo leer abono del pedido", id, error); return 0; }
-    return num(data?.[ABONO_FIELD]);
-  }
-
-  async function cargarAbonoEnModal(id){
-    const input = $("f_monto_abonado");
-    if(!input || !id) return;
-    const monto = await leerAbonoPedido(id);
-    input.value = money(monto);
-    input.dataset.pedidoId = id;
-    aplicarClaseAbonoInput(input, monto);
-  }
-
-  function sincronizarModalSiMismoPedido(id, monto){
-    const input = $("f_monto_abonado");
-    if(!input) return;
-    const modalVisible = $("orderBackdrop") && $("orderBackdrop").style.display !== "none";
-    if(!modalVisible) return;
-    if(String(input.dataset.pedidoId || pedidoActivoParaModal || "") !== String(id)) return;
-    input.value = money(monto);
-    aplicarClaseAbonoInput(input, monto);
-  }
-
-  function prepararClickCliente(tr){
-    const id = getPedidoIdFromRow(tr);
-    pedidoActivoParaModal = id;
-    window.__pedidoActivoParaModal = id;
-    setTimeout(()=>cargarAbonoEnModal(id), 450);
-    setTimeout(()=>cargarAbonoEnModal(id), 1000);
-  }
-
-  // Captura antes del onclick general del app.js.
-  document.addEventListener("click", function(e){
-    const tr = getRowFromTarget(e.target);
-    if(!tr) return;
-    const td = e.target.closest("td");
-    if(!td) return;
-    const index = [...tr.children].indexOf(td);
-
-    // Controles: deben funcionar, pero NO abrir modal.
-    if(e.target.closest("input,select,textarea,button,a")){
-      e.stopPropagation();
-      return;
+    @media(max-width:980px){
+      .add-symbol-btn{
+        width:100%!important;
+        max-width:none!important;
+        min-width:46px!important;
+        height:34px!important;
+        min-height:34px!important;
+        font-size:22px!important;
+        border-radius:10px!important;
+      }
     }
+  `;
 
-    // Cliente: único sitio que abre edición.
-    if(index === 3){
-      prepararClickCliente(tr);
-      return;
-    }
+  document.head.appendChild(style);
+}
 
-    // Descripción: vista rápida.
-    if(index === 4){
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      abrirVistaDescripcion(getDescripcionFromRow(tr));
-      return;
-    }
 
-    // Cualquier otra columna no abre edición.
+// Reconfirmar funciones de pago para compatibilidad con HTML anterior.
+// No llamar window.openPagoPedido -> openPagoPedido, porque eso causa recursión.
+window.openPagoPedido = abrirPagoPedidoSeguro;
+window.openPagoPedidoSafe = abrirPagoPedidoSeguro;
+window.onMetodoPagoChange = onMetodoPagoChange;
+window.calcularPagoModal = calcularPagoModal;
+window.aplicarPagoPedido = aplicarPagoPedido;
+window.actualizarVisibilidadTasaDeuda = actualizarVisibilidadTasaDeuda;
+window.onPagoTipoDeudaChange = onPagoTipoDeudaChange;
+window.guardarDeudaPedido = guardarDeudaPedido;
+window.claseEntrega = claseEntrega;
+window.resolverNombreClienteIdAntesDeGuardar = resolverNombreClienteIdAntesDeGuardar;
+
+// ===========================
+// LISTENERS ABONO
+// ===========================
+document.addEventListener("keydown", function(e) {
+  if (e.target && e.target.classList && e.target.classList.contains("abono-edit") && e.key === "Enter") {
     e.preventDefault();
-    e.stopImmediatePropagation();
-  }, true);
+    e.target.blur();
+  }
+});
 
-  // Al tocar abono: seleccionar todo para editar rápido, como cantidad/material.
-  document.addEventListener("focusin", function(e){
-    if(e.target && e.target.classList && e.target.classList.contains("abono-edit")){
-      setTimeout(()=> e.target.select?.(), 20);
+document.addEventListener("change", async function(e) {
+  if (!(e.target && e.target.classList && e.target.classList.contains("abono-edit"))) return;
+
+  const id = e.target.dataset.abonoId;
+  const monto = numeroSeguro(e.target.value);
+
+  try {
+    e.target.disabled = true;
+    await actualizarAbonoPedido(id, monto);
+    e.target.value = money(monto);
+  } finally {
+    e.target.disabled = false;
+  }
+});
+
+// ===========================
+// INICIO
+// ===========================
+window.addEventListener("DOMContentLoaded", async () => {
+  if (!validarSupabase()) return;
+
+  marcarSupabaseActivo();
+  ponerFechaHoy();
+  actualizarVisibilidadTasaDeuda("q");
+  actualizarVisibilidadTasaDeuda("f");
+  asegurarOpcionesFiltroEstado();
+  inyectarEstilosAppFinal();
+
+  try {
+    await cargarClientesBusqueda();
+  } catch (e) {
+    console.error("Error cargando clientes para búsqueda:", e);
+  }
+
+  try {
+    await cargarMateriales();
+  } catch (e) {
+    console.error("Error cargando materiales:", e);
+  }
+
+  try {
+    await cargarTiposImpresion();
+  } catch (e) {
+    console.error("Error cargando tipos de impresión:", e);
+  }
+
+  try {
+    await cargarOperadoresComandaDesdeSupabase();
+  } catch (e) {
+    console.error("Error cargando operadores:", e);
+  }
+
+  try {
+    await cargarPedidos();
+  } catch (e) {
+    console.error("Error cargando pedidos al iniciar:", e);
+  }
+
+  try {
+    if (typeof cargarOperadoresEnComanda === "function") {
+      await cargarOperadoresEnComanda();
     }
-  });
-  document.addEventListener("click", function(e){
-    if(e.target && e.target.classList && e.target.classList.contains("abono-edit")){
-      e.stopPropagation();
-      e.target.focus();
-      e.target.select?.();
-    }
-  }, true);
-
-  // Refuerza guardado directo y sincronización con modal.
-  document.addEventListener("change", async function(e){
-    if(!(e.target && e.target.classList && e.target.classList.contains("abono-edit"))) return;
-    const id = e.target.dataset.abonoId;
-    const monto = num(e.target.value);
-    try{
-      sincronizarModalSiMismoPedido(id, monto);
-    }catch(_){ }
-  }, true);
-
-  // Si el usuario cambia el abono dentro del modal, conserva color y marca pago Abonado si aplica.
-  document.addEventListener("input", function(e){
-    if(e.target && e.target.id === "f_monto_abonado"){
-      aplicarClaseAbonoInput(e.target, e.target.value);
-      const pago = $("f_estatus_pago");
-      if(num(e.target.value) > 0 && pago && pago.value === "Pendiente") pago.value = "Abonado";
-    }
-    if(e.target && e.target.id === "q_monto_abonado"){
-      aplicarClaseAbonoInput(e.target, e.target.value);
-    }
-  });
-
-  // Observa apertura del modal para cargar abono, por si app.js abre con retardo.
-  window.addEventListener("load", function(){
-    const modal = $("orderBackdrop");
-    if(modal && window.MutationObserver){
-      const obs = new MutationObserver(function(){
-        const visible = modal.style.display !== "none";
-        const id = pedidoActivoParaModal || window.__pedidoActivoParaModal;
-        if(visible && id) setTimeout(()=>cargarAbonoEnModal(id), 250);
-      });
-      obs.observe(modal, {attributes:true, attributeFilter:["style", "class"]});
-    }
-  });
-})();
-</script>
-
-
-<style>
-/* V10 · colores de materiales e impresión en pedidos */
-.catalog-pill{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:999px;
-  padding:5px 9px;
-  font-size:11px;
-  font-weight:800;
-  line-height:1;
-  min-width:54px;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);
-  white-space:nowrap;
-}
-.catalog-select-colored{
-  font-weight:800!important;
-  border-radius:10px!important;
-}
-
-
-/* =========================================================
-   FIX v8 · Quitar flash negro/raro al cargar
-   - Oculta el menú hasta que JS lo arma
-   - Estabiliza el header desde el primer segundo
-   - Mantiene precio oculto
-========================================================= */
-html,
-body{
-  background:#f0f2f9!important;
-}
-
-/* Mientras el menú se arma, queda invisible pero con espacio reservado */
-html.loading-menu .header-tabs{
-  opacity:0!important;
-  visibility:hidden!important;
-}
-
-/* Cuando menu.js termina, aparece estable */
-html.menu-ready .header-tabs,
-.header.menu-ready .header-tabs{
-  opacity:1!important;
-  visibility:visible!important;
-}
-
-/* Header estable para evitar fondo negro/salto visual */
-.header{
-  background:#172bd8!important;
-  box-shadow:0 8px 20px rgba(21,59,255,.18)!important;
-  min-height:64px!important;
-  height:64px!important;
-  overflow:hidden!important;
-  transition:none!important;
-  animation:none!important;
-}
-
-.header,
-.header *,
-.header-tabs,
-.header-tabs *,
-.tab-btn,
-.storage-pill,
-.mobile-menu-btn{
-  transition:none!important;
-  animation:none!important;
-}
-
-.header-tabs{
-  min-height:34px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:flex-end!important;
-  gap:7px!important;
-  flex-wrap:nowrap!important;
-  margin-left:auto!important;
-}
-
-.header-tabs .tab-btn,
-.header-tabs .storage-pill{
-  min-height:31px!important;
-  height:31px!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  white-space:nowrap!important;
-}
-
-.logo{
-  flex-shrink:0!important;
-}
-
-.logo img{
-  display:block!important;
-  height:32px!important;
-  width:auto!important;
-}
-
-.logo small{
-  color:#fff!important;
-  font-weight:900!important;
-  letter-spacing:1.4px!important;
-}
-
-/* Select desplegable blanco */
-select,
-select option,
-.cell-select option,
-.quick-select option,
-.filter-sel option,
-#q_estatus_trabajo option,
-#q_estatus_pago option,
-#f_estatus_trabajo option,
-#f_estatus_pago option{
-  background:#ffffff!important;
-  color:#111827!important;
-}
-
-input,
-select,
-textarea,
-button{
-  -webkit-tap-highlight-color:transparent!important;
-}
-
-/* PRECIO oculto temporalmente */
-table th:nth-child(9),
-table td:nth-child(9),
-.quick-entry-row th:nth-child(9){
-  display:none!important;
-}
-
-table{
-  min-width:1320px!important;
-}
-
-@media(max-width:980px){
-  .header{
-    height:auto!important;
-    min-height:64px!important;
-    overflow:visible!important;
+  } catch (e) {
+    console.error("Error cargando operadores fallback:", e);
   }
 
-  html.loading-menu .header-tabs,
-  html.menu-ready .header-tabs,
-  .header.menu-ready .header-tabs{
-    opacity:1!important;
-    visibility:visible!important;
-  }
+  aplicarOperadorSesion();
 
-  .header-tabs{
-    display:none!important;
-  }
+  if (typeof aplicarPermisosComanda === "function") aplicarPermisosComanda();
+});
 
-  .header-tabs.open{
-    display:grid!important;
-  }
-}
 
-@media(max-width:760px){
-  table{
-    min-width:1160px!important;
-  }
-}
 
-
-/* =========================================================
-   FIX MOBILE · Tabla comienza en CLIENTE
-   Solo en celulares se ocultan las columnas:
-   1) # / Nro pedido
-   2) Fecha de emisión
-   3) Operador
-   Así la tabla arranca visualmente en Cliente y Descripción.
-========================================================= */
-@media(max-width:760px){
-  table th:nth-child(1),
-  table td:nth-child(1),
-  table th:nth-child(2),
-  table td:nth-child(2),
-  table th:nth-child(3),
-  table td:nth-child(3){
-    display:none!important;
-  }
-
-  .quick-entry-row th:nth-child(1),
-  .quick-entry-row th:nth-child(2),
-  .quick-entry-row th:nth-child(3){
-    display:none!important;
-  }
-
-  table{
-    min-width:850px!important;
-  }
-
-  table th:nth-child(4),
-  table td:nth-child(4){
-    width:210px!important;
-    min-width:210px!important;
-    padding-left:28px!important;
-  }
-
-  table th:nth-child(5),
-  table td:nth-child(5){
-    width:330px!important;
-    min-width:330px!important;
-  }
-}
-</style>
-<script>
-/* =========================================================
-   CATÁLOGOS v34
-   La pintura de Material e Impresión ahora ocurre directamente en js/app.js
-   antes de renderizar la tabla. Se eliminó el repaint posterior que causaba flash.
-========================================================= */
-window.refrescarColoresCatalogos = window.refrescarColoresCatalogos || function(){};
-</script>
-
-
-<style>
-/* =========================================================
-   FIX FINAL MENU + BUSCADOR + FILTROS · v35
-   Limpia conflictos visuales sin tocar Supabase ni app.js
-========================================================= */
-html,body{
-  background:#f0f2f9!important;
-  color-scheme:light!important;
-}
-.header{
-  position:sticky!important;
-  top:0!important;
-  z-index:500!important;
-  min-height:64px!important;
-  height:auto!important;
-  overflow:visible!important;
-  display:flex!important;
-  align-items:center!important;
-  gap:14px!important;
-  padding:12px 18px!important;
-  background:#172bd8!important;
-  box-shadow:0 8px 20px rgba(21,59,255,.18)!important;
-  border-bottom:0!important;
-  flex-wrap:nowrap!important;
-}
-.header .logo{
-  flex:0 0 auto!important;
-  min-width:auto!important;
-  width:auto!important;
-  display:flex!important;
-  align-items:center!important;
-  gap:8px!important;
-  border:0!important;
-  padding:0!important;
-  margin:0!important;
-}
-.header .logo img{
-  display:block!important;
-  height:36px!important;
-  width:auto!important;
-  max-width:130px!important;
-  object-fit:contain!important;
-}
-.header .logo small{
-  display:inline!important;
-  color:#fff!important;
-  font-family:var(--head)!important;
-  font-weight:900!important;
-  font-size:12px!important;
-  letter-spacing:1.2px!important;
-}
-.mobile-menu-btn{
-  display:none!important;
-  margin-left:auto!important;
-  min-height:36px!important;
-  padding:8px 14px!important;
-  border-radius:999px!important;
-  border:1px solid rgba(255,255,255,.30)!important;
-  background:rgba(255,255,255,.12)!important;
-  color:#fff!important;
-  font-family:var(--head)!important;
-  font-size:12px!important;
-  font-weight:900!important;
-  letter-spacing:.4px!important;
-  text-transform:uppercase!important;
-  cursor:pointer!important;
-}
-.header-tabs{
-  flex:1 1 auto!important;
-  min-width:0!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:flex-end!important;
-  gap:6px!important;
-  margin-left:auto!important;
-  width:auto!important;
-  padding:0!important;
-  border:0!important;
-  opacity:1!important;
-  visibility:visible!important;
-  flex-wrap:nowrap!important;
-}
-.header-tabs .tab-btn,
-.header-tabs .storage-pill{
-  height:32px!important;
-  min-height:32px!important;
-  padding:0 10px!important;
-  border-radius:999px!important;
-  border:1px solid rgba(255,255,255,.28)!important;
-  background:rgba(255,255,255,.10)!important;
-  color:#fff!important;
-  font-family:var(--head)!important;
-  font-size:10px!important;
-  font-weight:900!important;
-  letter-spacing:.25px!important;
-  text-transform:uppercase!important;
-  white-space:nowrap!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  box-shadow:none!important;
-}
-.header-tabs .tab-btn.active{
-  background:#fff!important;
-  color:#153bff!important;
-  border-color:#fff!important;
-}
-.toolbar{
-  position:sticky!important;
-  top:64px!important;
-  z-index:250!important;
-  display:grid!important;
-  grid-template-columns:minmax(280px,1fr) repeat(5, minmax(118px, auto));
-  gap:8px!important;
-  align-items:center!important;
-  padding:10px 14px!important;
-  background:#fff!important;
-  border-bottom:1px solid #d9deea!important;
-  box-shadow:0 4px 18px rgba(0,0,0,.045)!important;
-}
-.search-wrap{
-  min-width:0!important;
-  width:100%!important;
-  display:flex!important;
-  align-items:center!important;
-  min-height:42px!important;
-  border-radius:14px!important;
-  background:#fff!important;
-  border:1px solid #d9deea!important;
-  padding:9px 12px!important;
-  box-shadow:none!important;
-}
-.search-wrap input{
-  width:100%!important;
-  min-width:0!important;
-  color:#111827!important;
-}
-.filter-sel{
-  width:100%!important;
-  min-width:0!important;
-  min-height:42px!important;
-  border-radius:12px!important;
-  border:1px solid #d9deea!important;
-  background:#fff!important;
-  color:#153bff!important;
-  font-size:11px!important;
-  font-weight:900!important;
-  padding:8px 10px!important;
-}
-.toolbar > #storageBadge{
-  display:none!important;
-}
-.table-wrap{
-  position:relative!important;
-  z-index:1!important;
-}
-@media(max-width:1180px){
-  .header{padding:12px 14px!important;gap:10px!important;}
-  .header .logo img{height:32px!important;max-width:110px!important;}
-  .header .logo small{display:none!important;}
-  .header-tabs{gap:4px!important;}
-  .header-tabs .tab-btn,
-  .header-tabs .storage-pill{font-size:9px!important;padding:0 7px!important;}
-}
-@media(max-width:980px){
-  .header{
-    min-height:60px!important;
-    flex-wrap:wrap!important;
-    padding:10px 12px!important;
-  }
-  .header .logo img{height:34px!important;max-width:125px!important;}
-  .mobile-menu-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;}
-  .header-tabs{
-    display:none!important;
-    flex:1 1 100%!important;
-    width:100%!important;
-    margin-left:0!important;
-    padding-top:10px!important;
-    border-top:1px solid rgba(255,255,255,.22)!important;
-    grid-template-columns:1fr 1fr!important;
-    gap:8px!important;
-  }
-  .header-tabs.open{display:grid!important;}
-  .header-tabs .tab-btn,
-  .header-tabs .storage-pill{
-    width:100%!important;
-    min-height:40px!important;
-    height:40px!important;
-    font-size:11px!important;
-  }
-  .toolbar{
-    position:relative!important;
-    top:auto!important;
-    grid-template-columns:1fr 1fr!important;
-    padding:10px!important;
-    gap:8px!important;
-  }
-  .search-wrap{grid-column:1 / -1!important;}
-  #filterStatus,
-  #filterPago,
-  #filterFechaDesde,
-  #filterFechaHasta,
-  #filterOperador{
-    flex:none!important;
-    min-width:0!important;
-    font-size:11px!important;
-    padding:8px 9px!important;
-  }
-  #filterOperador{grid-column:1 / -1!important;}
-}
-@media(max-width:430px){
-  .toolbar{grid-template-columns:1fr 1fr!important;}
-  .filter-sel{font-size:10px!important;padding:8px 7px!important;}
-  .search-wrap input{font-size:13px!important;}
-}
-</style>
-<style>
-/* =========================================================
-   FIX FINAL v36 · Menú + buscador + filtros
-   Corrige solapamiento del logo, campana, menú y toolbar.
-   Este bloque debe quedar al final para ganar sobre parches anteriores.
-========================================================= */
-html,body{background:#f0f2f9!important;color-scheme:light!important;}
-
-.header{
-  position:sticky!important;
-  top:0!important;
-  z-index:900!important;
-  display:grid!important;
-  grid-template-columns:155px minmax(0,1fr)!important;
-  align-items:center!important;
-  gap:10px!important;
-  width:100%!important;
-  min-height:58px!important;
-  height:58px!important;
-  padding:10px 16px!important;
-  overflow:hidden!important;
-  background:#172bd8!important;
-  border-bottom:0!important;
-  box-shadow:0 8px 20px rgba(21,59,255,.18)!important;
-  flex-wrap:nowrap!important;
-}
-
-.header .logo{
-  grid-column:1!important;
-  grid-row:1!important;
-  width:155px!important;
-  min-width:155px!important;
-  max-width:155px!important;
-  height:38px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:flex-start!important;
-  gap:6px!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  overflow:hidden!important;
-  flex:none!important;
-}
-
-.header .logo img{
-  display:block!important;
-  width:auto!important;
-  height:34px!important;
-  max-width:138px!important;
-  max-height:34px!important;
-  object-fit:contain!important;
-  filter:none!important;
-}
-
-.header .logo small{display:none!important;}
-.header .noti-btn{display:none!important;}
-.mobile-menu-btn{display:none!important;}
-
-.header-tabs{
-  grid-column:2!important;
-  grid-row:1!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:flex-end!important;
-  gap:5px!important;
-  width:100%!important;
-  max-width:100%!important;
-  min-width:0!important;
-  height:36px!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  overflow:hidden!important;
-  opacity:1!important;
-  visibility:visible!important;
-  flex-wrap:nowrap!important;
-}
-
-.header-tabs .tab-btn,
-.header-tabs .storage-pill{
-  flex:0 1 auto!important;
-  height:30px!important;
-  min-height:30px!important;
-  max-height:30px!important;
-  padding:0 9px!important;
-  border-radius:999px!important;
-  border:1px solid rgba(255,255,255,.28)!important;
-  background:rgba(255,255,255,.10)!important;
-  color:#fff!important;
-  font-family:var(--head,Montserrat,Arial,sans-serif)!important;
-  font-size:9.5px!important;
-  font-weight:900!important;
-  letter-spacing:.25px!important;
-  line-height:1!important;
-  text-transform:uppercase!important;
-  white-space:nowrap!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:4px!important;
-  box-shadow:none!important;
-  overflow:hidden!important;
-}
-
-.header-tabs .tab-btn.active{
-  background:#fff!important;
-  color:#153bff!important;
-  border-color:#fff!important;
-}
-
-.toolbar{
-  position:sticky!important;
-  top:58px!important;
-  z-index:700!important;
-  display:grid!important;
-  grid-template-columns:minmax(340px,1fr) 120px 120px 135px 135px 120px!important;
-  gap:8px!important;
-  align-items:center!important;
-  width:100%!important;
-  padding:10px 14px!important;
-  background:#fff!important;
-  border-bottom:1px solid #d9deea!important;
-  box-shadow:0 4px 18px rgba(0,0,0,.045)!important;
-  margin:0!important;
-}
-
-.search-wrap{
-  grid-column:auto!important;
-  width:100%!important;
-  min-width:0!important;
-  min-height:42px!important;
-  display:flex!important;
-  align-items:center!important;
-  border-radius:14px!important;
-  background:#fff!important;
-  border:1px solid #d9deea!important;
-  padding:9px 12px!important;
-  box-shadow:none!important;
-}
-
-.search-wrap input{
-  width:100%!important;
-  min-width:0!important;
-  font-size:13px!important;
-  color:#111827!important;
-}
-
-.filter-sel,
-#filterStatus,
-#filterPago,
-#filterFechaDesde,
-#filterFechaHasta,
-#filterOperador{
-  width:100%!important;
-  min-width:0!important;
-  max-width:none!important;
-  min-height:42px!important;
-  height:42px!important;
-  border-radius:12px!important;
-  border:1px solid #d9deea!important;
-  background:#fff!important;
-  color:#153bff!important;
-  font-size:11px!important;
-  font-weight:900!important;
-  padding:8px 10px!important;
-  flex:none!important;
-}
-
-.toolbar > #storageBadge{display:none!important;}
-.table-wrap{margin-top:0!important;position:relative!important;z-index:1!important;}
-
-@media(max-width:1280px){
-  .header{grid-template-columns:130px minmax(0,1fr)!important;padding:10px 12px!important;}
-  .header .logo{width:130px!important;min-width:130px!important;max-width:130px!important;}
-  .header .logo img{max-width:118px!important;height:31px!important;}
-  .header-tabs{gap:4px!important;}
-  .header-tabs .tab-btn,
-  .header-tabs .storage-pill{font-size:8.7px!important;padding:0 7px!important;gap:3px!important;}
-  .toolbar{grid-template-columns:minmax(300px,1fr) 112px 112px 128px 128px 112px!important;}
-}
-
-@media(max-width:980px){
-  .header{
-    display:grid!important;
-    grid-template-columns:1fr auto!important;
-    height:auto!important;
-    min-height:60px!important;
-    overflow:visible!important;
-    padding:10px 12px!important;
-  }
-  .header .logo{
-    width:150px!important;
-    min-width:150px!important;
-    max-width:150px!important;
-  }
-  .header .logo img{height:34px!important;max-width:140px!important;}
-  .mobile-menu-btn{
-    grid-column:2!important;
-    grid-row:1!important;
-    display:inline-flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-    min-height:36px!important;
-    padding:8px 14px!important;
-    border-radius:999px!important;
-    border:1px solid rgba(255,255,255,.30)!important;
-    background:rgba(255,255,255,.12)!important;
-    color:#fff!important;
-    font-family:var(--head,Montserrat,Arial,sans-serif)!important;
-    font-size:12px!important;
-    font-weight:900!important;
-  }
-  .header-tabs{
-    grid-column:1 / -1!important;
-    grid-row:2!important;
-    display:none!important;
-    width:100%!important;
-    height:auto!important;
-    margin-top:10px!important;
-    padding-top:10px!important;
-    border-top:1px solid rgba(255,255,255,.22)!important;
-    overflow:visible!important;
-    grid-template-columns:1fr 1fr!important;
-    gap:8px!important;
-  }
-  .header-tabs.open{display:grid!important;}
-  .header-tabs .tab-btn,
-  .header-tabs .storage-pill{
-    width:100%!important;
-    min-height:40px!important;
-    height:40px!important;
-    font-size:11px!important;
-    padding:0 10px!important;
-  }
-  .toolbar{
-    position:relative!important;
-    top:auto!important;
-    z-index:500!important;
-    grid-template-columns:1fr 1fr!important;
-    padding:10px!important;
-    gap:8px!important;
-  }
-  .search-wrap{grid-column:1 / -1!important;}
-  #filterOperador{grid-column:1 / -1!important;}
-}
-
-@media(max-width:430px){
-  .header .logo{width:132px!important;min-width:132px!important;max-width:132px!important;}
-  .header .logo img{height:31px!important;max-width:126px!important;}
-  .mobile-menu-btn{font-size:11px!important;padding:7px 11px!important;}
-  .toolbar{grid-template-columns:1fr 1fr!important;}
-  .filter-sel,
-  #filterStatus,
-  #filterPago,
-  #filterFechaDesde,
-  #filterFechaHasta,
-  #filterOperador{
-    font-size:10px!important;
-    padding:8px 7px!important;
-  }
-}
-</style>
-
-
-
-<style>
-/* =========================================================
-   FIX FINAL v37 · Regresa campana + estabiliza menú
-   - Logo | Campana | Menú en escritorio
-   - Logo | Campana | Botón menú en móvil
-   - No toca Supabase ni lógica de pedidos
-========================================================= */
-.header{
-  display:grid!important;
-  grid-template-columns:155px 44px minmax(0,1fr)!important;
-  align-items:center!important;
-  gap:8px!important;
-  height:58px!important;
-  min-height:58px!important;
-  overflow:hidden!important;
-}
-
-.header .logo{
-  grid-column:1!important;
-  grid-row:1!important;
-}
-
-.header .noti-btn,
-#notiBtnGlobal{
-  grid-column:2!important;
-  grid-row:1!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  width:38px!important;
-  min-width:38px!important;
-  max-width:38px!important;
-  height:34px!important;
-  min-height:34px!important;
-  max-height:34px!important;
-  padding:0!important;
-  margin:0!important;
-  border-radius:999px!important;
-  border:1px solid rgba(255,255,255,.30)!important;
-  background:rgba(255,255,255,.12)!important;
-  color:#fff!important;
-  font-size:13px!important;
-  line-height:1!important;
-  box-shadow:none!important;
-  cursor:pointer!important;
-  white-space:nowrap!important;
-  overflow:visible!important;
-}
-
-#notiBtnGlobal .noti-count{
-  position:absolute!important;
-  transform:translate(12px,-10px)!important;
-  min-width:18px!important;
-  width:auto!important;
-  height:18px!important;
-  padding:0 5px!important;
-  border-radius:999px!important;
-  background:#e5e7eb!important;
-  color:#64748b!important;
-  font-size:10px!important;
-  font-family:var(--mono,monospace)!important;
-  font-weight:900!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  border:1px solid rgba(255,255,255,.35)!important;
-}
-
-#notiBtnGlobal .noti-count:not(.empty){
-  background:#dc2626!important;
-  color:#fff!important;
-}
-
-.header-tabs{
-  grid-column:3!important;
-  grid-row:1!important;
-}
-
-@media(max-width:1280px){
-  .header{
-    grid-template-columns:130px 42px minmax(0,1fr)!important;
-  }
-}
-
-@media(max-width:980px){
-  .header{
-    grid-template-columns:1fr 42px auto!important;
-    height:auto!important;
-    min-height:60px!important;
-    overflow:visible!important;
-  }
-
-  .header .logo{
-    grid-column:1!important;
-    grid-row:1!important;
-  }
-
-  .header .noti-btn,
-  #notiBtnGlobal{
-    grid-column:2!important;
-    grid-row:1!important;
-  }
-
-  .mobile-menu-btn{
-    grid-column:3!important;
-    grid-row:1!important;
-  }
-
-  .header-tabs{
-    grid-column:1 / -1!important;
-    grid-row:2!important;
-  }
-}
-</style>
-
-
-
-<style id="fix-mobile-compact-v39">
-/* =========================================================
-   FIX v39 · SOLO MÓVIL
-   - Reduce aprox. 25% el tamaño visual en móvil
-   - Oculta filtro de fecha Desde/Hasta solo en móvil
-   - No modifica escritorio/web
-========================================================= */
-@media (max-width:980px){
-  body{
-    padding-bottom:92px!important;
-  }
-
-  .header{
-    min-height:48px!important;
-    padding:7px 9px!important;
-    gap:6px!important;
-  }
-
-  .header .logo{
-    width:118px!important;
-    min-width:118px!important;
-    max-width:118px!important;
-  }
-
-  .header .logo img{
-    height:26px!important;
-    max-width:112px!important;
-  }
-
-  .header .noti-btn,
-  #notiBtnGlobal{
-    width:32px!important;
-    min-width:32px!important;
-    max-width:32px!important;
-    height:31px!important;
-    min-height:31px!important;
-    max-height:31px!important;
-    font-size:12px!important;
-  }
-
-  #notiBtnGlobal .noti-count{
-    min-width:14px!important;
-    height:14px!important;
-    padding:0 4px!important;
-    font-size:8px!important;
-    transform:translate(9px,-8px)!important;
-  }
-
-  .mobile-menu-btn{
-    min-height:31px!important;
-    height:31px!important;
-    padding:6px 10px!important;
-    font-size:10px!important;
-    letter-spacing:1px!important;
-  }
-
-  .header-tabs{
-    margin-top:7px!important;
-    padding-top:7px!important;
-    gap:6px!important;
-  }
-
-  .header-tabs .tab-btn,
-  .header-tabs .storage-pill,
-  .tab-btn{
-    min-height:31px!important;
-    height:31px!important;
-    font-size:8.5px!important;
-    padding:0 7px!important;
-    border-radius:7px!important;
-    letter-spacing:.8px!important;
-  }
-
-  .toolbar{
-    padding:7px 9px!important;
-    gap:6px!important;
-    grid-template-columns:1fr 1fr!important;
-  }
-
-  .search-wrap{
-    min-height:32px!important;
-    height:32px!important;
-    padding:5px 8px!important;
-    border-radius:10px!important;
-  }
-
-  .search-wrap input{
-    font-size:10px!important;
-  }
-
-  #filterFechaDesde,
-  #filterFechaHasta{
-    display:none!important;
-  }
-
-  .filter-sel,
-  #filterStatus,
-  #filterPago,
-  #filterOperador{
-    min-height:32px!important;
-    height:32px!important;
-    font-size:9px!important;
-    padding:5px 7px!important;
-    border-radius:9px!important;
-  }
-
-  #filterOperador{
-    grid-column:auto!important;
-  }
-
-  .table-wrap{
-    margin:0 7px!important;
-    border-radius:8px!important;
-    padding-bottom:95px!important;
-  }
-
-  table{
-    min-width:890px!important;
-    font-size:9px!important;
-  }
-
-  th{
-    font-size:7.5px!important;
-    padding:4px 4px!important;
-    height:25px!important;
-  }
-
-  td{
-    font-size:8.8px!important;
-    padding:4px 4px!important;
-    height:28px!important;
-  }
-
-  .quick-input,
-  .quick-select,
-  .quick-btn,
-  .cell-edit,
-  .cell-select{
-    min-height:27px!important;
-    height:27px!important;
-    font-size:8.8px!important;
-    padding:3px 5px!important;
-    border-radius:6px!important;
-  }
-
-  .quick-textarea{
-    min-height:27px!important;
-    max-height:38px!important;
-  }
-
-  .status-pill,
-  .pay-pill,
-  .pill{
-    font-size:7.8px!important;
-    padding:3px 5px!important;
-  }
-
-  .btn-icon,
-  .btn-mini,
-  .icon-btn{
-    min-width:26px!important;
-    min-height:26px!important;
-    width:26px!important;
-    height:26px!important;
-    font-size:10px!important;
-  }
-}
-
-@media (max-width:430px){
-  .header .logo{
-    width:108px!important;
-    min-width:108px!important;
-    max-width:108px!important;
-  }
-
-  .header .logo img{
-    height:24px!important;
-    max-width:104px!important;
-  }
-
-  .mobile-menu-btn{
-    min-height:30px!important;
-    height:30px!important;
-    padding:5px 9px!important;
-    font-size:9.5px!important;
-  }
-
-  .toolbar{
-    padding:6px 8px!important;
-    gap:5px!important;
-  }
-
-  .filter-sel,
-  #filterStatus,
-  #filterPago,
-  #filterOperador{
-    font-size:8.5px!important;
-    padding:5px 6px!important;
-  }
-}
-</style>
-
-</body>
-</html>
