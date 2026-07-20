@@ -818,7 +818,7 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
     // Número fijo de prueba. Todos los avisos llegan aquí.
     const telefono = "584144143004";
 
-    // Nueva plantilla transaccional de categoría Utility.
+    // Plantilla original activa en Meta: pedido_listo_detalle.
     // Variables:
     // 1) Cliente
     // 2) Entrega
@@ -830,8 +830,8 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       body: {
         pedido_id: Number(id),
         to: telefono,
-        template: "pedido_listo_tuttovinilos",
-        language: "es",
+        template: "pedido_listo_detalle",
+        language: "es_ES",
         parameters: [
           String(pedidoActual.cliente || "Cliente"),
           textoEntregaWhatsApp(pedidoActual.tipo_entrega),
@@ -865,8 +865,8 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       pedidoId: id,
       cliente: pedidoActual.cliente || "",
       telefono,
-      template: "pedido_listo_tuttovinilos",
-      language: "es",
+      template: "pedido_listo_detalle",
+      language: "es_ES",
       mensajeId,
       estadoMeta,
       respuestaCompleta: data
