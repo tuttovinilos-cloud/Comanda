@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v75 WhatsApp diagnóstico");
+console.log("APP JS conectado correctamente v77 WhatsApp plantilla Meta confirmada");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -773,16 +773,26 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
     // Número fijo de prueba. Todos los avisos llegan aquí.
     const telefono = "584144143004";
 
+    // Plantilla confirmada manualmente en Meta Developers.
+    // Parámetros:
+    // 1) Nombre del cliente
+    // 2) Número del pedido
+    // 3) Fecha
+    const fechaMensaje = new Date().toLocaleDateString("en-US", {
+      month: "short",
+      day: "2-digit",
+      year: "numeric"
+    });
+
     const { data, error } = await db().functions.invoke("enviar-whatsapp", {
       body: {
         to: telefono,
-        template: "pedido_listo_detalle",
-        language: "es_ES",
+        template: "jaspers_market_order_confirmation_v1",
+        language: "en_US",
         parameters: [
           String(pedidoActual.cliente || "Cliente"),
-          textoEntregaWhatsApp(pedidoActual.tipo_entrega),
-          datosPagoWhatsApp(pedidoActual).estado,
-          datosPagoWhatsApp(pedidoActual).saldo
+          String(pedidoActual.id || id || "000000"),
+          fechaMensaje
         ]
       }
     });
@@ -811,14 +821,14 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       pedidoId: id,
       cliente: pedidoActual.cliente || "",
       telefono,
-      template: "pedido_listo_detalle",
-      language: "es_ES",
+      template: "jaspers_market_order_confirmation_v1",
+      language: "en_US",
       mensajeId,
       estadoMeta,
       respuestaCompleta: data
     });
 
-    mostrarToast("Pedido listo · WhatsApp aceptado por Meta ✅");
+    mostrarToast("Pedido listo · WhatsApp enviado a Meta ✅");
   } catch (error) {
     console.error("No se pudo enviar WhatsApp para el pedido " + id + ":", error);
     mostrarToast("Pedido listo, pero falló WhatsApp ⚠️");
@@ -1631,7 +1641,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v75_whatsapp_diagnostico";
+const PAGO_SIMPLE_VERSION = "v77_whatsapp_meta_confirmada";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
