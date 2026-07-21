@@ -830,8 +830,8 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       body: {
         pedido_id: Number(id),
         to: telefono,
-        template: "pedido_listo_utilidad",
-        language: "es_ES",
+        template: "pedido_listo_tuttovinilos",
+        language: "es",
         parameters: [
           pedidoActual.cliente || "Cliente",
           textoEntregaWhatsApp(pedidoActual.tipo_entrega),
@@ -865,8 +865,8 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       pedidoId: id,
       cliente: pedidoActual.cliente || "",
       telefono,
-      template: "pedido_listo_utilidad",
-      language: "es_ES",
+      template: "pedido_listo_tuttovinilos",
+      language: "es",
       mensajeId,
       estadoMeta,
       respuestaCompleta: data
@@ -1703,7 +1703,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v78_pedido_listo_utilidad";
+const PAGO_SIMPLE_VERSION = "v78_pedido_listo_tuttovinilos";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
