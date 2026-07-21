@@ -720,6 +720,81 @@ function datosPagoWhatsApp(pedido) {
   };
 }
 
+async function obtenerResumenTotalClienteWhatsApp(pedido) {
+  const fallback = datosPagoWhatsApp(pedido || {});
+  if (!pedido || !db()) return fallback;
+
+  const clienteId = pedido.cliente_id || clienteIdPorPedido(pedido);
+  const nombreCliente = String(pedido.cliente || "").trim();
+  const columnas = [
+    "id",
+    "cliente_id",
+    "cliente",
+    "pago_simple_total",
+    "pago_simple_pagado",
+    "pago_simple_estado",
+    "pago_simple_tipo",
+    "tasa_deuda",
+    "moneda_deuda",
+    "tipo_tasa_deuda"
+  ].join(",");
+
+  try {
+    const PAGE_SIZE = 1000;
+    let desde = 0;
+    let pedidosCliente = [];
+
+    while (true) {
+      let consulta = db()
+        .from("pedidos")
+        .select(columnas)
+        .order("id", { ascending: false })
+        .range(desde, desde + PAGE_SIZE - 1);
+
+      if (clienteId) {
+        consulta = consulta.eq("cliente_id", clienteId);
+      } else if (nombreCliente) {
+        consulta = consulta.eq("cliente", nombreCliente);
+      } else {
+        return fallback;
+      }
+
+      const { data, error } = await consulta;
+      if (error) throw error;
+
+      const lote = data || [];
+      pedidosCliente = pedidosCliente.concat(lote);
+
+      if (lote.length < PAGE_SIZE) break;
+      desde += PAGE_SIZE;
+    }
+
+    const resumen = pedidosCliente.reduce(function(acum, item) {
+      const deuda = resumenDeudaPedido(item);
+      acum.total += numeroSeguro(deuda.total || 0);
+      acum.pagado += numeroSeguro(deuda.pagado || 0);
+      acum.saldo += numeroSeguro(deuda.saldo || 0);
+      return acum;
+    }, { total: 0, pagado: 0, saldo: 0 });
+
+    if (resumen.total <= 0.009) {
+      return { estado: "Sin monto", saldo: "Sin monto definido" };
+    }
+
+    if (resumen.saldo <= 0.009) {
+      return { estado: "Pagado", saldo: "Sin saldo pendiente" };
+    }
+
+    return {
+      estado: resumen.pagado > 0.009 ? "Abonado" : "Pendiente",
+      saldo: formatoUsd(resumen.saldo)
+    };
+  } catch (error) {
+    console.warn("No se pudo calcular el resumen total del cliente para WhatsApp:", error);
+    return fallback;
+  }
+}
+
 async function obtenerClienteWhatsApp(pedido) {
   if (!pedido || !db()) return null;
 
@@ -823,15 +898,15 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
     // 1) Cliente
     // 2) Entrega
     // 3) Estado del pago
-    // 4) Saldo pendiente
-    const pagoWhatsApp = datosPagoWhatsApp(pedidoActual);
+    // 4) Saldo pendiente total de todos los pedidos del cliente
+    const pagoWhatsApp = await obtenerResumenTotalClienteWhatsApp(pedidoActual);
 
     const { data, error } = await db().functions.invoke("enviar-whatsapp", {
       body: {
         pedido_id: Number(id),
         to: telefono,
-        template: "pedido_listo_tuttovinilos",
-        language: "es",
+        template: "pedido_listo_utilidad",
+        language: "es_ES",
         parameters: [
           pedidoActual.cliente || "Cliente",
           textoEntregaWhatsApp(pedidoActual.tipo_entrega),
@@ -865,8 +940,8 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       pedidoId: id,
       cliente: pedidoActual.cliente || "",
       telefono,
-      template: "pedido_listo_tuttovinilos",
-      language: "es",
+      template: "pedido_listo_utilidad",
+      language: "es_ES",
       mensajeId,
       estadoMeta,
       respuestaCompleta: data
@@ -1703,7 +1778,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v78_pedido_listo_tuttovinilos";
+const PAGO_SIMPLE_VERSION = "v79_saldo_total_cliente";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
