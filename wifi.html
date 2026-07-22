@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detector de WiFi</title>
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    display:grid;
+    place-items:center;
+    background:#f3f5fa;
+    font-family:Arial,sans-serif;
+    color:#172033;
+    padding:20px;
+  }
+  .card{
+    width:min(440px,100%);
+    background:#fff;
+    border:1px solid #dfe4ee;
+    border-radius:20px;
+    padding:24px;
+    box-shadow:0 14px 40px rgba(20,35,70,.10);
+  }
+  h1{margin:0 0 8px;font-size:24px}
+  p{line-height:1.45;color:#586174}
+  .estado{
+    margin:18px 0;
+    padding:16px;
+    border-radius:14px;
+    background:#f6f8fc;
+    border:1px solid #e2e7f0;
+  }
+  .fila{
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    padding:8px 0;
+    border-bottom:1px solid #e8ecf3;
+  }
+  .fila:last-child{border-bottom:0}
+  .valor{font-weight:800;text-align:right}
+  .ok{color:#16863b}
+  .error{color:#cf2f2f}
+  input{
+    width:100%;
+    padding:13px 14px;
+    border:1px solid #ccd3df;
+    border-radius:12px;
+    font-size:16px;
+    margin-top:8px;
+  }
+  button{
+    width:100%;
+    margin-top:12px;
+    border:0;
+    border-radius:12px;
+    padding:14px;
+    background:#153bff;
+    color:#fff;
+    font-size:16px;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .nota{
+    margin-top:16px;
+    font-size:13px;
+    background:#fff6db;
+    border:1px solid #f1d98b;
+    padding:12px;
+    border-radius:12px;
+    color:#725600;
+  }
+</style>
+</head>
+<body>
+  <main class="card">
+    <h1>Estado de conexión</h1>
+    <p>Esta página puede detectar si tienes Internet y, cuando el navegador lo permite, el tipo de conexión.</p>
+
+    <section class="estado">
+      <div class="fila">
+        <span>Internet</span>
+        <span id="internet" class="valor">Comprobando…</span>
+      </div>
+      <div class="fila">
+        <span>Tipo de conexión</span>
+        <span id="tipo" class="valor">No disponible</span>
+      </div>
+      <div class="fila">
+        <span>Velocidad estimada</span>
+        <span id="velocidad" class="valor">No disponible</span>
+      </div>
+      <div class="fila">
+        <span>Nombre del WiFi</span>
+        <span id="wifi" class="valor">Bloqueado por el navegador</span>
+      </div>
+    </section>
+
+    <label for="ssid"><strong>Escribe el nombre de tu WiFi:</strong></label>
+    <input id="ssid" type="text" placeholder="Ejemplo: Tuttovinilos WiFi">
+    <button onclick="guardarWifi()">Guardar nombre</button>
+
+    <div class="nota">
+      Por seguridad, una página HTML normal no puede leer automáticamente el nombre real de la red WiFi. 
+      Un ESP32 sí puede detectar las redes cercanas y enviar sus nombres a esta página o a Supabase.
+    </div>
+  </main>
+
+<script>
+  const internet = document.getElementById('internet');
+  const tipo = document.getElementById('tipo');
+  const velocidad = document.getElementById('velocidad');
+  const wifi = document.getElementById('wifi');
+  const ssid = document.getElementById('ssid');
+
+  function actualizarEstado(){
+    const conectado = navigator.onLine;
+
+    internet.textContent = conectado ? 'Conectado' : 'Sin conexión';
+    internet.className = 'valor ' + (conectado ? 'ok' : 'error');
+
+    const conexion = navigator.connection ||
+                     navigator.mozConnection ||
+                     navigator.webkitConnection;
+
+    if(conexion){
+      tipo.textContent = conexion.type || conexion.effectiveType || 'Desconocido';
+      velocidad.textContent = conexion.downlink
+        ? conexion.downlink + ' Mbps'
+        : 'No disponible';
+    }
+  }
+
+  function guardarWifi(){
+    const nombre = ssid.value.trim();
+
+    if(!nombre){
+      alert('Escribe el nombre de tu WiFi.');
+      return;
+    }
+
+    localStorage.setItem('nombre_wifi', nombre);
+    wifi.textContent = nombre;
+    wifi.className = 'valor ok';
+  }
+
+  const guardado = localStorage.getItem('nombre_wifi');
+  if(guardado){
+    ssid.value = guardado;
+    wifi.textContent = guardado;
+    wifi.className = 'valor ok';
+  }
+
+  window.addEventListener('online', actualizarEstado);
+  window.addEventListener('offline', actualizarEstado);
+
+  const conexion = navigator.connection ||
+                   navigator.mozConnection ||
+                   navigator.webkitConnection;
+
+  if(conexion){
+    conexion.addEventListener('change', actualizarEstado);
+  }
+
+  actualizarEstado();
+</script>
+</body>
+</html>
