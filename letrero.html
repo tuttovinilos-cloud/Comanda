@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b1020">
   <meta name="description" content="Guía completa de letreros, corpóreos, iluminación y cajas de luz de Tuttovinilos.">
   <title>Letreros · Tuttovinilos</title>
-  <!-- Letrero v2 · Catálogo separado por material, espesor y construcción · mismo estilo visual -->
+  <!-- Letrero v3 · Orientador inteligente por compatibilidad · mismo estilo visual -->
   <style>
     *{box-sizing:border-box}
     html{scroll-behavior:smooth}
@@ -234,6 +234,17 @@
     .config-actions{margin-top:auto;display:grid;gap:9px}
     .config-result .btn-light{width:100%}
     .copy-msg{font-size:11px;color:#92a0bf;text-align:center;min-height:16px}
+    .field-help{font-size:11px;color:#73809a;line-height:1.35;margin-top:-1px}
+    .field-help.locked{color:#167a4d;font-weight:800}
+    .field.is-hidden{display:none}
+    .compatibility-box{grid-column:1/-1;border:1px solid #d9e0ef;background:#f4f7ff;border-radius:15px;padding:13px 14px;display:flex;align-items:flex-start;gap:11px}
+    .compatibility-icon{width:31px;height:31px;flex:0 0 31px;border-radius:10px;background:#e4e9ff;color:var(--blue);display:grid;place-items:center;font-weight:1000}
+    .compatibility-box b{display:block;color:var(--navy);font-size:12px;margin-bottom:2px}
+    .compatibility-box span{display:block;color:var(--muted);font-size:11px;line-height:1.4}
+    .auto-tag{display:inline-flex;align-items:center;gap:6px;margin-left:6px;padding:3px 7px;border-radius:999px;background:#e8f8f0;color:#14754a;font-size:9px;font-weight:950;letter-spacing:.4px;text-transform:uppercase;vertical-align:middle}
+    .summary-line.optional{display:none}
+    .recommendation.warning{border-color:rgba(255,176,32,.38);background:rgba(255,176,32,.08)}
+    .recommendation.good{border-color:rgba(25,178,107,.34);background:rgba(25,178,107,.07)}
 
     .faq{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     details{background:#fff;border:1px solid var(--line);border-radius:16px;padding:0 18px;box-shadow:0 8px 24px rgba(17,24,39,.04)}
@@ -691,32 +702,124 @@
       <div class="wrap">
         <div class="section-head">
           <div><span class="section-kicker">Orientador de compra</span><h2>Construye tu idea</h2></div>
-          <p>Selecciona lo que buscas y la página preparará una recomendación y un mensaje listo para WhatsApp.</p>
+          <p>Primero eliges la familia del letrero. Luego la página muestra únicamente las variantes, iluminaciones y opciones compatibles.</p>
         </div>
         <div class="configurator">
           <div class="config-grid">
             <form class="config-form" id="configForm">
               <div class="form-grid">
-                <div class="field full"><label for="productType">Tipo de letrero</label><select id="productType"><option>PVC 6 mm + laminado</option><option>PVC 9 mm + laminado</option><option>PVC 15 mm + laminado</option><option>Acrílico de color 3 mm</option><option>Acrílico de color 5 mm</option><option>Acrílico transparente 3 mm + laminado</option><option>Acrílico transparente 5 mm + laminado</option><option>PVC 9 mm + frontal acrílico</option><option>PVC 15 mm + frontal acrílico</option><option>Canto de aluminio 4 cm</option><option>Canto de aluminio 6 cm</option><option>Canto de aluminio 10 cm</option><option>Corpóreo retroiluminado</option><option>Corpóreo frontal + halo</option><option>Caja de luz rígida</option><option>Caja de luz tipo bandera</option><option>Letras metálicas</option><option>Panel o base calada</option><option>Logo sobre base</option><option>Letras flotantes</option><option>Neón LED flexible</option><option>Letrero plano impreso</option></select></div>
+                <div class="compatibility-box">
+                  <span class="compatibility-icon">✓</span>
+                  <span><b>Opciones controladas por compatibilidad</b><span id="compatibilityText">El sistema ajustará automáticamente la iluminación y las opciones según el letrero seleccionado.</span></span>
+                </div>
+
+                <div class="field full">
+                  <label for="productType">Familia de letrero</label>
+                  <select id="productType">
+                    <option>PVC laminado</option>
+                    <option>Acrílico de color</option>
+                    <option>Acrílico transparente laminado</option>
+                    <option>Acrílico transparente retro pintado</option>
+                    <option>PVC con frontal acrílico</option>
+                    <option>Acabado automotriz</option>
+                    <option>Front Lit</option>
+                    <option>Caja de luz</option>
+                    <option>Galvanizado</option>
+                    <option>Acero inoxidable</option>
+                    <option>Neón LED</option>
+                    <option>Logo sobre base</option>
+                  </select>
+                </div>
+
+                <div class="field full" id="variantField">
+                  <label for="productVariant">Material, espesor o variante</label>
+                  <select id="productVariant"></select>
+                  <small class="field-help" id="variantHelp"></small>
+                </div>
+
+                <div class="field full is-hidden" id="mountedProductField">
+                  <label for="mountedProduct">Tipo de logo que irá sobre la base</label>
+                  <select id="mountedProduct">
+                    <option>PVC laminado</option>
+                    <option>Acrílico transparente laminado</option>
+                    <option>Acrílico transparente retro pintado</option>
+                    <option>PVC con frontal acrílico</option>
+                    <option>Front Lit</option>
+                    <option>Galvanizado</option>
+                    <option>Acero inoxidable</option>
+                    <option>Neón LED</option>
+                  </select>
+                  <small class="field-help">La iluminación se adaptará al tipo de logo colocado sobre la base.</small>
+                </div>
+
                 <div class="field"><label for="width">Ancho aproximado (cm)</label><input id="width" type="number" min="1" value="200"></div>
                 <div class="field"><label for="height">Alto aproximado (cm)</label><input id="height" type="number" min="1" value="80"></div>
-                <div class="field"><label for="location">Ubicación</label><select id="location"><option>Interior</option><option>Exterior techado</option><option>Exterior expuesto</option></select></div>
-                <div class="field"><label for="light">Iluminación deseada</label><select id="light"><option>Sin iluminación</option><option>Frontal</option><option>Retroiluminada / halo</option><option>Frontal + halo</option><option>No estoy seguro</option></select></div>
-                <div class="field"><label for="hiddenWire">¿Se puede ocultar cableado?</label><select id="hiddenWire"><option value="yes">Sí</option><option value="no">No</option><option value="unknown">No lo sé</option></select></div>
-                <div class="field"><label for="finish">Acabado preferido</label><select id="finish"><option>Color sólido</option><option>Laminado</option><option>Pintura automotriz</option><option>Metálico</option><option>No estoy seguro</option></select></div>
-                <div class="field full"><label for="notes">Detalles adicionales</label><textarea id="notes" placeholder="Ejemplo: pared de concreto, instalación a 4 metros de altura, logo en azul y naranja..."></textarea></div>
+
+                <div class="field">
+                  <label for="location">Ubicación</label>
+                  <select id="location"><option>Interior</option><option>Exterior techado</option><option>Exterior expuesto</option></select>
+                </div>
+
+                <div class="field">
+                  <label for="light">Iluminación <span class="auto-tag">Automática</span></label>
+                  <select id="light"></select>
+                  <small class="field-help" id="lightHelp"></small>
+                </div>
+
+                <div class="field">
+                  <label for="finish">Acabado compatible</label>
+                  <select id="finish"></select>
+                </div>
+
+                <div class="field">
+                  <label for="wallType">Tipo de pared o superficie</label>
+                  <select id="wallType">
+                    <option>Bloque</option><option>Drywall</option><option>Madera</option><option>Metálica</option><option>ACM</option><option>Vidrio</option><option>No estoy seguro</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="fixing">Fijación disponible</label>
+                  <select id="fixing"></select>
+                  <small class="field-help">La fijación final debe validarse según peso, tamaño y superficie.</small>
+                </div>
+
+                <div class="field">
+                  <label for="accessType">Acceso para instalación</label>
+                  <select id="accessType"><option>A ras de suelo</option><option>Escalera</option><option>Andamio</option></select>
+                </div>
+
+                <div class="field is-hidden" id="ladderStepsField">
+                  <label for="ladderSteps">Cantidad de peldaños</label>
+                  <input id="ladderSteps" type="number" min="1" max="30" value="6">
+                </div>
+
+                <div class="field full" id="hiddenWireField">
+                  <label for="hiddenWire">¿Se puede ocultar el cableado?</label>
+                  <select id="hiddenWire"><option value="yes">Sí</option><option value="no">No</option><option value="unknown">No lo sé</option></select>
+                  <small class="field-help" id="wireHelp">Esta pregunta aparece porque el letrero seleccionado utiliza iluminación.</small>
+                </div>
+
+                <div class="field full"><label for="notes">Detalles adicionales</label><textarea id="notes" placeholder="Ejemplo: instalación sobre ACM, acceso con escalera de 8 peldaños, logo azul y naranja..."></textarea></div>
               </div>
             </form>
+
             <aside class="config-result">
               <h3>Recomendación inicial</h3>
-              <p>Se actualiza automáticamente según tus respuestas.</p>
-              <div class="recommendation"><strong id="recTitle">PVC 6 mm + laminado</strong><p id="recText">Opción liviana y económica para logos pequeños o medianos con acabado frontal en vinil.</p></div>
+              <p>Se actualiza automáticamente según las reglas del producto.</p>
+              <div class="recommendation good" id="recommendationBox"><strong id="recTitle">PVC laminado · 6 mm</strong><p id="recText">Puede fabricarse sin iluminación o con luz posterior.</p></div>
               <div class="summary-list">
+                <div class="summary-line"><span>Producto</span><b id="sumProduct">PVC laminado · 6 mm</b></div>
                 <div class="summary-line"><span>Medida</span><b id="sumSize">200 × 80 cm</b></div>
                 <div class="summary-line"><span>Ubicación</span><b id="sumLocation">Interior</b></div>
                 <div class="summary-line"><span>Iluminación</span><b id="sumLight">Sin iluminación</b></div>
-                <div class="summary-line"><span>Instalación</span><b id="sumInstall">Cableado oculto posible</b></div>
-                <div class="summary-line"><span>Nivel estimado</span><b id="sumLevel">Económico</b></div>
+                <div class="summary-line"><span>Acabado</span><b id="sumFinish">Laminado de color</b></div>
+                <div class="summary-line optional" id="sumBaseRow"><span>Base</span><b id="sumBase">—</b></div>
+                <div class="summary-line"><span>Pared</span><b id="sumWall">Bloque</b></div>
+                <div class="summary-line"><span>Fijación</span><b id="sumFixing">Tornillo</b></div>
+                <div class="summary-line"><span>Acceso</span><b id="sumAccess">A ras de suelo</b></div>
+                <div class="summary-line optional" id="sumCableRow"><span>Cableado</span><b id="sumInstall">No aplica</b></div>
+                <div class="summary-line"><span>Nivel estimado</span><b id="sumLevel">Económico / medio</b></div>
               </div>
               <div class="config-actions">
                 <button class="btn btn-light" type="button" id="whatsappBtn">Enviar solicitud por WhatsApp</button>
@@ -991,48 +1094,285 @@
     modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
     document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
 
-    function chooseProduct(name){
-      document.getElementById('productType').value=name;
+    const familyRules = {
+      "PVC laminado": {
+        variants:["6 mm","9 mm","15 mm"],
+        variantHelp:"Los espesores se mantienen agrupados dentro de la misma familia.",
+        lights:["Sin iluminación","Posterior / retroiluminación"],
+        finishes:["Laminado de color","Vinil impreso","Acabado especial"],
+        fixings:["Doble faz","Clavo","Tornillo","Clip","Pestaña","Chupón"],
+        level:"Económico / medio",
+        text:"Puede fabricarse sin iluminación o con luz posterior. No admite iluminación frontal."
+      },
+      "Acrílico de color": {
+        variants:["3 mm","5 mm","8 mm"],
+        variantHelp:"Acrílico sólido del color seleccionado.",
+        lights:["Sin iluminación","Posterior / retroiluminación"],
+        finishes:["Color propio del acrílico","Acabado especial"],
+        fixings:["Doble faz","Tornillo","Clip","Pestaña","Chupón"],
+        level:"Medio",
+        text:"Mantiene el color propio del material. Si lleva luz, la opción compatible es posterior."
+      },
+      "Acrílico transparente laminado": {
+        variants:["3 mm","5 mm","8 mm"],
+        variantHelp:"Acrílico transparente con laminado aplicado.",
+        lights:["Sin iluminación","Posterior / retroiluminación"],
+        finishes:["Laminado de color","Vinil impreso","Acabado especial"],
+        fixings:["Doble faz","Tornillo","Clip","Pestaña","Chupón"],
+        level:"Medio",
+        text:"Puede ir sin luz o con iluminación posterior. La iluminación frontal no es compatible con esta construcción."
+      },
+      "Acrílico transparente retro pintado": {
+        variants:["3 mm","5 mm","8 mm"],
+        variantHelp:"El color se aplica por la parte posterior para conservar el brillo frontal.",
+        lights:["Sin iluminación","Posterior / retroiluminación"],
+        finishes:["Retro pintado","Retro pintado + acabado especial"],
+        fixings:["Doble faz","Tornillo","Clip","Pestaña","Chupón"],
+        level:"Medio / premium",
+        text:"Conserva una cara frontal brillante. Cuando se ilumina, utiliza luz posterior."
+      },
+      "PVC con frontal acrílico": {
+        variants:["PVC 9 mm + acrílico","PVC 15 mm + acrílico"],
+        variantHelp:"Combina volumen de PVC con una cara visible de acrílico.",
+        lights:["Sin iluminación","Posterior / retroiluminación"],
+        finishes:["Acrílico de color","Acrílico transparente laminado","Acrílico retro pintado"],
+        fixings:["Tornillo","Clip","Pestaña","Doble faz"],
+        level:"Medio / recomendado",
+        text:"Combina volumen y acabado frontal. Si se ilumina, la opción compatible es posterior."
+      },
+      "Acabado automotriz": {
+        variants:["15 mm","30 mm"],
+        variantHelp:"Corpóreo con pintura automotriz y color personalizado.",
+        lights:["Sin iluminación","Posterior / retroiluminación"],
+        finishes:["Pintura automotriz mate","Pintura automotriz brillante","Color personalizado"],
+        fixings:["Tornillo","Clip","Pestaña"],
+        level:"Medio / premium",
+        text:"El acabado automotriz permite colores personalizados. La iluminación compatible es posterior."
+      },
+      "Front Lit": {
+        variants:["Canto 4 cm","Canto 6 cm","Canto 10 cm"],
+        variantHelp:"La profundidad se selecciona según tamaño, diseño y efecto de iluminación.",
+        lights:["Frontal","Posterior / retroiluminación","Frontal + posterior"],
+        finishes:["Frontal acrílico translúcido","Frontal acrílico laminado","Frontal personalizado"],
+        fixings:["Tornillo","Clip","Pestaña"],
+        level:"Premium",
+        lightRequired:true,
+        text:"Este corpóreo admite iluminación frontal, posterior o ambas. No se muestra la opción sin iluminación."
+      },
+      "Caja de luz": {
+        variants:["Canto en PVC","Canto en aluminio"],
+        variantHelp:"La estructura puede fabricarse en PVC o aluminio.",
+        lights:["Frontal"],
+        finishes:["Acrílico blanco + vinil","Acrílico impreso","Acrílico de color"],
+        fixings:["Tornillo","Clip","Pestaña"],
+        level:"Medio / alto",
+        lightRequired:true,
+        text:"La caja de luz utiliza iluminación frontal obligatoria dentro de una estructura cerrada."
+      },
+      "Galvanizado": {
+        variants:["Con ribete","Sin ribete"],
+        variantHelp:"Selecciona si el corpóreo lleva ribete visible o construcción sin ribete.",
+        lights:["Sin iluminación","Posterior / retroiluminación"],
+        finishes:["Pintura automotriz","Pintura de color","Acabado metálico"],
+        fixings:["Tornillo","Clip","Pestaña"],
+        level:"Premium",
+        text:"El galvanizado puede ir sin luz. Cuando se ilumina, únicamente utiliza retroiluminación."
+      },
+      "Acero inoxidable": {
+        variants:["Pulido","Satinado","Espejo","Pintado"],
+        variantHelp:"La variante corresponde al acabado visible del acero inoxidable.",
+        lights:["Sin iluminación","Posterior / retroiluminación"],
+        finishes:["Pulido","Satinado","Espejo","Pintado"],
+        fixings:["Tornillo","Clip","Pestaña"],
+        level:"Premium",
+        text:"Puede fabricarse sin iluminación o con luz posterior. La iluminación frontal no se ofrece en esta configuración."
+      },
+      "Neón LED": {
+        variants:["Acrílico transparente sin laminar","Acrílico transparente laminado","PVC laminado"],
+        variantHelp:"La variante define el material y acabado de la base del neón.",
+        lights:["Neón LED integrado"],
+        finishes:["Color fijo","RGB","Color fijo con regulación","RGB con control"],
+        fixings:["Tornillo","Clip","Doble faz"],
+        level:"Medio / decorativo",
+        lightRequired:true,
+        text:"El neón siempre lleva iluminación. La opción sin luz queda bloqueada automáticamente."
+      },
+      "Logo sobre base": {
+        variants:["Rack de tubo","PVC laminado","ACM"],
+        variantHelp:"Primero se define cómo estará fabricada la base.",
+        lights:["Sin iluminación"],
+        finishes:["Según el logo seleccionado"],
+        fixings:["Tornillo"],
+        level:"Variable",
+        mountedProduct:true,
+        text:"La base puede ser rack de tubo, PVC laminado o ACM. Las opciones de iluminación dependen del logo instalado sobre ella."
+      }
+    };
+
+    const cardToConfigurator = {
+      "PVC 6 mm + laminado":["PVC laminado","6 mm"],
+      "PVC 9 mm + laminado":["PVC laminado","9 mm"],
+      "PVC 15 mm + laminado":["PVC laminado","15 mm"],
+      "Acrílico de color 3 mm":["Acrílico de color","3 mm"],
+      "Acrílico de color 5 mm":["Acrílico de color","5 mm"],
+      "Acrílico transparente 3 mm + laminado":["Acrílico transparente laminado","3 mm"],
+      "Acrílico transparente 5 mm + laminado":["Acrílico transparente laminado","5 mm"],
+      "PVC 9 mm + frontal acrílico":["PVC con frontal acrílico","PVC 9 mm + acrílico"],
+      "PVC 15 mm + frontal acrílico":["PVC con frontal acrílico","PVC 15 mm + acrílico"],
+      "Canto de aluminio 4 cm":["Front Lit","Canto 4 cm"],
+      "Canto de aluminio 6 cm":["Front Lit","Canto 6 cm"],
+      "Canto de aluminio 10 cm":["Front Lit","Canto 10 cm"],
+      "Corpóreo retroiluminado":["Front Lit","Canto 6 cm","Posterior / retroiluminación"],
+      "Corpóreo frontal + halo":["Front Lit","Canto 6 cm","Frontal + posterior"],
+      "Caja de luz rígida":["Caja de luz","Canto en PVC"],
+      "Caja de luz tipo bandera":["Caja de luz","Canto en aluminio"],
+      "Letras metálicas":["Galvanizado","Con ribete"],
+      "Logo sobre base":["Logo sobre base","ACM"],
+      "Neón LED flexible":["Neón LED","Acrílico transparente sin laminar"]
+    };
+
+    const productType=document.getElementById('productType');
+    const productVariant=document.getElementById('productVariant');
+    const mountedProduct=document.getElementById('mountedProduct');
+    const light=document.getElementById('light');
+    const finish=document.getElementById('finish');
+    const fixing=document.getElementById('fixing');
+    const hiddenWireField=document.getElementById('hiddenWireField');
+    const ladderStepsField=document.getElementById('ladderStepsField');
+    const mountedProductField=document.getElementById('mountedProductField');
+
+    function fillSelect(select,items,preferred){
+      const previous=preferred||select.value;
+      select.innerHTML=items.map(item=>`<option>${item}</option>`).join('');
+      if(items.includes(previous)) select.value=previous;
+    }
+
+    function activeRule(){
+      const family=productType.value;
+      if(family==='Logo sobre base') return familyRules[mountedProduct.value]||familyRules['PVC laminado'];
+      return familyRules[family];
+    }
+
+    function configureFamily(preferredVariant,preferredLight){
+      const family=productType.value;
+      const baseRule=familyRules[family];
+      fillSelect(productVariant,baseRule.variants,preferredVariant);
+      document.getElementById('variantHelp').textContent=baseRule.variantHelp||'';
+      mountedProductField.classList.toggle('is-hidden',!baseRule.mountedProduct);
+      configureDependentOptions(preferredLight);
+    }
+
+    function configureDependentOptions(preferredLight){
+      const family=productType.value;
+      const rule=activeRule();
+      fillSelect(light,rule.lights,preferredLight);
+      fillSelect(finish,rule.finishes);
+      const baseFixings=family==='Logo sobre base'?familyRules['Logo sobre base'].fixings:rule.fixings;
+      fillSelect(fixing,baseFixings);
+
+      const illuminated=light.value!=='Sin iluminación';
+      hiddenWireField.classList.toggle('is-hidden',!illuminated);
+      document.getElementById('sumCableRow').classList.toggle('optional',!illuminated);
+
+      const forced=rule.lightRequired||rule.lights.length===1;
+      document.getElementById('lightHelp').textContent=forced
+        ? `Iluminación obligatoria: ${rule.lights.join(', ')}.`
+        : `Opciones permitidas: ${rule.lights.join(' o ')}.`;
+      document.getElementById('lightHelp').classList.toggle('locked',forced);
+
+      let compatibility=rule.text;
+      if(family==='Logo sobre base') compatibility=`Base: ${productVariant.value}. Logo instalado: ${mountedProduct.value}. ${rule.text}`;
+      document.getElementById('compatibilityText').textContent=compatibility;
       updateRecommendation();
+    }
+
+    function chooseProduct(name){
+      const mapped=cardToConfigurator[name];
+      if(mapped){
+        productType.value=mapped[0];
+        configureFamily(mapped[1],mapped[2]);
+      }else{
+        configureFamily();
+      }
       document.getElementById('cotizar').scrollIntoView({behavior:'smooth'});
     }
     window.selectFromModal=function(name){closeModal();chooseProduct(name)};
     document.querySelectorAll('.choose-btn').forEach(b=>b.addEventListener('click',()=>chooseProduct(b.dataset.choice)));
 
-    const fields=['productType','width','height','location','light','hiddenWire','finish','notes'];
-    fields.forEach(id=>document.getElementById(id).addEventListener('input',updateRecommendation));
+    productType.addEventListener('change',()=>configureFamily());
+    mountedProduct.addEventListener('change',()=>configureDependentOptions());
+    productVariant.addEventListener('change',()=>{
+      if(productType.value==='Logo sobre base') configureDependentOptions();
+      else updateRecommendation();
+    });
+    light.addEventListener('change',()=>configureDependentOptions(light.value));
+    finish.addEventListener('change',updateRecommendation);
+    fixing.addEventListener('change',updateRecommendation);
+
+    ['width','height','location','wallType','hiddenWire','ladderSteps','notes'].forEach(id=>document.getElementById(id).addEventListener('input',updateRecommendation));
+    document.getElementById('accessType').addEventListener('change',()=>{
+      ladderStepsField.classList.toggle('is-hidden',document.getElementById('accessType').value!=='Escalera');
+      updateRecommendation();
+    });
+
+    function currentProductLabel(){
+      const family=productType.value;
+      if(family==='Logo sobre base') return `${mountedProduct.value} sobre base de ${productVariant.value}`;
+      return `${family} · ${productVariant.value}`;
+    }
 
     function updateRecommendation(){
-      const type=document.getElementById('productType').value;
+      const family=productType.value;
+      const rule=activeRule();
       const w=document.getElementById('width').value||0;
       const h=document.getElementById('height').value||0;
       const location=document.getElementById('location').value;
-      const light=document.getElementById('light').value;
+      const illumination=light.value;
+      const illuminated=illumination!=='Sin iluminación';
       const hidden=document.getElementById('hiddenWire').value;
-      document.getElementById('recTitle').textContent=type;
-      let text=recMap[type];
-      if(hidden==='no' && light!=='Sin iluminación') text+=' Como no se puede ocultar el cableado, conviene evaluar una base completa, cableado externo ordenado o iluminación con spots.';
-      if(location==='Exterior expuesto' && type==='Neón LED flexible') text+=' Para exterior expuesto se debe revisar una alternativa con mayor protección ambiental.';
+      const access=document.getElementById('accessType').value;
+      const steps=document.getElementById('ladderSteps').value||0;
+      const accessText=access==='Escalera'?`Escalera de ${steps} peldaños`:access;
+      const productLabel=currentProductLabel();
+
+      let text=rule.text;
+      if(illuminated && hidden==='no') text+=' El cableado no podrá quedar totalmente oculto; debe evaluarse canaleta, caja técnica o una base posterior.';
+      if(location==='Exterior expuesto' && family==='Neón LED') text+=' Para exterior expuesto debe confirmarse la protección ambiental de todos los componentes.';
+      if(document.getElementById('wallType').value==='Vidrio' && illuminated) text+=' En vidrio se debe revisar especialmente la salida de cables y la ubicación de la fuente.';
+
+      const box=document.getElementById('recommendationBox');
+      box.classList.toggle('warning',illuminated && hidden==='no');
+      box.classList.toggle('good',!(illuminated && hidden==='no'));
+      document.getElementById('recTitle').textContent=productLabel;
       document.getElementById('recText').textContent=text;
+      document.getElementById('sumProduct').textContent=productLabel;
       document.getElementById('sumSize').textContent=`${w} × ${h} cm`;
       document.getElementById('sumLocation').textContent=location;
-      document.getElementById('sumLight').textContent=light;
-      document.getElementById('sumInstall').textContent=hidden==='yes'?'Cableado oculto posible':hidden==='no'?'Sin intervenir la pared':'Debe revisarse en sitio';
-      document.getElementById('sumLevel').textContent=levelMap[type];
+      document.getElementById('sumLight').textContent=illumination;
+      document.getElementById('sumFinish').textContent=finish.value;
+      document.getElementById('sumWall').textContent=document.getElementById('wallType').value;
+      document.getElementById('sumFixing').textContent=fixing.value;
+      document.getElementById('sumAccess').textContent=accessText;
+      document.getElementById('sumLevel').textContent=family==='Logo sobre base'?`Base variable + ${rule.level}`:rule.level;
+      document.getElementById('sumBaseRow').classList.toggle('optional',family!=='Logo sobre base');
+      document.getElementById('sumBase').textContent=family==='Logo sobre base'?productVariant.value:'—';
+      document.getElementById('sumInstall').textContent=!illuminated?'No aplica':hidden==='yes'?'Cableado oculto posible':hidden==='no'?'Cableado visible / solución técnica':'Debe revisarse en sitio';
     }
 
     function buildMessage(){
-      const type=document.getElementById('productType').value;
-      const w=document.getElementById('width').value||'sin definir';
-      const h=document.getElementById('height').value||'sin definir';
-      const location=document.getElementById('location').value;
-      const light=document.getElementById('light').value;
+      const family=productType.value;
+      const illuminated=light.value!=='Sin iluminación';
       const hidden=document.getElementById('hiddenWire').value;
-      const finish=document.getElementById('finish').value;
-      const notes=document.getElementById('notes').value.trim();
       const hiddenText=hidden==='yes'?'Sí':hidden==='no'?'No':'No lo sé';
-      return `Hola, quiero solicitar orientación para un letrero.\n\nTipo: ${type}\nMedida aproximada: ${w} × ${h} cm\nUbicación: ${location}\nIluminación: ${light}\n¿Se puede ocultar el cableado?: ${hiddenText}\nAcabado: ${finish}${notes?`\nDetalles: ${notes}`:''}\n\nPuedo enviar el logo y una foto de la pared.`;
+      const access=document.getElementById('accessType').value;
+      const accessText=access==='Escalera'?`Escalera de ${document.getElementById('ladderSteps').value||'?' } peldaños`:access;
+      const notes=document.getElementById('notes').value.trim();
+      const baseLine=family==='Logo sobre base'?`\nBase: ${productVariant.value}\nLogo sobre la base: ${mountedProduct.value}`:`\nVariante: ${productVariant.value}`;
+      const cableLine=illuminated?`\n¿Se puede ocultar el cableado?: ${hiddenText}`:'';
+      return `Hola, quiero solicitar orientación para un letrero.\n\nProducto: ${family}${baseLine}\nMedida aproximada: ${document.getElementById('width').value||'sin definir'} × ${document.getElementById('height').value||'sin definir'} cm\nUbicación: ${document.getElementById('location').value}\nIluminación: ${light.value}\nAcabado: ${finish.value}\nTipo de pared: ${document.getElementById('wallType').value}\nFijación considerada: ${fixing.value}\nAcceso: ${accessText}${cableLine}${notes?`\nDetalles: ${notes}`:''}\n\nPuedo enviar el logo y una foto del lugar.`;
     }
+
+    configureFamily();
 
     document.getElementById('whatsappBtn').addEventListener('click',()=>{
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildMessage())}`,'_blank','noopener');
@@ -1047,7 +1387,6 @@
       setTimeout(()=>msg.textContent='',1800);
     });
 
-    updateRecommendation();
   </script>
 </body>
 </html>
