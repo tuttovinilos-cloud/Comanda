@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Tuttovinilos</title>
-<!-- clientes.html corregido v63 · cuentas DIVISA y BCV separadas en cobro global -->
+<!-- clientes.html corregido v64 · carga optimizada + pagos generales trazables -->
 <link rel="icon" href="data:,">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2181,6 +2181,35 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 }
 </style>
 
+
+<style>
+/* CLIENTES v64 · comprobante de pago general */
+.payment-section-title{margin-top:8px!important;margin-bottom:8px!important}
+.payment-receipt{
+  border:1px solid #bbf7d0;
+  border-left:5px solid #16a34a;
+  border-radius:16px;
+  background:#f0fdf4;
+  padding:13px;
+  display:grid;
+  gap:10px;
+  margin-bottom:10px;
+}
+.payment-receipt-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.payment-receipt-top small{display:block;font-family:var(--head);font-size:9px;font-weight:900;letter-spacing:.7px;text-transform:uppercase;color:#166534;margin-bottom:3px}
+.payment-receipt-top strong{font-family:var(--mono);font-size:23px;color:#166534}
+.payment-receipt-top strong em{font-family:var(--head);font-size:10px;font-style:normal;letter-spacing:.6px;background:#dcfce7;border:1px solid #86efac;border-radius:999px;padding:4px 7px;vertical-align:middle}
+.payment-receipt-top>span{font-family:var(--mono);font-size:11px;color:#64748b}
+.payment-receipt-meta,.payment-receipt-summary{display:flex;gap:7px;flex-wrap:wrap}
+.payment-receipt-meta span,.payment-receipt-summary span{background:#fff;border:1px solid #d9e8dc;border-radius:999px;padding:6px 9px;font-size:11px;color:#475569}
+.payment-receipt-summary span{border-color:#c7d2fe;color:#153bff}
+.payment-note{border:1px dashed #86efac;background:#fff;border-radius:10px;padding:8px 10px;font-size:12px;color:#475569}
+.payment-applications{display:flex;gap:6px;flex-wrap:wrap;padding-top:2px}
+.payment-applications span{font-family:var(--mono);font-size:10px;font-weight:700;color:#153bff;background:#fff;border:1px solid #c7d2fe;border-radius:999px;padding:5px 8px}
+.empty-applications{font-size:11px;color:#64748b}
+@media(max-width:600px){.payment-receipt-top strong{font-size:19px}.payment-receipt-meta span,.payment-receipt-summary span{width:100%}}
+</style>
+
 </head>
 
 <body>
@@ -2487,10 +2516,12 @@ function cerrarNotificacionesSiFondo(event){
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v62 header igual a index");
+console.log("CLIENTES HTML conectado v64 · carga optimizada + pagos generales");
 
 let clientesDB = [];
 let pedidosDB = [];
+let pedidosPorClienteIdMap = new Map();
+let pedidosPorNombreMap = new Map();
 let clientesDeudaMap = new Map();
 let clientesContactosBusquedaMap = new Map();
 let clientesSeleccionados = new Set();
@@ -2593,14 +2624,45 @@ function mostrarToast(mensaje){
   }, 2200);
 }
 
-function contarPedidosCliente(nombre, clienteId = null){
-  const n = normalizar(nombre);
-  const id = Number(clienteId || 0);
+function construirIndicePedidos(){
+  pedidosPorClienteIdMap = new Map();
+  pedidosPorNombreMap = new Map();
 
-  return pedidosDB.filter(p => {
-    if(id && Number(p.cliente_id || 0) === id) return true;
-    return n && normalizar(p.cliente) === n;
-  }).length;
+  for(const pedido of pedidosDB){
+    const clienteId = Number(pedido.cliente_id || 0);
+    const nombre = normalizar(pedido.cliente);
+
+    if(clienteId){
+      const listaId = pedidosPorClienteIdMap.get(clienteId) || [];
+      listaId.push(pedido);
+      pedidosPorClienteIdMap.set(clienteId, listaId);
+    }
+
+    if(nombre){
+      const listaNombre = pedidosPorNombreMap.get(nombre) || [];
+      listaNombre.push(pedido);
+      pedidosPorNombreMap.set(nombre, listaNombre);
+    }
+  }
+}
+
+function obtenerPedidosClienteIndexados(nombre, clienteId = null){
+  const id = Number(clienteId || 0);
+  const claveNombre = normalizar(nombre);
+  const porId = id ? (pedidosPorClienteIdMap.get(id) || []) : [];
+  const porNombre = claveNombre ? (pedidosPorNombreMap.get(claveNombre) || []) : [];
+
+  if(!porId.length) return porNombre;
+  if(!porNombre.length) return porId;
+
+  const unicos = new Map();
+  porId.forEach(p => unicos.set(Number(p.id), p));
+  porNombre.forEach(p => unicos.set(Number(p.id), p));
+  return [...unicos.values()];
+}
+
+function contarPedidosCliente(nombre, clienteId = null){
+  return obtenerPedidosClienteIndexados(nombre, clienteId).length;
 }
 
 function estadoPagoSimpleCliente(total, pagado){
@@ -2646,11 +2708,8 @@ function resumenPagoSimpleCliente(pedido){
 
 function pedidosEstadoCuentaCliente(cliente, soloConMonto = true){
   if(!cliente) return [];
-  const id = Number(cliente.id || 0);
-  const nombre = normalizar(cliente.nombre);
 
-  return pedidosDB
-    .filter(p => Number(p.cliente_id || 0) === id || (nombre && normalizar(p.cliente) === nombre))
+  return obtenerPedidosClienteIndexados(cliente.nombre, cliente.id)
     .map(p => resumenPagoSimpleCliente(p))
     .filter(x => !soloConMonto || x.total > 0.009 || x.pagado > 0.009)
     .sort((a,b) => Number(b.id || 0) - Number(a.id || 0));
@@ -2801,6 +2860,7 @@ async function cargarPedidos(){
   }
 
   pedidosDB = data || [];
+  construirIndicePedidos();
 }
 
 async function crearClientesDesdePedidos(){
@@ -2829,7 +2889,7 @@ async function crearClientesDesdePedidos(){
       activo:true
     }));
 
-  if(!nuevos.length) return;
+  if(!nuevos.length) return 0;
 
   const { error } = await db()
     .from("clientes")
@@ -2837,10 +2897,11 @@ async function crearClientesDesdePedidos(){
 
   if(error){
     console.warn("No se pudieron crear clientes desde pedidos:", error);
-    return;
+    return 0;
   }
 
   console.log("Clientes creados desde pedidos:", nuevos);
+  return nuevos.length;
 }
 
 async function cargarClientes(){
@@ -2900,14 +2961,29 @@ async function cargarContactosParaBusqueda(){
 async function inicializarClientes(){
   if(!validarSupabase()) return;
 
-  await cargarPedidos();
-  await cargarClientes();
-  await crearClientesDesdePedidos();
-  await cargarClientes();
-  await cargarContactosParaBusqueda();
-  await cargarDeudasClientes();
+  // Pedidos y clientes viajan al mismo tiempo, en vez de esperar una consulta y luego la otra.
+  await Promise.all([
+    cargarPedidos(),
+    cargarClientes()
+  ]);
 
+  // Solo repite la consulta de clientes cuando realmente se creó alguno desde pedidos antiguos.
+  const clientesCreados = await crearClientesDesdePedidos();
+  if(clientesCreados > 0){
+    await cargarClientes();
+  }
+
+  // La tabla aparece inmediatamente con conteos y cuentas ya calculadas.
+  await cargarDeudasClientes();
   filtrarClientes();
+
+  // Los contactos del buscador se cargan en segundo plano para no frenar la apertura.
+  cargarContactosParaBusqueda()
+    .then(() => {
+      const busqueda = String(document.getElementById("searchClientes")?.value || "").trim();
+      if(busqueda) filtrarClientes();
+    })
+    .catch(error => console.warn("Contactos cargados en segundo plano con error:", error));
 }
 
 function filtrarClientes(){
@@ -4046,6 +4122,16 @@ function fechaCortaCliente(iso){
   return `${p[2]}/${p[1]}/${p[0]}`;
 }
 
+function fechaHoraCortaCliente(iso){
+  if(!iso) return "";
+  const fecha = new Date(iso);
+  if(Number.isNaN(fecha.getTime())) return fechaCortaCliente(iso);
+  return fecha.toLocaleString("es-VE", {
+    day:"2-digit", month:"2-digit", year:"numeric",
+    hour:"2-digit", minute:"2-digit"
+  });
+}
+
 function tipoTextoCuenta(item){
   return item.tipo === "BCV" ? "BCV" : "Divisa";
 }
@@ -4287,10 +4373,38 @@ async function aplicarPagoGlobalCliente(){
     ? (window.getSesionOperador()?.nombre || "")
     : "";
   const fechaPago = fechaISOCliente();
+  const saldoCuentaAntes = pendientes.reduce((acc, item) => acc + numeroSeguro(item.saldo), 0);
 
   let pagosAplicados = 0;
+  let pagoGeneralId = null;
+  let aplicadoRealDeuda = 0;
+  let favorReal = 0;
 
   try{
+    // Guarda una sola entrada de caja: por ejemplo, "recibimos $100 DIVISA".
+    const { data:pagoGeneral, error:pagoGeneralError } = await db()
+      .from("clientes_pagos")
+      .insert([{
+        cliente_id:cliente.id,
+        cliente_nombre:cliente.nombre || "",
+        monto_recibido:monto,
+        tipo_pago:tipoPago,
+        metodo_pago:metodo,
+        referencia:referencia || null,
+        nota:nota || null,
+        fecha_pago:fechaPago,
+        registrado_por:registradoPor || null,
+        saldo_antes:saldoCuentaAntes,
+        monto_aplicado:0,
+        saldo_a_favor:0,
+        pedidos_afectados:0
+      }])
+      .select("id")
+      .single();
+
+    if(pagoGeneralError) throw pagoGeneralError;
+    pagoGeneralId = Number(pagoGeneral.id);
+
     for(let i = 0; i < pendientes.length; i++){
       if(disponibleUsd <= 0.009) break;
 
@@ -4302,6 +4416,8 @@ async function aplicarPagoGlobalCliente(){
 
       const pagadoAntes = item.pagado;
       const saldoAntes = item.saldo;
+      const aplicadoADeudaParte = Math.min(aplicarUsd, saldoAntes);
+      const favorParte = Math.max(aplicarUsd - saldoAntes, 0);
       const nuevoPagado = pagadoAntes + aplicarUsd;
       const nuevoSaldo = Math.max(item.total - nuevoPagado, 0);
       const nuevoAFavor = Math.max(nuevoPagado - item.total, 0);
@@ -4315,14 +4431,13 @@ async function aplicarPagoGlobalCliente(){
       };
       itemFinal.estado = estadoPagoCuentaDesdeItem(itemFinal);
 
-      const montoRecibidoParte = aplicarUsd;
-
       const pagoPayload = {
+        cliente_pago_id:pagoGeneralId,
         pedido_id: pedido.id,
         cliente_id: cliente.id,
         cliente_nombre: cliente.nombre || pedido.cliente || "",
         pedido_descripcion: pedido.descripcion || "Pago global cliente",
-        monto_recibido: montoRecibidoParte,
+        monto_recibido: aplicarUsd,
         moneda,
         tasa_usada: tasa,
         equivalente_usd: aplicarUsd,
@@ -4364,8 +4479,21 @@ async function aplicarPagoGlobalCliente(){
       if(updateError) throw updateError;
 
       disponibleUsd -= aplicarUsd;
+      aplicadoRealDeuda += aplicadoADeudaParte;
+      favorReal += favorParte;
       pagosAplicados++;
     }
+
+    const { error:cerrarPagoError } = await db()
+      .from("clientes_pagos")
+      .update({
+        monto_aplicado:aplicadoRealDeuda,
+        saldo_a_favor:favorReal,
+        pedidos_afectados:pagosAplicados
+      })
+      .eq("id", pagoGeneralId);
+
+    if(cerrarPagoError) throw cerrarPagoError;
 
     await cargarPedidos();
     await cargarClientes();
@@ -4378,10 +4506,24 @@ async function aplicarPagoGlobalCliente(){
       pintarDeudaModal(clienteActualizado);
     }
 
-    mostrarToast(`Pago ${tipoPago} aplicado a ${pagosAplicados} pedido${pagosAplicados === 1 ? "" : "s"}`);
+    mostrarToast(`Pago de $${money(monto)} ${tipoPago} registrado y aplicado a ${pagosAplicados} pedido${pagosAplicados === 1 ? "" : "s"}`);
   }catch(error){
+    // Conserva el movimiento parcial para auditoría, en vez de hacer desaparecer la entrada recibida.
+    if(pagoGeneralId){
+      try{
+        await db().from("clientes_pagos").update({
+          monto_aplicado:aplicadoRealDeuda,
+          saldo_a_favor:favorReal,
+          pedidos_afectados:pagosAplicados,
+          nota:[nota, "REGISTRO PARCIAL: ocurrió un error durante la distribución"].filter(Boolean).join(" · ")
+        }).eq("id", pagoGeneralId);
+      }catch(_errorRegistro){
+        console.warn("No se pudo marcar el pago general como parcial:", _errorRegistro);
+      }
+    }
+
     console.error("Error aplicando pago global:", error);
-    alert("No se pudo aplicar el pago global: " + (error.message || error));
+    alert("No se pudo completar el pago global: " + (error.message || error));
   }
 }
 
@@ -4392,7 +4534,7 @@ async function cargarPagosCliente(cliente){
     if(cliente?.id){
       const { data, error } = await db()
         .from("pedidos_pagos")
-        .select("id, pedido_id, monto_recibido, monto_aplicado, moneda, tasa_usada, equivalente_usd, metodo_pago, referencia, nota, fecha_pago, tipo_movimiento, created_at")
+        .select("id, cliente_pago_id, pedido_id, monto_recibido, monto_aplicado, moneda, tasa_usada, equivalente_usd, metodo_pago, referencia, nota, fecha_pago, tipo_movimiento, created_at")
         .eq("cliente_id", cliente.id)
         .order("created_at", { ascending:false });
 
@@ -4402,7 +4544,7 @@ async function cargarPagosCliente(cliente){
     if(!pagos.length && cliente?.nombre){
       const { data, error } = await db()
         .from("pedidos_pagos")
-        .select("id, pedido_id, monto_recibido, monto_aplicado, moneda, tasa_usada, equivalente_usd, metodo_pago, referencia, nota, fecha_pago, tipo_movimiento, created_at")
+        .select("id, cliente_pago_id, pedido_id, monto_recibido, monto_aplicado, moneda, tasa_usada, equivalente_usd, metodo_pago, referencia, nota, fecha_pago, tipo_movimiento, created_at")
         .ilike("cliente_nombre", cliente.nombre)
         .order("created_at", { ascending:false });
 
@@ -4410,6 +4552,36 @@ async function cargarPagosCliente(cliente){
     }
   }catch(error){
     console.warn("No se pudo cargar historial de pagos del cliente:", error);
+  }
+
+  return pagos;
+}
+
+async function cargarPagosGeneralesCliente(cliente){
+  let pagos = [];
+
+  try{
+    if(cliente?.id){
+      const { data, error } = await db()
+        .from("clientes_pagos")
+        .select("id, cliente_id, cliente_nombre, monto_recibido, tipo_pago, metodo_pago, referencia, nota, fecha_pago, registrado_por, saldo_antes, monto_aplicado, saldo_a_favor, pedidos_afectados, created_at")
+        .eq("cliente_id", cliente.id)
+        .order("created_at", { ascending:false });
+
+      if(!error && Array.isArray(data)) pagos = data;
+    }
+
+    if(!pagos.length && cliente?.nombre){
+      const { data, error } = await db()
+        .from("clientes_pagos")
+        .select("id, cliente_id, cliente_nombre, monto_recibido, tipo_pago, metodo_pago, referencia, nota, fecha_pago, registrado_por, saldo_antes, monto_aplicado, saldo_a_favor, pedidos_afectados, created_at")
+        .ilike("cliente_nombre", cliente.nombre)
+        .order("created_at", { ascending:false });
+
+      if(!error && Array.isArray(data)) pagos = data;
+    }
+  }catch(error){
+    console.warn("No se pudieron cargar los pagos generales del cliente:", error);
   }
 
   return pagos;
@@ -4426,7 +4598,10 @@ async function verHistorialCliente(id){
   const nombreNorm = normalizar(cliente.nombre);
   const pedidos = pedidosDB.filter(p => Number(p.cliente_id || 0) === Number(cliente.id) || normalizar(p.cliente) === nombreNorm);
   const cuenta = pedidos.map(p => resumenPagoSimpleCliente(p)).filter(x => x.total > 0.009 || x.pagado > 0.009);
-  const pagos = await cargarPagosCliente(cliente);
+  const [pagos, pagosGenerales] = await Promise.all([
+    cargarPagosCliente(cliente),
+    cargarPagosGeneralesCliente(cliente)
+  ]);
 
   const total = cuenta.reduce((acc,x) => acc + x.total, 0);
   const pagado = cuenta.reduce((acc,x) => acc + x.pagado, 0);
@@ -4446,10 +4621,57 @@ async function verHistorialCliente(id){
     </div>
   `;
 
-  if(!pedidos.length){
-    body.innerHTML = resumenHtml + `<div class="empty">Este cliente no tiene pedidos registrados</div>`;
-  }else{
-    const pedidosHtml = pedidos.map(p => {
+  const pagosPorGeneral = new Map();
+  pagos.forEach(pg => {
+    const generalId = Number(pg.cliente_pago_id || 0);
+    if(!generalId) return;
+    const lista = pagosPorGeneral.get(generalId) || [];
+    lista.push(pg);
+    pagosPorGeneral.set(generalId, lista);
+  });
+
+  const pagosGeneralesHtml = pagosGenerales.length ? `
+    <div class="deuda-cobro-title payment-section-title">Pagos recibidos</div>
+    ${pagosGenerales.map(pg => {
+      const aplicaciones = pagosPorGeneral.get(Number(pg.id)) || [];
+      const recibido = numeroSeguro(pg.monto_recibido || 0);
+      const aplicado = numeroSeguro(pg.monto_aplicado || 0);
+      const favorPago = numeroSeguro(pg.saldo_a_favor || 0);
+      const tipo = normalizarTipoCuentaCliente(pg.tipo_pago);
+      const fechaHora = fechaHoraCortaCliente(pg.created_at || pg.fecha_pago);
+      const aplicacionesHtml = aplicaciones.length
+        ? `<div class="payment-applications">${aplicaciones.map(ap => `<span>#${escapeHtml(ap.pedido_id || "")} · $${money(ap.monto_aplicado || ap.equivalente_usd || ap.monto_recibido || 0)}</span>`).join("")}</div>`
+        : `<div class="payment-applications empty-applications">Sin desglose por pedido</div>`;
+
+      return `
+        <div class="payment-receipt">
+          <div class="payment-receipt-top">
+            <div>
+              <small>Pago recibido</small>
+              <strong>$${money(recibido)} <em>${escapeHtml(tipo)}</em></strong>
+            </div>
+            <span>${escapeHtml(fechaHora)}</span>
+          </div>
+          <div class="payment-receipt-meta">
+            <span>Método: <b>${escapeHtml(pg.metodo_pago || "—")}</b></span>
+            ${pg.referencia ? `<span>Referencia: <b>${escapeHtml(pg.referencia)}</b></span>` : ""}
+            ${pg.registrado_por ? `<span>Registrado por: <b>${escapeHtml(pg.registrado_por)}</b></span>` : ""}
+          </div>
+          <div class="payment-receipt-summary">
+            <span>Aplicado a deuda <b>$${money(aplicado)}</b></span>
+            <span>A favor <b>$${money(favorPago)}</b></span>
+            <span>Pedidos <b>${Number(pg.pedidos_afectados || aplicaciones.length || 0)}</b></span>
+          </div>
+          ${pg.nota ? `<div class="payment-note">${escapeHtml(pg.nota)}</div>` : ""}
+          ${aplicacionesHtml}
+        </div>
+      `;
+    }).join("")}
+  ` : `<div class="empty">Todavía no hay pagos generales registrados</div>`;
+
+  const pedidosHtml = pedidos.length ? `
+    <div class="deuda-cobro-title payment-section-title">Pedidos y saldos</div>
+    ${pedidos.map(p => {
       const item = resumenPagoSimpleCliente(p);
       const estado = item.total > 0 || item.pagado > 0 ? estadoLabelPagoSimple(item.estado) : (p.estatus_pago || "");
       const saldoTxt = item.aFavor > 0.009 ? `A favor $${money(item.aFavor)}` : `Saldo $${money(item.saldo)}`;
@@ -4457,7 +4679,7 @@ async function verHistorialCliente(id){
       return `
         <div class="history-item">
           <div class="history-top">
-            <span>#${escapeHtml(p.id)} · ${escapeHtml(p.fecha || "")}</span>
+            <span>#${escapeHtml(p.id)} · Pedido ${escapeHtml(p.fecha || "")}</span>
             <span>${escapeHtml(p.estatus_trabajo || "")} / ${escapeHtml(estado)}</span>
           </div>
           <div class="history-desc">
@@ -4470,31 +4692,32 @@ async function verHistorialCliente(id){
           </div>
         </div>
       `;
-    }).join("");
+    }).join("")}
+  ` : `<div class="empty">Este cliente no tiene pedidos registrados</div>`;
 
-    const pagosHtml = pagos.length ? `
-      <div class="deuda-cobro-title" style="margin-top:10px">Pagos registrados</div>
-      ${pagos.map(pg => {
-        const monto = numeroSeguro(pg.monto_aplicado || pg.equivalente_usd || pg.monto_recibido || 0);
-        const fecha = String(pg.fecha_pago || pg.created_at || "").slice(0,10);
-        return `
-          <div class="history-item">
-            <div class="history-top">
-              <span>#${escapeHtml(pg.pedido_id || "")} · ${escapeHtml(fechaCortaCliente(fecha))}</span>
-              <span>${escapeHtml(pg.metodo_pago || pg.tipo_movimiento || "Pago")}</span>
-            </div>
-            <div class="history-desc">
-              Monto aplicado: <strong>$${money(monto)}</strong><br>
-              ${pg.referencia ? `Referencia: ${escapeHtml(pg.referencia)}<br>` : ""}
-              ${pg.nota && pg.nota !== PAGO_SIMPLE_CLIENTES_NOTA ? `Nota: ${escapeHtml(pg.nota)}<br>` : ""}
-            </div>
+  const pagosAnteriores = pagos.filter(pg => !Number(pg.cliente_pago_id || 0));
+  const pagosAnterioresHtml = pagosAnteriores.length ? `
+    <div class="deuda-cobro-title payment-section-title">Aplicaciones anteriores sin pago general</div>
+    ${pagosAnteriores.map(pg => {
+      const monto = numeroSeguro(pg.monto_aplicado || pg.equivalente_usd || pg.monto_recibido || 0);
+      const fecha = String(pg.fecha_pago || pg.created_at || "").slice(0,10);
+      return `
+        <div class="history-item">
+          <div class="history-top">
+            <span>#${escapeHtml(pg.pedido_id || "")} · Pago ${escapeHtml(fechaCortaCliente(fecha))}</span>
+            <span>${escapeHtml(pg.metodo_pago || pg.tipo_movimiento || "Pago")}</span>
           </div>
-        `;
-      }).join("")}
-    ` : `<div class="empty">Sin pagos registrados en historial</div>`;
+          <div class="history-desc">
+            Monto aplicado: <strong>$${money(monto)}</strong><br>
+            ${pg.referencia ? `Referencia: ${escapeHtml(pg.referencia)}<br>` : ""}
+            ${pg.nota && pg.nota !== PAGO_SIMPLE_CLIENTES_NOTA ? `Nota: ${escapeHtml(pg.nota)}<br>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("")}
+  ` : "";
 
-    body.innerHTML = resumenHtml + pedidosHtml + pagosHtml;
-  }
+  body.innerHTML = resumenHtml + pagosGeneralesHtml + pedidosHtml + pagosAnterioresHtml;
 
   document.getElementById("historyBackdrop").style.display = "flex";
 }
