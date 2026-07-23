@@ -385,6 +385,67 @@
   .controls{top:0!important}
 }
 
+
+/* =========================================================
+   PROYECTO + MONEDA / BCV / DIVISA · v67
+========================================================= */
+.price-config-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:14px;
+  align-items:end;
+}
+
+.segmented-choice{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  padding:4px;
+  border:1px solid var(--linea);
+  border-radius:12px;
+  background:#f3f5fb;
+  min-height:46px;
+}
+
+.segmented-choice button{
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  color:var(--gris);
+  font-family:var(--head);
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  transition:.16s ease;
+}
+
+.segmented-choice button.active{
+  background:var(--azul);
+  color:#fff;
+  box-shadow:0 4px 12px rgba(21,59,255,.22);
+}
+
+.price-legend{
+  margin-top:10px;
+  min-height:36px;
+  display:flex;
+  align-items:center;
+  padding:9px 12px;
+  border:1px solid #cfd6ff;
+  border-radius:10px;
+  background:#f4f6ff;
+  color:var(--azulOsc);
+  font-size:12px;
+  font-weight:800;
+}
+
+#modalidadPrecioField.is-hidden{
+  display:none;
+}
+
+@media(max-width:700px){
+  .price-config-grid{grid-template-columns:1fr}
+}
+
 </style>
 
 </head>
@@ -458,6 +519,14 @@
 
       <div style="height:12px"></div>
 
+      <div class="field">
+        <label>Proyecto</label>
+        <input id="proyecto" type="text" maxlength="120" placeholder="Ej: Chiz">
+        <div class="client-mini">Identifica el proyecto asociado al cliente y se mostrará en el PDF.</div>
+      </div>
+
+      <div style="height:12px"></div>
+
       <div class="grid">
         <div class="field">
           <label>Cliente</label>
@@ -490,6 +559,30 @@
           <input id="direccion" type="text" placeholder="Dirección del cliente">
         </div>
       </div>
+
+      <div style="height:12px"></div>
+
+      <div class="price-config-grid">
+        <div class="field">
+          <label>Moneda</label>
+          <input id="monedaDocumento" type="hidden" value="USD">
+          <div class="segmented-choice" id="monedaButtons" aria-label="Seleccionar moneda">
+            <button class="active" type="button" data-moneda="USD">$</button>
+            <button type="button" data-moneda="BS">Bs</button>
+          </div>
+        </div>
+
+        <div class="field" id="modalidadPrecioField">
+          <label>Condición del precio</label>
+          <input id="modalidadPrecio" type="hidden" value="DIVISA">
+          <div class="segmented-choice" id="modalidadButtons" aria-label="Seleccionar condición del precio">
+            <button type="button" data-modalidad-precio="BCV">BCV</button>
+            <button class="active" type="button" data-modalidad-precio="DIVISA">DIVISA</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="price-legend" id="leyendaPrecio">Precio en DIVISA.</div>
     </section>
 
     <section class="card">
@@ -520,12 +613,6 @@
       </div>
 
       <div class="quote-options">
-        <div class="field">
-          <label>Descripción corta de la cotización</label>
-          <input id="descripcionArchivo" type="text" maxlength="80" placeholder="Ej: Letrero fachada principal">
-          <div class="client-mini">Se usará para identificar el archivo PDF descargado.</div>
-        </div>
-
         <label class="quote-switch">
           <input type="checkbox" id="mostrarMontoFinal" checked>
           <span>Mostrar monto final en el PDF</span>
@@ -585,7 +672,7 @@
       <div class="section-title">Cotizaciones previas guardadas</div>
 
       <div class="prev-toolbar">
-        <input class="prev-search" id="buscarCotizaciones" type="text" placeholder="Buscar por fecha, cliente, teléfono o número...">
+        <input class="prev-search" id="buscarCotizaciones" type="text" placeholder="Buscar por fecha, cliente, proyecto, teléfono o número...">
 
         <select class="prev-search" id="filtroAprobado">
           <option value="">Todas</option>
@@ -605,6 +692,7 @@
               <th>Fecha</th>
               <th>N° Documento</th>
               <th>Cliente</th>
+              <th>Proyecto</th>
               <th>Responsable</th>
               <th>Teléfono</th>
               <th>Total</th>
@@ -613,7 +701,7 @@
           </thead>
           <tbody id="cotizacionesBody">
             <tr>
-              <td colspan="8" class="empty">Cargando...</td>
+              <td colspan="9" class="empty">Cargando...</td>
             </tr>
           </tbody>
         </table>
@@ -695,4 +783,3 @@
 <script src="js/cotizador.js?v=66"></script>
 </body>
 </html>
-
