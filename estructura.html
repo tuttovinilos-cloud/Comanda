@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Estructura · Base técnica de letreros</title>
+  <title>Estructura · Base técnica y asesor compatible · V3</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js?v=24"></script>
+  <script src="js/auth.js?v=29"></script>
   <style>
     *{box-sizing:border-box}
     :root{
@@ -129,6 +131,61 @@
     .error-box{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:10px;padding:10px;font-size:11px;margin-top:10px}
     .mobile-menu{display:none}
     .toast{position:fixed;right:18px;bottom:18px;z-index:300;background:#0f172a;color:#fff;border-radius:12px;padding:11px 14px;box-shadow:var(--sombra);font-size:12px;max-width:360px}
+
+    /* ==================== ASESOR DE COMPATIBILIDAD ==================== */
+    .modo-nav{padding:12px 14px 3px;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+    .modo-btn{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#dbe3ff;border-radius:11px;padding:10px 8px;font-size:10px;font-weight:950;line-height:1.2}
+    .modo-btn.activo{background:#fff;color:var(--azul);border-color:#fff}
+    .asesor-shell{display:grid;grid-template-columns:minmax(0,1.04fr) minmax(410px,.96fr);gap:0;background:#fff;border:1px solid var(--borde);border-radius:20px;overflow:hidden;box-shadow:var(--sombra)}
+    .asesor-form{padding:24px;min-width:0;background:#fff}
+    .compat-banner{display:flex;align-items:flex-start;gap:12px;background:#f0f3ff;border:1px solid #ccd5ff;border-radius:14px;padding:12px;margin-bottom:14px}
+    .compat-icon{width:32px;height:32px;border-radius:10px;background:var(--azul-2);color:#fff;display:grid;place-items:center;font-weight:1000;flex:0 0 auto}
+    .compat-banner strong{display:block;color:#0d268e;font-size:11px;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px}
+    .compat-banner p{margin:0;color:#667085;font-size:10px;line-height:1.45}
+    .asesor-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px 12px}
+    .asesor-grid .full{grid-column:1/-1}
+    .asesor-grid textarea{min-height:94px}
+    .tag-auto{display:inline-flex;margin-left:6px;background:#dcfce7;color:#067647;border-radius:999px;padding:2px 7px;font-size:8px;font-weight:950;vertical-align:middle}
+    .electrico-box{grid-column:1/-1;background:#f8fafc;border:1px solid var(--borde);border-radius:14px;padding:13px}
+    .electrico-box h4{margin:0 0 4px;font-size:12px}
+    .electrico-box>p{margin:0 0 11px;color:var(--muted);font-size:10px;line-height:1.4}
+    .electrico-grid{display:grid;grid-template-columns:1.2fr .8fr .7fr;gap:10px}
+    .electrico-result{margin-top:10px;display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+    .mini-stat{background:#fff;border:1px solid var(--borde);border-radius:10px;padding:9px}
+    .mini-stat small{display:block;color:var(--muted);font-size:8px;font-weight:850;text-transform:uppercase}
+    .mini-stat strong{display:block;margin-top:3px;font-size:12px}
+    .reco-panel{padding:25px 24px;background:linear-gradient(155deg,#2132e9 0%,#101f83 100%);color:#fff;display:flex;flex-direction:column;min-height:720px}
+    .reco-panel h3{margin:0;font-size:23px;font-weight:950}
+    .reco-sub{margin:6px 0 17px;color:#cbd5ff;font-size:11px}
+    .reco-destacado{background:rgba(29,78,216,.45);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:14px 15px;margin-bottom:16px}
+    .reco-destacado strong{display:block;font-size:14px;margin-bottom:5px}
+    .reco-destacado p{margin:0;color:#e4e8ff;font-size:10px;line-height:1.5}
+    .reco-lista{display:grid;margin-bottom:13px}
+    .reco-fila{display:grid;grid-template-columns:135px 1fr;gap:12px;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,.18);font-size:10px}
+    .reco-fila span{color:#aebaff}.reco-fila b{text-align:right;color:#fff}
+    .reco-bloque{margin-top:11px;border-top:1px solid rgba(255,255,255,.16);padding-top:12px}
+    .reco-bloque h4{font-size:10px;text-transform:uppercase;letter-spacing:.55px;color:#cbd5ff;margin:0 0 8px}
+    .chips{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.09);border-radius:999px;padding:5px 8px;font-size:9px;color:#fff}
+    .reco-ul,.reco-ol{margin:0;padding-left:17px;color:#eef2ff;font-size:9px;line-height:1.55}
+    .reco-ul li,.reco-ol li{margin-bottom:4px}
+    .reco-acciones{margin-top:auto;padding-top:20px;display:grid;gap:9px}
+    .reco-btn{border:1px solid rgba(255,255,255,.22);border-radius:11px;padding:12px;font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.2px;background:rgba(255,255,255,.11);color:#fff}
+    .reco-btn.principal{background:#fff;color:var(--azul-2);border-color:#fff}
+    .reco-btn:hover{filter:brightness(.97)}
+    .asesor-nota{margin-top:12px;color:#7c86c7;font-size:9px;line-height:1.4;text-align:center}
+    .base-sidebar.oculto{display:none!important}
+    @media(max-width:1120px){
+      .asesor-shell{grid-template-columns:1fr}
+      .reco-panel{min-height:0}
+    }
+    @media(max-width:760px){
+      .asesor-form,.reco-panel{padding:15px}
+      .asesor-grid,.electrico-grid{grid-template-columns:1fr}
+      .electrico-result{grid-template-columns:1fr 1fr}
+      .reco-fila{grid-template-columns:115px 1fr}
+      .modo-nav{padding-top:10px}
+    }
     @media(max-width:1050px){
       .app{grid-template-columns:260px minmax(0,1fr)}
       .c3{grid-column:span 6}.c4{grid-column:span 6}
@@ -167,19 +224,25 @@
         </div>
       </div>
       <div class="conexion">
-        <span><i class="punto" id="puntoConexion"></i><span id="textoConexion">Modo local</span></span>
-        <span id="usuarioConexion">Sin sesión</span>
+        <span><i class="punto" id="puntoConexion"></i><span id="textoConexion">Conectando...</span></span>
+        <span id="usuarioConexion">Operador</span>
       </div>
     </div>
-    <div class="sidebar-tools">
-      <button class="btn-nueva" id="btnNueva">＋ Nueva ficha técnica</button>
-      <input class="buscar" id="buscarFichas" placeholder="Buscar letrero, código...">
+    <div class="modo-nav">
+      <button class="modo-btn" id="btnModoBase">Base técnica</button>
+      <button class="modo-btn activo" id="btnModoAsesor">Asesor compatible</button>
     </div>
-    <div class="lista-titulo">Fichas registradas</div>
-    <div class="lista" id="listaFichas"></div>
+    <div class="base-sidebar" id="panelBaseSidebar">
+      <div class="sidebar-tools">
+        <button class="btn-nueva" id="btnNueva">＋ Nueva ficha técnica</button>
+        <input class="buscar" id="buscarFichas" placeholder="Buscar letrero, código...">
+      </div>
+      <div class="lista-titulo">Fichas registradas</div>
+      <div class="lista" id="listaFichas"></div>
+    </div>
     <div class="sidebar-footer">
-      <button id="btnConfig">Configurar Supabase</button>
-      <button id="btnSalir" title="Cerrar sesión">↪</button>
+      <button id="btnVolver">← Volver a COMANDA</button>
+      <button id="btnSalir" title="Cambiar operador">↪</button>
     </div>
   </aside>
 
@@ -296,6 +359,162 @@
         </div>
       </div>
     </section>
+
+    <section id="asesor" class="contenido oculto">
+      <div class="asesor-shell">
+        <article class="asesor-form">
+          <div class="compat-banner">
+            <div class="compat-icon">✓</div>
+            <div>
+              <strong>Opciones controladas por compatibilidad</strong>
+              <p id="asAviso">Las opciones cambian automáticamente según el sistema de fabricación seleccionado.</p>
+            </div>
+          </div>
+
+          <div class="asesor-grid">
+            <div class="full">
+              <label>Familia o sistema de letrero</label>
+              <select id="asFamilia"></select>
+            </div>
+
+            <div class="full">
+              <label>Material, espesor o variante</label>
+              <select id="asVariante"></select>
+              <span class="ayuda" id="asAyudaVariante">Las variantes se mantienen agrupadas dentro de la misma familia.</span>
+            </div>
+
+            <div>
+              <label>Ancho aproximado (cm)</label>
+              <input id="asAncho" type="number" min="1" step="0.1" value="200">
+            </div>
+            <div>
+              <label>Alto aproximado (cm)</label>
+              <input id="asAlto" type="number" min="1" step="0.1" value="80">
+            </div>
+
+            <div>
+              <label>Ubicación</label>
+              <select id="asUbicacion"></select>
+            </div>
+            <div>
+              <label>Iluminación <span class="tag-auto">AUTOMÁTICA</span></label>
+              <select id="asIluminacion"></select>
+              <span class="ayuda" id="asAyudaLuz"></span>
+            </div>
+
+            <div>
+              <label>Acabado compatible</label>
+              <select id="asAcabado"></select>
+            </div>
+            <div>
+              <label>Tipo de pared o superficie</label>
+              <select id="asPared">
+                <option>Cemento / bloque</option>
+                <option>Madera</option>
+                <option>Vidrio</option>
+                <option>Metal</option>
+                <option>Panel compuesto / ACM</option>
+                <option>Otra / por validar</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Fijación disponible</label>
+              <select id="asFijacion"></select>
+              <span class="ayuda">La fijación final debe validarse según peso, tamaño y superficie.</span>
+            </div>
+            <div>
+              <label>Acceso para instalación</label>
+              <select id="asAcceso">
+                <option>A ras de suelo</option>
+                <option>Escalera</option>
+                <option>Andamio</option>
+                <option>Elevador</option>
+                <option>Acceso especial / por validar</option>
+              </select>
+            </div>
+
+            <div class="electrico-box oculto" id="asElectricoBox">
+              <h4>Referencia eléctrica preliminar</h4>
+              <p>Este cálculo sirve para organizar ramales y fuente. Debe confirmarse con el consumo real del LED utilizado.</p>
+              <div class="electrico-grid">
+                <div>
+                  <label>Sistema LED</label>
+                  <select id="asSistemaLed">
+                    <option value="modulos">Módulos encapsulados</option>
+                    <option value="cinta">Cinta LED de 8 mm</option>
+                  </select>
+                </div>
+                <div>
+                  <label id="asCantidadLedLabel">Cantidad de módulos</label>
+                  <input id="asCantidadLed" type="number" min="0" step="1" value="20">
+                </div>
+                <div>
+                  <label>Margen (%)</label>
+                  <input id="asMargen" type="number" min="15" max="30" step="1" value="20">
+                </div>
+              </div>
+              <div class="electrico-result">
+                <div class="mini-stat"><small>Consumo base</small><strong id="asConsumoBase">1.00 A</strong></div>
+                <div class="mini-stat"><small>Con margen</small><strong id="asConsumoMargen">1.20 A</strong></div>
+                <div class="mini-stat"><small>Fuente mínima</small><strong id="asFuenteMinima">1.20 A</strong></div>
+                <div class="mini-stat"><small>Ramales 18 AWG</small><strong id="asRamales">1</strong></div>
+              </div>
+            </div>
+
+            <div class="full">
+              <label>Detalles adicionales</label>
+              <textarea id="asDetalles" placeholder="Ejemplo: instalación sobre ACM, acceso con escalera, logo con piezas separadas, color de referencia..."></textarea>
+            </div>
+          </div>
+        </article>
+
+        <aside class="reco-panel">
+          <h3>Recomendación inicial</h3>
+          <p class="reco-sub">Se actualiza automáticamente según las reglas técnicas disponibles.</p>
+
+          <div class="reco-destacado">
+            <strong id="asRecoTitulo">PVC laminado · 3 mm</strong>
+            <p id="asRecoTexto">Selecciona las opciones para generar una recomendación coherente.</p>
+          </div>
+
+          <div class="reco-lista">
+            <div class="reco-fila"><span>Producto</span><b id="asRProducto">—</b></div>
+            <div class="reco-fila"><span>Medida</span><b id="asRMedida">—</b></div>
+            <div class="reco-fila"><span>Ubicación</span><b id="asRUbicacion">—</b></div>
+            <div class="reco-fila"><span>Iluminación</span><b id="asRIluminacion">—</b></div>
+            <div class="reco-fila"><span>Acabado</span><b id="asRAcabado">—</b></div>
+            <div class="reco-fila"><span>Pared</span><b id="asRPared">—</b></div>
+            <div class="reco-fila"><span>Fijación</span><b id="asRFijacion">—</b></div>
+            <div class="reco-fila"><span>Acceso</span><b id="asRAcceso">—</b></div>
+            <div class="reco-fila"><span>Nivel inicial</span><b id="asRNivel">—</b></div>
+          </div>
+
+          <div class="reco-bloque">
+            <h4>Componentes principales</h4>
+            <div class="chips" id="asMateriales"></div>
+          </div>
+
+          <div class="reco-bloque">
+            <h4>Proceso base</h4>
+            <ol class="reco-ol" id="asProceso"></ol>
+          </div>
+
+          <div class="reco-bloque">
+            <h4>Advertencias y validaciones</h4>
+            <ul class="reco-ul" id="asAdvertencias"></ul>
+          </div>
+
+          <div class="reco-acciones">
+            <button class="reco-btn principal" id="btnAsWhatsApp">Enviar solicitud por WhatsApp</button>
+            <button class="reco-btn" id="btnAsCopiar">Copiar resumen</button>
+            <button class="reco-btn" id="btnAsTxt">Exportar recomendación TXT</button>
+          </div>
+          <div class="asesor-nota">No calcula precios. La recomendación técnica debe confirmarse antes de fabricar o instalar.</div>
+        </aside>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -336,75 +555,426 @@
   </div>
 </div>
 
-<div class="modal-fondo oculto" id="modalConfig">
-  <div class="modal">
-    <div class="modal-head">
-      <h3>Conexión con Supabase</h3>
-      <button class="btn icono" data-cerrar-modal="modalConfig">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="nota-info">
-        Utiliza únicamente la URL del proyecto y la clave pública <b>publishable</b> o la antigua <b>anon</b>. Nunca coloques aquí una clave secret ni service_role.
-      </div>
-      <div style="margin-top:14px">
-        <label>Supabase URL</label>
-        <input id="configUrl" placeholder="https://tu-proyecto.supabase.co">
-      </div>
-      <div style="margin-top:12px">
-        <label>Publishable key / anon key</label>
-        <textarea id="configKey" style="min-height:110px" placeholder="sb_publishable_... o eyJ..."></textarea>
-      </div>
-      <span class="ayuda">Si dejas ambos campos vacíos, la aplicación funcionará en modo local usando este navegador.</span>
-    </div>
-    <div class="modal-foot">
-      <button class="btn peligro" id="btnModoLocal">Usar modo local</button>
-      <button class="btn primario" id="btnGuardarConfig">Guardar conexión</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-fondo oculto" id="modalLogin">
-  <div class="login">
-    <h2>Iniciar sesión</h2>
-    <p>La base técnica está protegida. Ingresa con un usuario creado en Supabase Auth.</p>
-    <div class="campo">
-      <label>Correo</label>
-      <input type="email" id="loginEmail" autocomplete="username">
-    </div>
-    <div class="campo">
-      <label>Contraseña</label>
-      <input type="password" id="loginPassword" autocomplete="current-password">
-    </div>
-    <div class="login-acciones">
-      <button class="btn primario" id="btnLogin">Entrar</button>
-      <button class="btn" id="btnLoginLocal">Trabajar temporalmente en modo local</button>
-    </div>
-    <div class="error-box oculto" id="loginError"></div>
-  </div>
-</div>
-
 <script>
 'use strict';
+// ESTRUCTURA V3 · Base técnica + asesor compatible · Integrada con COMANDA
 
-const CONFIG_KEY = 'estructura_supabase_config_v1';
-const SUPABASE_URL_PREDEFINIDA = 'https://ujfdsabypflseijatxba.supabase.co';
-const SUPABASE_KEY_PREDEFINIDA = 'sb_publishable_CiZo8xFKkaT7mdRrQUYxuQ_48F6Vx3w';
-const LOCAL_DB_KEY = 'estructura_fichas_local_v1';
+const AUTH_KEY = 'comanda_operador_actual';
 const DRAFT_KEY = 'estructura_borrador_v1';
 
 let supabaseClient = null;
-let modo = 'local';
+let operadorActual = null;
 let fichasResumen = [];
 let fichaActual = null;
 let cambiosPendientes = false;
 let timerBorrador = null;
+let vistaActual = localStorage.getItem('estructura_vista_v3') || 'asesor';
+
+const CATALOGO_ASESOR = {
+  pvc_laminado: {
+    nombre: 'PVC laminado',
+    aviso: 'Puede fabricarse sin iluminación o con luz posterior. No admite iluminación frontal.',
+    ayuda: 'Espesores disponibles en esta familia: 3, 5, 9 y 15 mm.',
+    variantes: ['3 mm','5 mm','9 mm','15 mm'],
+    ubicaciones: ['Interior','Exterior temporal o protegido'],
+    iluminaciones: ['Sin iluminación','Posterior'],
+    acabados: ['Vinil impreso UV','Vinil de color sólido'],
+    nivel: 'Económico / estándar',
+    componentes: ['PVC espumado','Vinil frontal','Adhesivo o laminado','Sistema de fijación'],
+    proceso: [
+      'Imprimir o preparar el vinil frontal.',
+      'Aplicar el vinil sobre el PVC.',
+      'Cortar las piezas en router.',
+      'Lijar y limpiar los bordes.',
+      'Revisar adherencia, corte y acabado frontal.'
+    ],
+    reglas: [
+      'El canto queda blanco salvo que se documente otro acabado.',
+      'Para exterior se recomienda una zona temporal, protegida o técnicamente validada.',
+      'La iluminación frontal es incompatible porque el frente no funciona como difusor translúcido.'
+    ]
+  },
+  pvc_acrilico: {
+    nombre: 'PVC con acrílico',
+    aviso: 'La base de PVC recibe una cara de acrílico. Puede fabricarse sin iluminación o con luz posterior según el diseño.',
+    ayuda: 'Combinaciones documentadas: PVC de 9 o 15 mm con acrílico de 3 o 5 mm.',
+    variantes: ['PVC 9 mm + acrílico 3 mm','PVC 9 mm + acrílico 5 mm','PVC 15 mm + acrílico 3 mm','PVC 15 mm + acrílico 5 mm'],
+    ubicaciones: ['Interior','Exterior protegido','Exterior por validar'],
+    iluminaciones: ['Sin iluminación','Posterior'],
+    acabados: ['Acrílico sólido · canto crudo','Acrílico sólido · canto pintado','Acrílico transparente · canto crudo','Acrílico transparente · canto pintado','Acrílico opalino · canto pintado','Acrílico espejo · canto pintado'],
+    nivel: 'Estándar',
+    componentes: ['Base de PVC','Cara de acrílico','Adhesivo especial','Vinil posterior opcional','Sistema de fijación'],
+    proceso: [
+      'Cortar la base de PVC en router.',
+      'Cortar el acrílico en láser CO₂.',
+      'Lijar y preparar el canto del PVC.',
+      'Pintar el canto cuando corresponda.',
+      'Aplicar vinil posterior cuando corresponda.',
+      'Fijar el acrílico al PVC y revisar alineación.'
+    ],
+    reglas: [
+      'La unión debe definirse entre adhesivo especial o cinta doble faz superficial según el caso.',
+      'La luz posterior depende del tipo de acrílico, separación a la pared y espacio para LED.',
+      'El acrílico debe quedar alineado, sin rayones ni quemaduras visibles.'
+    ]
+  },
+  pvc_pintura: {
+    nombre: 'PVC con pintura automotriz',
+    aviso: 'Sistema corpóreo opaco con acabado automotriz. Puede ir sin iluminación o con retroiluminación.',
+    ayuda: 'El espesor de 30 mm se construye con dos capas de PVC de 15 mm.',
+    variantes: ['9 mm','15 mm','30 mm · 2 capas de 15 mm'],
+    ubicaciones: ['Interior','Exterior protegido','Exterior por validar'],
+    iluminaciones: ['Sin iluminación','Posterior'],
+    acabados: ['Pintura mate · frente','Pintura mate · frente y cantos','Pintura brillante · frente','Pintura brillante · frente y cantos'],
+    nivel: 'Estándar / premium',
+    componentes: ['PVC espumado','Adhesivo entre capas','Masilla si aplica','Primer','Pintura automotriz','Sistema de fijación'],
+    proceso: [
+      'Cortar las piezas en router.',
+      'Pegar capas cuando se requieran 30 mm.',
+      'Lijar y preparar frente y cantos.',
+      'Aplicar masilla cuando sea necesaria.',
+      'Aplicar primer y las manos de pintura requeridas.',
+      'Revisar uniformidad, poros, color y acabado.'
+    ],
+    reglas: [
+      'Las etapas de preparación y secado no deben omitirse.',
+      'La necesidad de masilla depende del material, unión y nivel de acabado.',
+      'La iluminación frontal es incompatible porque el cuerpo pintado es opaco.'
+    ]
+  },
+  frontlit_aluminio: {
+    nombre: 'Front Lit con canto de aluminio',
+    aviso: 'Requiere cara frontal translúcida, iluminación frontal interna y acceso desmontable para mantenimiento.',
+    ayuda: 'Profundidades documentadas: 4, 6 y 10 cm. El frontal de referencia es acrílico de 3 mm.',
+    variantes: ['Canto 4 cm · acrílico 3 mm','Canto 6 cm · acrílico 3 mm','Canto 10 cm · acrílico 3 mm'],
+    ubicaciones: ['Interior','Exterior'],
+    iluminaciones: ['Frontal'],
+    acabados: ['Acrílico translúcido blanco','Acrílico translúcido de color','Acrílico transparente con vinil translúcido'],
+    nivel: 'Premium iluminado',
+    componentes: ['Frontal acrílico 3 mm','Canto de aluminio','Base posterior','Módulos LED 12 V','Cable 18 AWG','Fuente 12 V','Tornillos desmontables'],
+    proceso: [
+      'Cortar el frente de acrílico.',
+      'Formar el contorno con dobladora.',
+      'Unir el canto al acrílico con el sistema definido.',
+      'Preparar la base posterior.',
+      'Instalar iluminación y cableado en paralelo.',
+      'Preparar tornillos de apertura y mantenimiento.',
+      'Revisar uniones, profundidad, cierre y uniformidad de luz.'
+    ],
+    reglas: [
+      'No permitir frontal opaco ni opción sin iluminación dentro de la clasificación Front Lit.',
+      'La fuente debe quedar accesible y protegida.',
+      'Los radios cerrados deben validarse según la capacidad de doblado de la banda.'
+    ]
+  },
+  acrilico_sin_pvc: {
+    nombre: 'Acrílico sin PVC',
+    aviso: 'Pieza plana de acrílico. Puede utilizarse sin iluminación o con luz posterior cuando la instalación lo permita.',
+    ayuda: 'Espesores documentados: 1, 2, 3, 5 y 8 mm.',
+    variantes: ['1 mm','2 mm','3 mm','5 mm','8 mm'],
+    ubicaciones: ['Interior','Exterior por validar'],
+    iluminaciones: ['Sin iluminación','Posterior'],
+    acabados: ['Acrílico transparente','Acrílico blanco','Acrílico de color sólido','Acrílico espejo','Acrílico opalino','Acrílico con vinil posterior'],
+    nivel: 'Económico / estándar',
+    componentes: ['Acrílico','Vinil posterior opcional','Perforaciones o fijaciones','Sistema de separación si lleva luz posterior'],
+    proceso: [
+      'Cortar las piezas en láser CO₂.',
+      'Revisar que el canto quede limpio y pulido.',
+      'Aplicar vinil posterior cuando corresponda.',
+      'Preparar perforaciones o fijaciones.',
+      'Limpiar la superficie sin rayarla.'
+    ],
+    reglas: [
+      'La fijación puede ser cinta doble faz, chupones, tornillos u otra técnicamente validada.',
+      'La iluminación posterior requiere separación, salida de cables y un sistema de LED compatible.',
+      'No utilizar limpiadores abrasivos ni entregar piezas rayadas.'
+    ]
+  }
+};
+
+const FIJACIONES_POR_PARED = {
+  'Cemento / bloque': ['Ramplug y tornillo','Tornillos','Fijación posterior','Sistema mecánico especial','Cinta doble faz · validar'],
+  'Madera': ['Tornillos','Clavos','Fijación posterior','Cinta doble faz · validar'],
+  'Vidrio': ['Cinta doble faz','Chupones','Sistema mecánico especial'],
+  'Metal': ['Tornillos','Fijación posterior','Cinta doble faz · validar','Sistema mecánico especial'],
+  'Panel compuesto / ACM': ['Tornillos','Fijación posterior','Cinta doble faz · validar','Sistema mecánico especial'],
+  'Otra / por validar': ['Sistema mecánico especial','Fijación posterior','Por definir después de inspección']
+};
 
 const $ = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
 
+
+function llenarSelect(select, opciones, mantener=true){
+  const anterior = mantener ? select.value : '';
+  select.innerHTML = (opciones || []).map(op => `<option value="${esc(op)}">${esc(op)}</option>`).join('');
+  if(anterior && opciones.includes(anterior)) select.value = anterior;
+}
+
+function familiaAsesor(){
+  return CATALOGO_ASESOR[$('#asFamilia')?.value] || CATALOGO_ASESOR.pvc_laminado;
+}
+
+function opcionesFijacion(){
+  let opciones = [...(FIJACIONES_POR_PARED[$('#asPared').value] || FIJACIONES_POR_PARED['Otra / por validar'])];
+  const familia = $('#asFamilia').value;
+  if(familia === 'frontlit_aluminio'){
+    opciones = opciones.filter(x => !x.includes('Chupones') && !x.startsWith('Cinta doble faz') && x !== 'Clavos');
+  }
+  if(familia === 'acrilico_sin_pvc' && $('#asPared').value === 'Vidrio'){
+    opciones = ['Cinta doble faz','Chupones','Tornillos con separadores','Sistema mecánico especial'];
+  }
+  return [...new Set(opciones)];
+}
+
+function configurarFamiliaAsesor(){
+  const f = familiaAsesor();
+  $('#asAviso').textContent = f.aviso;
+  $('#asAyudaVariante').textContent = f.ayuda;
+  llenarSelect($('#asVariante'), f.variantes);
+  llenarSelect($('#asUbicacion'), f.ubicaciones);
+  llenarSelect($('#asIluminacion'), f.iluminaciones);
+  llenarSelect($('#asAcabado'), f.acabados);
+  $('#asAyudaLuz').textContent = `Opciones permitidas: ${f.iluminaciones.join(' / ')}.`;
+  actualizarFijacionesAsesor();
+  actualizarAsesor();
+}
+
+function actualizarFijacionesAsesor(){
+  llenarSelect($('#asFijacion'), opcionesFijacion());
+}
+
+function calcularElectricoAsesor(){
+  const iluminacion = $('#asIluminacion').value;
+  const activo = iluminacion !== 'Sin iluminación';
+  $('#asElectricoBox').classList.toggle('oculto', !activo);
+  if(!activo) return {activo:false, base:0, margen:0, ramales:0, sistema:''};
+
+  const sistema = $('#asSistemaLed').value;
+  const cantidad = Math.max(0, Number($('#asCantidadLed').value) || 0);
+  const porcentaje = Math.max(15, Number($('#asMargen').value) || 20);
+  const base = sistema === 'modulos' ? cantidad / 20 : cantidad;
+  const total = base * (1 + porcentaje / 100);
+  const ramales = Math.max(1, Math.ceil(total / 10));
+  $('#asCantidadLedLabel').textContent = sistema === 'modulos' ? 'Cantidad de módulos' : 'Metros de cinta LED';
+  $('#asCantidadLed').step = sistema === 'modulos' ? '1' : '0.1';
+  $('#asConsumoBase').textContent = `${base.toFixed(2)} A`;
+  $('#asConsumoMargen').textContent = `${total.toFixed(2)} A`;
+  $('#asFuenteMinima').textContent = `${total.toFixed(2)} A`;
+  $('#asRamales').textContent = String(ramales);
+  return {
+    activo:true,
+    base,
+    margen:total,
+    ramales,
+    sistema:sistema === 'modulos' ? 'Módulos encapsulados' : 'Cinta LED de 8 mm',
+    cantidad,
+    porcentaje
+  };
+}
+
+function advertenciasAsesor(f, electrico){
+  const lista = [...f.reglas];
+  const fijacion = $('#asFijacion').value;
+  const acceso = $('#asAcceso').value;
+  const ubicacion = $('#asUbicacion').value;
+  const sistema = $('#asSistemaLed').value;
+
+  if(fijacion.toLowerCase().includes('doble faz')){
+    lista.push('No depender únicamente de cinta doble faz en piezas grandes o pesadas; validar peso, tamaño y superficie.');
+  }
+  if(['Andamio','Elevador','Acceso especial / por validar'].includes(acceso)){
+    lista.push('El acceso requiere confirmar condiciones de seguridad, personal y equipos antes de instalar.');
+  }
+  if(electrico.activo){
+    lista.push(`Referencia eléctrica: ${electrico.base.toFixed(2)} A base, ${electrico.margen.toFixed(2)} A con margen y ${electrico.ramales} ramal(es) máximo 10 A.`);
+    if(ubicacion.toLowerCase().includes('exterior') && sistema === 'cinta'){
+      lista.push('Para exterior se recomiendan módulos encapsulados; la cinta LED sin protección se limita a interior o zonas sin agua.');
+    }
+    lista.push('La fuente debe quedar dentro de una caja protectora y accesible para mantenimiento.');
+  }
+  return lista;
+}
+
+function construirResumenAsesor(){
+  const f = familiaAsesor();
+  const variante = $('#asVariante').value;
+  const ancho = Number($('#asAncho').value) || 0;
+  const alto = Number($('#asAlto').value) || 0;
+  const electrico = calcularElectricoAsesor();
+  const advertencias = advertenciasAsesor(f, electrico);
+  const datos = {
+    familia:f.nombre,
+    variante,
+    producto:`${f.nombre} · ${variante}`,
+    medida:`${ancho || '—'} × ${alto || '—'} cm`,
+    ubicacion:$('#asUbicacion').value,
+    iluminacion:$('#asIluminacion').value,
+    acabado:$('#asAcabado').value,
+    pared:$('#asPared').value,
+    fijacion:$('#asFijacion').value,
+    acceso:$('#asAcceso').value,
+    nivel:f.nivel,
+    aviso:f.aviso,
+    materiales:[...f.componentes],
+    proceso:[...f.proceso],
+    advertencias,
+    detalles:$('#asDetalles').value.trim(),
+    electrico
+  };
+  if(electrico.activo){
+    datos.materiales.push(electrico.sistema,'Cable 18 AWG','Fuente 12 V','Caja protectora');
+  }
+  return datos;
+}
+
+function resumenTextoAsesor(){
+  const d = construirResumenAsesor();
+  const lineas = [
+    'RECOMENDACIÓN TÉCNICA INICIAL · TUTTOVINILOS',
+    '============================================================',
+    `Producto: ${d.producto}`,
+    `Medida: ${d.medida}`,
+    `Ubicación: ${d.ubicacion}`,
+    `Iluminación: ${d.iluminacion}`,
+    `Acabado: ${d.acabado}`,
+    `Pared o superficie: ${d.pared}`,
+    `Fijación propuesta: ${d.fijacion}`,
+    `Acceso: ${d.acceso}`,
+    `Nivel inicial: ${d.nivel}`,
+    '',
+    'CRITERIO PRINCIPAL',
+    d.aviso,
+    '',
+    'COMPONENTES PRINCIPALES',
+    ...d.materiales.map(x=>`- ${x}`),
+    '',
+    'PROCESO BASE',
+    ...d.proceso.map((x,i)=>`${i+1}. ${x}`),
+    '',
+    'ADVERTENCIAS Y VALIDACIONES',
+    ...d.advertencias.map(x=>`- ${x}`)
+  ];
+  if(d.electrico.activo){
+    lineas.push('', 'REFERENCIA ELÉCTRICA',
+      `Sistema: ${d.electrico.sistema}`,
+      `Cantidad de referencia: ${d.electrico.cantidad}`,
+      `Consumo base: ${d.electrico.base.toFixed(2)} A`,
+      `Margen aplicado: ${d.electrico.porcentaje}%`,
+      `Fuente mínima calculada: ${d.electrico.margen.toFixed(2)} A`,
+      `Ramales sugeridos: ${d.electrico.ramales}`
+    );
+  }
+  if(d.detalles) lineas.push('', 'DETALLES ADICIONALES', d.detalles);
+  lineas.push('', 'NOTA', 'Esta recomendación no incluye costos y debe validarse antes de fabricar o instalar.');
+  return lineas.join('\n');
+}
+
+function actualizarAsesor(){
+  if(!$('#asFamilia')) return;
+  const d = construirResumenAsesor();
+  $('#asRecoTitulo').textContent = d.producto;
+  $('#asRecoTexto').textContent = d.aviso;
+  $('#asRProducto').textContent = d.producto;
+  $('#asRMedida').textContent = d.medida;
+  $('#asRUbicacion').textContent = d.ubicacion;
+  $('#asRIluminacion').textContent = d.iluminacion;
+  $('#asRAcabado').textContent = d.acabado;
+  $('#asRPared').textContent = d.pared;
+  $('#asRFijacion').textContent = d.fijacion;
+  $('#asRAcceso').textContent = d.acceso;
+  $('#asRNivel').textContent = d.nivel;
+  $('#asMateriales').innerHTML = d.materiales.map(x=>`<span class="chip">${esc(x)}</span>`).join('');
+  $('#asProceso').innerHTML = d.proceso.map(x=>`<li>${esc(x)}</li>`).join('');
+  $('#asAdvertencias').innerHTML = d.advertencias.map(x=>`<li>${esc(x)}</li>`).join('');
+  localStorage.setItem('estructura_asesor_v3', JSON.stringify({
+    familia:$('#asFamilia').value,
+    variante:$('#asVariante').value,
+    ancho:$('#asAncho').value,
+    alto:$('#asAlto').value,
+    ubicacion:$('#asUbicacion').value,
+    iluminacion:$('#asIluminacion').value,
+    acabado:$('#asAcabado').value,
+    pared:$('#asPared').value,
+    fijacion:$('#asFijacion').value,
+    acceso:$('#asAcceso').value,
+    sistemaLed:$('#asSistemaLed').value,
+    cantidadLed:$('#asCantidadLed').value,
+    margen:$('#asMargen').value,
+    detalles:$('#asDetalles').value
+  }));
+}
+
+function inicializarAsesor(){
+  llenarSelect($('#asFamilia'), Object.entries(CATALOGO_ASESOR).map(([k,v])=>v.nombre), false);
+  const claves = Object.keys(CATALOGO_ASESOR);
+  const nombres = Object.values(CATALOGO_ASESOR).map(x=>x.nombre);
+  const mapaNombreClave = Object.fromEntries(nombres.map((n,i)=>[n,claves[i]]));
+  $('#asFamilia').innerHTML = claves.map(k=>`<option value="${k}">${esc(CATALOGO_ASESOR[k].nombre)}</option>`).join('');
+
+  let guardado = {};
+  try{ guardado = JSON.parse(localStorage.getItem('estructura_asesor_v3') || '{}'); }catch{}
+  if(guardado.familia && CATALOGO_ASESOR[guardado.familia]) $('#asFamilia').value = guardado.familia;
+  configurarFamiliaAsesor();
+
+  const restaurables = {
+    asVariante:'variante',asAncho:'ancho',asAlto:'alto',asUbicacion:'ubicacion',
+    asIluminacion:'iluminacion',asAcabado:'acabado',asPared:'pared',asFijacion:'fijacion',
+    asAcceso:'acceso',asSistemaLed:'sistemaLed',asCantidadLed:'cantidadLed',asMargen:'margen',asDetalles:'detalles'
+  };
+  Object.entries(restaurables).forEach(([id,key])=>{
+    const el=$('#'+id);
+    if(!el || guardado[key] === undefined) return;
+    if(el.tagName !== 'SELECT' || [...el.options].some(o=>o.value===String(guardado[key]))){
+      el.value = guardado[key];
+    }
+  });
+  actualizarFijacionesAsesor();
+  if(guardado.fijacion && [...$('#asFijacion').options].some(o=>o.value===guardado.fijacion)) $('#asFijacion').value=guardado.fijacion;
+  actualizarAsesor();
+}
+
+function cambiarVista(modo){
+  vistaActual = modo === 'base' ? 'base' : 'asesor';
+  localStorage.setItem('estructura_vista_v3', vistaActual);
+  const esAsesor = vistaActual === 'asesor';
+  $('#asesor').classList.toggle('oculto', !esAsesor);
+  $('#panelBaseSidebar').classList.toggle('oculto', esAsesor);
+  $('#btnModoBase').classList.toggle('activo', !esAsesor);
+  $('#btnModoAsesor').classList.toggle('activo', esAsesor);
+  if(esAsesor){
+    $('#estadoVacio').classList.add('oculto');
+    $('#editor').classList.add('oculto');
+    $('#accionesTop').classList.add('oculto');
+    $('#tituloPagina').textContent = 'Asesor de fabricación compatible';
+    $('#subtituloPagina').textContent = 'Filtra materiales, iluminación, acabados y fijaciones según las reglas técnicas.';
+    actualizarAsesor();
+  }else{
+    $('#asesor').classList.add('oculto');
+    renderEditor();
+  }
+  $('#sidebar').classList.remove('abierta');
+}
+
+function descargarAsesorTxt(){
+  const contenido = resumenTextoAsesor();
+  const d = construirResumenAsesor();
+  const nombre = d.producto.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_');
+  const blob = new Blob([contenido],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`RECOMENDACION_${nombre}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 function nuevaFicha(){
   return {
     id: null,
+    operador_id: operadorActual?.id ?? null,
+    operador_nombre: operadorActual?.nombre || '',
+    actualizado_por_id: operadorActual?.id ?? null,
+    actualizado_por_nombre: operadorActual?.nombre || '',
     codigo: '',
     nombre: '',
     categoria: '',
@@ -589,6 +1159,12 @@ function actualizarTitulos(){
 
 function renderEditor(){
   const hay = !!fichaActual;
+  if(vistaActual === 'asesor'){
+    $('#estadoVacio').classList.add('oculto');
+    $('#editor').classList.add('oculto');
+    $('#accionesTop').classList.add('oculto');
+    return;
+  }
   $('#estadoVacio').classList.toggle('oculto', hay);
   $('#editor').classList.toggle('oculto', !hay);
   $('#accionesTop').classList.toggle('oculto', !hay);
@@ -815,7 +1391,7 @@ function renderLista(){
   $('#listaFichas').innerHTML = items.length ? items.map(f=>`
     <button class="ficha-item ${fichaActual?.id===f.id?'activa':''}" data-cargar-id="${f.id}">
       <strong>${esc(f.nombre || 'Sin nombre')}</strong>
-      <small><span>${esc(f.codigo || f.categoria || 'Sin código')}</span><span>${etiquetaEstado(f.estado)}</span></small>
+      <small><span>${esc(f.codigo || f.categoria || 'Sin código')}</span><span>${esc(f.actualizado_por_nombre || f.operador_nombre || '')}${(f.actualizado_por_nombre || f.operador_nombre) ? ' · ' : ''}${etiquetaEstado(f.estado)}</span></small>
     </button>`).join('') : `<div style="padding:16px 8px;color:#cbd5ff;font-size:11px;text-align:center">No hay fichas para mostrar.</div>`;
 }
 
@@ -857,6 +1433,8 @@ function generarTxt(ficha=fichaActual){
   campo('Otros nombres', ficha.otros_nombres);
   campo('Estado', etiquetaEstado(ficha.estado));
   campo('Uso general', etiquetaAmbiente(ficha.uso_general));
+  campo('Creada por', ficha.operador_nombre || operadorActual?.nombre || 'PENDIENTE DEFINIR');
+  campo('Última actualización por', ficha.actualizado_por_nombre || operadorActual?.nombre || 'PENDIENTE DEFINIR');
 
   lineas.push(linea('-'));
   lineas.push('DEFINICIÓN GENERAL');
@@ -969,115 +1547,109 @@ function descargarTxt(){
   URL.revokeObjectURL(a.href);
 }
 
-function getConfig(){
+function leerOperadorActual(){
   try{
-    const guardada = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
-    return {
-      url: guardada.url || SUPABASE_URL_PREDEFINIDA,
-      key: guardada.key || SUPABASE_KEY_PREDEFINIDA
-    };
+    const desdeAuth = typeof window.getSesionOperador === 'function'
+      ? window.getSesionOperador()
+      : null;
+    return desdeAuth || JSON.parse(localStorage.getItem(AUTH_KEY) || 'null');
   }catch{
-    return {
-      url: SUPABASE_URL_PREDEFINIDA,
-      key: SUPABASE_KEY_PREDEFINIDA
-    };
+    return null;
   }
 }
 
-async function inicializar(){
-  const config = getConfig();
-  if(config.url && config.key){
-    try{
-      supabaseClient = window.supabase.createClient(config.url, config.key);
-      const {data:{session},error} = await supabaseClient.auth.getSession();
-      if(error) throw error;
-      if(session){
-        modo = 'supabase';
-        actualizarConexion(session.user);
-        await cargarResumenes();
-      }else{
-        abrirModal('modalLogin');
-      }
-    }catch(err){
-      console.error(err);
-      modo = 'local';
-      actualizarConexion();
-      toast('No se pudo conectar. Se abrió el modo local.');
-      await cargarResumenes();
-    }
-  }else{
-    modo = 'local';
-    actualizarConexion();
-    await cargarResumenes();
+function operadorValido(op){
+  return !!op && op.activo !== false && op.id !== undefined && op.id !== null && String(op.nombre || '').trim();
+}
+
+async function esperarSupabase(intentos=80){
+  for(let i=0;i<intentos;i++){
+    if(window.supabaseClient) return window.supabaseClient;
+    await new Promise(resolve=>setTimeout(resolve,75));
   }
+  return null;
+}
+
+async function inicializar(){
+  operadorActual = leerOperadorActual();
+
+  if(!operadorValido(operadorActual)){
+    location.replace('login.html');
+    return;
+  }
+
+  actualizarConexion(false);
+  supabaseClient = await esperarSupabase();
+
+  if(!supabaseClient){
+    actualizarConexion(false);
+    $('#textoConexion').textContent = 'Sin conexión';
+    toast('No se pudo conectar con Supabase. Recarga la página.');
+    return;
+  }
+
+  actualizarConexion(true);
+  await cargarResumenes();
 
   const borrador = localStorage.getItem(DRAFT_KEY);
   if(!fichasResumen.length && borrador){
     try{
       fichaActual = JSON.parse(borrador);
+      fichaActual.operador_id = fichaActual.operador_id || operadorActual.id;
+      fichaActual.operador_nombre = fichaActual.operador_nombre || operadorActual.nombre;
+      fichaActual.actualizado_por_id = operadorActual.id;
+      fichaActual.actualizado_por_nombre = operadorActual.nombre;
       renderEditor();
-      toast('Se recuperó un borrador local.');
+      toast('Se recuperó un borrador pendiente.');
     }catch{}
   }
+  inicializarAsesor();
+  cambiarVista(vistaActual);
 }
 
-function actualizarConexion(user=null){
-  const online = modo === 'supabase';
+function actualizarConexion(online=false){
   $('#puntoConexion').classList.toggle('online',online);
-  $('#textoConexion').textContent = online ? 'Supabase conectado' : 'Modo local';
-  $('#usuarioConexion').textContent = online ? (user?.email || 'Con sesión') : 'Este navegador';
-  $('#btnSalir').style.visibility = online ? 'visible' : 'hidden';
+  $('#textoConexion').textContent = online ? 'Supabase conectado' : 'Conectando...';
+  $('#usuarioConexion').textContent = operadorActual?.nombre || 'Sin operador';
+  $('#btnSalir').style.visibility = 'visible';
 }
 
 async function cargarResumenes(){
   try{
-    if(modo==='supabase'){
-      const {data,error} = await supabaseClient
-        .from('letrero_fichas')
-        .select('id,codigo,nombre,categoria,estado,updated_at')
-        .order('updated_at',{ascending:false});
-      if(error) throw error;
-      fichasResumen = data || [];
-    }else{
-      const locales = leerLocales();
-      fichasResumen = locales.map(f=>({
-        id:f.id,codigo:f.codigo,nombre:f.nombre,categoria:f.categoria,
-        estado:f.estado,updated_at:f.updated_at
-      })).sort((a,b)=>String(b.updated_at).localeCompare(String(a.updated_at)));
-    }
+    if(!supabaseClient) throw new Error('Supabase todavía no está disponible.');
+
+    const {data,error} = await supabaseClient
+      .from('letrero_fichas')
+      .select('id,codigo,nombre,categoria,estado,updated_at,operador_nombre,actualizado_por_nombre')
+      .order('updated_at',{ascending:false});
+
+    if(error) throw error;
+    fichasResumen = data || [];
     renderLista();
     if(!fichaActual) renderEditor();
   }catch(err){
     console.error(err);
-    toast('No se pudieron cargar las fichas.');
+    $('#textoConexion').textContent = 'Error de conexión';
+    $('#puntoConexion').classList.remove('online');
+    toast(err.message || 'No se pudieron cargar las fichas.');
   }
-}
-
-function leerLocales(){
-  try{return JSON.parse(localStorage.getItem(LOCAL_DB_KEY) || '[]')}catch{return []}
-}
-
-function escribirLocales(datos){
-  localStorage.setItem(LOCAL_DB_KEY,JSON.stringify(datos));
 }
 
 async function cargarFicha(id){
   try{
+    cambiarVista('base');
     if(cambiosPendientes && !confirm('Hay cambios sin guardar. ¿Deseas abrir otra ficha y descartarlos?')) return;
-    if(modo==='supabase'){
-      const {data,error} = await supabaseClient.rpc('obtener_ficha_letrero',{p_id:id});
-      if(error) throw error;
-      if(!data) throw new Error('Ficha no encontrada');
-      fichaActual = data;
-    }else{
-      fichaActual = leerLocales().find(f=>f.id===id);
-      if(!fichaActual) throw new Error('Ficha no encontrada');
-      fichaActual = JSON.parse(JSON.stringify(fichaActual));
-    }
+    if(!supabaseClient) throw new Error('No hay conexión con Supabase.');
+
+    const {data,error} = await supabaseClient.rpc('obtener_ficha_letrero',{p_id:id});
+    if(error) throw error;
+    if(!data) throw new Error('Ficha no encontrada');
+
+    fichaActual = data;
     fichaActual.variantes = fichaActual.variantes || [];
     fichaActual.variantes.forEach(v=>v._collapsed=false);
     cambiosPendientes = false;
-    $('#estadoGuardado').textContent = 'Ficha cargada';
+    $('#estadoGuardado').textContent = `Ficha cargada · ${fichaActual.actualizado_por_nombre || fichaActual.operador_nombre || 'Sin operador'}`;
     $('#estadoGuardado').className = 'guardado ok';
     renderEditor();
     renderLista();
@@ -1099,26 +1671,28 @@ async function guardarFicha(){
   boton.disabled = true;
   boton.textContent = 'Guardando...';
   try{
+    if(!supabaseClient) throw new Error('No hay conexión con Supabase.');
+    if(!operadorValido(operadorActual)) throw new Error('La sesión del operador no es válida.');
+
     const payload = limpiarParaGuardar(fichaActual);
-    payload.documento_txt = generarTxt(payload);
+    payload.operador_id = fichaActual.operador_id || operadorActual.id;
+    payload.operador_nombre = fichaActual.operador_nombre || operadorActual.nombre;
+    payload.actualizado_por_id = operadorActual.id;
+    payload.actualizado_por_nombre = operadorActual.nombre;
+    payload.documento_txt = generarTxt({...payload, actualizado_por_nombre: operadorActual.nombre});
     payload.estructura_json = JSON.parse(JSON.stringify(payload));
 
-    if(modo==='supabase'){
-      const {data,error} = await supabaseClient.rpc('guardar_ficha_letrero',{p_ficha:payload});
-      if(error) throw error;
-      fichaActual.id = data;
-    }else{
-      const locales = leerLocales();
-      if(!fichaActual.id) fichaActual.id = crypto.randomUUID();
-      const guardada = {...limpiarParaGuardar(fichaActual),updated_at:new Date().toISOString()};
-      const pos = locales.findIndex(f=>f.id===fichaActual.id);
-      if(pos>=0) locales[pos]=guardada; else locales.push(guardada);
-      escribirLocales(locales);
-    }
+    const {data,error} = await supabaseClient.rpc('guardar_ficha_letrero',{p_ficha:payload});
+    if(error) throw error;
+    fichaActual.id = data;
+    fichaActual.operador_id = payload.operador_id;
+    fichaActual.operador_nombre = payload.operador_nombre;
+    fichaActual.actualizado_por_id = operadorActual.id;
+    fichaActual.actualizado_por_nombre = operadorActual.nombre;
 
     localStorage.removeItem(DRAFT_KEY);
     cambiosPendientes = false;
-    $('#estadoGuardado').textContent = 'Guardado correctamente';
+    $('#estadoGuardado').textContent = `Guardado por ${operadorActual.nombre}`;
     $('#estadoGuardado').className = 'guardado ok';
     await cargarResumenes();
     renderEditor();
@@ -1143,12 +1717,9 @@ async function eliminarFicha(){
   }
   if(!confirm(`¿Eliminar definitivamente la ficha "${fichaActual.nombre}"?`)) return;
   try{
-    if(modo==='supabase'){
-      const {error} = await supabaseClient.from('letrero_fichas').delete().eq('id',fichaActual.id);
-      if(error) throw error;
-    }else{
-      escribirLocales(leerLocales().filter(f=>f.id!==fichaActual.id));
-    }
+    if(!supabaseClient) throw new Error('No hay conexión con Supabase.');
+    const {error} = await supabaseClient.from('letrero_fichas').delete().eq('id',fichaActual.id);
+    if(error) throw error;
     fichaActual = null;
     cambiosPendientes = false;
     await cargarResumenes();
@@ -1235,8 +1806,13 @@ document.addEventListener('click',async e=>{
 });
 
 function crearNueva(){
+  cambiarVista('base');
   if(cambiosPendientes && !confirm('Hay cambios sin guardar. ¿Deseas descartarlos?')) return;
   fichaActual=nuevaFicha();
+  fichaActual.operador_id = operadorActual.id;
+  fichaActual.operador_nombre = operadorActual.nombre;
+  fichaActual.actualizado_por_id = operadorActual.id;
+  fichaActual.actualizado_por_nombre = operadorActual.nombre;
   cambiosPendientes=true;
   renderEditor();
   renderLista();
@@ -1252,8 +1828,13 @@ $('#buscarFichas').oninput=renderLista;
 $('#btnMenu').onclick=()=>$('#sidebar').classList.toggle('abierta');
 
 $('#btnEjemplo').onclick=()=>{
+  cambiarVista('base');
   if(cambiosPendientes && !confirm('Esto reemplazará la ficha actual. ¿Continuar?')) return;
   fichaActual=ejemploFrontLit();
+  fichaActual.operador_id = operadorActual.id;
+  fichaActual.operador_nombre = operadorActual.nombre;
+  fichaActual.actualizado_por_id = operadorActual.id;
+  fichaActual.actualizado_por_nombre = operadorActual.nombre;
   cambiosPendientes=true;
   renderEditor();
   renderLista();
@@ -1266,6 +1847,10 @@ $('#btnDuplicar').onclick=()=>{
   copia.codigo=copia.codigo?`${copia.codigo}-COPIA`:'';
   copia.nombre=`${copia.nombre || 'Ficha'} - copia`;
   copia.estado='borrador';
+  copia.operador_id = operadorActual.id;
+  copia.operador_nombre = operadorActual.nombre;
+  copia.actualizado_por_id = operadorActual.id;
+  copia.actualizado_por_nombre = operadorActual.nombre;
   copia.variantes.forEach(v=>v._collapsed=false);
   fichaActual=copia;
   cambiosPendientes=true;
@@ -1284,56 +1869,36 @@ $('#btnCopiarTxt').onclick=async()=>{
   toast('TXT copiado.');
 };
 
-$('#btnConfig').onclick=()=>{
-  const c=getConfig();
-  $('#configUrl').value=c.url||'';
-  $('#configKey').value=c.key||'';
-  abrirModal('modalConfig');
+
+$('#btnModoBase').onclick=()=>cambiarVista('base');
+$('#btnModoAsesor').onclick=()=>cambiarVista('asesor');
+
+$('#asFamilia').onchange=configurarFamiliaAsesor;
+$('#asPared').onchange=()=>{actualizarFijacionesAsesor();actualizarAsesor()};
+['asVariante','asAncho','asAlto','asUbicacion','asIluminacion','asAcabado','asFijacion','asAcceso','asSistemaLed','asCantidadLed','asMargen','asDetalles']
+  .forEach(id=>{
+    const el=$('#'+id);
+    if(el){el.addEventListener('input',actualizarAsesor);el.addEventListener('change',actualizarAsesor)}
+  });
+
+$('#btnAsCopiar').onclick=async()=>{
+  await navigator.clipboard.writeText(resumenTextoAsesor());
+  toast('Resumen técnico copiado.');
+};
+$('#btnAsTxt').onclick=descargarAsesorTxt;
+$('#btnAsWhatsApp').onclick=()=>{
+  const texto=encodeURIComponent(resumenTextoAsesor());
+  window.open(`https://wa.me/?text=${texto}`,'_blank','noopener');
 };
 
-$('#btnGuardarConfig').onclick=()=>{
-  const url=$('#configUrl').value.trim();
-  const key=$('#configKey').value.trim();
-  if(!url || !key){alert('Completa la URL y la clave pública, o usa el botón Modo local.');return}
-  localStorage.setItem(CONFIG_KEY,JSON.stringify({url,key}));
-  location.reload();
+$('#btnVolver').onclick=()=>{
+  if(cambiosPendientes && !confirm('Hay cambios sin guardar. ¿Deseas salir de todas formas?')) return;
+  location.href='index.html';
 };
 
-$('#btnModoLocal').onclick=()=>{
-  modo='local';
-  supabaseClient=null;
-  cerrarModal('modalConfig');
-  actualizarConexion();
-  cargarResumenes();
-};
-
-$('#btnLogin').onclick=async()=>{
-  const email=$('#loginEmail').value.trim();
-  const password=$('#loginPassword').value;
-  $('#loginError').classList.add('oculto');
-  try{
-    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
-    if(error) throw error;
-    modo='supabase';
-    actualizarConexion(data.user);
-    cerrarModal('modalLogin');
-    await cargarResumenes();
-  }catch(err){
-    $('#loginError').textContent=err.message||'No fue posible iniciar sesión.';
-    $('#loginError').classList.remove('oculto');
-  }
-};
-
-$('#btnLoginLocal').onclick=()=>{
-  modo='local';
-  actualizarConexion();
-  cerrarModal('modalLogin');
-  cargarResumenes();
-};
-
-$('#btnSalir').onclick=async()=>{
-  if(supabaseClient) await supabaseClient.auth.signOut();
-  location.reload();
+$('#btnSalir').onclick=()=>{
+  if(cambiosPendientes && !confirm('Hay cambios sin guardar. ¿Deseas cambiar de operador?')) return;
+  location.href='login.html?logout=1';
 };
 
 window.addEventListener('beforeunload',e=>{
