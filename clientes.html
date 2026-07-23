@@ -4408,6 +4408,17 @@ function fechaCortaCliente(iso){
   return `${p[2]}/${p[1]}/${p[0]}`;
 }
 
+function fechaPagoVisiblePedido(pedido, item = null){
+  const pagado = numeroSeguro(item?.pagado ?? pedido?.pago_simple_pagado ?? pedido?.monto_abonado ?? 0);
+  if(pagado <= 0.009) return "";
+
+  return String(
+    pedido?.pago_simple_fecha ||
+    pedido?.pago_simple_actualizado_en ||
+    ""
+  ).slice(0,10);
+}
+
 function fechaHoraCortaCliente(iso){
   if(!iso) return "";
   const fecha = new Date(iso);
@@ -4533,12 +4544,17 @@ function pintarDeudaModal(cliente){
       const pedido = item.pedido;
       const clase = claseEstadoCuenta(item);
       const saldoTxt = item.aFavor > 0.009 ? `A favor $${money(item.aFavor)}` : `Saldo $${money(item.saldo)}`;
+      const fechaPago = fechaPagoVisiblePedido(pedido, item);
+      const textoFechaPago = fechaPago
+        ? `Pago: ${fechaCortaCliente(fechaPago)}`
+        : "Sin pago registrado";
+
       return `
         <div class="deuda-pedido-row estado-${clase}">
           <div class="deuda-pedido-id">#${escapeHtml(pedido.id)}</div>
           <div class="deuda-pedido-desc">
             <strong>${escapeHtml(pedido.descripcion || "Sin descripción")}</strong>
-            <small>${escapeHtml(pedido.fecha || "")} · ${escapeHtml(tipoTextoCuenta(item))} · ${escapeHtml(estadoLabelPagoSimple(item.estado))}</small>
+            <small>${escapeHtml(textoFechaPago)} · ${escapeHtml(tipoTextoCuenta(item))} · ${escapeHtml(estadoLabelPagoSimple(item.estado))}</small>
           </div>
           <div class="deuda-pedido-money pagado" title="Pagado">Pagado $${money(item.pagado)}</div>
           <div class="deuda-pedido-money ${item.saldo > 0.009 ? "debe" : "pagado"}" title="Saldo">${escapeHtml(saldoTxt)}</div>
