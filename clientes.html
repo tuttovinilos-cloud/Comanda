@@ -2674,7 +2674,7 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
           </div>
           <div class="field">
             <label>Tipo de pago</label>
-            <select id="deudaPagoMoneda" onchange="calcularPagoGlobalCliente()">
+            <select id="deudaPagoMoneda" onchange="actualizarMetodosPagoCliente(); calcularPagoGlobalCliente()">
               <option value="DIVISA">DIVISA</option>
               <option value="BCV">BCV</option>
             </select>
@@ -2683,13 +2683,6 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
             <label>Método de pago</label>
             <select id="deudaPagoMetodo">
               <option value="">Seleccionar...</option>
-              <option value="Efectivo USD">Efectivo USD</option>
-              <option value="Efectivo Bs">Efectivo Bs</option>
-              <option value="Pago móvil">Pago móvil</option>
-              <option value="Transferencia">Transferencia</option>
-              <option value="Zelle">Zelle</option>
-              <option value="Binance">Binance</option>
-              <option value="Otro">Otro</option>
             </select>
           </div>
           <div class="field">
@@ -4569,6 +4562,38 @@ function pintarDeudaModal(cliente){
   calcularPagoGlobalCliente();
 }
 
+function actualizarMetodosPagoCliente(){
+  const tipo = normalizarTipoCuentaCliente(
+    document.getElementById("deudaPagoMoneda")?.value || "DIVISA"
+  );
+  const select = document.getElementById("deudaPagoMetodo");
+  if(!select) return;
+
+  const valorAnterior = String(select.value || "");
+  const metodos = tipo === "BCV"
+    ? [
+        { value:"Pago móvil", label:"Pago móvil" },
+        { value:"Transferencia", label:"Transferencia" }
+      ]
+    : [
+        { value:"Efectivo USD", label:"Efectivo" },
+        { value:"Zelle", label:"Zelle" },
+        { value:"Binance", label:"Binance" },
+        { value:"Transferencia", label:"Transferencia" }
+      ];
+
+  select.innerHTML = `
+    <option value="">Seleccionar...</option>
+    ${metodos.map(m => `<option value="${escapeHtml(m.value)}">${escapeHtml(m.label)}</option>`).join("")}
+  `;
+
+  if(metodos.some(m => m.value === valorAnterior)){
+    select.value = valorAnterior;
+  }else{
+    select.value = "";
+  }
+}
+
 function abrirDeudaCliente(id, modoCobrar = false){
   const cliente = clientesDB.find(c => Number(c.id) === Number(id));
   if(!cliente){
@@ -4583,6 +4608,7 @@ function abrirDeudaCliente(id, modoCobrar = false){
 
   document.getElementById("deudaPagoMonto").value = "";
   document.getElementById("deudaPagoMoneda").value = hayDivisaPendiente ? "DIVISA" : (hayBcvPendiente ? "BCV" : "DIVISA");
+  actualizarMetodosPagoCliente();
   document.getElementById("deudaPagoMetodo").value = "";
   document.getElementById("deudaPagoReferencia").value = "";
   document.getElementById("deudaPagoNota").value = "";
@@ -5092,6 +5118,7 @@ function cerrarHistorialSiFondo(event){
 }
 
 document.addEventListener("DOMContentLoaded", function(){
+  actualizarMetodosPagoCliente();
   inicializarClientes();
 });
 </script>
