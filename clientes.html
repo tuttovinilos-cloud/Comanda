@@ -2258,6 +2258,93 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
   .clientes-pagination-controls{width:100%;display:grid;grid-template-columns:1fr auto 1fr}
 }
 
+/* CLIENTES v66 · entrada de dinero claramente visible */
+.money-entry{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  border:2px solid #22c55e;
+  border-radius:15px;
+  background:linear-gradient(135deg,#dcfce7,#f0fdf4);
+  padding:13px 14px;
+  box-shadow:0 7px 20px rgba(22,163,74,.10);
+}
+.money-entry-icon{
+  width:42px;
+  height:42px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#16a34a;
+  color:#fff;
+  font-size:20px;
+  font-weight:900;
+}
+.money-entry-main small{
+  display:block;
+  margin-bottom:3px;
+  color:#166534;
+  font-family:var(--head);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+}
+.money-entry-main strong{
+  display:block;
+  color:#166534;
+  font-family:var(--mono);
+  font-size:26px;
+  line-height:1;
+}
+.money-entry-main strong em{
+  font-family:var(--head);
+  font-size:10px;
+  font-style:normal;
+  letter-spacing:.5px;
+  vertical-align:middle;
+  background:#fff;
+  border:1px solid #86efac;
+  border-radius:999px;
+  padding:4px 7px;
+}
+.money-entry-detail{
+  text-align:right;
+  color:#166534;
+  font-size:11px;
+  line-height:1.45;
+}
+.money-entry-detail strong{
+  display:block;
+  font-family:var(--mono);
+  font-size:11px;
+}
+.money-entry-separator{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#64748b;
+  font-family:var(--head);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.6px;
+  text-transform:uppercase;
+}
+.money-entry-separator::before,
+.money-entry-separator::after{
+  content:"";
+  height:1px;
+  background:#d9deea;
+  flex:1;
+}
+@media(max-width:600px){
+  .money-entry{grid-template-columns:auto minmax(0,1fr)}
+  .money-entry-detail{grid-column:1 / -1;text-align:left;padding-left:54px}
+  .money-entry-main strong{font-size:22px}
+}
+
 /* CLIENTES v65 · conciliación detallada del pago */
 .payment-reconciliation{
   border:1px solid #c7d2fe;
@@ -4834,7 +4921,7 @@ async function verHistorialCliente(id){
   });
 
   const pagosGeneralesHtml = pagosGenerales.length ? `
-    <div class="deuda-cobro-title payment-section-title">Pagos recibidos y conciliación</div>
+    <div class="deuda-cobro-title payment-section-title">Entradas de dinero y conciliación</div>
     ${pagosGenerales.map(pg => {
       const aplicaciones = pagosPorGeneral.get(Number(pg.id)) || [];
       const recibido = numeroSeguro(pg.monto_recibido || 0);
@@ -4892,19 +4979,28 @@ async function verHistorialCliente(id){
 
       return `
         <div class="payment-receipt">
-          <div class="payment-receipt-top">
-            <div>
-              <small>Pago recibido</small>
-              <strong>$${money(recibido)} <em>${escapeHtml(tipo)}</em></strong>
+          <div class="money-entry">
+            <div class="money-entry-icon">+</div>
+            <div class="money-entry-main">
+              <small>Entrada de dinero</small>
+              <strong>+$${money(recibido)} <em>${escapeHtml(tipo)}</em></strong>
             </div>
-            <span>${escapeHtml(fechaHora)}</span>
+            <div class="money-entry-detail">
+              <strong>${escapeHtml(fechaHora)}</strong>
+              ${escapeHtml(pg.metodo_pago || "Método no indicado")}
+            </div>
           </div>
+
+          <div class="money-entry-separator">Distribución de esta entrada</div>
+
           <div class="payment-receipt-meta">
+            <span>Movimiento: <b>ENTRADA #${escapeHtml(pg.id || "")}</b></span>
             <span>Método: <b>${escapeHtml(pg.metodo_pago || "—")}</b></span>
             ${pg.referencia ? `<span>Referencia: <b>${escapeHtml(pg.referencia)}</b></span>` : ""}
             ${pg.registrado_por ? `<span>Registrado por: <b>${escapeHtml(pg.registrado_por)}</b></span>` : ""}
           </div>
           <div class="payment-receipt-summary">
+            <span>Entrada recibida <b>$${money(recibido)}</b></span>
             <span>Aplicado a deuda <b>$${money(aplicado)}</b></span>
             <span>A favor <b>$${money(favorPago)}</b></span>
             <span>Pedidos <b>${Number(pg.pedidos_afectados || aplicaciones.length || 0)}</b></span>
