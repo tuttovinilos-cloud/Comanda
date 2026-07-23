@@ -387,6 +387,8 @@
 'use strict';
 
 const CONFIG_KEY = 'estructura_supabase_config_v1';
+const SUPABASE_URL_PREDEFINIDA = 'https://ujfdsabypflseijatxba.supabase.co';
+const SUPABASE_KEY_PREDEFINIDA = 'sb_publishable_CiZo8xFKkaT7mdRrQUYxuQ_48F6Vx3w';
 const LOCAL_DB_KEY = 'estructura_fichas_local_v1';
 const DRAFT_KEY = 'estructura_borrador_v1';
 
@@ -968,7 +970,18 @@ function descargarTxt(){
 }
 
 function getConfig(){
-  try{return JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}')}catch{return {}}
+  try{
+    const guardada = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+    return {
+      url: guardada.url || SUPABASE_URL_PREDEFINIDA,
+      key: guardada.key || SUPABASE_KEY_PREDEFINIDA
+    };
+  }catch{
+    return {
+      url: SUPABASE_URL_PREDEFINIDA,
+      key: SUPABASE_KEY_PREDEFINIDA
+    };
+  }
 }
 
 async function inicializar(){
@@ -1287,8 +1300,11 @@ $('#btnGuardarConfig').onclick=()=>{
 };
 
 $('#btnModoLocal').onclick=()=>{
-  localStorage.removeItem(CONFIG_KEY);
-  location.reload();
+  modo='local';
+  supabaseClient=null;
+  cerrarModal('modalConfig');
+  actualizarConexion();
+  cargarResumenes();
 };
 
 $('#btnLogin').onclick=async()=>{
@@ -1328,4 +1344,3 @@ inicializar();
 </script>
 </body>
 </html>
-
