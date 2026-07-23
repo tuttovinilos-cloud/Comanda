@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v69 BCV predeterminado y condición separada sobre totales");
+console.log("COTIZADOR JS conectado v67 proyecto, moneda y condición BCV/DIVISA");
 
 const $ = (id) => document.getElementById(id);
 
@@ -253,15 +253,12 @@ function formatoPrecioUnitario(n){
 }
 
 function normalizarMonedaDocumento(moneda,tipoDocumento=""){
-  // La factura conserva siempre su formato original en bolívares.
-  if(esFacturaTipo(tipoDocumento)) return "BS";
-
   const raw = normalizar(moneda || "").replace(/\s+/g,"");
 
   if(["bs","ves","bolivar","bolivares"].includes(raw)) return "BS";
   if(["usd","$","dolar","dolares"].includes(raw)) return "USD";
 
-  return "USD";
+  return esFacturaTipo(tipoDocumento) ? "BS" : "USD";
 }
 
 function monedaActualCodigo(){
@@ -272,7 +269,7 @@ function monedaActualCodigo(){
 }
 
 function modalidadPrecioActual(){
-  const value = String($("modalidadPrecio")?.value || "BCV").toUpperCase();
+  const value = String($("modalidadPrecio")?.value || "DIVISA").toUpperCase();
   return value === "BCV" ? "BCV" : "DIVISA";
 }
 
@@ -283,7 +280,7 @@ function leyendaPrecioDocumento(moneda,modalidad){
     return "Precios expresados en bolívares.";
   }
 
-  return String(modalidad || "BCV").toUpperCase() === "BCV"
+  return String(modalidad || "DIVISA").toUpperCase() === "BCV"
     ? "Precios anclados a la tasa BCV del día."
     : "Precio en DIVISA.";
 }
@@ -293,7 +290,7 @@ function aplicarOpcionesPrecioUI(moneda,modalidad){
     moneda || $("monedaDocumento")?.value || "USD",
     $("tipoDocumento")?.value || data.tipo
   );
-  const modo = String(modalidad || $("modalidadPrecio")?.value || "BCV").toUpperCase() === "BCV"
+  const modo = String(modalidad || $("modalidadPrecio")?.value || "DIVISA").toUpperCase() === "BCV"
     ? "BCV"
     : "DIVISA";
 
@@ -354,7 +351,7 @@ function metaCotizacionDesdeRegistro(reg){
   return {
     proyecto:String(meta.proyecto || meta.descripcion_archivo || ""),
     moneda:normalizarMonedaDocumento(meta.moneda || "",reg?.tipo_documento || ""),
-    modalidad_precio:String(meta.modalidad_precio || "BCV").toUpperCase() === "BCV" ? "BCV" : "DIVISA"
+    modalidad_precio:String(meta.modalidad_precio || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA"
   };
 }
 
@@ -1043,7 +1040,7 @@ function deshacerUltimoCambio(){
   setValueDeshacer("direccion",f.direccion);
   setValueDeshacer("proyecto",f.proyecto || "");
   setValueDeshacer("monedaDocumento",normalizarMonedaDocumento(f.moneda || "",f.tipo));
-  setValueDeshacer("modalidadPrecio",f.modalidad_precio || "BCV");
+  setValueDeshacer("modalidadPrecio",f.modalidad_precio || "DIVISA");
   setValueDeshacer("mostrarMontoFinal",f.mostrar_monto_final !== false);
   setValueDeshacer("notas",f.notas);
   setValueDeshacer("ivaCheck",f.iva);
@@ -1846,7 +1843,8 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   drawPdfField(doc,142,Y_CLIENT_ROW_1,56,FIELD_H,"Teléfono",form.telefono || "",{ valueSize:6.4 });
   drawPdfField(doc,14,Y_CLIENT_ROW_2,67,FIELD_H,"Email",form.email || "",{ valueSize:6.3 });
   drawPdfField(doc,84,Y_CLIENT_ROW_2,114,FIELD_H,"Dirección",form.direccion || "",{ valueSize:5.2, maxLines:2, valueY:5.9 });
-  drawPdfField(doc,14,Y_CLIENT_ROW_3,184,FIELD_H,"Proyecto",form.proyecto || "—",{ valueBold:true, valueSize:6.4, maxLines:1 });
+  drawPdfField(doc,14,Y_CLIENT_ROW_3,123,FIELD_H,"Proyecto",form.proyecto || "—",{ valueBold:true, valueSize:6.4, maxLines:1 });
+  drawPdfField(doc,140,Y_CLIENT_ROW_3,58,FIELD_H,"Condición del precio",leyendaPrecioDocumento(form.moneda,form.modalidad_precio),{ valueBold:true, valueSize:4.9, maxLines:2, valueY:5.7 });
 
   let tableStartY = 103.5;
 
@@ -1994,11 +1992,6 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   const fullX = 14;
   const fullW = W - 28;
   const rightBoxH = Number(t.iva || 0) > 0 ? 33 : 25;
-  const conditionBoxH = 14;
-  const conditionGap = 5;
-  const mostrarMontoFinal = form.mostrar_monto_final !== false;
-  // La condición ocupa su propio cuadro ARRIBA y nunca depende de mostrar los montos.
-  const priceBlockH = conditionBoxH + (mostrarMontoFinal ? conditionGap + rightBoxH : 0);
 
   /*
     FIX v62:
@@ -2021,7 +2014,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     const maxNoteLines = 30;
     const noteLines = noteLinesAll.slice(0,maxNoteLines);
     const notesH = Math.min(105, Math.max(34, 14 + (noteLines.length * noteLineH) + 5));
-    const requiredH = notesH + 7 + priceBlockH;
+    const requiredH = notesH + 7 + rightBoxH;
 
     if(fy > H - requiredH - 26){
       doc.addPage();
@@ -2058,72 +2051,49 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
 
     totalsY = fy + notesH + 7;
   }else{
-    if(fy > H - priceBlockH - 26){
+    if(fy > H - rightBoxH - 26){
       doc.addPage();
       fy = 20;
     }
     totalsY = fy;
   }
 
-  // La condición del precio siempre se muestra, aunque se oculten los montos.
-  doc.setDrawColor(...line);
-  doc.setFillColor(248,249,255);
-  doc.roundedRect(rightX,totalsY,rightW,conditionBoxH,3,3,"FD");
-
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(4.8);
-  doc.setTextColor(...blueDark);
-  doc.text("CONDICIÓN DEL PRECIO",rightX+3,totalsY+4.1);
-
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(5.6);
-  doc.setTextColor(17,24,39);
-
-  const conditionLines = doc
-    .splitTextToSize(leyendaPrecioDocumento(form.moneda,form.modalidad_precio),rightW-6)
-    .slice(0,2);
-
-  doc.text(conditionLines,rightX+3,totalsY+8.7);
-
-  if(mostrarMontoFinal){
-    // Separación visible: el cuadro de condición no se monta sobre Sub Total / TOTAL.
-    const summaryY = totalsY + conditionBoxH + conditionGap;
-
+  if(form.mostrar_monto_final !== false){
     doc.setDrawColor(...line);
     doc.setFillColor(255,255,255);
-    doc.roundedRect(rightX,summaryY,rightW,rightBoxH,3,3,"FD");
+    doc.roundedRect(rightX,totalsY,rightW,rightBoxH,3,3,"FD");
 
-    let rowY = summaryY;
+    let rowY = totalsY;
 
-    const drawSummaryRow = (label,value,fill,txtColor,bold=false,size=9.2) => {
-      doc.setFillColor(...fill);
-      doc.rect(rightX,rowY,rightW,8,"F");
+  const drawSummaryRow = (label,value,fill,txtColor,bold=false,size=9.2) => {
+    doc.setFillColor(...fill);
+    doc.rect(rightX,rowY,rightW,8,"F");
 
-      doc.setDrawColor(...line);
-      doc.rect(rightX,rowY,rightW,8);
+    doc.setDrawColor(...line);
+    doc.rect(rightX,rowY,rightW,8);
 
-      doc.setFont("helvetica",bold ? "bold" : "normal");
-      doc.setFontSize(size);
-      doc.setTextColor(...txtColor);
+    doc.setFont("helvetica",bold ? "bold" : "normal");
+    doc.setFontSize(size);
+    doc.setTextColor(...txtColor);
 
-      doc.text(label,rightX+3,rowY+5.4);
-      doc.text(value,rightX+rightW-3,rowY+5.4,{ align:"right" });
+    doc.text(label,rightX+3,rowY+5.4);
+    doc.text(value,rightX+rightW-3,rowY+5.4,{ align:"right" });
 
-      rowY += 8;
-    };
+    rowY += 8;
+  };
 
-    drawSummaryRow("Sub Total",currency(t.subtotal,form.moneda),[255,255,255],[17,24,39],true);
+  drawSummaryRow("Sub Total",currency(t.subtotal,form.moneda),[255,255,255],[17,24,39],true);
 
-    if(Number(t.iva || 0) > 0){
-      drawSummaryRow(getIvaLabel(form.tipo),currency(t.iva,form.moneda),[255,255,255],[17,24,39],true);
-    }
+  if(Number(t.iva || 0) > 0){
+    drawSummaryRow(getIvaLabel(form.tipo),currency(t.iva,form.moneda),[255,255,255],[17,24,39],true);
+  }
 
-    doc.setFillColor(...blue);
-    doc.roundedRect(rightX,rowY,rightW,10,0,0,"F");
+  doc.setFillColor(...blue);
+  doc.roundedRect(rightX,rowY,rightW,10,0,0,"F");
 
-    doc.setFont("helvetica","bold");
-    doc.setFontSize(12);
-    doc.setTextColor(255,255,255);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(12);
+  doc.setTextColor(255,255,255);
 
     doc.text("TOTAL",rightX+3,rowY+6.7);
     doc.text(currency(t.total,form.moneda),rightX+rightW-3,rowY+6.7,{ align:"right" });
@@ -2218,7 +2188,7 @@ async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null,snaps
       iva_aplicado:form.iva,
       proyecto:form.proyecto || "",
       moneda:normalizarMonedaDocumento(form.moneda,form.tipo),
-      modalidad_precio:form.modalidad_precio || "BCV",
+      modalidad_precio:form.modalidad_precio || "DIVISA",
       mostrar_monto_final:form.mostrar_monto_final !== false
     },
     notas: form.notas,
@@ -3001,7 +2971,7 @@ function cargarCotizacionEnFormulario(){
   $("direccion").value = f.direccion || "";
   $("proyecto").value = f.proyecto || "";
   $("monedaDocumento").value = normalizarMonedaDocumento(f.moneda || "",f.tipo);
-  $("modalidadPrecio").value = f.modalidad_precio || "BCV";
+  $("modalidadPrecio").value = f.modalidad_precio || "DIVISA";
   $("mostrarMontoFinal").checked = f.mostrar_monto_final !== false;
   $("notas").value = f.notas || "";
   ajustarNotasAuto();
@@ -3038,8 +3008,8 @@ async function nuevaCotizacionLimpia(){
   $("direccion").value = "";
   $("proyecto").value = "";
   $("monedaDocumento").value = "USD";
-  $("modalidadPrecio").value = "BCV";
-  aplicarOpcionesPrecioUI("USD","BCV");
+  $("modalidadPrecio").value = "DIVISA";
+  aplicarOpcionesPrecioUI("USD","DIVISA");
   $("mostrarMontoFinal").checked = true;
   $("notas").value = "";
   ajustarNotasAuto();
@@ -3165,18 +3135,8 @@ function bindEvents(){
     const monedaBtn = e.target.closest("[data-moneda]");
 
     if(monedaBtn){
-      const tipoActual = $("tipoDocumento")?.value || data.tipo;
-
-      if(esFacturaTipo(tipoActual)){
-        if($("monedaDocumento")) $("monedaDocumento").value = "BS";
-        aplicarOpcionesPrecioUI("BS",modalidadPrecioActual());
-        render();
-        showToast("Las facturas se mantienen en Bs.","warn");
-        return;
-      }
-
       guardarEstadoDeshacer();
-      const moneda = normalizarMonedaDocumento(monedaBtn.dataset.moneda,tipoActual);
+      const moneda = normalizarMonedaDocumento(monedaBtn.dataset.moneda,$("tipoDocumento")?.value || data.tipo);
       if($("monedaDocumento")) $("monedaDocumento").value = moneda;
       aplicarOpcionesPrecioUI(moneda,modalidadPrecioActual());
       render();
@@ -3187,7 +3147,7 @@ function bindEvents(){
 
     if(modalidadBtn){
       guardarEstadoDeshacer();
-      const modalidad = String(modalidadBtn.dataset.modalidadPrecio || "BCV").toUpperCase() === "BCV" ? "BCV" : "DIVISA";
+      const modalidad = String(modalidadBtn.dataset.modalidadPrecio || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA";
       if($("modalidadPrecio")) $("modalidadPrecio").value = modalidad;
       aplicarOpcionesPrecioUI(monedaActualCodigo(),modalidad);
       render();
