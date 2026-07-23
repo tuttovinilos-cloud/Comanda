@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v66 descripción de archivo y monto final opcional");
+console.log("COTIZADOR JS conectado v67 proyecto, moneda y condición BCV/DIVISA");
 
 const $ = (id) => document.getElementById(id);
 
@@ -252,26 +252,107 @@ function formatoPrecioUnitario(n){
   return formatoCampoNumero(n,PRECIO_UNIT_DECIMALES_MAX,false);
 }
 
-function monedaPrecioUnitario(n,tipoDocumento=""){
-  return esFacturaTipo(tipoDocumento)
+function normalizarMonedaDocumento(moneda,tipoDocumento=""){
+  const raw = normalizar(moneda || "").replace(/\s+/g,"");
+
+  if(["bs","ves","bolivar","bolivares"].includes(raw)) return "BS";
+  if(["usd","$","dolar","dolares"].includes(raw)) return "USD";
+
+  return esFacturaTipo(tipoDocumento) ? "BS" : "USD";
+}
+
+function monedaActualCodigo(){
+  return normalizarMonedaDocumento(
+    $("monedaDocumento")?.value || "",
+    $("tipoDocumento")?.value || data.tipo
+  );
+}
+
+function modalidadPrecioActual(){
+  const value = String($("modalidadPrecio")?.value || "DIVISA").toUpperCase();
+  return value === "BCV" ? "BCV" : "DIVISA";
+}
+
+function leyendaPrecioDocumento(moneda,modalidad){
+  const codigo = normalizarMonedaDocumento(moneda);
+
+  if(codigo === "BS"){
+    return "Precios expresados en bolívares.";
+  }
+
+  return String(modalidad || "DIVISA").toUpperCase() === "BCV"
+    ? "Precios anclados a la tasa BCV del día."
+    : "Precio en DIVISA.";
+}
+
+function aplicarOpcionesPrecioUI(moneda,modalidad){
+  const codigo = normalizarMonedaDocumento(
+    moneda || $("monedaDocumento")?.value || "USD",
+    $("tipoDocumento")?.value || data.tipo
+  );
+  const modo = String(modalidad || $("modalidadPrecio")?.value || "DIVISA").toUpperCase() === "BCV"
+    ? "BCV"
+    : "DIVISA";
+
+  if($("monedaDocumento")) $("monedaDocumento").value = codigo;
+  if($("modalidadPrecio")) $("modalidadPrecio").value = modo;
+
+  document.querySelectorAll("[data-moneda]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.moneda === codigo);
+  });
+
+  document.querySelectorAll("[data-modalidad-precio]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.modalidadPrecio === modo);
+  });
+
+  const modalidadField = $("modalidadPrecioField");
+  if(modalidadField){
+    modalidadField.classList.toggle("is-hidden", codigo === "BS");
+  }
+
+  const leyenda = $("leyendaPrecio");
+  if(leyenda){
+    leyenda.textContent = leyendaPrecioDocumento(codigo,modo);
+  }
+}
+
+function monedaPrecioUnitario(n,tipoDocumento="",moneda=""){
+  const codigo = normalizarMonedaDocumento(moneda,tipoDocumento);
+  return codigo === "BS"
     ? "BS " + formatoMilesFlexible(n,PRECIO_UNIT_DECIMALES_MAX)
     : "$" + formatoMilesFlexible(n,PRECIO_UNIT_DECIMALES_MAX);
 }
 
-function currency(n){ return "$" + formatoMiles(n,2); }
+function currency(n,moneda="USD"){
+  return normalizarMonedaDocumento(moneda) === "BS"
+    ? "BS " + formatoMiles(n,2)
+    : "$" + formatoMiles(n,2);
+}
 
-function monedaDocumento(n,tipoDocumento="",decimales=2){
-  return esFacturaTipo(tipoDocumento)
+function monedaDocumento(n,tipoDocumento="",decimales=2,moneda=""){
+  const codigo = normalizarMonedaDocumento(moneda,tipoDocumento);
+  return codigo === "BS"
     ? "BS " + formatoMiles(n,decimales)
     : "$" + formatoMiles(n,decimales);
 }
 
-function etiquetaMonedaDocumento(tipoDocumento=""){
-  return esFacturaTipo(tipoDocumento) ? "BS" : "$";
+function etiquetaMonedaDocumento(tipoDocumento="",moneda=""){
+  return normalizarMonedaDocumento(moneda,tipoDocumento) === "BS" ? "BS" : "$";
 }
 
-function currencyDocumento(n,tipoDocumento=""){
-  return monedaDocumento(n,tipoDocumento,2);
+function currencyDocumento(n,tipoDocumento="",moneda=""){
+  return monedaDocumento(n,tipoDocumento,2,moneda);
+}
+
+function metaCotizacionDesdeRegistro(reg){
+  const raw = reg?.items;
+  const meta = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+
+  return {
+    proyecto:String(meta.proyecto || meta.descripcion_archivo || ""),
+    moneda:normalizarMonedaDocumento(meta.moneda || "",reg?.tipo_documento || ""),
+    modalidad_precio:String(meta.modalidad_precio || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA"
+  };
 }
 
 function cleanText(v){ return String(v || "").trim(); }
@@ -533,8 +614,8 @@ function actualizarEtiquetaIva(tipo){
   if(resumen) resumen.textContent = label;
 }
 
-function actualizarEtiquetasMonedaItems(tipo){
-  const moneda = etiquetaMonedaDocumento(tipo || $("tipoDocumento")?.value || data.tipo);
+function actualizarEtiquetasMonedaItems(tipo,monedaCodigo=monedaActualCodigo()){
+  const moneda = etiquetaMonedaDocumento(tipo || $("tipoDocumento")?.value || data.tipo,monedaCodigo);
 
   const precio = $("thPrecioItem");
   const total = $("thTotalItem");
@@ -561,10 +642,13 @@ function updateTotals(){
   const tipo = $("tipoDocumento")?.value || data.tipo;
   const t = calcularTotales(data.items, $("ivaCheck")?.checked, tipo);
 
-  actualizarEtiquetaIva(tipo);
-  actualizarEtiquetasMonedaItems(tipo);
+  const moneda = monedaActualCodigo();
 
-  const formato = n => monedaDocumento(n,tipo,2);
+  actualizarEtiquetaIva(tipo);
+  actualizarEtiquetasMonedaItems(tipo,moneda);
+  aplicarOpcionesPrecioUI(moneda,modalidadPrecioActual());
+
+  const formato = n => monedaDocumento(n,tipo,2,moneda);
 
   const subtotalEl = $("subtotal");
   const ivaEl = $("iva");
@@ -580,8 +664,9 @@ function updateItemVisualTotal(index){
   if(!item) return;
 
   const tipo = $("tipoDocumento")?.value || data.tipo;
+  const moneda = monedaActualCodigo();
   const total = itemTotal(item);
-  const totalTxt = monedaDocumento(total,tipo,2);
+  const totalTxt = monedaDocumento(total,tipo,2,moneda);
 
   document.querySelectorAll(`[data-total-index="${index}"]`).forEach(el => {
     if(el.tagName === "INPUT"){
@@ -849,7 +934,9 @@ function getForm(){
     telefono: cleanText($("telefono").value),
     email: cleanText($("email").value),
     direccion: cleanText($("direccion").value),
-    descripcion_archivo: cleanText($("descripcionArchivo")?.value || ""),
+    proyecto: cleanText($("proyecto")?.value || ""),
+    moneda: monedaActualCodigo(),
+    modalidad_precio: modalidadPrecioActual(),
     mostrar_monto_final: $("mostrarMontoFinal") ? $("mostrarMontoFinal").checked : true,
     notas: cleanText($("notas").value),
     iva: $("ivaCheck").checked,
@@ -870,7 +957,9 @@ function crearEstadoActualDeshacer(){
       telefono: $("telefono")?.value || "",
       email: $("email")?.value || "",
       direccion: $("direccion")?.value || "",
-      descripcion_archivo: $("descripcionArchivo")?.value || "",
+      proyecto: $("proyecto")?.value || "",
+      moneda: monedaActualCodigo(),
+      modalidad_precio: modalidadPrecioActual(),
       mostrar_monto_final: $("mostrarMontoFinal") ? $("mostrarMontoFinal").checked : true,
       notas: $("notas")?.value || "",
       iva: !!$("ivaCheck")?.checked,
@@ -949,7 +1038,9 @@ function deshacerUltimoCambio(){
   setValueDeshacer("telefono",f.telefono);
   setValueDeshacer("email",f.email);
   setValueDeshacer("direccion",f.direccion);
-  setValueDeshacer("descripcionArchivo",f.descripcion_archivo || "");
+  setValueDeshacer("proyecto",f.proyecto || "");
+  setValueDeshacer("monedaDocumento",normalizarMonedaDocumento(f.moneda || "",f.tipo));
+  setValueDeshacer("modalidadPrecio",f.modalidad_precio || "DIVISA");
   setValueDeshacer("mostrarMontoFinal",f.mostrar_monto_final !== false);
   setValueDeshacer("notas",f.notas);
   setValueDeshacer("ivaCheck",f.iva);
@@ -964,6 +1055,7 @@ function deshacerUltimoCambio(){
 
   aplicarModoNumeroDocumento(data.tipo,false);
   actualizarEtiquetaIva(data.tipo);
+  aplicarOpcionesPrecioUI(f.moneda,f.modalidad_precio);
   render();
   revisarClienteActual();
 
@@ -1008,8 +1100,11 @@ function render(){
   if(banner) banner.textContent = data.tipo;
   if(creditName) creditName.textContent = data.responsable;
 
+  const monedaCodigo = monedaActualCodigo();
+
   actualizarEtiquetaIva(data.tipo);
-  actualizarEtiquetasMonedaItems(data.tipo);
+  actualizarEtiquetasMonedaItems(data.tipo,monedaCodigo);
+  aplicarOpcionesPrecioUI(monedaCodigo,modalidadPrecioActual());
   aplicarModoNumeroDocumento(data.tipo, false);
 
   tbody.innerHTML = "";
@@ -1111,8 +1206,8 @@ function render(){
 
     const number = visibleNumber++;
     const total = itemTotal(item);
-    const monedaItem = etiquetaMonedaDocumento(data.tipo);
-    const totalItemTexto = monedaDocumento(total,data.tipo,2);
+    const monedaItem = etiquetaMonedaDocumento(data.tipo,monedaCodigo);
+    const totalItemTexto = monedaDocumento(total,data.tipo,2,monedaCodigo);
 
     tbody.insertAdjacentHTML("beforeend", `
       <tr>
@@ -1505,17 +1600,27 @@ function drawFacturaReferenciaHeader(doc,snapshot){
 
   drawTextFactura(doc,"RIF.:",24,90,{ size:10.4 });
   drawTextFactura(doc,form.rif || "",38,90,{ size:10.4 });
+
+  drawTextFactura(doc,"PROYECTO:",24,97,{ size:9.4 });
+  const proyectoLines = doc.splitTextToSize(String(form.proyecto || "—"), 125).slice(0,1);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(facturaFontSize(9.4));
+  doc.text(proyectoLines,49,97);
+
+  drawTextFactura(doc,"CONDICIÓN:",24,103,{ size:8.8 });
+  drawTextFactura(doc,leyendaPrecioDocumento(form.moneda,form.modalidad_precio),49,103,{ size:8.8,bold:false });
 }
 
-function drawFacturaReferenciaTable(doc,items){
+function drawFacturaReferenciaTable(doc,items,form={}){
   const left = 18;
   const x1 = 37;
   const x2 = 108;
   const x3 = 127;
   const x4 = 154;
   const right = 184;
-  const y = 96;
+  const y = 111;
   const headerH = 9;
+  const monedaLabel = etiquetaMonedaDocumento(form.tipo,form.moneda);
   const rowH = 16;
 
   doc.setDrawColor(0,0,0);
@@ -1529,8 +1634,8 @@ function drawFacturaReferenciaTable(doc,items){
   drawTextFactura(doc,"#",(left+x1)/2,y+6.1,{ size:10.4, align:"center" });
   drawTextFactura(doc,"DESCRIPCION",(x1+x2)/2,y+6.1,{ size:10.4, align:"center" });
   drawTextFactura(doc,"CANT (m)",(x2+x3)/2,y+6.1,{ size:10.4, align:"center" });
-  drawTextFactura(doc,"P.U BS",(x3+x4)/2,y+6.1,{ size:10.4, align:"center" });
-  drawTextFactura(doc,"SUB TOTAL BS",(x4+right)/2,y+6.1,{ size:10.4, align:"center" });
+  drawTextFactura(doc,`P.U ${monedaLabel}`,(x3+x4)/2,y+6.1,{ size:10.4, align:"center" });
+  drawTextFactura(doc,`SUB TOTAL ${monedaLabel}`,(x4+right)/2,y+6.1,{ size:10.4, align:"center" });
 
   const visibles = (items || []).filter(it => it.kind === "item").slice(0,6);
   const filas = Math.max(1,visibles.length);
@@ -1556,8 +1661,8 @@ function drawFacturaReferenciaTable(doc,items){
     doc.setFontSize(facturaFontSize(10.4));
     doc.text(descLines,(x1+x2)/2,descY,{ align:"center" });
     drawTextFactura(doc,cantidadFactura(qty),(x2+x3)/2,rowY+9.4,{ size:10.4, align:"center" });
-    drawTextFactura(doc,"BS " + moneyFacturaPrecio(price),(x3+x4)/2,rowY+9.4,{ size:9.2, align:"center" });
-    drawTextFactura(doc,"BS " + moneyFactura(total,2),right-1,rowY+9.4,{ size:9.2, align:"right" });
+    drawTextFactura(doc,monedaPrecioUnitario(price,form.tipo,form.moneda),(x3+x4)/2,rowY+9.4,{ size:9.2, align:"center" });
+    drawTextFactura(doc,monedaDocumento(total,form.tipo,2,form.moneda),right-1,rowY+9.4,{ size:9.2, align:"right" });
   }
 
   doc.setLineWidth(.2);
@@ -1573,14 +1678,15 @@ function drawFacturaReferenciaTotals(doc,snapshot){
 
   const labelX = 154;
   const valueX = 183;
+  const monedaLabel = etiquetaMonedaDocumento(form.tipo,form.moneda);
 
-  drawTextFactura(doc,"SUB-TOTAL BS",labelX,225,{ size:10.4, align:"right" });
+  drawTextFactura(doc,`SUB-TOTAL ${monedaLabel}`,labelX,225,{ size:10.4, align:"right" });
   drawTextFactura(doc,moneyFactura(subtotal,2),valueX,225,{ size:10.4, align:"right" });
 
   drawTextFactura(doc,"IVA 16%",labelX,233,{ size:10.4, align:"right" });
   drawTextFactura(doc,moneyFactura(iva,2),valueX,233,{ size:10.4, align:"right" });
 
-  drawTextFactura(doc,"TOTAL A PAGAR BS",labelX,241,{ size:10.4, align:"right" });
+  drawTextFactura(doc,`TOTAL A PAGAR ${monedaLabel}`,labelX,241,{ size:10.4, align:"right" });
   drawTextFactura(doc,moneyFactura(totalPagar,2),valueX,241,{ size:10.4, align:"right" });
 }
 
@@ -1593,7 +1699,7 @@ async function crearDocumentoFacturaPDF(snapshot=crearSnapshotActual()){
   const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
 
   drawFacturaReferenciaHeader(doc,snapshot);
-  drawFacturaReferenciaTable(doc,snapshot.items || []);
+  drawFacturaReferenciaTable(doc,snapshot.items || [],snapshot.form || {});
 
   if(snapshot.form?.mostrar_monto_final !== false){
     drawFacturaReferenciaTotals(doc,snapshot);
@@ -1691,6 +1797,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   const Y_CLIENT_LINE = 65;
   const Y_CLIENT_ROW_1 = 67.5;
   const Y_CLIENT_ROW_2 = 78;
+  const Y_CLIENT_ROW_3 = 88.5;
 
   doc.setFillColor(...blue);
   doc.rect(0,0,W,30,"F");
@@ -1736,11 +1843,13 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   drawPdfField(doc,142,Y_CLIENT_ROW_1,56,FIELD_H,"Teléfono",form.telefono || "",{ valueSize:6.4 });
   drawPdfField(doc,14,Y_CLIENT_ROW_2,67,FIELD_H,"Email",form.email || "",{ valueSize:6.3 });
   drawPdfField(doc,84,Y_CLIENT_ROW_2,114,FIELD_H,"Dirección",form.direccion || "",{ valueSize:5.2, maxLines:2, valueY:5.9 });
+  drawPdfField(doc,14,Y_CLIENT_ROW_3,123,FIELD_H,"Proyecto",form.proyecto || "—",{ valueBold:true, valueSize:6.4, maxLines:1 });
+  drawPdfField(doc,140,Y_CLIENT_ROW_3,58,FIELD_H,"Condición del precio",leyendaPrecioDocumento(form.moneda,form.modalidad_precio),{ valueBold:true, valueSize:4.9, maxLines:2, valueY:5.7 });
 
-  let tableStartY = 93;
+  let tableStartY = 103.5;
 
   if(esPropuestaEconomicaTipo(form.tipo)){
-    tableStartY = drawPropuestaEconomicaIntro(doc,14,91,W-28) + 6;
+    tableStartY = drawPropuestaEconomicaIntro(doc,14,101.5,W-28) + 6;
   }
 
   let count = 1;
@@ -1805,14 +1914,14 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
       String(count++),
       item.desc || "",
       formatoCampoNumero(item.qty,2),
-      monedaPrecioUnitario(item.price,form.tipo),
-      monedaDocumento(total,form.tipo,2)
+      monedaPrecioUnitario(item.price,form.tipo,form.moneda),
+      monedaDocumento(total,form.tipo,2,form.moneda)
     ]);
   });
 
   doc.autoTable({
     startY:tableStartY,
-    head:[["#","DESCRIPCIÓN DEL PRODUCTO / SERVICIO","CANT.","P. UNIT ($)","TOTAL ($)"]],
+    head:[["#","DESCRIPCIÓN DEL PRODUCTO / SERVICIO","CANT.",`P. UNIT (${etiquetaMonedaDocumento(form.tipo,form.moneda)})`,`TOTAL (${etiquetaMonedaDocumento(form.tipo,form.moneda)})`]],
     body,
     theme:"grid",
     margin:{ left:14, right:14, bottom:26 },
@@ -1973,10 +2082,10 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     rowY += 8;
   };
 
-  drawSummaryRow("Sub Total",currency(t.subtotal),[255,255,255],[17,24,39],true);
+  drawSummaryRow("Sub Total",currency(t.subtotal,form.moneda),[255,255,255],[17,24,39],true);
 
   if(Number(t.iva || 0) > 0){
-    drawSummaryRow(getIvaLabel(form.tipo),currency(t.iva),[255,255,255],[17,24,39],true);
+    drawSummaryRow(getIvaLabel(form.tipo),currency(t.iva,form.moneda),[255,255,255],[17,24,39],true);
   }
 
   doc.setFillColor(...blue);
@@ -1987,7 +2096,7 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   doc.setTextColor(255,255,255);
 
     doc.text("TOTAL",rightX+3,rowY+6.7);
-    doc.text(currency(t.total),rightX+rightW-3,rowY+6.7,{ align:"right" });
+    doc.text(currency(t.total,form.moneda),rightX+rightW-3,rowY+6.7,{ align:"right" });
   }
 
   drawPdfHeaderFooter(doc,footer,form);
@@ -2011,10 +2120,10 @@ function nombreArchivoPDF(snapshot){
   const tipo = limpiarParteNombreArchivo(form.tipo || "Cotizacion",35) || "Cotizacion";
   const numero = limpiarParteNombreArchivo(form.numero || "sin_numero",35) || "sin_numero";
   const cliente = limpiarParteNombreArchivo(form.cliente || "cliente",60) || "cliente";
-  const descripcion = limpiarParteNombreArchivo(form.descripcion_archivo || "",70);
+  const proyecto = limpiarParteNombreArchivo(form.proyecto || "",70);
 
   const partes = [tipo,"Tuttovinilos",numero,cliente];
-  if(descripcion) partes.push(descripcion);
+  if(proyecto) partes.push(proyecto);
 
   return `${partes.join("_")}.pdf`;
 }
@@ -2072,12 +2181,14 @@ async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null,snaps
     responsable: form.responsable,
     vence: form.vence || null,
     items:{
-      version:6,
+      version:7,
       modo:"texto_json_con_pdf_opcional",
       rows:snapshot.items,
       footer:snapshot.footer,
       iva_aplicado:form.iva,
-      descripcion_archivo:form.descripcion_archivo || "",
+      proyecto:form.proyecto || "",
+      moneda:normalizarMonedaDocumento(form.moneda,form.tipo),
+      modalidad_precio:form.modalidad_precio || "DIVISA",
       mostrar_monto_final:form.mostrar_monto_final !== false
     },
     notas: form.notas,
@@ -2342,10 +2453,10 @@ async function createPDF(){
 
 function normalizarSnapshotDesdeRegistro(reg){
   const raw = reg?.items;
+  const meta = metaCotizacionDesdeRegistro(reg);
 
   let rows = [];
   let footer = null;
-  let descripcionArchivo = "";
   let mostrarMontoFinal = true;
   let ivaAplicado = Number(reg?.iva || 0) > 0;
 
@@ -2354,7 +2465,6 @@ function normalizarSnapshotDesdeRegistro(reg){
   }else if(raw && typeof raw === "object"){
     rows = Array.isArray(raw.rows) ? raw.rows : (Array.isArray(raw.items) ? raw.items : []);
     footer = raw.footer || null;
-    descripcionArchivo = String(raw.descripcion_archivo || "");
     mostrarMontoFinal = raw.mostrar_monto_final !== false;
 
     if(typeof raw.iva_aplicado === "boolean"){
@@ -2373,7 +2483,9 @@ function normalizarSnapshotDesdeRegistro(reg){
     telefono: reg?.telefono || "",
     email: reg?.correo || "",
     direccion: reg?.direccion || "",
-    descripcion_archivo: descripcionArchivo,
+    proyecto: meta.proyecto,
+    moneda: meta.moneda,
+    modalidad_precio: meta.modalidad_precio,
     mostrar_monto_final: mostrarMontoFinal,
     notas: reg?.notas || "",
     iva: ivaAplicado,
@@ -2404,7 +2516,7 @@ async function cargarCotizacionesPrevias(){
   const body = $("cotizacionesBody");
 
   if(body){
-    body.innerHTML = `<tr><td colspan="8" class="empty">Cargando...</td></tr>`;
+    body.innerHTML = `<tr><td colspan="9" class="empty">Cargando...</td></tr>`;
   }
 
   const selects = [
@@ -2439,7 +2551,7 @@ async function cargarCotizacionesPrevias(){
     console.error("Error cargando cotizaciones:", res.error);
 
     if(body){
-      body.innerHTML = `<tr><td colspan="8" class="empty">Error cargando cotizaciones: ${html(res.error.message || "")}</td></tr>`;
+      body.innerHTML = `<tr><td colspan="9" class="empty">Error cargando cotizaciones: ${html(res.error.message || "")}</td></tr>`;
     }
 
     showToast("Error cargando cotizaciones","err");
@@ -2466,14 +2578,18 @@ function renderCotizacionesPrevias(){
 
   if(q){
     lista = lista.filter(c => {
+      const meta = metaCotizacionDesdeRegistro(c);
       const texto = [
         c.fecha,
         c.numero,
         c.cliente,
+        meta.proyecto,
         c.responsable,
         c.telefono,
         c.total,
         c.tipo_documento,
+        meta.moneda,
+        meta.modalidad_precio,
         estadoTextoCotizacion(c)
       ].join(" ");
 
@@ -2494,11 +2610,12 @@ function renderCotizacionesPrevias(){
   }
 
   if(!lista.length){
-    body.innerHTML = `<tr><td colspan="8" class="empty">Sin cotizaciones</td></tr>`;
+    body.innerHTML = `<tr><td colspan="9" class="empty">Sin cotizaciones</td></tr>`;
     return;
   }
 
   body.innerHTML = lista.map(c => {
+    const meta = metaCotizacionDesdeRegistro(c);
     const aprobadoMeta = c.aprobado
       ? `<span class="approved-meta">${html(c.aprobado_por || "")} ${c.aprobado_at ? "· " + html(String(c.aprobado_at).slice(0,10)) : ""}</span>`
       : "";
@@ -2526,13 +2643,14 @@ function renderCotizacionesPrevias(){
         <td>${html(c.fecha || "")}</td>
         <td><b>${html(c.numero || "")}</b></td>
         <td>${html(c.cliente || "")}</td>
+        <td><b>${html(meta.proyecto || "—")}</b></td>
 
         <td>
           <span class="badge-responsable">${html(c.responsable || "Sin responsable")}</span>
         </td>
 
         <td>${html(c.telefono || "")}</td>
-        <td><b>${currencyDocumento(c.total || 0,c.tipo_documento)}</b></td>
+        <td><b>${currencyDocumento(c.total || 0,c.tipo_documento,meta.moneda)}</b></td>
 
         <td class="center">
           <button class="mini-btn dark" type="button" data-ver-cot="${Number(c.id)}">Abrir</button>
@@ -2757,7 +2875,7 @@ function abrirDetalleCotizacion(id){
     return `
       <div class="detail-item">
         <b>${numero}. ${html(it.desc || "")}</b><br>
-        Cant: ${html(formatoCampoNumero(it.qty || 0,2))} · P.Unit: ${monedaPrecioUnitario(it.price || 0,form.tipo)} · Total: ${currencyDocumento(itemTotal(it),form.tipo)}
+        Cant: ${html(formatoCampoNumero(it.qty || 0,2))} · P.Unit: ${monedaPrecioUnitario(it.price || 0,form.tipo,form.moneda)} · Total: ${currencyDocumento(itemTotal(it),form.tipo,form.moneda)}
       </div>
     `;
   }).join("");
@@ -2774,7 +2892,9 @@ function abrirDetalleCotizacion(id){
       <div class="detail-item">
         <b>Fecha:</b> ${html(form.fecha || "")} · <b>Vence:</b> ${html(form.vence || "")}<br>
         <b>Responsable:</b> ${html(form.responsable || "")}<br>
-        <b>Descripción corta:</b> ${html(form.descripcion_archivo || "—")}<br>
+        <b>Proyecto:</b> ${html(form.proyecto || "—")}<br>
+        <b>Moneda:</b> ${html(etiquetaMonedaDocumento(form.tipo,form.moneda))}<br>
+        <b>Condición del precio:</b> ${html(leyendaPrecioDocumento(form.moneda,form.modalidad_precio))}<br>
         <b>Monto final en PDF:</b> ${form.mostrar_monto_final !== false ? "Visible" : "Oculto"}
       </div>
 
@@ -2786,9 +2906,9 @@ function abrirDetalleCotizacion(id){
       </div>
 
       <div class="detail-item">
-        <b>Subtotal:</b> ${currencyDocumento(snap.totals.subtotal,form.tipo)}<br>
-        <b>IVA:</b> ${currencyDocumento(snap.totals.iva,form.tipo)}<br>
-        <b>Total:</b> ${currencyDocumento(snap.totals.total,form.tipo)}
+        <b>Subtotal:</b> ${currencyDocumento(snap.totals.subtotal,form.tipo,form.moneda)}<br>
+        <b>IVA:</b> ${currencyDocumento(snap.totals.iva,form.tipo,form.moneda)}<br>
+        <b>Total:</b> ${currencyDocumento(snap.totals.total,form.tipo,form.moneda)}
       </div>
     </div>
   `;
@@ -2849,12 +2969,15 @@ function cargarCotizacionEnFormulario(){
   $("telefono").value = f.telefono || "";
   $("email").value = f.email || "";
   $("direccion").value = f.direccion || "";
-  $("descripcionArchivo").value = f.descripcion_archivo || "";
+  $("proyecto").value = f.proyecto || "";
+  $("monedaDocumento").value = normalizarMonedaDocumento(f.moneda || "",f.tipo);
+  $("modalidadPrecio").value = f.modalidad_precio || "DIVISA";
   $("mostrarMontoFinal").checked = f.mostrar_monto_final !== false;
   $("notas").value = f.notas || "";
   ajustarNotasAuto();
   $("ivaCheck").checked = !!f.iva;
   aplicarModoNumeroDocumento(f.tipo || "Cotización", false);
+  aplicarOpcionesPrecioUI(f.moneda,f.modalidad_precio);
 
   if(f.footer){
     $("footerDireccion").innerText = f.footer.direccion || $("footerDireccion").innerText;
@@ -2883,7 +3006,10 @@ async function nuevaCotizacionLimpia(){
   $("telefono").value = "";
   $("email").value = "";
   $("direccion").value = "";
-  $("descripcionArchivo").value = "";
+  $("proyecto").value = "";
+  $("monedaDocumento").value = "USD";
+  $("modalidadPrecio").value = "DIVISA";
+  aplicarOpcionesPrecioUI("USD","DIVISA");
   $("mostrarMontoFinal").checked = true;
   $("notas").value = "";
   ajustarNotasAuto();
@@ -2978,6 +3104,11 @@ function bindEvents(){
         $("ivaCheck").checked = true;
       }
 
+      if(esFactura && $("monedaDocumento")){
+        $("monedaDocumento").value = "BS";
+        aplicarOpcionesPrecioUI("BS",modalidadPrecioActual());
+      }
+
       aplicarModoNumeroDocumento(e.target.value, esFactura);
 
       if(!esFactura && !$("numero")?.value){
@@ -3001,6 +3132,28 @@ function bindEvents(){
   });
 
   document.addEventListener("click", e => {
+    const monedaBtn = e.target.closest("[data-moneda]");
+
+    if(monedaBtn){
+      guardarEstadoDeshacer();
+      const moneda = normalizarMonedaDocumento(monedaBtn.dataset.moneda,$("tipoDocumento")?.value || data.tipo);
+      if($("monedaDocumento")) $("monedaDocumento").value = moneda;
+      aplicarOpcionesPrecioUI(moneda,modalidadPrecioActual());
+      render();
+      return;
+    }
+
+    const modalidadBtn = e.target.closest("[data-modalidad-precio]");
+
+    if(modalidadBtn){
+      guardarEstadoDeshacer();
+      const modalidad = String(modalidadBtn.dataset.modalidadPrecio || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA";
+      if($("modalidadPrecio")) $("modalidadPrecio").value = modalidad;
+      aplicarOpcionesPrecioUI(monedaActualCodigo(),modalidad);
+      render();
+      return;
+    }
+
     const removeImg = e.target.closest("[data-image-remove-index]");
 
     if(removeImg){
@@ -3164,5 +3317,4 @@ async function iniciarCotizador(){
 
 
 document.addEventListener("DOMContentLoaded", iniciarCotizador);
-
 
