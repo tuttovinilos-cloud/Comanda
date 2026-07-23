@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Tuttovinilos</title>
-<!-- clientes.html corregido v62 · header igual a index · menú/auth/notificaciones globales -->
+<!-- clientes.html corregido v63 · cuentas DIVISA y BCV separadas en cobro global -->
 <link rel="icon" href="data:,">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1206,6 +1206,86 @@ tbody tr:hover td{background:#eef1ff!important}
   text-transform:uppercase;
 }
 
+.deuda-account-card{
+  grid-column:span 2;
+  border:1px solid #d9deea;
+  border-radius:16px;
+  background:#f8f9ff;
+  padding:12px;
+}
+
+.deuda-account-title{
+  font-family:var(--head);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.7px;
+  color:#153bff;
+  text-transform:uppercase;
+  margin-bottom:9px;
+}
+
+.deuda-account-values{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:7px;
+}
+
+.deuda-account-value{
+  border:1px solid #e1e6f0;
+  border-radius:12px;
+  background:#fff;
+  padding:9px;
+  min-width:0;
+}
+
+.deuda-account-value label{
+  display:block;
+  font-family:var(--head);
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.45px;
+  color:#64748b;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+
+.deuda-account-value strong{
+  display:block;
+  font-family:var(--mono);
+  font-size:14px;
+  font-weight:900;
+  color:#153bff;
+  white-space:nowrap;
+}
+
+.deuda-btn-separada{
+  gap:5px;
+  min-width:142px;
+}
+
+.deuda-linea-cuenta{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  font-size:9px;
+  line-height:1.1;
+}
+
+.deuda-linea-cuenta span{
+  letter-spacing:.55px;
+  opacity:.82;
+}
+
+.deuda-linea-cuenta strong{
+  font-size:14px;
+}
+
+@media(max-width:760px){
+  .deuda-account-values{grid-template-columns:1fr 1fr}
+}
+
 @media(max-width:760px){
   .deuda-modal-summary{grid-template-columns:1fr 1fr}
   .deuda-pedido-row{grid-template-columns:1fr 1fr;gap:6px}
@@ -2320,19 +2400,15 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
         <div class="deuda-cobro-title">Cobrar deuda del cliente</div>
         <div class="form-grid">
           <div class="field">
-            <label>Monto recibido</label>
+            <label>Monto recibido ($ equivalente)</label>
             <input id="deudaPagoMonto" type="number" step="0.01" placeholder="0.00" oninput="calcularPagoGlobalCliente()"/>
           </div>
           <div class="field">
-            <label>Moneda recibida</label>
+            <label>Tipo de pago</label>
             <select id="deudaPagoMoneda" onchange="calcularPagoGlobalCliente()">
-              <option value="USD">USD / Divisa</option>
-              <option value="BS">Bs</option>
+              <option value="DIVISA">DIVISA</option>
+              <option value="BCV">BCV</option>
             </select>
-          </div>
-          <div class="field">
-            <label>Tasa usada</label>
-            <input id="deudaPagoTasa" type="number" step="0.0001" value="1" oninput="calcularPagoGlobalCliente()"/>
           </div>
           <div class="field">
             <label>Método de pago</label>
@@ -2583,6 +2659,7 @@ function pedidosEstadoCuentaCliente(cliente, soloConMonto = true){
 function deudaCliente(cliente){
   const id = Number(cliente && cliente.id ? cliente.id : 0);
   const row = clientesDeudaMap.get(id);
+  const vacio = { total:0, abonado:0, saldo:0, a_favor:0, pendientes:0 };
 
   if(!row){
     return {
@@ -2591,7 +2668,9 @@ function deudaCliente(cliente){
       saldo:0,
       total:0,
       abonado:0,
-      a_favor:0
+      a_favor:0,
+      divisa:{ ...vacio },
+      bcv:{ ...vacio }
     };
   }
 
@@ -2601,18 +2680,42 @@ function deudaCliente(cliente){
     saldo:Number(row.saldo_pendiente_usd_equiv || 0),
     total:Number(row.total_deuda_usd_equiv || 0),
     abonado:Number(row.total_abonado_usd_equiv || 0),
-    a_favor:Number(row.total_a_favor_usd_equiv || 0)
+    a_favor:Number(row.total_a_favor_usd_equiv || 0),
+    divisa:{
+      total:Number(row.divisa?.total || 0),
+      abonado:Number(row.divisa?.abonado || 0),
+      saldo:Number(row.divisa?.saldo || 0),
+      a_favor:Number(row.divisa?.a_favor || 0),
+      pendientes:Number(row.divisa?.pendientes || 0)
+    },
+    bcv:{
+      total:Number(row.bcv?.total || 0),
+      abonado:Number(row.bcv?.abonado || 0),
+      saldo:Number(row.bcv?.saldo || 0),
+      a_favor:Number(row.bcv?.a_favor || 0),
+      pendientes:Number(row.bcv?.pendientes || 0)
+    }
   };
 }
 
 function deudaClienteHtml(cliente){
   const d = deudaCliente(cliente);
   const id = Number(cliente && cliente.id ? cliente.id : 0);
+  const hayDeuda = d.divisa.saldo > 0.009 || d.bcv.saldo > 0.009;
+  const hayFavor = d.divisa.a_favor > 0.009 || d.bcv.a_favor > 0.009;
 
-  if(d.saldo > 0.009){
+  const lineaCuenta = (nombre, cuenta) => {
+    const valor = cuenta.saldo > 0.009
+      ? `$${money(cuenta.saldo)}`
+      : (cuenta.a_favor > 0.009 ? `+$${money(cuenta.a_favor)}` : "$0.00");
+    return `<div class="deuda-linea-cuenta"><span>${nombre}</span><strong>${valor}</strong></div>`;
+  };
+
+  if(hayDeuda){
     return `
-      <div class="deuda-btn" title="Total: $${money(d.total)} · Pagado: $${money(d.abonado)} · A favor: $${money(d.a_favor)}">
-        <strong>$${money(d.saldo)}</strong>
+      <div class="deuda-btn deuda-btn-separada" title="Las cuentas DIVISA y BCV no se cruzan">
+        ${lineaCuenta("DIVISA", d.divisa)}
+        ${lineaCuenta("BCV", d.bcv)}
         <small>${d.pedidos_pendientes} pendiente${d.pedidos_pendientes === 1 ? "" : "s"}</small>
       </div>
       <div class="deuda-actions">
@@ -2622,10 +2725,11 @@ function deudaClienteHtml(cliente){
     `;
   }
 
-  if(d.a_favor > 0.009){
+  if(hayFavor){
     return `
-      <div class="deuda-btn favor" title="Total: $${money(d.total)} · Pagado: $${money(d.abonado)}">
-        <strong>$${money(d.a_favor)}</strong>
+      <div class="deuda-btn favor deuda-btn-separada" title="Saldo a favor separado por cuenta">
+        ${lineaCuenta("DIVISA", d.divisa)}
+        ${lineaCuenta("BCV", d.bcv)}
         <small>A favor</small>
       </div>
       <div class="deuda-actions">
@@ -2635,8 +2739,9 @@ function deudaClienteHtml(cliente){
   }
 
   return `
-    <div class="deuda-btn ok">
-      <strong>$0.00</strong>
+    <div class="deuda-btn ok deuda-btn-separada">
+      ${lineaCuenta("DIVISA", d.divisa)}
+      ${lineaCuenta("BCV", d.bcv)}
       <small>Sin deuda</small>
     </div>
   `;
@@ -2647,11 +2752,13 @@ async function cargarDeudasClientes(){
 
   clientesDB.forEach(cliente => {
     const items = pedidosEstadoCuentaCliente(cliente, true);
-    const total = items.reduce((acc,x) => acc + numeroSeguro(x.total), 0);
-    const abonado = items.reduce((acc,x) => acc + numeroSeguro(x.pagado), 0);
-    const saldo = items.reduce((acc,x) => acc + numeroSeguro(x.saldo), 0);
-    const aFavor = items.reduce((acc,x) => acc + numeroSeguro(x.aFavor), 0);
-    const pendientes = items.filter(x => x.saldo > 0.009).length;
+    const divisa = resumenCuentaClientePorTipo(items, "DIVISA");
+    const bcv = resumenCuentaClientePorTipo(items, "BCV");
+    const total = divisa.total + bcv.total;
+    const abonado = divisa.pagado + bcv.pagado;
+    const saldo = divisa.saldo + bcv.saldo;
+    const aFavor = divisa.aFavor + bcv.aFavor;
+    const pendientes = divisa.pendientes + bcv.pendientes;
 
     clientesDeudaMap.set(Number(cliente.id || 0), {
       cliente_id:cliente.id,
@@ -2662,6 +2769,20 @@ async function cargarDeudasClientes(){
       total_abonado_usd_equiv:abonado,
       saldo_pendiente_usd_equiv:saldo,
       total_a_favor_usd_equiv:aFavor,
+      divisa:{
+        total:divisa.total,
+        abonado:divisa.pagado,
+        saldo:divisa.saldo,
+        a_favor:divisa.aFavor,
+        pendientes:divisa.pendientes
+      },
+      bcv:{
+        total:bcv.total,
+        abonado:bcv.pagado,
+        saldo:bcv.saldo,
+        a_favor:bcv.aFavor,
+        pendientes:bcv.pendientes
+      },
       ultima_fecha_pedido:items[0]?.fecha || null
     });
   });
@@ -3981,28 +4102,55 @@ function payloadPedidoCuenta(item, fechaPago = null){
   };
 }
 
-function pedidosPendientesCliente(cliente){
+function normalizarTipoCuentaCliente(tipo){
+  return String(tipo || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA";
+}
+
+function resumenCuentaClientePorTipo(cuenta, tipo){
+  const tipoNormalizado = normalizarTipoCuentaCliente(tipo);
+  const items = (cuenta || []).filter(x => x.tipo === tipoNormalizado);
+
+  return {
+    tipo:tipoNormalizado,
+    items,
+    total:items.reduce((acc,x) => acc + numeroSeguro(x.total), 0),
+    pagado:items.reduce((acc,x) => acc + numeroSeguro(x.pagado), 0),
+    saldo:items.reduce((acc,x) => acc + numeroSeguro(x.saldo), 0),
+    aFavor:items.reduce((acc,x) => acc + numeroSeguro(x.aFavor), 0),
+    pendientes:items.filter(x => x.saldo > 0.009).length
+  };
+}
+
+function pedidosPendientesCliente(cliente, tipo = null){
+  const tipoNormalizado = tipo ? normalizarTipoCuentaCliente(tipo) : null;
+
   return pedidosEstadoCuentaCliente(cliente, true)
-    .filter(x => x.saldo > 0.009)
+    .filter(x => x.saldo > 0.009 && (!tipoNormalizado || x.tipo === tipoNormalizado))
     .sort((a,b) => Number(a.id || 0) - Number(b.id || 0));
 }
 
 function pintarDeudaModal(cliente){
   const cuenta = pedidosEstadoCuentaCliente(cliente, true);
+  const divisa = resumenCuentaClientePorTipo(cuenta, "DIVISA");
+  const bcv = resumenCuentaClientePorTipo(cuenta, "BCV");
   const pendientes = cuenta.filter(x => x.saldo > 0.009);
-  const total = cuenta.reduce((acc,x) => acc + x.total, 0);
-  const pagado = cuenta.reduce((acc,x) => acc + x.pagado, 0);
-  const saldo = cuenta.reduce((acc,x) => acc + x.saldo, 0);
-  const aFavor = cuenta.reduce((acc,x) => acc + x.aFavor, 0);
 
   document.getElementById("deudaTitle").textContent = `Estado de cuenta · ${cliente.nombre}`;
 
-  document.getElementById("deudaSummary").innerHTML = `
-    <div class="deuda-summary-box"><label>Total</label><strong>$${money(total)}</strong></div>
-    <div class="deuda-summary-box"><label>Pagado</label><strong>$${money(pagado)}</strong></div>
-    <div class="deuda-summary-box"><label>Saldo</label><strong>$${money(saldo)}</strong></div>
-    <div class="deuda-summary-box"><label>A favor</label><strong>$${money(aFavor)}</strong></div>
+  const resumenCuentaHtml = (titulo, resumen) => `
+    <div class="deuda-account-card">
+      <div class="deuda-account-title">Cuenta ${titulo}</div>
+      <div class="deuda-account-values">
+        <div class="deuda-account-value"><label>Total</label><strong>$${money(resumen.total)}</strong></div>
+        <div class="deuda-account-value"><label>Pagado</label><strong>$${money(resumen.pagado)}</strong></div>
+        <div class="deuda-account-value"><label>Saldo</label><strong>$${money(resumen.saldo)}</strong></div>
+        <div class="deuda-account-value"><label>A favor</label><strong>$${money(resumen.aFavor)}</strong></div>
+      </div>
+    </div>
   `;
+
+  document.getElementById("deudaSummary").innerHTML =
+    resumenCuentaHtml("DIVISA", divisa) + resumenCuentaHtml("BCV", bcv);
 
   const lista = document.getElementById("deudaPedidosLista");
 
@@ -4041,9 +4189,12 @@ function abrirDeudaCliente(id, modoCobrar = false){
   }
 
   deudaClienteActualId = Number(id);
+  const cuenta = pedidosEstadoCuentaCliente(cliente, true);
+  const hayDivisaPendiente = cuenta.some(x => x.tipo === "DIVISA" && x.saldo > 0.009);
+  const hayBcvPendiente = cuenta.some(x => x.tipo === "BCV" && x.saldo > 0.009);
+
   document.getElementById("deudaPagoMonto").value = "";
-  document.getElementById("deudaPagoMoneda").value = "USD";
-  document.getElementById("deudaPagoTasa").value = "1";
+  document.getElementById("deudaPagoMoneda").value = hayDivisaPendiente ? "DIVISA" : (hayBcvPendiente ? "BCV" : "DIVISA");
   document.getElementById("deudaPagoMetodo").value = "";
   document.getElementById("deudaPagoReferencia").value = "";
   document.getElementById("deudaPagoNota").value = "";
@@ -4078,29 +4229,25 @@ function calcularPagoGlobalCliente(){
   const resultado = document.getElementById("deudaPagoResultado");
   if(!resultado || !cliente) return;
 
-  const pendientes = pedidosPendientesCliente(cliente);
+  const tipoPago = normalizarTipoCuentaCliente(document.getElementById("deudaPagoMoneda")?.value || "DIVISA");
+  const pendientes = pedidosPendientesCliente(cliente, tipoPago);
   const saldo = pendientes.reduce((acc,x) => acc + x.saldo, 0);
   const monto = numeroSeguro(document.getElementById("deudaPagoMonto")?.value || 0);
-  const moneda = document.getElementById("deudaPagoMoneda")?.value || "USD";
-  let tasa = numeroSeguro(document.getElementById("deudaPagoTasa")?.value || 1);
-  if(tasa <= 0) tasa = 1;
-
-  const equivalenteUsd = moneda === "BS" ? (monto / tasa) : monto;
-  const aplicado = Math.min(equivalenteUsd, saldo);
+  const aplicado = Math.min(monto, saldo);
   const restante = Math.max(saldo - aplicado, 0);
-  const excedente = Math.max(equivalenteUsd - saldo, 0);
+  const excedente = Math.max(monto - saldo, 0);
 
   if(!pendientes.length){
-    resultado.textContent = "Este cliente no tiene deuda pendiente";
+    resultado.textContent = `La cuenta ${tipoPago} no tiene deuda pendiente. Este pago no tocará la otra cuenta.`;
     return;
   }
 
   if(monto <= 0){
-    resultado.textContent = `Saldo actual: $${money(saldo)} · Coloca el monto recibido`;
+    resultado.textContent = `Cuenta ${tipoPago}: saldo $${money(saldo)} · Coloca el monto recibido`;
     return;
   }
 
-  resultado.textContent = `Aplicará $${money(aplicado)} · Quedará $${money(restante)}${excedente > 0 ? " · A favor $" + money(excedente) : ""}`;
+  resultado.textContent = `Cuenta ${tipoPago}: aplicará $${money(aplicado)} · Quedará $${money(restante)}${excedente > 0 ? " · A favor " + tipoPago + " $" + money(excedente) : ""}`;
 }
 
 async function aplicarPagoGlobalCliente(){
@@ -4112,20 +4259,20 @@ async function aplicarPagoGlobalCliente(){
     return;
   }
 
-  const pendientes = pedidosPendientesCliente(cliente);
+  const tipoPago = normalizarTipoCuentaCliente(document.getElementById("deudaPagoMoneda")?.value || "DIVISA");
+  const pendientes = pedidosPendientesCliente(cliente, tipoPago);
   if(!pendientes.length){
-    alert("Este cliente no tiene deuda pendiente.");
+    alert(`La cuenta ${tipoPago} no tiene deuda pendiente. No se modificó la cuenta ${tipoPago === "BCV" ? "DIVISA" : "BCV"}.`);
     return;
   }
 
   const monto = numeroSeguro(document.getElementById("deudaPagoMonto")?.value || 0);
-  const moneda = document.getElementById("deudaPagoMoneda")?.value || "USD";
-  let tasa = numeroSeguro(document.getElementById("deudaPagoTasa")?.value || 1);
+  const moneda = tipoPago === "BCV" ? "BS" : "USD";
+  const tasa = 1;
   const metodo = String(document.getElementById("deudaPagoMetodo")?.value || "").trim();
   const referencia = String(document.getElementById("deudaPagoReferencia")?.value || "").trim();
   const nota = String(document.getElementById("deudaPagoNota")?.value || "").trim();
 
-  if(tasa <= 0) tasa = 1;
   if(monto <= 0){
     alert("Coloca el monto recibido.");
     return;
@@ -4135,7 +4282,7 @@ async function aplicarPagoGlobalCliente(){
     return;
   }
 
-  let disponibleUsd = moneda === "BS" ? (monto / tasa) : monto;
+  let disponibleUsd = monto;
   const registradoPor = typeof window.getSesionOperador === "function"
     ? (window.getSesionOperador()?.nombre || "")
     : "";
@@ -4168,7 +4315,7 @@ async function aplicarPagoGlobalCliente(){
       };
       itemFinal.estado = estadoPagoCuentaDesdeItem(itemFinal);
 
-      const montoRecibidoParte = moneda === "BS" ? (aplicarUsd * tasa) : aplicarUsd;
+      const montoRecibidoParte = aplicarUsd;
 
       const pagoPayload = {
         pedido_id: pedido.id,
@@ -4191,8 +4338,8 @@ async function aplicarPagoGlobalCliente(){
         monto_aplicado: aplicarUsd,
         saldo_despues_simple: nuevoSaldo,
         a_favor_despues: nuevoAFavor,
-        tipo_pago_simple: item.tipo,
-        moneda_deuda: item.tipo === "BCV" ? "BS" : "USD",
+        tipo_pago_simple: tipoPago,
+        moneda_deuda: tipoPago === "BCV" ? "BS" : "USD",
         tipo_tasa_deuda: item.tipo === "BCV" ? "BS_BCV" : "USD_FIJO",
         tasa_deuda: item.tipo === "BCV" && numeroSeguro(pedido.tasa_deuda) > 0 ? numeroSeguro(pedido.tasa_deuda) : 1,
         total_deuda_usd: item.total,
@@ -4231,7 +4378,7 @@ async function aplicarPagoGlobalCliente(){
       pintarDeudaModal(clienteActualizado);
     }
 
-    mostrarToast(`Pago aplicado a ${pagosAplicados} pedido${pagosAplicados === 1 ? "" : "s"}`);
+    mostrarToast(`Pago ${tipoPago} aplicado a ${pagosAplicados} pedido${pagosAplicados === 1 ? "" : "s"}`);
   }catch(error){
     console.error("Error aplicando pago global:", error);
     alert("No se pudo aplicar el pago global: " + (error.message || error));
