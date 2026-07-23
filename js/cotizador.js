@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v65 precio unitario hasta 10 decimales");
+console.log("COTIZADOR JS conectado v66 descripción de archivo y monto final opcional");
 
 const $ = (id) => document.getElementById(id);
 
@@ -849,6 +849,8 @@ function getForm(){
     telefono: cleanText($("telefono").value),
     email: cleanText($("email").value),
     direccion: cleanText($("direccion").value),
+    descripcion_archivo: cleanText($("descripcionArchivo")?.value || ""),
+    mostrar_monto_final: $("mostrarMontoFinal") ? $("mostrarMontoFinal").checked : true,
     notas: cleanText($("notas").value),
     iva: $("ivaCheck").checked,
     footer: getFooter()
@@ -868,6 +870,8 @@ function crearEstadoActualDeshacer(){
       telefono: $("telefono")?.value || "",
       email: $("email")?.value || "",
       direccion: $("direccion")?.value || "",
+      descripcion_archivo: $("descripcionArchivo")?.value || "",
+      mostrar_monto_final: $("mostrarMontoFinal") ? $("mostrarMontoFinal").checked : true,
       notas: $("notas")?.value || "",
       iva: !!$("ivaCheck")?.checked,
       footer:getFooter()
@@ -945,6 +949,8 @@ function deshacerUltimoCambio(){
   setValueDeshacer("telefono",f.telefono);
   setValueDeshacer("email",f.email);
   setValueDeshacer("direccion",f.direccion);
+  setValueDeshacer("descripcionArchivo",f.descripcion_archivo || "");
+  setValueDeshacer("mostrarMontoFinal",f.mostrar_monto_final !== false);
   setValueDeshacer("notas",f.notas);
   setValueDeshacer("ivaCheck",f.iva);
 
@@ -1588,7 +1594,10 @@ async function crearDocumentoFacturaPDF(snapshot=crearSnapshotActual()){
 
   drawFacturaReferenciaHeader(doc,snapshot);
   drawFacturaReferenciaTable(doc,snapshot.items || []);
-  drawFacturaReferenciaTotals(doc,snapshot);
+
+  if(snapshot.form?.mostrar_monto_final !== false){
+    drawFacturaReferenciaTotals(doc,snapshot);
+  }
 
   return doc;
 }
@@ -1940,11 +1949,12 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
     totalsY = fy;
   }
 
-  doc.setDrawColor(...line);
-  doc.setFillColor(255,255,255);
-  doc.roundedRect(rightX,totalsY,rightW,rightBoxH,3,3,"FD");
+  if(form.mostrar_monto_final !== false){
+    doc.setDrawColor(...line);
+    doc.setFillColor(255,255,255);
+    doc.roundedRect(rightX,totalsY,rightW,rightBoxH,3,3,"FD");
 
-  let rowY = totalsY;
+    let rowY = totalsY;
 
   const drawSummaryRow = (label,value,fill,txtColor,bold=false,size=9.2) => {
     doc.setFillColor(...fill);
@@ -1976,24 +1986,37 @@ async function crearDocumentoPDF(snapshot=crearSnapshotActual()){
   doc.setFontSize(12);
   doc.setTextColor(255,255,255);
 
-  doc.text("TOTAL",rightX+3,rowY+6.7);
-  doc.text(currency(t.total),rightX+rightW-3,rowY+6.7,{ align:"right" });
+    doc.text("TOTAL",rightX+3,rowY+6.7);
+    doc.text(currency(t.total),rightX+rightW-3,rowY+6.7,{ align:"right" });
+  }
 
   drawPdfHeaderFooter(doc,footer,form);
 
   return doc;
 }
 
+function limpiarParteNombreArchivo(valor,max=80){
+  return String(valor || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-zA-Z0-9_-]+/g,"_")
+    .replace(/_+/g,"_")
+    .replace(/^_+|_+$/g,"")
+    .slice(0,max);
+}
+
 function nombreArchivoPDF(snapshot){
   const form = snapshot.form || getForm();
 
-  const clientName = (form.cliente || "cliente")
-    .replace(/[^\wáéíóúÁÉÍÓÚñÑ-]+/g,"_")
-    .slice(0,60);
+  const tipo = limpiarParteNombreArchivo(form.tipo || "Cotizacion",35) || "Cotizacion";
+  const numero = limpiarParteNombreArchivo(form.numero || "sin_numero",35) || "sin_numero";
+  const cliente = limpiarParteNombreArchivo(form.cliente || "cliente",60) || "cliente";
+  const descripcion = limpiarParteNombreArchivo(form.descripcion_archivo || "",70);
 
-  const tipo = (form.tipo || "Cotizacion").replace(/\s+/g,"_");
+  const partes = [tipo,"Tuttovinilos",numero,cliente];
+  if(descripcion) partes.push(descripcion);
 
-  return `${tipo}_Tuttovinilos_${form.numero || "sin_numero"}_${clientName}.pdf`;
+  return `${partes.join("_")}.pdf`;
 }
 
 function blobToBase64(blob){
@@ -2049,11 +2072,13 @@ async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null,snaps
     responsable: form.responsable,
     vence: form.vence || null,
     items:{
-      version:5,
+      version:6,
       modo:"texto_json_con_pdf_opcional",
       rows:snapshot.items,
       footer:snapshot.footer,
-      iva_aplicado:form.iva
+      iva_aplicado:form.iva,
+      descripcion_archivo:form.descripcion_archivo || "",
+      mostrar_monto_final:form.mostrar_monto_final !== false
     },
     notas: form.notas,
     subtotal: Number(t.subtotal.toFixed(2)),
@@ -2320,6 +2345,8 @@ function normalizarSnapshotDesdeRegistro(reg){
 
   let rows = [];
   let footer = null;
+  let descripcionArchivo = "";
+  let mostrarMontoFinal = true;
   let ivaAplicado = Number(reg?.iva || 0) > 0;
 
   if(Array.isArray(raw)){
@@ -2327,6 +2354,8 @@ function normalizarSnapshotDesdeRegistro(reg){
   }else if(raw && typeof raw === "object"){
     rows = Array.isArray(raw.rows) ? raw.rows : (Array.isArray(raw.items) ? raw.items : []);
     footer = raw.footer || null;
+    descripcionArchivo = String(raw.descripcion_archivo || "");
+    mostrarMontoFinal = raw.mostrar_monto_final !== false;
 
     if(typeof raw.iva_aplicado === "boolean"){
       ivaAplicado = raw.iva_aplicado;
@@ -2344,6 +2373,8 @@ function normalizarSnapshotDesdeRegistro(reg){
     telefono: reg?.telefono || "",
     email: reg?.correo || "",
     direccion: reg?.direccion || "",
+    descripcion_archivo: descripcionArchivo,
+    mostrar_monto_final: mostrarMontoFinal,
     notas: reg?.notas || "",
     iva: ivaAplicado,
     footer: footer || {
@@ -2742,7 +2773,9 @@ function abrirDetalleCotizacion(id){
 
       <div class="detail-item">
         <b>Fecha:</b> ${html(form.fecha || "")} · <b>Vence:</b> ${html(form.vence || "")}<br>
-        <b>Responsable:</b> ${html(form.responsable || "")}
+        <b>Responsable:</b> ${html(form.responsable || "")}<br>
+        <b>Descripción corta:</b> ${html(form.descripcion_archivo || "—")}<br>
+        <b>Monto final en PDF:</b> ${form.mostrar_monto_final !== false ? "Visible" : "Oculto"}
       </div>
 
       ${itemsHtml || `<div class="empty">Sin ítems</div>`}
@@ -2816,6 +2849,8 @@ function cargarCotizacionEnFormulario(){
   $("telefono").value = f.telefono || "";
   $("email").value = f.email || "";
   $("direccion").value = f.direccion || "";
+  $("descripcionArchivo").value = f.descripcion_archivo || "";
+  $("mostrarMontoFinal").checked = f.mostrar_monto_final !== false;
   $("notas").value = f.notas || "";
   ajustarNotasAuto();
   $("ivaCheck").checked = !!f.iva;
@@ -2848,6 +2883,8 @@ async function nuevaCotizacionLimpia(){
   $("telefono").value = "";
   $("email").value = "";
   $("direccion").value = "";
+  $("descripcionArchivo").value = "";
+  $("mostrarMontoFinal").checked = true;
   $("notas").value = "";
   ajustarNotasAuto();
   $("ivaCheck").checked = false;
