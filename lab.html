@@ -3,264 +3,471 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>LAB · Previsualizador</title>
+<title>LAB · Letrero realista</title>
 <style>
 *{box-sizing:border-box}
 :root{
-  --azul:#172bd8;
-  --verde:#16a34a;
-  --fondo:#f1f3f9;
-  --panel:#fff;
-  --borde:#dbe1ec;
-  --texto:#111827;
-  --muted:#64748b;
-  --sombra:0 14px 36px rgba(15,23,42,.12);
+  --panel:#07111f;
+  --panel2:#0b1627;
+  --line:#26364d;
+  --text:#f8fafc;
+  --muted:#9fb0c6;
+  --accent:#4c38ff;
+  --accent2:#6a57ff;
+  --wall1:#b9afa4;
+  --wall2:#73695f;
+  --front:#f2f2ef;
+  --side:#c2c2be;
+  --led:#ffffff;
+  --depth:10px;
+  --separation:8px;
+  --shadow:.35;
+  --rotY:-6deg;
 }
-html,body{
-  margin:0;
-  min-height:100%;
-  background:var(--fondo);
-  color:var(--texto);
-  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+html,body{margin:0;min-height:100%;background:#06090f;color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+body{display:grid;grid-template-columns:390px minmax(0,1fr);overflow:hidden}
+button,input,select{font:inherit}
+.sidebar{
+  height:100vh;
+  overflow:auto;
+  background:linear-gradient(180deg,var(--panel),#08121f 60%,#06101c);
+  border-right:1px solid rgba(255,255,255,.08);
+  padding:22px 24px;
 }
-body{padding:16px}
-button,textarea{font:inherit}
-.app{width:min(1600px,100%);margin:auto;display:grid;gap:14px}
-.header{
-  background:var(--azul);
+.brand h1{font-size:42px;line-height:1;margin:0;font-weight:950}
+.brand p{margin:7px 0 0;color:#c4ccda;font-size:18px}
+.tabs{
+  display:grid;grid-template-columns:1fr 1fr;
+  background:#111c2d;border-radius:10px;margin:28px 0 24px;overflow:hidden
+}
+.tab{border:0;background:transparent;color:#b9c5d8;padding:12px;font-size:14px}
+.tab.active{background:linear-gradient(90deg,#211d69,#1a2743);color:#7666ff}
+.group{margin-bottom:18px}
+.group-title{font-size:14px;margin-bottom:8px}
+.row{display:flex;align-items:center;gap:8px}
+.text-input,.select{
+  width:100%;background:#07111f;color:#fff;border:1px solid #26364d;border-radius:8px;padding:10px 12px;outline:none
+}
+.toggle{margin-left:auto;width:38px;height:22px;border-radius:999px;background:#18243a;position:relative}
+.toggle:after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:#c7ced8;left:2px;top:2px}
+.pills{display:flex;flex-wrap:wrap;gap:7px}
+.pill{
+  border:1px solid #26364d;background:#0a1423;color:#fff;border-radius:8px;padding:9px 13px;font-size:13px
+}
+.pill.active{background:var(--accent);border-color:var(--accent)}
+.color-row{display:flex;align-items:center;gap:10px}
+.color{
+  width:130px;height:38px;background:#0a1423;border:1px solid #26364d;border-radius:8px;display:flex;align-items:center;gap:10px;padding:0 10px
+}
+.color input{width:22px;height:22px;padding:0;border:0;background:transparent}
+.slider-row{display:grid;grid-template-columns:1fr 42px;gap:10px;align-items:center}
+.slider-wrap label{display:flex;justify-content:space-between;color:#fff;font-size:13px;margin-bottom:5px}
+.slider-wrap label span:first-child{color:#f6ef6a}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.value-box{background:#0a1423;border:1px solid #26364d;border-radius:8px;padding:7px 6px;text-align:center;font-size:13px;color:#cfd8e6}
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:20px}
+.mode button{
+  border:1px solid #26364d;background:#101a2b;color:#fff;padding:11px;border-radius:0
+}
+.mode button:first-child{border-radius:9px 0 0 9px}
+.mode button:last-child{border-radius:0 9px 9px 0}
+.mode button.active{background:var(--accent);border-color:var(--accent)}
+
+.main{height:100vh;display:grid;grid-template-rows:1fr 205px;background:#0b0d12;min-width:0}
+.scene{
+  position:relative;overflow:hidden;
+  background:
+    linear-gradient(100deg,rgba(255,255,255,.07),rgba(0,0,0,.22)),
+    repeating-linear-gradient(0deg,transparent 0,transparent 218px,rgba(40,30,24,.32) 219px,rgba(255,255,255,.12) 221px),
+    linear-gradient(135deg,var(--wall1),var(--wall2));
+  box-shadow:inset 0 0 120px rgba(25,18,13,.36)
+}
+.scene:after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 60% 32%,rgba(255,255,255,.15),transparent 32%)
+}
+.toolbar{
+  position:absolute;top:24px;left:34px;z-index:10;display:flex;gap:10px;flex-wrap:wrap
+}
+.tool{
+  background:rgba(22,18,17,.76);color:#fff;border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;padding:10px 14px;font-size:13px;backdrop-filter:blur(8px)
+}
+.sign-wrap{position:absolute;inset:0;display:grid;place-items:center;z-index:4}
+.sign{
+  display:flex;gap:4px;align-items:center;justify-content:center;
+  transform:perspective(1200px) rotateY(var(--rotY));
+  transform-style:preserve-3d;
+  padding:20px 30px
+}
+.letter{
+  position:relative;display:inline-block;
+  color:var(--front);
+  font-family:Arial Black,Inter,sans-serif;
+  font-size:clamp(100px,14vw,210px);
+  line-height:.8;
+  font-weight:1000;
+  letter-spacing:-12px;
+  text-shadow:
+    1px 1px 0 var(--side),
+    2px 2px 0 var(--side),
+    3px 3px 0 var(--side),
+    4px 4px 0 var(--side),
+    5px 5px 0 var(--side),
+    6px 6px 0 var(--side),
+    7px 7px 0 var(--side),
+    8px 8px 0 var(--side),
+    var(--depth) var(--depth) 0 color-mix(in srgb,var(--side) 78%,#000),
+    calc(var(--depth) + 7px) calc(var(--depth) + 14px) 25px rgba(0,0,0,var(--shadow)),
+    0 0 8px var(--led),
+    0 0 22px var(--led),
+    0 0 48px var(--led),
+    0 0 88px color-mix(in srgb,var(--led) 92%,transparent);
+  filter:drop-shadow(calc(var(--separation)*.5) calc(var(--separation)*1.1) 16px rgba(0,0,0,var(--shadow)))
+}
+.sign.no-halo .letter{
+  text-shadow:
+    1px 1px 0 var(--side),2px 2px 0 var(--side),3px 3px 0 var(--side),4px 4px 0 var(--side),
+    5px 5px 0 var(--side),6px 6px 0 var(--side),7px 7px 0 var(--side),8px 8px 0 var(--side),
+    var(--depth) var(--depth) 0 color-mix(in srgb,var(--side) 78%,#000),
+    calc(var(--depth) + 7px) calc(var(--depth) + 14px) 25px rgba(0,0,0,var(--shadow))
+}
+.sign.front-light .letter{
   color:#fff;
-  border-radius:17px;
-  padding:16px 18px;
-  box-shadow:0 10px 26px rgba(23,43,216,.24);
+  text-shadow:
+    1px 1px 0 var(--side),2px 2px 0 var(--side),3px 3px 0 var(--side),4px 4px 0 var(--side),
+    5px 5px 0 var(--side),6px 6px 0 var(--side),
+    var(--depth) var(--depth) 0 color-mix(in srgb,var(--side) 78%,#000),
+    0 0 5px #fff,0 0 16px var(--led),0 0 35px var(--led),0 0 70px var(--led)
 }
-.header h1{margin:0;font-size:20px;font-weight:950}
-.header p{margin:4px 0 0;color:#dbe3ff;font-size:11px}
-.card{
-  background:var(--panel);
-  border:1px solid var(--borde);
-  border-radius:17px;
-  box-shadow:var(--sombra);
-  overflow:hidden;
+.plant{
+  position:absolute;left:20px;bottom:0;width:120px;height:200px;z-index:3
 }
-.card-head{
-  padding:12px 14px;
-  border-bottom:1px solid var(--borde);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
+.plant:before,.plant:after{
+  content:"";position:absolute;background:#204e34;border-radius:100% 0 100% 0;transform-origin:bottom right
 }
-.card-head strong{font-size:12px}
-.estado{color:var(--muted);font-size:10px}
-textarea{
-  display:block;
-  width:100%;
-  min-height:330px;
-  resize:vertical;
-  border:0;
-  outline:0;
-  padding:16px;
-  background:#0f172a;
-  color:#e2e8f0;
-  font:12px/1.55 "Roboto Mono",Consolas,monospace;
-  tab-size:2;
+.plant:before{width:62px;height:150px;left:15px;top:0;transform:rotate(-22deg)}
+.plant:after{width:55px;height:132px;right:0;top:30px;transform:rotate(28deg)}
+.pot{position:absolute;left:24px;bottom:0;width:70px;height:75px;background:#11151d;border-radius:10px 10px 25px 25px}
+.bottom{
+  background:#0b0e14;border-top:1px solid rgba(255,255,255,.08);
+  display:flex;gap:20px;padding:18px 16px 14px;overflow:auto
 }
-.actions{
-  padding:11px 14px;
-  border-top:1px solid var(--borde);
-  display:flex;
-  justify-content:flex-end;
-  gap:8px;
+.thumb{min-width:140px;text-align:center;color:#fff}
+.thumb-box{
+  height:112px;border-radius:9px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#8e8478,#514b45);
+  border:1px solid rgba(255,255,255,.08);overflow:hidden
 }
-.btn{
-  border:1px solid var(--borde);
-  background:#fff;
-  color:var(--texto);
-  border-radius:10px;
-  padding:10px 14px;
-  font-size:10px;
-  font-weight:900;
-  cursor:pointer;
+.thumb.active .thumb-box{outline:2px solid var(--accent)}
+.thumb-text{font-weight:1000;font-size:34px;letter-spacing:-3px;text-shadow:3px 3px 0 #8b8b87,0 0 15px #fff}
+.thumb:nth-child(2) .thumb-text{color:#d8d1ca;text-shadow:0 0 0 transparent}
+.thumb:nth-child(3) .thumb-text{color:#85898f;text-shadow:3px 3px 0 #5d6268}
+.thumb:nth-child(4) .thumb-text{background:linear-gradient(90deg,#f5f5f5,#555,#fff);-webkit-background-clip:text;color:transparent}
+.thumb:nth-child(5) .thumb-text{color:#fff;text-shadow:0 0 7px #fff,0 0 20px #5b3dff,0 0 40px #5b3dff}
+.thumb:nth-child(6) .thumb-text{color:#fff4d2;text-shadow:0 0 7px #fff,0 0 20px #ffce70,0 0 40px #ffb44a}
+.thumb:nth-child(7) .thumb-text{color:#9f9f9a;text-shadow:4px 4px 0 #666}
+.thumb b{display:block;margin-top:8px;font-size:13px}.thumb span{color:#bac4d4;font-size:12px}
+
+@media(max-width:980px){
+  body{grid-template-columns:1fr;overflow:auto}
+  .sidebar{height:auto}
+  .main{height:auto;grid-template-rows:620px 190px}
 }
-.btn.run{background:var(--verde);border-color:var(--verde);color:#fff}
-.btn.full{background:var(--azul);border-color:var(--azul);color:#fff}
-.preview-wrap{padding:12px;background:#d9dee8}
-iframe{
-  display:block;
-  width:100%;
-  height:820px;
-  border:0;
-  border-radius:11px;
-  background:#fff;
-  box-shadow:0 8px 24px rgba(15,23,42,.12);
-}
-.fullscreen{
-  position:fixed!important;
-  inset:0!important;
-  z-index:999!important;
-  width:100vw!important;
-  height:100vh!important;
-  border-radius:0!important;
-}
-.fullscreen .preview-wrap{height:calc(100vh - 49px);padding:0}
-.fullscreen iframe{height:100%;border-radius:0}
-@media(max-width:700px){
-  body{padding:9px}
-  .card-head{align-items:flex-start;flex-direction:column}
-  .actions{display:grid;grid-template-columns:1fr 1fr}
-  iframe{height:650px}
+@media(max-width:600px){
+  .main{grid-template-rows:500px 170px}
+  .toolbar{top:12px;left:12px}
+  .tool{padding:8px 10px;font-size:11px}
+  .letter{font-size:clamp(58px,17vw,110px);letter-spacing:-6px}
+  .brand h1{font-size:34px}
 }
 </style>
 </head>
 <body>
-<main class="app">
 
-<header class="header">
-  <h1>LAB</h1>
-  <p>Pega el código que te envíe y presiona Previsualizar.</p>
-</header>
-
-<section class="card">
-  <div class="card-head">
-    <strong>Código HTML + CSS + JavaScript</strong>
-    <span class="estado" id="estado">Sin previsualizar</span>
+<aside class="sidebar">
+  <div class="brand">
+    <h1>LAB</h1>
+    <p>Laboratorio de letreros</p>
   </div>
 
-  <textarea
-    id="codigo"
-    spellcheck="false"
-    placeholder="Pega aquí el código completo del letrero..."></textarea>
+  <div class="tabs">
+    <button class="tab active">Configuración</button>
+    <button class="tab">Exportar</button>
+  </div>
 
-  <div class="actions">
-    <button class="btn" id="limpiar">Limpiar</button>
-    <button class="btn run" id="ejecutar">Previsualizar</button>
+  <div class="group">
+    <div class="group-title">Texto / Logo</div>
+    <div class="row">
+      <input class="text-input" id="textInput" value="TUTTO">
+      <div class="toggle"></div>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Tipografía</div>
+    <select class="select">
+      <option>Montserrat ExtraBold</option>
+      <option>Arial Black</option>
+      <option>Impact</option>
+    </select>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Material frontal</div>
+    <div class="pills">
+      <button class="pill active" data-front="pvc">PVC</button>
+      <button class="pill" data-front="acrilico">Acrílico</button>
+      <button class="pill" data-front="metalico">Metálico</button>
+      <button class="pill" data-front="neon">Neón LED</button>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Color frontal</div>
+    <div class="color">
+      <input id="frontColor" type="color" value="#f2f2ef">
+      <span id="frontHex">#F2F2EF</span>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Material canto</div>
+    <div class="pills">
+      <button class="pill active" data-side="#c2c2be">Blanco</button>
+      <button class="pill" data-side="#242424">Negro</button>
+      <button class="pill" data-side="#aeb4bc">Aluminio</button>
+      <button class="pill" data-side="#8c7a68">Personalizado</button>
+    </div>
+  </div>
+
+  <div class="group slider-wrap">
+    <label><span>Profundidad (cm)</span></label>
+    <div class="slider-row">
+      <input id="depth" type="range" min="2" max="24" value="10">
+      <div class="value-box" id="depthValue">10</div>
+    </div>
+  </div>
+
+  <div class="group slider-wrap">
+    <label><span>Separación de pared (cm)</span></label>
+    <div class="slider-row">
+      <input id="separation" type="range" min="0" max="30" value="8">
+      <div class="value-box" id="separationValue">8</div>
+    </div>
+  </div>
+
+  <div class="group slider-wrap">
+    <label><span>Sombra natural</span></label>
+    <div class="slider-row">
+      <input id="shadow" type="range" min="0" max="80" value="35">
+      <div class="value-box" id="shadowValue">35%</div>
+    </div>
+  </div>
+
+  <div class="group slider-wrap">
+    <label><span>Luz posterior (halo)</span></label>
+    <div class="slider-row">
+      <input id="halo" type="range" min="0" max="100" value="85">
+      <div class="value-box" id="haloValue">85%</div>
+    </div>
+  </div>
+
+  <div class="group slider-wrap">
+    <label><span>Intensidad de luz frontal</span></label>
+    <div class="slider-row">
+      <input id="frontLight" type="range" min="0" max="100" value="40">
+      <div class="value-box" id="frontLightValue">40%</div>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Color de luz LED</div>
+    <div class="color">
+      <input id="ledColor" type="color" value="#ffffff">
+      <span id="ledHex">#FFFFFF</span>
+    </div>
+  </div>
+
+  <div class="mode">
+    <button id="dayBtn">☼ Modo día</button>
+    <button id="nightBtn" class="active">☾ Modo noche</button>
+  </div>
+</aside>
+
+<section class="main">
+  <div class="scene" id="scene">
+    <div class="toolbar">
+      <button class="tool">Vista: Perspectiva⌄</button>
+      <button class="tool">Pared: Concreto claro⌄</button>
+      <button class="tool">☼ Luz ambiente</button>
+      <button class="tool">◉ Ocultar cable</button>
+    </div>
+
+    <div class="sign-wrap">
+      <div class="sign" id="sign"></div>
+    </div>
+
+    <div class="plant"><span class="pot"></span></div>
+  </div>
+
+  <div class="bottom">
+    <div class="thumb active" data-preset="pvc">
+      <div class="thumb-box"><div class="thumb-text">TUTTO</div></div>
+      <b>PVC</b><span>Laminado</span>
+    </div>
+    <div class="thumb" data-preset="acrilico">
+      <div class="thumb-box"><div class="thumb-text">TUTTO</div></div>
+      <b>Acrílico</b><span>Transparente</span>
+    </div>
+    <div class="thumb" data-preset="galvanizado">
+      <div class="thumb-box"><div class="thumb-text">TUTTO</div></div>
+      <b>Galvanizado</b><span>Frente metálico</span>
+    </div>
+    <div class="thumb" data-preset="inox">
+      <div class="thumb-box"><div class="thumb-text">TUTTO</div></div>
+      <b>Acero inox.</b><span>Espejo</span>
+    </div>
+    <div class="thumb" data-preset="neon">
+      <div class="thumb-box"><div class="thumb-text">TUTTO</div></div>
+      <b>Neón LED</b><span>Manguera</span>
+    </div>
+    <div class="thumb" data-preset="frontal">
+      <div class="thumb-box"><div class="thumb-text">TUTTO</div></div>
+      <b>Luz frontal</b><span>Front Light</span>
+    </div>
+    <div class="thumb" data-preset="sinluz">
+      <div class="thumb-box"><div class="thumb-text">TUTTO</div></div>
+      <b>Sin luz</b><span>Solo relieve</span>
+    </div>
   </div>
 </section>
-
-<section class="card" id="previewCard">
-  <div class="card-head">
-    <strong>Previsualización</strong>
-    <button class="btn full" id="ampliar">Pantalla completa</button>
-  </div>
-
-  <div class="preview-wrap">
-    <iframe
-      id="visor"
-      title="Previsualización del código"
-      sandbox="allow-scripts allow-forms allow-modals allow-popups allow-downloads"></iframe>
-  </div>
-</section>
-
-</main>
 
 <script>
 'use strict';
 
-const codigo = document.getElementById('codigo');
-const visor = document.getElementById('visor');
-const estado = document.getElementById('estado');
-const previewCard = document.getElementById('previewCard');
-const ampliar = document.getElementById('ampliar');
-const STORAGE_KEY = 'lab_codigo_pegado_v1';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const root = document.documentElement;
+let mode = 'halo';
+let isNight = true;
 
-function paginaVacia(){
-  return `<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<style>
-html,body{
-  margin:0;
-  min-height:100%;
-  display:grid;
-  place-items:center;
-  background:#f1f3f9;
-  color:#64748b;
-  font-family:Arial,sans-serif;
-}
-</style>
-</head>
-<body>Pega el código y presiona Previsualizar.</body>
-</html>`;
+function renderText(){
+  const txt = ($('#textInput').value || 'TUTTO').toUpperCase();
+  $('#sign').innerHTML = [...txt].map(c =>
+    `<span class="letter">${c === ' ' ? '&nbsp;' : c}</span>`
+  ).join('');
 }
 
-function normalizar(texto){
-  const limpio = String(texto || '').trim();
+function update(){
+  const depth = $('#depth').value;
+  const separation = $('#separation').value;
+  const shadow = $('#shadow').value;
+  const halo = $('#halo').value;
+  const frontLight = $('#frontLight').value;
 
-  if(!limpio){
-    return paginaVacia();
+  root.style.setProperty('--depth',depth+'px');
+  root.style.setProperty('--separation',separation+'px');
+  root.style.setProperty('--shadow',Number(shadow)/100);
+  root.style.setProperty('--led',$('#ledColor').value);
+  root.style.setProperty('--front',$('#frontColor').value);
+
+  $('#depthValue').textContent = depth;
+  $('#separationValue').textContent = separation;
+  $('#shadowValue').textContent = shadow+'%';
+  $('#haloValue').textContent = halo+'%';
+  $('#frontLightValue').textContent = frontLight+'%';
+  $('#frontHex').textContent = $('#frontColor').value.toUpperCase();
+  $('#ledHex').textContent = $('#ledColor').value.toUpperCase();
+
+  $('#sign').classList.toggle('no-halo',mode==='sinluz' || Number(halo)===0);
+  $('#sign').classList.toggle('front-light',mode==='frontal');
+
+  $('#scene').style.filter = isNight ? 'brightness(.83) saturate(.95)' : 'brightness(1.08) saturate(.88)';
+  $('#sign').style.opacity = mode==='neon' ? Math.max(.4,Number(frontLight)/100) : '1';
+}
+
+function selectPreset(name){
+  $$('.thumb').forEach(t=>t.classList.toggle('active',t.dataset.preset===name));
+
+  if(name==='pvc'){
+    mode='halo';
+    $('#frontColor').value='#f2f2ef';
+    root.style.setProperty('--side','#c2c2be');
+    $('#ledColor').value='#ffffff';
+  }
+  if(name==='acrilico'){
+    mode='sinluz';
+    $('#frontColor').value='#d9d1c8';
+    root.style.setProperty('--side','#b7afa6');
+  }
+  if(name==='galvanizado'){
+    mode='sinluz';
+    $('#frontColor').value='#85898f';
+    root.style.setProperty('--side','#5f646b');
+  }
+  if(name==='inox'){
+    mode='sinluz';
+    $('#frontColor').value='#d9dce2';
+    root.style.setProperty('--side','#60656c');
+  }
+  if(name==='neon'){
+    mode='frontal';
+    $('#frontColor').value='#ffffff';
+    $('#ledColor').value='#5b3dff';
+    root.style.setProperty('--side','#1d2140');
+  }
+  if(name==='frontal'){
+    mode='frontal';
+    $('#frontColor').value='#fff4d2';
+    $('#ledColor').value='#ffca68';
+    root.style.setProperty('--side','#b2a58b');
+  }
+  if(name==='sinluz'){
+    mode='sinluz';
+    $('#frontColor').value='#9f9f9a';
+    root.style.setProperty('--side','#666662');
   }
 
-  if(/<!doctype|<html[\s>]/i.test(limpio)){
-    return limpio;
-  }
-
-  return `<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<style>html,body{margin:0;min-height:100%}</style>
-</head>
-<body>
-${limpio}
-</body>
-</html>`;
+  update();
 }
 
-function previsualizar(){
-  visor.srcdoc = normalizar(codigo.value);
-  localStorage.setItem(STORAGE_KEY,codigo.value);
-  estado.textContent = 'Previsualizado';
-}
+$('#textInput').addEventListener('input',()=>{renderText();update()});
+['depth','separation','shadow','halo','frontLight','frontColor','ledColor']
+.forEach(id=>$('#'+id).addEventListener('input',update));
 
-codigo.addEventListener('input',()=>{
-  localStorage.setItem(STORAGE_KEY,codigo.value);
-  estado.textContent = 'Cambios pendientes';
+$$('[data-side]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    $$('[data-side]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    root.style.setProperty('--side',btn.dataset.side);
+  });
 });
 
-codigo.addEventListener('keydown',evento=>{
-  if(evento.key === 'Tab'){
-    evento.preventDefault();
-    const inicio = codigo.selectionStart;
-    const fin = codigo.selectionEnd;
-    codigo.value =
-      codigo.value.substring(0,inicio) +
-      '  ' +
-      codigo.value.substring(fin);
-    codigo.selectionStart = codigo.selectionEnd = inicio + 2;
-  }
-
-  if((evento.ctrlKey || evento.metaKey) && evento.key === 'Enter'){
-    evento.preventDefault();
-    previsualizar();
-  }
+$$('[data-front]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    $$('[data-front]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  });
 });
 
-document.getElementById('ejecutar').addEventListener('click',previsualizar);
+$$('.thumb').forEach(t=>t.addEventListener('click',()=>selectPreset(t.dataset.preset)));
 
-document.getElementById('limpiar').addEventListener('click',()=>{
-  if(!confirm('¿Limpiar el código pegado?')) return;
-  codigo.value = '';
-  localStorage.removeItem(STORAGE_KEY);
-  previsualizar();
-});
+$('#dayBtn').onclick=()=>{
+  isNight=false;
+  $('#dayBtn').classList.add('active');
+  $('#nightBtn').classList.remove('active');
+  update();
+};
+$('#nightBtn').onclick=()=>{
+  isNight=true;
+  $('#nightBtn').classList.add('active');
+  $('#dayBtn').classList.remove('active');
+  update();
+};
 
-ampliar.addEventListener('click',()=>{
-  const activa = previewCard.classList.toggle('fullscreen');
-  ampliar.textContent = activa ? 'Cerrar pantalla completa' : 'Pantalla completa';
-  document.body.style.overflow = activa ? 'hidden' : '';
-});
-
-const guardado = localStorage.getItem(STORAGE_KEY);
-
-if(guardado){
-  codigo.value = guardado;
-  previsualizar();
-}else{
-  visor.srcdoc = paginaVacia();
-}
+renderText();
+update();
 </script>
 </body>
 </html>
