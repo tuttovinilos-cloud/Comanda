@@ -3,926 +3,264 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>LAB · Bloques visuales de letreros</title>
+<title>LAB · Previsualizador</title>
 <style>
 *{box-sizing:border-box}
 :root{
   --azul:#172bd8;
-  --azul2:#2448ff;
-  --azul-suave:#eef2ff;
-  --naranja:#ff8616;
   --verde:#16a34a;
-  --texto:#111827;
-  --muted:#64748b;
   --fondo:#f1f3f9;
   --panel:#fff;
   --borde:#dbe1ec;
-  --sombra:0 12px 32px rgba(15,23,42,.09);
+  --texto:#111827;
+  --muted:#64748b;
+  --sombra:0 14px 36px rgba(15,23,42,.12);
 }
 html,body{
   margin:0;
   min-height:100%;
   background:var(--fondo);
   color:var(--texto);
-  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
 }
-button,input,select,textarea{font:inherit}
-button{cursor:pointer}
-.oculto{display:none!important}
-
-.topbar{
-  position:sticky;
-  top:0;
-  z-index:20;
+body{padding:16px}
+button,textarea{font:inherit}
+.app{width:min(1600px,100%);margin:auto;display:grid;gap:14px}
+.header{
   background:var(--azul);
   color:#fff;
-  box-shadow:0 8px 24px rgba(23,43,216,.24);
+  border-radius:17px;
+  padding:16px 18px;
+  box-shadow:0 10px 26px rgba(23,43,216,.24);
 }
-.topbar-inner{
-  max-width:1460px;
-  margin:auto;
-  padding:14px 18px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:14px;
-}
-.marca{display:flex;align-items:center;gap:12px}
-.logo{
-  width:42px;height:42px;border-radius:13px;
-  background:#fff;color:var(--azul);
-  display:grid;place-items:center;
-  font-weight:1000;font-size:20px;
-}
-.marca h1{margin:0;font-size:18px;font-weight:950}
-.marca p{margin:3px 0 0;color:#dbe3ff;font-size:11px}
-
-.app{
-  max-width:1460px;
-  margin:auto;
-  padding:18px;
-  display:grid;
-  grid-template-columns:240px minmax(0,1fr) 340px;
-  gap:16px;
-}
-.panel{
-  background:#fff;
+.header h1{margin:0;font-size:20px;font-weight:950}
+.header p{margin:4px 0 0;color:#dbe3ff;font-size:11px}
+.card{
+  background:var(--panel);
   border:1px solid var(--borde);
-  border-radius:18px;
+  border-radius:17px;
   box-shadow:var(--sombra);
+  overflow:hidden;
 }
-.sidebar{
-  padding:14px;
-  align-self:start;
-  position:sticky;
-  top:86px;
-}
-.sidebar h2,.controles h2{
-  margin:0 0 4px;
-  font-size:15px;
-  font-weight:950;
-}
-.sidebar p,.controles p{
-  margin:0 0 13px;
-  color:var(--muted);
-  font-size:10px;
-  line-height:1.4;
-}
-.lista{
-  display:grid;
-  gap:7px;
-}
-.tipo-btn{
-  width:100%;
-  border:1px solid var(--borde);
-  background:#fff;
-  color:#334155;
-  border-radius:11px;
-  padding:10px 11px;
-  text-align:left;
-  font-size:10px;
-  font-weight:900;
-}
-.tipo-btn.activo{
-  background:var(--azul);
-  color:#fff;
-  border-color:var(--azul);
-}
-.preview-wrap{
-  padding:18px;
-}
-.preview-head{
+.card-head{
+  padding:12px 14px;
+  border-bottom:1px solid var(--borde);
   display:flex;
   justify-content:space-between;
-  align-items:flex-start;
+  align-items:center;
   gap:12px;
-  margin-bottom:14px;
 }
-.preview-head h2{margin:0;font-size:18px;font-weight:950}
-.preview-head p{margin:4px 0 0;color:var(--muted);font-size:10px}
+.card-head strong{font-size:12px}
+.estado{color:var(--muted);font-size:10px}
+textarea{
+  display:block;
+  width:100%;
+  min-height:330px;
+  resize:vertical;
+  border:0;
+  outline:0;
+  padding:16px;
+  background:#0f172a;
+  color:#e2e8f0;
+  font:12px/1.55 "Roboto Mono",Consolas,monospace;
+  tab-size:2;
+}
+.actions{
+  padding:11px 14px;
+  border-top:1px solid var(--borde);
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
 .btn{
   border:1px solid var(--borde);
   background:#fff;
   color:var(--texto);
   border-radius:10px;
-  padding:9px 11px;
+  padding:10px 14px;
   font-size:10px;
   font-weight:900;
+  cursor:pointer;
 }
-.btn.primario{
-  background:var(--azul);
-  border-color:var(--azul);
-  color:#fff;
-}
-.preview-card{
+.btn.run{background:var(--verde);border-color:var(--verde);color:#fff}
+.btn.full{background:var(--azul);border-color:var(--azul);color:#fff}
+.preview-wrap{padding:12px;background:#d9dee8}
+iframe{
+  display:block;
   width:100%;
-  max-width:760px;
-  margin:auto;
-  background:#fff;
-  border:1px solid var(--borde);
-  border-radius:20px;
-  overflow:hidden;
-  box-shadow:var(--sombra);
-}
-.card-visual{
-  position:relative;
-  min-height:220px;
-  display:grid;
-  place-items:center;
-  overflow:hidden;
-  background:linear-gradient(145deg,#edf1ff,#fff);
-}
-.badge{
-  position:absolute;
-  top:14px;
-  left:14px;
-  z-index:4;
-  background:#fff;
-  color:var(--azul);
-  border:1px solid #cdd6ff;
-  border-radius:999px;
-  padding:6px 9px;
-  font-size:10px;
-  font-weight:950;
-}
-.objeto{
-  position:relative;
-  z-index:2;
-  display:grid;
-  place-items:center;
-  min-width:220px;
-  min-height:110px;
-  padding:24px 30px;
-  border-radius:8px;
-  font-size:54px;
-  font-weight:1000;
-  letter-spacing:-2px;
-  text-align:center;
-  color:#17233d;
-  background:#fff;
-  box-shadow:0 16px 28px rgba(15,23,42,.18);
-  transform:perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0px);
-}
-.objeto:before,.objeto:after{
-  content:"";
-  position:absolute;
-  display:none;
-}
-.card-body{padding:18px}
-.card-title{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:12px;
-}
-.card-title h3{margin:0;font-size:20px;font-weight:950}
-.nivel{
-  white-space:nowrap;
-  background:#fff7e6;
-  color:#9a5700;
-  border:1px solid #ffe2a8;
-  border-radius:999px;
-  padding:6px 8px;
-  font-size:9px;
-  font-weight:950;
-}
-.card-body p{
-  margin:9px 0 13px;
-  color:var(--muted);
-  font-size:11px;
-  line-height:1.45;
-}
-.chips{display:flex;flex-wrap:wrap;gap:7px}
-.chip{
-  background:#f6f8fc;
-  border:1px solid #e3e8f2;
-  border-radius:8px;
-  padding:7px 8px;
-  color:#475569;
-  font-size:9px;
-  font-weight:850;
-}
-.acciones{
-  display:flex;
-  gap:8px;
-  margin-top:15px;
-}
-.acciones .btn{flex:1}
-
-.controles{
-  padding:14px;
-  align-self:start;
-  position:sticky;
-  top:86px;
-  max-height:calc(100vh - 105px);
-  overflow:auto;
-}
-.grupo{
-  border-top:1px solid #edf0f5;
-  padding-top:12px;
-  margin-top:12px;
-}
-.grupo:first-of-type{
-  border-top:0;
-  padding-top:0;
-  margin-top:0;
-}
-.grupo h3{
-  margin:0 0 9px;
-  font-size:11px;
-  font-weight:950;
-}
-.campo{margin-bottom:10px}
-label{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  font-size:9px;
-  color:#475569;
-  font-weight:900;
-  margin-bottom:5px;
-}
-.valor{
-  color:var(--azul);
-  font-weight:950;
-}
-input,select,textarea{
-  width:100%;
-  border:1px solid var(--borde);
-  background:#fff;
-  color:var(--texto);
-  border-radius:9px;
-  padding:9px 10px;
-  outline:none;
-}
-input[type="range"]{padding:0}
-input[type="color"]{
-  height:38px;
-  padding:3px;
-}
-textarea{min-height:72px;resize:vertical}
-.dos{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-.codigo{
-  margin-top:14px;
-  background:#0f172a;
-  color:#e2e8f0;
-  border-radius:12px;
-  padding:12px;
-  font:10px/1.5 "Roboto Mono",Consolas,monospace;
-  white-space:pre-wrap;
-  max-height:280px;
-  overflow:auto;
-}
-.nota{
-  margin-top:12px;
-  background:#eff6ff;
-  border:1px solid #bfdbfe;
-  color:#1e40af;
+  height:820px;
+  border:0;
   border-radius:11px;
-  padding:10px;
-  font-size:9px;
-  line-height:1.45;
+  background:#fff;
+  box-shadow:0 8px 24px rgba(15,23,42,.12);
 }
-
-@media(max-width:1100px){
-  .app{grid-template-columns:210px minmax(0,1fr)}
-  .controles{grid-column:1/-1;position:static;max-height:none}
+.fullscreen{
+  position:fixed!important;
+  inset:0!important;
+  z-index:999!important;
+  width:100vw!important;
+  height:100vh!important;
+  border-radius:0!important;
 }
-@media(max-width:720px){
-  .topbar-inner{align-items:flex-start}
-  .app{grid-template-columns:1fr;padding:12px}
-  .sidebar,.controles{position:static}
-  .lista{
-    display:flex;
-    overflow:auto;
-    padding-bottom:4px;
-  }
-  .tipo-btn{
-    width:auto;
-    white-space:nowrap;
-  }
-  .preview-wrap{padding:12px}
-  .card-visual{min-height:180px}
-  .objeto{min-width:180px;min-height:90px;font-size:42px}
-  .card-title{flex-direction:column}
-  .acciones{flex-direction:column}
+.fullscreen .preview-wrap{height:calc(100vh - 49px);padding:0}
+.fullscreen iframe{height:100%;border-radius:0}
+@media(max-width:700px){
+  body{padding:9px}
+  .card-head{align-items:flex-start;flex-direction:column}
+  .actions{display:grid;grid-template-columns:1fr 1fr}
+  iframe{height:650px}
 }
 </style>
 </head>
 <body>
-<header class="topbar">
-  <div class="topbar-inner">
-    <div class="marca">
-      <div class="logo">L</div>
-      <div>
-        <h1>LAB</h1>
-        <p>Laboratorio visual de bloques de letreros</p>
-      </div>
-    </div>
-    <button class="btn" id="btnReset">Restablecer bloque</button>
-  </div>
+<main class="app">
+
+<header class="header">
+  <h1>LAB</h1>
+  <p>Pega el código que te envíe y presiona Previsualizar.</p>
 </header>
 
-<main class="app">
-  <aside class="panel sidebar">
-    <h2>Bloques</h2>
-    <p>Selecciona un tipo y ajusta su apariencia.</p>
-    <div class="lista" id="listaTipos"></div>
-  </aside>
+<section class="card">
+  <div class="card-head">
+    <strong>Código HTML + CSS + JavaScript</strong>
+    <span class="estado" id="estado">Sin previsualizar</span>
+  </div>
 
-  <section class="panel preview-wrap">
-    <div class="preview-head">
-      <div>
-        <h2>Vista previa</h2>
-        <p>Los cambios se aplican inmediatamente.</p>
-      </div>
-      <button class="btn primario" id="btnCopiarCss">Copiar CSS</button>
-    </div>
+  <textarea
+    id="codigo"
+    spellcheck="false"
+    placeholder="Pega aquí el código completo del letrero..."></textarea>
 
-    <article class="preview-card" id="previewCard">
-      <div class="card-visual" id="cardVisual">
-        <span class="badge" id="badge">4 variantes</span>
-        <div class="objeto" id="objeto">PVC</div>
-      </div>
+  <div class="actions">
+    <button class="btn" id="limpiar">Limpiar</button>
+    <button class="btn run" id="ejecutar">Previsualizar</button>
+  </div>
+</section>
 
-      <div class="card-body">
-        <div class="card-title">
-          <h3 id="titulo">PVC laminado</h3>
-          <span class="nivel" id="nivel">Económico / estándar</span>
-        </div>
-        <p id="descripcion">Corpóreo macizo de PVC con acabado laminado.</p>
-        <div class="chips" id="chips"></div>
-        <div class="acciones">
-          <button class="btn">Detalles</button>
-          <button class="btn primario">Elegir</button>
-        </div>
-      </div>
-    </article>
+<section class="card" id="previewCard">
+  <div class="card-head">
+    <strong>Previsualización</strong>
+    <button class="btn full" id="ampliar">Pantalla completa</button>
+  </div>
 
-    <div class="nota">
-      Este laboratorio modifica únicamente la apariencia del bloque. Cuando encuentres un resultado que te guste, copia el CSS y luego lo pasamos a Letrero.
-    </div>
-  </section>
+  <div class="preview-wrap">
+    <iframe
+      id="visor"
+      title="Previsualización del código"
+      sandbox="allow-scripts allow-forms allow-modals allow-popups allow-downloads"></iframe>
+  </div>
+</section>
 
-  <aside class="panel controles">
-    <h2>Controles</h2>
-    <p>Ajusta el bloque seleccionado.</p>
-
-    <div class="grupo">
-      <h3>Contenido</h3>
-      <div class="campo">
-        <label>Texto central</label>
-        <input id="ctrlTexto" type="text">
-      </div>
-      <div class="campo">
-        <label>Título</label>
-        <input id="ctrlTitulo" type="text">
-      </div>
-      <div class="campo">
-        <label>Descripción</label>
-        <textarea id="ctrlDescripcion"></textarea>
-      </div>
-      <div class="campo">
-        <label>Etiqueta de variantes</label>
-        <input id="ctrlBadge" type="text">
-      </div>
-      <div class="campo">
-        <label>Nivel</label>
-        <input id="ctrlNivel" type="text">
-      </div>
-    </div>
-
-    <div class="grupo">
-      <h3>Bloque visual</h3>
-      <div class="campo">
-        <label>Alto <span class="valor" id="vAlto"></span></label>
-        <input id="ctrlAlto" type="range" min="120" max="420" step="5">
-      </div>
-      <div class="campo">
-        <label>Fondo inicial</label>
-        <input id="ctrlFondo1" type="color">
-      </div>
-      <div class="campo">
-        <label>Fondo final</label>
-        <input id="ctrlFondo2" type="color">
-      </div>
-      <div class="campo">
-        <label>Dirección del degradado <span class="valor" id="vAngulo"></span></label>
-        <input id="ctrlAngulo" type="range" min="0" max="360" step="5">
-      </div>
-      <div class="campo">
-        <label>Radio del bloque <span class="valor" id="vRadioBloque"></span></label>
-        <input id="ctrlRadioBloque" type="range" min="0" max="40" step="1">
-      </div>
-    </div>
-
-    <div class="grupo">
-      <h3>Objeto central</h3>
-      <div class="campo">
-        <label>Tamaño de letra <span class="valor" id="vFuente"></span></label>
-        <input id="ctrlFuente" type="range" min="18" max="110" step="1">
-      </div>
-      <div class="campo">
-        <label>Color del texto</label>
-        <input id="ctrlColorTexto" type="color">
-      </div>
-      <div class="campo">
-        <label>Color del objeto</label>
-        <input id="ctrlColorObjeto" type="color">
-      </div>
-      <div class="campo">
-        <label>Ancho mínimo <span class="valor" id="vAnchoObjeto"></span></label>
-        <input id="ctrlAnchoObjeto" type="range" min="100" max="500" step="5">
-      </div>
-      <div class="campo">
-        <label>Alto mínimo <span class="valor" id="vAltoObjeto"></span></label>
-        <input id="ctrlAltoObjeto" type="range" min="50" max="260" step="5">
-      </div>
-      <div class="campo">
-        <label>Radio del objeto <span class="valor" id="vRadioObjeto"></span></label>
-        <input id="ctrlRadioObjeto" type="range" min="0" max="60" step="1">
-      </div>
-      <div class="campo">
-        <label>Profundidad / sombra <span class="valor" id="vSombra"></span></label>
-        <input id="ctrlSombra" type="range" min="0" max="50" step="1">
-      </div>
-      <div class="campo">
-        <label>Brillo luminoso <span class="valor" id="vGlow"></span></label>
-        <input id="ctrlGlow" type="range" min="0" max="60" step="1">
-      </div>
-      <div class="campo">
-        <label>Color del brillo</label>
-        <input id="ctrlGlowColor" type="color">
-      </div>
-    </div>
-
-    <div class="grupo">
-      <h3>Perspectiva</h3>
-      <div class="campo">
-        <label>Rotación X <span class="valor" id="vRotX"></span></label>
-        <input id="ctrlRotX" type="range" min="-45" max="45" step="1">
-      </div>
-      <div class="campo">
-        <label>Rotación Y <span class="valor" id="vRotY"></span></label>
-        <input id="ctrlRotY" type="range" min="-45" max="45" step="1">
-      </div>
-      <div class="campo">
-        <label>Desplazamiento vertical <span class="valor" id="vTranslateY"></span></label>
-        <input id="ctrlTranslateY" type="range" min="-80" max="80" step="1">
-      </div>
-    </div>
-
-    <div class="grupo">
-      <h3>Borde y tarjeta</h3>
-      <div class="campo">
-        <label>Radio de tarjeta <span class="valor" id="vRadioCard"></span></label>
-        <input id="ctrlRadioCard" type="range" min="0" max="40" step="1">
-      </div>
-      <div class="campo">
-        <label>Color del borde</label>
-        <input id="ctrlBorde" type="color">
-      </div>
-    </div>
-
-    <div class="codigo" id="codigoCss"></div>
-  </aside>
 </main>
 
 <script>
 'use strict';
 
-const PRESETS = {
-  pvc:{
-    nombre:'PVC laminado',
-    texto:'PVC',
-    descripcion:'Corpóreo macizo de PVC con acabado laminado.',
-    badge:'4 variantes',
-    nivel:'Económico / estándar',
-    chips:['3 mm','5 mm','9 mm','15 mm'],
-    alto:220,
-    fondo1:'#edf1ff',
-    fondo2:'#ffffff',
-    angulo:145,
-    radioBloque:0,
-    fuente:54,
-    colorTexto:'#17233d',
-    colorObjeto:'#ffffff',
-    anchoObjeto:220,
-    altoObjeto:110,
-    radioObjeto:8,
-    sombra:28,
-    glow:0,
-    glowColor:'#2448ff',
-    rotX:0,
-    rotY:0,
-    translateY:0,
-    radioCard:20,
-    borde:'#dbe1ec'
-  },
-  acrilico:{
-    nombre:'Acrílico transparente laminado',
-    texto:'Acrílico',
-    descripcion:'Acrílico transparente con acabado laminado frontal.',
-    badge:'3 variantes',
-    nivel:'Estándar',
-    chips:['3 mm','5 mm','8 mm'],
-    alto:220,
-    fondo1:'#f4f7ff',
-    fondo2:'#ffffff',
-    angulo:145,
-    radioBloque:0,
-    fuente:46,
-    colorTexto:'#5f6674',
-    colorObjeto:'#f7fbff',
-    anchoObjeto:260,
-    altoObjeto:120,
-    radioObjeto:12,
-    sombra:22,
-    glow:0,
-    glowColor:'#2448ff',
-    rotX:0,
-    rotY:-8,
-    translateY:0,
-    radioCard:20,
-    borde:'#dbe1ec'
-  },
-  frontlit:{
-    nombre:'Front Lit',
-    texto:'Front Lit',
-    descripcion:'Letrero con canto de aluminio e iluminación frontal.',
-    badge:'3 variantes',
-    nivel:'Premium iluminado',
-    chips:['4 cm','6 cm','10 cm'],
-    alto:220,
-    fondo1:'#2439ec',
-    fondo2:'#0f1f7e',
-    angulo:145,
-    radioBloque:0,
-    fuente:48,
-    colorTexto:'#ffffff',
-    colorObjeto:'#20263b',
-    anchoObjeto:260,
-    altoObjeto:120,
-    radioObjeto:10,
-    sombra:26,
-    glow:26,
-    glowColor:'#7fa0ff',
-    rotX:0,
-    rotY:0,
-    translateY:0,
-    radioCard:20,
-    borde:'#dbe1ec'
-  },
-  caja:{
-    nombre:'Caja de luz',
-    texto:'CAJA',
-    descripcion:'Estructura cerrada con frontal acrílico iluminado.',
-    badge:'2 variantes',
-    nivel:'Estándar / premium',
-    chips:['PVC','Aluminio'],
-    alto:220,
-    fondo1:'#eaf0ff',
-    fondo2:'#ffffff',
-    angulo:145,
-    radioBloque:0,
-    fuente:50,
-    colorTexto:'#ffffff',
-    colorObjeto:'#172bd8',
-    anchoObjeto:260,
-    altoObjeto:120,
-    radioObjeto:14,
-    sombra:30,
-    glow:20,
-    glowColor:'#8da4ff',
-    rotX:0,
-    rotY:0,
-    translateY:0,
-    radioCard:20,
-    borde:'#dbe1ec'
-  },
-  galvanizado:{
-    nombre:'Galvanizado',
-    texto:'GALV',
-    descripcion:'Corpóreo metálico con o sin ribete.',
-    badge:'2 variantes',
-    nivel:'Premium',
-    chips:['Con ribete','Sin ribete'],
-    alto:220,
-    fondo1:'#e6e9ef',
-    fondo2:'#ffffff',
-    angulo:145,
-    radioBloque:0,
-    fuente:50,
-    colorTexto:'#303640',
-    colorObjeto:'#b9bec7',
-    anchoObjeto:260,
-    altoObjeto:120,
-    radioObjeto:8,
-    sombra:34,
-    glow:0,
-    glowColor:'#ffffff',
-    rotX:0,
-    rotY:-8,
-    translateY:0,
-    radioCard:20,
-    borde:'#dbe1ec'
-  },
-  inoxidable:{
-    nombre:'Acero inoxidable',
-    texto:'INOX',
-    descripcion:'Corpóreo metálico pulido, satinado o espejo.',
-    badge:'4 variantes',
-    nivel:'Premium',
-    chips:['Pulido','Satinado','Espejo','Pintado'],
-    alto:220,
-    fondo1:'#f0f2f6',
-    fondo2:'#ffffff',
-    angulo:145,
-    radioBloque:0,
-    fuente:50,
-    colorTexto:'#2f3540',
-    colorObjeto:'#d5d9e1',
-    anchoObjeto:260,
-    altoObjeto:120,
-    radioObjeto:8,
-    sombra:34,
-    glow:0,
-    glowColor:'#ffffff',
-    rotX:0,
-    rotY:-8,
-    translateY:0,
-    radioCard:20,
-    borde:'#dbe1ec'
-  },
-  neon:{
-    nombre:'Neón LED',
-    texto:'NEÓN',
-    descripcion:'Neón LED sobre acrílico o PVC.',
-    badge:'3 variantes',
-    nivel:'Estándar / premium',
-    chips:['Acrílico','Laminado','PVC'],
-    alto:220,
-    fondo1:'#202a4d',
-    fondo2:'#080d1d',
-    angulo:145,
-    radioBloque:0,
-    fuente:52,
-    colorTexto:'#ffffff',
-    colorObjeto:'#101628',
-    anchoObjeto:280,
-    altoObjeto:125,
-    radioObjeto:14,
-    sombra:28,
-    glow:42,
-    glowColor:'#7c5cff',
-    rotX:0,
-    rotY:0,
-    translateY:0,
-    radioCard:20,
-    borde:'#dbe1ec'
-  },
-  base:{
-    nombre:'Logo sobre base',
-    texto:'BASE',
-    descripcion:'Logo instalado sobre rack, PVC laminado o ACM.',
-    badge:'3 variantes',
-    nivel:'Variable',
-    chips:['Rack','PVC','ACM'],
-    alto:220,
-    fondo1:'#edf1ff',
-    fondo2:'#ffffff',
-    angulo:145,
-    radioBloque:0,
-    fuente:50,
-    colorTexto:'#17233d',
-    colorObjeto:'#dce3ff',
-    anchoObjeto:300,
-    altoObjeto:130,
-    radioObjeto:16,
-    sombra:28,
-    glow:0,
-    glowColor:'#2448ff',
-    rotX:0,
-    rotY:0,
-    translateY:0,
-    radioCard:20,
-    borde:'#dbe1ec'
+const codigo = document.getElementById('codigo');
+const visor = document.getElementById('visor');
+const estado = document.getElementById('estado');
+const previewCard = document.getElementById('previewCard');
+const ampliar = document.getElementById('ampliar');
+const STORAGE_KEY = 'lab_codigo_pegado_v1';
+
+function paginaVacia(){
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+html,body{
+  margin:0;
+  min-height:100%;
+  display:grid;
+  place-items:center;
+  background:#f1f3f9;
+  color:#64748b;
+  font-family:Arial,sans-serif;
+}
+</style>
+</head>
+<body>Pega el código y presiona Previsualizar.</body>
+</html>`;
+}
+
+function normalizar(texto){
+  const limpio = String(texto || '').trim();
+
+  if(!limpio){
+    return paginaVacia();
   }
-};
 
-let tipoActual = 'pvc';
-let estado = {};
+  if(/<!doctype|<html[\s>]/i.test(limpio)){
+    return limpio;
+  }
 
-const $ = s => document.querySelector(s);
-
-function clonar(obj){return JSON.parse(JSON.stringify(obj))}
-
-function cargarTipo(tipo){
-  tipoActual = tipo;
-  estado = clonar(PRESETS[tipo]);
-  document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.toggle('activo',b.dataset.tipo===tipo));
-  cargarControles();
-  actualizarVista();
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;min-height:100%}</style>
+</head>
+<body>
+${limpio}
+</body>
+</html>`;
 }
 
-function renderLista(){
-  const nombres = {
-    pvc:'PVC laminado',
-    acrilico:'Acrílico laminado',
-    frontlit:'Front Lit',
-    caja:'Caja de luz',
-    galvanizado:'Galvanizado',
-    inoxidable:'Acero inoxidable',
-    neon:'Neón LED',
-    base:'Logo sobre base'
-  };
-  $('#listaTipos').innerHTML = Object.entries(nombres).map(([k,v])=>
-    `<button class="tipo-btn ${k===tipoActual?'activo':''}" data-tipo="${k}">${v}</button>`
-  ).join('');
+function previsualizar(){
+  visor.srcdoc = normalizar(codigo.value);
+  localStorage.setItem(STORAGE_KEY,codigo.value);
+  estado.textContent = 'Previsualizado';
 }
 
-function cargarControles(){
-  $('#ctrlTexto').value = estado.texto;
-  $('#ctrlTitulo').value = estado.nombre;
-  $('#ctrlDescripcion').value = estado.descripcion;
-  $('#ctrlBadge').value = estado.badge;
-  $('#ctrlNivel').value = estado.nivel;
-  $('#ctrlAlto').value = estado.alto;
-  $('#ctrlFondo1').value = estado.fondo1;
-  $('#ctrlFondo2').value = estado.fondo2;
-  $('#ctrlAngulo').value = estado.angulo;
-  $('#ctrlRadioBloque').value = estado.radioBloque;
-  $('#ctrlFuente').value = estado.fuente;
-  $('#ctrlColorTexto').value = estado.colorTexto;
-  $('#ctrlColorObjeto').value = estado.colorObjeto;
-  $('#ctrlAnchoObjeto').value = estado.anchoObjeto;
-  $('#ctrlAltoObjeto').value = estado.altoObjeto;
-  $('#ctrlRadioObjeto').value = estado.radioObjeto;
-  $('#ctrlSombra').value = estado.sombra;
-  $('#ctrlGlow').value = estado.glow;
-  $('#ctrlGlowColor').value = estado.glowColor;
-  $('#ctrlRotX').value = estado.rotX;
-  $('#ctrlRotY').value = estado.rotY;
-  $('#ctrlTranslateY').value = estado.translateY;
-  $('#ctrlRadioCard').value = estado.radioCard;
-  $('#ctrlBorde').value = estado.borde;
-}
-
-function actualizarEstadoDesdeControles(){
-  estado.texto = $('#ctrlTexto').value;
-  estado.nombre = $('#ctrlTitulo').value;
-  estado.descripcion = $('#ctrlDescripcion').value;
-  estado.badge = $('#ctrlBadge').value;
-  estado.nivel = $('#ctrlNivel').value;
-  estado.alto = Number($('#ctrlAlto').value);
-  estado.fondo1 = $('#ctrlFondo1').value;
-  estado.fondo2 = $('#ctrlFondo2').value;
-  estado.angulo = Number($('#ctrlAngulo').value);
-  estado.radioBloque = Number($('#ctrlRadioBloque').value);
-  estado.fuente = Number($('#ctrlFuente').value);
-  estado.colorTexto = $('#ctrlColorTexto').value;
-  estado.colorObjeto = $('#ctrlColorObjeto').value;
-  estado.anchoObjeto = Number($('#ctrlAnchoObjeto').value);
-  estado.altoObjeto = Number($('#ctrlAltoObjeto').value);
-  estado.radioObjeto = Number($('#ctrlRadioObjeto').value);
-  estado.sombra = Number($('#ctrlSombra').value);
-  estado.glow = Number($('#ctrlGlow').value);
-  estado.glowColor = $('#ctrlGlowColor').value;
-  estado.rotX = Number($('#ctrlRotX').value);
-  estado.rotY = Number($('#ctrlRotY').value);
-  estado.translateY = Number($('#ctrlTranslateY').value);
-  estado.radioCard = Number($('#ctrlRadioCard').value);
-  estado.borde = $('#ctrlBorde').value;
-}
-
-function actualizarVista(){
-  $('#badge').textContent = estado.badge;
-  $('#objeto').textContent = estado.texto;
-  $('#titulo').textContent = estado.nombre;
-  $('#descripcion').textContent = estado.descripcion;
-  $('#nivel').textContent = estado.nivel;
-  $('#chips').innerHTML = estado.chips.map(x=>`<span class="chip">${x}</span>`).join('');
-
-  const visual = $('#cardVisual');
-  visual.style.minHeight = `${estado.alto}px`;
-  visual.style.background = `linear-gradient(${estado.angulo}deg,${estado.fondo1},${estado.fondo2})`;
-  visual.style.borderRadius = `${estado.radioBloque}px ${estado.radioBloque}px 0 0`;
-
-  const objeto = $('#objeto');
-  objeto.style.fontSize = `${estado.fuente}px`;
-  objeto.style.color = estado.colorTexto;
-  objeto.style.background = estado.colorObjeto;
-  objeto.style.minWidth = `${estado.anchoObjeto}px`;
-  objeto.style.minHeight = `${estado.altoObjeto}px`;
-  objeto.style.borderRadius = `${estado.radioObjeto}px`;
-  objeto.style.transform = `perspective(900px) rotateX(${estado.rotX}deg) rotateY(${estado.rotY}deg) translateY(${estado.translateY}px)`;
-  objeto.style.boxShadow = `0 ${Math.max(6,Math.round(estado.sombra*.55))}px ${estado.sombra}px rgba(15,23,42,.24)`;
-  objeto.style.textShadow = estado.glow > 0
-    ? `0 0 ${Math.max(3,Math.round(estado.glow*.2))}px ${estado.glowColor},0 0 ${Math.max(8,Math.round(estado.glow*.55))}px ${estado.glowColor},0 0 ${estado.glow}px ${estado.glowColor}`
-    : 'none';
-
-  $('#previewCard').style.borderRadius = `${estado.radioCard}px`;
-  $('#previewCard').style.borderColor = estado.borde;
-
-  $('#vAlto').textContent = `${estado.alto}px`;
-  $('#vAngulo').textContent = `${estado.angulo}°`;
-  $('#vRadioBloque').textContent = `${estado.radioBloque}px`;
-  $('#vFuente').textContent = `${estado.fuente}px`;
-  $('#vAnchoObjeto').textContent = `${estado.anchoObjeto}px`;
-  $('#vAltoObjeto').textContent = `${estado.altoObjeto}px`;
-  $('#vRadioObjeto').textContent = `${estado.radioObjeto}px`;
-  $('#vSombra').textContent = `${estado.sombra}px`;
-  $('#vGlow').textContent = `${estado.glow}px`;
-  $('#vRotX').textContent = `${estado.rotX}°`;
-  $('#vRotY').textContent = `${estado.rotY}°`;
-  $('#vTranslateY').textContent = `${estado.translateY}px`;
-  $('#vRadioCard').textContent = `${estado.radioCard}px`;
-
-  generarCss();
-}
-
-function generarCss(){
-  const css = `.card-visual{
-  min-height:${estado.alto}px;
-  background:linear-gradient(${estado.angulo}deg,${estado.fondo1},${estado.fondo2});
-  border-radius:${estado.radioBloque}px ${estado.radioBloque}px 0 0;
-}
-
-.card-visual .objeto{
-  min-width:${estado.anchoObjeto}px;
-  min-height:${estado.altoObjeto}px;
-  background:${estado.colorObjeto};
-  color:${estado.colorTexto};
-  font-size:${estado.fuente}px;
-  border-radius:${estado.radioObjeto}px;
-  transform:perspective(900px) rotateX(${estado.rotX}deg) rotateY(${estado.rotY}deg) translateY(${estado.translateY}px);
-  box-shadow:0 ${Math.max(6,Math.round(estado.sombra*.55))}px ${estado.sombra}px rgba(15,23,42,.24);
-  text-shadow:${estado.glow>0?`0 0 ${Math.max(3,Math.round(estado.glow*.2))}px ${estado.glowColor}, 0 0 ${Math.max(8,Math.round(estado.glow*.55))}px ${estado.glowColor}, 0 0 ${estado.glow}px ${estado.glowColor}`:'none'};
-}
-
-.preview-card{
-  border-radius:${estado.radioCard}px;
-  border-color:${estado.borde};
-}`;
-  $('#codigoCss').textContent = css;
-}
-
-document.addEventListener('click',e=>{
-  const btn = e.target.closest('[data-tipo]');
-  if(btn) cargarTipo(btn.dataset.tipo);
+codigo.addEventListener('input',()=>{
+  localStorage.setItem(STORAGE_KEY,codigo.value);
+  estado.textContent = 'Cambios pendientes';
 });
 
-document.querySelectorAll('.controles input,.controles textarea,.controles select').forEach(el=>{
-  el.addEventListener('input',()=>{
-    actualizarEstadoDesdeControles();
-    actualizarVista();
-  });
-  el.addEventListener('change',()=>{
-    actualizarEstadoDesdeControles();
-    actualizarVista();
-  });
+codigo.addEventListener('keydown',evento=>{
+  if(evento.key === 'Tab'){
+    evento.preventDefault();
+    const inicio = codigo.selectionStart;
+    const fin = codigo.selectionEnd;
+    codigo.value =
+      codigo.value.substring(0,inicio) +
+      '  ' +
+      codigo.value.substring(fin);
+    codigo.selectionStart = codigo.selectionEnd = inicio + 2;
+  }
+
+  if((evento.ctrlKey || evento.metaKey) && evento.key === 'Enter'){
+    evento.preventDefault();
+    previsualizar();
+  }
 });
 
-$('#btnReset').onclick=()=>cargarTipo(tipoActual);
+document.getElementById('ejecutar').addEventListener('click',previsualizar);
 
-$('#btnCopiarCss').onclick=async()=>{
-  try{
-    await navigator.clipboard.writeText($('#codigoCss').textContent);
-    const original = $('#btnCopiarCss').textContent;
-    $('#btnCopiarCss').textContent = 'CSS copiado';
-    setTimeout(()=>$('#btnCopiarCss').textContent=original,1400);
-  }catch{
-    alert('No se pudo copiar automáticamente.');
-  }
-};
+document.getElementById('limpiar').addEventListener('click',()=>{
+  if(!confirm('¿Limpiar el código pegado?')) return;
+  codigo.value = '';
+  localStorage.removeItem(STORAGE_KEY);
+  previsualizar();
+});
 
-renderLista();
-cargarTipo('pvc');
+ampliar.addEventListener('click',()=>{
+  const activa = previewCard.classList.toggle('fullscreen');
+  ampliar.textContent = activa ? 'Cerrar pantalla completa' : 'Pantalla completa';
+  document.body.style.overflow = activa ? 'hidden' : '';
+});
+
+const guardado = localStorage.getItem(STORAGE_KEY);
+
+if(guardado){
+  codigo.value = guardado;
+  previsualizar();
+}else{
+  visor.srcdoc = paginaVacia();
+}
 </script>
 </body>
 </html>
