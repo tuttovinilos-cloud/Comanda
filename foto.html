@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <title>Cámara Tuttovinilos</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --fondo: #080b12;
+      --panel: #111827;
+      --panel2: #182235;
+      --texto: #f8fafc;
+      --suave: #94a3b8;
+      --borde: rgba(255,255,255,.10);
+      --acento: #22c55e;
+      --acento2: #16a34a;
+      --peligro: #ef4444;
+      --aviso: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, rgba(34,197,94,.13), transparent 35%),
+        var(--fondo);
+      color: var(--texto);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    button, input { font: inherit; }
+
+    .contenedor {
+      width: min(100%, 720px);
+      margin: 0 auto;
+      padding: 18px 14px 36px;
+    }
+
+    .encabezado {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 7vw, 34px);
+      line-height: 1;
+    }
+
+    .subtitulo {
+      margin: 7px 0 0;
+      color: var(--suave);
+      font-size: 14px;
+    }
+
+    .conexion {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--suave);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .punto {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--peligro);
+      box-shadow: 0 0 12px currentColor;
+    }
+
+    .punto.activo { background: var(--acento); }
+
+    .tarjeta {
+      background: rgba(17,24,39,.94);
+      border: 1px solid var(--borde);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.28);
+    }
+
+    .oculto { display: none !important; }
+
+    .campo {
+      display: grid;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    label {
+      color: var(--suave);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      min-height: 52px;
+      padding: 0 15px;
+      border: 1px solid var(--borde);
+      border-radius: 13px;
+      outline: none;
+      background: #0b1220;
+      color: var(--texto);
+      font-size: 20px;
+      letter-spacing: 4px;
+    }
+
+    input:focus {
+      border-color: var(--acento);
+      box-shadow: 0 0 0 3px rgba(34,197,94,.16);
+    }
+
+    .recordar {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 13px 0 16px;
+      color: var(--suave);
+      font-size: 13px;
+    }
+
+    .btn {
+      width: 100%;
+      min-height: 54px;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .12s ease, opacity .12s ease;
+    }
+
+    .btn:active { transform: scale(.985); }
+    .btn:disabled { opacity: .50; cursor: not-allowed; }
+
+    .btn-principal {
+      background: linear-gradient(180deg, var(--acento), var(--acento2));
+      color: #041108;
+      font-size: 18px;
+    }
+
+    .btn-secundario {
+      background: var(--panel2);
+      color: var(--texto);
+      border: 1px solid var(--borde);
+    }
+
+    .acciones {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .visor {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      margin-top: 14px;
+      overflow: hidden;
+      border-radius: 16px;
+      border: 1px solid var(--borde);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.03), rgba(255,255,255,0)),
+        #05070c;
+    }
+
+    .visor img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      background: #000;
+    }
+
+    .sin-foto {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 30px;
+      text-align: center;
+      color: var(--suave);
+    }
+
+    .estado-fila {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .estado {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      background: rgba(148,163,184,.12);
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .estado.pendiente {
+      background: rgba(245,158,11,.15);
+      color: #fbbf24;
+    }
+
+    .estado.capturando {
+      background: rgba(59,130,246,.16);
+      color: #60a5fa;
+    }
+
+    .estado.completada {
+      background: rgba(34,197,94,.15);
+      color: #4ade80;
+    }
+
+    .estado.error {
+      background: rgba(239,68,68,.16);
+      color: #f87171;
+    }
+
+    .fecha {
+      color: var(--suave);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .mensaje {
+      min-height: 20px;
+      margin: 12px 0 0;
+      color: var(--suave);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .mensaje.error { color: #fca5a5; }
+
+    .pie {
+      margin-top: 14px;
+      text-align: center;
+      color: #64748b;
+      font-size: 11px;
+    }
+
+    @media (max-width: 480px) {
+      .contenedor { padding-inline: 10px; }
+      .tarjeta { padding: 14px; border-radius: 17px; }
+      .encabezado { align-items: flex-start; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="contenedor">
+    <header class="encabezado">
+      <div>
+        <h1>Cámara</h1>
+        <p class="subtitulo">Tuttovinilos · fotografía remota</p>
+      </div>
+
+      <div class="conexion">
+        <span id="puntoConexion" class="punto"></span>
+        <span id="textoConexion">Sin conexión</span>
+      </div>
+    </header>
+
+    <section id="pantallaAcceso" class="tarjeta">
+      <h2 style="margin:0">Ingresar</h2>
+      <p class="subtitulo">Coloca el PIN de la cámara.</p>
+
+      <div class="campo">
+        <label for="pin">PIN</label>
+        <input id="pin" type="password" inputmode="numeric" maxlength="12"
+               autocomplete="current-password" placeholder="••••">
+      </div>
+
+      <label class="recordar">
+        <input id="recordar" type="checkbox" checked>
+        Recordar el PIN en este celular
+      </label>
+
+      <button id="btnEntrar" class="btn btn-principal">Entrar</button>
+      <p id="mensajeAcceso" class="mensaje"></p>
+    </section>
+
+    <section id="pantallaCamara" class="tarjeta oculto">
+      <button id="btnTomar" class="btn btn-principal">Tomar foto</button>
+
+      <div class="visor">
+        <img id="foto" class="oculto" alt="Última fotografía de la cámara">
+        <div id="sinFoto" class="sin-foto">
+          Todavía no se ha recibido ninguna fotografía.
+        </div>
+      </div>
+
+      <div class="estado-fila">
+        <span id="estado" class="estado">Esperando</span>
+        <span id="fecha" class="fecha">Sin fotografía</span>
+      </div>
+
+      <p id="mensajeCamara" class="mensaje">La página revisará automáticamente si hay una foto nueva.</p>
+
+      <div class="acciones">
+        <button id="btnActualizar" class="btn btn-secundario">Actualizar</button>
+        <button id="btnSalir" class="btn btn-secundario">Salir</button>
+      </div>
+    </section>
+
+    <p class="pie">La cámara debe permanecer encendida y conectada a Internet.</p>
+  </main>
+
+  <script>
+    const SUPABASE_URL = 'https://ujfdsabypflseijatxba.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_CiZo8xFKkaT7mdRrQUYxuQ_48F6Vx3w';
+    const BUCKET = 'camara-fotos';
+
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    });
+
+    const $ = (selector) => document.querySelector(selector);
+
+    const pantallaAcceso = $('#pantallaAcceso');
+    const pantallaCamara = $('#pantallaCamara');
+    const pinInput = $('#pin');
+    const recordarInput = $('#recordar');
+    const btnEntrar = $('#btnEntrar');
+    const btnTomar = $('#btnTomar');
+    const btnActualizar = $('#btnActualizar');
+    const btnSalir = $('#btnSalir');
+    const foto = $('#foto');
+    const sinFoto = $('#sinFoto');
+    const estado = $('#estado');
+    const fecha = $('#fecha');
+    const mensajeAcceso = $('#mensajeAcceso');
+    const mensajeCamara = $('#mensajeCamara');
+    const puntoConexion = $('#puntoConexion');
+    const textoConexion = $('#textoConexion');
+
+    let pinActual = '';
+    let rutaActual = '';
+    let temporizador = null;
+    let actualizando = false;
+
+    function textoError(error) {
+      const mensaje = String(error?.message || error || 'Error desconocido');
+
+      if (mensaje.toLowerCase().includes('pin incorrecto')) {
+        return 'PIN incorrecto.';
+      }
+
+      if (mensaje.toLowerCase().includes('failed to fetch')) {
+        return 'No se pudo conectar con Supabase. Revisa el Internet.';
+      }
+
+      return mensaje;
+    }
+
+    function marcarConexion(activa) {
+      puntoConexion.classList.toggle('activo', activa);
+      textoConexion.textContent = activa ? 'Conectado' : 'Sin conexión';
+    }
+
+    function ponerMensaje(elemento, texto, esError = false) {
+      elemento.textContent = texto || '';
+      elemento.classList.toggle('error', esError);
+    }
+
+    function formatearFecha(valor) {
+      if (!valor) return 'Sin fotografía';
+
+      try {
+        return new Intl.DateTimeFormat('es-VE', {
+          dateStyle: 'short',
+          timeStyle: 'medium',
+          timeZone: 'America/Caracas'
+        }).format(new Date(valor));
+      } catch {
+        return new Date(valor).toLocaleString();
+      }
+    }
+
+    function cambiarEstado(nombre, detalle = '') {
+      const mapa = {
+        pendiente: ['pendiente', 'Solicitud enviada'],
+        capturando: ['capturando', 'Tomando foto'],
+        completada: ['completada', 'Foto lista'],
+        error: ['error', 'Error'],
+        esperando: ['', 'Esperando']
+      };
+
+      const configuracion = mapa[nombre] || mapa.esperando;
+      estado.className = 'estado' + (configuracion[0] ? ' ' + configuracion[0] : '');
+      estado.textContent = configuracion[1];
+
+      if (detalle) {
+        ponerMensaje(mensajeCamara, detalle, nombre === 'error');
+      }
+    }
+
+    async function obtenerUrlTemporal(ruta) {
+      const { data, error } = await db.storage
+        .from(BUCKET)
+        .createSignedUrl(ruta, 3600);
+
+      if (error) throw error;
+      if (!data?.signedUrl) throw new Error('No se pudo crear la dirección de la fotografía.');
+
+      return data.signedUrl;
+    }
+
+    async function mostrarFoto(ruta, fechaFoto, forzar = false) {
+      if (!ruta) return;
+      if (!forzar && ruta === rutaActual && !foto.classList.contains('oculto')) return;
+
+      const url = await obtenerUrlTemporal(ruta);
+      rutaActual = ruta;
+
+      foto.onload = () => {
+        foto.classList.remove('oculto');
+        sinFoto.classList.add('oculto');
+      };
+
+      foto.onerror = () => {
+        foto.classList.add('oculto');
+        sinFoto.classList.remove('oculto');
+        sinFoto.textContent = 'La fotografía existe, pero no se pudo abrir.';
+      };
+
+      foto.src = url + (url.includes('?') ? '&' : '?') + 'v=' + Date.now();
+      fecha.textContent = formatearFecha(fechaFoto);
+    }
+
+    async function consultarEstado(forzarFoto = false) {
+      if (!pinActual || actualizando) return;
+
+      actualizando = true;
+
+      try {
+        const { data, error } = await db.rpc('camara_estado', {
+          p_pin: pinActual
+        });
+
+        if (error) throw error;
+
+        marcarConexion(true);
+
+        const solicitud = data?.solicitud || null;
+        const estadoSolicitud = solicitud?.estado || 'esperando';
+
+        if (estadoSolicitud === 'error') {
+          cambiarEstado('error', solicitud?.error || 'La cámara informó un error.');
+        } else if (estadoSolicitud === 'pendiente') {
+          cambiarEstado('pendiente', 'La orden fue enviada. Esperando que la cámara la reciba.');
+        } else if (estadoSolicitud === 'capturando') {
+          cambiarEstado('capturando', 'La cámara está tomando y enviando la fotografía.');
+        } else if (estadoSolicitud === 'completada') {
+          cambiarEstado('completada', 'Última fotografía recibida correctamente.');
+        } else {
+          cambiarEstado('esperando', 'La página está lista para solicitar una fotografía.');
+        }
+
+        btnTomar.disabled = ['pendiente', 'capturando'].includes(estadoSolicitud);
+
+        if (data?.ultima_foto_path) {
+          await mostrarFoto(
+            data.ultima_foto_path,
+            data.ultima_foto_fecha,
+            forzarFoto
+          );
+        }
+      } catch (error) {
+        marcarConexion(false);
+        ponerMensaje(mensajeCamara, textoError(error), true);
+
+        if (String(error?.message || '').toLowerCase().includes('pin incorrecto')) {
+          salir();
+        }
+      } finally {
+        actualizando = false;
+      }
+    }
+
+    async function entrar() {
+      const pin = pinInput.value.trim();
+
+      if (!pin) {
+        ponerMensaje(mensajeAcceso, 'Coloca el PIN.', true);
+        pinInput.focus();
+        return;
+      }
+
+      btnEntrar.disabled = true;
+      ponerMensaje(mensajeAcceso, 'Conectando...');
+
+      try {
+        const { data, error } = await db.rpc('camara_estado', {
+          p_pin: pin
+        });
+
+        if (error) throw error;
+
+        pinActual = pin;
+
+        if (recordarInput.checked) {
+          localStorage.setItem('tutto_camara_pin', pin);
+        } else {
+          localStorage.removeItem('tutto_camara_pin');
+        }
+
+        pantallaAcceso.classList.add('oculto');
+        pantallaCamara.classList.remove('oculto');
+        marcarConexion(true);
+        ponerMensaje(mensajeAcceso, '');
+
+        const solicitud = data?.solicitud || null;
+        cambiarEstado(solicitud?.estado || 'esperando');
+
+        if (data?.ultima_foto_path) {
+          await mostrarFoto(data.ultima_foto_path, data.ultima_foto_fecha, true);
+        }
+
+        iniciarRevision();
+        await consultarEstado();
+      } catch (error) {
+        marcarConexion(false);
+        ponerMensaje(mensajeAcceso, textoError(error), true);
+      } finally {
+        btnEntrar.disabled = false;
+      }
+    }
+
+    async function tomarFoto() {
+      if (!pinActual) return;
+
+      btnTomar.disabled = true;
+      cambiarEstado('pendiente', 'Enviando la orden a la cámara...');
+
+      try {
+        const { data, error } = await db.rpc('camara_solicitar_foto', {
+          p_pin: pinActual
+        });
+
+        if (error) throw error;
+
+        cambiarEstado('pendiente', 'Solicitud #' + data + ' enviada. Esperando la cámara.');
+        setTimeout(() => consultarEstado(), 700);
+      } catch (error) {
+        btnTomar.disabled = false;
+        cambiarEstado('error', textoError(error));
+      }
+    }
+
+    function iniciarRevision() {
+      clearInterval(temporizador);
+      temporizador = setInterval(() => consultarEstado(), 2000);
+    }
+
+    function salir() {
+      clearInterval(temporizador);
+      temporizador = null;
+      pinActual = '';
+      rutaActual = '';
+      localStorage.removeItem('tutto_camara_pin');
+
+      foto.removeAttribute('src');
+      foto.classList.add('oculto');
+      sinFoto.classList.remove('oculto');
+      sinFoto.textContent = 'Todavía no se ha recibido ninguna fotografía.';
+      fecha.textContent = 'Sin fotografía';
+
+      pantallaCamara.classList.add('oculto');
+      pantallaAcceso.classList.remove('oculto');
+      pinInput.value = '';
+      btnTomar.disabled = false;
+      marcarConexion(navigator.onLine);
+      pinInput.focus();
+    }
+
+    btnEntrar.addEventListener('click', entrar);
+    btnTomar.addEventListener('click', tomarFoto);
+    btnActualizar.addEventListener('click', () => consultarEstado(true));
+    btnSalir.addEventListener('click', salir);
+
+    pinInput.addEventListener('keydown', (evento) => {
+      if (evento.key === 'Enter') entrar();
+    });
+
+    window.addEventListener('online', () => {
+      marcarConexion(true);
+      consultarEstado();
+    });
+
+    window.addEventListener('offline', () => marcarConexion(false));
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && pinActual) consultarEstado(true);
+    });
+
+    marcarConexion(navigator.onLine);
+
+    const pinGuardado = localStorage.getItem('tutto_camara_pin');
+    if (pinGuardado) {
+      pinInput.value = pinGuardado;
+      entrar();
+    } else {
+      pinInput.focus();
+    }
+  </script>
+</body>
+</html>
