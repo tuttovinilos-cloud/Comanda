@@ -4,196 +4,456 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#070b12">
-<title>TuttoCam · Seguridad</title>
+<title>TuttoCam · Centro de Seguridad</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   color-scheme:dark;
-  --bg:#06090f;--panel:#0e1522;--panel2:#121c2c;--panel3:#172235;
-  --text:#f8fafc;--muted:#8b9bb0;--line:rgba(255,255,255,.09);
-  --green:#2bd67b;--green2:#13a95c;--red:#ff5c68;--amber:#ffb020;--blue:#5b8cff;
-  --shadow:0 22px 70px rgba(0,0,0,.38)
+  --bg:#060910;--panel:#0d1522;--panel2:#111d2e;--panel3:#17243a;
+  --text:#f6f8fb;--muted:#8fa1b8;--line:rgba(255,255,255,.085);
+  --green:#29d27d;--green2:#10a861;--red:#ff5965;--amber:#f7b23a;
+  --blue:#5b8cff;--cyan:#37c8ff;--purple:#9d78ff;
+  --shadow:0 24px 80px rgba(0,0,0,.38);
 }
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:
- radial-gradient(circle at 25% -10%,rgba(43,214,123,.12),transparent 28%),
- radial-gradient(circle at 100% 0,rgba(91,140,255,.08),transparent 30%),var(--bg);
- color:var(--text);font-family:Inter,Arial,Helvetica,sans-serif}
+html,body{margin:0;min-height:100%;background:
+  radial-gradient(circle at 15% -10%,rgba(41,210,125,.10),transparent 28%),
+  radial-gradient(circle at 100% 0,rgba(91,140,255,.07),transparent 30%),
+  var(--bg);color:var(--text);font-family:Inter,Arial,Helvetica,sans-serif}
 button,input,select{font:inherit}
 button{cursor:pointer}
-.shell{width:min(100%,980px);margin:auto;padding:14px 12px 100px}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-.brand{display:flex;align-items:center;gap:11px}.logo{width:42px;height:42px;border-radius:13px;background:
- linear-gradient(135deg,var(--green),#0f8150);display:grid;place-items:center;color:#02120a;font-weight:1000;box-shadow:0 8px 30px rgba(43,214,123,.22)}
-.brand h1{margin:0;font-size:21px;letter-spacing:-.4px}.brand small{display:block;color:var(--muted);margin-top:2px}
-.chips{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.chip{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:rgba(14,21,34,.78);font-size:11px;color:var(--muted)}
-.dot{width:8px;height:8px;border-radius:50%;background:#475569}.dot.online{background:var(--green);box-shadow:0 0 12px rgba(43,214,123,.8)}.dot.alert{background:var(--red);box-shadow:0 0 12px rgba(255,92,104,.75)}
-.card{background:linear-gradient(180deg,rgba(18,28,44,.96),rgba(13,21,34,.96));border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
-.login{max-width:430px;margin:11vh auto 0;padding:20px}.login h2{margin:0 0 4px}.muted{color:var(--muted);font-size:12px}.field{display:grid;gap:6px;margin-top:14px}.field label{font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.55px}
-input[type=password],input[type=text],input[type=time],input[type=number],select{width:100%;min-height:46px;border:1px solid var(--line);border-radius:11px;background:#09111e;color:var(--text);padding:0 12px;outline:none}
-input:focus,select:focus{border-color:rgba(43,214,123,.6);box-shadow:0 0 0 3px rgba(43,214,123,.10)}
-.btn{min-height:44px;border:0;border-radius:11px;font-weight:850;padding:9px 13px}.btn.primary{background:linear-gradient(180deg,var(--green),var(--green2));color:#021109}.btn.secondary{background:var(--panel3);color:var(--text);border:1px solid var(--line)}.btn.danger{background:rgba(255,92,104,.11);color:#ff9ca4;border:1px solid rgba(255,92,104,.25)}.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}.btn:disabled{opacity:.45;cursor:not-allowed}
 .hide{display:none!important}
-.content{display:none}.content.active{display:block}
-.live-card{overflow:hidden}.live-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-bottom:1px solid var(--line)}.live-head h2{margin:0;font-size:16px}.live-actions{display:flex;gap:7px}
-.video{position:relative;aspect-ratio:16/10;background:#020407;overflow:hidden}.video img{width:100%;height:100%;object-fit:contain;display:block}.video-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#607089;padding:30px;background:radial-gradient(circle at center,rgba(43,214,123,.06),transparent 42%)}
-.scan{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent);box-shadow:0 0 12px var(--green);animation:scan 3.3s linear infinite;opacity:.55}@keyframes scan{from{top:0}to{top:100%}}
-.overlay-top{position:absolute;left:10px;right:10px;top:10px;display:flex;justify-content:space-between;gap:8px}.overlay-badge{backdrop-filter:blur(10px);background:rgba(3,7,12,.72);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:6px 9px;font-size:11px;font-weight:800}
-.motion-alert{color:var(--red)}.motion-ok{color:var(--green)}
-.live-foot{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line)}.metric{background:var(--panel);padding:10px 11px}.metric small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px}.metric strong{display:block;margin-top:3px;font-size:14px}
-.quick{display:grid;grid-template-columns:1.15fr 1fr;gap:10px;margin-top:10px}.panel{padding:14px}.panel h3{margin:0 0 3px;font-size:15px}
-.motion-meter{position:relative;height:14px;border-radius:999px;background:#1d2a3c;overflow:visible;margin:13px 0 6px}.motion-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--green),var(--amber),var(--red));width:0;transition:width .2s}.threshold-mark{position:absolute;top:-4px;width:2px;height:22px;background:#fff;border-radius:2px;box-shadow:0 0 8px rgba(255,255,255,.45)}
-.sensitivity-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.sensitivity-row input{width:100%}.value-pill{min-width:48px;text-align:center;padding:6px 8px;background:#09111e;border:1px solid var(--line);border-radius:9px;font-weight:900}
-.statusbox{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#09111e}.statuslamp{width:15px;height:15px;border-radius:50%;background:#475569;flex:none}.statuslamp.green{background:var(--green);box-shadow:0 0 16px rgba(43,214,123,.75)}.statuslamp.amber{background:var(--amber);box-shadow:0 0 16px rgba(255,176,32,.7)}.statuslamp.red{background:var(--red);box-shadow:0 0 16px rgba(255,92,104,.75)}
-.controls-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:10px}.switchline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#09111e}.switchline input{width:22px;height:22px}
-.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}.section-head h2{margin:0;font-size:18px}
-.events{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.event{overflow:hidden;border:1px solid var(--line);border-radius:13px;background:#09111e}.event img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#000}.event-body{padding:8px}.event-time{font-weight:800;font-size:11px}.event-meta{color:var(--muted);font-size:10px;margin-top:3px}.event-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:7px}.event-actions .btn{min-height:33px;font-size:10px;padding:6px}
-.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.filter{padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#09111e;color:var(--muted);font-size:11px;font-weight:800}.filter.active{color:#06130c;background:var(--green);border-color:var(--green)}
-.tasklist{display:grid;gap:8px}.task{padding:11px;border:1px solid var(--line);border-radius:13px;background:#09111e}.task-row{display:flex;justify-content:space-between;gap:10px}.task-name{font-weight:900}.task-meta{color:var(--muted);font-size:11px;margin-top:4px;line-height:1.45}.task-actions{display:flex;gap:6px;margin-top:9px}.task-actions .btn{min-height:34px;font-size:10px}.active-now{color:var(--green)}
-.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.setting{padding:12px;border:1px solid var(--line);border-radius:13px;background:#09111e}.setting h4{margin:0 0 4px;font-size:13px}.setting p{margin:0 0 10px;color:var(--muted);font-size:11px;line-height:1.45}
-.bottom-nav{position:fixed;z-index:40;left:50%;bottom:12px;transform:translateX(-50%);width:min(calc(100% - 20px),640px);display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:6px;background:rgba(9,15,25,.88);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:17px;box-shadow:0 18px 50px rgba(0,0,0,.45)}.navbtn{min-height:48px;border:0;border-radius:12px;background:transparent;color:#718198;font-weight:800;font-size:10px}.navbtn span{display:block;font-size:17px;margin-bottom:2px}.navbtn.active{background:var(--panel3);color:#fff}
-.modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:12px}.modalbox{width:min(100%,560px);max-height:92vh;overflow:auto;padding:15px}.hours{display:grid;grid-template-columns:1fr 1fr;gap:8px}.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:6px}.day{padding:8px 2px;border:1px solid var(--line);border-radius:9px;background:#09111e;text-align:center;font-size:10px;color:var(--muted)}
-.toast{position:fixed;left:50%;bottom:82px;transform:translateX(-50%) translateY(20px);z-index:80;background:#101a29;border:1px solid var(--line);border-radius:11px;padding:9px 12px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.2s;font-size:12px}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-@media(max-width:700px){.chips .chip:nth-child(2){display:none}.quick{grid-template-columns:1fr}.events{grid-template-columns:repeat(2,1fr)}.settings-grid{grid-template-columns:1fr}.live-foot{grid-template-columns:repeat(2,1fr)}.days{grid-template-columns:repeat(4,1fr)}}
+.app-shell{width:min(100%,1240px);margin:0 auto;padding:14px 14px 92px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:13px}
+.brand{display:flex;align-items:center;gap:11px}
+.brandmark{width:43px;height:43px;border-radius:13px;background:linear-gradient(135deg,var(--green),#087d49);display:grid;place-items:center;color:#02110a;font-weight:1000;box-shadow:0 8px 28px rgba(41,210,125,.20)}
+.brand h1{margin:0;font-size:21px;letter-spacing:-.45px}.brand small{display:block;color:var(--muted);margin-top:2px;font-size:11px}
+.topchips{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;min-height:30px;border:1px solid var(--line);border-radius:999px;background:rgba(13,21,34,.76);font-size:10px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:#46566a}
+.dot.green{background:var(--green);box-shadow:0 0 12px rgba(41,210,125,.8)}
+.dot.red{background:var(--red);box-shadow:0 0 12px rgba(255,89,101,.75)}
+.card{background:linear-gradient(180deg,rgba(17,29,46,.96),rgba(12,20,33,.96));border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.login{max-width:430px;margin:11vh auto 0;padding:20px}
+.login h2{margin:0 0 4px}.muted{color:var(--muted);font-size:11px;line-height:1.45}
+.field{display:grid;gap:6px;margin-top:13px}.field label{font-size:10px;color:var(--muted);font-weight:850;letter-spacing:.55px;text-transform:uppercase}
+input[type=password],input[type=text],input[type=time],input[type=number],select{
+  width:100%;min-height:44px;border:1px solid var(--line);border-radius:11px;background:#09111e;color:var(--text);padding:0 11px;outline:none}
+input:focus,select:focus{border-color:rgba(41,210,125,.58);box-shadow:0 0 0 3px rgba(41,210,125,.09)}
+.btn{min-height:42px;border:0;border-radius:11px;padding:8px 12px;font-weight:850}
+.btn.primary{background:linear-gradient(180deg,var(--green),var(--green2));color:#021109}
+.btn.secondary{background:var(--panel3);color:var(--text);border:1px solid var(--line)}
+.btn.danger{background:rgba(255,89,101,.10);color:#ff9da5;border:1px solid rgba(255,89,101,.25)}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn.small{min-height:34px;padding:6px 9px;font-size:10px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.page{display:none}.page.active{display:block}
+.section-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.section-title h2{margin:0;font-size:18px}.section-title p{margin:3px 0 0;color:var(--muted);font-size:11px}
+.toolbar{display:flex;gap:7px;flex-wrap:wrap}
+.grid-layout-toggle{display:flex;padding:4px;background:#09111e;border:1px solid var(--line);border-radius:11px}
+.layout-btn{min-width:40px;min-height:34px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:11px;font-weight:800}
+.layout-btn.active{background:var(--panel3);color:#fff}
+.camera-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.camera-grid.g4{grid-template-columns:repeat(2,1fr)}
+.camera-grid.g9{grid-template-columns:repeat(3,1fr)}
+.camera-tile{overflow:hidden;position:relative}
+.camera-head{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:10px 11px;border-bottom:1px solid var(--line)}
+.camera-name{font-weight:900;font-size:12px}.camera-sub{color:var(--muted);font-size:9px;margin-top:2px}
+.camera-actions{display:flex;gap:5px}
+.video-wrap{position:relative;aspect-ratio:16/10;background:#020408;overflow:hidden}
+.video-wrap img{width:100%;height:100%;object-fit:contain;display:block}
+.video-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#637389;padding:30px}
+.video-empty strong{color:#aab6c8}
+.hud-top{position:absolute;top:9px;left:9px;right:9px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;pointer-events:none}
+.hud-badge{backdrop-filter:blur(10px);background:rgba(4,8,13,.68);border:1px solid rgba(255,255,255,.09);border-radius:999px;padding:5px 8px;font-size:9px;font-weight:850}
+.hud-green{color:var(--green)}.hud-red{color:var(--red)}.hud-amber{color:var(--amber)}
+.hud-bottom{position:absolute;left:9px;right:9px;bottom:9px;display:flex;justify-content:space-between;gap:8px;align-items:end;pointer-events:none}
+.hud-stack{display:grid;gap:4px}
+.crosshair{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);opacity:.25;pointer-events:none}
+.crosshair:before,.crosshair:after{content:"";position:absolute;background:#fff}.crosshair:before{left:10px;top:0;width:1px;height:22px}.crosshair:after{left:0;top:10px;width:22px;height:1px}
+.camera-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line)}
+.stat{background:var(--panel);padding:9px}.stat small{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.45px}.stat strong{display:block;margin-top:3px;font-size:12px}
+.placeholder-camera{min-height:200px;display:grid;place-items:center;text-align:center;color:#536378;border:1px dashed rgba(255,255,255,.12);border-radius:16px;background:rgba(9,17,30,.55)}
+.dashboard-lower{display:grid;grid-template-columns:1.4fr .8fr;gap:10px;margin-top:10px}
+.panel{padding:13px}.panel h3{margin:0;font-size:14px}.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.live-meter{height:14px;background:#1c2b3e;border-radius:999px;overflow:visible;position:relative;margin:12px 0 5px}
+.live-meter-fill{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--green),var(--amber),var(--red));transition:width .2s}
+.threshold-line{position:absolute;top:-4px;width:2px;height:22px;background:#fff;box-shadow:0 0 9px rgba(255,255,255,.45)}
+.spark{width:100%;height:118px;display:block;background:#08101b;border:1px solid var(--line);border-radius:12px;margin-top:10px}
+.status-line{display:flex;align-items:center;gap:9px;margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#09111e}
+.status-lamp{width:15px;height:15px;border-radius:50%;background:#46566a;flex:none}
+.status-lamp.green{background:var(--green);box-shadow:0 0 14px rgba(41,210,125,.75)}
+.status-lamp.amber{background:var(--amber);box-shadow:0 0 14px rgba(247,178,58,.75)}
+.status-lamp.red{background:var(--red);box-shadow:0 0 14px rgba(255,89,101,.75)}
+.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.event-tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.filter-btn{padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#09111e;color:var(--muted);font-size:10px;font-weight:850}
+.filter-btn.active{background:var(--green);color:#021109;border-color:var(--green)}
+.events-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.event-card{overflow:hidden;border:1px solid var(--line);border-radius:13px;background:#09111e}
+.event-card img{width:100%;aspect-ratio:4/3;object-fit:cover;background:#020408;display:block}
+.event-body{padding:8px}.event-time{font-weight:850;font-size:10px}.event-meta{color:var(--muted);font-size:9px;margin-top:3px}
+.event-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:7px}
+.timeline{display:grid;gap:7px}.timeline-row{display:grid;grid-template-columns:78px 12px 1fr;gap:8px;align-items:start}
+.timeline-time{color:var(--muted);font-size:10px;text-align:right;padding-top:2px}.timeline-dot{width:9px;height:9px;border-radius:50%;background:var(--green);margin-top:3px;box-shadow:0 0 9px rgba(41,210,125,.4)}
+.timeline-content{padding-bottom:9px;border-bottom:1px solid var(--line);font-size:10px}.timeline-content strong{font-size:11px}
+.rules-layout{display:grid;grid-template-columns:1fr 1fr;gap:10px}.wide{grid-column:1/-1}
+.tabs-inline{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}.subtab{min-height:35px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:#09111e;color:var(--muted);font-size:10px;font-weight:850}.subtab.active{background:var(--panel3);color:#fff;border-color:rgba(41,210,125,.3)}
+.subpanel{display:none}.subpanel.active{display:block}
+.profile-list,.rule-list{display:grid;gap:8px}
+.profile-card,.rule-card{padding:10px;border:1px solid var(--line);border-radius:12px;background:#09111e}
+.profile-top,.rule-top{display:flex;align-items:flex-start;justify-content:space-between;gap:9px}
+.profile-color{width:11px;height:11px;border-radius:50%;margin-top:2px;flex:none}
+.profile-name,.rule-name{font-weight:900;font-size:11px}
+.profile-meta,.rule-meta{font-size:9px;color:var(--muted);line-height:1.45;margin-top:4px}
+.profile-actions,.rule-actions{display:flex;gap:5px;margin-top:8px}
+.matrix-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#07101c}
+.matrix{min-width:920px;display:grid;grid-template-columns:62px repeat(24,1fr)}
+.matrix .mh,.matrix .md,.matrix .cell{min-height:25px;border-right:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.04)}
+.matrix .mh,.matrix .md{display:grid;place-items:center;background:#0c1625;color:var(--muted);font-size:8px;font-weight:850}
+.matrix .md{position:sticky;left:0;z-index:2}.matrix .cell{background:#09111e;cursor:crosshair;position:relative}.matrix .cell:hover{outline:1px solid rgba(255,255,255,.18);z-index:1}
+.matrix .cell::after{content:"";position:absolute;inset:3px;border-radius:4px;background:var(--cell-color,transparent);opacity:.8}
+.matrix-controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:9px 0}
+.matrix-legend{display:flex;gap:7px;flex-wrap:wrap}.legend-item{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:9px}.legend-dot{width:9px;height:9px;border-radius:50%}
+.zone-editor{display:grid;grid-template-columns:1.4fr .6fr;gap:10px}
+.zone-stage{position:relative;aspect-ratio:16/10;background:#020408;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.zone-stage img{width:100%;height:100%;object-fit:contain;display:block}
+#zoneCanvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.zone-list{display:grid;gap:7px;margin-top:9px}.zone-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#09111e;font-size:9px}
+.zone-key{display:inline-flex;align-items:center;gap:5px}.zone-swatch{width:10px;height:10px;border-radius:3px}
+.settings-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.setting-card{padding:11px;border:1px solid var(--line);border-radius:12px;background:#09111e}.setting-card h4{margin:0 0 4px;font-size:11px}.setting-card p{margin:0 0 9px;color:var(--muted);font-size:9px;line-height:1.45}
+.health-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.health{padding:11px;border:1px solid var(--line);border-radius:12px;background:#09111e}.health small{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.45px}.health strong{display:block;margin-top:4px;font-size:12px}
+.audit-table{width:100%;border-collapse:collapse;font-size:9px}.audit-table th,.audit-table td{padding:8px;border-bottom:1px solid var(--line);text-align:left}.audit-table th{color:var(--muted);font-weight:800}
+.bottom-nav{position:fixed;z-index:40;left:50%;bottom:11px;transform:translateX(-50%);width:min(calc(100% - 20px),690px);display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:6px;background:rgba(8,14,23,.88);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:17px;box-shadow:0 20px 55px rgba(0,0,0,.46)}
+.navbtn{min-height:49px;border:0;border-radius:12px;background:transparent;color:#718198;font-weight:850;font-size:9px}.navbtn span{display:block;font-size:17px;margin-bottom:2px}.navbtn.active{background:var(--panel3);color:#fff}
+.modal{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:12px}.modalbox{width:min(100%,590px);max-height:92vh;overflow:auto;padding:15px}
+.modal-title{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.modal-title h3{margin:0;font-size:16px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.switchline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border:1px solid var(--line);border-radius:11px;background:#09111e}.switchline input{width:21px;height:21px}
+.range-row{display:grid;grid-template-columns:1fr 50px;gap:8px;align-items:center}.range-row input{width:100%}.valuebox{padding:6px 8px;border:1px solid var(--line);border-radius:9px;background:#07101c;text-align:center;font-weight:900;font-size:10px}
+.toast{position:fixed;left:50%;bottom:78px;z-index:90;transform:translateX(-50%) translateY(15px);opacity:0;pointer-events:none;background:#101a29;border:1px solid var(--line);border-radius:10px;padding:8px 11px;box-shadow:var(--shadow);font-size:10px;transition:.2s}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:900px){.events-grid{grid-template-columns:repeat(3,1fr)}.settings-grid{grid-template-columns:repeat(2,1fr)}.health-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){
+  .topchips .chip:nth-child(2){display:none}.dashboard-lower,.rules-layout,.zone-editor{grid-template-columns:1fr}.events-grid{grid-template-columns:repeat(2,1fr)}.settings-grid{grid-template-columns:1fr}.camera-grid.g9{grid-template-columns:repeat(2,1fr)}.camera-stats{grid-template-columns:repeat(3,1fr)}.form-grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
-<div class="shell">
+
+<div class="app-shell">
 <header class="topbar">
-  <div class="brand"><div class="logo">TV</div><div><h1>TuttoCam</h1><small>Seguridad · Cámara principal</small></div></div>
-  <div class="chips">
-    <div class="chip"><span id="deviceDot" class="dot"></span><span id="deviceText">ESP32 sin datos</span></div>
-    <div class="chip"><span id="armedDot" class="dot"></span><span id="armedText">Fuera de horario</span></div>
+  <div class="brand">
+    <div class="brandmark">TV</div>
+    <div><h1>TuttoCam</h1><small>Centro de Seguridad · Cámara Principal</small></div>
+  </div>
+  <div class="topchips">
+    <div class="chip"><span id="topOnlineDot" class="dot"></span><span id="topOnlineText">Sin conexión</span></div>
+    <div class="chip"><span id="topArmedDot" class="dot"></span><span id="topArmedText">Desarmado</span></div>
+    <div class="chip"><span id="topProfileDot" class="dot"></span><span id="topProfileText">Sin perfil</span></div>
   </div>
 </header>
 
 <section id="login" class="card login">
-  <h2>Acceso a cámara</h2><div class="muted">Introduce el PIN para abrir el panel.</div>
-  <div class="field"><label>PIN</label><input id="pin" type="password" inputmode="numeric" placeholder="••••"></div>
+  <h2>Acceso seguro</h2>
+  <div class="muted">Introduce el PIN del sistema para abrir el centro de monitoreo.</div>
+  <div class="field"><label>PIN</label><input id="pin" type="password" inputmode="numeric" maxlength="12" placeholder="••••"></div>
   <label class="muted"><input id="remember" type="checkbox" checked> Recordar en este dispositivo</label>
   <button id="enter" class="btn primary" style="width:100%;margin-top:14px">Entrar</button>
-  <div id="loginMsg" class="muted" style="margin-top:9px"></div>
+  <div id="loginMsg" class="muted" style="margin-top:8px"></div>
 </section>
 
 <main id="app" class="hide">
 
-<section id="view-live" class="content active">
-  <div class="card live-card">
-    <div class="live-head">
-      <div><h2>Vista en vivo</h2><div id="liveSubtitle" class="muted">Vista remota de baja latencia</div></div>
-      <div class="live-actions">
-        <button id="capture" class="btn secondary">📷 Foto</button>
-        <button id="liveToggle" class="btn primary">▶ En vivo</button>
+<!-- =========================================================
+     EN VIVO
+========================================================= -->
+<section id="page-live" class="page active">
+  <div class="section-title">
+    <div><h2>En Vivo</h2><p>Monitoreo táctico, telemetría y respuesta inmediata.</p></div>
+    <div class="toolbar">
+      <div class="grid-layout-toggle">
+        <button class="layout-btn active" data-layout="1">1×1</button>
+        <button class="layout-btn" data-layout="4">2×2</button>
+        <button class="layout-btn" data-layout="9">3×3</button>
       </div>
-    </div>
-    <div class="video">
-      <img id="liveImage" class="hide" alt="Vista en vivo">
-      <div id="liveEmpty" class="video-empty"><div><div style="font-size:38px">◉</div><strong>Vista detenida</strong><div class="muted" style="margin-top:5px">Pulsa “En vivo” para comenzar.</div></div></div>
-      <div id="scan" class="scan hide"></div>
-      <div class="overlay-top">
-        <div id="liveBadge" class="overlay-badge">● OFFLINE</div>
-        <div id="motionBadge" class="overlay-badge motion-ok">SIN MOVIMIENTO</div>
-      </div>
-    </div>
-    <div class="live-foot">
-      <div class="metric"><small>Movimiento</small><strong id="metricLevel">0</strong></div>
-      <div class="metric"><small>Umbral</small><strong id="metricThreshold">45</strong></div>
-      <div class="metric"><small>Horario</small><strong id="metricSchedule">OFF</strong></div>
-      <div class="metric"><small>Última foto</small><strong id="metricLastPhoto">--</strong></div>
+      <button id="btnLive" class="btn primary">▶ En vivo</button>
     </div>
   </div>
 
-  <div class="quick">
+  <div id="cameraGrid" class="camera-grid">
+    <article class="card camera-tile" data-camera="principal">
+      <div class="camera-head">
+        <div><div class="camera-name">Cámara Principal</div><div class="camera-sub">XIAO ESP32S3 Sense · OV2640</div></div>
+        <div class="camera-actions">
+          <button id="btnSnapshot" class="btn secondary small">📷 Foto</button>
+          <button id="btnFullscreen" class="btn secondary small">⛶</button>
+        </div>
+      </div>
+      <div id="videoPrincipal" class="video-wrap">
+        <img id="liveImage" class="hide" alt="Vista de cámara">
+        <div id="liveEmpty" class="video-empty"><div><div style="font-size:34px">◉</div><strong>Vista detenida</strong><div class="muted" style="margin-top:5px">Pulsa “En vivo” para comenzar.</div></div></div>
+        <div class="crosshair"></div>
+        <div class="hud-top">
+          <div id="hudOnline" class="hud-badge hud-red">● OFFLINE</div>
+          <div id="hudMotion" class="hud-badge hud-green">SIN MOVIMIENTO</div>
+        </div>
+        <div class="hud-bottom">
+          <div class="hud-stack">
+            <div id="hudProfile" class="hud-badge">PERFIL: --</div>
+            <div id="hudResolution" class="hud-badge">QVGA / VGA</div>
+          </div>
+          <div class="hud-stack" style="text-align:right">
+            <div id="hudFps" class="hud-badge">~0 FPS</div>
+            <div id="hudBandwidth" class="hud-badge">-- KB/s</div>
+          </div>
+        </div>
+      </div>
+      <div class="camera-stats">
+        <div class="stat"><small>Movimiento</small><strong id="statLevel">0</strong></div>
+        <div class="stat"><small>Umbral</small><strong id="statThreshold">45</strong></div>
+        <div class="stat"><small>RSSI</small><strong id="statRssi">--</strong></div>
+        <div class="stat"><small>IP</small><strong id="statIp">--</strong></div>
+        <div class="stat"><small>Fotos</small><strong id="statPhotos">0</strong></div>
+      </div>
+    </article>
+  </div>
+
+  <div class="dashboard-lower">
+    <section class="card panel">
+      <div class="panel-head"><div><h3>Actividad de movimiento</h3><div class="muted">Nivel visual en tiempo real vs. umbral de disparo.</div></div><button id="btnGoCalibration" class="btn secondary small">Calibrar</button></div>
+      <div class="status-line"><span id="motionLamp" class="status-lamp"></span><div><strong id="motionState">Esperando telemetría</strong><div id="motionDetail" class="muted">Nivel 0 · Umbral 45</div></div></div>
+      <div class="live-meter"><div id="meterFill" class="live-meter-fill"></div><div id="meterThreshold" class="threshold-line" style="left:45%"></div></div>
+      <canvas id="motionGraph" class="spark" width="900" height="118"></canvas>
+    </section>
+
+    <section class="card panel">
+      <h3>Acciones rápidas</h3>
+      <div class="muted">Control inmediato del sistema.</div>
+      <div class="quick-actions">
+        <button id="btnQuickPhoto" class="btn secondary">📷 Instantánea</button>
+        <button id="btnQuickTest" class="btn secondary">🧪 Modo prueba</button>
+        <button id="btnQuickRules" class="btn secondary">⚡ Reglas</button>
+        <button id="btnQuickMaintenance" class="btn secondary">⚙ Mantenimiento</button>
+      </div>
+      <div id="quickStatus" class="muted" style="margin-top:10px">Esperando estado del sistema...</div>
+    </section>
+  </div>
+</section>
+
+<!-- =========================================================
+     REPRODUCCIÓN
+========================================================= -->
+<section id="page-playback" class="page">
+  <div class="section-title">
+    <div><h2>Reproducción</h2><p>Historial forense de capturas y eventos.</p></div>
+    <div class="toolbar"><button id="reloadEvents" class="btn secondary">Actualizar</button></div>
+  </div>
+
+  <section class="card panel">
+    <div class="event-tools">
+      <button class="filter-btn active" data-filter="todos">Todos</button>
+      <button class="filter-btn" data-filter="movimiento">Movimiento</button>
+      <button class="filter-btn" data-filter="manual">Manual</button>
+    </div>
+    <div id="eventsGrid" class="events-grid"></div>
+    <div id="eventsMsg" class="muted" style="margin-top:9px"></div>
+    <button id="moreEvents" class="btn secondary hide" style="width:100%;margin-top:10px">Ver más</button>
+  </section>
+
+  <section class="card panel" style="margin-top:10px">
+    <div class="panel-head"><div><h3>Línea de tiempo</h3><div class="muted">Últimos eventos del sistema.</div></div></div>
+    <div id="eventTimeline" class="timeline" style="margin-top:10px"></div>
+  </section>
+</section>
+
+<!-- =========================================================
+     REGLAS
+========================================================= -->
+<section id="page-rules" class="page">
+  <div class="section-title">
+    <div><h2>Reglas</h2><p>Horarios, perfiles, zonas y automatización.</p></div>
+  </div>
+
+  <div class="tabs-inline">
+    <button class="subtab active" data-rulestab="schedule">Matriz semanal</button>
+    <button class="subtab" data-rulestab="profiles">Perfiles</button>
+    <button class="subtab" data-rulestab="zones">Zonas</button>
+    <button class="subtab" data-rulestab="engine">Motor de reglas</button>
+  </div>
+
+  <section id="rule-schedule" class="subpanel active">
     <div class="card panel">
-      <h3>Detector de movimiento</h3><div class="muted">Analiza cambios reales de imagen y compensa cambios globales de luz.</div>
-      <div class="statusbox" style="margin-top:10px"><div id="motionLamp" class="statuslamp"></div><div><strong id="motionStatus">Esperando...</strong><div id="motionDetail" class="muted">Nivel 0 · Umbral 45</div></div></div>
-      <div class="motion-meter"><div id="motionFill" class="motion-fill"></div><div id="thresholdMark" class="threshold-mark" style="left:45%"></div></div>
-      <div class="muted" style="display:flex;justify-content:space-between"><span>Quieto</span><span>Movimiento fuerte</span></div>
+      <div class="panel-head"><div><h3>Matriz semanal</h3><div class="muted">Selecciona un perfil y pinta bloques de una hora con clic o arrastre.</div></div><button id="saveMatrix" class="btn primary small">Guardar matriz</button></div>
+      <div class="matrix-controls">
+        <select id="matrixProfile" style="width:auto;min-width:190px"></select>
+        <button id="matrixErase" class="btn secondary small">Borrador</button>
+        <button id="matrixClear" class="btn danger small">Limpiar semana</button>
+        <div id="matrixLegend" class="matrix-legend"></div>
+      </div>
+      <div id="weeklyMatrix" class="matrix-wrap"></div>
+      <div id="matrixMsg" class="muted" style="margin-top:8px"></div>
     </div>
+  </section>
 
+  <section id="rule-profiles" class="subpanel">
     <div class="card panel">
-      <h3>Acciones rápidas</h3><div class="muted">Control inmediato del detector.</div>
-      <div class="controls-grid">
-        <button id="calibrateQuick" class="btn secondary">◎ Calibrar</button>
-        <button id="testQuick" class="btn secondary">🧪 Prueba</button>
-      </div>
-      <div id="quickInfo" class="muted" style="margin-top:10px">La captura automática depende de los horarios activos.</div>
+      <div class="panel-head"><div><h3>Perfiles de armado</h3><div class="muted">Define el comportamiento que se aplicará en cada bloque horario.</div></div><button id="newProfile" class="btn primary small">+ Perfil</button></div>
+      <div id="profileList" class="profile-list" style="margin-top:10px"></div>
     </div>
-  </div>
+  </section>
+
+  <section id="rule-zones" class="subpanel">
+    <div class="card panel">
+      <div class="panel-head"><div><h3>Mapeo de zonas</h3><div class="muted">Dibuja zonas de vigilancia o exclusión directamente sobre la imagen.</div></div><button id="saveZones" class="btn primary small">Guardar zonas</button></div>
+      <div class="zone-editor" style="margin-top:10px">
+        <div class="zone-stage" id="zoneStage">
+          <img id="zoneImage" alt="Imagen para zonas">
+          <canvas id="zoneCanvas"></canvas>
+        </div>
+        <div>
+          <div class="field" style="margin-top:0"><label>Herramienta</label>
+            <select id="zoneMode">
+              <option value="include">Vigilar zona</option>
+              <option value="exclude">Ignorar zona</option>
+            </select>
+          </div>
+          <button id="clearZones" class="btn danger" style="width:100%">Borrar todas</button>
+          <div class="muted" style="margin-top:8px">Si existe al menos una zona “Vigilar”, solo esas áreas serán analizadas. Las zonas “Ignorar” siempre tienen prioridad.</div>
+          <div id="zoneList" class="zone-list"></div>
+          <div id="zoneMsg" class="muted" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="rule-engine" class="subpanel">
+    <div class="card panel">
+      <div class="panel-head"><div><h3>Motor de reglas</h3><div class="muted">Define acciones adicionales según la intensidad del movimiento.</div></div><button id="newRule" class="btn primary small">+ Regla</button></div>
+      <div id="ruleList" class="rule-list" style="margin-top:10px"></div>
+      <div class="muted" style="margin-top:9px">Actualmente el firmware ejecuta “cantidad de capturas”. Notificación y relé quedan preparados para integración posterior.</div>
+    </div>
+  </section>
 </section>
 
-<section id="view-events" class="content">
-  <div class="card panel">
-    <div class="section-head"><div><h2>Eventos</h2><div id="eventCount" class="muted">Historial de capturas</div></div><button id="reloadEvents" class="btn secondary">Actualizar</button></div>
-    <div class="filters"><button class="filter active" data-filter="todos">Todos</button><button class="filter" data-filter="movimiento">Movimiento</button><button class="filter" data-filter="manual">Manual</button></div>
-    <div id="events" class="events"></div><div id="eventMsg" class="muted" style="margin-top:9px"></div><button id="moreEvents" class="btn secondary hide" style="width:100%;margin-top:10px">Ver más</button>
+<!-- =========================================================
+     MANTENIMIENTO
+========================================================= -->
+<section id="page-maintenance" class="page">
+  <div class="section-title">
+    <div><h2>Mantenimiento</h2><p>Calibración, red, cámara, salud y auditoría.</p></div>
+    <div class="toolbar"><button id="reloadMaintenance" class="btn secondary">Actualizar</button></div>
   </div>
-</section>
 
-<section id="view-automation" class="content">
-  <div class="card panel">
-    <div class="section-head"><div><h2>Automatizaciones</h2><div class="muted">Varias franjas horarias independientes.</div></div><button id="newTask" class="btn primary">+ Horario</button></div>
-    <div id="tasks" class="tasklist"></div><div id="taskMsg" class="muted" style="margin-top:9px"></div>
-  </div>
-</section>
+  <section class="card panel">
+    <div class="panel-head"><div><h3>Salud del sistema</h3><div class="muted">Estado técnico reportado por el ESP32.</div></div></div>
+    <div class="health-grid" style="margin-top:10px">
+      <div class="health"><small>Estado</small><strong id="healthOnline">--</strong></div>
+      <div class="health"><small>IP</small><strong id="healthIp">--</strong></div>
+      <div class="health"><small>Wi‑Fi RSSI</small><strong id="healthRssi">--</strong></div>
+      <div class="health"><small>Uptime</small><strong id="healthUptime">--</strong></div>
+      <div class="health"><small>Heap libre</small><strong id="healthHeap">--</strong></div>
+      <div class="health"><small>PSRAM libre</small><strong id="healthPsram">--</strong></div>
+      <div class="health"><small>Firmware</small><strong id="healthFirmware">--</strong></div>
+      <div class="health"><small>Almacenadas</small><strong id="healthPhotos">--</strong></div>
+    </div>
+  </section>
 
-<section id="view-settings" class="content">
-  <div class="card panel">
-    <div class="section-head"><div><h2>Ajustes</h2><div class="muted">Calibración y comportamiento del detector.</div></div></div>
-    <div class="settings-grid">
-      <div class="setting">
-        <h4>Sensibilidad</h4><p>Más alta detecta movimientos pequeños. La calibración automática es la mejor forma de ajustarla.</p>
-        <div class="sensitivity-row"><input id="sensitivity" type="range" min="1" max="100" step="1" value="50"><div id="sensitivityValue" class="value-pill">50</div></div>
-        <div class="muted" style="margin-top:6px">Umbral interno: <span id="thresholdInternal">45</span></div>
+  <section class="card panel" style="margin-top:10px">
+    <div class="panel-head"><div><h3>Calibración del detector</h3><div class="muted">Test en tiempo real para reducir falsos positivos.</div></div></div>
+    <div class="settings-grid" style="margin-top:10px">
+      <div class="setting-card">
+        <h4>Modo prueba</h4><p>Detecta movimiento sin tomar fotos automáticas.</p>
+        <div class="switchline"><span id="testModeLabel">Desactivado</span><input id="testMode" type="checkbox"></div>
       </div>
-      <div class="setting">
-        <h4>Confirmación</h4><p>Cuántas lecturas consecutivas deben detectar movimiento antes de disparar.</p>
-        <select id="confirmations"><option value="1">1 · Muy rápida</option><option value="2">2 · Rápida</option><option value="3" selected>3 · Recomendada</option><option value="4">4 · Segura</option><option value="5">5 · Muy segura</option></select>
+      <div class="setting-card">
+        <h4>Calibración automática</h4><p>Deja la escena quieta 8 segundos y calculamos un umbral recomendado.</p>
+        <button id="calibrate8" class="btn secondary" style="width:100%">◎ Calibrar 8 s</button>
       </div>
-      <div class="setting">
-        <h4>Pausa entre fotos</h4><p>Evita que una misma persona genere decenas de capturas.</p>
-        <select id="cooldown"><option value="5000">5 segundos</option><option value="10000" selected>10 segundos</option><option value="15000">15 segundos</option><option value="30000">30 segundos</option><option value="60000">60 segundos</option></select>
-      </div>
-      <div class="setting">
-        <h4>Modo prueba</h4><p>Detecta y muestra el nivel, pero no toma fotografías automáticas.</p>
-        <div class="switchline"><span id="testLabel">Desactivado</span><input id="testMode" type="checkbox"></div>
-      </div>
-      <div class="setting">
-        <h4>Vista en vivo</h4><p>Frecuencia de actualización de la vista remota. 1 s usa más datos.</p>
+      <div class="setting-card">
+        <h4>Vista en vivo</h4><p>Frecuencia de refresco del preview remoto.</p>
         <select id="liveInterval"><option value="700">0.7 s · Fluida</option><option value="1000" selected>1 s · Recomendada</option><option value="1500">1.5 s</option><option value="2000">2 s · Ahorro</option></select>
       </div>
-      <div class="setting">
-        <h4>Calibración automática</h4><p>Durante 8 segundos deja la escena quieta. El sistema calcula el ruido normal y ajusta el umbral.</p>
-        <button id="calibrate" class="btn secondary" style="width:100%">◎ Calibrar 8 segundos</button>
-      </div>
     </div>
-    <button id="saveSettings" class="btn primary" style="width:100%;margin-top:11px">Guardar ajustes</button>
-    <div id="settingsMsg" class="muted" style="margin-top:8px"></div>
-  </div>
+    <div id="calibrationMsg" class="muted" style="margin-top:9px"></div>
+  </section>
+
+  <section class="card panel" style="margin-top:10px">
+    <div class="panel-head"><div><h3>Ajustes de imagen</h3><div class="muted">Controles reales disponibles en OV2640.</div></div><button id="saveCameraSettings" class="btn primary small">Guardar</button></div>
+    <div class="settings-grid" style="margin-top:10px">
+      <div class="setting-card"><h4>Brillo</h4><select id="camBrightness"><option value="-2">-2</option><option value="-1">-1</option><option value="0" selected>0</option><option value="1">+1</option><option value="2">+2</option></select></div>
+      <div class="setting-card"><h4>Contraste</h4><select id="camContrast"><option value="-2">-2</option><option value="-1">-1</option><option value="0" selected>0</option><option value="1">+1</option><option value="2">+2</option></select></div>
+      <div class="setting-card"><h4>Saturación</h4><select id="camSaturation"><option value="-2">-2</option><option value="-1">-1</option><option value="0" selected>0</option><option value="1">+1</option><option value="2">+2</option></select></div>
+    </div>
+    <div id="cameraSettingsMsg" class="muted" style="margin-top:8px"></div>
+  </section>
+
+  <section class="card panel" style="margin-top:10px">
+    <div class="panel-head"><div><h3>Sistema</h3><div class="muted">Acciones administrativas.</div></div></div>
+    <div class="quick-actions">
+      <button id="restartDevice" class="btn danger">↻ Reiniciar ESP32</button>
+      <button id="logout" class="btn secondary">Salir del panel</button>
+    </div>
+  </section>
+
+  <section class="card panel" style="margin-top:10px">
+    <div class="panel-head"><div><h3>Registro de auditoría</h3><div class="muted">Cambios y acciones realizadas desde el panel.</div></div><button id="reloadAudit" class="btn secondary small">Actualizar</button></div>
+    <div style="overflow:auto;margin-top:8px">
+      <table class="audit-table">
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Detalle</th></tr></thead>
+        <tbody id="auditBody"></tbody>
+      </table>
+    </div>
+  </section>
 </section>
 
 </main>
 </div>
 
-<nav id="nav" class="bottom-nav hide">
-<button class="navbtn active" data-view="live"><span>◉</span>En vivo</button>
-<button class="navbtn" data-view="events"><span>▦</span>Eventos</button>
-<button class="navbtn" data-view="automation"><span>◷</span>Horarios</button>
-<button class="navbtn" data-view="settings"><span>⚙</span>Ajustes</button>
+<nav id="bottomNav" class="bottom-nav hide">
+  <button class="navbtn active" data-page="live"><span>◉</span>En vivo</button>
+  <button class="navbtn" data-page="playback"><span>▦</span>Reproducción</button>
+  <button class="navbtn" data-page="rules"><span>⚡</span>Reglas</button>
+  <button class="navbtn" data-page="maintenance"><span>⚙</span>Mantenimiento</button>
 </nav>
 
-<div id="taskModal" class="modal hide">
-<div class="card modalbox">
-  <div class="section-head"><div><h2 id="taskTitle">Nuevo horario</h2></div><button id="closeTask" class="btn ghost">Cerrar</button></div>
-  <input id="taskId" type="hidden">
-  <div class="field"><label>Nombre</label><input id="taskName" type="text" placeholder="Ej. Noche"></div>
-  <div class="switchline"><span>Horario activo</span><input id="taskActive" type="checkbox" checked></div>
-  <div class="hours"><div class="field"><label>Desde</label><input id="taskFrom" type="time" value="08:00"></div><div class="field"><label>Hasta</label><input id="taskTo" type="time" value="18:00"></div></div>
-  <div class="field"><label>Días activos</label><div class="days">
-    <label class="day"><input class="taskDow" type="checkbox" value="1"> Lun</label><label class="day"><input class="taskDow" type="checkbox" value="2"> Mar</label><label class="day"><input class="taskDow" type="checkbox" value="3"> Mié</label><label class="day"><input class="taskDow" type="checkbox" value="4"> Jue</label><label class="day"><input class="taskDow" type="checkbox" value="5"> Vie</label><label class="day"><input class="taskDow" type="checkbox" value="6"> Sáb</label><label class="day"><input class="taskDow" type="checkbox" value="0"> Dom</label>
-  </div></div>
-  <button id="saveTask" class="btn primary" style="width:100%">Guardar horario</button><div id="taskModalMsg" class="muted" style="margin-top:8px"></div>
+<!-- PERFIL -->
+<div id="profileModal" class="modal hide">
+  <div class="card modalbox">
+    <div class="modal-title"><div><h3 id="profileModalTitle">Nuevo perfil</h3><div class="muted">Comportamiento del detector en una franja horaria.</div></div><button class="btn ghost small" data-close="profileModal">Cerrar</button></div>
+    <input id="profileId" type="hidden">
+    <div class="form-grid">
+      <div class="field"><label>Nombre</label><input id="profileName" type="text" placeholder="Fuera de horas"></div>
+      <div class="field"><label>Color</label><input id="profileColor" type="color" value="#22c55e" style="width:100%;height:44px;border:1px solid var(--line);border-radius:11px;background:#09111e"></div>
+    </div>
+    <div class="switchline" style="margin-top:8px"><span>Sistema armado</span><input id="profileArmed" type="checkbox" checked></div>
+    <div class="form-grid">
+      <div class="field"><label>Umbral</label><input id="profileThreshold" type="number" min="10" max="80" value="45"></div>
+      <div class="field"><label>Confirmaciones</label><select id="profileConfirm"><option value="1">1 · Muy rápida</option><option value="2">2 · Rápida</option><option value="3" selected>3 · Recomendada</option><option value="4">4 · Segura</option><option value="5">5 · Muy segura</option></select></div>
+      <div class="field"><label>Pausa entre eventos</label><select id="profileCooldown"><option value="5000">5 s</option><option value="10000">10 s</option><option value="15000">15 s</option><option value="30000">30 s</option><option value="60000">60 s</option></select></div>
+      <div class="field"><label>Fotos por evento</label><select id="profileCaptures"><option value="1">1 foto</option><option value="2">2 fotos</option><option value="3">3 fotos</option><option value="4">4 fotos</option><option value="5">5 fotos</option></select></div>
+    </div>
+    <div class="switchline"><span>Notificación preparada</span><input id="profileNotify" type="checkbox"></div>
+    <button id="saveProfile" class="btn primary" style="width:100%;margin-top:10px">Guardar perfil</button>
+    <div id="profileModalMsg" class="muted" style="margin-top:8px"></div>
+  </div>
 </div>
+
+<!-- REGLA -->
+<div id="ruleModal" class="modal hide">
+  <div class="card modalbox">
+    <div class="modal-title"><div><h3 id="ruleModalTitle">Nueva regla</h3><div class="muted">Acciones adicionales según intensidad.</div></div><button class="btn ghost small" data-close="ruleModal">Cerrar</button></div>
+    <input id="ruleId" type="hidden">
+    <div class="field"><label>Nombre</label><input id="ruleName" type="text" placeholder="Movimiento fuerte"></div>
+    <div class="switchline"><span>Regla activa</span><input id="ruleActive" type="checkbox" checked></div>
+    <div class="form-grid">
+      <div class="field"><label>Nivel mínimo</label><input id="ruleLevel" type="number" min="0" max="100" value="60"></div>
+      <div class="field"><label>Capturas</label><select id="ruleCaptures"><option value="1">1 foto</option><option value="2">2 fotos</option><option value="3">3 fotos</option><option value="4">4 fotos</option><option value="5">5 fotos</option></select></div>
+    </div>
+    <div class="switchline" style="margin-top:8px"><span>Notificar Admin · preparado</span><input id="ruleNotify" type="checkbox"></div>
+    <div class="switchline" style="margin-top:8px"><span>Activar relé · preparado</span><input id="ruleRelay" type="checkbox"></div>
+    <button id="saveRule" class="btn primary" style="width:100%;margin-top:10px">Guardar regla</button>
+    <div id="ruleModalMsg" class="muted" style="margin-top:8px"></div>
+  </div>
 </div>
 
 <div id="toast" class="toast"></div>
@@ -203,182 +463,252 @@ const SUPABASE_URL='https://ujfdsabypflseijatxba.supabase.co';
 const SUPABASE_KEY='sb_publishable_CiZo8xFKkaT7mdRrQUYxuQ_48F6Vx3w';
 const BUCKET='camara-fotos';
 const PREVIEW_PATH='camara-76f3385ab470135a9168b9b4/preview.jpg';
-const PAGE=24;
+const PAGE_SIZE=24;
 
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-let pinNow='',statusTimer=null,liveRenewTimer=null,liveImageTimer=null,liveOn=false,previewSigned='',eventsOffset=0,eventsTotal=0,eventFilter='todos';
-let settings={umbral_movimiento:45,modo_prueba:false,consecutivas_requeridas:3,cooldown_ms:10000,nivel_actual:0,permitido_ahora:false,online:false};
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 
-function toast(t){const x=$('#toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),1800)}
-function err(e){return String(e?.message||e||'Error desconocido')}
+let pinNow='';
+let dashboardTimer=null;
+let liveRenewTimer=null;
+let liveImageTimer=null;
+let liveOn=false;
+let previewUrl='';
+let lastPreviewBytes=0;
+let lastPreviewStamp=0;
+let graphValues=[];
+let eventOffset=0,eventTotal=0,eventFilter='todos';
+let profiles=[],matrixCells=new Array(168).fill(null),matrixMouse=false,matrixErase=false;
+let zones=[];
+let zoneDrawing=false,zoneStart=null;
+let auditCache=[];
+
+function toast(text){const t=$('#toast');t.textContent=text;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+function E(e){return String(e?.message||e||'Error desconocido')}
 function fmt(v){if(!v)return '--';try{return new Intl.DateTimeFormat('es-VE',{dateStyle:'short',timeStyle:'short',timeZone:'America/Caracas'}).format(new Date(v))}catch{return '--'}}
-function thresholdFromSensitivity(s){return Math.max(10,Math.min(80,80-Math.round(Number(s)*0.70)))}
-function sensitivityFromThreshold(t){return Math.max(1,Math.min(100,Math.round((80-Number(t))/0.70)))}
-async function signed(path,seconds=3600){const {data,error}=await db.storage.from(BUCKET).createSignedUrl(path,seconds);if(error)throw error;return data.signedUrl}
+function formatUptime(ms){if(!ms)return '--';let s=Math.floor(ms/1000),d=Math.floor(s/86400);s%=86400;let h=Math.floor(s/3600);s%=3600;let m=Math.floor(s/60);return (d?d+'d ':'')+h+'h '+m+'m'}
+function bytes(n){if(n==null)return '--';if(n>1024*1024)return (n/1024/1024).toFixed(1)+' MB';if(n>1024)return (n/1024).toFixed(0)+' KB';return n+' B'}
+async function signed(path,seconds=600){const {data,error}=await db.storage.from(BUCKET).createSignedUrl(path,seconds);if(error)throw error;return data.signedUrl}
 
 async function enter(){
-  const p=$('#pin').value.trim(); if(!p)return;
+  const p=$('#pin').value.trim();if(!p)return;
   $('#loginMsg').textContent='Conectando...';
   try{
-    const {data,error}=await db.rpc('camara_estado',{p_pin:p}); if(error)throw error;
-    pinNow=p;if($('#remember').checked)localStorage.setItem('cam_pin',p);else localStorage.removeItem('cam_pin');
-    $('#login').classList.add('hide');$('#app').classList.remove('hide');$('#nav').classList.remove('hide');$('#loginMsg').textContent='';
-    if(data?.ultima_foto_fecha)$('#metricLastPhoto').textContent=fmt(data.ultima_foto_fecha);
-    await loadSettings(); await updateTelemetry(); startTelemetry();
-  }catch(e){$('#loginMsg').textContent=err(e)}
+    const {error}=await db.rpc('tuttocam_dashboard',{p_pin:p});if(error)throw error;
+    pinNow=p;if($('#remember').checked)localStorage.setItem('tuttocam_pin',p);else localStorage.removeItem('tuttocam_pin');
+    $('#login').classList.add('hide');$('#app').classList.remove('hide');$('#bottomNav').classList.remove('hide');$('#loginMsg').textContent='';
+    await updateDashboard();startDashboard();
+  }catch(e){$('#loginMsg').textContent=E(e)}
 }
-function logout(){localStorage.removeItem('cam_pin');location.reload()}
-
-async function capture(){
-  $('#capture').disabled=true;
-  try{const {data,error}=await db.rpc('camara_solicitar_foto',{p_pin:pinNow});if(error)throw error;toast('Solicitud #'+data+' enviada')}catch(e){toast(err(e))}
-  finally{setTimeout(()=>$('#capture').disabled=false,1000)}
-}
-
-function renderTelemetry(d){
-  settings={...settings,...d};
-  const level=Number(d.nivel_actual||0), threshold=Number(d.umbral_movimiento||45);
-  $('#metricLevel').textContent=level;$('#metricThreshold').textContent=threshold;
-  $('#motionFill').style.width=Math.min(100,level)+'%';$('#thresholdMark').style.left=Math.min(100,threshold)+'%';
-  $('#motionDetail').textContent=`Nivel ${level} · Umbral ${threshold}`;
-  const detected=!!d.movimiento_detectado;
-  $('#motionBadge').textContent=detected?'● MOVIMIENTO':'● SIN MOVIMIENTO';
-  $('#motionBadge').className='overlay-badge '+(detected?'motion-alert':'motion-ok');
-  $('#motionLamp').className='statuslamp '+(detected?'red':level>=threshold*.7?'amber':'green');
-  $('#motionStatus').textContent=detected?'Movimiento confirmado':level>=threshold*.7?'Cambio visual':'Escena estable';
-
-  $('#deviceDot').className='dot '+(d.online?'online':'');
-  $('#deviceText').textContent=d.online?'ESP32 online':'ESP32 sin conexión';
-  $('#liveBadge').textContent=d.online?'● ONLINE':'● OFFLINE';
-  $('#liveBadge').style.color=d.online?'var(--green)':'var(--red)';
-
-  $('#armedDot').className='dot '+(d.permitido_ahora?'online':'');
-  $('#armedText').textContent=d.permitido_ahora?'Horario activo':'Fuera de horario';
-  $('#metricSchedule').textContent=d.permitido_ahora?'ON':'OFF';
-  $('#quickInfo').textContent=d.modo_prueba?'Modo prueba activo: no se tomarán fotos automáticas.':(d.permitido_ahora?'Sistema armado por horario.':'Detector activo, pero fuera de horario.');
-}
-async function updateTelemetry(){
+function startDashboard(){clearInterval(dashboardTimer);dashboardTimer=setInterval(updateDashboard,1100)}
+async function updateDashboard(){
   if(!pinNow)return;
-  try{const {data,error}=await db.rpc('camara_movimiento_estado',{p_pin:pinNow});if(error)throw error;renderTelemetry(data)}catch(e){}
-}
-function startTelemetry(){clearInterval(statusTimer);statusTimer=setInterval(updateTelemetry,1100)}
-
-async function loadSettings(){
   try{
-    const {data,error}=await db.rpc('camara_movimiento_ajustes_obtener',{p_pin:pinNow});if(error)throw error;
-    settings={...settings,...data};
-    const sens=sensitivityFromThreshold(data.umbral_movimiento);
-    $('#sensitivity').value=sens;$('#sensitivityValue').textContent=sens;$('#thresholdInternal').textContent=data.umbral_movimiento;
-    $('#confirmations').value=String(data.consecutivas_requeridas||3);$('#cooldown').value=String(data.cooldown_ms||10000);$('#testMode').checked=!!data.modo_prueba;$('#testLabel').textContent=data.modo_prueba?'Activado':'Desactivado';
-    if(data.live_intervalo_ms)$('#liveInterval').value=String(data.live_intervalo_ms);
-  }catch(e){$('#settingsMsg').textContent=err(e)}
+    const {data,error}=await db.rpc('tuttocam_dashboard',{p_pin:pinNow});if(error)throw error;
+    renderDashboard(data);
+  }catch(e){}
 }
-async function saveSettings(){
-  const threshold=thresholdFromSensitivity($('#sensitivity').value);
-  try{
-    const {error}=await db.rpc('camara_movimiento_ajustes_guardar',{
-      p_pin:pinNow,p_umbral_movimiento:threshold,p_modo_prueba:$('#testMode').checked,
-      p_consecutivas:Number($('#confirmations').value),p_cooldown_ms:Number($('#cooldown').value)
-    });if(error)throw error;
-    $('#thresholdInternal').textContent=threshold;toast('Ajustes guardados');await updateTelemetry();
-  }catch(e){$('#settingsMsg').textContent=err(e)}
+function renderDashboard(d){
+  $('#topOnlineDot').className='dot '+(d.online?'green':'red');$('#topOnlineText').textContent=d.online?'ESP32 online':'ESP32 offline';
+  $('#topArmedDot').className='dot '+(d.armado?'green':'');$('#topArmedText').textContent=d.armado?'Armado':'Desarmado';
+  $('#topProfileDot').className='dot';if(d.perfil_color)$('#topProfileDot').style.background=d.perfil_color;$('#topProfileText').textContent=d.perfil||'Sin perfil';
+  $('#hudOnline').textContent=d.online?'● ONLINE':'● OFFLINE';$('#hudOnline').className='hud-badge '+(d.online?'hud-green':'hud-red');
+  $('#hudMotion').textContent=d.movimiento?'● MOVIMIENTO':'● SIN MOVIMIENTO';$('#hudMotion').className='hud-badge '+(d.movimiento?'hud-red':'hud-green');
+  $('#hudProfile').textContent='PERFIL: '+(d.perfil||'--');$('#hudResolution').textContent=d.resolucion||'QVGA / VGA';
+  $('#statLevel').textContent=d.nivel??0;$('#statThreshold').textContent=d.umbral??45;$('#statRssi').textContent=d.rssi!=null?d.rssi+' dBm':'--';$('#statIp').textContent=d.ip||'--';$('#statPhotos').textContent=d.total_fotos||0;
+  const level=Number(d.nivel||0),thr=Number(d.umbral||45);$('#meterFill').style.width=Math.min(100,level)+'%';$('#meterThreshold').style.left=Math.min(100,thr)+'%';
+  $('#motionDetail').textContent=`Nivel ${level} · Umbral ${thr}`;$('#motionLamp').className='status-lamp '+(d.movimiento?'red':level>=thr*.7?'amber':'green');$('#motionState').textContent=d.movimiento?'Movimiento confirmado':level>=thr*.7?'Cambio visual':'Escena estable';
+  $('#quickStatus').textContent=d.modo_prueba?'Modo prueba activo: no se tomarán fotos automáticas.':(d.armado?'Sistema armado mediante perfil '+(d.perfil||'')+'.':'Actualmente desarmado.');
+  graphValues.push({v:level,t:thr});if(graphValues.length>90)graphValues.shift();drawGraph();
 }
-async function calibrate(){
-  const b=$('#calibrate');b.disabled=true;const oldTest=$('#testMode').checked;$('#settingsMsg').textContent='Calibrando: deja la escena quieta durante 8 segundos...';
-  try{
-    const currentThreshold=thresholdFromSensitivity($('#sensitivity').value);
-    let q=await db.rpc('camara_movimiento_ajustes_guardar',{p_pin:pinNow,p_umbral_movimiento:currentThreshold,p_modo_prueba:true,p_consecutivas:Number($('#confirmations').value),p_cooldown_ms:Number($('#cooldown').value)});if(q.error)throw q.error;
-    const samples=[];
-    for(let i=0;i<10;i++){await new Promise(r=>setTimeout(r,800));const {data,error}=await db.rpc('camara_movimiento_estado',{p_pin:pinNow});if(error)throw error;samples.push(Number(data.nivel_actual||0));$('#settingsMsg').textContent=`Calibrando... ${i+1}/10 · nivel ${samples[samples.length-1]}`}
-    const max=Math.max(...samples),avg=Math.round(samples.reduce((a,b)=>a+b,0)/samples.length);
-    const threshold=Math.max(18,Math.min(80,Math.max(max+10,avg+15)));
-    const sens=sensitivityFromThreshold(threshold);
-    $('#sensitivity').value=sens;$('#sensitivityValue').textContent=sens;$('#thresholdInternal').textContent=threshold;
-    q=await db.rpc('camara_movimiento_ajustes_guardar',{p_pin:pinNow,p_umbral_movimiento:threshold,p_modo_prueba:oldTest,p_consecutivas:Number($('#confirmations').value),p_cooldown_ms:Number($('#cooldown').value)});if(q.error)throw q.error;
-    $('#testMode').checked=oldTest;$('#testLabel').textContent=oldTest?'Activado':'Desactivado';
-    $('#settingsMsg').textContent=`Calibrado. Ruido promedio ${avg}, máximo ${max}, umbral ${threshold}.`;toast('Calibración completada');
-  }catch(e){$('#settingsMsg').textContent=err(e)}finally{b.disabled=false}
+function drawGraph(){
+  const c=$('#motionGraph'),ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;for(let y=0;y<=4;y++){ctx.beginPath();ctx.moveTo(0,y*h/4);ctx.lineTo(w,y*h/4);ctx.stroke()}
+  if(graphValues.length<2)return;
+  ctx.strokeStyle='#29d27d';ctx.lineWidth=2;ctx.beginPath();graphValues.forEach((x,i)=>{const px=i*(w/(Math.max(1,graphValues.length-1))),py=h-(x.v/100)*h;i?ctx.lineTo(px,py):ctx.moveTo(px,py)});ctx.stroke();
+  const thr=graphValues[graphValues.length-1].t||45;ctx.strokeStyle='rgba(255,255,255,.75)';ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(0,h-(thr/100)*h);ctx.lineTo(w,h-(thr/100)*h);ctx.stroke();ctx.setLineDash([]);
 }
 
-async function startLive(){
-  liveOn=true;$('#liveToggle').textContent='■ Detener';$('#liveToggle').className='btn danger';$('#scan').classList.remove('hide');$('#liveEmpty').innerHTML='<div><strong>Conectando...</strong><div class="muted" style="margin-top:5px">Esperando imagen del ESP32.</div></div>';
-  try{
-    const interval=Number($('#liveInterval').value);
-    let {error}=await db.rpc('camara_live_activar',{p_pin:pinNow,p_segundos:90,p_intervalo_ms:interval});if(error)throw error;
-    clearInterval(liveRenewTimer);liveRenewTimer=setInterval(()=>db.rpc('camara_live_activar',{p_pin:pinNow,p_segundos:90,p_intervalo_ms:Number($('#liveInterval').value)}),30000);
-    previewSigned='';
-    clearInterval(liveImageTimer);liveImageTimer=setInterval(refreshLiveImage,Math.max(650,interval));setTimeout(refreshLiveImage,900);
-  }catch(e){toast(err(e));stopLive(false)}
-}
-async function refreshLiveImage(){
-  if(!liveOn)return;
-  try{
-    if(!previewSigned)previewSigned=await signed(PREVIEW_PATH,600);
-    $('#liveImage').src=previewSigned+(previewSigned.includes('?')?'&':'?')+'v='+Date.now();
-    $('#liveImage').onload=()=>{$('#liveImage').classList.remove('hide');$('#liveEmpty').classList.add('hide')};
-  }catch(e){previewSigned=''}
-}
-async function stopLive(callServer=true){
-  liveOn=false;clearInterval(liveRenewTimer);clearInterval(liveImageTimer);liveRenewTimer=liveImageTimer=null;
-  $('#liveToggle').textContent='▶ En vivo';$('#liveToggle').className='btn primary';$('#scan').classList.add('hide');
-  if(callServer&&pinNow)try{await db.rpc('camara_live_detener',{p_pin:pinNow})}catch(e){}
+async function snapshot(){
+  try{const {data,error}=await db.rpc('camara_solicitar_foto',{p_pin:pinNow});if(error)throw error;toast('Instantánea solicitada #'+data)}catch(e){toast(E(e))}
 }
 async function toggleLive(){liveOn?await stopLive():await startLive()}
+async function startLive(){
+  try{
+    const interval=Number($('#liveInterval')?.value||1000);
+    const {error}=await db.rpc('tuttocam_live_activar',{p_pin:pinNow,p_segundos:90,p_intervalo_ms:interval});if(error)throw error;
+    liveOn=true;$('#btnLive').textContent='■ Detener';$('#btnLive').className='btn danger';previewUrl='';clearInterval(liveRenewTimer);liveRenewTimer=setInterval(()=>db.rpc('tuttocam_live_activar',{p_pin:pinNow,p_segundos:90,p_intervalo_ms:interval}),30000);
+    clearInterval(liveImageTimer);liveImageTimer=setInterval(refreshPreview,Math.max(650,interval));setTimeout(refreshPreview,900);
+  }catch(e){toast(E(e))}
+}
+async function stopLive(){
+  liveOn=false;clearInterval(liveRenewTimer);clearInterval(liveImageTimer);liveRenewTimer=liveImageTimer=null;$('#btnLive').textContent='▶ En vivo';$('#btnLive').className='btn primary';
+  try{await db.rpc('tuttocam_live_detener',{p_pin:pinNow})}catch(e){}
+}
+async function refreshPreview(){
+  if(!liveOn)return;
+  try{
+    if(!previewUrl)previewUrl=await signed(PREVIEW_PATH,600);
+    const img=$('#liveImage'),start=performance.now();img.onload=()=>{const dt=Math.max(1,performance.now()-start);$('#liveImage').classList.remove('hide');$('#liveEmpty').classList.add('hide');$('#hudFps').textContent='~'+(1000/Number($('#liveInterval')?.value||1000)).toFixed(1)+' FPS';if(lastPreviewBytes){$('#hudBandwidth').textContent=(lastPreviewBytes/1024/(Number($('#liveInterval')?.value||1000)/1000)).toFixed(0)+' KB/s'}};
+    img.src=previewUrl+(previewUrl.includes('?')?'&':'?')+'v='+Date.now();
+    $('#zoneImage').src=img.src;
+  }catch(e){previewUrl=''}
+}
+
+function setPage(name){
+  $$('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+name));$$('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===name));
+  if(name==='playback')loadEvents(true);if(name==='rules'){loadProfiles().then(()=>loadMatrix());loadRules();loadZones()}if(name==='maintenance'){loadMaintenance();loadCameraSettings();loadAudit()}
+}
+$$('.navbtn').forEach(b=>b.onclick=()=>setPage(b.dataset.page));
+
+function setLayout(n){
+  $$('.layout-btn').forEach(x=>x.classList.toggle('active',Number(x.dataset.layout)===n));
+  const grid=$('#cameraGrid');grid.className='camera-grid'+(n===4?' g4':n===9?' g9':'');
+  grid.querySelectorAll('.placeholder-camera').forEach(x=>x.remove());
+  for(let i=1;i<n;i++){const p=document.createElement('div');p.className='placeholder-camera';p.innerHTML='<div><div style="font-size:24px">＋</div><strong>Espacio de cámara</strong><div class="muted" style="margin-top:4px">Preparado para futura cámara</div></div>';grid.appendChild(p)}
+}
+$$('.layout-btn').forEach(b=>b.onclick=()=>setLayout(Number(b.dataset.layout)));
 
 async function loadEvents(reset=true){
-  if(reset){eventsOffset=0;$('#events').innerHTML=''}
+  if(reset){eventOffset=0;$('#eventsGrid').innerHTML=''}
   try{
-    const {data,error}=await db.rpc('camara_historial',{p_pin:pinNow,p_limite:PAGE,p_offset:eventsOffset});if(error)throw error;
-    let items=data.items||[];eventsTotal=data.total||0;
-    if(eventFilter!=='todos')items=items.filter(x=>(x.origen||'manual')===eventFilter);
+    const {data,error}=await db.rpc('camara_historial',{p_pin:pinNow,p_limite:PAGE_SIZE,p_offset:eventOffset});if(error)throw error;
+    let all=data?.items||[];eventTotal=data?.total||0;let items=eventFilter==='todos'?all:all.filter(x=>(x.origen||'manual')===eventFilter);
     for(const x of items){
-      let u='';try{u=await signed(x.foto_path)}catch{}
-      const el=document.createElement('article');el.className='event';
-      el.innerHTML=`${u?`<img src="${u}">`:'<div style="aspect-ratio:4/3;background:#020407"></div>'}<div class="event-body"><div class="event-time">${fmt(x.fecha)}</div><div class="event-meta">${x.origen==='movimiento'?'Movimiento':'Manual'} · #${x.id}</div><div class="event-actions"><button class="btn secondary see">Ver</button><button class="btn danger del">Borrar</button></div></div>`;
-      el.querySelector('.see').onclick=()=>{if(u){$('#liveImage').src=u;$('#liveImage').classList.remove('hide');$('#liveEmpty').classList.add('hide');showView('live')}};
-      el.querySelector('.del').onclick=()=>deleteEvent(x,el);$('#events').appendChild(el)
+      let u='';try{u=await signed(x.foto_path,1800)}catch{}
+      const el=document.createElement('article');el.className='event-card';
+      el.innerHTML=`${u?`<img src="${u}" alt="">`:'<div style="aspect-ratio:4/3;background:#020408"></div>'}<div class="event-body"><div class="event-time">${fmt(x.fecha)}</div><div class="event-meta">${x.origen==='movimiento'?'Movimiento':'Manual'} · #${x.id}</div><div class="event-actions"><button class="btn secondary small see">Ver</button><button class="btn danger small del">Borrar</button></div></div>`;
+      el.querySelector('.see').onclick=()=>{if(u){$('#liveImage').src=u;$('#liveImage').classList.remove('hide');$('#liveEmpty').classList.add('hide');setPage('live')}};
+      el.querySelector('.del').onclick=()=>deleteEvent(x,el);$('#eventsGrid').appendChild(el)
     }
-    eventsOffset+=(data.items||[]).length;$('#eventCount').textContent=`${eventsTotal} capturas`;$('#moreEvents').classList.toggle('hide',eventsOffset>=eventsTotal);$('#eventMsg').textContent=items.length?'':'No hay eventos para este filtro.';
-  }catch(e){$('#eventMsg').textContent=err(e)}
+    eventOffset+=all.length;$('#moreEvents').classList.toggle('hide',eventOffset>=eventTotal);$('#eventsMsg').textContent=items.length?'':(eventFilter==='todos'?'No hay eventos.':'No hay eventos con este filtro.');buildTimeline(all.slice(0,12));
+  }catch(e){$('#eventsMsg').textContent=E(e)}
+}
+function buildTimeline(items){
+  const root=$('#eventTimeline');root.innerHTML='';
+  items.forEach(x=>{const row=document.createElement('div');row.className='timeline-row';row.innerHTML=`<div class="timeline-time">${fmt(x.fecha).split(',').pop()||''}</div><div class="timeline-dot" style="background:${x.origen==='movimiento'?'var(--red)':'var(--blue)'}"></div><div class="timeline-content"><strong>${x.origen==='movimiento'?'Movimiento detectado':'Foto manual'}</strong><div class="muted">${fmt(x.fecha)} · Solicitud #${x.id}</div></div>`;root.appendChild(row)})
 }
 async function deleteEvent(x,el){
   if(!confirm('¿Borrar esta fotografía definitivamente?'))return;
-  try{let r=await db.storage.from(BUCKET).remove([x.foto_path]);if(r.error)throw r.error;let q=await db.rpc('camara_eliminar_registro',{p_pin:pinNow,p_solicitud_id:x.id});if(q.error)throw q.error;el.remove();toast('Foto eliminada')}catch(e){toast(err(e))}
+  try{let r=await db.storage.from(BUCKET).remove([x.foto_path]);if(r.error)throw r.error;let q=await db.rpc('camara_eliminar_registro',{p_pin:pinNow,p_solicitud_id:x.id});if(q.error)throw q.error;el.remove();toast('Foto eliminada')}catch(e){toast(E(e))}
 }
+$$('.filter-btn').forEach(b=>b.onclick=()=>{$$('.filter-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');eventFilter=b.dataset.filter;loadEvents(true)});
 
-const dayNames={0:'Dom',1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie',6:'Sáb'};
-async function loadTasks(){
+async function loadProfiles(){
+  try{const {data,error}=await db.rpc('tuttocam_perfiles_listar',{p_pin:pinNow});if(error)throw error;profiles=data||[];renderProfiles();renderProfileSelect();renderLegend()}catch(e){toast(E(e))}
+}
+function renderProfiles(){
+  const root=$('#profileList');root.innerHTML='';
+  profiles.forEach(p=>{const el=document.createElement('div');el.className='profile-card';el.innerHTML=`<div class="profile-top"><div style="display:flex;gap:8px"><span class="profile-color" style="background:${p.color}"></span><div><div class="profile-name">${p.nombre}</div><div class="profile-meta">${p.armado?'Armado':'Desarmado'} · Umbral ${p.umbral} · ${p.consecutivas} confirm. · ${(p.cooldown_ms/1000)} s · ${p.capturas} foto(s)</div></div></div></div><div class="profile-actions"><button class="btn secondary small edit">Editar</button><button class="btn danger small del">Borrar</button></div>`;el.querySelector('.edit').onclick=()=>openProfile(p);el.querySelector('.del').onclick=()=>deleteProfile(p.id);root.appendChild(el)})
+}
+function renderProfileSelect(){
+  const s=$('#matrixProfile');s.innerHTML='';profiles.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.nombre;s.appendChild(o)})
+}
+function renderLegend(){
+  const r=$('#matrixLegend');r.innerHTML='';profiles.forEach(p=>{const x=document.createElement('div');x.className='legend-item';x.innerHTML=`<span class="legend-dot" style="background:${p.color}"></span>${p.nombre}`;r.appendChild(x)})
+}
+function openProfile(p=null){
+  $('#profileId').value=p?.id||'';$('#profileName').value=p?.nombre||'';$('#profileColor').value=p?.color||'#22c55e';$('#profileArmed').checked=p?p.armado:true;$('#profileThreshold').value=p?.umbral||45;$('#profileConfirm').value=String(p?.consecutivas||3);$('#profileCooldown').value=String(p?.cooldown_ms||10000);$('#profileCaptures').value=String(p?.capturas||1);$('#profileNotify').checked=!!p?.notificar;$('#profileModalTitle').textContent=p?'Editar perfil':'Nuevo perfil';$('#profileModal').classList.remove('hide')
+}
+async function saveProfile(){
+  try{const {error}=await db.rpc('tuttocam_perfil_guardar',{p_pin:pinNow,p_id:$('#profileId').value?Number($('#profileId').value):null,p_nombre:$('#profileName').value.trim()||'Perfil',p_color:$('#profileColor').value,p_armado:$('#profileArmed').checked,p_umbral:Number($('#profileThreshold').value),p_consecutivas:Number($('#profileConfirm').value),p_cooldown_ms:Number($('#profileCooldown').value),p_capturas:Number($('#profileCaptures').value),p_notificar:$('#profileNotify').checked});if(error)throw error;$('#profileModal').classList.add('hide');toast('Perfil guardado');await loadProfiles();renderMatrix()}catch(e){$('#profileModalMsg').textContent=E(e)}
+}
+async function deleteProfile(id){if(!confirm('¿Borrar este perfil? Las celdas que lo usen quedarán sin perfil.'))return;try{const {error}=await db.rpc('tuttocam_perfil_eliminar',{p_pin:pinNow,p_id:id});if(error)throw error;matrixCells=matrixCells.map(x=>Number(x)===Number(id)?null:x);await loadProfiles();renderMatrix()}catch(e){toast(E(e))}}
+
+async function loadMatrix(){
+  try{const {data,error}=await db.rpc('tuttocam_matriz_obtener',{p_pin:pinNow});if(error)throw error;matrixCells=(data?.celdas||new Array(168).fill(null)).map(x=>x==null?null:Number(x));renderMatrix()}catch(e){$('#matrixMsg').textContent=E(e)}
+}
+function renderMatrix(){
+  const root=$('#weeklyMatrix');root.innerHTML='';
+  const m=document.createElement('div');m.className='matrix';
+  m.appendChild(Object.assign(document.createElement('div'),{className:'mh',textContent:'Día'}));
+  for(let h=0;h<24;h++){const x=document.createElement('div');x.className='mh';x.textContent=String(h).padStart(2,'0');m.appendChild(x)}
+  const days=[['Dom',0],['Lun',1],['Mar',2],['Mié',3],['Jue',4],['Vie',5],['Sáb',6]];
+  for(const [name,dow] of days){
+    const d=document.createElement('div');d.className='md';d.textContent=name;m.appendChild(d);
+    for(let h=0;h<24;h++){const idx=dow*24+h,cell=document.createElement('div');cell.className='cell';cell.dataset.idx=idx;applyCellStyle(cell,matrixCells[idx]);cell.onmousedown=e=>{e.preventDefault();matrixMouse=true;paintCell(cell)};cell.onmouseenter=()=>{if(matrixMouse)paintCell(cell)};cell.ontouchstart=e=>{e.preventDefault();matrixMouse=true;paintCell(cell)};cell.ontouchmove=e=>{const t=e.touches[0],el=document.elementFromPoint(t.clientX,t.clientY);if(el?.classList.contains('cell'))paintCell(el)};m.appendChild(cell)}
+  }
+  root.appendChild(m)
+}
+function applyCellStyle(cell,id){
+  const p=profiles.find(x=>Number(x.id)===Number(id));cell.style.setProperty('--cell-color',p?.color||'transparent');cell.title=p?p.nombre:'Sin perfil'
+}
+function paintCell(cell){
+  const idx=Number(cell.dataset.idx),id=matrixErase?null:Number($('#matrixProfile').value);matrixCells[idx]=id;applyCellStyle(cell,id)
+}
+window.addEventListener('mouseup',()=>matrixMouse=false);window.addEventListener('touchend',()=>matrixMouse=false);
+async function saveMatrix(){try{const {error}=await db.rpc('tuttocam_matriz_guardar',{p_pin:pinNow,p_celdas:matrixCells});if(error)throw error;toast('Matriz guardada')}catch(e){$('#matrixMsg').textContent=E(e)}}
+
+async function loadRules(){
+  try{const {data,error}=await db.rpc('tuttocam_reglas_listar',{p_pin:pinNow});if(error)throw error;renderRules(data||[])}catch(e){toast(E(e))}
+}
+function renderRules(items){
+  const root=$('#ruleList');root.innerHTML='';if(!items.length){root.innerHTML='<div class="muted">No hay reglas adicionales.</div>';return}
+  items.forEach(r=>{const el=document.createElement('div');el.className='rule-card';el.innerHTML=`<div class="rule-top"><div><div class="rule-name">${r.nombre}</div><div class="rule-meta">${r.activo?'Activa':'Desactivada'} · Nivel ≥ ${r.nivel_minimo} · ${r.capturas} captura(s)${r.notificar?' · Notificar':''}${r.rele?' · Relé':''}</div></div></div><div class="rule-actions"><button class="btn secondary small edit">Editar</button><button class="btn danger small del">Borrar</button></div>`;el.querySelector('.edit').onclick=()=>openRule(r);el.querySelector('.del').onclick=()=>deleteRule(r.id);root.appendChild(el)})
+}
+function openRule(r=null){$('#ruleId').value=r?.id||'';$('#ruleName').value=r?.nombre||'';$('#ruleActive').checked=r?r.activo:true;$('#ruleLevel').value=r?.nivel_minimo??60;$('#ruleCaptures').value=String(r?.capturas||1);$('#ruleNotify').checked=!!r?.notificar;$('#ruleRelay').checked=!!r?.rele;$('#ruleModalTitle').textContent=r?'Editar regla':'Nueva regla';$('#ruleModal').classList.remove('hide')}
+async function saveRule(){try{const {error}=await db.rpc('tuttocam_regla_guardar',{p_pin:pinNow,p_id:$('#ruleId').value?Number($('#ruleId').value):null,p_nombre:$('#ruleName').value.trim()||'Regla',p_activo:$('#ruleActive').checked,p_nivel_minimo:Number($('#ruleLevel').value),p_capturas:Number($('#ruleCaptures').value),p_notificar:$('#ruleNotify').checked,p_rele:$('#ruleRelay').checked});if(error)throw error;$('#ruleModal').classList.add('hide');toast('Regla guardada');loadRules()}catch(e){$('#ruleModalMsg').textContent=E(e)}}
+async function deleteRule(id){if(!confirm('¿Borrar esta regla?'))return;try{const {error}=await db.rpc('tuttocam_regla_eliminar',{p_pin:pinNow,p_id:id});if(error)throw error;loadRules()}catch(e){toast(E(e))}}
+
+async function loadZones(){
+  try{const {data,error}=await db.rpc('tuttocam_zonas_obtener',{p_pin:pinNow});if(error)throw error;zones=data?.zonas||[];renderZones();await refreshZoneImage()}catch(e){$('#zoneMsg').textContent=E(e)}
+}
+async function refreshZoneImage(){
+  try{const u=await signed(PREVIEW_PATH,600);$('#zoneImage').src=u+'&v='+Date.now()}catch(e){}
+}
+function renderZones(){
+  drawZones();const root=$('#zoneList');root.innerHTML='';zones.forEach((z,i)=>{const el=document.createElement('div');el.className='zone-item';el.innerHTML=`<span class="zone-key"><span class="zone-swatch" style="background:${z.type==='include'?'rgba(41,210,125,.9)':'rgba(255,89,101,.9)'}"></span>${z.type==='include'?'Vigilar':'Ignorar'} ${i+1}</span><button class="btn danger small">×</button>`;el.querySelector('button').onclick=()=>{zones.splice(i,1);renderZones()};root.appendChild(el)})
+}
+function canvasPoint(e){
+  const c=$('#zoneCanvas'),r=c.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return{x:(t.clientX-r.left)/r.width,y:(t.clientY-r.top)/r.height}
+}
+function drawZones(temp=null){
+  const c=$('#zoneCanvas'),r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=Math.max(1,Math.round(r.width*dpr));c.height=Math.max(1,Math.round(r.height*dpr));const ctx=c.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,r.width,r.height);
+  const all=temp?[...zones,temp]:zones;all.forEach(z=>{const x=z.x*r.width,y=z.y*r.height,w=z.w*r.width,h=z.h*r.height;ctx.fillStyle=z.type==='include'?'rgba(41,210,125,.18)':'rgba(255,89,101,.20)';ctx.strokeStyle=z.type==='include'?'#29d27d':'#ff5965';ctx.lineWidth=2;ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h)})
+}
+$('#zoneCanvas').addEventListener('pointerdown',e=>{zoneDrawing=true;zoneStart=canvasPoint(e);$('#zoneCanvas').setPointerCapture(e.pointerId)});
+$('#zoneCanvas').addEventListener('pointermove',e=>{if(!zoneDrawing)return;const p=canvasPoint(e),z={type:$('#zoneMode').value,x:Math.min(zoneStart.x,p.x),y:Math.min(zoneStart.y,p.y),w:Math.abs(p.x-zoneStart.x),h:Math.abs(p.y-zoneStart.y)};drawZones(z)});
+$('#zoneCanvas').addEventListener('pointerup',e=>{if(!zoneDrawing)return;zoneDrawing=false;const p=canvasPoint(e),z={type:$('#zoneMode').value,x:Math.min(zoneStart.x,p.x),y:Math.min(zoneStart.y,p.y),w:Math.abs(p.x-zoneStart.x),h:Math.abs(p.y-zoneStart.y)};if(z.w>.015&&z.h>.015)zones.push(z);renderZones()});
+window.addEventListener('resize',()=>drawZones());
+function buildMask(){
+  const hasInclude=zones.some(z=>z.type==='include'),mask=new Array(1200).fill(hasInclude?'0':'1');
+  const apply=(z,val)=>{const x0=Math.floor(z.x*40),x1=Math.min(39,Math.ceil((z.x+z.w)*40)-1),y0=Math.floor(z.y*30),y1=Math.min(29,Math.ceil((z.y+z.h)*30)-1);for(let y=Math.max(0,y0);y<=y1;y++)for(let x=Math.max(0,x0);x<=x1;x++)mask[y*40+x]=val};
+  zones.filter(z=>z.type==='include').forEach(z=>apply(z,'1'));zones.filter(z=>z.type==='exclude').forEach(z=>apply(z,'0'));return mask.join('')
+}
+async function saveZones(){try{const {error}=await db.rpc('tuttocam_zonas_guardar',{p_pin:pinNow,p_zonas:zones,p_mascara:buildMask()});if(error)throw error;toast('Zonas guardadas')}catch(e){$('#zoneMsg').textContent=E(e)}}
+
+async function loadMaintenance(){
+  try{const {data,error}=await db.rpc('tuttocam_mantenimiento_estado',{p_pin:pinNow});if(error)throw error;$('#healthOnline').textContent=data.online?'ONLINE':'OFFLINE';$('#healthIp').textContent=data.ip||'--';$('#healthRssi').textContent=data.rssi!=null?data.rssi+' dBm':'--';$('#healthUptime').textContent=formatUptime(data.uptime_ms);$('#healthHeap').textContent=bytes(data.heap_libre);$('#healthPsram').textContent=bytes(data.psram_libre);$('#healthFirmware').textContent=data.firmware||'--';$('#healthPhotos').textContent=data.total_fotos||0}catch(e){toast(E(e))}
+}
+async function loadCameraSettings(){try{const {data,error}=await db.rpc('tuttocam_camara_ajustes_obtener',{p_pin:pinNow});if(error)throw error;$('#camBrightness').value=String(data.brillo);$('#camContrast').value=String(data.contraste);$('#camSaturation').value=String(data.saturacion)}catch(e){}}
+async function saveCameraSettings(){try{const {error}=await db.rpc('tuttocam_camara_ajustes_guardar',{p_pin:pinNow,p_brillo:Number($('#camBrightness').value),p_contraste:Number($('#camContrast').value),p_saturacion:Number($('#camSaturation').value)});if(error)throw error;toast('Ajustes de cámara guardados')}catch(e){$('#cameraSettingsMsg').textContent=E(e)}}
+async function loadAudit(){try{const {data,error}=await db.rpc('tuttocam_auditoria_listar',{p_pin:pinNow,p_limite:100});if(error)throw error;const body=$('#auditBody');body.innerHTML='';(data||[]).forEach(x=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${fmt(x.creado_en)}</td><td>${x.tipo}</td><td>${x.detalle||''}</td>`;body.appendChild(tr)})}catch(e){}}
+async function restartDevice(){if(!confirm('¿Reiniciar el ESP32 ahora?'))return;try{const {data,error}=await db.rpc('tuttocam_comando_crear',{p_pin:pinNow,p_comando:'reiniciar'});if(error)throw error;toast('Comando #'+data+' enviado')}catch(e){toast(E(e))}}
+async function calibrate8(){
+  const b=$('#calibrate8');b.disabled=true;$('#calibrationMsg').textContent='Deja la escena completamente quieta durante 8 segundos...';
   try{
-    const {data,error}=await db.rpc('camara_horarios_listar',{p_pin:pinNow});if(error)throw error;$('#tasks').innerHTML='';
-    for(const t of data||[]){
-      const el=document.createElement('div');el.className='task';
-      el.innerHTML=`<div class="task-row"><div><div class="task-name">${t.nombre}</div><div class="task-meta">${t.activo?'Activo':'Desactivado'} · ${(t.dias||[]).map(d=>dayNames[d]).join(', ')}<br>${String(t.hora_inicio).slice(0,5)} → ${String(t.hora_fin).slice(0,5)}</div></div><div class="${t.coincide_ahora?'active-now':''}">${t.coincide_ahora?'● AHORA':'○'}</div></div><div class="task-actions"><button class="btn secondary edit">Editar</button><button class="btn danger del">Borrar</button></div>`;
-      el.querySelector('.edit').onclick=()=>openTask(t);el.querySelector('.del').onclick=()=>deleteTask(t.id);$('#tasks').appendChild(el)
-    }
-    if(!(data||[]).length)$('#tasks').innerHTML='<div class="muted">No hay horarios. Crea uno para habilitar capturas automáticas.</div>';
-  }catch(e){$('#taskMsg').textContent=err(e)}
+    const samples=[];
+    const oldTest=$('#testMode').checked;$('#testMode').checked=true;$('#testModeLabel').textContent='Activado';
+    for(let i=0;i<10;i++){await new Promise(r=>setTimeout(r,800));const {data,error}=await db.rpc('tuttocam_dashboard',{p_pin:pinNow});if(error)throw error;samples.push(Number(data.nivel||0));$('#calibrationMsg').textContent=`Calibrando ${i+1}/10 · nivel ${samples.at(-1)}`}
+    const avg=Math.round(samples.reduce((a,b)=>a+b,0)/samples.length),max=Math.max(...samples),thr=Math.max(18,Math.min(80,Math.max(max+10,avg+15)));
+    $('#calibrationMsg').textContent=`Resultado: ruido promedio ${avg}, máximo ${max}. Umbral recomendado: ${thr}. Ajusta el perfil activo con ese valor.`;
+    $('#testMode').checked=oldTest;$('#testModeLabel').textContent=oldTest?'Activado':'Desactivado';toast('Calibración completada')
+  }catch(e){$('#calibrationMsg').textContent=E(e)}finally{b.disabled=false}
 }
-function openTask(t=null){
-  $('#taskId').value=t?.id||'';$('#taskName').value=t?.nombre||'';$('#taskActive').checked=t?t.activo:true;$('#taskFrom').value=String(t?.hora_inicio||'08:00').slice(0,5);$('#taskTo').value=String(t?.hora_fin||'18:00').slice(0,5);$$('.taskDow').forEach(x=>x.checked=(t?.dias||[1,2,3,4,5]).includes(Number(x.value)));$('#taskTitle').textContent=t?'Editar horario':'Nuevo horario';$('#taskModal').classList.remove('hide')
-}
-async function saveTask(){
-  const dias=$$('.taskDow:checked').map(x=>Number(x.value));if(!dias.length){$('#taskModalMsg').textContent='Selecciona al menos un día.';return}
-  try{const {error}=await db.rpc('camara_horario_guardar',{p_pin:pinNow,p_id:$('#taskId').value?Number($('#taskId').value):null,p_nombre:$('#taskName').value.trim()||'Horario',p_activo:$('#taskActive').checked,p_hora_inicio:$('#taskFrom').value,p_hora_fin:$('#taskTo').value,p_dias:dias});if(error)throw error;$('#taskModal').classList.add('hide');toast('Horario guardado');loadTasks()}catch(e){$('#taskModalMsg').textContent=err(e)}
-}
-async function deleteTask(id){if(!confirm('¿Borrar este horario?'))return;try{const {error}=await db.rpc('camara_horario_eliminar',{p_pin:pinNow,p_id:id});if(error)throw error;loadTasks()}catch(e){toast(err(e))}}
 
-function showView(name){
-  $$('.content').forEach(x=>x.classList.toggle('active',x.id==='view-'+name));$$('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.view===name));
-  if(name==='events')loadEvents(true);if(name==='automation')loadTasks();if(name==='settings')loadSettings();if(name!=='live'&&liveOn){} 
-}
-$$('.navbtn').forEach(x=>x.onclick=()=>showView(x.dataset.view));
-$$('.filter').forEach(x=>x.onclick=()=>{$$('.filter').forEach(y=>y.classList.remove('active'));x.classList.add('active');eventFilter=x.dataset.filter;loadEvents(true)});
-$('#enter').onclick=enter;$('#pin').onkeydown=e=>{if(e.key==='Enter')enter()};$('#capture').onclick=capture;$('#liveToggle').onclick=toggleLive;$('#reloadEvents').onclick=()=>loadEvents(true);$('#moreEvents').onclick=()=>loadEvents(false);$('#newTask').onclick=()=>openTask();$('#closeTask').onclick=()=>$('#taskModal').classList.add('hide');$('#saveTask').onclick=saveTask;$('#saveSettings').onclick=saveSettings;$('#calibrate').onclick=calibrate;$('#calibrateQuick').onclick=()=>{showView('settings');setTimeout(calibrate,250)};$('#testQuick').onclick=()=>{showView('settings');$('#testMode').checked=true;$('#testLabel').textContent='Activado';toast('Activa Guardar ajustes para confirmar')};
-$('#sensitivity').oninput=()=>{$('#sensitivityValue').textContent=$('#sensitivity').value;$('#thresholdInternal').textContent=thresholdFromSensitivity($('#sensitivity').value)};
-$('#testMode').onchange=()=>$('#testLabel').textContent=$('#testMode').checked?'Activado':'Desactivado';
-window.addEventListener('beforeunload',()=>{if(liveOn)navigator.sendBeacon&&void 0});
-const saved=localStorage.getItem('cam_pin');if(saved){$('#pin').value=saved;enter()}
+$$('.subtab').forEach(b=>b.onclick=()=>{$$('.subtab').forEach(x=>x.classList.remove('active'));b.classList.add('active');$$('.subpanel').forEach(x=>x.classList.toggle('active',x.id==='rule-'+b.dataset.rulestab));if(b.dataset.rulestab==='zones')setTimeout(()=>{refreshZoneImage();drawZones()},100)});
+$$('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).classList.add('hide'));
+
+$('#enter').onclick=enter;$('#pin').onkeydown=e=>{if(e.key==='Enter')enter()};
+$('#btnLive').onclick=toggleLive;$('#btnSnapshot').onclick=snapshot;$('#btnQuickPhoto').onclick=snapshot;$('#btnFullscreen').onclick=()=>$('#videoPrincipal').requestFullscreen?.();
+$('#btnGoCalibration').onclick=()=>setPage('maintenance');$('#btnQuickTest').onclick=()=>{setPage('maintenance');$('#testMode').checked=true;$('#testModeLabel').textContent='Activado';toast('Modo prueba seleccionado')};$('#btnQuickRules').onclick=()=>setPage('rules');$('#btnQuickMaintenance').onclick=()=>setPage('maintenance');
+$('#reloadEvents').onclick=()=>loadEvents(true);$('#moreEvents').onclick=()=>loadEvents(false);
+$('#newProfile').onclick=()=>openProfile();$('#saveProfile').onclick=saveProfile;$('#saveMatrix').onclick=saveMatrix;$('#matrixErase').onclick=()=>{matrixErase=!matrixErase;$('#matrixErase').classList.toggle('danger',matrixErase)};$('#matrixClear').onclick=()=>{if(confirm('¿Limpiar toda la matriz semanal?')){matrixCells=new Array(168).fill(null);renderMatrix()}};
+$('#newRule').onclick=()=>openRule();$('#saveRule').onclick=saveRule;$('#saveZones').onclick=saveZones;$('#clearZones').onclick=()=>{if(confirm('¿Borrar todas las zonas?')){zones=[];renderZones()}};
+$('#reloadMaintenance').onclick=()=>{loadMaintenance();loadAudit()};$('#saveCameraSettings').onclick=saveCameraSettings;$('#reloadAudit').onclick=loadAudit;$('#restartDevice').onclick=restartDevice;$('#calibrate8').onclick=calibrate8;$('#testMode').onchange=()=>$('#testModeLabel').textContent=$('#testMode').checked?'Activado':'Desactivado';
+$('#logout').onclick=()=>{localStorage.removeItem('tuttocam_pin');location.reload()};
+
+const saved=localStorage.getItem('tuttocam_pin');if(saved){$('#pin').value=saved;enter()}
 </script>
 </body>
 </html>
