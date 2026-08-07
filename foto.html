@@ -1,632 +1,81 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#111827">
-  <title>Cámara Tuttovinilos</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    :root {
-      color-scheme: dark;
-      --fondo: #080b12;
-      --panel: #111827;
-      --panel2: #182235;
-      --texto: #f8fafc;
-      --suave: #94a3b8;
-      --borde: rgba(255,255,255,.10);
-      --acento: #22c55e;
-      --acento2: #16a34a;
-      --peligro: #ef4444;
-      --aviso: #f59e0b;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background:
-        radial-gradient(circle at top, rgba(34,197,94,.13), transparent 35%),
-        var(--fondo);
-      color: var(--texto);
-      font-family: Arial, Helvetica, sans-serif;
-    }
-
-    button, input { font: inherit; }
-
-    .contenedor {
-      width: min(100%, 720px);
-      margin: 0 auto;
-      padding: 18px 14px 36px;
-    }
-
-    .encabezado {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(24px, 7vw, 34px);
-      line-height: 1;
-    }
-
-    .subtitulo {
-      margin: 7px 0 0;
-      color: var(--suave);
-      font-size: 14px;
-    }
-
-    .conexion {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      color: var(--suave);
-      font-size: 12px;
-      white-space: nowrap;
-    }
-
-    .punto {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--peligro);
-      box-shadow: 0 0 12px currentColor;
-    }
-
-    .punto.activo { background: var(--acento); }
-
-    .tarjeta {
-      background: rgba(17,24,39,.94);
-      border: 1px solid var(--borde);
-      border-radius: 20px;
-      padding: 18px;
-      box-shadow: 0 18px 50px rgba(0,0,0,.28);
-    }
-
-    .oculto { display: none !important; }
-
-    .campo {
-      display: grid;
-      gap: 8px;
-      margin-top: 16px;
-    }
-
-    label {
-      color: var(--suave);
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    input[type="password"],
-    input[type="text"] {
-      width: 100%;
-      min-height: 52px;
-      padding: 0 15px;
-      border: 1px solid var(--borde);
-      border-radius: 13px;
-      outline: none;
-      background: #0b1220;
-      color: var(--texto);
-      font-size: 20px;
-      letter-spacing: 4px;
-    }
-
-    input:focus {
-      border-color: var(--acento);
-      box-shadow: 0 0 0 3px rgba(34,197,94,.16);
-    }
-
-    .recordar {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      margin: 13px 0 16px;
-      color: var(--suave);
-      font-size: 13px;
-    }
-
-    .btn {
-      width: 100%;
-      min-height: 54px;
-      border: 0;
-      border-radius: 14px;
-      padding: 12px 16px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: transform .12s ease, opacity .12s ease;
-    }
-
-    .btn:active { transform: scale(.985); }
-    .btn:disabled { opacity: .50; cursor: not-allowed; }
-
-    .btn-principal {
-      background: linear-gradient(180deg, var(--acento), var(--acento2));
-      color: #041108;
-      font-size: 18px;
-    }
-
-    .btn-secundario {
-      background: var(--panel2);
-      color: var(--texto);
-      border: 1px solid var(--borde);
-    }
-
-    .acciones {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .visor {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 4 / 3;
-      margin-top: 14px;
-      overflow: hidden;
-      border-radius: 16px;
-      border: 1px solid var(--borde);
-      background:
-        linear-gradient(135deg, rgba(255,255,255,.03), rgba(255,255,255,0)),
-        #05070c;
-    }
-
-    .visor img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: contain;
-      background: #000;
-    }
-
-    .sin-foto {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      padding: 30px;
-      text-align: center;
-      color: var(--suave);
-    }
-
-    .estado-fila {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .estado {
-      display: inline-flex;
-      align-items: center;
-      min-height: 32px;
-      padding: 6px 11px;
-      border-radius: 999px;
-      background: rgba(148,163,184,.12);
-      color: #cbd5e1;
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .estado.pendiente {
-      background: rgba(245,158,11,.15);
-      color: #fbbf24;
-    }
-
-    .estado.capturando {
-      background: rgba(59,130,246,.16);
-      color: #60a5fa;
-    }
-
-    .estado.completada {
-      background: rgba(34,197,94,.15);
-      color: #4ade80;
-    }
-
-    .estado.error {
-      background: rgba(239,68,68,.16);
-      color: #f87171;
-    }
-
-    .fecha {
-      color: var(--suave);
-      font-size: 12px;
-      text-align: right;
-    }
-
-    .mensaje {
-      min-height: 20px;
-      margin: 12px 0 0;
-      color: var(--suave);
-      font-size: 13px;
-      line-height: 1.4;
-    }
-
-    .mensaje.error { color: #fca5a5; }
-
-    .pie {
-      margin-top: 14px;
-      text-align: center;
-      color: #64748b;
-      font-size: 11px;
-    }
-
-    @media (max-width: 480px) {
-      .contenedor { padding-inline: 10px; }
-      .tarjeta { padding: 14px; border-radius: 17px; }
-      .encabezado { align-items: flex-start; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>Cámara Tuttovinilos</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#070b12;--p:#111827;--p2:#182235;--t:#f8fafc;--m:#94a3b8;--b:rgba(255,255,255,.1);--g:#22c55e;--r:#ef4444;--y:#f59e0b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font-family:Arial,sans-serif}.wrap{max-width:760px;margin:auto;padding:14px}.card{background:var(--p);border:1px solid var(--b);border-radius:18px;padding:14px;margin-bottom:12px}.hide{display:none!important}h1,h2{margin:0}.muted{color:var(--m);font-size:13px}.head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px}.online{font-size:12px;color:var(--m)}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--r);margin-right:5px}.dot.ok{background:var(--g)}
+button,input{font:inherit}.btn{width:100%;min-height:48px;border:0;border-radius:12px;font-weight:800;padding:10px;cursor:pointer}.green{background:var(--g);color:#031008}.dark{background:var(--p2);color:#fff;border:1px solid var(--b)}.red{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}.tab{min-height:42px;border-radius:11px;background:#0d1422;color:var(--m);border:1px solid var(--b);font-weight:800}.tab.on{background:var(--p2);color:white;border-color:rgba(34,197,94,.4)}.panel{display:none}.panel.on{display:block}
+input[type=password],input[type=time]{width:100%;min-height:48px;background:#0b1220;border:1px solid var(--b);border-radius:11px;color:white;padding:0 12px;outline:none}.field{display:grid;gap:6px;margin:12px 0}.field label{font-size:12px;color:var(--m);font-weight:700}.viewer{aspect-ratio:4/3;background:#000;border-radius:14px;overflow:hidden;margin:10px 0;display:grid;place-items:center;color:var(--m)}.viewer img{width:100%;height:100%;object-fit:contain}.status{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--m)}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.shot{background:#0a101b;border:1px solid var(--b);border-radius:13px;overflow:hidden}.shot img{width:100%;aspect-ratio:4/3;object-fit:cover;background:#000}.shot .info{padding:8px;font-size:11px;color:var(--m)}.shot .actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:7px}.shot .actions .btn{min-height:35px;font-size:11px}.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.day{padding:8px 2px;text-align:center;border:1px solid var(--b);border-radius:9px;background:#0b1220;font-size:11px;color:var(--m)}.switchrow{display:flex;justify-content:space-between;align-items:center;padding:11px;border:1px solid var(--b);border-radius:11px;background:#0b1220}.msg{font-size:12px;color:var(--m);min-height:17px;margin:8px 0}.schedstate{padding:10px;border:1px solid var(--b);border-radius:11px;background:#0b1220;font-size:12px;color:var(--m)}
+@media(max-width:520px){.wrap{padding:9px}.days{grid-template-columns:repeat(4,1fr)}}
+</style>
 </head>
-
 <body>
-  <main class="contenedor">
-    <header class="encabezado">
-      <div>
-        <h1>Cámara</h1>
-        <p class="subtitulo">Tuttovinilos · fotografía remota</p>
-      </div>
-
-      <div class="conexion">
-        <span id="puntoConexion" class="punto"></span>
-        <span id="textoConexion">Sin conexión</span>
-      </div>
-    </header>
-
-    <section id="pantallaAcceso" class="tarjeta">
-      <h2 style="margin:0">Ingresar</h2>
-      <p class="subtitulo">Coloca el PIN de la cámara.</p>
-
-      <div class="campo">
-        <label for="pin">PIN</label>
-        <input id="pin" type="password" inputmode="numeric" maxlength="12"
-               autocomplete="current-password" placeholder="••••">
-      </div>
-
-      <label class="recordar">
-        <input id="recordar" type="checkbox" checked>
-        Recordar el PIN en este celular
-      </label>
-
-      <button id="btnEntrar" class="btn btn-principal">Entrar</button>
-      <p id="mensajeAcceso" class="mensaje"></p>
-    </section>
-
-    <section id="pantallaCamara" class="tarjeta oculto">
-      <button id="btnTomar" class="btn btn-principal">Tomar foto</button>
-
-      <div class="visor">
-        <img id="foto" class="oculto" alt="Última fotografía de la cámara">
-        <div id="sinFoto" class="sin-foto">
-          Todavía no se ha recibido ninguna fotografía.
-        </div>
-      </div>
-
-      <div class="estado-fila">
-        <span id="estado" class="estado">Esperando</span>
-        <span id="fecha" class="fecha">Sin fotografía</span>
-      </div>
-
-      <p id="mensajeCamara" class="mensaje">La página revisará automáticamente si hay una foto nueva.</p>
-
-      <div class="acciones">
-        <button id="btnActualizar" class="btn btn-secundario">Actualizar</button>
-        <button id="btnSalir" class="btn btn-secundario">Salir</button>
-      </div>
-    </section>
-
-    <p class="pie">La cámara debe permanecer encendida y conectada a Internet.</p>
-  </main>
-
-  <script>
-    const SUPABASE_URL = 'https://ujfdsabypflseijatxba.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_CiZo8xFKkaT7mdRrQUYxuQ_48F6Vx3w';
-    const BUCKET = 'camara-fotos';
-
-    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false
-      }
-    });
-
-    const $ = (selector) => document.querySelector(selector);
-
-    const pantallaAcceso = $('#pantallaAcceso');
-    const pantallaCamara = $('#pantallaCamara');
-    const pinInput = $('#pin');
-    const recordarInput = $('#recordar');
-    const btnEntrar = $('#btnEntrar');
-    const btnTomar = $('#btnTomar');
-    const btnActualizar = $('#btnActualizar');
-    const btnSalir = $('#btnSalir');
-    const foto = $('#foto');
-    const sinFoto = $('#sinFoto');
-    const estado = $('#estado');
-    const fecha = $('#fecha');
-    const mensajeAcceso = $('#mensajeAcceso');
-    const mensajeCamara = $('#mensajeCamara');
-    const puntoConexion = $('#puntoConexion');
-    const textoConexion = $('#textoConexion');
-
-    let pinActual = '';
-    let rutaActual = '';
-    let temporizador = null;
-    let actualizando = false;
-
-    function textoError(error) {
-      const mensaje = String(error?.message || error || 'Error desconocido');
-
-      if (mensaje.toLowerCase().includes('pin incorrecto')) {
-        return 'PIN incorrecto.';
-      }
-
-      if (mensaje.toLowerCase().includes('failed to fetch')) {
-        return 'No se pudo conectar con Supabase. Revisa el Internet.';
-      }
-
-      return mensaje;
-    }
-
-    function marcarConexion(activa) {
-      puntoConexion.classList.toggle('activo', activa);
-      textoConexion.textContent = activa ? 'Conectado' : 'Sin conexión';
-    }
-
-    function ponerMensaje(elemento, texto, esError = false) {
-      elemento.textContent = texto || '';
-      elemento.classList.toggle('error', esError);
-    }
-
-    function formatearFecha(valor) {
-      if (!valor) return 'Sin fotografía';
-
-      try {
-        return new Intl.DateTimeFormat('es-VE', {
-          dateStyle: 'short',
-          timeStyle: 'medium',
-          timeZone: 'America/Caracas'
-        }).format(new Date(valor));
-      } catch {
-        return new Date(valor).toLocaleString();
-      }
-    }
-
-    function cambiarEstado(nombre, detalle = '') {
-      const mapa = {
-        pendiente: ['pendiente', 'Solicitud enviada'],
-        capturando: ['capturando', 'Tomando foto'],
-        completada: ['completada', 'Foto lista'],
-        error: ['error', 'Error'],
-        esperando: ['', 'Esperando']
-      };
-
-      const configuracion = mapa[nombre] || mapa.esperando;
-      estado.className = 'estado' + (configuracion[0] ? ' ' + configuracion[0] : '');
-      estado.textContent = configuracion[1];
-
-      if (detalle) {
-        ponerMensaje(mensajeCamara, detalle, nombre === 'error');
-      }
-    }
-
-    async function obtenerUrlTemporal(ruta) {
-      const { data, error } = await db.storage
-        .from(BUCKET)
-        .createSignedUrl(ruta, 3600);
-
-      if (error) throw error;
-      if (!data?.signedUrl) throw new Error('No se pudo crear la dirección de la fotografía.');
-
-      return data.signedUrl;
-    }
-
-    async function mostrarFoto(ruta, fechaFoto, forzar = false) {
-      if (!ruta) return;
-      if (!forzar && ruta === rutaActual && !foto.classList.contains('oculto')) return;
-
-      const url = await obtenerUrlTemporal(ruta);
-      rutaActual = ruta;
-
-      foto.onload = () => {
-        foto.classList.remove('oculto');
-        sinFoto.classList.add('oculto');
-      };
-
-      foto.onerror = () => {
-        foto.classList.add('oculto');
-        sinFoto.classList.remove('oculto');
-        sinFoto.textContent = 'La fotografía existe, pero no se pudo abrir.';
-      };
-
-      foto.src = url + (url.includes('?') ? '&' : '?') + 'v=' + Date.now();
-      fecha.textContent = formatearFecha(fechaFoto);
-    }
-
-    async function consultarEstado(forzarFoto = false) {
-      if (!pinActual || actualizando) return;
-
-      actualizando = true;
-
-      try {
-        const { data, error } = await db.rpc('camara_estado', {
-          p_pin: pinActual
-        });
-
-        if (error) throw error;
-
-        marcarConexion(true);
-
-        const solicitud = data?.solicitud || null;
-        const estadoSolicitud = solicitud?.estado || 'esperando';
-
-        if (estadoSolicitud === 'error') {
-          cambiarEstado('error', solicitud?.error || 'La cámara informó un error.');
-        } else if (estadoSolicitud === 'pendiente') {
-          cambiarEstado('pendiente', 'La orden fue enviada. Esperando que la cámara la reciba.');
-        } else if (estadoSolicitud === 'capturando') {
-          cambiarEstado('capturando', 'La cámara está tomando y enviando la fotografía.');
-        } else if (estadoSolicitud === 'completada') {
-          cambiarEstado('completada', 'Última fotografía recibida correctamente.');
-        } else {
-          cambiarEstado('esperando', 'La página está lista para solicitar una fotografía.');
-        }
-
-        btnTomar.disabled = ['pendiente', 'capturando'].includes(estadoSolicitud);
-
-        if (data?.ultima_foto_path) {
-          await mostrarFoto(
-            data.ultima_foto_path,
-            data.ultima_foto_fecha,
-            forzarFoto
-          );
-        }
-      } catch (error) {
-        marcarConexion(false);
-        ponerMensaje(mensajeCamara, textoError(error), true);
-
-        if (String(error?.message || '').toLowerCase().includes('pin incorrecto')) {
-          salir();
-        }
-      } finally {
-        actualizando = false;
-      }
-    }
-
-    async function entrar() {
-      const pin = pinInput.value.trim();
-
-      if (!pin) {
-        ponerMensaje(mensajeAcceso, 'Coloca el PIN.', true);
-        pinInput.focus();
-        return;
-      }
-
-      btnEntrar.disabled = true;
-      ponerMensaje(mensajeAcceso, 'Conectando...');
-
-      try {
-        const { data, error } = await db.rpc('camara_estado', {
-          p_pin: pin
-        });
-
-        if (error) throw error;
-
-        pinActual = pin;
-
-        if (recordarInput.checked) {
-          localStorage.setItem('tutto_camara_pin', pin);
-        } else {
-          localStorage.removeItem('tutto_camara_pin');
-        }
-
-        pantallaAcceso.classList.add('oculto');
-        pantallaCamara.classList.remove('oculto');
-        marcarConexion(true);
-        ponerMensaje(mensajeAcceso, '');
-
-        const solicitud = data?.solicitud || null;
-        cambiarEstado(solicitud?.estado || 'esperando');
-
-        if (data?.ultima_foto_path) {
-          await mostrarFoto(data.ultima_foto_path, data.ultima_foto_fecha, true);
-        }
-
-        iniciarRevision();
-        await consultarEstado();
-      } catch (error) {
-        marcarConexion(false);
-        ponerMensaje(mensajeAcceso, textoError(error), true);
-      } finally {
-        btnEntrar.disabled = false;
-      }
-    }
-
-    async function tomarFoto() {
-      if (!pinActual) return;
-
-      btnTomar.disabled = true;
-      cambiarEstado('pendiente', 'Enviando la orden a la cámara...');
-
-      try {
-        const { data, error } = await db.rpc('camara_solicitar_foto', {
-          p_pin: pinActual
-        });
-
-        if (error) throw error;
-
-        cambiarEstado('pendiente', 'Solicitud #' + data + ' enviada. Esperando la cámara.');
-        setTimeout(() => consultarEstado(), 700);
-      } catch (error) {
-        btnTomar.disabled = false;
-        cambiarEstado('error', textoError(error));
-      }
-    }
-
-    function iniciarRevision() {
-      clearInterval(temporizador);
-      temporizador = setInterval(() => consultarEstado(), 2000);
-    }
-
-    function salir() {
-      clearInterval(temporizador);
-      temporizador = null;
-      pinActual = '';
-      rutaActual = '';
-      localStorage.removeItem('tutto_camara_pin');
-
-      foto.removeAttribute('src');
-      foto.classList.add('oculto');
-      sinFoto.classList.remove('oculto');
-      sinFoto.textContent = 'Todavía no se ha recibido ninguna fotografía.';
-      fecha.textContent = 'Sin fotografía';
-
-      pantallaCamara.classList.add('oculto');
-      pantallaAcceso.classList.remove('oculto');
-      pinInput.value = '';
-      btnTomar.disabled = false;
-      marcarConexion(navigator.onLine);
-      pinInput.focus();
-    }
-
-    btnEntrar.addEventListener('click', entrar);
-    btnTomar.addEventListener('click', tomarFoto);
-    btnActualizar.addEventListener('click', () => consultarEstado(true));
-    btnSalir.addEventListener('click', salir);
-
-    pinInput.addEventListener('keydown', (evento) => {
-      if (evento.key === 'Enter') entrar();
-    });
-
-    window.addEventListener('online', () => {
-      marcarConexion(true);
-      consultarEstado();
-    });
-
-    window.addEventListener('offline', () => marcarConexion(false));
-
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && pinActual) consultarEstado(true);
-    });
-
-    marcarConexion(navigator.onLine);
-
-    const pinGuardado = localStorage.getItem('tutto_camara_pin');
-    if (pinGuardado) {
-      pinInput.value = pinGuardado;
-      entrar();
-    } else {
-      pinInput.focus();
-    }
-  </script>
+<div class="wrap">
+<div class="head"><div><h1>Cámara</h1><div class="muted">Tuttovinilos · control remoto</div></div><div class="online"><span id="dot" class="dot"></span><span id="conn">Sin conexión</span></div></div>
+
+<section id="login" class="card">
+<h2>Ingresar</h2><div class="field"><label>PIN</label><input id="pin" type="password" inputmode="numeric" placeholder="••••"></div>
+<label class="muted"><input id="remember" type="checkbox" checked> Recordar PIN</label>
+<button id="enter" class="btn green" style="margin-top:12px">Entrar</button><div id="loginmsg" class="msg"></div>
+</section>
+
+<section id="app" class="hide">
+<div class="tabs"><button class="tab on" data-tab="last">Última</button><button class="tab" data-tab="history">Historial</button><button class="tab" data-tab="schedule">Programación</button></div>
+
+<div id="p-last" class="panel on card">
+<button id="take" class="btn green">Tomar foto</button>
+<div class="viewer"><img id="photo" class="hide"><span id="nophoto">Sin fotografía</span></div>
+<div class="status"><span id="state">Esperando</span><span id="date">--</span></div>
+<div id="cammsg" class="msg"></div>
+<div class="row"><button id="refresh" class="btn dark">Actualizar</button><button id="logout" class="btn dark">Salir</button></div>
+</div>
+
+<div id="p-history" class="panel card">
+<div class="head"><div><h2>Historial</h2><div id="count" class="muted"></div></div><button id="reloadHistory" class="btn dark" style="width:auto;min-height:38px">Actualizar</button></div>
+<div id="shots" class="grid"></div><div id="histmsg" class="msg"></div><button id="more" class="btn dark hide">Ver más</button>
+</div>
+
+<div id="p-schedule" class="panel card">
+<h2>Movimiento automático</h2><p class="muted">Define cuándo puede detectar movimiento y tomar fotos.</p>
+<div class="switchrow"><div><b>Habilitado</b><div class="muted">Fuera del horario no tomará fotos por movimiento.</div></div><input id="enabled" type="checkbox" style="width:24px;height:24px"></div>
+<div class="row"><div class="field"><label>Desde</label><input id="from" type="time" value="08:00"></div><div class="field"><label>Hasta</label><input id="to" type="time" value="18:00"></div></div>
+<div class="field"><label>Días activos</label><div class="days">
+<label class="day"><input class="dow" type="checkbox" value="1"> Lun</label><label class="day"><input class="dow" type="checkbox" value="2"> Mar</label><label class="day"><input class="dow" type="checkbox" value="3"> Mié</label><label class="day"><input class="dow" type="checkbox" value="4"> Jue</label><label class="day"><input class="dow" type="checkbox" value="5"> Vie</label><label class="day"><input class="dow" type="checkbox" value="6"> Sáb</label><label class="day"><input class="dow" type="checkbox" value="0"> Dom</label>
+</div></div>
+<div id="schedstate" class="schedstate">Sin configuración.</div>
+<button id="saveSchedule" class="btn green" style="margin-top:10px">Guardar programación</button><div id="schedmsg" class="msg"></div>
+</div>
+</section>
+</div>
+
+<script>
+const URL='https://ujfdsabypflseijatxba.supabase.co';
+const KEY='sb_publishable_CiZo8xFKkaT7mdRrQUYxuQ_48F6Vx3w';
+const BUCKET='camara-fotos', PAGE=20;
+const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+let pinNow='',lastPath='',timer=null,offset=0,total=0,busy=false;
+function connected(v){$('#dot').classList.toggle('ok',v);$('#conn').textContent=v?'Conectado':'Sin conexión'}
+function fmt(v){if(!v)return '--';return new Intl.DateTimeFormat('es-VE',{dateStyle:'short',timeStyle:'medium',timeZone:'America/Caracas'}).format(new Date(v))}
+function err(e){return String(e?.message||e||'Error')}
+async function signed(path){const {data,error}=await db.storage.from(BUCKET).createSignedUrl(path,3600);if(error)throw error;return data.signedUrl}
+async function showPhoto(path,dt,force=false){if(!path)return;if(!force&&path===lastPath)return;lastPath=path;$('#photo').src=(await signed(path))+'&v='+Date.now();$('#photo').classList.remove('hide');$('#nophoto').classList.add('hide');$('#date').textContent=fmt(dt)}
+async function status(force=false){if(!pinNow||busy)return;busy=true;try{const {data,error}=await db.rpc('camara_estado',{p_pin:pinNow});if(error)throw error;connected(true);const s=data?.solicitud||{};$('#state').textContent=s.estado||'Esperando';$('#take').disabled=['pendiente','capturando'].includes(s.estado);if(data?.ultima_foto_path)await showPhoto(data.ultima_foto_path,data.ultima_foto_fecha,force)}catch(e){connected(false);$('#cammsg').textContent=err(e)}finally{busy=false}}
+async function enter(){const p=$('#pin').value.trim();if(!p)return;try{const {data,error}=await db.rpc('camara_estado',{p_pin:p});if(error)throw error;pinNow=p;if($('#remember').checked)localStorage.setItem('cam_pin',p);$('#login').classList.add('hide');$('#app').classList.remove('hide');connected(true);if(data?.ultima_foto_path)await showPhoto(data.ultima_foto_path,data.ultima_foto_fecha,true);clearInterval(timer);timer=setInterval(()=>status(),2000)}catch(e){$('#loginmsg').textContent=err(e)}}
+async function take(){$('#take').disabled=true;const {error}=await db.rpc('camara_solicitar_foto',{p_pin:pinNow});if(error){$('#cammsg').textContent=err(error);$('#take').disabled=false}}
+function logout(){clearInterval(timer);localStorage.removeItem('cam_pin');location.reload()}
+function tab(n){$$('.tab').forEach(x=>x.classList.toggle('on',x.dataset.tab===n));$$('.panel').forEach(x=>x.classList.toggle('on',x.id==='p-'+n));if(n==='history')history(true);if(n==='schedule')loadSchedule()}
+async function history(reset=true){if(reset){offset=0;$('#shots').innerHTML=''};$('#histmsg').textContent='Cargando...';try{const {data,error}=await db.rpc('camara_historial',{p_pin:pinNow,p_limite:PAGE,p_offset:offset});if(error)throw error;const items=data.items||[];total=data.total||0;for(const x of items){const u=await signed(x.foto_path);const c=document.createElement('div');c.className='shot';c.innerHTML=`<img src="${u}"><div class="info">${fmt(x.fecha)}<br>#${x.id} · ${x.origen||'captura'}<div class="actions"><button class="btn dark see">Ver</button><button class="btn red del">Borrar</button></div></div>`;c.querySelector('.see').onclick=async()=>{await showPhoto(x.foto_path,x.fecha,true);tab('last')};c.querySelector('.del').onclick=()=>delShot(x.id,x.foto_path,c);$('#shots').appendChild(c)}offset+=items.length;$('#count').textContent=`${total} foto${total===1?'':'s'}`;$('#more').classList.toggle('hide',offset>=total);$('#histmsg').textContent=items.length?'':'No hay fotografías.'}catch(e){$('#histmsg').textContent=err(e)}}
+async function delShot(id,path,node){if(!confirm('¿Borrar esta foto definitivamente?'))return;try{let r=await db.storage.from(BUCKET).remove([path]);if(r.error)throw r.error;let q=await db.rpc('camara_eliminar_registro',{p_pin:pinNow,p_solicitud_id:id});if(q.error)throw q.error;node.remove();total=Math.max(0,total-1);$('#count').textContent=`${total} fotos`;if(path===lastPath){lastPath='';$('#photo').classList.add('hide');$('#nophoto').classList.remove('hide')}await status(true)}catch(e){alert(err(e))}}
+function renderSchedule(d){const names={0:'Dom',1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie',6:'Sáb'};$('#schedstate').innerHTML=`<b>${d.activo?'ACTIVO':'DESACTIVADO'}</b><br>${(d.dias||[]).map(x=>names[x]).join(', ')}<br>${String(d.hora_inicio).slice(0,5)} → ${String(d.hora_fin).slice(0,5)}<br>Ahora: <b>${d.permitido_ahora?'PERMITIDO':'FUERA DE HORARIO'}</b>`}
+async function loadSchedule(){try{const {data,error}=await db.rpc('camara_programacion_obtener',{p_pin:pinNow});if(error)throw error;$('#enabled').checked=data.activo;$('#from').value=String(data.hora_inicio).slice(0,5);$('#to').value=String(data.hora_fin).slice(0,5);$$('.dow').forEach(x=>x.checked=(data.dias||[]).includes(Number(x.value)));renderSchedule(data)}catch(e){$('#schedmsg').textContent=err(e)}}
+async function saveSchedule(){const dias=$$('.dow:checked').map(x=>Number(x.value));if(!dias.length){$('#schedmsg').textContent='Selecciona al menos un día.';return}try{const {data,error}=await db.rpc('camara_programacion_guardar',{p_pin:pinNow,p_activo:$('#enabled').checked,p_hora_inicio:$('#from').value,p_hora_fin:$('#to').value,p_dias:dias});if(error)throw error;renderSchedule(data);$('#schedmsg').textContent='Guardado.'}catch(e){$('#schedmsg').textContent=err(e)}}
+$$('.tab').forEach(x=>x.onclick=()=>tab(x.dataset.tab));$('#enter').onclick=enter;$('#take').onclick=take;$('#refresh').onclick=()=>status(true);$('#logout').onclick=logout;$('#reloadHistory').onclick=()=>history(true);$('#more').onclick=()=>history(false);$('#saveSchedule').onclick=saveSchedule;$('#pin').onkeydown=e=>{if(e.key==='Enter')enter()};connected(navigator.onLine);const saved=localStorage.getItem('cam_pin');if(saved){$('#pin').value=saved;enter()}
+</script>
 </body>
 </html>
