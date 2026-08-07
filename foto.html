@@ -3,127 +3,382 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b1220">
-<title>Cámara Tuttovinilos</title>
+<meta name="theme-color" content="#070b12">
+<title>TuttoCam · Seguridad</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{color-scheme:dark;--bg:#070b12;--p:#111827;--p2:#182235;--t:#f8fafc;--m:#94a3b8;--b:rgba(255,255,255,.10);--g:#22c55e;--g2:#16a34a;--r:#ef4444;--y:#f59e0b;--o:#f97316}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at top,rgba(34,197,94,.11),transparent 34%),var(--bg);color:var(--t);font-family:Arial,sans-serif}
-button,input{font:inherit}.wrap{width:min(100%,820px);margin:auto;padding:14px 10px 40px}.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}
-h1,h2,h3{margin:0}.muted{color:var(--m);font-size:13px}.conn{display:flex;gap:6px;align-items:center;color:var(--m);font-size:12px}.dot{width:9px;height:9px;border-radius:50%;background:var(--r);box-shadow:0 0 10px currentColor}.dot.ok{background:var(--g)}
-.card{background:rgba(17,24,39,.96);border:1px solid var(--b);border-radius:18px;padding:14px;box-shadow:0 16px 44px rgba(0,0,0,.28)}.hide{display:none!important}
-.field{display:grid;gap:6px;margin:12px 0}.field label{font-size:12px;color:var(--m);font-weight:700}input[type=password],input[type=text],input[type=time]{width:100%;min-height:46px;background:#0b1220;color:#fff;border:1px solid var(--b);border-radius:11px;padding:0 12px}
-.btn{width:100%;min-height:46px;border:0;border-radius:12px;padding:10px 13px;font-weight:800;cursor:pointer}.green{background:linear-gradient(180deg,var(--g),var(--g2));color:#031008}.dark{background:var(--p2);color:#fff;border:1px solid var(--b)}.red{background:rgba(239,68,68,.13);color:#fca5a5;border:1px solid rgba(239,68,68,.30)}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}.tab{min-height:42px;border-radius:11px;border:1px solid var(--b);background:#0d1422;color:var(--m);font-weight:800}.tab.on{background:var(--p2);color:#fff;border-color:rgba(34,197,94,.4)}.panel{display:none}.panel.on{display:block}
-.viewer{position:relative;aspect-ratio:4/3;background:#000;border-radius:14px;overflow:hidden;margin:10px 0;border:1px solid var(--b);display:grid;place-items:center;color:var(--m)}.viewer img{width:100%;height:100%;object-fit:contain}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.statusrow{display:flex;justify-content:space-between;gap:10px;color:var(--m);font-size:12px}.msg{min-height:18px;margin:8px 0;color:var(--m);font-size:12px}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.shot{overflow:hidden;background:#0a101b;border:1px solid var(--b);border-radius:13px}.shot img{width:100%;aspect-ratio:4/3;object-fit:cover}.shotinfo{padding:8px;font-size:11px;color:var(--m)}.shotactions{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:7px}.shotactions .btn{min-height:34px;font-size:11px;padding:7px}
-.switchrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px;border:1px solid var(--b);border-radius:11px;background:#0b1220}.switchrow input{width:24px;height:24px}.hours{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.day{padding:8px 2px;text-align:center;border:1px solid var(--b);border-radius:9px;background:#0b1220;font-size:11px;color:var(--m)}
-.motionbox{padding:13px;border:1px solid var(--b);border-radius:13px;background:#0b1220}.traffic{display:flex;align-items:center;gap:10px}.light{width:18px;height:18px;border-radius:50%;background:#334155;box-shadow:0 0 12px rgba(255,255,255,.08)}.light.green{background:var(--g);box-shadow:0 0 16px rgba(34,197,94,.8)}.light.orange{background:var(--o);box-shadow:0 0 16px rgba(249,115,22,.8)}.light.red{background:var(--r);box-shadow:0 0 16px rgba(239,68,68,.8)}
-.meter{height:15px;background:#1e293b;border-radius:999px;overflow:hidden;margin-top:10px}.meter>div{height:100%;width:0;background:linear-gradient(90deg,var(--g),var(--y),var(--r));transition:width .25s}.meterlabels{display:flex;justify-content:space-between;margin-top:5px;font-size:11px;color:var(--m)}
-.rangebox{margin-top:13px}.rangebox input[type=range]{width:100%}.rangevalue{text-align:center;font-size:13px;color:#fff;font-weight:800;margin-top:4px}
-.tasklist{display:grid;gap:9px}.task{padding:11px;border:1px solid var(--b);border-radius:12px;background:#0b1220}.tasktop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.tasktitle{font-weight:800}.taskmeta{color:var(--m);font-size:12px;margin-top:4px;line-height:1.45}.taskactions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}.taskactions .btn{min-height:35px;font-size:11px}
-.schedstate{padding:10px;border:1px solid var(--b);border-radius:11px;background:#0b1220;font-size:12px;color:var(--m)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:14px;z-index:50}.modalbox{width:min(100%,560px);max-height:92vh;overflow:auto;background:var(--p);border:1px solid var(--b);border-radius:16px;padding:14px}
-@media(max-width:520px){.days{grid-template-columns:repeat(4,1fr)}.grid{grid-template-columns:1fr 1fr}}
+:root{
+  color-scheme:dark;
+  --bg:#06090f;--panel:#0e1522;--panel2:#121c2c;--panel3:#172235;
+  --text:#f8fafc;--muted:#8b9bb0;--line:rgba(255,255,255,.09);
+  --green:#2bd67b;--green2:#13a95c;--red:#ff5c68;--amber:#ffb020;--blue:#5b8cff;
+  --shadow:0 22px 70px rgba(0,0,0,.38)
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:
+ radial-gradient(circle at 25% -10%,rgba(43,214,123,.12),transparent 28%),
+ radial-gradient(circle at 100% 0,rgba(91,140,255,.08),transparent 30%),var(--bg);
+ color:var(--text);font-family:Inter,Arial,Helvetica,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.shell{width:min(100%,980px);margin:auto;padding:14px 12px 100px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.brand{display:flex;align-items:center;gap:11px}.logo{width:42px;height:42px;border-radius:13px;background:
+ linear-gradient(135deg,var(--green),#0f8150);display:grid;place-items:center;color:#02120a;font-weight:1000;box-shadow:0 8px 30px rgba(43,214,123,.22)}
+.brand h1{margin:0;font-size:21px;letter-spacing:-.4px}.brand small{display:block;color:var(--muted);margin-top:2px}
+.chips{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.chip{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:rgba(14,21,34,.78);font-size:11px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:#475569}.dot.online{background:var(--green);box-shadow:0 0 12px rgba(43,214,123,.8)}.dot.alert{background:var(--red);box-shadow:0 0 12px rgba(255,92,104,.75)}
+.card{background:linear-gradient(180deg,rgba(18,28,44,.96),rgba(13,21,34,.96));border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.login{max-width:430px;margin:11vh auto 0;padding:20px}.login h2{margin:0 0 4px}.muted{color:var(--muted);font-size:12px}.field{display:grid;gap:6px;margin-top:14px}.field label{font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.55px}
+input[type=password],input[type=text],input[type=time],input[type=number],select{width:100%;min-height:46px;border:1px solid var(--line);border-radius:11px;background:#09111e;color:var(--text);padding:0 12px;outline:none}
+input:focus,select:focus{border-color:rgba(43,214,123,.6);box-shadow:0 0 0 3px rgba(43,214,123,.10)}
+.btn{min-height:44px;border:0;border-radius:11px;font-weight:850;padding:9px 13px}.btn.primary{background:linear-gradient(180deg,var(--green),var(--green2));color:#021109}.btn.secondary{background:var(--panel3);color:var(--text);border:1px solid var(--line)}.btn.danger{background:rgba(255,92,104,.11);color:#ff9ca4;border:1px solid rgba(255,92,104,.25)}.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.hide{display:none!important}
+.content{display:none}.content.active{display:block}
+.live-card{overflow:hidden}.live-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-bottom:1px solid var(--line)}.live-head h2{margin:0;font-size:16px}.live-actions{display:flex;gap:7px}
+.video{position:relative;aspect-ratio:16/10;background:#020407;overflow:hidden}.video img{width:100%;height:100%;object-fit:contain;display:block}.video-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#607089;padding:30px;background:radial-gradient(circle at center,rgba(43,214,123,.06),transparent 42%)}
+.scan{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent);box-shadow:0 0 12px var(--green);animation:scan 3.3s linear infinite;opacity:.55}@keyframes scan{from{top:0}to{top:100%}}
+.overlay-top{position:absolute;left:10px;right:10px;top:10px;display:flex;justify-content:space-between;gap:8px}.overlay-badge{backdrop-filter:blur(10px);background:rgba(3,7,12,.72);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:6px 9px;font-size:11px;font-weight:800}
+.motion-alert{color:var(--red)}.motion-ok{color:var(--green)}
+.live-foot{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line)}.metric{background:var(--panel);padding:10px 11px}.metric small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px}.metric strong{display:block;margin-top:3px;font-size:14px}
+.quick{display:grid;grid-template-columns:1.15fr 1fr;gap:10px;margin-top:10px}.panel{padding:14px}.panel h3{margin:0 0 3px;font-size:15px}
+.motion-meter{position:relative;height:14px;border-radius:999px;background:#1d2a3c;overflow:visible;margin:13px 0 6px}.motion-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--green),var(--amber),var(--red));width:0;transition:width .2s}.threshold-mark{position:absolute;top:-4px;width:2px;height:22px;background:#fff;border-radius:2px;box-shadow:0 0 8px rgba(255,255,255,.45)}
+.sensitivity-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.sensitivity-row input{width:100%}.value-pill{min-width:48px;text-align:center;padding:6px 8px;background:#09111e;border:1px solid var(--line);border-radius:9px;font-weight:900}
+.statusbox{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#09111e}.statuslamp{width:15px;height:15px;border-radius:50%;background:#475569;flex:none}.statuslamp.green{background:var(--green);box-shadow:0 0 16px rgba(43,214,123,.75)}.statuslamp.amber{background:var(--amber);box-shadow:0 0 16px rgba(255,176,32,.7)}.statuslamp.red{background:var(--red);box-shadow:0 0 16px rgba(255,92,104,.75)}
+.controls-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:10px}.switchline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#09111e}.switchline input{width:22px;height:22px}
+.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}.section-head h2{margin:0;font-size:18px}
+.events{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.event{overflow:hidden;border:1px solid var(--line);border-radius:13px;background:#09111e}.event img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#000}.event-body{padding:8px}.event-time{font-weight:800;font-size:11px}.event-meta{color:var(--muted);font-size:10px;margin-top:3px}.event-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:7px}.event-actions .btn{min-height:33px;font-size:10px;padding:6px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.filter{padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#09111e;color:var(--muted);font-size:11px;font-weight:800}.filter.active{color:#06130c;background:var(--green);border-color:var(--green)}
+.tasklist{display:grid;gap:8px}.task{padding:11px;border:1px solid var(--line);border-radius:13px;background:#09111e}.task-row{display:flex;justify-content:space-between;gap:10px}.task-name{font-weight:900}.task-meta{color:var(--muted);font-size:11px;margin-top:4px;line-height:1.45}.task-actions{display:flex;gap:6px;margin-top:9px}.task-actions .btn{min-height:34px;font-size:10px}.active-now{color:var(--green)}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.setting{padding:12px;border:1px solid var(--line);border-radius:13px;background:#09111e}.setting h4{margin:0 0 4px;font-size:13px}.setting p{margin:0 0 10px;color:var(--muted);font-size:11px;line-height:1.45}
+.bottom-nav{position:fixed;z-index:40;left:50%;bottom:12px;transform:translateX(-50%);width:min(calc(100% - 20px),640px);display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:6px;background:rgba(9,15,25,.88);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:17px;box-shadow:0 18px 50px rgba(0,0,0,.45)}.navbtn{min-height:48px;border:0;border-radius:12px;background:transparent;color:#718198;font-weight:800;font-size:10px}.navbtn span{display:block;font-size:17px;margin-bottom:2px}.navbtn.active{background:var(--panel3);color:#fff}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:12px}.modalbox{width:min(100%,560px);max-height:92vh;overflow:auto;padding:15px}.hours{display:grid;grid-template-columns:1fr 1fr;gap:8px}.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:6px}.day{padding:8px 2px;border:1px solid var(--line);border-radius:9px;background:#09111e;text-align:center;font-size:10px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:82px;transform:translateX(-50%) translateY(20px);z-index:80;background:#101a29;border:1px solid var(--line);border-radius:11px;padding:9px 12px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.2s;font-size:12px}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:700px){.chips .chip:nth-child(2){display:none}.quick{grid-template-columns:1fr}.events{grid-template-columns:repeat(2,1fr)}.settings-grid{grid-template-columns:1fr}.live-foot{grid-template-columns:repeat(2,1fr)}.days{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
 <body>
-<div class="wrap">
-<div class="head"><div><h1>Cámara</h1><div class="muted">Tuttovinilos · control remoto</div></div><div class="conn"><span id="dot" class="dot"></span><span id="conn">Sin conexión</span></div></div>
+<div class="shell">
+<header class="topbar">
+  <div class="brand"><div class="logo">TV</div><div><h1>TuttoCam</h1><small>Seguridad · Cámara principal</small></div></div>
+  <div class="chips">
+    <div class="chip"><span id="deviceDot" class="dot"></span><span id="deviceText">ESP32 sin datos</span></div>
+    <div class="chip"><span id="armedDot" class="dot"></span><span id="armedText">Fuera de horario</span></div>
+  </div>
+</header>
 
-<section id="login" class="card">
-<h2>Ingresar</h2>
-<div class="field"><label>PIN</label><input id="pin" type="password" inputmode="numeric" placeholder="••••"></div>
-<label class="muted"><input id="remember" type="checkbox" checked> Recordar PIN</label>
-<button id="enter" class="btn green" style="margin-top:12px">Entrar</button><div id="loginmsg" class="msg"></div>
+<section id="login" class="card login">
+  <h2>Acceso a cámara</h2><div class="muted">Introduce el PIN para abrir el panel.</div>
+  <div class="field"><label>PIN</label><input id="pin" type="password" inputmode="numeric" placeholder="••••"></div>
+  <label class="muted"><input id="remember" type="checkbox" checked> Recordar en este dispositivo</label>
+  <button id="enter" class="btn primary" style="width:100%;margin-top:14px">Entrar</button>
+  <div id="loginMsg" class="muted" style="margin-top:9px"></div>
 </section>
 
-<section id="app" class="hide">
-<div class="tabs"><button class="tab on" data-tab="last">Última</button><button class="tab" data-tab="history">Historial</button><button class="tab" data-tab="schedule">Programación</button></div>
+<main id="app" class="hide">
 
-<section id="p-last" class="panel on card">
-<button id="take" class="btn green">Tomar foto</button>
-<div class="viewer"><img id="photo" class="hide"><span id="nophoto">Sin fotografía</span></div>
-<div class="statusrow"><span id="state">Esperando</span><span id="date">--</span></div><div id="cammsg" class="msg"></div>
-<div class="row"><button id="refresh" class="btn dark">Actualizar</button><button id="logout" class="btn dark">Salir</button></div>
+<section id="view-live" class="content active">
+  <div class="card live-card">
+    <div class="live-head">
+      <div><h2>Vista en vivo</h2><div id="liveSubtitle" class="muted">Vista remota de baja latencia</div></div>
+      <div class="live-actions">
+        <button id="capture" class="btn secondary">📷 Foto</button>
+        <button id="liveToggle" class="btn primary">▶ En vivo</button>
+      </div>
+    </div>
+    <div class="video">
+      <img id="liveImage" class="hide" alt="Vista en vivo">
+      <div id="liveEmpty" class="video-empty"><div><div style="font-size:38px">◉</div><strong>Vista detenida</strong><div class="muted" style="margin-top:5px">Pulsa “En vivo” para comenzar.</div></div></div>
+      <div id="scan" class="scan hide"></div>
+      <div class="overlay-top">
+        <div id="liveBadge" class="overlay-badge">● OFFLINE</div>
+        <div id="motionBadge" class="overlay-badge motion-ok">SIN MOVIMIENTO</div>
+      </div>
+    </div>
+    <div class="live-foot">
+      <div class="metric"><small>Movimiento</small><strong id="metricLevel">0</strong></div>
+      <div class="metric"><small>Umbral</small><strong id="metricThreshold">45</strong></div>
+      <div class="metric"><small>Horario</small><strong id="metricSchedule">OFF</strong></div>
+      <div class="metric"><small>Última foto</small><strong id="metricLastPhoto">--</strong></div>
+    </div>
+  </div>
+
+  <div class="quick">
+    <div class="card panel">
+      <h3>Detector de movimiento</h3><div class="muted">Analiza cambios reales de imagen y compensa cambios globales de luz.</div>
+      <div class="statusbox" style="margin-top:10px"><div id="motionLamp" class="statuslamp"></div><div><strong id="motionStatus">Esperando...</strong><div id="motionDetail" class="muted">Nivel 0 · Umbral 45</div></div></div>
+      <div class="motion-meter"><div id="motionFill" class="motion-fill"></div><div id="thresholdMark" class="threshold-mark" style="left:45%"></div></div>
+      <div class="muted" style="display:flex;justify-content:space-between"><span>Quieto</span><span>Movimiento fuerte</span></div>
+    </div>
+
+    <div class="card panel">
+      <h3>Acciones rápidas</h3><div class="muted">Control inmediato del detector.</div>
+      <div class="controls-grid">
+        <button id="calibrateQuick" class="btn secondary">◎ Calibrar</button>
+        <button id="testQuick" class="btn secondary">🧪 Prueba</button>
+      </div>
+      <div id="quickInfo" class="muted" style="margin-top:10px">La captura automática depende de los horarios activos.</div>
+    </div>
+  </div>
 </section>
 
-<section id="p-history" class="panel card">
-<div class="head"><div><h2>Historial</h2><div id="count" class="muted">0 fotos</div></div><button id="reloadHistory" class="btn dark" style="width:auto;min-height:38px">Actualizar</button></div>
-<div id="shots" class="grid"></div><div id="histmsg" class="msg"></div><button id="more" class="btn dark hide">Ver más</button>
+<section id="view-events" class="content">
+  <div class="card panel">
+    <div class="section-head"><div><h2>Eventos</h2><div id="eventCount" class="muted">Historial de capturas</div></div><button id="reloadEvents" class="btn secondary">Actualizar</button></div>
+    <div class="filters"><button class="filter active" data-filter="todos">Todos</button><button class="filter" data-filter="movimiento">Movimiento</button><button class="filter" data-filter="manual">Manual</button></div>
+    <div id="events" class="events"></div><div id="eventMsg" class="muted" style="margin-top:9px"></div><button id="moreEvents" class="btn secondary hide" style="width:100%;margin-top:10px">Ver más</button>
+  </div>
 </section>
 
-<section id="p-schedule" class="panel card">
-<h2>Movimiento automático</h2><div class="muted" style="margin-top:4px">Calibra el detector y crea varios horarios.</div>
+<section id="view-automation" class="content">
+  <div class="card panel">
+    <div class="section-head"><div><h2>Automatizaciones</h2><div class="muted">Varias franjas horarias independientes.</div></div><button id="newTask" class="btn primary">+ Horario</button></div>
+    <div id="tasks" class="tasklist"></div><div id="taskMsg" class="muted" style="margin-top:9px"></div>
+  </div>
+</section>
 
-<div class="motionbox" style="margin-top:12px">
-<div class="traffic"><span id="motionLight" class="light"></span><div><strong id="motionText">SIN DATOS</strong><div id="motionDetail" class="muted">Esperando nivel del ESP32...</div></div></div>
-<div class="meter"><div id="motionBar"></div></div><div class="meterlabels"><span>0</span><span id="motionCurrent">Nivel 0</span><span>100</span></div>
-<div class="rangebox"><label>Sensibilidad</label><input id="sensitivity" type="range" min="10" max="80" step="1" value="45"><div class="rangevalue">Umbral: <span id="thresholdValue">45</span></div><div class="muted">Menor umbral = más sensible. Mayor umbral = menos falsas detecciones.</div></div>
+<section id="view-settings" class="content">
+  <div class="card panel">
+    <div class="section-head"><div><h2>Ajustes</h2><div class="muted">Calibración y comportamiento del detector.</div></div></div>
+    <div class="settings-grid">
+      <div class="setting">
+        <h4>Sensibilidad</h4><p>Más alta detecta movimientos pequeños. La calibración automática es la mejor forma de ajustarla.</p>
+        <div class="sensitivity-row"><input id="sensitivity" type="range" min="1" max="100" step="1" value="50"><div id="sensitivityValue" class="value-pill">50</div></div>
+        <div class="muted" style="margin-top:6px">Umbral interno: <span id="thresholdInternal">45</span></div>
+      </div>
+      <div class="setting">
+        <h4>Confirmación</h4><p>Cuántas lecturas consecutivas deben detectar movimiento antes de disparar.</p>
+        <select id="confirmations"><option value="1">1 · Muy rápida</option><option value="2">2 · Rápida</option><option value="3" selected>3 · Recomendada</option><option value="4">4 · Segura</option><option value="5">5 · Muy segura</option></select>
+      </div>
+      <div class="setting">
+        <h4>Pausa entre fotos</h4><p>Evita que una misma persona genere decenas de capturas.</p>
+        <select id="cooldown"><option value="5000">5 segundos</option><option value="10000" selected>10 segundos</option><option value="15000">15 segundos</option><option value="30000">30 segundos</option><option value="60000">60 segundos</option></select>
+      </div>
+      <div class="setting">
+        <h4>Modo prueba</h4><p>Detecta y muestra el nivel, pero no toma fotografías automáticas.</p>
+        <div class="switchline"><span id="testLabel">Desactivado</span><input id="testMode" type="checkbox"></div>
+      </div>
+      <div class="setting">
+        <h4>Vista en vivo</h4><p>Frecuencia de actualización de la vista remota. 1 s usa más datos.</p>
+        <select id="liveInterval"><option value="700">0.7 s · Fluida</option><option value="1000" selected>1 s · Recomendada</option><option value="1500">1.5 s</option><option value="2000">2 s · Ahorro</option></select>
+      </div>
+      <div class="setting">
+        <h4>Calibración automática</h4><p>Durante 8 segundos deja la escena quieta. El sistema calcula el ruido normal y ajusta el umbral.</p>
+        <button id="calibrate" class="btn secondary" style="width:100%">◎ Calibrar 8 segundos</button>
+      </div>
+    </div>
+    <button id="saveSettings" class="btn primary" style="width:100%;margin-top:11px">Guardar ajustes</button>
+    <div id="settingsMsg" class="muted" style="margin-top:8px"></div>
+  </div>
+</section>
+
+</main>
 </div>
 
-<div class="switchrow" style="margin-top:10px"><div><strong>Modo prueba</strong><div class="muted">Mide y enciende el indicador, pero NO toma fotos.</div></div><input id="testMode" type="checkbox"></div>
-<button id="saveMotion" class="btn green" style="margin-top:10px">Guardar sensibilidad</button><div id="motionmsg" class="msg"></div>
-
-<div class="head" style="margin-top:18px;margin-bottom:8px"><div><h3>Horarios</h3><div class="muted">Puedes crear tantos como necesites.</div></div><button id="newTask" class="btn green" style="width:auto;min-height:38px">+ Nuevo</button></div>
-<div id="tasks" class="tasklist"></div><div id="taskmsg" class="msg"></div>
-</section>
-</section>
-</div>
+<nav id="nav" class="bottom-nav hide">
+<button class="navbtn active" data-view="live"><span>◉</span>En vivo</button>
+<button class="navbtn" data-view="events"><span>▦</span>Eventos</button>
+<button class="navbtn" data-view="automation"><span>◷</span>Horarios</button>
+<button class="navbtn" data-view="settings"><span>⚙</span>Ajustes</button>
+</nav>
 
 <div id="taskModal" class="modal hide">
-<div class="modalbox">
-<div class="head"><div><h3 id="taskModalTitle">Nuevo horario</h3></div><button id="closeTask" class="btn dark" style="width:auto;min-height:36px">Cerrar</button></div>
-<input id="taskId" type="hidden">
-<div class="field"><label>Nombre</label><input id="taskName" type="text" placeholder="Ej. Noche"></div>
-<div class="switchrow"><div><strong>Horario activo</strong></div><input id="taskActive" type="checkbox" checked></div>
-<div class="hours"><div class="field"><label>Desde</label><input id="taskFrom" type="time" value="08:00"></div><div class="field"><label>Hasta</label><input id="taskTo" type="time" value="18:00"></div></div>
-<div class="field"><label>Días</label><div class="days">
-<label class="day"><input class="taskDow" type="checkbox" value="1"> Lun</label><label class="day"><input class="taskDow" type="checkbox" value="2"> Mar</label><label class="day"><input class="taskDow" type="checkbox" value="3"> Mié</label><label class="day"><input class="taskDow" type="checkbox" value="4"> Jue</label><label class="day"><input class="taskDow" type="checkbox" value="5"> Vie</label><label class="day"><input class="taskDow" type="checkbox" value="6"> Sáb</label><label class="day"><input class="taskDow" type="checkbox" value="0"> Dom</label>
-</div></div>
-<button id="saveTask" class="btn green">Guardar horario</button><div id="taskModalMsg" class="msg"></div>
+<div class="card modalbox">
+  <div class="section-head"><div><h2 id="taskTitle">Nuevo horario</h2></div><button id="closeTask" class="btn ghost">Cerrar</button></div>
+  <input id="taskId" type="hidden">
+  <div class="field"><label>Nombre</label><input id="taskName" type="text" placeholder="Ej. Noche"></div>
+  <div class="switchline"><span>Horario activo</span><input id="taskActive" type="checkbox" checked></div>
+  <div class="hours"><div class="field"><label>Desde</label><input id="taskFrom" type="time" value="08:00"></div><div class="field"><label>Hasta</label><input id="taskTo" type="time" value="18:00"></div></div>
+  <div class="field"><label>Días activos</label><div class="days">
+    <label class="day"><input class="taskDow" type="checkbox" value="1"> Lun</label><label class="day"><input class="taskDow" type="checkbox" value="2"> Mar</label><label class="day"><input class="taskDow" type="checkbox" value="3"> Mié</label><label class="day"><input class="taskDow" type="checkbox" value="4"> Jue</label><label class="day"><input class="taskDow" type="checkbox" value="5"> Vie</label><label class="day"><input class="taskDow" type="checkbox" value="6"> Sáb</label><label class="day"><input class="taskDow" type="checkbox" value="0"> Dom</label>
+  </div></div>
+  <button id="saveTask" class="btn primary" style="width:100%">Guardar horario</button><div id="taskModalMsg" class="muted" style="margin-top:8px"></div>
 </div>
 </div>
+
+<div id="toast" class="toast"></div>
 
 <script>
 const SUPABASE_URL='https://ujfdsabypflseijatxba.supabase.co';
 const SUPABASE_KEY='sb_publishable_CiZo8xFKkaT7mdRrQUYxuQ_48F6Vx3w';
-const BUCKET='camara-fotos',PAGE=20;
+const BUCKET='camara-fotos';
+const PREVIEW_PATH='camara-76f3385ab470135a9168b9b4/preview.jpg';
+const PAGE=24;
+
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-let pinNow='',lastPath='',timer=null,motionTimer=null,offset=0,total=0,busy=false;
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+let pinNow='',statusTimer=null,liveRenewTimer=null,liveImageTimer=null,liveOn=false,previewSigned='',eventsOffset=0,eventsTotal=0,eventFilter='todos';
+let settings={umbral_movimiento:45,modo_prueba:false,consecutivas_requeridas:3,cooldown_ms:10000,nivel_actual:0,permitido_ahora:false,online:false};
 
-function conn(v){$('#dot').classList.toggle('ok',v);$('#conn').textContent=v?'Conectado':'Sin conexión'}
-function fmt(v){if(!v)return '--';return new Intl.DateTimeFormat('es-VE',{dateStyle:'short',timeStyle:'medium',timeZone:'America/Caracas'}).format(new Date(v))}
-function E(e){return String(e?.message||e||'Error')}
-async function signed(p){const {data,error}=await db.storage.from(BUCKET).createSignedUrl(p,3600);if(error)throw error;return data.signedUrl}
-async function showPhoto(p,d,f=false){if(!p)return;if(!f&&p===lastPath)return;lastPath=p;$('#photo').src=(await signed(p))+'&v='+Date.now();$('#photo').classList.remove('hide');$('#nophoto').classList.add('hide');$('#date').textContent=fmt(d)}
-async function status(force=false){if(!pinNow||busy)return;busy=true;try{const {data,error}=await db.rpc('camara_estado',{p_pin:pinNow});if(error)throw error;conn(true);const s=data?.solicitud||{};$('#state').textContent=s.estado||'Esperando';$('#take').disabled=['pendiente','capturando'].includes(s.estado);if(data?.ultima_foto_path)await showPhoto(data.ultima_foto_path,data.ultima_foto_fecha,force)}catch(e){conn(false);$('#cammsg').textContent=E(e)}finally{busy=false}}
-async function enter(){const p=$('#pin').value.trim();if(!p)return;try{const {data,error}=await db.rpc('camara_estado',{p_pin:p});if(error)throw error;pinNow=p;if($('#remember').checked)localStorage.setItem('cam_pin',p);$('#login').classList.add('hide');$('#app').classList.remove('hide');conn(true);if(data?.ultima_foto_path)await showPhoto(data.ultima_foto_path,data.ultima_foto_fecha,true);clearInterval(timer);timer=setInterval(()=>status(),2000)}catch(e){$('#loginmsg').textContent=E(e)}}
-async function take(){const {error}=await db.rpc('camara_solicitar_foto',{p_pin:pinNow});if(error)$('#cammsg').textContent=E(error)}
-function logout(){clearInterval(timer);clearInterval(motionTimer);localStorage.removeItem('cam_pin');location.reload()}
-function tab(n){$$('.tab').forEach(x=>x.classList.toggle('on',x.dataset.tab===n));$$('.panel').forEach(x=>x.classList.toggle('on',x.id==='p-'+n));if(n==='history')history(true);if(n==='schedule'){loadMotion();loadTasks();startMotion()}else stopMotion()}
+function toast(t){const x=$('#toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),1800)}
+function err(e){return String(e?.message||e||'Error desconocido')}
+function fmt(v){if(!v)return '--';try{return new Intl.DateTimeFormat('es-VE',{dateStyle:'short',timeStyle:'short',timeZone:'America/Caracas'}).format(new Date(v))}catch{return '--'}}
+function thresholdFromSensitivity(s){return Math.max(10,Math.min(80,80-Math.round(Number(s)*0.70)))}
+function sensitivityFromThreshold(t){return Math.max(1,Math.min(100,Math.round((80-Number(t))/0.70)))}
+async function signed(path,seconds=3600){const {data,error}=await db.storage.from(BUCKET).createSignedUrl(path,seconds);if(error)throw error;return data.signedUrl}
 
-async function history(reset=true){if(reset){offset=0;$('#shots').innerHTML=''};try{const {data,error}=await db.rpc('camara_historial',{p_pin:pinNow,p_limite:PAGE,p_offset:offset});if(error)throw error;const a=data.items||[];total=data.total||0;for(const x of a){const u=await signed(x.foto_path);const c=document.createElement('div');c.className='shot';c.innerHTML=`<img src="${u}"><div class="shotinfo">${fmt(x.fecha)}<br>#${x.id} · ${x.origen||'captura'}<div class="shotactions"><button class="btn dark see">Ver</button><button class="btn red del">Borrar</button></div></div>`;c.querySelector('.see').onclick=async()=>{await showPhoto(x.foto_path,x.fecha,true);tab('last')};c.querySelector('.del').onclick=()=>delShot(x.id,x.foto_path,c);$('#shots').appendChild(c)}offset+=a.length;$('#count').textContent=`${total} foto${total===1?'':'s'}`;$('#more').classList.toggle('hide',offset>=total);$('#histmsg').textContent=a.length?'':'No hay fotografías.'}catch(e){$('#histmsg').textContent=E(e)}}
-async function delShot(id,p,node){if(!confirm('¿Borrar esta foto definitivamente?'))return;try{let r=await db.storage.from(BUCKET).remove([p]);if(r.error)throw r.error;let q=await db.rpc('camara_eliminar_registro',{p_pin:pinNow,p_solicitud_id:id});if(q.error)throw q.error;node.remove();total=Math.max(0,total-1);$('#count').textContent=`${total} fotos`;await status(true)}catch(e){alert(E(e))}}
+async function enter(){
+  const p=$('#pin').value.trim(); if(!p)return;
+  $('#loginMsg').textContent='Conectando...';
+  try{
+    const {data,error}=await db.rpc('camara_estado',{p_pin:p}); if(error)throw error;
+    pinNow=p;if($('#remember').checked)localStorage.setItem('cam_pin',p);else localStorage.removeItem('cam_pin');
+    $('#login').classList.add('hide');$('#app').classList.remove('hide');$('#nav').classList.remove('hide');$('#loginMsg').textContent='';
+    if(data?.ultima_foto_fecha)$('#metricLastPhoto').textContent=fmt(data.ultima_foto_fecha);
+    await loadSettings(); await updateTelemetry(); startTelemetry();
+  }catch(e){$('#loginMsg').textContent=err(e)}
+}
+function logout(){localStorage.removeItem('cam_pin');location.reload()}
 
-function renderMotion(d){const n=Number(d?.nivel_actual||0),u=Number(d?.umbral_movimiento||45);$('#motionCurrent').textContent='Nivel '+n;$('#motionBar').style.width=Math.min(100,n)+'%';const l=$('#motionLight');l.className='light';if(n>=u){l.classList.add('red');$('#motionText').textContent='MOVIMIENTO';}else if(n>=Math.round(u*.70)){l.classList.add('orange');$('#motionText').textContent='CAMBIO';}else{l.classList.add('green');$('#motionText').textContent='SIN MOVIMIENTO';}$('#motionDetail').textContent=`Nivel ${n} / Umbral ${u}`;}
-async function motionState(){try{const {data,error}=await db.rpc('camara_movimiento_estado',{p_pin:pinNow});if(error)throw error;renderMotion(data)}catch(e){$('#motionDetail').textContent=E(e)}}
-function startMotion(){stopMotion();motionState();motionTimer=setInterval(motionState,1200)}function stopMotion(){clearInterval(motionTimer);motionTimer=null}
-async function loadMotion(){try{const {data,error}=await db.rpc('camara_movimiento_ajustes_obtener',{p_pin:pinNow});if(error)throw error;$('#sensitivity').value=data.umbral_movimiento;$('#thresholdValue').textContent=data.umbral_movimiento;$('#testMode').checked=!!data.modo_prueba}catch(e){$('#motionmsg').textContent=E(e)}}
-async function saveMotion(){try{const {error}=await db.rpc('camara_movimiento_ajustes_guardar',{p_pin:pinNow,p_umbral_movimiento:Number($('#sensitivity').value),p_modo_prueba:$('#testMode').checked});if(error)throw error;$('#motionmsg').textContent='Sensibilidad guardada.'}catch(e){$('#motionmsg').textContent=E(e)}}
+async function capture(){
+  $('#capture').disabled=true;
+  try{const {data,error}=await db.rpc('camara_solicitar_foto',{p_pin:pinNow});if(error)throw error;toast('Solicitud #'+data+' enviada')}catch(e){toast(err(e))}
+  finally{setTimeout(()=>$('#capture').disabled=false,1000)}
+}
 
-const names={0:'Dom',1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie',6:'Sáb'};
-async function loadTasks(){try{const {data,error}=await db.rpc('camara_horarios_listar',{p_pin:pinNow});if(error)throw error;$('#tasks').innerHTML='';for(const t of data||[]){const el=document.createElement('div');el.className='task';el.innerHTML=`<div class="tasktop"><div><div class="tasktitle">${t.nombre}</div><div class="taskmeta">${t.activo?'Activo':'Desactivado'} · ${(t.dias||[]).map(d=>names[d]).join(', ')}<br>${String(t.hora_inicio).slice(0,5)} → ${String(t.hora_fin).slice(0,5)}</div></div><div>${t.coincide_ahora?'🟢':'⚫'}</div></div><div class="taskactions"><button class="btn dark edit">Editar</button><button class="btn red del">Borrar</button></div>`;el.querySelector('.edit').onclick=()=>openTask(t);el.querySelector('.del').onclick=()=>deleteTask(t.id);$('#tasks').appendChild(el)}if(!(data||[]).length)$('#tasks').innerHTML='<div class="muted">No hay horarios creados.</div>'}catch(e){$('#taskmsg').textContent=E(e)}}
-function openTask(t=null){$('#taskId').value=t?.id||'';$('#taskName').value=t?.nombre||'';$('#taskActive').checked=t?t.activo:true;$('#taskFrom').value=String(t?.hora_inicio||'08:00').slice(0,5);$('#taskTo').value=String(t?.hora_fin||'18:00').slice(0,5);$$('.taskDow').forEach(x=>x.checked=(t?.dias||[1,2,3,4,5]).includes(Number(x.value)));$('#taskModalTitle').textContent=t?'Editar horario':'Nuevo horario';$('#taskModal').classList.remove('hide')}
-async function saveTask(){const dias=$$('.taskDow:checked').map(x=>Number(x.value));if(!dias.length){$('#taskModalMsg').textContent='Selecciona al menos un día.';return}try{const {error}=await db.rpc('camara_horario_guardar',{p_pin:pinNow,p_id:$('#taskId').value?Number($('#taskId').value):null,p_nombre:$('#taskName').value.trim()||'Horario',p_activo:$('#taskActive').checked,p_hora_inicio:$('#taskFrom').value,p_hora_fin:$('#taskTo').value,p_dias:dias});if(error)throw error;$('#taskModal').classList.add('hide');loadTasks()}catch(e){$('#taskModalMsg').textContent=E(e)}}
-async function deleteTask(id){if(!confirm('¿Borrar este horario?'))return;try{const {error}=await db.rpc('camara_horario_eliminar',{p_pin:pinNow,p_id:id});if(error)throw error;loadTasks()}catch(e){$('#taskmsg').textContent=E(e)}}
+function renderTelemetry(d){
+  settings={...settings,...d};
+  const level=Number(d.nivel_actual||0), threshold=Number(d.umbral_movimiento||45);
+  $('#metricLevel').textContent=level;$('#metricThreshold').textContent=threshold;
+  $('#motionFill').style.width=Math.min(100,level)+'%';$('#thresholdMark').style.left=Math.min(100,threshold)+'%';
+  $('#motionDetail').textContent=`Nivel ${level} · Umbral ${threshold}`;
+  const detected=!!d.movimiento_detectado;
+  $('#motionBadge').textContent=detected?'● MOVIMIENTO':'● SIN MOVIMIENTO';
+  $('#motionBadge').className='overlay-badge '+(detected?'motion-alert':'motion-ok');
+  $('#motionLamp').className='statuslamp '+(detected?'red':level>=threshold*.7?'amber':'green');
+  $('#motionStatus').textContent=detected?'Movimiento confirmado':level>=threshold*.7?'Cambio visual':'Escena estable';
 
-$('#sensitivity').oninput=()=>$('#thresholdValue').textContent=$('#sensitivity').value;
-$$('.tab').forEach(x=>x.onclick=()=>tab(x.dataset.tab));$('#enter').onclick=enter;$('#take').onclick=take;$('#refresh').onclick=()=>status(true);$('#logout').onclick=logout;$('#reloadHistory').onclick=()=>history(true);$('#more').onclick=()=>history(false);$('#saveMotion').onclick=saveMotion;$('#newTask').onclick=()=>openTask();$('#closeTask').onclick=()=>$('#taskModal').classList.add('hide');$('#saveTask').onclick=saveTask;$('#pin').onkeydown=e=>{if(e.key==='Enter')enter()};
-conn(navigator.onLine);const saved=localStorage.getItem('cam_pin');if(saved){$('#pin').value=saved;enter()}
+  $('#deviceDot').className='dot '+(d.online?'online':'');
+  $('#deviceText').textContent=d.online?'ESP32 online':'ESP32 sin conexión';
+  $('#liveBadge').textContent=d.online?'● ONLINE':'● OFFLINE';
+  $('#liveBadge').style.color=d.online?'var(--green)':'var(--red)';
+
+  $('#armedDot').className='dot '+(d.permitido_ahora?'online':'');
+  $('#armedText').textContent=d.permitido_ahora?'Horario activo':'Fuera de horario';
+  $('#metricSchedule').textContent=d.permitido_ahora?'ON':'OFF';
+  $('#quickInfo').textContent=d.modo_prueba?'Modo prueba activo: no se tomarán fotos automáticas.':(d.permitido_ahora?'Sistema armado por horario.':'Detector activo, pero fuera de horario.');
+}
+async function updateTelemetry(){
+  if(!pinNow)return;
+  try{const {data,error}=await db.rpc('camara_movimiento_estado',{p_pin:pinNow});if(error)throw error;renderTelemetry(data)}catch(e){}
+}
+function startTelemetry(){clearInterval(statusTimer);statusTimer=setInterval(updateTelemetry,1100)}
+
+async function loadSettings(){
+  try{
+    const {data,error}=await db.rpc('camara_movimiento_ajustes_obtener',{p_pin:pinNow});if(error)throw error;
+    settings={...settings,...data};
+    const sens=sensitivityFromThreshold(data.umbral_movimiento);
+    $('#sensitivity').value=sens;$('#sensitivityValue').textContent=sens;$('#thresholdInternal').textContent=data.umbral_movimiento;
+    $('#confirmations').value=String(data.consecutivas_requeridas||3);$('#cooldown').value=String(data.cooldown_ms||10000);$('#testMode').checked=!!data.modo_prueba;$('#testLabel').textContent=data.modo_prueba?'Activado':'Desactivado';
+    if(data.live_intervalo_ms)$('#liveInterval').value=String(data.live_intervalo_ms);
+  }catch(e){$('#settingsMsg').textContent=err(e)}
+}
+async function saveSettings(){
+  const threshold=thresholdFromSensitivity($('#sensitivity').value);
+  try{
+    const {error}=await db.rpc('camara_movimiento_ajustes_guardar',{
+      p_pin:pinNow,p_umbral_movimiento:threshold,p_modo_prueba:$('#testMode').checked,
+      p_consecutivas:Number($('#confirmations').value),p_cooldown_ms:Number($('#cooldown').value)
+    });if(error)throw error;
+    $('#thresholdInternal').textContent=threshold;toast('Ajustes guardados');await updateTelemetry();
+  }catch(e){$('#settingsMsg').textContent=err(e)}
+}
+async function calibrate(){
+  const b=$('#calibrate');b.disabled=true;const oldTest=$('#testMode').checked;$('#settingsMsg').textContent='Calibrando: deja la escena quieta durante 8 segundos...';
+  try{
+    const currentThreshold=thresholdFromSensitivity($('#sensitivity').value);
+    let q=await db.rpc('camara_movimiento_ajustes_guardar',{p_pin:pinNow,p_umbral_movimiento:currentThreshold,p_modo_prueba:true,p_consecutivas:Number($('#confirmations').value),p_cooldown_ms:Number($('#cooldown').value)});if(q.error)throw q.error;
+    const samples=[];
+    for(let i=0;i<10;i++){await new Promise(r=>setTimeout(r,800));const {data,error}=await db.rpc('camara_movimiento_estado',{p_pin:pinNow});if(error)throw error;samples.push(Number(data.nivel_actual||0));$('#settingsMsg').textContent=`Calibrando... ${i+1}/10 · nivel ${samples[samples.length-1]}`}
+    const max=Math.max(...samples),avg=Math.round(samples.reduce((a,b)=>a+b,0)/samples.length);
+    const threshold=Math.max(18,Math.min(80,Math.max(max+10,avg+15)));
+    const sens=sensitivityFromThreshold(threshold);
+    $('#sensitivity').value=sens;$('#sensitivityValue').textContent=sens;$('#thresholdInternal').textContent=threshold;
+    q=await db.rpc('camara_movimiento_ajustes_guardar',{p_pin:pinNow,p_umbral_movimiento:threshold,p_modo_prueba:oldTest,p_consecutivas:Number($('#confirmations').value),p_cooldown_ms:Number($('#cooldown').value)});if(q.error)throw q.error;
+    $('#testMode').checked=oldTest;$('#testLabel').textContent=oldTest?'Activado':'Desactivado';
+    $('#settingsMsg').textContent=`Calibrado. Ruido promedio ${avg}, máximo ${max}, umbral ${threshold}.`;toast('Calibración completada');
+  }catch(e){$('#settingsMsg').textContent=err(e)}finally{b.disabled=false}
+}
+
+async function startLive(){
+  liveOn=true;$('#liveToggle').textContent='■ Detener';$('#liveToggle').className='btn danger';$('#scan').classList.remove('hide');$('#liveEmpty').innerHTML='<div><strong>Conectando...</strong><div class="muted" style="margin-top:5px">Esperando imagen del ESP32.</div></div>';
+  try{
+    const interval=Number($('#liveInterval').value);
+    let {error}=await db.rpc('camara_live_activar',{p_pin:pinNow,p_segundos:90,p_intervalo_ms:interval});if(error)throw error;
+    clearInterval(liveRenewTimer);liveRenewTimer=setInterval(()=>db.rpc('camara_live_activar',{p_pin:pinNow,p_segundos:90,p_intervalo_ms:Number($('#liveInterval').value)}),30000);
+    previewSigned='';
+    clearInterval(liveImageTimer);liveImageTimer=setInterval(refreshLiveImage,Math.max(650,interval));setTimeout(refreshLiveImage,900);
+  }catch(e){toast(err(e));stopLive(false)}
+}
+async function refreshLiveImage(){
+  if(!liveOn)return;
+  try{
+    if(!previewSigned)previewSigned=await signed(PREVIEW_PATH,600);
+    $('#liveImage').src=previewSigned+(previewSigned.includes('?')?'&':'?')+'v='+Date.now();
+    $('#liveImage').onload=()=>{$('#liveImage').classList.remove('hide');$('#liveEmpty').classList.add('hide')};
+  }catch(e){previewSigned=''}
+}
+async function stopLive(callServer=true){
+  liveOn=false;clearInterval(liveRenewTimer);clearInterval(liveImageTimer);liveRenewTimer=liveImageTimer=null;
+  $('#liveToggle').textContent='▶ En vivo';$('#liveToggle').className='btn primary';$('#scan').classList.add('hide');
+  if(callServer&&pinNow)try{await db.rpc('camara_live_detener',{p_pin:pinNow})}catch(e){}
+}
+async function toggleLive(){liveOn?await stopLive():await startLive()}
+
+async function loadEvents(reset=true){
+  if(reset){eventsOffset=0;$('#events').innerHTML=''}
+  try{
+    const {data,error}=await db.rpc('camara_historial',{p_pin:pinNow,p_limite:PAGE,p_offset:eventsOffset});if(error)throw error;
+    let items=data.items||[];eventsTotal=data.total||0;
+    if(eventFilter!=='todos')items=items.filter(x=>(x.origen||'manual')===eventFilter);
+    for(const x of items){
+      let u='';try{u=await signed(x.foto_path)}catch{}
+      const el=document.createElement('article');el.className='event';
+      el.innerHTML=`${u?`<img src="${u}">`:'<div style="aspect-ratio:4/3;background:#020407"></div>'}<div class="event-body"><div class="event-time">${fmt(x.fecha)}</div><div class="event-meta">${x.origen==='movimiento'?'Movimiento':'Manual'} · #${x.id}</div><div class="event-actions"><button class="btn secondary see">Ver</button><button class="btn danger del">Borrar</button></div></div>`;
+      el.querySelector('.see').onclick=()=>{if(u){$('#liveImage').src=u;$('#liveImage').classList.remove('hide');$('#liveEmpty').classList.add('hide');showView('live')}};
+      el.querySelector('.del').onclick=()=>deleteEvent(x,el);$('#events').appendChild(el)
+    }
+    eventsOffset+=(data.items||[]).length;$('#eventCount').textContent=`${eventsTotal} capturas`;$('#moreEvents').classList.toggle('hide',eventsOffset>=eventsTotal);$('#eventMsg').textContent=items.length?'':'No hay eventos para este filtro.';
+  }catch(e){$('#eventMsg').textContent=err(e)}
+}
+async function deleteEvent(x,el){
+  if(!confirm('¿Borrar esta fotografía definitivamente?'))return;
+  try{let r=await db.storage.from(BUCKET).remove([x.foto_path]);if(r.error)throw r.error;let q=await db.rpc('camara_eliminar_registro',{p_pin:pinNow,p_solicitud_id:x.id});if(q.error)throw q.error;el.remove();toast('Foto eliminada')}catch(e){toast(err(e))}
+}
+
+const dayNames={0:'Dom',1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie',6:'Sáb'};
+async function loadTasks(){
+  try{
+    const {data,error}=await db.rpc('camara_horarios_listar',{p_pin:pinNow});if(error)throw error;$('#tasks').innerHTML='';
+    for(const t of data||[]){
+      const el=document.createElement('div');el.className='task';
+      el.innerHTML=`<div class="task-row"><div><div class="task-name">${t.nombre}</div><div class="task-meta">${t.activo?'Activo':'Desactivado'} · ${(t.dias||[]).map(d=>dayNames[d]).join(', ')}<br>${String(t.hora_inicio).slice(0,5)} → ${String(t.hora_fin).slice(0,5)}</div></div><div class="${t.coincide_ahora?'active-now':''}">${t.coincide_ahora?'● AHORA':'○'}</div></div><div class="task-actions"><button class="btn secondary edit">Editar</button><button class="btn danger del">Borrar</button></div>`;
+      el.querySelector('.edit').onclick=()=>openTask(t);el.querySelector('.del').onclick=()=>deleteTask(t.id);$('#tasks').appendChild(el)
+    }
+    if(!(data||[]).length)$('#tasks').innerHTML='<div class="muted">No hay horarios. Crea uno para habilitar capturas automáticas.</div>';
+  }catch(e){$('#taskMsg').textContent=err(e)}
+}
+function openTask(t=null){
+  $('#taskId').value=t?.id||'';$('#taskName').value=t?.nombre||'';$('#taskActive').checked=t?t.activo:true;$('#taskFrom').value=String(t?.hora_inicio||'08:00').slice(0,5);$('#taskTo').value=String(t?.hora_fin||'18:00').slice(0,5);$$('.taskDow').forEach(x=>x.checked=(t?.dias||[1,2,3,4,5]).includes(Number(x.value)));$('#taskTitle').textContent=t?'Editar horario':'Nuevo horario';$('#taskModal').classList.remove('hide')
+}
+async function saveTask(){
+  const dias=$$('.taskDow:checked').map(x=>Number(x.value));if(!dias.length){$('#taskModalMsg').textContent='Selecciona al menos un día.';return}
+  try{const {error}=await db.rpc('camara_horario_guardar',{p_pin:pinNow,p_id:$('#taskId').value?Number($('#taskId').value):null,p_nombre:$('#taskName').value.trim()||'Horario',p_activo:$('#taskActive').checked,p_hora_inicio:$('#taskFrom').value,p_hora_fin:$('#taskTo').value,p_dias:dias});if(error)throw error;$('#taskModal').classList.add('hide');toast('Horario guardado');loadTasks()}catch(e){$('#taskModalMsg').textContent=err(e)}
+}
+async function deleteTask(id){if(!confirm('¿Borrar este horario?'))return;try{const {error}=await db.rpc('camara_horario_eliminar',{p_pin:pinNow,p_id:id});if(error)throw error;loadTasks()}catch(e){toast(err(e))}}
+
+function showView(name){
+  $$('.content').forEach(x=>x.classList.toggle('active',x.id==='view-'+name));$$('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.view===name));
+  if(name==='events')loadEvents(true);if(name==='automation')loadTasks();if(name==='settings')loadSettings();if(name!=='live'&&liveOn){} 
+}
+$$('.navbtn').forEach(x=>x.onclick=()=>showView(x.dataset.view));
+$$('.filter').forEach(x=>x.onclick=()=>{$$('.filter').forEach(y=>y.classList.remove('active'));x.classList.add('active');eventFilter=x.dataset.filter;loadEvents(true)});
+$('#enter').onclick=enter;$('#pin').onkeydown=e=>{if(e.key==='Enter')enter()};$('#capture').onclick=capture;$('#liveToggle').onclick=toggleLive;$('#reloadEvents').onclick=()=>loadEvents(true);$('#moreEvents').onclick=()=>loadEvents(false);$('#newTask').onclick=()=>openTask();$('#closeTask').onclick=()=>$('#taskModal').classList.add('hide');$('#saveTask').onclick=saveTask;$('#saveSettings').onclick=saveSettings;$('#calibrate').onclick=calibrate;$('#calibrateQuick').onclick=()=>{showView('settings');setTimeout(calibrate,250)};$('#testQuick').onclick=()=>{showView('settings');$('#testMode').checked=true;$('#testLabel').textContent='Activado';toast('Activa Guardar ajustes para confirmar')};
+$('#sensitivity').oninput=()=>{$('#sensitivityValue').textContent=$('#sensitivity').value;$('#thresholdInternal').textContent=thresholdFromSensitivity($('#sensitivity').value)};
+$('#testMode').onchange=()=>$('#testLabel').textContent=$('#testMode').checked?'Activado':'Desactivado';
+window.addEventListener('beforeunload',()=>{if(liveOn)navigator.sendBeacon&&void 0});
+const saved=localStorage.getItem('cam_pin');if(saved){$('#pin').value=saved;enter()}
 </script>
 </body>
 </html>
