@@ -790,38 +790,21 @@ async function deleteEvent(x,el){
 async function saveThreshold(){
   const value=Number($('#thresholdSlider').value);
   $('#thresholdMsg').textContent='Guardando...';
+
   try{
-    const {data,error}=await db.rpc('tuttocam_perfiles_listar',{p_pin:pinNow});
+    const {data,error}=await db.rpc('tuttocam_umbral_guardar',{
+      p_pin:pinNow,
+      p_umbral:value
+    });
+
     if(error)throw error;
 
-    let active=(data||[]).find(p=>p.nombre===currentDashboard?.perfil);
-
-    if(!active){
-      // Si no hay perfil activo, usa el primero disponible.
-      active=(data||[])[0]||null;
-    }
-    if(!active){
-      $('#thresholdMsg').textContent='No existe ningún perfil para guardar el umbral.';
-      return;
-    }
-
-    const {error:saveError}=await db.rpc('tuttocam_perfil_guardar',{
-      p_pin:pinNow,
-      p_id:Number(active.id),
-      p_nombre:active.nombre,
-      p_color:active.color,
-      p_armado:active.armado,
-      p_umbral:value,
-      p_consecutivas:active.consecutivas,
-      p_cooldown_ms:active.cooldown_ms,
-      p_capturas:active.capturas,
-      p_notificar:active.notificar
-    });
-    if(saveError)throw saveError;
-
-    $('#thresholdMsg').textContent=`Umbral ${value} guardado en "${active.nombre}".`;
+    $('#thresholdMsg').textContent=`Umbral ${value} guardado correctamente.`;
     toast('Umbral actualizado');
+
+    await new Promise(r=>setTimeout(r,500));
     await updateDashboard();
+
   }catch(e){
     $('#thresholdMsg').textContent=errorText(e);
   }
