@@ -169,14 +169,15 @@ input:focus,select:focus{border-color:rgba(41,210,125,.58);box-shadow:0 0 0 3px 
 ========================================================= -->
 <section id="page-live" class="page active">
   <div class="section-title">
-    <div><h2>En Vivo</h2><p>Monitoreo táctico, telemetría y respuesta inmediata.</p></div>
+    <div><h2>En Vivo</h2><p>Video fluido en red local + vista remota por Supabase.</p></div>
     <div class="toolbar">
       <div class="grid-layout-toggle">
         <button class="layout-btn active" data-layout="1">1×1</button>
         <button class="layout-btn" data-layout="4">2×2</button>
         <button class="layout-btn" data-layout="9">3×3</button>
       </div>
-      <button id="btnLive" class="btn primary">▶ En vivo</button>
+      <button id="btnFluidLive" class="btn primary">▶ Video fluido</button>
+      <button id="btnLive" class="btn secondary">Vista remota</button>
     </div>
   </div>
 
@@ -191,7 +192,7 @@ input:focus,select:focus{border-color:rgba(41,210,125,.58);box-shadow:0 0 0 3px 
       </div>
       <div id="videoPrincipal" class="video-wrap">
         <img id="liveImage" class="hide" alt="Vista de cámara">
-        <div id="liveEmpty" class="video-empty"><div><div style="font-size:34px">◉</div><strong>Vista detenida</strong><div class="muted" style="margin-top:5px">Pulsa “En vivo” para comenzar.</div></div></div>
+        <div id="liveEmpty" class="video-empty"><div><div style="font-size:34px">◉</div><strong>Vista detenida</strong><div class="muted" style="margin-top:5px">“Video fluido” abre el stream MJPEG local. “Vista remota” usa Supabase.</div></div></div>
         <div class="crosshair"></div>
         <div class="hud-top">
           <div id="hudOnline" class="hud-badge hud-red">● OFFLINE</div>
@@ -364,7 +365,10 @@ input:focus,select:focus{border-color:rgba(41,210,125,.58);box-shadow:0 0 0 3px 
         <h3>Calibración del detector</h3>
         <div class="muted">Ajusta el umbral mientras observas la cámara y el nivel de movimiento en tiempo real.</div>
       </div>
-      <button id="calibrationLiveToggle" class="btn primary small">▶ Ver en vivo</button>
+      <div class="toolbar">
+        <button id="calibrationFluidLive" class="btn primary small">▶ Video fluido</button>
+        <button id="calibrationLiveToggle" class="btn secondary small">Vista remota</button>
+      </div>
     </div>
 
     <div class="zone-editor" style="margin-top:10px">
@@ -574,7 +578,8 @@ function renderDashboard(d){
   $('#statLevel').textContent=d.nivel??0;$('#statThreshold').textContent=d.umbral??45;$('#statRssi').textContent=d.rssi!=null?d.rssi+' dBm':'--';$('#statIp').textContent=d.ip||'--';$('#statPhotos').textContent=d.total_fotos||0;
   const level=Number(d.nivel||0),thr=Number(d.umbral||45);$('#meterFill').style.width=Math.min(100,level)+'%';$('#meterThreshold').style.left=Math.min(100,thr)+'%';
   $('#motionDetail').textContent=`Nivel ${level} · Umbral ${thr}`;$('#motionLamp').className='status-lamp '+(d.movimiento?'red':level>=thr*.7?'amber':'green');$('#motionState').textContent=d.movimiento?'Movimiento confirmado':level>=thr*.7?'Cambio visual':'Escena estable';
-  $('#quickStatus').textContent=d.modo_prueba?'Modo prueba activo: no se tomarán fotos automáticas.':(d.armado?'Sistema armado mediante perfil '+(d.perfil||'')+'.':'Actualmente desarmado.');
+  const baseStatus=d.modo_prueba?'Modo prueba activo: no se tomarán fotos automáticas.':(d.armado?'Sistema armado mediante perfil '+(d.perfil||'')+'.':'Actualmente desarmado.');
+  $('#quickStatus').textContent=baseStatus+(d.ip?' · Video local: http://'+d.ip+'/':'');
   graphValues.push({v:level,t:thr});if(graphValues.length>90)graphValues.shift();drawGraph();drawCalibrationGraph();
   if(document.activeElement!==$('#thresholdSlider')){
     $('#thresholdSlider').value=thr;
@@ -606,6 +611,27 @@ function drawCalibrationGraph(){
   ctx.strokeStyle='rgba(255,255,255,.85)';ctx.setLineDash([7,5]);ctx.beginPath();ctx.moveTo(0,h-(thr/100)*h);ctx.lineTo(w,h-(thr/100)*h);ctx.stroke();ctx.setLineDash([]);
 }
 
+
+function localCameraUrl(){
+  const ip=currentDashboard?.ip;
+  if(!ip)return null;
+  return 'http://'+ip+'/';
+}
+function openFluidLocal(){
+  const url=localCameraUrl();
+  if(!url){
+    toast('El ESP32 todavía no ha reportado su IP.');
+    return;
+  }
+
+  // GitHub Pages usa HTTPS y los navegadores bloquean un stream HTTP local
+  // dentro de la página. Abrirlo como página local permite MJPEG fluido.
+  const w=window.open(url,'tuttocam_live');
+  if(!w){
+    toast('El navegador bloqueó la ventana. Permite ventanas emergentes.');
+  }
+}
+
 async function snapshot(){
   try{const {data,error}=await db.rpc('camara_solicitar_foto',{p_pin:pinNow});if(error)throw error;toast('Instantánea solicitada #'+data)}catch(e){toast(E(e))}
 }
@@ -617,7 +643,7 @@ async function startCalibrationLive(){
     const {error}=await db.rpc('tuttocam_live_activar',{p_pin:pinNow,p_segundos:90,p_intervalo_ms:interval});
     if(error)throw error;
     calibrationLiveOn=true;
-    $('#calibrationLiveToggle').textContent='■ Detener';
+    $('#calibrationLiveToggle').textContent='■ Detener remota';
     $('#calibrationLiveToggle').className='btn danger small';
     calibrationPreviewUrl='';
     clearInterval(calibrationLiveTimer);
@@ -629,8 +655,8 @@ async function stopCalibrationLive(){
   calibrationLiveOn=false;
   clearInterval(calibrationLiveTimer);
   calibrationLiveTimer=null;
-  $('#calibrationLiveToggle').textContent='▶ Ver en vivo';
-  $('#calibrationLiveToggle').className='btn primary small';
+  $('#calibrationLiveToggle').textContent='Vista remota';
+  $('#calibrationLiveToggle').className='btn secondary small';
   if(!liveOn){
     try{await db.rpc('tuttocam_live_detener',{p_pin:pinNow})}catch(e){}
   }
@@ -649,12 +675,12 @@ async function startLive(){
   try{
     const interval=Number($('#liveInterval')?.value||1000);
     const {error}=await db.rpc('tuttocam_live_activar',{p_pin:pinNow,p_segundos:90,p_intervalo_ms:interval});if(error)throw error;
-    liveOn=true;$('#btnLive').textContent='■ Detener';$('#btnLive').className='btn danger';previewUrl='';clearInterval(liveRenewTimer);liveRenewTimer=setInterval(()=>db.rpc('tuttocam_live_activar',{p_pin:pinNow,p_segundos:90,p_intervalo_ms:interval}),30000);
+    liveOn=true;$('#btnLive').textContent='■ Detener remota';$('#btnLive').className='btn danger';previewUrl='';clearInterval(liveRenewTimer);liveRenewTimer=setInterval(()=>db.rpc('tuttocam_live_activar',{p_pin:pinNow,p_segundos:90,p_intervalo_ms:interval}),30000);
     clearInterval(liveImageTimer);liveImageTimer=setInterval(refreshPreview,Math.max(650,interval));setTimeout(refreshPreview,900);
   }catch(e){toast(E(e))}
 }
 async function stopLive(){
-  liveOn=false;clearInterval(liveRenewTimer);clearInterval(liveImageTimer);liveRenewTimer=liveImageTimer=null;$('#btnLive').textContent='▶ En vivo';$('#btnLive').className='btn primary';
+  liveOn=false;clearInterval(liveRenewTimer);clearInterval(liveImageTimer);liveRenewTimer=liveImageTimer=null;$('#btnLive').textContent='Vista remota';$('#btnLive').className='btn secondary';
   try{await db.rpc('tuttocam_live_detener',{p_pin:pinNow})}catch(e){}
 }
 async function refreshPreview(){
@@ -851,12 +877,12 @@ $$('.subtab').forEach(b=>b.onclick=()=>{$$('.subtab').forEach(x=>x.classList.rem
 $$('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).classList.add('hide'));
 
 $('#enter').onclick=enter;$('#pin').onkeydown=e=>{if(e.key==='Enter')enter()};
-$('#btnLive').onclick=toggleLive;$('#btnSnapshot').onclick=snapshot;$('#btnQuickPhoto').onclick=snapshot;$('#btnFullscreen').onclick=()=>$('#videoPrincipal').requestFullscreen?.();
+$('#btnFluidLive').onclick=openFluidLocal;$('#btnLive').onclick=toggleLive;$('#btnSnapshot').onclick=snapshot;$('#btnQuickPhoto').onclick=snapshot;$('#btnFullscreen').onclick=()=>$('#videoPrincipal').requestFullscreen?.();
 $('#btnGoCalibration').onclick=()=>setPage('maintenance');$('#btnQuickTest').onclick=()=>{setPage('maintenance');$('#testMode').checked=true;$('#testModeLabel').textContent='Activado';toast('Modo prueba seleccionado')};$('#btnQuickRules').onclick=()=>setPage('rules');$('#btnQuickMaintenance').onclick=()=>setPage('maintenance');
 $('#reloadEvents').onclick=()=>loadEvents(true);$('#moreEvents').onclick=()=>loadEvents(false);
 $('#newProfile').onclick=()=>openProfile();$('#saveProfile').onclick=saveProfile;$('#saveMatrix').onclick=saveMatrix;$('#matrixErase').onclick=()=>{matrixErase=!matrixErase;$('#matrixErase').classList.toggle('danger',matrixErase)};$('#matrixClear').onclick=()=>{if(confirm('¿Limpiar toda la matriz semanal?')){matrixCells=new Array(168).fill(null);renderMatrix()}};
 $('#newRule').onclick=()=>openRule();$('#saveRule').onclick=saveRule;$('#saveZones').onclick=saveZones;$('#clearZones').onclick=()=>{if(confirm('¿Borrar todas las zonas?')){zones=[];renderZones()}};
-$('#calibrationLiveToggle').onclick=toggleCalibrationLive;
+$('#calibrationFluidLive').onclick=openFluidLocal;$('#calibrationLiveToggle').onclick=toggleCalibrationLive;
 $('#thresholdSlider').oninput=()=>{const v=Number($('#thresholdSlider').value);$('#thresholdSliderValue').textContent=v;$('#calibrationThresholdLine').style.left=Math.min(100,v)+'%';drawCalibrationGraph()};
 $('#saveThreshold').onclick=saveCurrentThreshold;
 $('#reloadMaintenance').onclick=()=>{loadMaintenance();loadAudit()};$('#saveCameraSettings').onclick=saveCameraSettings;$('#reloadAudit').onclick=loadAudit;$('#restartDevice').onclick=restartDevice;$('#calibrate8').onclick=calibrate8;$('#testMode').onchange=()=>$('#testModeLabel').textContent=$('#testMode').checked?'Activado':'Desactivado';
