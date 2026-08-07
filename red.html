@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RED</title>
+
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#111;
+    color:white;
+    margin:0;
+    padding:20px;
+}
+
+h1{
+    margin-top:0;
+}
+
+.card{
+    background:#1d1d1d;
+    border-radius:14px;
+    padding:15px;
+    margin-bottom:12px;
+}
+
+.red{
+    background:#222;
+    padding:14px;
+    margin:8px 0;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.nombre{
+    font-size:18px;
+    font-weight:bold;
+}
+
+.info{
+    font-size:13px;
+    color:#aaa;
+    margin-top:5px;
+}
+
+.barra{
+    height:10px;
+    background:#444;
+    border-radius:10px;
+    overflow:hidden;
+    margin-top:8px;
+}
+
+.nivel{
+    height:100%;
+    background:#fff;
+}
+
+input{
+    width:100%;
+    box-sizing:border-box;
+    padding:13px;
+    margin:6px 0 12px;
+    border-radius:8px;
+    border:0;
+    font-size:16px;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    border:0;
+    border-radius:10px;
+    font-size:17px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+#estado{
+    margin-top:15px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>RED</h1>
+
+<div class="card">
+
+<label>Nombre de la nueva red</label>
+<input id="ssid" placeholder="Ej: TUTTO INVITADOS">
+
+<label>Página destino</label>
+<input
+    id="url"
+    value="https://www.instagram.com/"
+>
+
+<button id="crear">CREAR RED</button>
+
+<div id="estado"></div>
+
+</div>
+
+<h2>Redes cercanas</h2>
+
+<div id="redes">
+Buscando...
+</div>
+
+<script>
+
+function calidad(rssi){
+
+    if(rssi >= -50) return "Excelente";
+    if(rssi >= -65) return "Buena";
+    if(rssi >= -75) return "Regular";
+    if(rssi >= -85) return "Débil";
+
+    return "Muy débil";
+}
+
+function porcentaje(rssi){
+
+    if(rssi >= -40) return 100;
+    if(rssi <= -100) return 0;
+
+    return Math.round(2 * (rssi + 100));
+}
+
+async function buscar(){
+
+    try{
+
+        const r = await fetch("/api/networks");
+        const redes = await r.json();
+
+        const contenedor =
+            document.getElementById("redes");
+
+        contenedor.innerHTML = "";
+
+        redes.forEach(red => {
+
+            const p = porcentaje(red.rssi);
+
+            const div =
+                document.createElement("div");
+
+            div.className = "red";
+
+            div.innerHTML = `
+                <div class="nombre">
+                    ${red.ssid || "(oculta)"}
+                </div>
+
+                <div class="info">
+                    ${red.rssi} dBm ·
+                    ${calidad(red.rssi)} ·
+                    ${p}%
+                </div>
+
+                <div class="barra">
+                    <div
+                        class="nivel"
+                        style="width:${p}%">
+                    </div>
+                </div>
+            `;
+
+            div.addEventListener("click", () => {
+
+                document.getElementById("ssid").value =
+                    red.ssid;
+
+            });
+
+            contenedor.appendChild(div);
+
+        });
+
+    }
+    catch(e){
+
+        document.getElementById("redes").innerHTML =
+            "Error buscando redes";
+
+    }
+}
+
+document
+.getElementById("crear")
+.addEventListener("click", async ()=>{
+
+    const ssid =
+        document.getElementById("ssid").value.trim();
+
+    const url =
+        document.getElementById("url").value.trim();
+
+    if(!ssid){
+
+        alert("Escribe un nombre para la red");
+        return;
+
+    }
+
+    const datos =
+        new URLSearchParams();
+
+    datos.append("ssid",ssid);
+    datos.append("url",url);
+
+    const r = await fetch("/api/create",{
+        method:"POST",
+        body:datos
+    });
+
+    const texto = await r.text();
+
+    document.getElementById("estado").innerHTML =
+        texto;
+
+});
+
+buscar();
+
+setInterval(buscar,2500);
+
+</script>
+
+</body>
+</html>
