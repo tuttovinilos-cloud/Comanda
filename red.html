@@ -2,234 +2,519 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RED</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d12">
+<title>RED · Wi‑Fi Manager</title>
 <style>
+:root{
+  --bg:#0b0d12;
+  --panel:#121621;
+  --panel2:#181d2a;
+  --line:#262d3d;
+  --text:#f5f7fb;
+  --muted:#8e98aa;
+  --accent:#4f8cff;
+  --good:#35c98f;
+  --warn:#ffb84d;
+  --bad:#ff6262;
+  --shadow:0 18px 50px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
 body{
-    font-family:Arial,sans-serif;
-    background:#111;
-    color:white;
-    margin:0;
-    padding:20px;
+  margin:0;
+  min-height:100vh;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 100% 0%,rgba(79,140,255,.13),transparent 28rem),
+    var(--bg);
 }
-
-h1{
-    margin-top:0;
+button,input,select{font:inherit}
+button{cursor:pointer}
+.shell{max-width:1080px;margin:auto;padding:18px 16px 42px}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  margin-bottom:20px
 }
-
-.card{
-    background:#1d1d1d;
-    border-radius:14px;
-    padding:15px;
-    margin-bottom:12px;
+.brand{display:flex;align-items:center;gap:12px}
+.logo{
+  width:42px;height:42px;border-radius:13px;
+  display:grid;place-items:center;background:var(--accent);
+  box-shadow:0 8px 28px rgba(79,140,255,.25)
 }
-
-.red{
-    background:#222;
-    padding:14px;
-    margin:8px 0;
-    border-radius:10px;
-    cursor:pointer;
+.logo svg{width:23px;height:23px}
+.brand h1{font-size:19px;margin:0;font-weight:750;letter-spacing:-.02em}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.live{
+  display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;
+  padding:8px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(18,22,33,.8)
 }
-
-.nombre{
-    font-size:18px;
-    font-weight:bold;
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 0 5px rgba(53,201,143,.1)}
+.grid-stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px
 }
-
-.info{
-    font-size:13px;
-    color:#aaa;
-    margin-top:5px;
+.stat{
+  background:rgba(18,22,33,.9);border:1px solid var(--line);border-radius:16px;padding:14px;
+  box-shadow:var(--shadow)
 }
-
-.barra{
-    height:10px;
-    background:#444;
-    border-radius:10px;
-    overflow:hidden;
-    margin-top:8px;
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.stat-value{font-size:23px;font-weight:760;margin-top:7px;letter-spacing:-.04em}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.main{
+  display:grid;grid-template-columns:330px 1fr;gap:14px;align-items:start
 }
-
-.nivel{
-    height:100%;
-    background:#fff;
+.panel{
+  background:rgba(18,22,33,.94);border:1px solid var(--line);border-radius:18px;
+  box-shadow:var(--shadow);overflow:hidden
 }
-
-input{
-    width:100%;
-    box-sizing:border-box;
-    padding:13px;
-    margin:6px 0 12px;
-    border-radius:8px;
-    border:0;
-    font-size:16px;
+.panel-head{
+  padding:15px 16px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:10px
 }
-
-button{
-    width:100%;
-    padding:14px;
-    border:0;
-    border-radius:10px;
-    font-size:17px;
-    font-weight:bold;
-    cursor:pointer;
+.panel-title{font-size:14px;font-weight:700}
+.panel-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.panel-body{padding:16px}
+.field{margin-bottom:13px}
+label{display:block;font-size:11px;color:var(--muted);margin-bottom:7px;font-weight:650}
+input,select{
+  width:100%;border:1px solid var(--line);background:#0e121b;color:var(--text);
+  padding:11px 12px;border-radius:11px;outline:none;transition:.18s
 }
-
-#estado{
-    margin-top:15px;
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,140,255,.12)}
+.primary{
+  width:100%;border:0;background:var(--accent);color:white;padding:12px 14px;
+  border-radius:11px;font-weight:750;transition:.18s
+}
+.primary:hover{filter:brightness(1.06)}
+.primary:disabled{opacity:.55;cursor:not-allowed}
+.selected{
+  margin-bottom:14px;padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--panel2)
+}
+.selected-empty{color:var(--muted);font-size:12px}
+.selected-name{font-weight:720;font-size:14px;overflow:hidden;text-overflow:ellipsis}
+.selected-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}
+.chip{
+  font-size:10px;color:var(--muted);border:1px solid var(--line);
+  padding:4px 7px;border-radius:999px;background:#10141d
+}
+.note{
+  margin-top:12px;color:var(--muted);font-size:10px;line-height:1.5
+}
+.toolbar{
+  display:grid;grid-template-columns:1fr 145px auto;gap:8px;padding:12px 14px;
+  border-bottom:1px solid var(--line)
+}
+.refresh{
+  width:42px;border:1px solid var(--line);background:#0e121b;color:var(--text);border-radius:10px;
+  display:grid;place-items:center
+}
+.refresh.spin svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.networks{padding:8px}
+.network{
+  display:grid;grid-template-columns:minmax(0,1fr) 115px 82px;gap:14px;align-items:center;
+  padding:13px 11px;border-radius:13px;border:1px solid transparent;transition:.16s
+}
+.network:hover{background:var(--panel2);border-color:var(--line)}
+.network.active{background:rgba(79,140,255,.1);border-color:rgba(79,140,255,.42)}
+.net-main{min-width:0}
+.net-name{font-size:14px;font-weight:680;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.net-info{display:flex;gap:8px;align-items:center;margin-top:5px;color:var(--muted);font-size:10px}
+.signal-wrap{min-width:0}
+.signal-row{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:var(--muted);margin-bottom:6px}
+.track{height:7px;background:#252b37;border-radius:999px;overflow:hidden}
+.bar{height:100%;border-radius:999px;transition:width .35s ease}
+.bar.good{background:var(--good)}
+.bar.mid{background:var(--warn)}
+.bar.bad{background:var(--bad)}
+.pick{
+  border:1px solid var(--line);background:#10141d;color:var(--text);padding:8px 9px;
+  border-radius:9px;font-size:11px;font-weight:650
+}
+.pick:hover{border-color:var(--accent)}
+.empty{padding:42px 16px;text-align:center;color:var(--muted);font-size:13px}
+.loader{display:inline-block;width:20px;height:20px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:10px}
+.toast{
+  position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);
+  background:#f5f7fb;color:#111827;padding:11px 14px;border-radius:11px;font-size:12px;font-weight:650;
+  opacity:0;pointer-events:none;transition:.2s;box-shadow:0 15px 40px rgba(0,0,0,.32);
+  max-width:calc(100vw - 30px);text-align:center
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.mini-status{
+  padding:10px 12px;border-radius:11px;background:#0e121b;border:1px solid var(--line);
+  font-size:11px;color:var(--muted);margin-top:10px;display:none
+}
+.mini-status.show{display:block}
+@media(max-width:760px){
+  .shell{padding:14px 12px 34px}
+  .grid-stats{grid-template-columns:repeat(2,1fr)}
+  .main{grid-template-columns:1fr}
+  .toolbar{grid-template-columns:1fr 112px auto}
+}
+@media(max-width:500px){
+  .network{grid-template-columns:minmax(0,1fr) 95px}
+  .network .pick{grid-column:1/-1}
+  .topbar{align-items:flex-start}
+  .brand p{max-width:220px}
 }
 </style>
 </head>
-
 <body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+          <path d="M8.5 16a6 6 0 0 1 7 0"/>
+          <path d="M12 20h.01"/>
+        </svg>
+      </div>
+      <div>
+        <h1>RED</h1>
+        <p>Monitor y administrador Wi‑Fi · ESP32‑S3</p>
+      </div>
+    </div>
+    <div class="live"><span class="dot"></span><span id="liveText">Actualizando</span></div>
+  </div>
 
-<h1>RED</h1>
+  <section class="grid-stats">
+    <div class="stat">
+      <div class="stat-label">Redes</div>
+      <div class="stat-value" id="count">0</div>
+      <div class="stat-sub">detectadas</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Mejor señal</div>
+      <div class="stat-value" id="bestRssi">--</div>
+      <div class="stat-sub" id="bestName">Sin datos</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Seleccionada</div>
+      <div class="stat-value" id="selectedRssi">--</div>
+      <div class="stat-sub" id="selectedStat">Ninguna</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Actualización</div>
+      <div class="stat-value"><span id="seconds">5</span>s</div>
+      <div class="stat-sub">escaneo automático</div>
+    </div>
+  </section>
 
-<div class="card">
+  <div class="main">
+    <aside class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Crear punto de acceso</div>
+          <div class="panel-sub">Configura la red emitida por el ESP32</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div id="selectedBox" class="selected">
+          <div class="selected-empty">Selecciona una red de la lista para usar su nombre como referencia.</div>
+        </div>
 
-<label>Nombre de la nueva red</label>
-<input id="ssid" placeholder="Ej: TUTTO INVITADOS">
+        <div class="field">
+          <label for="ssid">NOMBRE DE LA NUEVA RED</label>
+          <input id="ssid" maxlength="31" placeholder="Ej. TUTTO INVITADOS" autocomplete="off">
+        </div>
 
-<label>Página destino</label>
-<input
-    id="url"
-    value="https://www.instagram.com/"
->
+        <div class="field">
+          <label for="url">PÁGINA DESTINO</label>
+          <input id="url" value="https://www.instagram.com/" autocomplete="off">
+        </div>
 
-<button id="crear">CREAR RED</button>
+        <button id="createBtn" class="primary" type="button">Crear red</button>
+        <div id="status" class="mini-status" aria-live="polite"></div>
 
-<div id="estado"></div>
+        <div class="note">
+          La distancia mostrada es una estimación basada en RSSI. Paredes, muebles, antenas y potencia del router pueden alterar bastante el resultado.
+        </div>
+      </div>
+    </aside>
 
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Redes cercanas</div>
+          <div class="panel-sub">Señal actualizada automáticamente</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input id="search" placeholder="Buscar red…" autocomplete="off">
+        <select id="sort">
+          <option value="signal">Mejor señal</option>
+          <option value="name">Nombre A–Z</option>
+          <option value="distance">Más cercana</option>
+        </select>
+        <button id="refresh" class="refresh" type="button" aria-label="Actualizar">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5"/>
+            <path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"/>
+          </svg>
+        </button>
+      </div>
+
+      <div id="networks" class="networks">
+        <div class="empty"><span class="loader"></span><br>Buscando redes…</div>
+      </div>
+    </section>
+  </div>
 </div>
 
-<h2>Redes cercanas</h2>
-
-<div id="redes">
-Buscando...
-</div>
+<div id="toast" class="toast" aria-live="polite"></div>
 
 <script>
+const state = {
+  networks: [],
+  selected: null,
+  loading: false,
+  interval: 5000
+};
 
-function calidad(rssi){
+const $ = id => document.getElementById(id);
 
-    if(rssi >= -50) return "Excelente";
-    if(rssi >= -65) return "Buena";
-    if(rssi >= -75) return "Regular";
-    if(rssi >= -85) return "Débil";
-
-    return "Muy débil";
+function quality(rssi){
+  if(rssi >= -50) return {label:'Excelente', cls:'good'};
+  if(rssi >= -65) return {label:'Buena', cls:'good'};
+  if(rssi >= -75) return {label:'Regular', cls:'mid'};
+  if(rssi >= -85) return {label:'Débil', cls:'mid'};
+  return {label:'Muy débil', cls:'bad'};
 }
 
-function porcentaje(rssi){
-
-    if(rssi >= -40) return 100;
-    if(rssi <= -100) return 0;
-
-    return Math.round(2 * (rssi + 100));
+function percent(rssi){
+  if(rssi >= -40) return 100;
+  if(rssi <= -100) return 0;
+  return Math.max(0, Math.min(100, Math.round(2 * (rssi + 100))));
 }
 
-async function buscar(){
-
-    try{
-
-        const r = await fetch("/api/networks");
-        const redes = await r.json();
-
-        const contenedor =
-            document.getElementById("redes");
-
-        contenedor.innerHTML = "";
-
-        redes.forEach(red => {
-
-            const p = porcentaje(red.rssi);
-
-            const div =
-                document.createElement("div");
-
-            div.className = "red";
-
-            div.innerHTML = `
-                <div class="nombre">
-                    ${red.ssid || "(oculta)"}
-                </div>
-
-                <div class="info">
-                    ${red.rssi} dBm ·
-                    ${calidad(red.rssi)} ·
-                    ${p}%
-                </div>
-
-                <div class="barra">
-                    <div
-                        class="nivel"
-                        style="width:${p}%">
-                    </div>
-                </div>
-            `;
-
-            div.addEventListener("click", () => {
-
-                document.getElementById("ssid").value =
-                    red.ssid;
-
-            });
-
-            contenedor.appendChild(div);
-
-        });
-
-    }
-    catch(e){
-
-        document.getElementById("redes").innerHTML =
-            "Error buscando redes";
-
-    }
+// Aproximación sencilla para 2.4 GHz usando RSSI.
+// Se usa solo como referencia visual.
+function distanceEstimate(rssi){
+  const txPower = -45;
+  const n = 3.0;
+  const d = Math.pow(10, (txPower - rssi) / (10 * n));
+  if(d < 1) return d.toFixed(1) + ' m';
+  if(d < 10) return d.toFixed(1) + ' m';
+  return Math.round(d) + ' m';
 }
 
-document
-.getElementById("crear")
-.addEventListener("click", async ()=>{
+function escapeHTML(str=''){
+  return String(str)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#039;');
+}
 
-    const ssid =
-        document.getElementById("ssid").value.trim();
+function toast(message){
+  const el = $('toast');
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => el.classList.remove('show'), 2200);
+}
 
-    const url =
-        document.getElementById("url").value.trim();
+function updateStats(list){
+  $('count').textContent = list.length;
 
-    if(!ssid){
+  const best = [...list].sort((a,b)=>b.rssi-a.rssi)[0];
+  $('bestRssi').textContent = best ? `${best.rssi}` : '--';
+  $('bestName').textContent = best ? `${best.ssid || '(oculta)'} dBm` : 'Sin datos';
 
-        alert("Escribe un nombre para la red");
-        return;
+  if(state.selected){
+    const current = list.find(n => n.ssid === state.selected.ssid);
+    if(current) state.selected = current;
+  }
 
+  $('selectedRssi').textContent = state.selected ? state.selected.rssi : '--';
+  $('selectedStat').textContent = state.selected ? `${state.selected.ssid} dBm` : 'Ninguna';
+}
+
+function renderSelected(){
+  const box = $('selectedBox');
+
+  if(!state.selected){
+    box.innerHTML = '<div class="selected-empty">Selecciona una red de la lista para usar su nombre como referencia.</div>';
+    return;
+  }
+
+  const q = quality(state.selected.rssi);
+  box.innerHTML = `
+    <div class="selected-name">${escapeHTML(state.selected.ssid || '(oculta)')}</div>
+    <div class="selected-meta">
+      <span class="chip">${state.selected.rssi} dBm</span>
+      <span class="chip">${q.label}</span>
+      <span class="chip">≈ ${distanceEstimate(state.selected.rssi)}</span>
+    </div>
+  `;
+}
+
+function getVisibleNetworks(){
+  const text = $('search').value.trim().toLowerCase();
+  const sort = $('sort').value;
+
+  let list = state.networks.filter(n =>
+    (n.ssid || '(oculta)').toLowerCase().includes(text)
+  );
+
+  if(sort === 'name'){
+    list.sort((a,b)=>(a.ssid || '').localeCompare(b.ssid || ''));
+  } else if(sort === 'distance'){
+    list.sort((a,b)=>b.rssi-a.rssi);
+  } else {
+    list.sort((a,b)=>b.rssi-a.rssi);
+  }
+
+  return list;
+}
+
+function renderNetworks(){
+  const list = getVisibleNetworks();
+  const root = $('networks');
+
+  if(!list.length){
+    root.innerHTML = '<div class="empty">No hay redes que coincidan.</div>';
+    return;
+  }
+
+  root.innerHTML = list.map((net, i) => {
+    const q = quality(net.rssi);
+    const p = percent(net.rssi);
+    const isActive = state.selected && state.selected.ssid === net.ssid;
+
+    return `
+      <div class="network ${isActive ? 'active' : ''}" data-index="${state.networks.indexOf(net)}">
+        <div class="net-main">
+          <div class="net-name">${escapeHTML(net.ssid || '(red oculta)')}</div>
+          <div class="net-info">
+            <span>${net.rssi} dBm</span>
+            <span>•</span>
+            <span>${q.label}</span>
+            <span>•</span>
+            <span>≈ ${distanceEstimate(net.rssi)}</span>
+          </div>
+        </div>
+
+        <div class="signal-wrap">
+          <div class="signal-row">
+            <span>Señal</span>
+            <span>${p}%</span>
+          </div>
+          <div class="track">
+            <div class="bar ${q.cls}" style="width:${p}%"></div>
+          </div>
+        </div>
+
+        <button class="pick" type="button">Seleccionar</button>
+      </div>
+    `;
+  }).join('');
+
+  root.querySelectorAll('.network').forEach(row => {
+    row.querySelector('.pick').addEventListener('click', () => {
+      const index = Number(row.dataset.index);
+      state.selected = state.networks[index];
+      $('ssid').value = state.selected.ssid || '';
+      renderSelected();
+      renderNetworks();
+      updateStats(state.networks);
+      toast('Red seleccionada');
+    });
+  });
+}
+
+async function loadNetworks(manual=false){
+  if(state.loading) return;
+  state.loading = true;
+
+  if(manual) $('refresh').classList.add('spin');
+  $('liveText').textContent = 'Actualizando';
+
+  try{
+    const response = await fetch('/api/networks?t=' + Date.now(), {cache:'no-store'});
+    if(!response.ok) throw new Error('HTTP ' + response.status);
+
+    const data = await response.json();
+    state.networks = Array.isArray(data) ? data : [];
+
+    updateStats(state.networks);
+    renderSelected();
+    renderNetworks();
+
+    $('liveText').textContent = 'En vivo';
+  }catch(error){
+    $('liveText').textContent = 'Sin conexión';
+    if(!state.networks.length){
+      $('networks').innerHTML = `
+        <div class="empty">
+          No se pudo leer <b>/api/networks</b>.<br>
+          <span style="font-size:11px">Revisa que el ESP32 esté ejecutando el servidor.</span>
+        </div>`;
     }
+  }finally{
+    state.loading = false;
+    $('refresh').classList.remove('spin');
+  }
+}
 
-    const datos =
-        new URLSearchParams();
+async function createNetwork(){
+  const ssid = $('ssid').value.trim();
+  const url = $('url').value.trim();
 
-    datos.append("ssid",ssid);
-    datos.append("url",url);
+  if(!ssid){
+    toast('Escribe un nombre para la nueva red');
+    $('ssid').focus();
+    return;
+  }
 
-    const r = await fetch("/api/create",{
-        method:"POST",
-        body:datos
+  if(ssid.length > 31){
+    toast('El nombre debe tener máximo 31 caracteres');
+    return;
+  }
+
+  const btn = $('createBtn');
+  const status = $('status');
+
+  btn.disabled = true;
+  btn.textContent = 'Creando…';
+  status.classList.add('show');
+  status.textContent = 'Enviando configuración al ESP32…';
+
+  try{
+    const body = new URLSearchParams({ssid, url});
+    const response = await fetch('/api/create', {
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body
     });
 
-    const texto = await r.text();
+    const text = await response.text();
 
-    document.getElementById("estado").innerHTML =
-        texto;
+    if(!response.ok) throw new Error(text || 'No se pudo crear la red');
 
-});
+    status.innerHTML = `Red <b>${escapeHTML(ssid)}</b> solicitada. En unos segundos este Wi‑Fi puede desconectarse; busca el nuevo nombre en tu dispositivo.`;
+    toast('Configuración enviada');
+  }catch(error){
+    status.textContent = 'Error: ' + error.message;
+    toast('No se pudo crear la red');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Crear red';
+  }
+}
 
-buscar();
+$('search').addEventListener('input', renderNetworks);
+$('sort').addEventListener('change', renderNetworks);
+$('refresh').addEventListener('click', () => loadNetworks(true));
+$('createBtn').addEventListener('click', createNetwork);
 
-setInterval(buscar,2500);
-
+loadNetworks();
+setInterval(loadNetworks, state.interval);
 </script>
-
 </body>
 </html>
