@@ -1,81 +1,1071 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b1220">
-<title>Cámara Tuttovinilos</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-:root{color-scheme:dark;--bg:#070b12;--p:#111827;--p2:#182235;--t:#f8fafc;--m:#94a3b8;--b:rgba(255,255,255,.1);--g:#22c55e;--r:#ef4444;--y:#f59e0b}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font-family:Arial,sans-serif}.wrap{max-width:760px;margin:auto;padding:14px}.card{background:var(--p);border:1px solid var(--b);border-radius:18px;padding:14px;margin-bottom:12px}.hide{display:none!important}h1,h2{margin:0}.muted{color:var(--m);font-size:13px}.head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px}.online{font-size:12px;color:var(--m)}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--r);margin-right:5px}.dot.ok{background:var(--g)}
-button,input{font:inherit}.btn{width:100%;min-height:48px;border:0;border-radius:12px;font-weight:800;padding:10px;cursor:pointer}.green{background:var(--g);color:#031008}.dark{background:var(--p2);color:#fff;border:1px solid var(--b)}.red{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}.tab{min-height:42px;border-radius:11px;background:#0d1422;color:var(--m);border:1px solid var(--b);font-weight:800}.tab.on{background:var(--p2);color:white;border-color:rgba(34,197,94,.4)}.panel{display:none}.panel.on{display:block}
-input[type=password],input[type=time]{width:100%;min-height:48px;background:#0b1220;border:1px solid var(--b);border-radius:11px;color:white;padding:0 12px;outline:none}.field{display:grid;gap:6px;margin:12px 0}.field label{font-size:12px;color:var(--m);font-weight:700}.viewer{aspect-ratio:4/3;background:#000;border-radius:14px;overflow:hidden;margin:10px 0;display:grid;place-items:center;color:var(--m)}.viewer img{width:100%;height:100%;object-fit:contain}.status{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--m)}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.shot{background:#0a101b;border:1px solid var(--b);border-radius:13px;overflow:hidden}.shot img{width:100%;aspect-ratio:4/3;object-fit:cover;background:#000}.shot .info{padding:8px;font-size:11px;color:var(--m)}.shot .actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:7px}.shot .actions .btn{min-height:35px;font-size:11px}.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.day{padding:8px 2px;text-align:center;border:1px solid var(--b);border-radius:9px;background:#0b1220;font-size:11px;color:var(--m)}.switchrow{display:flex;justify-content:space-between;align-items:center;padding:11px;border:1px solid var(--b);border-radius:11px;background:#0b1220}.msg{font-size:12px;color:var(--m);min-height:17px;margin:8px 0}.schedstate{padding:10px;border:1px solid var(--b);border-radius:11px;background:#0b1220;font-size:12px;color:var(--m)}
-@media(max-width:520px){.wrap{padding:9px}.days{grid-template-columns:repeat(4,1fr)}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <title>Cámara Tuttovinilos</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      color-scheme:dark;
+      --fondo:#070b12;
+      --panel:#111827;
+      --panel2:#182235;
+      --texto:#f8fafc;
+      --suave:#94a3b8;
+      --borde:rgba(255,255,255,.10);
+      --verde:#22c55e;
+      --verde2:#16a34a;
+      --rojo:#ef4444;
+      --amarillo:#f59e0b;
+      --azul:#3b82f6;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(circle at top,rgba(34,197,94,.11),transparent 34%),
+        var(--fondo);
+      color:var(--texto);
+      font-family:Arial,Helvetica,sans-serif;
+    }
+
+    button,input{font:inherit}
+
+    .contenedor{
+      width:min(100%,780px);
+      margin:0 auto;
+      padding:16px 12px 40px;
+    }
+
+    .encabezado{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    h1{
+      margin:0;
+      font-size:clamp(28px,7vw,38px);
+    }
+
+    h2{
+      margin:0;
+      font-size:20px;
+    }
+
+    .subtitulo{
+      margin-top:4px;
+      color:var(--suave);
+      font-size:13px;
+    }
+
+    .conexion{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      color:var(--suave);
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    .punto{
+      width:9px;
+      height:9px;
+      border-radius:50%;
+      background:var(--rojo);
+      box-shadow:0 0 10px currentColor;
+    }
+
+    .punto.activo{background:var(--verde)}
+
+    .tarjeta{
+      background:rgba(17,24,39,.96);
+      border:1px solid var(--borde);
+      border-radius:18px;
+      padding:15px;
+      box-shadow:0 16px 44px rgba(0,0,0,.28);
+    }
+
+    .oculto{display:none!important}
+
+    .campo{
+      display:grid;
+      gap:7px;
+      margin-top:14px;
+    }
+
+    label{
+      color:var(--suave);
+      font-size:12px;
+      font-weight:700;
+    }
+
+    input[type="password"],
+    input[type="time"]{
+      width:100%;
+      min-height:48px;
+      padding:0 13px;
+      border:1px solid var(--borde);
+      border-radius:12px;
+      outline:none;
+      background:#0b1220;
+      color:var(--texto);
+    }
+
+    input:focus{
+      border-color:var(--verde);
+      box-shadow:0 0 0 3px rgba(34,197,94,.14);
+    }
+
+    .recordar{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin:12px 0 15px;
+      color:var(--suave);
+      font-size:13px;
+    }
+
+    .btn{
+      width:100%;
+      min-height:48px;
+      border:0;
+      border-radius:12px;
+      padding:10px 14px;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .btn:disabled{
+      opacity:.5;
+      cursor:not-allowed;
+    }
+
+    .btn-principal{
+      background:linear-gradient(180deg,var(--verde),var(--verde2));
+      color:#041108;
+    }
+
+    .btn-secundario{
+      background:var(--panel2);
+      color:#fff;
+      border:1px solid var(--borde);
+    }
+
+    .btn-peligro{
+      background:rgba(239,68,68,.14);
+      color:#fca5a5;
+      border:1px solid rgba(239,68,68,.30);
+    }
+
+    .tabs{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:7px;
+      margin-bottom:12px;
+    }
+
+    .tab{
+      min-height:42px;
+      border-radius:11px;
+      border:1px solid var(--borde);
+      background:#0d1422;
+      color:var(--suave);
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .tab.activo{
+      background:var(--panel2);
+      color:#fff;
+      border-color:rgba(34,197,94,.40);
+    }
+
+    .panel{display:none}
+    .panel.activo{display:block}
+
+    .visor{
+      position:relative;
+      width:100%;
+      aspect-ratio:4/3;
+      margin:11px 0;
+      overflow:hidden;
+      border:1px solid var(--borde);
+      border-radius:14px;
+      background:#000;
+    }
+
+    .visor img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
+
+    .sin-foto{
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      text-align:center;
+      color:var(--suave);
+    }
+
+    .estado-fila{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      color:var(--suave);
+      font-size:12px;
+    }
+
+    .estado{
+      font-weight:800;
+      color:#fff;
+    }
+
+    .mensaje{
+      min-height:18px;
+      margin:9px 0 0;
+      color:var(--suave);
+      font-size:12px;
+      line-height:1.4;
+    }
+
+    .acciones{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:10px;
+    }
+
+    .historial-cab{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .contador{
+      margin-top:4px;
+      color:var(--suave);
+      font-size:12px;
+    }
+
+    .grid-fotos{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:10px;
+    }
+
+    .foto-card{
+      overflow:hidden;
+      border:1px solid var(--borde);
+      border-radius:13px;
+      background:#0a101b;
+    }
+
+    .foto-card img{
+      width:100%;
+      aspect-ratio:4/3;
+      object-fit:cover;
+      display:block;
+      background:#000;
+    }
+
+    .foto-info{
+      padding:8px;
+      font-size:11px;
+      color:var(--suave);
+    }
+
+    .foto-fecha{
+      color:#e5e7eb;
+      font-size:12px;
+    }
+
+    .foto-acciones{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:6px;
+      margin-top:7px;
+    }
+
+    .foto-acciones .btn{
+      min-height:35px;
+      font-size:11px;
+      padding:7px;
+    }
+
+    .programa{
+      display:grid;
+      gap:13px;
+    }
+
+    .switchfila{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:12px;
+      border:1px solid var(--borde);
+      border-radius:12px;
+      background:#0b1220;
+    }
+
+    .switchfila input{
+      width:24px;
+      height:24px;
+    }
+
+    .horas{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .dias{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:5px;
+      margin-top:7px;
+    }
+
+    .dia{
+      padding:8px 3px;
+      text-align:center;
+      border:1px solid var(--borde);
+      border-radius:9px;
+      background:#0b1220;
+      font-size:11px;
+      color:var(--suave);
+    }
+
+    .programa-estado{
+      padding:11px;
+      border:1px solid var(--borde);
+      border-radius:11px;
+      background:#0b1220;
+      color:var(--suave);
+      font-size:12px;
+      line-height:1.5;
+    }
+
+    .pie{
+      margin-top:14px;
+      text-align:center;
+      color:#64748b;
+      font-size:11px;
+    }
+
+    @media(max-width:520px){
+      .contenedor{padding-inline:9px}
+      .dias{grid-template-columns:repeat(4,1fr)}
+      .tarjeta{padding:13px}
+    }
+  </style>
 </head>
+
 <body>
-<div class="wrap">
-<div class="head"><div><h1>Cámara</h1><div class="muted">Tuttovinilos · control remoto</div></div><div class="online"><span id="dot" class="dot"></span><span id="conn">Sin conexión</span></div></div>
+  <main class="contenedor">
 
-<section id="login" class="card">
-<h2>Ingresar</h2><div class="field"><label>PIN</label><input id="pin" type="password" inputmode="numeric" placeholder="••••"></div>
-<label class="muted"><input id="remember" type="checkbox" checked> Recordar PIN</label>
-<button id="enter" class="btn green" style="margin-top:12px">Entrar</button><div id="loginmsg" class="msg"></div>
-</section>
+    <header class="encabezado">
+      <div>
+        <h1>Cámara</h1>
+        <div class="subtitulo">Tuttovinilos · control remoto</div>
+      </div>
 
-<section id="app" class="hide">
-<div class="tabs"><button class="tab on" data-tab="last">Última</button><button class="tab" data-tab="history">Historial</button><button class="tab" data-tab="schedule">Programación</button></div>
+      <div class="conexion">
+        <span id="puntoConexion" class="punto"></span>
+        <span id="textoConexion">Sin conexión</span>
+      </div>
+    </header>
 
-<div id="p-last" class="panel on card">
-<button id="take" class="btn green">Tomar foto</button>
-<div class="viewer"><img id="photo" class="hide"><span id="nophoto">Sin fotografía</span></div>
-<div class="status"><span id="state">Esperando</span><span id="date">--</span></div>
-<div id="cammsg" class="msg"></div>
-<div class="row"><button id="refresh" class="btn dark">Actualizar</button><button id="logout" class="btn dark">Salir</button></div>
-</div>
+    <section id="pantallaAcceso" class="tarjeta">
+      <h2>Ingresar</h2>
 
-<div id="p-history" class="panel card">
-<div class="head"><div><h2>Historial</h2><div id="count" class="muted"></div></div><button id="reloadHistory" class="btn dark" style="width:auto;min-height:38px">Actualizar</button></div>
-<div id="shots" class="grid"></div><div id="histmsg" class="msg"></div><button id="more" class="btn dark hide">Ver más</button>
-</div>
+      <div class="campo">
+        <label for="pin">PIN</label>
+        <input id="pin" type="password" inputmode="numeric" maxlength="12" placeholder="••••">
+      </div>
 
-<div id="p-schedule" class="panel card">
-<h2>Movimiento automático</h2><p class="muted">Define cuándo puede detectar movimiento y tomar fotos.</p>
-<div class="switchrow"><div><b>Habilitado</b><div class="muted">Fuera del horario no tomará fotos por movimiento.</div></div><input id="enabled" type="checkbox" style="width:24px;height:24px"></div>
-<div class="row"><div class="field"><label>Desde</label><input id="from" type="time" value="08:00"></div><div class="field"><label>Hasta</label><input id="to" type="time" value="18:00"></div></div>
-<div class="field"><label>Días activos</label><div class="days">
-<label class="day"><input class="dow" type="checkbox" value="1"> Lun</label><label class="day"><input class="dow" type="checkbox" value="2"> Mar</label><label class="day"><input class="dow" type="checkbox" value="3"> Mié</label><label class="day"><input class="dow" type="checkbox" value="4"> Jue</label><label class="day"><input class="dow" type="checkbox" value="5"> Vie</label><label class="day"><input class="dow" type="checkbox" value="6"> Sáb</label><label class="day"><input class="dow" type="checkbox" value="0"> Dom</label>
-</div></div>
-<div id="schedstate" class="schedstate">Sin configuración.</div>
-<button id="saveSchedule" class="btn green" style="margin-top:10px">Guardar programación</button><div id="schedmsg" class="msg"></div>
-</div>
-</section>
-</div>
+      <label class="recordar">
+        <input id="recordar" type="checkbox" checked>
+        Recordar PIN
+      </label>
 
-<script>
-const URL='https://ujfdsabypflseijatxba.supabase.co';
-const KEY='sb_publishable_CiZo8xFKkaT7mdRrQUYxuQ_48F6Vx3w';
-const BUCKET='camara-fotos', PAGE=20;
-const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-let pinNow='',lastPath='',timer=null,offset=0,total=0,busy=false;
-function connected(v){$('#dot').classList.toggle('ok',v);$('#conn').textContent=v?'Conectado':'Sin conexión'}
-function fmt(v){if(!v)return '--';return new Intl.DateTimeFormat('es-VE',{dateStyle:'short',timeStyle:'medium',timeZone:'America/Caracas'}).format(new Date(v))}
-function err(e){return String(e?.message||e||'Error')}
-async function signed(path){const {data,error}=await db.storage.from(BUCKET).createSignedUrl(path,3600);if(error)throw error;return data.signedUrl}
-async function showPhoto(path,dt,force=false){if(!path)return;if(!force&&path===lastPath)return;lastPath=path;$('#photo').src=(await signed(path))+'&v='+Date.now();$('#photo').classList.remove('hide');$('#nophoto').classList.add('hide');$('#date').textContent=fmt(dt)}
-async function status(force=false){if(!pinNow||busy)return;busy=true;try{const {data,error}=await db.rpc('camara_estado',{p_pin:pinNow});if(error)throw error;connected(true);const s=data?.solicitud||{};$('#state').textContent=s.estado||'Esperando';$('#take').disabled=['pendiente','capturando'].includes(s.estado);if(data?.ultima_foto_path)await showPhoto(data.ultima_foto_path,data.ultima_foto_fecha,force)}catch(e){connected(false);$('#cammsg').textContent=err(e)}finally{busy=false}}
-async function enter(){const p=$('#pin').value.trim();if(!p)return;try{const {data,error}=await db.rpc('camara_estado',{p_pin:p});if(error)throw error;pinNow=p;if($('#remember').checked)localStorage.setItem('cam_pin',p);$('#login').classList.add('hide');$('#app').classList.remove('hide');connected(true);if(data?.ultima_foto_path)await showPhoto(data.ultima_foto_path,data.ultima_foto_fecha,true);clearInterval(timer);timer=setInterval(()=>status(),2000)}catch(e){$('#loginmsg').textContent=err(e)}}
-async function take(){$('#take').disabled=true;const {error}=await db.rpc('camara_solicitar_foto',{p_pin:pinNow});if(error){$('#cammsg').textContent=err(error);$('#take').disabled=false}}
-function logout(){clearInterval(timer);localStorage.removeItem('cam_pin');location.reload()}
-function tab(n){$$('.tab').forEach(x=>x.classList.toggle('on',x.dataset.tab===n));$$('.panel').forEach(x=>x.classList.toggle('on',x.id==='p-'+n));if(n==='history')history(true);if(n==='schedule')loadSchedule()}
-async function history(reset=true){if(reset){offset=0;$('#shots').innerHTML=''};$('#histmsg').textContent='Cargando...';try{const {data,error}=await db.rpc('camara_historial',{p_pin:pinNow,p_limite:PAGE,p_offset:offset});if(error)throw error;const items=data.items||[];total=data.total||0;for(const x of items){const u=await signed(x.foto_path);const c=document.createElement('div');c.className='shot';c.innerHTML=`<img src="${u}"><div class="info">${fmt(x.fecha)}<br>#${x.id} · ${x.origen||'captura'}<div class="actions"><button class="btn dark see">Ver</button><button class="btn red del">Borrar</button></div></div>`;c.querySelector('.see').onclick=async()=>{await showPhoto(x.foto_path,x.fecha,true);tab('last')};c.querySelector('.del').onclick=()=>delShot(x.id,x.foto_path,c);$('#shots').appendChild(c)}offset+=items.length;$('#count').textContent=`${total} foto${total===1?'':'s'}`;$('#more').classList.toggle('hide',offset>=total);$('#histmsg').textContent=items.length?'':'No hay fotografías.'}catch(e){$('#histmsg').textContent=err(e)}}
-async function delShot(id,path,node){if(!confirm('¿Borrar esta foto definitivamente?'))return;try{let r=await db.storage.from(BUCKET).remove([path]);if(r.error)throw r.error;let q=await db.rpc('camara_eliminar_registro',{p_pin:pinNow,p_solicitud_id:id});if(q.error)throw q.error;node.remove();total=Math.max(0,total-1);$('#count').textContent=`${total} fotos`;if(path===lastPath){lastPath='';$('#photo').classList.add('hide');$('#nophoto').classList.remove('hide')}await status(true)}catch(e){alert(err(e))}}
-function renderSchedule(d){const names={0:'Dom',1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie',6:'Sáb'};$('#schedstate').innerHTML=`<b>${d.activo?'ACTIVO':'DESACTIVADO'}</b><br>${(d.dias||[]).map(x=>names[x]).join(', ')}<br>${String(d.hora_inicio).slice(0,5)} → ${String(d.hora_fin).slice(0,5)}<br>Ahora: <b>${d.permitido_ahora?'PERMITIDO':'FUERA DE HORARIO'}</b>`}
-async function loadSchedule(){try{const {data,error}=await db.rpc('camara_programacion_obtener',{p_pin:pinNow});if(error)throw error;$('#enabled').checked=data.activo;$('#from').value=String(data.hora_inicio).slice(0,5);$('#to').value=String(data.hora_fin).slice(0,5);$$('.dow').forEach(x=>x.checked=(data.dias||[]).includes(Number(x.value)));renderSchedule(data)}catch(e){$('#schedmsg').textContent=err(e)}}
-async function saveSchedule(){const dias=$$('.dow:checked').map(x=>Number(x.value));if(!dias.length){$('#schedmsg').textContent='Selecciona al menos un día.';return}try{const {data,error}=await db.rpc('camara_programacion_guardar',{p_pin:pinNow,p_activo:$('#enabled').checked,p_hora_inicio:$('#from').value,p_hora_fin:$('#to').value,p_dias:dias});if(error)throw error;renderSchedule(data);$('#schedmsg').textContent='Guardado.'}catch(e){$('#schedmsg').textContent=err(e)}}
-$$('.tab').forEach(x=>x.onclick=()=>tab(x.dataset.tab));$('#enter').onclick=enter;$('#take').onclick=take;$('#refresh').onclick=()=>status(true);$('#logout').onclick=logout;$('#reloadHistory').onclick=()=>history(true);$('#more').onclick=()=>history(false);$('#saveSchedule').onclick=saveSchedule;$('#pin').onkeydown=e=>{if(e.key==='Enter')enter()};connected(navigator.onLine);const saved=localStorage.getItem('cam_pin');if(saved){$('#pin').value=saved;enter()}
-</script>
+      <button id="btnEntrar" class="btn btn-principal">Entrar</button>
+      <div id="mensajeAcceso" class="mensaje"></div>
+    </section>
+
+    <section id="pantallaCamara" class="oculto">
+
+      <div class="tabs">
+        <button class="tab activo" data-tab="ultima">Última</button>
+        <button class="tab" data-tab="historial">Historial</button>
+        <button class="tab" data-tab="programacion">Programación</button>
+      </div>
+
+      <section id="panel-ultima" class="panel activo tarjeta">
+        <button id="btnTomar" class="btn btn-principal">Tomar foto</button>
+
+        <div class="visor">
+          <img id="foto" class="oculto" alt="Última fotografía">
+          <div id="sinFoto" class="sin-foto">Sin fotografía</div>
+        </div>
+
+        <div class="estado-fila">
+          <span id="estado" class="estado">Esperando</span>
+          <span id="fecha">--</span>
+        </div>
+
+        <div id="mensajeCamara" class="mensaje"></div>
+
+        <div class="acciones">
+          <button id="btnActualizar" class="btn btn-secundario">Actualizar</button>
+          <button id="btnSalir" class="btn btn-secundario">Salir</button>
+        </div>
+      </section>
+
+      <section id="panel-historial" class="panel tarjeta">
+        <div class="historial-cab">
+          <div>
+            <h2>Historial</h2>
+            <div id="contadorHistorial" class="contador">0 fotos</div>
+          </div>
+
+          <button id="btnRecargarHistorial" class="btn btn-secundario" style="width:auto;min-height:38px">
+            Actualizar
+          </button>
+        </div>
+
+        <div id="gridFotos" class="grid-fotos"></div>
+        <div id="mensajeHistorial" class="mensaje"></div>
+
+        <button id="btnMas" class="btn btn-secundario oculto" style="margin-top:10px">
+          Ver más
+        </button>
+      </section>
+
+      <section id="panel-programacion" class="panel tarjeta">
+        <div class="programa">
+          <div>
+            <h2>Movimiento automático</h2>
+            <div class="subtitulo">
+              Define cuándo puede detectar movimiento y tomar fotos.
+            </div>
+          </div>
+
+          <div class="switchfila">
+            <div>
+              <strong>Habilitado</strong>
+              <div class="subtitulo">Fuera del horario no tomará fotos por movimiento.</div>
+            </div>
+
+            <input id="progActivo" type="checkbox">
+          </div>
+
+          <div class="horas">
+            <div class="campo" style="margin:0">
+              <label for="horaInicio">Desde</label>
+              <input id="horaInicio" type="time" value="08:00">
+            </div>
+
+            <div class="campo" style="margin:0">
+              <label for="horaFin">Hasta</label>
+              <input id="horaFin" type="time" value="18:00">
+            </div>
+          </div>
+
+          <div>
+            <label>Días activos</label>
+
+            <div class="dias">
+              <label class="dia"><input class="diaCheck" type="checkbox" value="1"> Lun</label>
+              <label class="dia"><input class="diaCheck" type="checkbox" value="2"> Mar</label>
+              <label class="dia"><input class="diaCheck" type="checkbox" value="3"> Mié</label>
+              <label class="dia"><input class="diaCheck" type="checkbox" value="4"> Jue</label>
+              <label class="dia"><input class="diaCheck" type="checkbox" value="5"> Vie</label>
+              <label class="dia"><input class="diaCheck" type="checkbox" value="6"> Sáb</label>
+              <label class="dia"><input class="diaCheck" type="checkbox" value="0"> Dom</label>
+            </div>
+          </div>
+
+          <div id="estadoProgramacion" class="programa-estado">
+            Sin configuración cargada.
+          </div>
+
+          <button id="btnGuardarProgramacion" class="btn btn-principal">
+            Guardar programación
+          </button>
+
+          <div id="mensajeProgramacion" class="mensaje"></div>
+        </div>
+      </section>
+
+    </section>
+
+    <div class="pie">La cámara debe permanecer encendida y conectada a Internet.</div>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://ujfdsabypflseijatxba.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_CiZo8xFKkaT7mdRrQUYxuQ_48F6Vx3w";
+    const BUCKET = "camara-fotos";
+    const PAGE_SIZE = 20;
+
+    const db = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
+      }
+    );
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => [...document.querySelectorAll(selector)];
+
+    let pinActual = "";
+    let rutaActual = "";
+    let temporizador = null;
+    let actualizando = false;
+
+    let historialOffset = 0;
+    let historialTotal = 0;
+
+    function marcarConexion(activa) {
+      $("#puntoConexion").classList.toggle("activo", activa);
+      $("#textoConexion").textContent = activa ? "Conectado" : "Sin conexión";
+    }
+
+    function textoError(error) {
+      return String(error?.message || error || "Error desconocido");
+    }
+
+    function formatearFecha(valor) {
+      if (!valor) return "--";
+
+      try {
+        return new Intl.DateTimeFormat("es-VE", {
+          dateStyle: "short",
+          timeStyle: "medium",
+          timeZone: "America/Caracas"
+        }).format(new Date(valor));
+      } catch {
+        return new Date(valor).toLocaleString();
+      }
+    }
+
+    async function obtenerUrlTemporal(ruta) {
+      const { data, error } = await db.storage
+        .from(BUCKET)
+        .createSignedUrl(ruta, 3600);
+
+      if (error) throw error;
+
+      return data.signedUrl;
+    }
+
+    async function mostrarFoto(ruta, fecha, forzar = false) {
+      if (!ruta) return;
+
+      if (
+        !forzar &&
+        ruta === rutaActual &&
+        !$("#foto").classList.contains("oculto")
+      ) {
+        return;
+      }
+
+      const url = await obtenerUrlTemporal(ruta);
+
+      rutaActual = ruta;
+
+      $("#foto").src = url + "&v=" + Date.now();
+      $("#foto").classList.remove("oculto");
+      $("#sinFoto").classList.add("oculto");
+      $("#fecha").textContent = formatearFecha(fecha);
+    }
+
+    async function consultarEstado(forzar = false) {
+      if (!pinActual || actualizando) return;
+
+      actualizando = true;
+
+      try {
+        const { data, error } = await db.rpc("camara_estado", {
+          p_pin: pinActual
+        });
+
+        if (error) throw error;
+
+        marcarConexion(true);
+
+        const solicitud = data?.solicitud || {};
+        const estado = solicitud?.estado || "esperando";
+
+        $("#estado").textContent = estado;
+        $("#btnTomar").disabled =
+          estado === "pendiente" || estado === "capturando";
+
+        if (data?.ultima_foto_path) {
+          await mostrarFoto(
+            data.ultima_foto_path,
+            data.ultima_foto_fecha,
+            forzar
+          );
+        }
+
+        $("#mensajeCamara").textContent = "";
+      } catch (error) {
+        marcarConexion(false);
+        $("#mensajeCamara").textContent = textoError(error);
+      } finally {
+        actualizando = false;
+      }
+    }
+
+    async function entrar() {
+      const pin = $("#pin").value.trim();
+
+      if (!pin) {
+        $("#mensajeAcceso").textContent = "Coloca el PIN.";
+        return;
+      }
+
+      $("#btnEntrar").disabled = true;
+      $("#mensajeAcceso").textContent = "Conectando...";
+
+      try {
+        const { data, error } = await db.rpc("camara_estado", {
+          p_pin: pin
+        });
+
+        if (error) throw error;
+
+        pinActual = pin;
+
+        if ($("#recordar").checked) {
+          localStorage.setItem("tutto_camara_pin", pin);
+        } else {
+          localStorage.removeItem("tutto_camara_pin");
+        }
+
+        $("#pantallaAcceso").classList.add("oculto");
+        $("#pantallaCamara").classList.remove("oculto");
+
+        marcarConexion(true);
+        $("#mensajeAcceso").textContent = "";
+
+        if (data?.ultima_foto_path) {
+          await mostrarFoto(
+            data.ultima_foto_path,
+            data.ultima_foto_fecha,
+            true
+          );
+        }
+
+        iniciarRevision();
+
+      } catch (error) {
+        marcarConexion(false);
+        $("#mensajeAcceso").textContent = textoError(error);
+      } finally {
+        $("#btnEntrar").disabled = false;
+      }
+    }
+
+    async function tomarFoto() {
+      if (!pinActual) return;
+
+      $("#btnTomar").disabled = true;
+      $("#mensajeCamara").textContent = "Enviando solicitud...";
+
+      try {
+        const { data, error } = await db.rpc("camara_solicitar_foto", {
+          p_pin: pinActual
+        });
+
+        if (error) throw error;
+
+        $("#mensajeCamara").textContent =
+          "Solicitud #" + data + " enviada.";
+
+      } catch (error) {
+        $("#mensajeCamara").textContent = textoError(error);
+        $("#btnTomar").disabled = false;
+      }
+    }
+
+    function iniciarRevision() {
+      clearInterval(temporizador);
+
+      temporizador = setInterval(
+        () => consultarEstado(),
+        2000
+      );
+
+      consultarEstado(true);
+    }
+
+    function salir() {
+      clearInterval(temporizador);
+
+      localStorage.removeItem("tutto_camara_pin");
+
+      pinActual = "";
+      rutaActual = "";
+
+      $("#pantallaCamara").classList.add("oculto");
+      $("#pantallaAcceso").classList.remove("oculto");
+
+      $("#pin").value = "";
+
+      marcarConexion(navigator.onLine);
+    }
+
+    async function cargarHistorial(reset = true) {
+      if (reset) {
+        historialOffset = 0;
+        $("#gridFotos").innerHTML = "";
+      }
+
+      $("#mensajeHistorial").textContent = "Cargando...";
+
+      try {
+        const { data, error } = await db.rpc("camara_historial", {
+          p_pin: pinActual,
+          p_limite: PAGE_SIZE,
+          p_offset: historialOffset
+        });
+
+        if (error) throw error;
+
+        const items = data?.items || [];
+        historialTotal = data?.total || 0;
+
+        for (const item of items) {
+          const url = await obtenerUrlTemporal(item.foto_path);
+
+          const card = document.createElement("article");
+          card.className = "foto-card";
+
+          card.innerHTML = `
+            <img src="${url}" alt="Foto">
+
+            <div class="foto-info">
+              <div class="foto-fecha">
+                ${formatearFecha(item.fecha)}
+              </div>
+
+              <div>
+                #${item.id} · ${item.origen || "captura"}
+              </div>
+
+              <div class="foto-acciones">
+                <button class="btn btn-secundario verFoto">
+                  Ver
+                </button>
+
+                <button class="btn btn-peligro borrarFoto">
+                  Borrar
+                </button>
+              </div>
+            </div>
+          `;
+
+          card.querySelector(".verFoto").onclick = async () => {
+            await mostrarFoto(
+              item.foto_path,
+              item.fecha,
+              true
+            );
+
+            activarTab("ultima");
+          };
+
+          card.querySelector(".borrarFoto").onclick = async () => {
+            if (!confirm("¿Borrar esta fotografía definitivamente?")) {
+              return;
+            }
+
+            try {
+              const { error: storageError } = await db.storage
+                .from(BUCKET)
+                .remove([item.foto_path]);
+
+              if (storageError) throw storageError;
+
+              const { error } = await db.rpc(
+                "camara_eliminar_registro",
+                {
+                  p_pin: pinActual,
+                  p_solicitud_id: item.id
+                }
+              );
+
+              if (error) throw error;
+
+              card.remove();
+
+              historialTotal = Math.max(
+                0,
+                historialTotal - 1
+              );
+
+              $("#contadorHistorial").textContent =
+                historialTotal +
+                (historialTotal === 1 ? " foto" : " fotos");
+
+              if (item.foto_path === rutaActual) {
+                rutaActual = "";
+
+                $("#foto").classList.add("oculto");
+                $("#sinFoto").classList.remove("oculto");
+              }
+
+              await consultarEstado(true);
+
+            } catch (error) {
+              alert(
+                "No se pudo borrar: " +
+                textoError(error)
+              );
+            }
+          };
+
+          $("#gridFotos").appendChild(card);
+        }
+
+        historialOffset += items.length;
+
+        $("#contadorHistorial").textContent =
+          historialTotal +
+          (historialTotal === 1 ? " foto" : " fotos");
+
+        $("#btnMas").classList.toggle(
+          "oculto",
+          historialOffset >= historialTotal
+        );
+
+        $("#mensajeHistorial").textContent =
+          items.length ? "" : "No hay fotografías.";
+
+      } catch (error) {
+        $("#mensajeHistorial").textContent =
+          textoError(error);
+      }
+    }
+
+    function renderProgramacion(data) {
+      const nombres = {
+        0: "Dom",
+        1: "Lun",
+        2: "Mar",
+        3: "Mié",
+        4: "Jue",
+        5: "Vie",
+        6: "Sáb"
+      };
+
+      const dias = data?.dias || [];
+
+      $("#estadoProgramacion").innerHTML = `
+        <strong>
+          ${data?.activo ? "ACTIVO" : "DESACTIVADO"}
+        </strong>
+        <br>
+        ${dias.map(d => nombres[d]).join(", ") || "Sin días"}
+        <br>
+        ${String(data?.hora_inicio || "--:--").slice(0,5)}
+        →
+        ${String(data?.hora_fin || "--:--").slice(0,5)}
+        <br>
+        Ahora:
+        <strong>
+          ${data?.permitido_ahora ? "PERMITIDO" : "FUERA DE HORARIO"}
+        </strong>
+      `;
+    }
+
+    async function cargarProgramacion() {
+      $("#mensajeProgramacion").textContent = "Cargando...";
+
+      try {
+        const { data, error } = await db.rpc(
+          "camara_programacion_obtener",
+          {
+            p_pin: pinActual
+          }
+        );
+
+        if (error) throw error;
+
+        $("#progActivo").checked = !!data.activo;
+
+        $("#horaInicio").value =
+          String(data.hora_inicio || "08:00").slice(0,5);
+
+        $("#horaFin").value =
+          String(data.hora_fin || "18:00").slice(0,5);
+
+        const dias = data.dias || [];
+
+        $$(".diaCheck").forEach(
+          check => {
+            check.checked =
+              dias.includes(Number(check.value));
+          }
+        );
+
+        renderProgramacion(data);
+
+        $("#mensajeProgramacion").textContent = "";
+
+      } catch (error) {
+        $("#mensajeProgramacion").textContent =
+          textoError(error);
+      }
+    }
+
+    async function guardarProgramacion() {
+      const dias = $$(".diaCheck:checked")
+        .map(check => Number(check.value));
+
+      if (!dias.length) {
+        $("#mensajeProgramacion").textContent =
+          "Selecciona al menos un día.";
+
+        return;
+      }
+
+      $("#btnGuardarProgramacion").disabled = true;
+      $("#mensajeProgramacion").textContent = "Guardando...";
+
+      try {
+        const { data, error } = await db.rpc(
+          "camara_programacion_guardar",
+          {
+            p_pin: pinActual,
+            p_activo: $("#progActivo").checked,
+            p_hora_inicio: $("#horaInicio").value,
+            p_hora_fin: $("#horaFin").value,
+            p_dias: dias
+          }
+        );
+
+        if (error) throw error;
+
+        renderProgramacion(data);
+
+        $("#mensajeProgramacion").textContent =
+          "Programación guardada.";
+
+      } catch (error) {
+        $("#mensajeProgramacion").textContent =
+          textoError(error);
+      } finally {
+        $("#btnGuardarProgramacion").disabled = false;
+      }
+    }
+
+    function activarTab(nombre) {
+      $$(".tab").forEach(
+        boton => {
+          boton.classList.toggle(
+            "activo",
+            boton.dataset.tab === nombre
+          );
+        }
+      );
+
+      $$(".panel").forEach(
+        panel => {
+          panel.classList.toggle(
+            "activo",
+            panel.id === "panel-" + nombre
+          );
+        }
+      );
+
+      if (nombre === "historial") {
+        cargarHistorial(true);
+      }
+
+      if (nombre === "programacion") {
+        cargarProgramacion();
+      }
+    }
+
+    $$(".tab").forEach(
+      boton => {
+        boton.onclick = () =>
+          activarTab(boton.dataset.tab);
+      }
+    );
+
+    $("#btnEntrar").onclick = entrar;
+    $("#btnTomar").onclick = tomarFoto;
+    $("#btnActualizar").onclick = () =>
+      consultarEstado(true);
+
+    $("#btnSalir").onclick = salir;
+
+    $("#btnRecargarHistorial").onclick = () =>
+      cargarHistorial(true);
+
+    $("#btnMas").onclick = () =>
+      cargarHistorial(false);
+
+    $("#btnGuardarProgramacion").onclick =
+      guardarProgramacion;
+
+    $("#pin").addEventListener(
+      "keydown",
+      event => {
+        if (event.key === "Enter") {
+          entrar();
+        }
+      }
+    );
+
+    window.addEventListener(
+      "online",
+      () => {
+        marcarConexion(true);
+        consultarEstado();
+      }
+    );
+
+    window.addEventListener(
+      "offline",
+      () => marcarConexion(false)
+    );
+
+    marcarConexion(navigator.onLine);
+
+    const pinGuardado =
+      localStorage.getItem("tutto_camara_pin");
+
+    if (pinGuardado) {
+      $("#pin").value = pinGuardado;
+      entrar();
+    }
+  </script>
 </body>
 </html>
