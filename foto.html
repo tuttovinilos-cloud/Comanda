@@ -359,21 +359,72 @@ input:focus,select:focus{border-color:rgba(41,210,125,.58);box-shadow:0 0 0 3px 
   </section>
 
   <section class="card panel" style="margin-top:10px">
-    <div class="panel-head"><div><h3>Calibración del detector</h3><div class="muted">Test en tiempo real para reducir falsos positivos.</div></div></div>
-    <div class="settings-grid" style="margin-top:10px">
-      <div class="setting-card">
-        <h4>Modo prueba</h4><p>Detecta movimiento sin tomar fotos automáticas.</p>
-        <div class="switchline"><span id="testModeLabel">Desactivado</span><input id="testMode" type="checkbox"></div>
+    <div class="panel-head">
+      <div>
+        <h3>Calibración del detector</h3>
+        <div class="muted">Ajusta el umbral mientras observas la cámara y el nivel de movimiento en tiempo real.</div>
       </div>
-      <div class="setting-card">
-        <h4>Calibración automática</h4><p>Deja la escena quieta 8 segundos y calculamos un umbral recomendado.</p>
-        <button id="calibrate8" class="btn secondary" style="width:100%">◎ Calibrar 8 s</button>
+      <button id="calibrationLiveToggle" class="btn primary small">▶ Ver en vivo</button>
+    </div>
+
+    <div class="zone-editor" style="margin-top:10px">
+      <div class="zone-stage" style="aspect-ratio:16/10">
+        <img id="calibrationLiveImage" class="hide" alt="Vista en vivo de calibración">
+        <div id="calibrationLiveEmpty" class="video-empty">
+          <div>
+            <div style="font-size:30px">◉</div>
+            <strong>Vista detenida</strong>
+            <div class="muted" style="margin-top:5px">Pulsa “Ver en vivo”.</div>
+          </div>
+        </div>
+        <div class="hud-top">
+          <div id="calibrationMotionBadge" class="hud-badge hud-green">SIN MOVIMIENTO</div>
+          <div id="calibrationLevelBadge" class="hud-badge">Nivel 0 / Umbral 45</div>
+        </div>
       </div>
-      <div class="setting-card">
-        <h4>Vista en vivo</h4><p>Frecuencia de refresco del preview remoto.</p>
-        <select id="liveInterval"><option value="700">0.7 s · Fluida</option><option value="1000" selected>1 s · Recomendada</option><option value="1500">1.5 s</option><option value="2000">2 s · Ahorro</option></select>
+
+      <div>
+        <div class="setting-card">
+          <h4>Umbral de disparo</h4>
+          <p>Mueve el control mientras observas la escena. Un valor más alto reduce falsas alarmas.</p>
+          <div class="range-row">
+            <input id="thresholdSlider" type="range" min="10" max="80" step="1" value="45">
+            <div id="thresholdSliderValue" class="valuebox">45</div>
+          </div>
+          <div class="live-meter" style="margin-top:12px">
+            <div id="calibrationMeterFill" class="live-meter-fill"></div>
+            <div id="calibrationThresholdLine" class="threshold-line" style="left:45%"></div>
+          </div>
+          <button id="saveThreshold" class="btn primary" style="width:100%;margin-top:10px">Guardar umbral</button>
+          <div id="thresholdMsg" class="muted" style="margin-top:7px"></div>
+        </div>
+
+        <div class="settings-grid" style="grid-template-columns:1fr;margin-top:9px">
+          <div class="setting-card">
+            <h4>Modo prueba</h4>
+            <p>Detecta movimiento sin tomar fotos automáticas.</p>
+            <div class="switchline"><span id="testModeLabel">Desactivado</span><input id="testMode" type="checkbox"></div>
+          </div>
+          <div class="setting-card">
+            <h4>Calibración automática</h4>
+            <p>Deja la escena quieta 8 segundos y calculamos un umbral recomendado.</p>
+            <button id="calibrate8" class="btn secondary" style="width:100%">◎ Calibrar 8 s</button>
+          </div>
+          <div class="setting-card">
+            <h4>Vista en vivo</h4>
+            <p>Frecuencia de refresco del preview remoto.</p>
+            <select id="liveInterval">
+              <option value="700">0.7 s · Fluida</option>
+              <option value="1000" selected>1 s · Recomendada</option>
+              <option value="1500">1.5 s</option>
+              <option value="2000">2 s · Ahorro</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
+
+    <canvas id="calibrationGraph" class="spark" width="900" height="118" style="margin-top:10px"></canvas>
     <div id="calibrationMsg" class="muted" style="margin-top:9px"></div>
   </section>
 
@@ -482,6 +533,10 @@ let profiles=[],matrixCells=new Array(168).fill(null),matrixMouse=false,matrixEr
 let zones=[];
 let zoneDrawing=false,zoneStart=null;
 let auditCache=[];
+let currentDashboard={};
+let calibrationLiveOn=false;
+let calibrationLiveTimer=null;
+let calibrationPreviewUrl='';
 
 function toast(text){const t=$('#toast');t.textContent=text;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
 function E(e){return String(e?.message||e||'Error desconocido')}
@@ -509,6 +564,7 @@ async function updateDashboard(){
   }catch(e){}
 }
 function renderDashboard(d){
+  currentDashboard=d||{};
   $('#topOnlineDot').className='dot '+(d.online?'green':'red');$('#topOnlineText').textContent=d.online?'ESP32 online':'ESP32 offline';
   $('#topArmedDot').className='dot '+(d.armado?'green':'');$('#topArmedText').textContent=d.armado?'Armado':'Desarmado';
   $('#topProfileDot').className='dot';if(d.perfil_color)$('#topProfileDot').style.background=d.perfil_color;$('#topProfileText').textContent=d.perfil||'Sin perfil';
@@ -519,7 +575,16 @@ function renderDashboard(d){
   const level=Number(d.nivel||0),thr=Number(d.umbral||45);$('#meterFill').style.width=Math.min(100,level)+'%';$('#meterThreshold').style.left=Math.min(100,thr)+'%';
   $('#motionDetail').textContent=`Nivel ${level} · Umbral ${thr}`;$('#motionLamp').className='status-lamp '+(d.movimiento?'red':level>=thr*.7?'amber':'green');$('#motionState').textContent=d.movimiento?'Movimiento confirmado':level>=thr*.7?'Cambio visual':'Escena estable';
   $('#quickStatus').textContent=d.modo_prueba?'Modo prueba activo: no se tomarán fotos automáticas.':(d.armado?'Sistema armado mediante perfil '+(d.perfil||'')+'.':'Actualmente desarmado.');
-  graphValues.push({v:level,t:thr});if(graphValues.length>90)graphValues.shift();drawGraph();
+  graphValues.push({v:level,t:thr});if(graphValues.length>90)graphValues.shift();drawGraph();drawCalibrationGraph();
+  if(document.activeElement!==$('#thresholdSlider')){
+    $('#thresholdSlider').value=thr;
+    $('#thresholdSliderValue').textContent=thr;
+    $('#calibrationThresholdLine').style.left=Math.min(100,thr)+'%';
+  }
+  $('#calibrationMeterFill').style.width=Math.min(100,level)+'%';
+  $('#calibrationLevelBadge').textContent=`Nivel ${level} / Umbral ${thr}`;
+  $('#calibrationMotionBadge').textContent=d.movimiento?'● MOVIMIENTO':'● SIN MOVIMIENTO';
+  $('#calibrationMotionBadge').className='hud-badge '+(d.movimiento?'hud-red':'hud-green');
 }
 function drawGraph(){
   const c=$('#motionGraph'),ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);
@@ -529,10 +594,57 @@ function drawGraph(){
   const thr=graphValues[graphValues.length-1].t||45;ctx.strokeStyle='rgba(255,255,255,.75)';ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(0,h-(thr/100)*h);ctx.lineTo(w,h-(thr/100)*h);ctx.stroke();ctx.setLineDash([]);
 }
 
+function drawCalibrationGraph(){
+  const c=$('#calibrationGraph'); if(!c)return;
+  const ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
+  for(let y=0;y<=4;y++){ctx.beginPath();ctx.moveTo(0,y*h/4);ctx.lineTo(w,y*h/4);ctx.stroke()}
+  if(graphValues.length<2)return;
+  ctx.strokeStyle='#37c8ff';ctx.lineWidth=2;ctx.beginPath();
+  graphValues.forEach((x,i)=>{const px=i*(w/Math.max(1,graphValues.length-1)),py=h-(x.v/100)*h;i?ctx.lineTo(px,py):ctx.moveTo(px,py)});ctx.stroke();
+  const thr=Number($('#thresholdSlider')?.value||45);
+  ctx.strokeStyle='rgba(255,255,255,.85)';ctx.setLineDash([7,5]);ctx.beginPath();ctx.moveTo(0,h-(thr/100)*h);ctx.lineTo(w,h-(thr/100)*h);ctx.stroke();ctx.setLineDash([]);
+}
+
 async function snapshot(){
   try{const {data,error}=await db.rpc('camara_solicitar_foto',{p_pin:pinNow});if(error)throw error;toast('Instantánea solicitada #'+data)}catch(e){toast(E(e))}
 }
 async function toggleLive(){liveOn?await stopLive():await startLive()}
+
+async function startCalibrationLive(){
+  try{
+    const interval=Number($('#liveInterval')?.value||1000);
+    const {error}=await db.rpc('tuttocam_live_activar',{p_pin:pinNow,p_segundos:90,p_intervalo_ms:interval});
+    if(error)throw error;
+    calibrationLiveOn=true;
+    $('#calibrationLiveToggle').textContent='■ Detener';
+    $('#calibrationLiveToggle').className='btn danger small';
+    calibrationPreviewUrl='';
+    clearInterval(calibrationLiveTimer);
+    calibrationLiveTimer=setInterval(refreshCalibrationPreview,Math.max(650,interval));
+    setTimeout(refreshCalibrationPreview,700);
+  }catch(e){toast(E(e))}
+}
+async function stopCalibrationLive(){
+  calibrationLiveOn=false;
+  clearInterval(calibrationLiveTimer);
+  calibrationLiveTimer=null;
+  $('#calibrationLiveToggle').textContent='▶ Ver en vivo';
+  $('#calibrationLiveToggle').className='btn primary small';
+  if(!liveOn){
+    try{await db.rpc('tuttocam_live_detener',{p_pin:pinNow})}catch(e){}
+  }
+}
+async function toggleCalibrationLive(){calibrationLiveOn?await stopCalibrationLive():await startCalibrationLive()}
+async function refreshCalibrationPreview(){
+  if(!calibrationLiveOn)return;
+  try{
+    if(!calibrationPreviewUrl)calibrationPreviewUrl=await signed(PREVIEW_PATH,600);
+    const img=$('#calibrationLiveImage');
+    img.onload=()=>{img.classList.remove('hide');$('#calibrationLiveEmpty').classList.add('hide')};
+    img.src=calibrationPreviewUrl+(calibrationPreviewUrl.includes('?')?'&':'?')+'v='+Date.now();
+  }catch(e){calibrationPreviewUrl=''}
+}
 async function startLive(){
   try{
     const interval=Number($('#liveInterval')?.value||1000);
@@ -677,6 +789,44 @@ function buildMask(){
 }
 async function saveZones(){try{const {error}=await db.rpc('tuttocam_zonas_guardar',{p_pin:pinNow,p_zonas:zones,p_mascara:buildMask()});if(error)throw error;toast('Zonas guardadas')}catch(e){$('#zoneMsg').textContent=E(e)}}
 
+
+async function saveCurrentThreshold(){
+  const value=Number($('#thresholdSlider').value);
+  $('#thresholdMsg').textContent='Guardando...';
+  try{
+    const {data:profileData,error:profileError}=await db.rpc('tuttocam_perfiles_listar',{p_pin:pinNow});
+    if(profileError)throw profileError;
+
+    const activeName=currentDashboard?.perfil||null;
+    const active=(profileData||[]).find(p=>p.nombre===activeName);
+
+    if(active){
+      const {error}=await db.rpc('tuttocam_perfil_guardar',{
+        p_pin:pinNow,
+        p_id:Number(active.id),
+        p_nombre:active.nombre,
+        p_color:active.color,
+        p_armado:active.armado,
+        p_umbral:value,
+        p_consecutivas:active.consecutivas,
+        p_cooldown_ms:active.cooldown_ms,
+        p_capturas:active.capturas,
+        p_notificar:active.notificar
+      });
+      if(error)throw error;
+      $('#thresholdMsg').textContent=`Umbral ${value} guardado en el perfil "${active.nombre}".`;
+      toast('Umbral actualizado');
+    }else{
+      $('#thresholdMsg').textContent='No hay un perfil activo en esta hora. Asigna un perfil en la matriz semanal para guardar el umbral.';
+      return;
+    }
+
+    await updateDashboard();
+  }catch(e){
+    $('#thresholdMsg').textContent=E(e);
+  }
+}
+
 async function loadMaintenance(){
   try{const {data,error}=await db.rpc('tuttocam_mantenimiento_estado',{p_pin:pinNow});if(error)throw error;$('#healthOnline').textContent=data.online?'ONLINE':'OFFLINE';$('#healthIp').textContent=data.ip||'--';$('#healthRssi').textContent=data.rssi!=null?data.rssi+' dBm':'--';$('#healthUptime').textContent=formatUptime(data.uptime_ms);$('#healthHeap').textContent=bytes(data.heap_libre);$('#healthPsram').textContent=bytes(data.psram_libre);$('#healthFirmware').textContent=data.firmware||'--';$('#healthPhotos').textContent=data.total_fotos||0}catch(e){toast(E(e))}
 }
@@ -691,7 +841,8 @@ async function calibrate8(){
     const oldTest=$('#testMode').checked;$('#testMode').checked=true;$('#testModeLabel').textContent='Activado';
     for(let i=0;i<10;i++){await new Promise(r=>setTimeout(r,800));const {data,error}=await db.rpc('tuttocam_dashboard',{p_pin:pinNow});if(error)throw error;samples.push(Number(data.nivel||0));$('#calibrationMsg').textContent=`Calibrando ${i+1}/10 · nivel ${samples.at(-1)}`}
     const avg=Math.round(samples.reduce((a,b)=>a+b,0)/samples.length),max=Math.max(...samples),thr=Math.max(18,Math.min(80,Math.max(max+10,avg+15)));
-    $('#calibrationMsg').textContent=`Resultado: ruido promedio ${avg}, máximo ${max}. Umbral recomendado: ${thr}. Ajusta el perfil activo con ese valor.`;
+    $('#thresholdSlider').value=thr;$('#thresholdSliderValue').textContent=thr;$('#calibrationThresholdLine').style.left=Math.min(100,thr)+'%';drawCalibrationGraph();
+    $('#calibrationMsg').textContent=`Resultado: ruido promedio ${avg}, máximo ${max}. Umbral recomendado: ${thr}. Pulsa "Guardar umbral" para aplicarlo al perfil activo.`;
     $('#testMode').checked=oldTest;$('#testModeLabel').textContent=oldTest?'Activado':'Desactivado';toast('Calibración completada')
   }catch(e){$('#calibrationMsg').textContent=E(e)}finally{b.disabled=false}
 }
@@ -705,6 +856,9 @@ $('#btnGoCalibration').onclick=()=>setPage('maintenance');$('#btnQuickTest').onc
 $('#reloadEvents').onclick=()=>loadEvents(true);$('#moreEvents').onclick=()=>loadEvents(false);
 $('#newProfile').onclick=()=>openProfile();$('#saveProfile').onclick=saveProfile;$('#saveMatrix').onclick=saveMatrix;$('#matrixErase').onclick=()=>{matrixErase=!matrixErase;$('#matrixErase').classList.toggle('danger',matrixErase)};$('#matrixClear').onclick=()=>{if(confirm('¿Limpiar toda la matriz semanal?')){matrixCells=new Array(168).fill(null);renderMatrix()}};
 $('#newRule').onclick=()=>openRule();$('#saveRule').onclick=saveRule;$('#saveZones').onclick=saveZones;$('#clearZones').onclick=()=>{if(confirm('¿Borrar todas las zonas?')){zones=[];renderZones()}};
+$('#calibrationLiveToggle').onclick=toggleCalibrationLive;
+$('#thresholdSlider').oninput=()=>{const v=Number($('#thresholdSlider').value);$('#thresholdSliderValue').textContent=v;$('#calibrationThresholdLine').style.left=Math.min(100,v)+'%';drawCalibrationGraph()};
+$('#saveThreshold').onclick=saveCurrentThreshold;
 $('#reloadMaintenance').onclick=()=>{loadMaintenance();loadAudit()};$('#saveCameraSettings').onclick=saveCameraSettings;$('#reloadAudit').onclick=loadAudit;$('#restartDevice').onclick=restartDevice;$('#calibrate8').onclick=calibrate8;$('#testMode').onchange=()=>$('#testModeLabel').textContent=$('#testMode').checked?'Activado':'Desactivado';
 $('#logout').onclick=()=>{localStorage.removeItem('tuttocam_pin');location.reload()};
 
