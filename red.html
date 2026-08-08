@@ -5,737 +5,271 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0d12">
 <title>RED · Wi‑Fi Manager</title>
-
 <style>
 :root{
-  --bg:#0b0d12;
-  --panel:#121621;
-  --panel2:#181d2a;
-  --line:#262d3d;
-  --text:#f5f7fb;
-  --muted:#8e98aa;
-  --accent:#4f8cff;
-  --good:#35c98f;
-  --warn:#ffb84d;
-  --bad:#ff6262;
+  --bg:#0b0d12;--panel:#121621;--panel2:#181d2a;--line:#262d3d;
+  --text:#f5f7fb;--muted:#8e98aa;--accent:#4f8cff;
+  --good:#35c98f;--warn:#ffb84d;--bad:#ff6262;
 }
-
 *{box-sizing:border-box}
-
-body{
-  margin:0;
-  min-height:100vh;
-  font-family:Arial,Helvetica,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-}
-
-button,input,select{
-  font:inherit;
-}
-
-button{
-  cursor:pointer;
-}
-
-.shell{
-  max-width:1050px;
-  margin:auto;
-  padding:18px 14px 40px;
-}
-
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  margin-bottom:18px;
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-
-.logo{
-  width:42px;
-  height:42px;
-  border-radius:13px;
-  display:grid;
-  place-items:center;
-  background:var(--accent);
-  font-weight:bold;
-}
-
-.brand h1{
-  margin:0;
-  font-size:19px;
-}
-
-.brand p{
-  margin:3px 0 0;
-  font-size:12px;
-  color:var(--muted);
-}
-
-.live{
-  display:flex;
-  align-items:center;
-  gap:7px;
-  padding:8px 10px;
-  border-radius:999px;
-  border:1px solid var(--line);
-  color:var(--muted);
-  font-size:12px;
-}
-
-.dot{
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:var(--good);
-}
-
-.stats{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin-bottom:14px;
-}
-
-.stat{
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:16px;
-  padding:14px;
-}
-
-.stat-label{
-  font-size:11px;
-  color:var(--muted);
-  text-transform:uppercase;
-}
-
-.stat-value{
-  font-size:23px;
-  font-weight:bold;
-  margin-top:7px;
-}
-
-.stat-sub{
-  font-size:11px;
-  color:var(--muted);
-  margin-top:3px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.main{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:14px;
-}
-
-.panel{
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:18px;
-  overflow:hidden;
-}
-
-.panel-head{
-  padding:15px 16px;
-  border-bottom:1px solid var(--line);
-}
-
-.panel-title{
-  font-size:14px;
-  font-weight:bold;
-}
-
-.panel-sub{
-  font-size:11px;
-  color:var(--muted);
-  margin-top:3px;
-}
-
-.toolbar{
-  display:grid;
-  grid-template-columns:1fr 150px auto;
-  gap:8px;
-  padding:12px 14px;
-  border-bottom:1px solid var(--line);
-}
-
-input,select{
-  width:100%;
-  border:1px solid var(--line);
-  background:#0e121b;
-  color:var(--text);
-  padding:11px 12px;
-  border-radius:11px;
-  outline:none;
-}
-
-input:focus,select:focus{
-  border-color:var(--accent);
-}
-
-.refresh{
-  width:46px;
-  border:1px solid var(--line);
-  background:#0e121b;
-  color:var(--text);
-  border-radius:10px;
-  font-size:18px;
-}
-
-.refresh.spin{
-  animation:spin .8s linear infinite;
-}
-
-@keyframes spin{
-  to{transform:rotate(360deg)}
-}
-
-.networks{
-  padding:8px;
-}
-
-.network{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 125px;
-  gap:14px;
-  align-items:center;
-  padding:13px 11px;
-  border-radius:13px;
-  border:1px solid transparent;
-}
-
-.network:hover{
-  background:var(--panel2);
-  border-color:var(--line);
-}
-
-.net-name{
-  font-size:14px;
-  font-weight:bold;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.net-info{
-  display:flex;
-  gap:7px;
-  flex-wrap:wrap;
-  margin-top:5px;
-  color:var(--muted);
-  font-size:10px;
-}
-
-.signal-row{
-  display:flex;
-  justify-content:space-between;
-  gap:6px;
-  font-size:10px;
-  color:var(--muted);
-  margin-bottom:6px;
-}
-
-.track{
-  height:8px;
-  background:#252b37;
-  border-radius:999px;
-  overflow:hidden;
-}
-
-.bar{
-  height:100%;
-  border-radius:999px;
-}
-
-.good{background:var(--good)}
-.mid{background:var(--warn)}
-.bad{background:var(--bad)}
-
-.empty{
-  padding:38px 15px;
-  text-align:center;
-  color:var(--muted);
-  font-size:13px;
-}
-
-.status{
-  padding:10px 14px;
-  border-top:1px solid var(--line);
-  color:var(--muted);
-  font-size:11px;
-}
-
-@media(max-width:650px){
-  .stats{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .toolbar{
-    grid-template-columns:1fr auto;
-  }
-
-  .toolbar select{
-    grid-column:1/2;
-  }
-
-  .network{
-    grid-template-columns:1fr;
-  }
-}
+body{margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit} button{cursor:pointer}
+.shell{max-width:1100px;margin:auto;padding:18px 14px 40px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent);font-weight:bold;font-size:18px}
+.brand h1{margin:0;font-size:19px}.brand p{margin:3px 0 0;font-size:12px;color:var(--muted)}
+.live{display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-size:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase}
+.stat-value{font-size:20px;font-weight:bold;margin-top:7px}
+.stat-sub{font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.layout{display:grid;grid-template-columns:340px 1fr;gap:14px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.panel-head{padding:15px 16px;border-bottom:1px solid var(--line)}
+.panel-title{font-size:14px;font-weight:bold}.panel-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.panel-body{padding:15px}.field{margin-bottom:13px}
+label{display:block;font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:bold;text-transform:uppercase}
+input,select{width:100%;border:1px solid var(--line);background:#0e121b;color:var(--text);padding:11px 12px;border-radius:11px;outline:none}
+input:focus,select:focus{border-color:var(--accent)}
+.btn{border:1px solid var(--line);background:#10141d;color:var(--text);padding:11px 12px;border-radius:11px;font-weight:bold}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.full{width:100%}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.selected{padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--panel2);margin-bottom:14px}
+.selected-name{font-size:14px;font-weight:bold;word-break:break-word}
+.selected-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{font-size:10px;color:var(--muted);border:1px solid var(--line);padding:4px 7px;border-radius:999px;background:#10141d}
+.statusbox{padding:10px 12px;border:1px solid var(--line);background:#0e121b;border-radius:11px;font-size:11px;color:var(--muted);line-height:1.5}
+.sep{height:1px;background:var(--line);margin:15px 0}
+.toolbar{display:grid;grid-template-columns:1fr 140px auto auto;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.iconbtn{min-width:44px;border:1px solid var(--line);background:#0e121b;color:var(--text);border-radius:10px;font-weight:bold}
+.iconbtn.active{background:var(--accent);border-color:var(--accent)}.iconbtn.spin{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.networks{padding:8px}
+.network{display:grid;grid-template-columns:minmax(0,1fr) 120px 110px;gap:12px;align-items:center;padding:13px 11px;border-radius:13px;border:1px solid transparent}
+.network:hover{background:var(--panel2);border-color:var(--line)}.network.active{background:rgba(79,140,255,.10);border-color:rgba(79,140,255,.45)}
+.net-name{font-size:14px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.net-info{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;color:var(--muted);font-size:10px}
+.signal-row{display:flex;justify-content:space-between;gap:6px;font-size:10px;color:var(--muted);margin-bottom:6px}
+.track{height:8px;background:#252b37;border-radius:999px;overflow:hidden}.bar{height:100%;border-radius:999px}
+.good{background:var(--good)}.mid{background:var(--warn)}.bad{background:var(--bad)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.smallbtn{border:1px solid var(--line);background:#10141d;color:var(--text);padding:8px 7px;border-radius:9px;font-size:10px;font-weight:bold}
+.empty{padding:38px 15px;text-align:center;color:var(--muted);font-size:13px}
+.footnote{padding:10px 14px;border-top:1px solid var(--line);font-size:10px;color:var(--muted);line-height:1.5}
+@media(max-width:820px){.stats{grid-template-columns:1fr 1fr}.layout{grid-template-columns:1fr}}
+@media(max-width:620px){.toolbar{grid-template-columns:1fr auto auto}.toolbar select{grid-column:1/2}.network{grid-template-columns:1fr}}
 </style>
 </head>
-
 <body>
-
 <div class="shell">
-
   <div class="topbar">
-    <div class="brand">
-      <div class="logo">R</div>
-
-      <div>
-        <h1>RED</h1>
-        <p>Monitor Wi‑Fi · ESP32‑S3</p>
-      </div>
-    </div>
-
-    <div class="live">
-      <span class="dot"></span>
-      <span id="liveText">Conectado</span>
-    </div>
+    <div class="brand"><div class="logo">R</div><div><h1>RED</h1><p>Monitor y administrador Wi‑Fi · ESP32‑S3</p></div></div>
+    <div class="live"><span class="dot"></span><span id="liveText">Conectado</span></div>
   </div>
 
   <section class="stats">
-
-    <div class="stat">
-      <div class="stat-label">Redes</div>
-      <div class="stat-value" id="count">0</div>
-      <div class="stat-sub">detectadas</div>
-    </div>
-
-    <div class="stat">
-      <div class="stat-label">Mejor señal</div>
-      <div class="stat-value" id="bestRssi">--</div>
-      <div class="stat-sub" id="bestName">Sin datos</div>
-    </div>
-
-    <div class="stat">
-      <div class="stat-label">Estado</div>
-      <div class="stat-value">AP</div>
-      <div class="stat-sub">RED-ESP32 · 192.168.4.1</div>
-    </div>
-
+    <div class="stat"><div class="stat-label">Redes</div><div class="stat-value" id="count">0</div><div class="stat-sub">detectadas</div></div>
+    <div class="stat"><div class="stat-label">Mejor señal</div><div class="stat-value" id="bestRssi">--</div><div class="stat-sub" id="bestName">Sin datos</div></div>
+    <div class="stat"><div class="stat-label">Wi‑Fi conectado</div><div class="stat-value" id="staState">NO</div><div class="stat-sub" id="staName">Sin conexión</div></div>
+    <div class="stat"><div class="stat-label">AP actual</div><div class="stat-value">AP</div><div class="stat-sub" id="apName">RED-ESP32</div></div>
   </section>
 
-  <section class="panel">
-
-    <div class="panel-head">
-      <div class="panel-title">Redes cercanas</div>
-      <div class="panel-sub">
-        Pulsa actualizar para realizar un nuevo escaneo
+  <div class="layout">
+    <aside class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Red seleccionada</div>
+        <div class="panel-sub">Conectar, copiar o crear un AP de prueba</div>
       </div>
-    </div>
 
-    <div class="toolbar">
+      <div class="panel-body">
+        <div id="selectedBox" class="selected"><div style="color:var(--muted);font-size:11px">Selecciona una red de la lista.</div></div>
 
-      <input
-        id="search"
-        placeholder="Buscar red..."
-        autocomplete="off"
-      >
+        <div class="field">
+          <label for="wifiPassword">Clave de la red seleccionada</label>
+          <input id="wifiPassword" type="password" placeholder="Solo para conectar el ESP32">
+        </div>
 
-      <select id="sort">
-        <option value="signal">Mejor señal</option>
-        <option value="name">Nombre A-Z</option>
-        <option value="channel">Canal</option>
-      </select>
+        <div class="btn-row">
+          <button id="connectBtn" class="btn primary" type="button">Conectar ESP32</button>
+          <button id="disconnectBtn" class="btn" type="button">Desconectar</button>
+        </div>
 
-      <button
-        id="refresh"
-        class="refresh"
-        type="button"
-        title="Actualizar"
-      >
-        ↻
-      </button>
+        <div class="sep"></div>
 
-    </div>
+        <div class="field">
+          <label for="mirrorName">Nombre del nuevo AP</label>
+          <input id="mirrorName" maxlength="31" placeholder="Ej. TUTTO INVITADOS">
+        </div>
 
-    <div id="networks" class="networks">
-      <div class="empty">
-        Cargando redes...
+        <div class="field">
+          <label for="targetUrl">Página destino</label>
+          <input id="targetUrl" value="https://www.instagram.com/" placeholder="https://...">
+        </div>
+
+        <div class="btn-row">
+          <button id="copySelectedBtn" class="btn" type="button">Copiar nombre</button>
+          <button id="mirrorBtn" class="btn primary" type="button">Crear AP</button>
+        </div>
+
+        <div style="margin-top:8px">
+          <button id="restoreBtn" class="btn full" type="button">Volver a RED-ESP32</button>
+        </div>
+
+        <div class="sep"></div>
+        <div id="statusBox" class="statusbox">Listo.</div>
       </div>
-    </div>
+    </aside>
 
-    <div id="status" class="status">
-      Mostrando el último escaneo guardado.
-    </div>
+    <section class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Redes cercanas</div>
+        <div class="panel-sub">Selecciona una red para trabajar con ella</div>
+      </div>
 
-  </section>
+      <div class="toolbar">
+        <input id="search" placeholder="Buscar red..." autocomplete="off">
+        <select id="sort">
+          <option value="signal">Mejor señal</option>
+          <option value="name">Nombre A-Z</option>
+          <option value="channel">Canal</option>
+        </select>
+        <button id="hideOthers" class="iconbtn" type="button" title="Ocultar otras redes">◎</button>
+        <button id="refresh" class="iconbtn" type="button" title="Actualizar">↻</button>
+      </div>
 
+      <div id="networks" class="networks"><div class="empty">Cargando redes...</div></div>
+
+      <div class="footnote">
+        “Ocultar otras redes” solo filtra esta pantalla. El ESP32 puede conectarse a una red existente y mantener su propio AP; esta versión no comparte Internet del Wi‑Fi conectado hacia los clientes del AP.
+      </div>
+    </section>
+  </div>
 </div>
 
 <script>
-
-const state = {
-  networks: [],
-  loading: false
-};
-
-const $ = id => document.getElementById(id);
+const state={networks:[],selected:null,hideOthers:false,loading:false};
+const $=id=>document.getElementById(id);
 
 function quality(rssi){
-
-  if(rssi >= -50)
-    return {label:'Excelente', cls:'good'};
-
-  if(rssi >= -65)
-    return {label:'Buena', cls:'good'};
-
-  if(rssi >= -75)
-    return {label:'Regular', cls:'mid'};
-
-  if(rssi >= -85)
-    return {label:'Débil', cls:'mid'};
-
-  return {label:'Muy débil', cls:'bad'};
+  if(rssi>=-50)return{label:'Excelente',cls:'good'};
+  if(rssi>=-65)return{label:'Buena',cls:'good'};
+  if(rssi>=-75)return{label:'Regular',cls:'mid'};
+  if(rssi>=-85)return{label:'Débil',cls:'mid'};
+  return{label:'Muy débil',cls:'bad'};
 }
+function percent(rssi){if(rssi>=-40)return 100;if(rssi<=-100)return 0;return Math.max(0,Math.min(100,Math.round(2*(rssi+100))))}
+function distanceEstimate(rssi){const tx=-45,n=3,d=Math.pow(10,(tx-rssi)/(10*n));return d<10?d.toFixed(1)+' m':Math.round(d)+' m'}
+function esc(s=''){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')}
+function setStatus(t){$('statusBox').textContent=t}
 
-function percent(rssi){
-
-  if(rssi >= -40) return 100;
-  if(rssi <= -100) return 0;
-
-  return Math.max(
-    0,
-    Math.min(
-      100,
-      Math.round(2 * (rssi + 100))
-    )
-  );
+function renderSelected(){
+  if(!state.selected){$('selectedBox').innerHTML='<div style="color:var(--muted);font-size:11px">Selecciona una red de la lista.</div>';return}
+  const q=quality(state.selected.rssi);
+  $('selectedBox').innerHTML=`<div class="selected-name">${esc(state.selected.ssid||'(red oculta)')}</div><div class="selected-meta"><span class="chip">${state.selected.rssi} dBm</span><span class="chip">${q.label}</span><span class="chip">≈ ${distanceEstimate(state.selected.rssi)}</span><span class="chip">Canal ${state.selected.channel??'--'}</span><span class="chip">${state.selected.secure?'Protegida':'Abierta'}</span></div>`;
 }
-
-function distanceEstimate(rssi){
-
-  const txPower = -45;
-  const n = 3.0;
-
-  const d =
-    Math.pow(
-      10,
-      (txPower - rssi) / (10 * n)
-    );
-
-  if(d < 1)
-    return d.toFixed(1) + ' m';
-
-  if(d < 10)
-    return d.toFixed(1) + ' m';
-
-  return Math.round(d) + ' m';
-}
-
-function escapeHTML(str=''){
-
-  return String(str)
-    .replaceAll('&','&amp;')
-    .replaceAll('<','&lt;')
-    .replaceAll('>','&gt;')
-    .replaceAll('"','&quot;')
-    .replaceAll("'",'&#039;');
-}
-
 function updateStats(){
-
-  $('count').textContent =
-    state.networks.length;
-
-  const best =
-    [...state.networks]
-    .sort((a,b)=>b.rssi-a.rssi)[0];
-
-  if(best){
-
-    $('bestRssi').textContent =
-      best.rssi + ' dBm';
-
-    $('bestName').textContent =
-      best.ssid || '(oculta)';
-
-  } else {
-
-    $('bestRssi').textContent = '--';
-    $('bestName').textContent = 'Sin datos';
-  }
+  $('count').textContent=state.networks.length;
+  const best=[...state.networks].sort((a,b)=>b.rssi-a.rssi)[0];
+  $('bestRssi').textContent=best?best.rssi+' dBm':'--';
+  $('bestName').textContent=best?(best.ssid||'(oculta)'):'Sin datos';
 }
-
-function getVisibleNetworks(){
-
-  const text =
-    $('search')
-    .value
-    .trim()
-    .toLowerCase();
-
-  const sort =
-    $('sort').value;
-
-  let list =
-    state.networks.filter(
-      n =>
-      (n.ssid || '(oculta)')
-      .toLowerCase()
-      .includes(text)
-    );
-
-  if(sort === 'name'){
-
-    list.sort(
-      (a,b) =>
-      (a.ssid || '')
-      .localeCompare(b.ssid || '')
-    );
-
-  }else if(sort === 'channel'){
-
-    list.sort(
-      (a,b) =>
-      (a.channel || 0) -
-      (b.channel || 0)
-    );
-
-  }else{
-
-    list.sort(
-      (a,b) =>
-      b.rssi - a.rssi
-    );
-  }
-
+function getVisible(){
+  const text=$('search').value.trim().toLowerCase(),sort=$('sort').value;
+  let list=state.networks.filter(n=>(n.ssid||'(oculta)').toLowerCase().includes(text));
+  if(state.hideOthers&&state.selected)list=list.filter(n=>n.ssid===state.selected.ssid);
+  if(sort==='name')list.sort((a,b)=>(a.ssid||'').localeCompare(b.ssid||''));
+  else if(sort==='channel')list.sort((a,b)=>(a.channel||0)-(b.channel||0));
+  else list.sort((a,b)=>b.rssi-a.rssi);
   return list;
 }
-
 function renderNetworks(){
+  const list=getVisible(),root=$('networks');
+  if(!list.length){root.innerHTML='<div class="empty">No hay redes para mostrar.</div>';return}
+  root.innerHTML=list.map(net=>{
+    const q=quality(net.rssi),p=percent(net.rssi),active=state.selected&&state.selected.ssid===net.ssid;
+    return `<div class="network ${active?'active':''}" data-ssid="${esc(net.ssid)}">
+      <div><div class="net-name">${esc(net.ssid||'(red oculta)')}</div><div class="net-info">
+      <span>${net.rssi} dBm</span><span>•</span><span>${q.label}</span><span>•</span><span>≈ ${distanceEstimate(net.rssi)}</span><span>•</span><span>Canal ${net.channel??'--'}</span><span>•</span><span>${net.secure?'Protegida':'Abierta'}</span></div></div>
+      <div><div class="signal-row"><span>Señal</span><span>${p}%</span></div><div class="track"><div class="bar ${q.cls}" style="width:${p}%"></div></div></div>
+      <div class="actions"><button class="smallbtn selectBtn" type="button">Seleccionar</button><button class="smallbtn copyBtn" type="button">Copiar</button></div>
+    </div>`;
+  }).join('');
 
-  const list =
-    getVisibleNetworks();
-
-  const root =
-    $('networks');
-
-  if(!list.length){
-
-    root.innerHTML =
-      '<div class="empty">No se encontraron redes.</div>';
-
-    return;
-  }
-
-  root.innerHTML =
-    list.map(net => {
-
-      const q =
-        quality(net.rssi);
-
-      const p =
-        percent(net.rssi);
-
-      const seguridad =
-        net.secure
-        ? 'Protegida'
-        : 'Abierta';
-
-      return `
-        <div class="network">
-
-          <div>
-
-            <div class="net-name">
-              ${escapeHTML(net.ssid || '(red oculta)')}
-            </div>
-
-            <div class="net-info">
-
-              <span>
-                ${net.rssi} dBm
-              </span>
-
-              <span>•</span>
-
-              <span>
-                ${q.label}
-              </span>
-
-              <span>•</span>
-
-              <span>
-                ≈ ${distanceEstimate(net.rssi)}
-              </span>
-
-              <span>•</span>
-
-              <span>
-                Canal ${net.channel ?? '--'}
-              </span>
-
-              <span>•</span>
-
-              <span>
-                ${seguridad}
-              </span>
-
-            </div>
-
-          </div>
-
-          <div>
-
-            <div class="signal-row">
-
-              <span>Señal</span>
-
-              <span>
-                ${p}%
-              </span>
-
-            </div>
-
-            <div class="track">
-
-              <div
-                class="bar ${q.cls}"
-                style="width:${p}%">
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-      `;
-
-    }).join('');
+  root.querySelectorAll('.network').forEach(row=>{
+    const ssid=row.dataset.ssid,net=state.networks.find(n=>n.ssid===ssid);
+    row.querySelector('.selectBtn').addEventListener('click',()=>{
+      state.selected=net;$('mirrorName').value=net.ssid||'';renderSelected();renderNetworks();setStatus('Red seleccionada: '+(net.ssid||'(oculta)'))
+    });
+    row.querySelector('.copyBtn').addEventListener('click',()=>copyName(net.ssid||''));
+  });
 }
-
+function copyName(text){
+  const input=$('mirrorName');input.value=text;input.focus();input.select();
+  try{document.execCommand('copy');setStatus('Nombre copiado: '+text)}catch(e){setStatus('Nombre colocado en el campo. Copia manualmente si hace falta.')}
+}
 async function loadNetworks(){
-
   try{
-
-    const response =
-      await fetch(
-        '/api/networks?t=' +
-        Date.now(),
-        {
-          cache:'no-store'
-        }
-      );
-
-    if(!response.ok)
-      throw new Error();
-
-    const data =
-      await response.json();
-
-    state.networks =
-      Array.isArray(data)
-      ? data
-      : [];
-
-    updateStats();
-    renderNetworks();
-
-    $('liveText').textContent =
-      'Conectado';
-
-  }catch(e){
-
-    $('liveText').textContent =
-      'Error';
-
-    $('networks').innerHTML =
-      '<div class="empty">No se pudo leer /api/networks</div>';
-  }
+    const r=await fetch('/api/networks?t='+Date.now(),{cache:'no-store'});
+    if(!r.ok)throw new Error();
+    const data=await r.json();state.networks=Array.isArray(data)?data:[];
+    if(state.selected){const u=state.networks.find(n=>n.ssid===state.selected.ssid);if(u)state.selected=u}
+    updateStats();renderSelected();renderNetworks();$('liveText').textContent='Conectado';
+  }catch(e){$('liveText').textContent='Error';$('networks').innerHTML='<div class="empty">No se pudo leer /api/networks</div>'}
 }
-
+async function loadStatus(){
+  try{
+    const r=await fetch('/api/status?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;
+    const s=await r.json();
+    $('staState').textContent=s.staConnected?'SÍ':'NO';
+    $('staName').textContent=s.staConnected?`${s.staSsid} · ${s.staRssi} dBm`:'Sin conexión';
+    $('apName').textContent=s.apSsid||'RED-ESP32';
+  }catch(e){}
+}
 async function rescan(){
-
-  if(state.loading)
-    return;
-
-  state.loading = true;
-
-  $('refresh')
-    .classList
-    .add('spin');
-
-  $('status').textContent =
-    'Escaneando redes... la conexión puede pausarse unos segundos.';
-
-  try{
-
-    await fetch(
-      '/api/rescan',
-      {
-        method:'POST'
-      }
-    );
-
-    await new Promise(
-      resolve =>
-      setTimeout(resolve, 3500)
-    );
-
-    await loadNetworks();
-
-    $('status').textContent =
-      'Escaneo actualizado.';
-
-  }catch(e){
-
-    $('status').textContent =
-      'No se pudo actualizar el escaneo.';
-
-  }finally{
-
-    $('refresh')
-      .classList
-      .remove('spin');
-
-    state.loading = false;
-  }
+  if(state.loading)return;state.loading=true;$('refresh').classList.add('spin');setStatus('Escaneando redes...');
+  try{await fetch('/api/rescan',{method:'POST'});await new Promise(r=>setTimeout(r,3500));await loadNetworks();setStatus('Escaneo actualizado.')}
+  catch(e){setStatus('No se pudo actualizar.')}
+  finally{$('refresh').classList.remove('spin');state.loading=false}
 }
+async function connectSelected(){
+  if(!state.selected){setStatus('Primero selecciona una red.');return}
+  setStatus('Conectando el ESP32 a '+state.selected.ssid+'...');
+  try{
+    const body=new URLSearchParams({ssid:state.selected.ssid||'',password:$('wifiPassword').value});
+    const r=await fetch('/api/connect',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+    const d=await r.json();
+    setStatus(d.ok?`Conectado a ${d.ssid}. IP: ${d.ip}`:(d.error||'No se pudo conectar.'));
+    loadStatus();
+  }catch(e){setStatus('La conexión se interrumpió durante el intento.')}
+}
+async function disconnectSta(){try{await fetch('/api/disconnect',{method:'POST'});setStatus('ESP32 desconectado del Wi‑Fi externo.');setTimeout(loadStatus,300)}catch(e){setStatus('No se pudo desconectar.')}}
+async function createMirror(){
+  const ssid=$('mirrorName').value.trim(),url=$('targetUrl').value.trim();
+  if(!ssid){setStatus('Escribe un nombre para el nuevo AP.');return}
+  setStatus('Creando AP: '+ssid+'...');
+  try{
+    const body=new URLSearchParams({ssid,url});
+    const r=await fetch('/api/mirror',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+    const d=await r.json();
+    setStatus(d.ok?'En unos segundos perderás RED-ESP32. Busca la nueva red "'+ssid+'" y conéctate.':(d.error||'No se pudo crear el AP.'));
+  }catch(e){setStatus('La red está cambiando. Busca el nuevo nombre en Wi‑Fi.')}
+}
+async function restoreAdmin(){setStatus('Volviendo a RED-ESP32...');try{await fetch('/api/restore',{method:'POST'});setStatus('En unos segundos busca RED-ESP32 y vuelve a conectarte.')}catch(e){setStatus('Busca RED-ESP32 y vuelve a conectarte.')}}
 
-$('search')
-  .addEventListener(
-    'input',
-    renderNetworks
-  );
+$('search').addEventListener('input',renderNetworks);
+$('sort').addEventListener('change',renderNetworks);
+$('refresh').addEventListener('click',rescan);
+$('hideOthers').addEventListener('click',()=>{state.hideOthers=!state.hideOthers;$('hideOthers').classList.toggle('active',state.hideOthers);renderNetworks()});
+$('copySelectedBtn').addEventListener('click',()=>{if(!state.selected){setStatus('Primero selecciona una red.');return}copyName(state.selected.ssid||'')});
+$('connectBtn').addEventListener('click',connectSelected);
+$('disconnectBtn').addEventListener('click',disconnectSta);
+$('mirrorBtn').addEventListener('click',createMirror);
+$('restoreBtn').addEventListener('click',restoreAdmin);
 
-$('sort')
-  .addEventListener(
-    'change',
-    renderNetworks
-  );
-
-$('refresh')
-  .addEventListener(
-    'click',
-    rescan
-  );
-
-loadNetworks();
-
+loadNetworks();loadStatus();setInterval(loadStatus,4000);
 </script>
-
 </body>
 </html>
