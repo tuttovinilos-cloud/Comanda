@@ -3,255 +3,335 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#090c12">
-<title>Tuttovinilos · LED Mapper</title>
+<meta name="theme-color" content="#080b11">
+<title>Tuttovinilos · LED Studio</title>
 <style>
 :root{
-  --bg:#090c12;--panel:#121722;--panel2:#171d29;--line:#283247;
-  --text:#f5f7fb;--muted:#8e99ad;--accent:#6f7cff;--good:#54dfa0;
-  --danger:#ff6f7d;--cell:#111722;--selected:#6675ff;
+  --bg:#080b11;--panel:#111722;--panel2:#171e2b;--line:#283349;
+  --text:#f5f7fb;--muted:#8c98ad;--accent:#6e7cff;--good:#4edb9a;
+  --danger:#ff6978;--cell:#0e141e;
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;font-family:Inter,Arial,sans-serif;background:
-radial-gradient(circle at 0 0,rgba(111,124,255,.17),transparent 28%),
-radial-gradient(circle at 100% 15%,rgba(0,210,255,.08),transparent 25%),var(--bg);color:var(--text)}
-button,input{font:inherit}
-.app{max-width:1500px;margin:auto;padding:16px}
-.top{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:14px}
-.brand h1{margin:0;font-size:25px;letter-spacing:-.4px}
+radial-gradient(circle at 0 0,rgba(110,124,255,.17),transparent 28%),
+radial-gradient(circle at 100% 10%,rgba(0,210,255,.07),transparent 24%),var(--bg);color:var(--text)}
+button,input,select{font:inherit}
+.app{max-width:1500px;margin:auto;padding:15px}
+.top{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:13px}
+.brand h1{margin:0;font-size:26px;letter-spacing:-.5px}
 .brand p{margin:5px 0 0;color:var(--muted);font-size:13px}
-.status{border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:999px;padding:9px 13px;font-size:12px;color:var(--muted)}
-.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
-.toolbar{display:grid;grid-template-columns:repeat(6,minmax(115px,1fr));gap:10px;margin-bottom:12px}
-.field label{display:block;color:var(--muted);font-size:11px;margin:0 0 6px}
-.field input{width:100%;padding:11px;border-radius:11px;border:1px solid var(--line);background:#0d121a;color:white;outline:none}
-.field input:focus{border-color:var(--accent)}
-.stat{background:#0d121a;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
-.stat span{display:block;color:var(--muted);font-size:11px}
+.status{padding:9px 13px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.025);color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:7px;margin-bottom:11px}
+.tab{border:1px solid var(--line);background:#111722;color:var(--muted);padding:10px 15px;border-radius:11px;cursor:pointer}
+.tab.active{background:var(--accent);border-color:var(--accent);color:white}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:15px;box-shadow:0 18px 55px rgba(0,0,0,.2)}
+.panel{display:none}.panel.active{display:block}
+.toolbar{display:grid;grid-template-columns:repeat(6,minmax(110px,1fr));gap:9px;margin-bottom:11px}
+.field label{display:block;color:var(--muted);font-size:10px;margin-bottom:6px;letter-spacing:.3px}
+.field input,.field select{width:100%;height:41px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#0d121a;color:white;outline:none}
+.field input[type=color]{padding:4px}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.stat{background:#0d121a;border:1px solid var(--line);border-radius:11px;padding:9px 11px}
+.stat span{display:block;color:var(--muted);font-size:10px}
 .stat b{display:block;margin-top:5px;font-size:15px}
-.actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
-.btn{border:1px solid var(--line);background:#1b2331;color:white;border-radius:11px;padding:10px 14px;cursor:pointer}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:11px}
+.btn{border:1px solid var(--line);background:#1a2230;color:#fff;border-radius:10px;padding:10px 13px;cursor:pointer}
 .btn.primary{background:var(--accent);border-color:var(--accent)}
-.btn.good{background:#164b37;border-color:#236f51}
-.btn.danger{background:#3b2027;border-color:#6d313d}
-.workspace{position:relative;overflow:auto;max-height:72vh;border-radius:16px;border:1px solid var(--line);background:#0b0f16;padding:18px;touch-action:none}
+.btn.good{background:#174c38;border-color:#287459}
+.btn.danger{background:#3b2027;border-color:#6c303c}
+.workspace{overflow:auto;max-height:68vh;border:1px solid var(--line);border-radius:15px;background:#0a0f16;padding:16px;touch-action:none}
 .grid{display:grid;gap:3px;width:max-content;min-width:100%;user-select:none}
-.cell{width:34px;height:34px;border-radius:6px;background:var(--cell);border:1px solid #20293a;display:flex;align-items:center;justify-content:center;font-size:10px;color:#667085;position:relative;cursor:crosshair}
-.cell:hover{border-color:#56637a}
-.cell.sel{background:linear-gradient(145deg,#5665f5,#7b86ff);border-color:#95a0ff;color:white;font-weight:800;box-shadow:0 0 0 1px rgba(255,255,255,.06) inset}
-.cell.sel::after{content:'';position:absolute;width:5px;height:5px;border-radius:50%;background:white;right:4px;bottom:4px;opacity:.8}
-.help{margin-top:12px;color:var(--muted);font-size:12px;line-height:1.5}
-.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:none;z-index:30;padding:11px 15px;border-radius:999px;background:#171d28;border:1px solid #374157;box-shadow:0 12px 35px rgba(0,0,0,.35)}
-@media(max-width:900px){.toolbar{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:560px){.app{padding:10px}.top{align-items:flex-start;flex-direction:column}.toolbar{grid-template-columns:1fr 1fr}.cell{width:31px;height:31px}}
+.cell{width:34px;height:34px;border-radius:6px;background:var(--cell);border:1px solid #202a3b;display:flex;align-items:center;justify-content:center;font-size:10px;color:#69758b;position:relative;cursor:crosshair;transition:background .06s,border-color .06s,box-shadow .06s}
+.cell.path{border-color:#6574ff;color:#fff;font-weight:800}
+.cell.path::after{content:'';width:4px;height:4px;border-radius:50%;background:white;position:absolute;right:4px;bottom:4px;opacity:.7}
+.effectGrid{display:grid;grid-template-columns:repeat(7,minmax(100px,1fr));gap:9px;margin-bottom:12px}
+.rangeWrap{background:#0d121a;border:1px solid var(--line);border-radius:11px;padding:9px 11px}
+.rangeWrap label{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-bottom:5px}
+.rangeWrap input{width:100%}
+.help{color:var(--muted);font-size:12px;line-height:1.5;margin-top:11px}
+.toast{display:none;position:fixed;z-index:50;left:50%;bottom:18px;transform:translateX(-50%);background:#171e2a;border:1px solid #364159;border-radius:999px;padding:11px 15px;box-shadow:0 12px 35px rgba(0,0,0,.35)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 10px;color:var(--muted);font-size:11px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;background:var(--accent)}
+@media(max-width:1000px){.toolbar{grid-template-columns:repeat(3,1fr)}.effectGrid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.app{padding:9px}.top{align-items:flex-start;flex-direction:column}.toolbar,.effectGrid{grid-template-columns:1fr 1fr}.cell{width:31px;height:31px}}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
     <div class="brand">
-      <h1>Tuttovinilos · LED Mapper</h1>
-      <p>Dibuja el recorrido físico de la cinta WS2811 y envíalo al ESP32</p>
+      <h1>Tuttovinilos · LED Studio</h1>
+      <p>Mapa físico + efectos para WS2811</p>
     </div>
     <div id="status" class="status">Supabase · listo</div>
   </div>
 
+  <div class="tabs">
+    <button class="tab active" data-tab="config">Configuración</button>
+    <button class="tab" data-tab="effects">Efectos</button>
+  </div>
+
   <div class="card">
-    <div class="toolbar">
-      <div class="field"><label>ANCHO DE MESA (cm)</label><input id="width" type="number" min="1" step="0.1" value="100"></div>
-      <div class="field"><label>ALTO DE MESA (cm)</label><input id="height" type="number" min="1" step="0.1" value="50"></div>
-      <div class="field"><label>SEPARACIÓN PIXEL (cm)</label><input id="spacing" type="number" min="0.1" step="0.1" value="2.5"></div>
-      <div class="stat"><span>COLUMNAS</span><b id="cols">40</b></div>
-      <div class="stat"><span>FILAS</span><b id="rows">20</b></div>
-      <div class="stat"><span>LEDS EN RECORRIDO</span><b id="count">0</b></div>
-    </div>
+    <section id="config" class="panel active">
+      <div class="toolbar">
+        <div class="field"><label>ANCHO MESA (cm)</label><input id="width" type="number" min="1" step=".1" value="100"></div>
+        <div class="field"><label>ALTO MESA (cm)</label><input id="height" type="number" min="1" step=".1" value="50"></div>
+        <div class="field"><label>SEPARACIÓN PIXEL (cm)</label><input id="spacing" type="number" min=".1" step=".1" value="2.5"></div>
+        <div class="stat"><span>COLUMNAS</span><b id="cols">40</b></div>
+        <div class="stat"><span>FILAS</span><b id="rows">20</b></div>
+        <div class="stat"><span>LEDS USADOS</span><b id="count">0</b></div>
+      </div>
 
-    <div class="actions">
-      <button class="btn primary" id="generate">Crear cuadrícula</button>
-      <button class="btn" id="undo">Deshacer</button>
-      <button class="btn" id="reverse">Invertir recorrido</button>
-      <button class="btn danger" id="clear">Borrar recorrido</button>
-      <button class="btn good" id="send">Enviar al ESP32</button>
-      <button class="btn" id="test">Probar recorrido</button>
-      <button class="btn" id="off">Apagar</button>
-    </div>
+      <div class="actions">
+        <button class="btn primary" id="generate">Crear cuadrícula</button>
+        <button class="btn" id="undo">Deshacer</button>
+        <button class="btn" id="reverse">Invertir</button>
+        <button class="btn danger" id="clear">Borrar recorrido</button>
+        <button class="btn good" id="sendLayout">Guardar recorrido</button>
+        <button class="btn" id="testPath">Probar 1 → N</button>
+      </div>
 
-    <div class="workspace" id="workspace">
-      <div class="grid" id="grid"></div>
-    </div>
+      <div class="workspace">
+        <div id="gridConfig" class="grid"></div>
+      </div>
+      <div class="help">Mantén presionado el mouse o el dedo y recorre la cuadrícula. Cada cuadro nuevo toma el siguiente número físico de LED.</div>
+    </section>
 
-    <div class="help">
-      Mantén presionado el mouse o el dedo y recorre los cuadros en el orden físico de la cinta.
-      Cada cuadro nuevo recibe automáticamente el siguiente número de LED.
-    </div>
+    <section id="effects" class="panel">
+      <div class="effectGrid">
+        <div class="field">
+          <label>EFECTO</label>
+          <select id="effect">
+            <option value="solid">Color fijo</option>
+            <option value="chase">Carrera</option>
+            <option value="snake">Serpiente</option>
+            <option value="rainbow">Arcoíris</option>
+            <option value="breathe">Respiración</option>
+            <option value="scanner">Scanner</option>
+            <option value="wave_h">Ola horizontal</option>
+            <option value="wave_v">Ola vertical</option>
+            <option value="center">Centro → exterior</option>
+            <option value="alternate">Alternado</option>
+            <option value="sparkle">Destellos</option>
+            <option value="off">Apagado</option>
+          </select>
+        </div>
+        <div class="field"><label>COLOR 1</label><input id="color1" type="color" value="#0066ff"></div>
+        <div class="field"><label>COLOR 2</label><input id="color2" type="color" value="#ff2bd6"></div>
+        <div class="rangeWrap"><label><span>BRILLO</span><b id="brightnessVal">70%</b></label><input id="brightness" type="range" min="1" max="100" value="70"></div>
+        <div class="rangeWrap"><label><span>VELOCIDAD</span><b id="speedVal">50%</b></label><input id="speed" type="range" min="1" max="100" value="50"></div>
+        <div class="field">
+          <label>DIRECCIÓN</label>
+          <select id="direction">
+            <option value="1">Normal →</option>
+            <option value="-1">Inversa ←</option>
+          </select>
+        </div>
+        <div class="stat"><span>PIXELS</span><b id="effectCount">0</b></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn good" id="sendEffect">Enviar efecto al ESP32</button>
+        <button class="btn danger" id="off">Apagar</button>
+      </div>
+
+      <div class="legend">
+        <span><i class="dot"></i>La vista es una simulación</span>
+        <span>El ESP32 genera el movimiento localmente, no por Internet cuadro a cuadro.</span>
+      </div>
+
+      <div class="workspace">
+        <div id="gridPreview" class="grid"></div>
+      </div>
+      <div class="help">Los efectos horizontales, verticales y desde el centro usan la posición X/Y del mapa, aunque físicamente la cinta esté instalada en serpentina.</div>
+    </section>
   </div>
 </div>
+
 <div id="toast" class="toast"></div>
 
 <script>
-const SUPABASE_URL = "https://ujfdsabypflseijatxba.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZmRzYWJ5cGZsc2VpamF0eGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNjcxNTIsImV4cCI6MjA5MTg0MzE1Mn0.Tyi_TeKaVG0PMA4R-aO8GPgP525GLZcqipB-tXmFq5c";
-const DEVICE_ID = "esp32_01";
-
-let cols=40, rows=20;
-let path=[];
-let drawing=false;
-let cellMap=new Map();
+const SUPABASE_URL="https://ujfdsabypflseijatxba.supabase.co";
+const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZmRzYWJ5cGZsc2VpamF0eGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNjcxNTIsImV4cCI6MjA5MTg0MzE1Mn0.Tyi_TeKaVG0PMA4R-aO8GPgP525GLZcqipB-tXmFq5c";
+const DEVICE_ID="esp32_01";
 
 const $=id=>document.getElementById(id);
+let cols=40,rows=20,path=[],drawing=false;
+let configCells=new Map(),previewCells=new Map();
+let animStart=performance.now();
 
-function toast(text){
-  const el=$('toast'); el.textContent=text; el.style.display='block';
-  clearTimeout(window.__tt); window.__tt=setTimeout(()=>el.style.display='none',2600);
+function toast(t){
+  const e=$('toast');e.textContent=t;e.style.display='block';
+  clearTimeout(window.__toast);window.__toast=setTimeout(()=>e.style.display='none',2500);
 }
-
-function dimensions(){
-  const w=Math.max(.1,parseFloat($('width').value)||100);
-  const h=Math.max(.1,parseFloat($('height').value)||50);
-  const s=Math.max(.1,parseFloat($('spacing').value)||2.5);
-  cols=Math.max(1,Math.round(w/s));
-  rows=Math.max(1,Math.round(h/s));
-  $('cols').textContent=cols; $('rows').textContent=rows;
-  return {w,h,s};
+function k(x,y){return x+','+y}
+function dims(){
+  const w=Math.max(.1,+$('width').value||100),h=Math.max(.1,+$('height').value||50),s=Math.max(.1,+$('spacing').value||2.5);
+  cols=Math.max(1,Math.round(w/s));rows=Math.max(1,Math.round(h/s));
+  $('cols').textContent=cols;$('rows').textContent=rows;return{w,h,s};
 }
-
-function key(x,y){return x+','+y}
-
-function buildGrid(reset=true){
-  dimensions();
-  if(reset) path=[];
-  const g=$('grid');
-  g.innerHTML='';
-  g.style.gridTemplateColumns=`repeat(${cols},34px)`;
-  cellMap.clear();
-
-  for(let y=0;y<rows;y++){
-    for(let x=0;x<cols;x++){
-      const c=document.createElement('div');
-      c.className='cell';
-      c.dataset.x=x; c.dataset.y=y;
-      c.addEventListener('pointerdown',e=>{
-        e.preventDefault(); drawing=true; try{c.setPointerCapture(e.pointerId)}catch{}
-        addCell(c);
-      });
+function buildGrid(target,map,editable){
+  const g=$(target);g.innerHTML='';g.style.gridTemplateColumns=`repeat(${cols},34px)`;map.clear();
+  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+    const c=document.createElement('div');c.className='cell';c.dataset.x=x;c.dataset.y=y;
+    if(editable){
+      c.addEventListener('pointerdown',e=>{e.preventDefault();drawing=true;addCell(c)});
       c.addEventListener('pointerenter',()=>{if(drawing)addCell(c)});
       c.addEventListener('pointermove',e=>{
-        if(!drawing || e.pointerType==='mouse') return;
-        const hit=document.elementFromPoint(e.clientX,e.clientY);
-        if(hit?.classList?.contains('cell')) addCell(hit);
+        if(!drawing||e.pointerType==='mouse')return;
+        const h=document.elementFromPoint(e.clientX,e.clientY);
+        if(h?.classList?.contains('cell'))addCell(h);
       });
-      cellMap.set(key(x,y),c);
-      g.appendChild(c);
     }
+    map.set(k(x,y),c);g.appendChild(c);
   }
+}
+function buildAll(reset=true){
+  dims();if(reset)path=[];
+  buildGrid('gridConfig',configCells,true);
+  buildGrid('gridPreview',previewCells,false);
   renderPath();
 }
-
 function addCell(c){
-  const x=+c.dataset.x, y=+c.dataset.y;
-  const k=key(x,y);
-  if(path.some(p=>key(p.x,p.y)===k)) return;
-  path.push({x,y});
-  renderPath();
+  const p={x:+c.dataset.x,y:+c.dataset.y};
+  if(path.some(v=>v.x===p.x&&v.y===p.y))return;
+  path.push(p);renderPath();
 }
-
 function renderPath(){
-  for(const c of cellMap.values()){c.classList.remove('sel');c.textContent='';}
-  path.forEach((p,i)=>{
-    const c=cellMap.get(key(p.x,p.y));
-    if(c){c.classList.add('sel');c.textContent=i+1;}
-  });
-  $('count').textContent=path.length;
+  for(const c of configCells.values()){c.className='cell';c.textContent=''}
+  path.forEach((p,i)=>{const c=configCells.get(k(p.x,p.y));if(c){c.classList.add('path');c.textContent=i+1}});
+  $('count').textContent=path.length;$('effectCount').textContent=path.length;
 }
+addEventListener('pointerup',()=>drawing=false);addEventListener('pointercancel',()=>drawing=false);
 
-window.addEventListener('pointerup',()=>drawing=false);
-window.addEventListener('pointercancel',()=>drawing=false);
-
-async function sb(pathUrl,opts={}){
-  const r=await fetch(SUPABASE_URL+pathUrl,{
-    ...opts,
-    headers:{
-      'apikey':SUPABASE_KEY,
-      'Authorization':'Bearer '+SUPABASE_KEY,
-      'Content-Type':'application/json',
-      ...(opts.headers||{})
-    }
+async function sb(endpoint,options={}){
+  const r=await fetch(SUPABASE_URL+endpoint,{
+    ...options,
+    headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',...(options.headers||{})}
   });
-  const text=await r.text();
-  if(!r.ok) throw new Error(text||('HTTP '+r.status));
-  try{return JSON.parse(text)}catch{return text}
+  const txt=await r.text();if(!r.ok)throw new Error(txt||('HTTP '+r.status));
+  try{return JSON.parse(txt)}catch{return txt}
 }
-
-async function sendLayout(showToast=true){
-  if(!path.length) throw new Error('Dibuja al menos un LED.');
-  const d=dimensions();
-  const payload={
-    device_id:DEVICE_ID,width_cm:d.w,height_cm:d.h,spacing_cm:d.s,
-    cols,rows,path:path.map(p=>[p.x,p.y]),
-    version:Date.now(),updated_at:new Date().toISOString()
-  };
-  await sb('/rest/v1/esp32_layouts?on_conflict=device_id',{
-    method:'POST',
-    headers:{'Prefer':'resolution=merge-duplicates,return=representation'},
-    body:JSON.stringify(payload)
-  });
-  if(showToast) toast('Recorrido enviado a Supabase');
-}
-
 async function command(cmd){
-  await sb('/rest/v1/esp32_commands?device_id=eq.'+encodeURIComponent(DEVICE_ID),{
-    method:'PATCH',
-    headers:{'Prefer':'return=minimal'},
+  return sb('/rest/v1/esp32_commands?device_id=eq.'+DEVICE_ID,{
+    method:'PATCH',headers:{Prefer:'return=minimal'},
     body:JSON.stringify({command:cmd,updated_at:new Date().toISOString()})
   });
 }
-
+async function saveLayout(){
+  if(!path.length)throw new Error('Dibuja primero el recorrido.');
+  const d=dims(),payload={
+    device_id:DEVICE_ID,width_cm:d.w,height_cm:d.h,spacing_cm:d.s,cols,rows,
+    path:path.map(p=>[p.x,p.y]),version:Date.now(),updated_at:new Date().toISOString()
+  };
+  await sb('/rest/v1/esp32_layouts?on_conflict=device_id',{
+    method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)
+  });
+  await command('layout_reload');
+}
 async function loadSaved(){
   try{
     const r=await sb('/rest/v1/esp32_layouts?device_id=eq.'+DEVICE_ID+'&select=*');
-    if(!r?.length){buildGrid(true);return}
-    const a=r[0];
-    $('width').value=a.width_cm; $('height').value=a.height_cm; $('spacing').value=a.spacing_cm;
-    buildGrid(true);
-    path=(a.path||[]).map(v=>({x:+v[0],y:+v[1]}));
-    renderPath();
-    $('status').textContent='Supabase · recorrido cargado';
-  }catch(e){
-    $('status').textContent='Supabase · error';
-    buildGrid(true);
-  }
+    if(r?.length){
+      const a=r[0];$('width').value=a.width_cm;$('height').value=a.height_cm;$('spacing').value=a.spacing_cm;
+      dims();buildGrid('gridConfig',configCells,true);buildGrid('gridPreview',previewCells,false);
+      path=(a.path||[]).map(p=>({x:+p[0],y:+p[1]}));renderPath();
+    }else buildAll(true);
+
+    const fx=await sb('/rest/v1/esp32_effects?device_id=eq.'+DEVICE_ID+'&select=*');
+    if(fx?.length){
+      const f=fx[0];
+      $('effect').value=f.effect||'solid';$('color1').value=f.color1||'#0066ff';$('color2').value=f.color2||'#ff2bd6';
+      $('brightness').value=f.brightness??70;$('speed').value=f.speed??50;$('direction').value=String(f.direction??1);
+      updateLabels();
+    }
+    $('status').textContent='Supabase · sincronizado';
+  }catch(e){buildAll(true);$('status').textContent='Supabase · error';toast('No se pudo cargar: '+e.message)}
+}
+async function sendEffect(effectOverride=null){
+  const payload={
+    device_id:DEVICE_ID,effect:effectOverride||$('effect').value,
+    color1:$('color1').value,color2:$('color2').value,
+    brightness:+$('brightness').value,speed:+$('speed').value,direction:+$('direction').value,
+    version:Date.now(),updated_at:new Date().toISOString()
+  };
+  await sb('/rest/v1/esp32_effects?on_conflict=device_id',{
+    method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)
+  });
 }
 
-$('generate').onclick=()=>buildGrid(true);
+function hexRgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]}
+function mix(a,b,t){return a.map((v,i)=>Math.round(v+(b[i]-v)*t))}
+function css(c,b=1){return`rgb(${Math.round(c[0]*b)},${Math.round(c[1]*b)},${Math.round(c[2]*b)})`}
+function wheel(pos){
+  pos=((pos%256)+256)%256;
+  if(pos<85)return[255-pos*3,pos*3,0];
+  if(pos<170){pos-=85;return[0,255-pos*3,pos*3]}
+  pos-=170;return[pos*3,0,255-pos*3];
+}
+function updateLabels(){$('brightnessVal').textContent=$('brightness').value+'%';$('speedVal').textContent=$('speed').value+'%'}
+$('brightness').oninput=updateLabels;$('speed').oninput=updateLabels;
+
+function preview(now){
+  requestAnimationFrame(preview);
+  if(!previewCells.size)return;
+
+  for(const c of previewCells.values()){c.style.background='';c.style.borderColor='';c.textContent=''}
+  if(!path.length)return;
+
+  const fx=$('effect').value,c1=hexRgb($('color1').value),c2=hexRgb($('color2').value);
+  const bri=+$('brightness').value/100,sp=+$('speed').value,dir=+$('direction').value;
+  const t=(now-animStart)/1000;
+  const phase=t*(.5+sp/18)*dir;
+  const N=path.length;
+
+  path.forEach((p,i)=>{
+    const c=previewCells.get(k(p.x,p.y));if(!c)return;
+    let col=[0,0,0],m=1;
+    if(fx==='solid')col=c1;
+    else if(fx==='off'){col=[0,0,0];m=0}
+    else if(fx==='chase'){
+      const head=((Math.floor(phase*5)%N)+N)%N;col=c1;m=i===head?1:.035;
+    }else if(fx==='snake'){
+      const head=((Math.floor(phase*5)%N)+N)%N,len=Math.max(3,Math.round(N*.10));
+      let d=(head-i+N)%N;if(dir<0)d=(i-head+N)%N;
+      col=c1;m=d<len?1-d/len:.025;
+    }else if(fx==='rainbow')col=wheel(i/N*256+phase*22);
+    else if(fx==='breathe'){col=c1;m=.08+.92*((Math.sin(phase)+1)/2)}
+    else if(fx==='scanner'){
+      const period=Math.max(1,2*(N-1)),v=((Math.floor(Math.abs(phase)*7)%period)+period)%period;
+      const head=v<N?v:period-v;const d=Math.abs(i-head);col=c1;m=Math.max(.025,1-d/5);
+    }else if(fx==='wave_h'){
+      const q=(Math.sin(phase+p.x/Math.max(1,cols-1)*Math.PI*2)+1)/2;col=mix(c1,c2,q);
+    }else if(fx==='wave_v'){
+      const q=(Math.sin(phase+p.y/Math.max(1,rows-1)*Math.PI*2)+1)/2;col=mix(c1,c2,q);
+    }else if(fx==='center'){
+      const dx=(p.x-(cols-1)/2)/Math.max(1,cols/2),dy=(p.y-(rows-1)/2)/Math.max(1,rows/2);
+      const q=(Math.sin(phase-Math.sqrt(dx*dx+dy*dy)*7)+1)/2;col=mix(c1,c2,q);
+    }else if(fx==='alternate')col=((i+Math.floor(phase*3))&1)?c1:c2;
+    else if(fx==='sparkle'){
+      const seed=(i*1103515245+Math.floor(t*(2+sp/12))*12345)>>>0;
+      col=(seed%13===0)?c2:c1;m=(seed%13===0)?1:.08;
+    }
+    c.style.background=css(col,bri*m);c.style.borderColor=m>.25?'rgba(255,255,255,.35)':'#202a3b';c.textContent=i+1;
+  });
+}
+
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');$(b.dataset.tab).classList.add('active');
+});
+$('generate').onclick=()=>buildAll(true);
 $('undo').onclick=()=>{path.pop();renderPath()};
-$('clear').onclick=()=>{if(confirm('¿Borrar todo el recorrido?')){path=[];renderPath()}};
 $('reverse').onclick=()=>{path.reverse();renderPath()};
+$('clear').onclick=()=>{if(confirm('¿Borrar todo el recorrido?')){path=[];renderPath()}};
+$('sendLayout').onclick=async()=>{try{$('status').textContent='Guardando recorrido...';await saveLayout();$('status').textContent='Recorrido enviado';toast('Recorrido guardado')}catch(e){toast('Error: '+e.message)}};
+$('testPath').onclick=async()=>{try{await saveLayout();await sendEffect('path_test');toast('Prueba 1 → N enviada')}catch(e){toast('Error: '+e.message)}};
+$('sendEffect').onclick=async()=>{try{$('status').textContent='Enviando efecto...';await sendEffect();$('status').textContent='Efecto enviado';toast('Efecto enviado al ESP32')}catch(e){toast('Error: '+e.message)}};
+$('off').onclick=async()=>{try{await sendEffect('off');toast('Apagado enviado')}catch(e){toast('Error: '+e.message)}};
 
-$('send').onclick=async()=>{
-  try{
-    $('status').textContent='Enviando...';
-    await sendLayout(false);
-    await command('layout_reload');
-    $('status').textContent='ESP32 · recorrido enviado';
-    toast('Recorrido guardado y enviado al ESP32');
-  }catch(e){$('status').textContent='Error';toast('Error: '+e.message)}
-};
-
-$('test').onclick=async()=>{
-  try{
-    $('status').textContent='Preparando prueba...';
-    await sendLayout(false);
-    await command('layout_test');
-    $('status').textContent='ESP32 · probando recorrido';
-    toast('Prueba enviada');
-  }catch(e){$('status').textContent='Error';toast('Error: '+e.message)}
-};
-
-$('off').onclick=async()=>{
-  try{await command('off');toast('Apagado enviado')}catch(e){toast('Error: '+e.message)}
-};
-
-loadSaved();
+loadSaved();updateLabels();requestAnimationFrame(preview);
 </script>
 </body>
 </html>
