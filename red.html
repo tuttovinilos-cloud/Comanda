@@ -81,11 +81,11 @@ canvas{display:none}
 
     <section id="config" class="panel active">
       <div class="toolbar">
-        <div class="field"><label>ANCHO MESA (cm)</label><input id="width" type="number" min="1" step=".1" value="100"></div>
-        <div class="field"><label>ALTO MESA (cm)</label><input id="height" type="number" min="1" step=".1" value="50"></div>
-        <div class="field"><label>SEPARACIÓN PIXEL (cm)</label><input id="spacing" type="number" min=".1" step=".1" value="2.5"></div>
-        <div class="stat"><span>COLUMNAS</span><b id="cols">40</b></div>
-        <div class="stat"><span>FILAS</span><b id="rows">20</b></div>
+        <div class="field"><label>ANCHO (PIXELS)</label><input id="colsInput" type="number" min="1" max="200" step="1" value="40"></div>
+        <div class="field"><label>ALTO (PIXELS)</label><input id="rowsInput" type="number" min="1" max="200" step="1" value="20"></div>
+        <div class="field"><label>COLUMNAS</label><input id="colsMirror" type="number" min="1" max="200" step="1" value="40"></div>
+        <div class="field"><label>FILAS</label><input id="rowsMirror" type="number" min="1" max="200" step="1" value="20"></div>
+        <div class="stat"><span>RESOLUCIÓN</span><b id="gridResolution">40 × 20</b></div>
         <div class="stat"><span>LEDS USADOS</span><b id="count">0</b></div>
       </div>
 
@@ -99,7 +99,7 @@ canvas{display:none}
       </div>
 
       <div class="workspace"><div id="gridConfig" class="grid"></div></div>
-      <div class="help">Mantén presionado el mouse o el dedo y recorre la cuadrícula. Cada cuadro nuevo toma el siguiente número físico de LED.</div>
+      <div class="help">Define directamente el ancho/columnas y alto/filas en píxeles. Luego mantén presionado el mouse o el dedo y recorre la cuadrícula; cada cuadro representa un píxel físico.</div>
     </section>
 
     <section id="effects" class="panel">
@@ -222,11 +222,18 @@ function toast(t){
 }
 function k(x,y){return x+','+y}
 function dims(){
-  const w=Math.max(.1,+$('width').value||100),h=Math.max(.1,+$('height').value||50),s=Math.max(.1,+$('spacing').value||2.5);
-  cols=Math.max(1,Math.round(w/s));rows=Math.max(1,Math.round(h/s));
-  $('cols').textContent=cols;$('rows').textContent=rows;
+  cols=Math.max(1,Math.min(200,Math.round(+$('colsInput').value||40)));
+  rows=Math.max(1,Math.min(200,Math.round(+$('rowsInput').value||20)));
+
+  $('colsInput').value=cols;
+  $('rowsInput').value=rows;
+  $('colsMirror').value=cols;
+  $('rowsMirror').value=rows;
+
+  $('gridResolution').textContent=cols+' × '+rows;
   $('imageResolution').textContent=cols+' × '+rows;
-  return{w,h,s};
+
+  return{cols,rows};
 }
 function buildGrid(target,map,editable){
   const g=$(target);g.innerHTML='';g.style.gridTemplateColumns=`repeat(${cols},34px)`;map.clear();
@@ -281,9 +288,17 @@ async function command(cmd){
 }
 async function saveLayout(){
   if(!path.length)throw new Error('Dibuja primero el recorrido.');
-  const d=dims(),payload={
-    device_id:DEVICE_ID,width_cm:d.w,height_cm:d.h,spacing_cm:d.s,cols,rows,
-    path:path.map(p=>[p.x,p.y]),version:Date.now(),updated_at:new Date().toISOString()
+  dims();
+  const payload={
+    device_id:DEVICE_ID,
+    width_cm:cols,
+    height_cm:rows,
+    spacing_cm:1,
+    cols,
+    rows,
+    path:path.map(p=>[p.x,p.y]),
+    version:Date.now(),
+    updated_at:new Date().toISOString()
   };
   await sb('/rest/v1/esp32_layouts?on_conflict=device_id',{
     method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)
@@ -305,7 +320,11 @@ async function loadSaved(){
   try{
     const r=await sb('/rest/v1/esp32_layouts?device_id=eq.'+DEVICE_ID+'&select=*');
     if(r?.length){
-      const a=r[0];$('width').value=a.width_cm;$('height').value=a.height_cm;$('spacing').value=a.spacing_cm;
+      const a=r[0];
+      $('colsInput').value=a.cols||40;
+      $('rowsInput').value=a.rows||20;
+      $('colsMirror').value=a.cols||40;
+      $('rowsMirror').value=a.rows||20;
       dims();
       buildGrid('gridConfig',configCells,true);
       buildGrid('gridPreview',previewCells,false);
@@ -507,6 +526,23 @@ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
   b.classList.add('active');$(b.dataset.tab).classList.add('active');
   if(b.dataset.tab==='image')renderImage();
+});
+
+function syncGridInputs(source){
+  if(source==='colsInput' || source==='colsMirror'){
+    const v=Math.max(1,Math.min(200,Math.round(+$(source).value||1)));
+    $('colsInput').value=v;
+    $('colsMirror').value=v;
+  }else{
+    const v=Math.max(1,Math.min(200,Math.round(+$(source).value||1)));
+    $('rowsInput').value=v;
+    $('rowsMirror').value=v;
+  }
+  dims();
+}
+
+['colsInput','colsMirror','rowsInput','rowsMirror'].forEach(id=>{
+  $(id).addEventListener('input',()=>syncGridInputs(id));
 });
 
 $('generate').onclick=()=>buildAll(true);
