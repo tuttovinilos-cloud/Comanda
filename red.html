@@ -59,6 +59,29 @@ button,input,select{font:inherit}
 canvas{display:none}
 @media(max-width:1000px){.toolbar{grid-template-columns:repeat(3,1fr)}.effectGrid,.imageGrid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:560px){.app{padding:9px}.top{align-items:flex-start;flex-direction:column}.toolbar,.effectGrid,.imageGrid{grid-template-columns:1fr 1fr}.cell{}}
+
+.scheduleHeader{display:grid;grid-template-columns:1.3fr 1fr .7fr .7fr;gap:9px;margin-bottom:12px}
+.scheduleBox{background:#0d121a;border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:12px}
+.scheduleBox h3{margin:0 0 11px;font-size:15px}
+.eventForm{display:grid;grid-template-columns:repeat(6,minmax(105px,1fr));gap:9px}
+.days{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0 12px}
+.day{display:flex;align-items:center;gap:5px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:#111824;color:var(--muted);font-size:11px}
+.day input{accent-color:var(--accent)}
+.eventList{display:grid;gap:9px}
+.eventCard{background:#0d121a;border:1px solid var(--line);border-radius:13px;padding:12px}
+.eventTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.eventTitle{font-weight:800}
+.eventMeta{margin-top:5px;color:var(--muted);font-size:11px;line-height:1.55}
+.eventActions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.miniBtn{border:1px solid var(--line);background:#182131;color:white;border-radius:8px;padding:7px 9px;font-size:11px;cursor:pointer}
+.priorityBadge{border-radius:999px;padding:5px 8px;background:#1c2740;border:1px solid #334364;font-size:10px;color:#bac6dc;white-space:nowrap}
+.sequenceList{display:grid;gap:6px;margin-top:8px}
+.sequenceStep{display:flex;justify-content:space-between;gap:8px;align-items:center;background:#111824;border:1px solid var(--line);border-radius:9px;padding:8px 9px;font-size:11px}
+.switchLine{display:flex;align-items:center;gap:8px;height:41px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#0d121a;color:var(--muted);font-size:12px}
+.switchLine input{accent-color:var(--accent)}
+@media(max-width:1000px){.scheduleHeader{grid-template-columns:1fr 1fr}.eventForm{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.scheduleHeader,.eventForm{grid-template-columns:1fr 1fr}}
+
 </style>
 </head>
 <body>
@@ -75,6 +98,7 @@ canvas{display:none}
     <button class="tab active" data-tab="config">Configuración</button>
     <button class="tab" data-tab="effects">Efectos</button>
     <button class="tab" data-tab="image">Imagen</button>
+    <button class="tab" data-tab="program">Programación</button>
   </div>
 
   <div class="card">
@@ -200,6 +224,150 @@ canvas{display:none}
       <canvas id="imageCanvas"></canvas>
     </section>
 
+
+    <section id="program" class="panel">
+      <div class="uploadBox">
+        <div class="uploadTitle">Programación · escenas · prioridades</div>
+        <div class="uploadSub">Crea Personalización 1, Personalización 2, etc. El ESP32 usa hora NTP y ejecuta automáticamente el evento activo con mayor prioridad.</div>
+      </div>
+
+      <div class="scheduleBox">
+        <h3>Personalización</h3>
+        <div class="scheduleHeader">
+          <div class="field">
+            <label>PERSONALIZACIÓN</label>
+            <select id="profileSelect"></select>
+          </div>
+          <div class="field">
+            <label>NOMBRE</label>
+            <input id="profileName" value="Personalización 1">
+          </div>
+          <div class="field">
+            <label>ZONA UTC (horas)</label>
+            <input id="profileUtc" type="number" min="-12" max="14" step=".5" value="-4">
+          </div>
+          <label class="switchLine"><input id="profileEnabled" type="checkbox" checked> Programación activa</label>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" id="newProfile">Nueva personalización</button>
+          <button class="btn good" id="saveProfile">Guardar</button>
+          <button class="btn" id="activateProfile">Usar esta personalización</button>
+        </div>
+
+        <div class="help">Si ningún evento está activo, el ESP32 vuelve al efecto normal elegido en la pestaña Efectos.</div>
+      </div>
+
+      <div class="scheduleBox">
+        <h3 id="eventEditorTitle">Nuevo evento</h3>
+
+        <div class="eventForm">
+          <div class="field"><label>NOMBRE DEL EVENTO</label><input id="eventTitle" value="Evento"></div>
+          <div class="field"><label>FECHA ESPECÍFICA (opcional)</label><input id="eventDate" type="date"></div>
+          <div class="field"><label>HORA DE INICIO</label><input id="eventTime" type="time" value="18:00"></div>
+          <div class="field"><label>DURACIÓN (min)</label><input id="eventDuration" type="number" min="1" max="1440" value="30"></div>
+          <div class="field"><label>PRIORIDAD 0–99</label><input id="eventPriority" type="number" min="0" max="99" value="50"></div>
+          <label class="switchLine"><input id="eventEnabled" type="checkbox" checked> Evento activo</label>
+        </div>
+
+        <div class="days">
+          <label class="day"><input type="checkbox" class="eventDay" value="1" checked>Dom</label>
+          <label class="day"><input type="checkbox" class="eventDay" value="2" checked>Lun</label>
+          <label class="day"><input type="checkbox" class="eventDay" value="4" checked>Mar</label>
+          <label class="day"><input type="checkbox" class="eventDay" value="8" checked>Mié</label>
+          <label class="day"><input type="checkbox" class="eventDay" value="16" checked>Jue</label>
+          <label class="day"><input type="checkbox" class="eventDay" value="32" checked>Vie</label>
+          <label class="day"><input type="checkbox" class="eventDay" value="64" checked>Sáb</label>
+        </div>
+
+        <div class="eventForm">
+          <div class="field">
+            <label>TIPO</label>
+            <select id="eventType">
+              <option value="effect">Efecto</option>
+              <option value="image">Última imagen enviada</option>
+              <option value="sequence">Secuencia</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>EFECTO</label>
+            <select id="eventEffect">
+              <option value="solid">Color fijo</option>
+              <option value="chase">Carrera</option>
+              <option value="snake">Serpiente</option>
+              <option value="rainbow">Arcoíris</option>
+              <option value="breathe">Respiración</option>
+              <option value="scanner">Scanner</option>
+              <option value="alternate">Alternado</option>
+              <option value="sparkle">Destellos</option>
+              <option value="wave_h">Ola horizontal</option>
+              <option value="wave_v">Ola vertical</option>
+              <option value="center">Centro → exterior</option>
+              <option value="tetris">Tetris</option>
+              <option value="disco">Discoteca</option>
+              <option value="police">Rojo / Azul</option>
+              <option value="f1_start">Salida F1</option>
+              <option value="f1_race">Carrera F1</option>
+              <option value="off">Apagado</option>
+            </select>
+          </div>
+
+          <div class="field"><label>COLOR 1</label><input id="eventColor1" type="color" value="#0066ff"></div>
+          <div class="field"><label>COLOR 2</label><input id="eventColor2" type="color" value="#ff2bd6"></div>
+          <div class="field"><label>BRILLO %</label><input id="eventBrightness" type="number" min="1" max="100" value="70"></div>
+          <div class="field"><label>VELOCIDAD %</label><input id="eventSpeed" type="number" min="1" max="100" value="50"></div>
+          <div class="field"><label>DIRECCIÓN</label><select id="eventDirection"><option value="1">Normal →</option><option value="-1">Inversa ←</option></select></div>
+        </div>
+
+        <div id="sequenceEditor" class="scheduleBox" style="margin:12px 0 0;display:none">
+          <h3>Pasos de la secuencia</h3>
+          <div class="eventForm">
+            <div class="field">
+              <label>EFECTO DEL PASO</label>
+              <select id="seqEffect">
+                <option value="solid">Color fijo</option>
+                <option value="chase">Carrera</option>
+                <option value="snake">Serpiente</option>
+                <option value="rainbow">Arcoíris</option>
+                <option value="breathe">Respiración</option>
+                <option value="scanner">Scanner</option>
+                <option value="wave_h">Ola horizontal</option>
+                <option value="wave_v">Ola vertical</option>
+                <option value="center">Centro → exterior</option>
+                <option value="tetris">Tetris</option>
+                <option value="disco">Discoteca</option>
+                <option value="police">Rojo / Azul</option>
+                <option value="f1_start">Salida F1</option>
+                <option value="f1_race">Carrera F1</option>
+                <option value="image">Última imagen</option>
+                <option value="off">Apagado</option>
+              </select>
+            </div>
+            <div class="field"><label>DURACIÓN DEL PASO (seg)</label><input id="seqSeconds" type="number" min="1" max="3600" value="10"></div>
+          </div>
+          <div class="actions" style="margin-top:9px">
+            <button class="btn" id="addSeqStep">Añadir paso</button>
+            <button class="btn danger" id="clearSeq">Vaciar secuencia</button>
+          </div>
+          <div id="sequenceList" class="sequenceList"></div>
+        </div>
+
+        <div class="actions" style="margin-top:12px">
+          <button class="btn good" id="saveEvent">Guardar evento</button>
+          <button class="btn" id="cancelEditEvent">Nuevo / cancelar edición</button>
+        </div>
+      </div>
+
+      <div class="scheduleBox">
+        <div class="eventTop">
+          <h3 style="margin:0">Eventos guardados</h3>
+          <span class="priorityBadge">Mayor prioridad gana</span>
+        </div>
+        <div id="eventsList" class="eventList" style="margin-top:11px"></div>
+      </div>
+    </section>
+
   </div>
 </div>
 
@@ -215,6 +383,11 @@ let cols=40,rows=20,path=[],drawing=false;
 let configCells=new Map(),previewCells=new Map(),imageCells=new Map();
 let imageObj=null,imageColors=[];
 let animStart=performance.now();
+
+let personalizations=[];
+let programEvents=[];
+let editingEventId=null;
+let sequenceSteps=[];
 
 function toast(t){
   const e=$('toast');e.textContent=t;e.style.display='block';
@@ -543,6 +716,271 @@ async function sendImageFrame(){
   await saveEffect('image');
 }
 
+
+// ---------- PROGRAMACIÓN / PERSONALIZACIONES ----------
+function escHtml(v){
+  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+function selectedProfile(){
+  return $('profileSelect').value || $('profileName').value.trim() || 'Personalización 1';
+}
+function daysMask(){
+  let mask=0;
+  document.querySelectorAll('.eventDay').forEach(x=>{if(x.checked)mask|=+x.value});
+  return mask;
+}
+function setDaysMask(mask){
+  document.querySelectorAll('.eventDay').forEach(x=>x.checked=(mask & (+x.value))!==0);
+}
+function daysLabel(mask){
+  if(mask===127)return 'Todos los días';
+  const d=[['Dom',1],['Lun',2],['Mar',4],['Mié',8],['Jue',16],['Vie',32],['Sáb',64]];
+  return d.filter(x=>mask&x[1]).map(x=>x[0]).join(', ') || 'Sin días';
+}
+function renderSequence(){
+  const el=$('sequenceList');
+  if(!sequenceSteps.length){
+    el.innerHTML='<div class="help" style="margin:0">Añade los pasos en el orden en que deben reproducirse.</div>';
+    return;
+  }
+  el.innerHTML=sequenceSteps.map((s,i)=>`
+    <div class="sequenceStep">
+      <span><b>${i+1}.</b> ${escHtml(s.effect)} · ${s.duration}s</span>
+      <button class="miniBtn" onclick="removeSeqStep(${i})">Quitar</button>
+    </div>`).join('');
+}
+window.removeSeqStep=i=>{sequenceSteps.splice(i,1);renderSequence()};
+
+function resetEventForm(){
+  editingEventId=null;
+  $('eventEditorTitle').textContent='Nuevo evento';
+  $('eventTitle').value='Evento';
+  $('eventDate').value='';
+  $('eventTime').value='18:00';
+  $('eventDuration').value=30;
+  $('eventPriority').value=50;
+  $('eventEnabled').checked=true;
+  setDaysMask(127);
+  $('eventType').value='effect';
+  $('eventEffect').value='solid';
+  $('eventColor1').value='#0066ff';
+  $('eventColor2').value='#ff2bd6';
+  $('eventBrightness').value=70;
+  $('eventSpeed').value=50;
+  $('eventDirection').value='1';
+  sequenceSteps=[];
+  $('sequenceEditor').style.display='none';
+  renderSequence();
+}
+function updateEventType(){
+  $('sequenceEditor').style.display=$('eventType').value==='sequence'?'block':'none';
+}
+$('eventType').addEventListener('change',updateEventType);
+
+async function loadPrograms(){
+  try{
+    personalizations=await sb('/rest/v1/esp32_personalizations?device_id=eq.'+DEVICE_ID+'&select=*&order=name.asc');
+    if(!personalizations.length){
+      await sb('/rest/v1/esp32_personalizations?on_conflict=device_id,name',{
+        method:'POST',
+        headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+        body:JSON.stringify({
+          device_id:DEVICE_ID,name:'Personalización 1',enabled:true,active:true,
+          timezone_offset_min:-240,version:Date.now(),updated_at:new Date().toISOString()
+        })
+      });
+      personalizations=await sb('/rest/v1/esp32_personalizations?device_id=eq.'+DEVICE_ID+'&select=*&order=name.asc');
+    }
+
+    const current=$('profileSelect').value;
+    $('profileSelect').innerHTML=personalizations.map(p=>
+      `<option value="${escHtml(p.name)}">${p.active?'● ':''}${escHtml(p.name)}</option>`
+    ).join('');
+
+    const active=personalizations.find(p=>p.active);
+    const wanted=personalizations.find(p=>p.name===current) || active || personalizations[0];
+    if(wanted){
+      $('profileSelect').value=wanted.name;
+      fillProfile(wanted);
+      await loadProgramEvents();
+    }
+  }catch(e){
+    toast('Error programación: '+e.message);
+  }
+}
+function fillProfile(p){
+  $('profileName').value=p.name;
+  $('profileUtc').value=(p.timezone_offset_min??-240)/60;
+  $('profileEnabled').checked=p.enabled!==false;
+}
+$('profileSelect').addEventListener('change',async()=>{
+  const p=personalizations.find(x=>x.name===$('profileSelect').value);
+  if(p)fillProfile(p);
+  resetEventForm();
+  await loadProgramEvents();
+});
+
+async function saveProfileRecord(activate=false){
+  const name=$('profileName').value.trim();
+  if(!name)throw new Error('Coloca un nombre para la personalización.');
+
+  if(activate){
+    await sb('/rest/v1/esp32_personalizations?device_id=eq.'+DEVICE_ID,{
+      method:'PATCH',headers:{Prefer:'return=minimal'},
+      body:JSON.stringify({active:false,updated_at:new Date().toISOString()})
+    });
+  }
+
+  const existing=personalizations.find(p=>p.name===name);
+
+  await sb('/rest/v1/esp32_personalizations?on_conflict=device_id,name',{
+    method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+    body:JSON.stringify({
+      device_id:DEVICE_ID,
+      name,
+      enabled:$('profileEnabled').checked,
+      active:activate ? true : (existing?.active ?? false),
+      timezone_offset_min:Math.round((+$('profileUtc').value||-4)*60),
+      version:Date.now(),
+      updated_at:new Date().toISOString()
+    })
+  });
+
+  await command('schedule_reload');
+  await loadPrograms();
+
+  if(personalizations.some(p=>p.name===name)){
+    $('profileSelect').value=name;
+    const saved=personalizations.find(p=>p.name===name);
+    if(saved)fillProfile(saved);
+    await loadProgramEvents();
+  }
+}
+async function loadProgramEvents(){
+  const profile=selectedProfile();
+  try{
+    programEvents=await sb(
+      '/rest/v1/esp32_events?device_id=eq.'+DEVICE_ID+
+      '&personalization=eq.'+encodeURIComponent(profile)+
+      '&select=*&order=priority.desc,start_time.asc'
+    );
+    renderEvents();
+  }catch(e){toast('No se pudieron cargar eventos: '+e.message)}
+}
+function renderEvents(){
+  const el=$('eventsList');
+  if(!programEvents.length){
+    el.innerHTML='<div class="help" style="margin:0">Todavía no hay eventos en esta personalización.</div>';
+    return;
+  }
+
+  el.innerHTML=programEvents.map(e=>{
+    const when=e.event_date ? e.event_date : daysLabel(e.days_mask);
+    const type=e.action_type==='sequence'
+      ? `Secuencia · ${(e.sequence||[]).length} pasos`
+      : e.action_type==='image' ? 'Imagen' : e.action_name;
+    return `<div class="eventCard">
+      <div class="eventTop">
+        <div>
+          <div class="eventTitle">${e.enabled?'':'⏸ '}${escHtml(e.title)}</div>
+          <div class="eventMeta">
+            ${escHtml(when)} · ${String(e.start_time||'').slice(0,5)}
+            · ${Math.round((e.duration_sec||60)/60)} min<br>
+            Acción: ${escHtml(type)}
+          </div>
+        </div>
+        <span class="priorityBadge">Prioridad ${e.priority}</span>
+      </div>
+      <div class="eventActions">
+        <button class="miniBtn" onclick="editProgramEvent(${e.id})">Editar</button>
+        <button class="miniBtn" onclick="toggleProgramEvent(${e.id},${!e.enabled})">${e.enabled?'Pausar':'Activar'}</button>
+        <button class="miniBtn" onclick="deleteProgramEvent(${e.id})">Eliminar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+window.editProgramEvent=id=>{
+  const e=programEvents.find(x=>x.id===id);if(!e)return;
+  editingEventId=id;
+  $('eventEditorTitle').textContent='Editar evento';
+  $('eventTitle').value=e.title||'Evento';
+  $('eventDate').value=e.event_date||'';
+  $('eventTime').value=String(e.start_time||'18:00').slice(0,5);
+  $('eventDuration').value=Math.max(1,Math.round((e.duration_sec||60)/60));
+  $('eventPriority').value=e.priority??50;
+  $('eventEnabled').checked=e.enabled!==false;
+  setDaysMask(e.days_mask??127);
+  $('eventType').value=e.action_type||'effect';
+  $('eventEffect').value=e.action_name||'solid';
+  $('eventColor1').value=e.color1||'#0066ff';
+  $('eventColor2').value=e.color2||'#ff2bd6';
+  $('eventBrightness').value=e.brightness??70;
+  $('eventSpeed').value=e.speed??50;
+  $('eventDirection').value=String(e.direction??1);
+  sequenceSteps=Array.isArray(e.sequence)?e.sequence.map(x=>({effect:x.effect,duration:+x.duration||10})):[];
+  updateEventType();renderSequence();
+  window.scrollTo({top:$('eventEditorTitle').getBoundingClientRect().top+window.scrollY-90,behavior:'smooth'});
+};
+window.toggleProgramEvent=async(id,enabled)=>{
+  try{
+    await sb('/rest/v1/esp32_events?id=eq.'+id+'&device_id=eq.'+DEVICE_ID,{
+      method:'PATCH',headers:{Prefer:'return=minimal'},
+      body:JSON.stringify({enabled,updated_at:new Date().toISOString()})
+    });
+    await command('schedule_reload');
+    await loadProgramEvents();
+  }catch(e){toast('Error: '+e.message)}
+};
+window.deleteProgramEvent=async id=>{
+  if(!confirm('¿Eliminar este evento?'))return;
+  try{
+    await sb('/rest/v1/esp32_events?id=eq.'+id+'&device_id=eq.'+DEVICE_ID,{method:'DELETE'});
+    await command('schedule_reload');
+    await loadProgramEvents();
+  }catch(e){toast('Error: '+e.message)}
+};
+
+async function saveProgramEvent(){
+  const profile=selectedProfile();
+  const type=$('eventType').value;
+  const payload={
+    device_id:DEVICE_ID,
+    personalization:profile,
+    title:$('eventTitle').value.trim()||'Evento',
+    enabled:$('eventEnabled').checked,
+    event_date:$('eventDate').value||null,
+    days_mask:daysMask(),
+    start_time:$('eventTime').value||'18:00',
+    duration_sec:Math.max(60,Math.round((+$('eventDuration').value||1)*60)),
+    priority:Math.max(0,Math.min(99,+$('eventPriority').value||0)),
+    action_type:type,
+    action_name:type==='image'?'image':type==='sequence'?'sequence':$('eventEffect').value,
+    color1:$('eventColor1').value,
+    color2:$('eventColor2').value,
+    brightness:Math.max(1,Math.min(100,+$('eventBrightness').value||70)),
+    speed:Math.max(1,Math.min(100,+$('eventSpeed').value||50)),
+    direction:+$('eventDirection').value===-1?-1:1,
+    sequence:type==='sequence'?sequenceSteps:[],
+    updated_at:new Date().toISOString()
+  };
+
+  if(type==='sequence'&&!sequenceSteps.length)throw new Error('Añade al menos un paso a la secuencia.');
+
+  if(editingEventId){
+    await sb('/rest/v1/esp32_events?id=eq.'+editingEventId+'&device_id=eq.'+DEVICE_ID,{
+      method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)
+    });
+  }else{
+    await sb('/rest/v1/esp32_events',{
+      method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)
+    });
+  }
+
+  await command('schedule_reload');
+  resetEventForm();
+  await loadProgramEvents();
+}
+
 // ---------- BOTONES ----------
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
@@ -567,6 +1005,30 @@ function syncGridInputs(source){
 ['colsInput','colsMirror','rowsInput','rowsMirror'].forEach(id=>{
   $(id).addEventListener('input',()=>syncGridInputs(id));
 });
+
+
+$('newProfile').onclick=()=>{
+  const n=personalizations.length+1;
+  $('profileName').value='Personalización '+n;
+  $('profileUtc').value=-4;
+  $('profileEnabled').checked=true;
+  toast('Coloca el nombre y pulsa Guardar');
+};
+$('saveProfile').onclick=async()=>{
+  try{await saveProfileRecord(false);toast('Personalización guardada')}catch(e){toast('Error: '+e.message)}
+};
+$('activateProfile').onclick=async()=>{
+  try{await saveProfileRecord(true);toast('Personalización activada')}catch(e){toast('Error: '+e.message)}
+};
+$('addSeqStep').onclick=()=>{
+  sequenceSteps.push({effect:$('seqEffect').value,duration:Math.max(1,+$('seqSeconds').value||10)});
+  renderSequence();
+};
+$('clearSeq').onclick=()=>{sequenceSteps=[];renderSequence()};
+$('saveEvent').onclick=async()=>{
+  try{await saveProgramEvent();toast('Evento guardado')}catch(e){toast('Error: '+e.message)}
+};
+$('cancelEditEvent').onclick=resetEventForm;
 
 $('generate').onclick=()=>buildAll(true);
 $('undo').onclick=()=>{path.pop();renderPath();renderImage()};
@@ -598,7 +1060,7 @@ $('sendImage').onclick=async()=>{
   catch(e){$('status').textContent='Error';toast('Error: '+e.message)}
 };
 
-loadSaved();updateLabels();requestAnimationFrame(preview);
+resetEventForm();loadSaved();loadPrograms();updateLabels();requestAnimationFrame(preview);
 </script>
 </body>
 </html>
