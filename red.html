@@ -21,19 +21,25 @@ button,input,select{font:inherit}
 .brand h1{margin:0;font-size:26px;letter-spacing:-.5px}
 .brand p{margin:5px 0 0;color:var(--muted);font-size:13px}
 .status{padding:9px 13px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.025);color:var(--muted);font-size:12px}
-.tabs{display:flex;gap:7px;margin-bottom:11px}
-.tab{border:1px solid var(--line);background:#111722;color:var(--muted);padding:10px 15px;border-radius:11px;cursor:pointer}
+.tabs{display:flex;gap:7px;margin-bottom:11px;overflow:auto}
+.tab{white-space:nowrap;border:1px solid var(--line);background:#111722;color:var(--muted);padding:10px 15px;border-radius:11px;cursor:pointer}
 .tab.active{background:var(--accent);border-color:var(--accent);color:white}
 .card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:15px;box-shadow:0 18px 55px rgba(0,0,0,.2)}
 .panel{display:none}.panel.active{display:block}
 .toolbar{display:grid;grid-template-columns:repeat(6,minmax(110px,1fr));gap:9px;margin-bottom:11px}
+.effectGrid{display:grid;grid-template-columns:repeat(7,minmax(105px,1fr));gap:9px;margin-bottom:12px}
+.imageGrid{display:grid;grid-template-columns:repeat(6,minmax(110px,1fr));gap:9px;margin-bottom:12px}
 .field label{display:block;color:var(--muted);font-size:10px;margin-bottom:6px;letter-spacing:.3px}
 .field input,.field select{width:100%;height:41px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#0d121a;color:white;outline:none}
 .field input[type=color]{padding:4px}
+.field input[type=file]{padding:8px;height:auto}
 .field input:focus,.field select:focus{border-color:var(--accent)}
 .stat{background:#0d121a;border:1px solid var(--line);border-radius:11px;padding:9px 11px}
 .stat span{display:block;color:var(--muted);font-size:10px}
 .stat b{display:block;margin-top:5px;font-size:15px}
+.rangeWrap{background:#0d121a;border:1px solid var(--line);border-radius:11px;padding:9px 11px}
+.rangeWrap label{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-bottom:5px}
+.rangeWrap input{width:100%}
 .actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:11px}
 .btn{border:1px solid var(--line);background:#1a2230;color:#fff;border-radius:10px;padding:10px 13px;cursor:pointer}
 .btn.primary{background:var(--accent);border-color:var(--accent)}
@@ -44,16 +50,15 @@ button,input,select{font:inherit}
 .cell{width:34px;height:34px;border-radius:6px;background:var(--cell);border:1px solid #202a3b;display:flex;align-items:center;justify-content:center;font-size:10px;color:#69758b;position:relative;cursor:crosshair;transition:background .06s,border-color .06s,box-shadow .06s}
 .cell.path{border-color:#6574ff;color:#fff;font-weight:800}
 .cell.path::after{content:'';width:4px;height:4px;border-radius:50%;background:white;position:absolute;right:4px;bottom:4px;opacity:.7}
-.effectGrid{display:grid;grid-template-columns:repeat(7,minmax(100px,1fr));gap:9px;margin-bottom:12px}
-.rangeWrap{background:#0d121a;border:1px solid var(--line);border-radius:11px;padding:9px 11px}
-.rangeWrap label{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-bottom:5px}
-.rangeWrap input{width:100%}
 .help{color:var(--muted);font-size:12px;line-height:1.5;margin-top:11px}
 .toast{display:none;position:fixed;z-index:50;left:50%;bottom:18px;transform:translateX(-50%);background:#171e2a;border:1px solid #364159;border-radius:999px;padding:11px 15px;box-shadow:0 12px 35px rgba(0,0,0,.35)}
 .legend{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 10px;color:var(--muted);font-size:11px}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;background:var(--accent)}
-@media(max-width:1000px){.toolbar{grid-template-columns:repeat(3,1fr)}.effectGrid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:560px){.app{padding:9px}.top{align-items:flex-start;flex-direction:column}.toolbar,.effectGrid{grid-template-columns:1fr 1fr}.cell{width:31px;height:31px}}
+.uploadBox{border:1px dashed #3a4762;border-radius:14px;background:#0d121a;padding:14px;margin-bottom:12px}
+.uploadTitle{font-weight:700;margin-bottom:4px}.uploadSub{color:var(--muted);font-size:12px}
+canvas{display:none}
+@media(max-width:1000px){.toolbar{grid-template-columns:repeat(3,1fr)}.effectGrid,.imageGrid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.app{padding:9px}.top{align-items:flex-start;flex-direction:column}.toolbar,.effectGrid,.imageGrid{grid-template-columns:1fr 1fr}.cell{width:31px;height:31px}}
 </style>
 </head>
 <body>
@@ -61,7 +66,7 @@ button,input,select{font:inherit}
   <div class="top">
     <div class="brand">
       <h1>Tuttovinilos · LED Studio</h1>
-      <p>Mapa físico + efectos para WS2811</p>
+      <p>Mapa físico · efectos · imágenes pixeladas</p>
     </div>
     <div id="status" class="status">Supabase · listo</div>
   </div>
@@ -69,9 +74,11 @@ button,input,select{font:inherit}
   <div class="tabs">
     <button class="tab active" data-tab="config">Configuración</button>
     <button class="tab" data-tab="effects">Efectos</button>
+    <button class="tab" data-tab="image">Imagen</button>
   </div>
 
   <div class="card">
+
     <section id="config" class="panel active">
       <div class="toolbar">
         <div class="field"><label>ANCHO MESA (cm)</label><input id="width" type="number" min="1" step=".1" value="100"></div>
@@ -91,9 +98,7 @@ button,input,select{font:inherit}
         <button class="btn" id="testPath">Probar 1 → N</button>
       </div>
 
-      <div class="workspace">
-        <div id="gridConfig" class="grid"></div>
-      </div>
+      <div class="workspace"><div id="gridConfig" class="grid"></div></div>
       <div class="help">Mantén presionado el mouse o el dedo y recorre la cuadrícula. Cada cuadro nuevo toma el siguiente número físico de LED.</div>
     </section>
 
@@ -102,17 +107,30 @@ button,input,select{font:inherit}
         <div class="field">
           <label>EFECTO</label>
           <select id="effect">
-            <option value="solid">Color fijo</option>
-            <option value="chase">Carrera</option>
-            <option value="snake">Serpiente</option>
-            <option value="rainbow">Arcoíris</option>
-            <option value="breathe">Respiración</option>
-            <option value="scanner">Scanner</option>
-            <option value="wave_h">Ola horizontal</option>
-            <option value="wave_v">Ola vertical</option>
-            <option value="center">Centro → exterior</option>
-            <option value="alternate">Alternado</option>
-            <option value="sparkle">Destellos</option>
+            <optgroup label="Básicos">
+              <option value="solid">Color fijo</option>
+              <option value="chase">Carrera</option>
+              <option value="snake">Serpiente</option>
+              <option value="rainbow">Arcoíris</option>
+              <option value="breathe">Respiración</option>
+              <option value="scanner">Scanner</option>
+              <option value="alternate">Alternado</option>
+              <option value="sparkle">Destellos</option>
+            </optgroup>
+            <optgroup label="Espaciales">
+              <option value="wave_h">Ola horizontal</option>
+              <option value="wave_v">Ola vertical</option>
+              <option value="center">Centro → exterior</option>
+            </optgroup>
+            <optgroup label="Juegos / Fiesta">
+              <option value="tetris">Tetris</option>
+              <option value="disco">Discoteca</option>
+              <option value="police">Rojo / Azul</option>
+            </optgroup>
+            <optgroup label="Racing / F1">
+              <option value="f1_start">Salida F1</option>
+              <option value="f1_race">Carrera F1</option>
+            </optgroup>
             <option value="off">Apagado</option>
           </select>
         </div>
@@ -120,13 +138,7 @@ button,input,select{font:inherit}
         <div class="field"><label>COLOR 2</label><input id="color2" type="color" value="#ff2bd6"></div>
         <div class="rangeWrap"><label><span>BRILLO</span><b id="brightnessVal">70%</b></label><input id="brightness" type="range" min="1" max="100" value="70"></div>
         <div class="rangeWrap"><label><span>VELOCIDAD</span><b id="speedVal">50%</b></label><input id="speed" type="range" min="1" max="100" value="50"></div>
-        <div class="field">
-          <label>DIRECCIÓN</label>
-          <select id="direction">
-            <option value="1">Normal →</option>
-            <option value="-1">Inversa ←</option>
-          </select>
-        </div>
+        <div class="field"><label>DIRECCIÓN</label><select id="direction"><option value="1">Normal →</option><option value="-1">Inversa ←</option></select></div>
         <div class="stat"><span>PIXELS</span><b id="effectCount">0</b></div>
       </div>
 
@@ -136,15 +148,58 @@ button,input,select{font:inherit}
       </div>
 
       <div class="legend">
-        <span><i class="dot"></i>La vista es una simulación</span>
-        <span>El ESP32 genera el movimiento localmente, no por Internet cuadro a cuadro.</span>
+        <span><i class="dot"></i>Vista simulada</span>
+        <span>El ESP32 genera el movimiento localmente para que sea fluido.</span>
       </div>
 
-      <div class="workspace">
-        <div id="gridPreview" class="grid"></div>
-      </div>
-      <div class="help">Los efectos horizontales, verticales y desde el centro usan la posición X/Y del mapa, aunque físicamente la cinta esté instalada en serpentina.</div>
+      <div class="workspace"><div id="gridPreview" class="grid"></div></div>
     </section>
+
+    <section id="image" class="panel">
+      <div class="uploadBox">
+        <div class="uploadTitle">Imagen → matriz LED</div>
+        <div class="uploadSub">Sube JPG, PNG o WebP. La imagen se adapta a la cuadrícula y después se traduce al orden físico real de la cinta.</div>
+      </div>
+
+      <div class="imageGrid">
+        <div class="field"><label>ARCHIVO</label><input id="imageFile" type="file" accept="image/*"></div>
+        <div class="field"><label>AJUSTE</label>
+          <select id="fitMode">
+            <option value="contain">Completa / mantener proporción</option>
+            <option value="cover">Rellenar / recortar</option>
+            <option value="stretch">Estirar a la cuadrícula</option>
+          </select>
+        </div>
+        <div class="field"><label>FONDO</label><input id="imageBg" type="color" value="#000000"></div>
+        <div class="rangeWrap"><label><span>ZOOM</span><b id="zoomVal">100%</b></label><input id="zoom" type="range" min="50" max="250" value="100"></div>
+        <div class="rangeWrap"><label><span>BRILLO IMAGEN</span><b id="imgBrightVal">100%</b></label><input id="imgBright" type="range" min="10" max="200" value="100"></div>
+        <div class="rangeWrap"><label><span>SATURACIÓN</span><b id="satVal">100%</b></label><input id="saturation" type="range" min="0" max="250" value="100"></div>
+
+        <div class="rangeWrap"><label><span>MOVER X</span><b id="offsetXVal">0%</b></label><input id="offsetX" type="range" min="-100" max="100" value="0"></div>
+        <div class="rangeWrap"><label><span>MOVER Y</span><b id="offsetYVal">0%</b></label><input id="offsetY" type="range" min="-100" max="100" value="0"></div>
+        <div class="field"><label>REDUCCIÓN DE COLOR</label>
+          <select id="colorLevels">
+            <option value="256">Color completo</option>
+            <option value="32">32 niveles</option>
+            <option value="16">16 niveles</option>
+            <option value="8">8 niveles</option>
+          </select>
+        </div>
+        <div class="stat"><span>RESOLUCIÓN LED</span><b id="imageResolution">—</b></div>
+        <div class="stat"><span>LEDS CON IMAGEN</span><b id="imagePixelCount">0</b></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="centerImage">Centrar imagen</button>
+        <button class="btn good" id="sendImage">Enviar imagen al ESP32</button>
+        <button class="btn danger" id="clearImage">Limpiar</button>
+      </div>
+
+      <div class="workspace"><div id="gridImage" class="grid"></div></div>
+      <div class="help">La previsualización representa los LEDs reales. Los cuadros fuera de tu recorrido quedan apagados.</div>
+      <canvas id="imageCanvas"></canvas>
+    </section>
+
   </div>
 </div>
 
@@ -157,7 +212,8 @@ const DEVICE_ID="esp32_01";
 
 const $=id=>document.getElementById(id);
 let cols=40,rows=20,path=[],drawing=false;
-let configCells=new Map(),previewCells=new Map();
+let configCells=new Map(),previewCells=new Map(),imageCells=new Map();
+let imageObj=null,imageColors=[];
 let animStart=performance.now();
 
 function toast(t){
@@ -168,7 +224,9 @@ function k(x,y){return x+','+y}
 function dims(){
   const w=Math.max(.1,+$('width').value||100),h=Math.max(.1,+$('height').value||50),s=Math.max(.1,+$('spacing').value||2.5);
   cols=Math.max(1,Math.round(w/s));rows=Math.max(1,Math.round(h/s));
-  $('cols').textContent=cols;$('rows').textContent=rows;return{w,h,s};
+  $('cols').textContent=cols;$('rows').textContent=rows;
+  $('imageResolution').textContent=cols+' × '+rows;
+  return{w,h,s};
 }
 function buildGrid(target,map,editable){
   const g=$(target);g.innerHTML='';g.style.gridTemplateColumns=`repeat(${cols},34px)`;map.clear();
@@ -190,26 +248,29 @@ function buildAll(reset=true){
   dims();if(reset)path=[];
   buildGrid('gridConfig',configCells,true);
   buildGrid('gridPreview',previewCells,false);
-  renderPath();
+  buildGrid('gridImage',imageCells,false);
+  renderPath();renderImage();
 }
 function addCell(c){
   const p={x:+c.dataset.x,y:+c.dataset.y};
   if(path.some(v=>v.x===p.x&&v.y===p.y))return;
-  path.push(p);renderPath();
+  path.push(p);renderPath();renderImage();
 }
 function renderPath(){
   for(const c of configCells.values()){c.className='cell';c.textContent=''}
   path.forEach((p,i)=>{const c=configCells.get(k(p.x,p.y));if(c){c.classList.add('path');c.textContent=i+1}});
-  $('count').textContent=path.length;$('effectCount').textContent=path.length;
+  $('count').textContent=path.length;$('effectCount').textContent=path.length;$('imagePixelCount').textContent=path.length;
 }
-addEventListener('pointerup',()=>drawing=false);addEventListener('pointercancel',()=>drawing=false);
+addEventListener('pointerup',()=>drawing=false);
+addEventListener('pointercancel',()=>drawing=false);
 
 async function sb(endpoint,options={}){
   const r=await fetch(SUPABASE_URL+endpoint,{
     ...options,
     headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',...(options.headers||{})}
   });
-  const txt=await r.text();if(!r.ok)throw new Error(txt||('HTTP '+r.status));
+  const txt=await r.text();
+  if(!r.ok)throw new Error(txt||('HTTP '+r.status));
   try{return JSON.parse(txt)}catch{return txt}
 }
 async function command(cmd){
@@ -229,26 +290,7 @@ async function saveLayout(){
   });
   await command('layout_reload');
 }
-async function loadSaved(){
-  try{
-    const r=await sb('/rest/v1/esp32_layouts?device_id=eq.'+DEVICE_ID+'&select=*');
-    if(r?.length){
-      const a=r[0];$('width').value=a.width_cm;$('height').value=a.height_cm;$('spacing').value=a.spacing_cm;
-      dims();buildGrid('gridConfig',configCells,true);buildGrid('gridPreview',previewCells,false);
-      path=(a.path||[]).map(p=>({x:+p[0],y:+p[1]}));renderPath();
-    }else buildAll(true);
-
-    const fx=await sb('/rest/v1/esp32_effects?device_id=eq.'+DEVICE_ID+'&select=*');
-    if(fx?.length){
-      const f=fx[0];
-      $('effect').value=f.effect||'solid';$('color1').value=f.color1||'#0066ff';$('color2').value=f.color2||'#ff2bd6';
-      $('brightness').value=f.brightness??70;$('speed').value=f.speed??50;$('direction').value=String(f.direction??1);
-      updateLabels();
-    }
-    $('status').textContent='Supabase · sincronizado';
-  }catch(e){buildAll(true);$('status').textContent='Supabase · error';toast('No se pudo cargar: '+e.message)}
-}
-async function sendEffect(effectOverride=null){
+async function saveEffect(effectOverride=null){
   const payload={
     device_id:DEVICE_ID,effect:effectOverride||$('effect').value,
     color1:$('color1').value,color2:$('color2').value,
@@ -259,7 +301,35 @@ async function sendEffect(effectOverride=null){
     method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)
   });
 }
+async function loadSaved(){
+  try{
+    const r=await sb('/rest/v1/esp32_layouts?device_id=eq.'+DEVICE_ID+'&select=*');
+    if(r?.length){
+      const a=r[0];$('width').value=a.width_cm;$('height').value=a.height_cm;$('spacing').value=a.spacing_cm;
+      dims();
+      buildGrid('gridConfig',configCells,true);
+      buildGrid('gridPreview',previewCells,false);
+      buildGrid('gridImage',imageCells,false);
+      path=(a.path||[]).map(p=>({x:+p[0],y:+p[1]}));renderPath();
+    }else buildAll(true);
 
+    const fx=await sb('/rest/v1/esp32_effects?device_id=eq.'+DEVICE_ID+'&select=*');
+    if(fx?.length){
+      const f=fx[0];
+      if([...$('effect').options].some(o=>o.value===f.effect))$('effect').value=f.effect||'solid';
+      $('color1').value=f.color1||'#0066ff';$('color2').value=f.color2||'#ff2bd6';
+      $('brightness').value=f.brightness??70;$('speed').value=f.speed??50;$('direction').value=String(f.direction??1);
+      updateLabels();
+    }
+    $('status').textContent='Supabase · sincronizado';
+  }catch(e){
+    if(!configCells.size)buildAll(true);
+    $('status').textContent='Supabase · error';
+    toast('No se pudo cargar: '+e.message);
+  }
+}
+
+// ---------- PREVIEW EFECTOS ----------
 function hexRgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]}
 function mix(a,b,t){return a.map((v,i)=>Math.round(v+(b[i]-v)*t))}
 function css(c,b=1){return`rgb(${Math.round(c[0]*b)},${Math.round(c[1]*b)},${Math.round(c[2]*b)})`}
@@ -269,38 +339,46 @@ function wheel(pos){
   if(pos<170){pos-=85;return[0,255-pos*3,pos*3]}
   pos-=170;return[pos*3,0,255-pos*3];
 }
-function updateLabels(){$('brightnessVal').textContent=$('brightness').value+'%';$('speedVal').textContent=$('speed').value+'%'}
-$('brightness').oninput=updateLabels;$('speed').oninput=updateLabels;
+function hash(n){n=((n>>>16)^n)*0x45d9f3b;n=((n>>>16)^n)*0x45d9f3b;return((n>>>16)^n)>>>0}
+function updateLabels(){
+  $('brightnessVal').textContent=$('brightness').value+'%';
+  $('speedVal').textContent=$('speed').value+'%';
+  $('zoomVal').textContent=$('zoom').value+'%';
+  $('imgBrightVal').textContent=$('imgBright').value+'%';
+  $('satVal').textContent=$('saturation').value+'%';
+  $('offsetXVal').textContent=$('offsetX').value+'%';
+  $('offsetYVal').textContent=$('offsetY').value+'%';
+}
+['brightness','speed','zoom','imgBright','saturation','offsetX','offsetY'].forEach(id=>$(id).addEventListener('input',()=>{
+  updateLabels();
+  if(['zoom','imgBright','saturation','offsetX','offsetY'].includes(id))renderImage();
+}));
 
 function preview(now){
   requestAnimationFrame(preview);
-  if(!previewCells.size)return;
+  if(!previewCells.size||!path.length)return;
 
   for(const c of previewCells.values()){c.style.background='';c.style.borderColor='';c.textContent=''}
-  if(!path.length)return;
-
   const fx=$('effect').value,c1=hexRgb($('color1').value),c2=hexRgb($('color2').value);
   const bri=+$('brightness').value/100,sp=+$('speed').value,dir=+$('direction').value;
-  const t=(now-animStart)/1000;
-  const phase=t*(.5+sp/18)*dir;
-  const N=path.length;
+  const t=(now-animStart)/1000,phase=t*(.5+sp/18)*dir,N=path.length;
 
   path.forEach((p,i)=>{
     const c=previewCells.get(k(p.x,p.y));if(!c)return;
     let col=[0,0,0],m=1;
+
     if(fx==='solid')col=c1;
     else if(fx==='off'){col=[0,0,0];m=0}
     else if(fx==='chase'){
-      const head=((Math.floor(phase*5)%N)+N)%N;col=c1;m=i===head?1:.035;
+      const head=((Math.floor(phase*5)%N)+N)%N;col=c1;m=i===head?1:.025;
     }else if(fx==='snake'){
       const head=((Math.floor(phase*5)%N)+N)%N,len=Math.max(3,Math.round(N*.10));
-      let d=(head-i+N)%N;if(dir<0)d=(i-head+N)%N;
-      col=c1;m=d<len?1-d/len:.025;
+      let d=(head-i+N)%N;if(dir<0)d=(i-head+N)%N;col=c1;m=d<len?1-d/len:.02;
     }else if(fx==='rainbow')col=wheel(i/N*256+phase*22);
     else if(fx==='breathe'){col=c1;m=.08+.92*((Math.sin(phase)+1)/2)}
     else if(fx==='scanner'){
       const period=Math.max(1,2*(N-1)),v=((Math.floor(Math.abs(phase)*7)%period)+period)%period;
-      const head=v<N?v:period-v;const d=Math.abs(i-head);col=c1;m=Math.max(.025,1-d/5);
+      const head=v<N?v:period-v,d=Math.abs(i-head);col=c1;m=Math.max(.02,1-d/5);
     }else if(fx==='wave_h'){
       const q=(Math.sin(phase+p.x/Math.max(1,cols-1)*Math.PI*2)+1)/2;col=mix(c1,c2,q);
     }else if(fx==='wave_v'){
@@ -310,26 +388,156 @@ function preview(now){
       const q=(Math.sin(phase-Math.sqrt(dx*dx+dy*dy)*7)+1)/2;col=mix(c1,c2,q);
     }else if(fx==='alternate')col=((i+Math.floor(phase*3))&1)?c1:c2;
     else if(fx==='sparkle'){
-      const seed=(i*1103515245+Math.floor(t*(2+sp/12))*12345)>>>0;
-      col=(seed%13===0)?c2:c1;m=(seed%13===0)?1:.08;
+      const seed=hash(i+Math.floor(t*(2+sp/12))*1009);col=(seed%13===0)?c2:c1;m=(seed%13===0)?1:.08;
+    }else if(fx==='disco'){
+      col=wheel(hash(i+Math.floor(t*(2+sp/10))*977)%256);m=.3+(hash(i*7+Math.floor(t*8))%70)/100;
+    }else if(fx==='police'){
+      const side=p.x<cols/2;const blink=Math.floor(t*(4+sp/15))%2;col=(side^blink)?[255,0,0]:[0,40,255];
+    }else if(fx==='f1_race'){
+      const car=((Math.floor(phase*7)%N)+N)%N;
+      const d=(i-car+N)%N;if(d<4){col=d===0?[255,255,255]:d===1?[255,0,0]:d===2?[255,255,0]:[0,120,255];m=1}else m=.01;
+    }else if(fx==='f1_start'){
+      const cyc=(t*1000)%8500;
+      if(cyc<5000){
+        const on=Math.min(5,Math.floor(cyc/850)+1);
+        let active=false;
+        for(let g=0;g<on;g++){
+          const gx=(g+1)*cols/6,gy=Math.max(1,rows*.22);
+          if(Math.hypot(p.x-gx,p.y-gy)<Math.max(1.2,Math.min(cols,rows)*.05))active=true;
+        }
+        col=[255,0,0];m=active?1:.01;
+      }else if(cyc<5800){col=[0,0,0];m=0}
+      else{
+        const q=((cyc-5800)/2700)*cols*1.5;
+        const d=Math.abs(p.x-q);col=[0,255,80];m=Math.max(.01,1-d/4);
+      }
+    }else if(fx==='tetris'){
+      const piece=Math.floor(t*(.5+sp/80)),local=(t*(.5+sp/80))%1;
+      const x0=hash(piece)%Math.max(1,cols-3),y0=Math.floor(local*(rows+4))-3;
+      const shape=hash(piece+99)%4;
+      const blocks=shape===0?[[0,0],[1,0],[2,0],[3,0]]:
+                   shape===1?[[0,0],[0,1],[1,1],[2,1]]:
+                   shape===2?[[0,0],[1,0],[0,1],[1,1]]:
+                             [[1,0],[0,1],[1,1],[2,1]];
+      const hit=blocks.some(b=>p.x===x0+b[0]&&p.y===y0+b[1]);
+      col=wheel(hash(piece)%256);m=hit?1:.015;
     }
-    c.style.background=css(col,bri*m);c.style.borderColor=m>.25?'rgba(255,255,255,.35)':'#202a3b';c.textContent=i+1;
+
+    c.style.background=css(col,bri*m);
+    c.style.borderColor=m>.25?'rgba(255,255,255,.35)':'#202a3b';
+    c.textContent=i+1;
   });
 }
 
+// ---------- IMAGEN ----------
+function quant(v,levels){
+  if(levels>=256)return v;
+  const steps=Math.max(2,levels),step=255/(steps-1);
+  return Math.round(Math.round(v/step)*step);
+}
+function rgbHex(r,g,b){
+  return '#'+[r,g,b].map(v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('');
+}
+function renderImage(){
+  if(!imageCells.size)return;
+  for(const c of imageCells.values()){c.style.background='';c.style.borderColor='#202a3b';c.textContent=''}
+  imageColors=[];
+  if(!imageObj||!path.length)return;
+
+  const canvas=$('imageCanvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+  canvas.width=cols;canvas.height=rows;
+  ctx.imageSmoothingEnabled=true;
+  ctx.fillStyle=$('imageBg').value;ctx.fillRect(0,0,cols,rows);
+  ctx.filter=`brightness(${$('imgBright').value}%) saturate(${$('saturation').value}%)`;
+
+  const mode=$('fitMode').value,zoom=+$('zoom').value/100;
+  const iw=imageObj.naturalWidth,ih=imageObj.naturalHeight;
+  let dw,dh;
+  if(mode==='stretch'){dw=cols*zoom;dh=rows*zoom}
+  else{
+    const base=mode==='cover'?Math.max(cols/iw,rows/ih):Math.min(cols/iw,rows/ih);
+    dw=iw*base*zoom;dh=ih*base*zoom;
+  }
+  const ox=+$('offsetX').value/100*cols/2,oy=+$('offsetY').value/100*rows/2;
+  const dx=(cols-dw)/2+ox,dy=(rows-dh)/2+oy;
+  ctx.drawImage(imageObj,dx,dy,dw,dh);
+  ctx.filter='none';
+
+  const data=ctx.getImageData(0,0,cols,rows).data;
+  const levels=+$('colorLevels').value;
+  path.forEach((p,i)=>{
+    const pos=(p.y*cols+p.x)*4;
+    const r=quant(data[pos],levels),g=quant(data[pos+1],levels),b=quant(data[pos+2],levels);
+    const hex=rgbHex(r,g,b);imageColors.push(hex);
+    const c=imageCells.get(k(p.x,p.y));
+    if(c){c.style.background=hex;c.style.borderColor='rgba(255,255,255,.22)';c.textContent=i+1}
+  });
+}
+$('imageFile').addEventListener('change',e=>{
+  const f=e.target.files?.[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{imageObj=img;renderImage();toast('Imagen cargada')};
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(f);
+});
+['fitMode','imageBg','colorLevels'].forEach(id=>$(id).addEventListener('change',renderImage));
+
+async function sendImageFrame(){
+  if(!imageObj)throw new Error('Selecciona una imagen.');
+  if(!path.length)throw new Error('Primero crea el recorrido LED.');
+  renderImage();
+  if(imageColors.length!==path.length)throw new Error('No se pudo generar la matriz de imagen.');
+
+  const frame={
+    device_id:DEVICE_ID,cols,rows,pixel_count:imageColors.length,
+    colors:imageColors,version:Date.now(),updated_at:new Date().toISOString()
+  };
+  await sb('/rest/v1/esp32_frames?on_conflict=device_id',{
+    method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(frame)
+  });
+  await saveEffect('image');
+}
+
+// ---------- BOTONES ----------
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
   b.classList.add('active');$(b.dataset.tab).classList.add('active');
+  if(b.dataset.tab==='image')renderImage();
 });
+
 $('generate').onclick=()=>buildAll(true);
-$('undo').onclick=()=>{path.pop();renderPath()};
-$('reverse').onclick=()=>{path.reverse();renderPath()};
-$('clear').onclick=()=>{if(confirm('¿Borrar todo el recorrido?')){path=[];renderPath()}};
-$('sendLayout').onclick=async()=>{try{$('status').textContent='Guardando recorrido...';await saveLayout();$('status').textContent='Recorrido enviado';toast('Recorrido guardado')}catch(e){toast('Error: '+e.message)}};
-$('testPath').onclick=async()=>{try{await saveLayout();await sendEffect('path_test');toast('Prueba 1 → N enviada')}catch(e){toast('Error: '+e.message)}};
-$('sendEffect').onclick=async()=>{try{$('status').textContent='Enviando efecto...';await sendEffect();$('status').textContent='Efecto enviado';toast('Efecto enviado al ESP32')}catch(e){toast('Error: '+e.message)}};
-$('off').onclick=async()=>{try{await sendEffect('off');toast('Apagado enviado')}catch(e){toast('Error: '+e.message)}};
+$('undo').onclick=()=>{path.pop();renderPath();renderImage()};
+$('reverse').onclick=()=>{path.reverse();renderPath();renderImage()};
+$('clear').onclick=()=>{if(confirm('¿Borrar todo el recorrido?')){path=[];renderPath();renderImage()}};
+
+$('sendLayout').onclick=async()=>{
+  try{$('status').textContent='Guardando recorrido...';await saveLayout();$('status').textContent='Recorrido enviado';toast('Recorrido guardado')}
+  catch(e){toast('Error: '+e.message)}
+};
+$('testPath').onclick=async()=>{
+  try{await saveLayout();await saveEffect('path_test');toast('Prueba 1 → N enviada')}
+  catch(e){toast('Error: '+e.message)}
+};
+$('sendEffect').onclick=async()=>{
+  try{$('status').textContent='Enviando efecto...';await saveEffect();$('status').textContent='Efecto enviado';toast('Efecto enviado al ESP32')}
+  catch(e){toast('Error: '+e.message)}
+};
+$('off').onclick=async()=>{try{await saveEffect('off');toast('Apagado enviado')}catch(e){toast('Error: '+e.message)}};
+
+$('centerImage').onclick=()=>{
+  $('zoom').value=100;$('offsetX').value=0;$('offsetY').value=0;updateLabels();renderImage();
+};
+$('clearImage').onclick=()=>{
+  imageObj=null;imageColors=[];$('imageFile').value='';renderImage();toast('Imagen limpiada');
+};
+$('sendImage').onclick=async()=>{
+  try{$('status').textContent='Enviando imagen...';await sendImageFrame();$('status').textContent='Imagen enviada';toast('Imagen enviada al ESP32')}
+  catch(e){$('status').textContent='Error';toast('Error: '+e.message)}
+};
 
 loadSaved();updateLabels();requestAnimationFrame(preview);
 </script>
