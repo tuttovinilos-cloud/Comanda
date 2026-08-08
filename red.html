@@ -2,117 +2,256 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RED · Tuttovinilos</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090c12">
+<title>Tuttovinilos · LED Mapper</title>
 <style>
+:root{
+  --bg:#090c12;--panel:#121722;--panel2:#171d29;--line:#283247;
+  --text:#f5f7fb;--muted:#8e99ad;--accent:#6f7cff;--good:#54dfa0;
+  --danger:#ff6f7d;--cell:#111722;--selected:#6675ff;
+}
 *{box-sizing:border-box}
-body{
-  margin:0;
-  min-height:100vh;
-  display:grid;
-  place-items:center;
-  background:#0b0f15;
-  color:#fff;
-  font-family:Arial,sans-serif;
-  padding:20px
-}
-.panel{
-  width:min(560px,100%);
-  background:#151b25;
-  border:1px solid #293243;
-  border-radius:22px;
-  padding:20px
-}
-h1{margin:0 0 6px}
-p{margin:0 0 18px;color:#98a2b3;font-size:14px}
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px
-}
-button{
-  min-height:150px;
-  border:0;
-  border-radius:20px;
-  color:#fff;
-  font-size:21px;
-  font-weight:800;
-  cursor:pointer;
-  transition:.15s transform
-}
-button:active{transform:scale(.98)}
-.green{background:#1fa75b}
-.red{background:#d63d4c}
-.blue{background:#3478e5}
-.off{background:#333b49}
-#status{
-  margin-top:14px;
-  padding:10px 12px;
-  border-radius:12px;
-  background:#0e131b;
-  color:#aeb7c6;
-  font-size:13px
-}
-@media(max-width:520px){
-  .grid{grid-template-columns:1fr}
-  button{min-height:110px}
-}
+html,body{margin:0;min-height:100%;font-family:Inter,Arial,sans-serif;background:
+radial-gradient(circle at 0 0,rgba(111,124,255,.17),transparent 28%),
+radial-gradient(circle at 100% 15%,rgba(0,210,255,.08),transparent 25%),var(--bg);color:var(--text)}
+button,input{font:inherit}
+.app{max-width:1500px;margin:auto;padding:16px}
+.top{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:14px}
+.brand h1{margin:0;font-size:25px;letter-spacing:-.4px}
+.brand p{margin:5px 0 0;color:var(--muted);font-size:13px}
+.status{border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:999px;padding:9px 13px;font-size:12px;color:var(--muted)}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.toolbar{display:grid;grid-template-columns:repeat(6,minmax(115px,1fr));gap:10px;margin-bottom:12px}
+.field label{display:block;color:var(--muted);font-size:11px;margin:0 0 6px}
+.field input{width:100%;padding:11px;border-radius:11px;border:1px solid var(--line);background:#0d121a;color:white;outline:none}
+.field input:focus{border-color:var(--accent)}
+.stat{background:#0d121a;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat span{display:block;color:var(--muted);font-size:11px}
+.stat b{display:block;margin-top:5px;font-size:15px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.btn{border:1px solid var(--line);background:#1b2331;color:white;border-radius:11px;padding:10px 14px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent)}
+.btn.good{background:#164b37;border-color:#236f51}
+.btn.danger{background:#3b2027;border-color:#6d313d}
+.workspace{position:relative;overflow:auto;max-height:72vh;border-radius:16px;border:1px solid var(--line);background:#0b0f16;padding:18px;touch-action:none}
+.grid{display:grid;gap:3px;width:max-content;min-width:100%;user-select:none}
+.cell{width:34px;height:34px;border-radius:6px;background:var(--cell);border:1px solid #20293a;display:flex;align-items:center;justify-content:center;font-size:10px;color:#667085;position:relative;cursor:crosshair}
+.cell:hover{border-color:#56637a}
+.cell.sel{background:linear-gradient(145deg,#5665f5,#7b86ff);border-color:#95a0ff;color:white;font-weight:800;box-shadow:0 0 0 1px rgba(255,255,255,.06) inset}
+.cell.sel::after{content:'';position:absolute;width:5px;height:5px;border-radius:50%;background:white;right:4px;bottom:4px;opacity:.8}
+.help{margin-top:12px;color:var(--muted);font-size:12px;line-height:1.5}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:none;z-index:30;padding:11px 15px;border-radius:999px;background:#171d28;border:1px solid #374157;box-shadow:0 12px 35px rgba(0,0,0,.35)}
+@media(max-width:900px){.toolbar{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.app{padding:10px}.top{align-items:flex-start;flex-direction:column}.toolbar{grid-template-columns:1fr 1fr}.cell{width:31px;height:31px}}
 </style>
 </head>
 <body>
-<div class="panel">
-  <h1>RED</h1>
-  <p>Control remoto del ESP32 vía Supabase</p>
-
-  <div class="grid">
-    <button class="green" onclick="sendCommand('green')">VERDE</button>
-    <button class="red" onclick="sendCommand('red')">ROJO</button>
-    <button class="blue" onclick="sendCommand('blue')">AZUL</button>
-    <button class="off" onclick="sendCommand('off')">APAGAR</button>
+<div class="app">
+  <div class="top">
+    <div class="brand">
+      <h1>Tuttovinilos · LED Mapper</h1>
+      <p>Dibuja el recorrido físico de la cinta WS2811 y envíalo al ESP32</p>
+    </div>
+    <div id="status" class="status">Supabase · listo</div>
   </div>
 
-  <div id="status">Listo.</div>
+  <div class="card">
+    <div class="toolbar">
+      <div class="field"><label>ANCHO DE MESA (cm)</label><input id="width" type="number" min="1" step="0.1" value="100"></div>
+      <div class="field"><label>ALTO DE MESA (cm)</label><input id="height" type="number" min="1" step="0.1" value="50"></div>
+      <div class="field"><label>SEPARACIÓN PIXEL (cm)</label><input id="spacing" type="number" min="0.1" step="0.1" value="2.5"></div>
+      <div class="stat"><span>COLUMNAS</span><b id="cols">40</b></div>
+      <div class="stat"><span>FILAS</span><b id="rows">20</b></div>
+      <div class="stat"><span>LEDS EN RECORRIDO</span><b id="count">0</b></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="generate">Crear cuadrícula</button>
+      <button class="btn" id="undo">Deshacer</button>
+      <button class="btn" id="reverse">Invertir recorrido</button>
+      <button class="btn danger" id="clear">Borrar recorrido</button>
+      <button class="btn good" id="send">Enviar al ESP32</button>
+      <button class="btn" id="test">Probar recorrido</button>
+      <button class="btn" id="off">Apagar</button>
+    </div>
+
+    <div class="workspace" id="workspace">
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="help">
+      Mantén presionado el mouse o el dedo y recorre los cuadros en el orden físico de la cinta.
+      Cada cuadro nuevo recibe automáticamente el siguiente número de LED.
+    </div>
+  </div>
 </div>
+<div id="toast" class="toast"></div>
 
 <script>
-const SB_URL = "https://ujfdsabypflseijatxba.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZmRzYWJ5cGZsc2VpamF0eGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNjcxNTIsImV4cCI6MjA5MTg0MzE1Mn0.Tyi_TeKaVG0PMA4R-aO8GPgP525GLZcqipB-tXmFq5c";
+const SUPABASE_URL = "https://ujfdsabypflseijatxba.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZmRzYWJ5cGZsc2VpamF0eGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNjcxNTIsImV4cCI6MjA5MTg0MzE1Mn0.Tyi_TeKaVG0PMA4R-aO8GPgP525GLZcqipB-tXmFq5c";
 const DEVICE_ID = "esp32_01";
 
-async function sendCommand(command) {
-  const status = document.getElementById('status');
-  status.textContent = 'Enviando: ' + command + '...';
+let cols=40, rows=20;
+let path=[];
+let drawing=false;
+let cellMap=new Map();
 
-  try {
-    const r = await fetch(
-      SB_URL + '/rest/v1/esp32_commands?device_id=eq.' + encodeURIComponent(DEVICE_ID),
-      {
-        method: 'PATCH',
-        headers: {
-          'apikey': SB_KEY,
-          'Authorization': 'Bearer ' + SB_KEY,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify({
-          command: command,
-          updated_at: new Date().toISOString()
-        })
-      }
-    );
+const $=id=>document.getElementById(id);
 
-    const txt = await r.text();
+function toast(text){
+  const el=$('toast'); el.textContent=text; el.style.display='block';
+  clearTimeout(window.__tt); window.__tt=setTimeout(()=>el.style.display='none',2600);
+}
 
-    if (!r.ok) {
-      status.textContent = 'Error Supabase: ' + txt;
-      return;
+function dimensions(){
+  const w=Math.max(.1,parseFloat($('width').value)||100);
+  const h=Math.max(.1,parseFloat($('height').value)||50);
+  const s=Math.max(.1,parseFloat($('spacing').value)||2.5);
+  cols=Math.max(1,Math.round(w/s));
+  rows=Math.max(1,Math.round(h/s));
+  $('cols').textContent=cols; $('rows').textContent=rows;
+  return {w,h,s};
+}
+
+function key(x,y){return x+','+y}
+
+function buildGrid(reset=true){
+  dimensions();
+  if(reset) path=[];
+  const g=$('grid');
+  g.innerHTML='';
+  g.style.gridTemplateColumns=`repeat(${cols},34px)`;
+  cellMap.clear();
+
+  for(let y=0;y<rows;y++){
+    for(let x=0;x<cols;x++){
+      const c=document.createElement('div');
+      c.className='cell';
+      c.dataset.x=x; c.dataset.y=y;
+      c.addEventListener('pointerdown',e=>{
+        e.preventDefault(); drawing=true; try{c.setPointerCapture(e.pointerId)}catch{}
+        addCell(c);
+      });
+      c.addEventListener('pointerenter',()=>{if(drawing)addCell(c)});
+      c.addEventListener('pointermove',e=>{
+        if(!drawing || e.pointerType==='mouse') return;
+        const hit=document.elementFromPoint(e.clientX,e.clientY);
+        if(hit?.classList?.contains('cell')) addCell(hit);
+      });
+      cellMap.set(key(x,y),c);
+      g.appendChild(c);
     }
+  }
+  renderPath();
+}
 
-    status.textContent = 'Comando enviado: ' + command;
-  } catch (e) {
-    status.textContent = 'Error de red: ' + e.message;
+function addCell(c){
+  const x=+c.dataset.x, y=+c.dataset.y;
+  const k=key(x,y);
+  if(path.some(p=>key(p.x,p.y)===k)) return;
+  path.push({x,y});
+  renderPath();
+}
+
+function renderPath(){
+  for(const c of cellMap.values()){c.classList.remove('sel');c.textContent='';}
+  path.forEach((p,i)=>{
+    const c=cellMap.get(key(p.x,p.y));
+    if(c){c.classList.add('sel');c.textContent=i+1;}
+  });
+  $('count').textContent=path.length;
+}
+
+window.addEventListener('pointerup',()=>drawing=false);
+window.addEventListener('pointercancel',()=>drawing=false);
+
+async function sb(pathUrl,opts={}){
+  const r=await fetch(SUPABASE_URL+pathUrl,{
+    ...opts,
+    headers:{
+      'apikey':SUPABASE_KEY,
+      'Authorization':'Bearer '+SUPABASE_KEY,
+      'Content-Type':'application/json',
+      ...(opts.headers||{})
+    }
+  });
+  const text=await r.text();
+  if(!r.ok) throw new Error(text||('HTTP '+r.status));
+  try{return JSON.parse(text)}catch{return text}
+}
+
+async function sendLayout(showToast=true){
+  if(!path.length) throw new Error('Dibuja al menos un LED.');
+  const d=dimensions();
+  const payload={
+    device_id:DEVICE_ID,width_cm:d.w,height_cm:d.h,spacing_cm:d.s,
+    cols,rows,path:path.map(p=>[p.x,p.y]),
+    version:Date.now(),updated_at:new Date().toISOString()
+  };
+  await sb('/rest/v1/esp32_layouts?on_conflict=device_id',{
+    method:'POST',
+    headers:{'Prefer':'resolution=merge-duplicates,return=representation'},
+    body:JSON.stringify(payload)
+  });
+  if(showToast) toast('Recorrido enviado a Supabase');
+}
+
+async function command(cmd){
+  await sb('/rest/v1/esp32_commands?device_id=eq.'+encodeURIComponent(DEVICE_ID),{
+    method:'PATCH',
+    headers:{'Prefer':'return=minimal'},
+    body:JSON.stringify({command:cmd,updated_at:new Date().toISOString()})
+  });
+}
+
+async function loadSaved(){
+  try{
+    const r=await sb('/rest/v1/esp32_layouts?device_id=eq.'+DEVICE_ID+'&select=*');
+    if(!r?.length){buildGrid(true);return}
+    const a=r[0];
+    $('width').value=a.width_cm; $('height').value=a.height_cm; $('spacing').value=a.spacing_cm;
+    buildGrid(true);
+    path=(a.path||[]).map(v=>({x:+v[0],y:+v[1]}));
+    renderPath();
+    $('status').textContent='Supabase · recorrido cargado';
+  }catch(e){
+    $('status').textContent='Supabase · error';
+    buildGrid(true);
   }
 }
+
+$('generate').onclick=()=>buildGrid(true);
+$('undo').onclick=()=>{path.pop();renderPath()};
+$('clear').onclick=()=>{if(confirm('¿Borrar todo el recorrido?')){path=[];renderPath()}};
+$('reverse').onclick=()=>{path.reverse();renderPath()};
+
+$('send').onclick=async()=>{
+  try{
+    $('status').textContent='Enviando...';
+    await sendLayout(false);
+    await command('layout_reload');
+    $('status').textContent='ESP32 · recorrido enviado';
+    toast('Recorrido guardado y enviado al ESP32');
+  }catch(e){$('status').textContent='Error';toast('Error: '+e.message)}
+};
+
+$('test').onclick=async()=>{
+  try{
+    $('status').textContent='Preparando prueba...';
+    await sendLayout(false);
+    await command('layout_test');
+    $('status').textContent='ESP32 · probando recorrido';
+    toast('Prueba enviada');
+  }catch(e){$('status').textContent='Error';toast('Error: '+e.message)}
+};
+
+$('off').onclick=async()=>{
+  try{await command('off');toast('Apagado enviado')}catch(e){toast('Error: '+e.message)}
+};
+
+loadSaved();
 </script>
 </body>
 </html>
