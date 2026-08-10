@@ -644,9 +644,48 @@ tr:hover td{background:#ffffff03}
 .deuda-historial-money small{display:block;margin-top:3px;font-size:9px;color:#64748b;font-weight:800}
 .deuda-historial-row.anulado{background:#f8fafc;opacity:.68}
 .deuda-historial-row.anulado .deuda-historial-money strong{color:#dc2626;text-decoration:line-through}
+
+.deuda-historial-action{display:flex;justify-content:flex-end}
+.anular-entry-btn{
+  border:1px solid #fecaca;
+  background:#fff;
+  color:#dc2626;
+  border-radius:9px;
+  padding:6px 8px;
+  font-family:var(--head);
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.3px;
+  text-transform:uppercase;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.anular-entry-btn:hover{background:#dc2626;color:#fff;border-color:#dc2626}
+.anular-entry-btn:disabled{opacity:.5;cursor:not-allowed}
+.payment-receipt.anulado{
+  border-color:#fecaca!important;
+  border-left-color:#dc2626!important;
+  background:#fef2f2!important;
+}
+.payment-receipt.anulado .money-entry-icon{background:#dc2626!important}
+.payment-receipt.anulado .money-entry-main strong{color:#dc2626!important;text-decoration:line-through}
+.payment-entry-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:2px;
+}
+.payment-entry-anulado{
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:900;
+  color:#dc2626;
+  text-transform:uppercase;
+}
 @media(max-width:620px){
   .deuda-historial-row{grid-template-columns:70px minmax(0,1fr);gap:7px}
   .deuda-historial-money{grid-column:1/-1;text-align:left;padding-left:77px}
+  .deuda-historial-action{grid-column:1/-1;justify-content:flex-start;padding-left:77px}
 }
 
 @media(max-width:760px){
@@ -2903,7 +2942,7 @@ function cerrarNotificacionesSiFondo(event){
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v66 · pagos unificados + carga protegida");
+console.log("CLIENTES HTML conectado v67 · anulación completa de entradas");
 
 let clientesDB = [];
 let pedidosDB = [];
@@ -2931,6 +2970,10 @@ function db(){
 function operadorPuedeFusionarClientes(){
   const op = typeof window.getSesionOperador === "function" ? window.getSesionOperador() : null;
   return typeof window.esRoberto === "function" ? window.esRoberto(op) : normalizar(op && op.nombre) === "roberto";
+}
+
+function operadorPuedeAnularPagos(){
+  return operadorPuedeFusionarClientes();
 }
 
 function aplicarPermisosFusionClientes(){
@@ -3162,27 +3205,15 @@ function deudaClienteHtml(cliente){
     const total = numeroSeguro(cuenta?.total || 0);
     const saldo = numeroSeguro(cuenta?.saldo || 0);
     const favor = numeroSeguro(cuenta?.a_favor || 0);
-
-    // "abonado" incluye el crédito del cliente para compatibilidad.
-    // Restamos el saldo a favor para obtener lo realmente aplicado a pedidos.
-    const aplicadoPedidos = Math.max(
-      Math.min(numeroSeguro(cuenta?.abonado || 0) - favor, total),
-      0
-    );
-
     const tags = [];
 
-    // Si todavía debe, reflejamos simultáneamente el abono y lo pendiente.
+    // Resumen compacto = situación ACTUAL, no histórico de cuánto se abonó.
     if(saldo > 0.009){
-      if(aplicadoPedidos > 0.009){
-        tags.push(`<span class="deuda-estado-tag abono">ABONO $${money(aplicadoPedidos)}</span>`);
-      }
       tags.push(`<span class="deuda-estado-tag debe">DEBE $${money(saldo)}</span>`);
     }else if(total > 0.009){
-      tags.push(`<span class="deuda-estado-tag pagado">PAGADO $${money(total)}</span>`);
+      tags.push(`<span class="deuda-estado-tag pagado">PAGADO</span>`);
     }
 
-    // El crédito es independiente de la deuda de la otra cuenta.
     if(favor > 0.009){
       tags.push(`<span class="deuda-estado-tag favor">A FAVOR +$${money(favor)}</span>`);
     }
@@ -4838,6 +4869,120 @@ function actualizarMetodosPagoCliente(){
   }
 }
 
+async function anularEntradaPagoCliente(pagoId, clienteId = null){
+  const id = Number(pagoId || 0);
+  if(!id){
+    alert("No se encontró la entrada de pago.");
+    return;
+  }
+
+  if(!operadorPuedeAnularPagos()){
+    alert("Solo Roberto puede anular pagos.");
+    return;
+  }
+
+  let entrada = null;
+  try{
+    const { data, error } = await db()
+      .from("clientes_pagos")
+      .select("id,cliente_id,cliente_nombre,monto_recibido,tipo_pago,monto_aplicado,saldo_a_favor,estado")
+      .eq("id", id)
+      .maybeSingle();
+
+    if(error) throw error;
+    entrada = data || null;
+  }catch(error){
+    console.error("No se pudo leer la entrada antes de anular:", error);
+    alert("No se pudo verificar la entrada de pago.");
+    return;
+  }
+
+  if(!entrada){
+    alert("La entrada de pago ya no existe.");
+    return;
+  }
+
+  if(String(entrada.estado || "ACTIVO").toUpperCase() === "ANULADO"){
+    alert("Esta entrada ya está anulada.");
+    return;
+  }
+
+  const recibido = numeroSeguro(entrada.monto_recibido || 0);
+  const aplicado = numeroSeguro(entrada.monto_aplicado || 0);
+  const favor = numeroSeguro(entrada.saldo_a_favor || 0);
+  const tipo = normalizarTipoCuentaCliente(entrada.tipo_pago || "DIVISA");
+
+  const mensaje =
+    `¿ANULAR la entrada #${id} de $${money(recibido)} ${tipo}?\n\n` +
+    `Aplicado a pedidos: $${money(aplicado)}\n` +
+    `Saldo a favor: $${money(favor)}\n\n` +
+    `Se revertirá TODO el movimiento, incluyendo el saldo a favor.`;
+
+  if(!confirm(mensaje)) return;
+
+  const motivo = prompt("Motivo de la anulación:");
+  if(motivo === null) return;
+  if(!String(motivo || "").trim()){
+    alert("Debes indicar el motivo de la anulación.");
+    return;
+  }
+
+  const botones = [...document.querySelectorAll(`[data-anular-entrada="${id}"]`)];
+  botones.forEach(btn => {
+    btn.disabled = true;
+    btn.dataset.textoOriginal = btn.textContent;
+    btn.textContent = "Anulando...";
+  });
+
+  try{
+    const { data, error } = await db().rpc("anular_pago_cliente_v1", {
+      p_cliente_pago_id: id,
+      p_anulado_por: "Roberto",
+      p_motivo: String(motivo).trim()
+    });
+
+    if(error) throw error;
+
+    const resultado = data || {};
+    const aplicadoRevertido = numeroSeguro(resultado.monto_aplicado_revertido || aplicado);
+    const favorRevertido = numeroSeguro(resultado.saldo_a_favor_revertido || favor);
+
+    mostrarToast(
+      `Entrada anulada · $${money(aplicadoRevertido)} revertido` +
+      (favorRevertido > 0.009 ? ` · $${money(favorRevertido)} de favor eliminado` : "")
+    );
+
+    await cargarPedidos();
+    await cargarDeudasClientes();
+    filtrarClientes(false);
+
+    const clienteObjetivoId = Number(clienteId || entrada.cliente_id || deudaClienteActualId || 0);
+    const cliente = clientesDB.find(c => Number(c.id) === clienteObjetivoId);
+
+    const deudaBackdrop = document.getElementById("deudaBackdrop");
+    if(cliente && deudaBackdrop && deudaBackdrop.style.display !== "none"){
+      deudaClienteActualId = Number(cliente.id);
+      pintarDeudaModal(cliente);
+      await pintarHistorialPagosCuentaCliente(cliente);
+    }
+
+    const historyBackdrop = document.getElementById("historyBackdrop");
+    if(cliente && historyBackdrop && historyBackdrop.style.display !== "none"){
+      await verHistorialCliente(cliente.id);
+    }
+
+    return resultado;
+  }catch(error){
+    console.error("No se pudo anular la entrada completa:", error);
+    alert("No se pudo anular el pago.\n\n" + (error?.message || error));
+  }finally{
+    botones.forEach(btn => {
+      btn.disabled = false;
+      btn.textContent = btn.dataset.textoOriginal || "Anular entrada";
+    });
+  }
+}
+
 async function pintarHistorialPagosCuentaCliente(cliente){
   const cont = document.getElementById("deudaHistorialPagos");
   if(!cont || !cliente) return;
@@ -4929,6 +5074,7 @@ async function pintarHistorialPagosCuentaCliente(cliente){
         ? ` · ${e.nota}`
         : "";
 
+      const puedeAnularEntrada = e.origen === "GENERAL" && !anulado && operadorPuedeAnularPagos();
       return `
         <div class="deuda-historial-row ${anulado ? "anulado" : ""}">
           <div class="deuda-historial-id">${escapeHtml(origenTxt)}</div>
@@ -4939,6 +5085,11 @@ async function pintarHistorialPagosCuentaCliente(cliente){
           <div class="deuda-historial-money">
             <strong>${anulado ? "ANULADO · " : ""}$${money(e.monto)}</strong>
             <small>${escapeHtml(e.tipo)}</small>
+          </div>
+          <div class="deuda-historial-action">
+            ${puedeAnularEntrada
+              ? `<button class="anular-entry-btn" type="button" data-anular-entrada="${e.id}" onclick="anularEntradaPagoCliente(${e.id}, ${Number(cliente.id || 0)})">Anular entrada</button>`
+              : ""}
           </div>
         </div>`;
     }).join("");
@@ -5409,8 +5560,11 @@ async function verHistorialCliente(id){
           </div>
         `;
 
+      const anulado = String(pg.estado || "ACTIVO").toUpperCase() === "ANULADO";
+      const puedeAnularEntrada = !anulado && operadorPuedeAnularPagos();
+
       return `
-        <div class="payment-receipt">
+        <div class="payment-receipt ${anulado ? "anulado" : ""}">
           <div class="money-entry">
             <div class="money-entry-icon">+</div>
             <div class="money-entry-main">
@@ -5441,6 +5595,14 @@ async function verHistorialCliente(id){
           </div>
           ${pg.nota ? `<div class="payment-note">${escapeHtml(pg.nota)}</div>` : ""}
           ${aplicacionesHtml}
+          <div class="payment-entry-actions">
+            ${anulado
+              ? `<span class="payment-entry-anulado">Entrada anulada${pg.anulado_por ? ` por ${escapeHtml(pg.anulado_por)}` : ""}</span>`
+              : ""}
+            ${puedeAnularEntrada
+              ? `<button class="anular-entry-btn" type="button" data-anular-entrada="${Number(pg.id || 0)}" onclick="anularEntradaPagoCliente(${Number(pg.id || 0)}, ${Number(cliente.id || 0)})">Anular entrada completa</button>`
+              : ""}
+          </div>
         </div>
       `;
     }).join("")}
