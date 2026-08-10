@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v81 pagos unificados");
+console.log("APP JS conectado correctamente v82 anulación centralizada");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -1703,7 +1703,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v81_pagos_unificados";
+const PAGO_SIMPLE_VERSION = "v82_anulacion_centralizada";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 const PAGO_UNIFICADO_NOTA = "PAGO_UNIFICADO_V1";
 let pagoSimpleGuardando = false;
@@ -2250,17 +2250,20 @@ function pintarModalPagoSimple() {
       const puedeAnular = esRobertoSesion();
       hist.innerHTML = header + item.abonos.map((a, i) => {
         const metaEntrada = a.clientePagoId
-          ? ` · Entrada #${escapeHtml(a.clientePagoId)}${a.origen ? " · " + escapeHtml(a.origen) : ""}`
+          ? ` · Entrada #${escapeHtml(a.clientePagoId)}${a.origen ? " · " + escapeHtml(a.origen) : ""} · Entrada completa $${money(a.entradaMonto || a.monto)}`
           : " · Registro anterior";
         const anuladoTxt = a.anulado ? " · ANULADO" : "";
-        const boton = puedeAnular && !a.anulado
-          ? `<button class="simple-delete-pay" type="button" data-pago-id="${escapeHtml(a.pagoId)}" title="Anular este pago">✕</button>`
+        const boton = puedeAnular && !a.anulado && !a.clientePagoId
+          ? `<button class="simple-delete-pay" type="button" data-pago-id="${escapeHtml(a.pagoId)}" title="Corregir registro anterior">✕</button>`
           : `<span></span>`;
+        const centralizado = a.clientePagoId && !a.anulado
+          ? " · Anulación: Clientes → Ver cuenta"
+          : "";
 
         return `
         <div class="simple-hist-row ${a.anulado ? "is-anulado" : ""}">
-          <span class="simple-hist-main">${a.anulado ? "Anulado" : "Abono"} ${i + 1}: $${money(a.monto)}</span>
-          <small>${escapeHtml(fechaCortaPagoSimple(a.fecha))}${a.auto ? " · automático" : ""}${metaEntrada}${anuladoTxt}</small>
+          <span class="simple-hist-main">${a.anulado ? "Anulado" : "Aplicado"} ${i + 1}: $${money(a.monto)}</span>
+          <small>${escapeHtml(fechaCortaPagoSimple(a.fecha))}${a.auto ? " · automático" : ""}${metaEntrada}${centralizado}${anuladoTxt}</small>
           ${boton}
         </div>`;
       }).join("");
