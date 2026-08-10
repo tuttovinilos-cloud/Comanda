@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Tuttovinilos</title>
-<!-- clientes.html corregido v65 · pagos unificados transaccionales + bloqueo anti duplicado -->
+<!-- clientes.html corregido v66 · pagos unificados + carga protegida -->
 <link rel="icon" href="data:,">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2749,7 +2749,7 @@ function cerrarNotificacionesSiFondo(event){
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v65 · pagos unificados transaccionales");
+console.log("CLIENTES HTML conectado v66 · pagos unificados + carga protegida");
 
 let clientesDB = [];
 let pedidosDB = [];
@@ -2766,6 +2766,9 @@ const CLIENTES_FUSION_UNDO_KEY = "tutto_ultima_fusion_clientes_v1";
 // Pago global seguro: un solo proceso por vez y una misma operación UUID en reintentos.
 let pagoGlobalClienteEnProceso = false;
 let pagoGlobalClienteOperacionPendiente = null;
+
+// Crédito real no aplicado a pedidos, separado por cliente y por cuenta.
+let clientesSaldoFavorMap = new Map();
 
 function db(){
   return window.supabaseClient;
@@ -3046,6 +3049,45 @@ function deudaClienteHtml(cliente){
   `;
 }
 
+async function cargarSaldosFavorClientes(){
+  clientesSaldoFavorMap = new Map();
+  if(!validarSupabase()) return;
+
+  try{
+    const { data, error } = await db()
+      .from("clientes_pagos")
+      .select("cliente_id, tipo_pago, saldo_a_favor, estado");
+
+    if(error){
+      console.warn("No se pudieron cargar saldos a favor del cliente:", error);
+      return;
+    }
+
+    for(const pago of data || []){
+      if(String(pago?.estado || "ACTIVO").toUpperCase() === "ANULADO") continue;
+
+      const clienteId = Number(pago?.cliente_id || 0);
+      const favor = numeroSeguro(pago?.saldo_a_favor || 0);
+      if(!clienteId || favor <= 0.009) continue;
+
+      const tipo = normalizarTipoCuentaCliente(pago?.tipo_pago || "DIVISA");
+      const key = `${clienteId}|${tipo}`;
+      clientesSaldoFavorMap.set(key, numeroSeguro(clientesSaldoFavorMap.get(key) || 0) + favor);
+    }
+  }catch(error){
+    // El fallo del resumen contable nunca debe impedir mostrar la lista de clientes.
+    console.warn("Error leyendo saldos a favor:", error);
+    clientesSaldoFavorMap = new Map();
+  }
+}
+
+function saldoFavorClientePorTipo(clienteId, tipo){
+  const id = Number(clienteId || 0);
+  if(!id) return 0;
+  const key = `${id}|${normalizarTipoCuentaCliente(tipo)}`;
+  return numeroSeguro(clientesSaldoFavorMap.get(key) || 0);
+}
+
 async function cargarDeudasClientes(){
   clientesDeudaMap = new Map();
   await cargarSaldosFavorClientes();
@@ -3225,8 +3267,14 @@ async function inicializarClientes(){
     await cargarClientes();
   }
 
-  // La tabla aparece inmediatamente con conteos y cuentas ya calculadas.
-  await cargarDeudasClientes();
+  // La lista de clientes no debe quedar bloqueada por un error del resumen contable.
+  try{
+    await cargarDeudasClientes();
+  }catch(error){
+    console.error("Error cargando resumen de cuentas; se mostrarán los clientes igualmente:", error);
+    clientesDeudaMap = new Map();
+  }
+
   filtrarClientes();
 
   // Los contactos del buscador se cargan en segundo plano para no frenar la apertura.
