@@ -2666,7 +2666,7 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
       <div class="deuda-modal-summary" id="deudaSummary"></div>
 
       <div class="deuda-cobro-box" id="deudaCobroBox">
-        <div class="deuda-cobro-title">Cobrar deuda del cliente</div>
+        <div class="deuda-cobro-title">Registrar pago del cliente</div>
         <div class="form-grid">
           <div class="field">
             <label>Monto recibido ($ equivalente)</label>
@@ -2705,7 +2705,7 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 
     <div class="modal-footer">
       <button class="btn secondary" onclick="cerrarDeudaCliente()">Cancelar</button>
-      <button class="btn success" id="btnAplicarPagoGlobalCliente" type="button" onclick="aplicarPagoGlobalCliente()">Aplicar pago a deuda</button>
+      <button class="btn success" id="btnAplicarPagoGlobalCliente" type="button" onclick="aplicarPagoGlobalCliente()">Registrar pago</button>
     </div>
   </div>
 </div>
@@ -3022,7 +3022,7 @@ function deudaClienteHtml(cliente){
       </div>
       <div class="deuda-actions">
         <button class="mini-btn" onclick="verDeudaCliente(${id})">Ver cuenta</button>
-        <button class="mini-btn cobrar" onclick="cobrarDeudaCliente(${id})">Cobrar</button>
+        <button class="mini-btn cobrar" onclick="registrarPagoCliente(${id})">+ Registrar pago</button>
       </div>
     `;
   }
@@ -3036,6 +3036,7 @@ function deudaClienteHtml(cliente){
       </div>
       <div class="deuda-actions">
         <button class="mini-btn" onclick="verDeudaCliente(${id})">Ver cuenta</button>
+        <button class="mini-btn cobrar" onclick="registrarPagoCliente(${id})">+ Registrar pago</button>
       </div>
     `;
   }
@@ -3045,6 +3046,10 @@ function deudaClienteHtml(cliente){
       ${lineaCuenta("DIVISA", d.divisa)}
       ${lineaCuenta("BCV", d.bcv)}
       <small>Sin deuda</small>
+    </div>
+    <div class="deuda-actions">
+      <button class="mini-btn" onclick="verDeudaCliente(${id})">Ver cuenta</button>
+      <button class="mini-btn cobrar" onclick="registrarPagoCliente(${id})">+ Registrar pago</button>
     </div>
   `;
 }
@@ -4634,7 +4639,7 @@ function pintarDeudaModal(cliente){
   }
 
   const boxCobro = document.getElementById("deudaCobroBox");
-  if(boxCobro) boxCobro.style.display = pendientes.length ? "" : "none";
+  if(boxCobro) boxCobro.style.display = "";
 
   calcularPagoGlobalCliente();
 }
@@ -4702,8 +4707,13 @@ function verDeudaCliente(id){
   abrirDeudaCliente(id, false);
 }
 
-function cobrarDeudaCliente(id){
+function registrarPagoCliente(id){
   abrirDeudaCliente(id, true);
+}
+
+// Compatibilidad con versiones anteriores.
+function cobrarDeudaCliente(id){
+  registrarPagoCliente(id);
 }
 
 function cerrarDeudaCliente(){
@@ -4733,7 +4743,9 @@ function calcularPagoGlobalCliente(){
   const excedente = Math.max(monto - saldo, 0);
 
   if(!pendientes.length){
-    resultado.textContent = `La cuenta ${tipoPago} no tiene deuda pendiente. Este pago no tocará la otra cuenta.`;
+    resultado.textContent = monto > 0
+      ? `Cuenta ${tipoPago}: no tiene deuda · quedará a favor $${money(monto)} en ${tipoPago}`
+      : `Cuenta ${tipoPago}: sin deuda · cualquier pago quedará como saldo a favor`;
     return;
   }
 
@@ -4791,7 +4803,7 @@ function bloquearFormularioPagoGlobalCliente(bloquear){
       if(!btn.dataset.textoOriginal) btn.dataset.textoOriginal = btn.textContent;
       btn.textContent = "Procesando...";
     }else{
-      btn.textContent = btn.dataset.textoOriginal || "Aplicar pago a deuda";
+      btn.textContent = btn.dataset.textoOriginal || "Registrar pago";
     }
   }
 }
@@ -4822,11 +4834,6 @@ async function aplicarPagoGlobalCliente(){
     document.getElementById("deudaPagoMoneda")?.value || "DIVISA"
   );
   const pendientes = pedidosPendientesCliente(cliente, tipoPago);
-
-  if(!pendientes.length){
-    alert(`La cuenta ${tipoPago} no tiene deuda pendiente. No se modificó la cuenta ${tipoPago === "BCV" ? "DIVISA" : "BCV"}.`);
-    return;
-  }
 
   const monto = numeroSeguro(document.getElementById("deudaPagoMonto")?.value || 0);
   const metodo = String(document.getElementById("deudaPagoMetodo")?.value || "").trim();
