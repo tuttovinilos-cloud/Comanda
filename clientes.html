@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Tuttovinilos</title>
-<!-- clientes.html corregido v64 · carga optimizada + pagos generales trazables -->
+<!-- clientes.html corregido v65 · pagos unificados transaccionales + bloqueo anti duplicado -->
 <link rel="icon" href="data:,">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2705,7 +2705,7 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 
     <div class="modal-footer">
       <button class="btn secondary" onclick="cerrarDeudaCliente()">Cancelar</button>
-      <button class="btn success" onclick="aplicarPagoGlobalCliente()">Aplicar pago a deuda</button>
+      <button class="btn success" id="btnAplicarPagoGlobalCliente" type="button" onclick="aplicarPagoGlobalCliente()">Aplicar pago a deuda</button>
     </div>
   </div>
 </div>
@@ -2749,7 +2749,7 @@ function cerrarNotificacionesSiFondo(event){
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v64 · carga optimizada + pagos generales");
+console.log("CLIENTES HTML conectado v65 · pagos unificados transaccionales");
 
 let clientesDB = [];
 let pedidosDB = [];
@@ -2762,6 +2762,10 @@ let clientesFiltradosActuales = [];
 let paginaClientesActual = 1;
 const CLIENTES_POR_PAGINA = 50;
 const CLIENTES_FUSION_UNDO_KEY = "tutto_ultima_fusion_clientes_v1";
+
+// Pago global seguro: un solo proceso por vez y una misma operación UUID en reintentos.
+let pagoGlobalClienteEnProceso = false;
+let pagoGlobalClienteOperacionPendiente = null;
 
 function db(){
   return window.supabaseClient;
@@ -3044,15 +3048,27 @@ function deudaClienteHtml(cliente){
 
 async function cargarDeudasClientes(){
   clientesDeudaMap = new Map();
+  await cargarSaldosFavorClientes();
 
   clientesDB.forEach(cliente => {
     const items = pedidosEstadoCuentaCliente(cliente, true);
     const divisa = resumenCuentaClientePorTipo(items, "DIVISA");
     const bcv = resumenCuentaClientePorTipo(items, "BCV");
+
+    // Los pagos unificados ya no inflan el último pedido cuando sobra dinero.
+    // Ese excedente vive en clientes_pagos y se suma aquí como crédito real del cliente.
+    const favorClienteDivisa = saldoFavorClientePorTipo(cliente.id, "DIVISA");
+    const favorClienteBcv = saldoFavorClientePorTipo(cliente.id, "BCV");
+
+    const divisaFavorTotal = divisa.aFavor + favorClienteDivisa;
+    const bcvFavorTotal = bcv.aFavor + favorClienteBcv;
+    const divisaPagadoTotal = divisa.pagado + favorClienteDivisa;
+    const bcvPagadoTotal = bcv.pagado + favorClienteBcv;
+
     const total = divisa.total + bcv.total;
-    const abonado = divisa.pagado + bcv.pagado;
+    const abonado = divisaPagadoTotal + bcvPagadoTotal;
     const saldo = divisa.saldo + bcv.saldo;
-    const aFavor = divisa.aFavor + bcv.aFavor;
+    const aFavor = divisaFavorTotal + bcvFavorTotal;
     const pendientes = divisa.pendientes + bcv.pendientes;
 
     clientesDeudaMap.set(Number(cliente.id || 0), {
@@ -3066,16 +3082,16 @@ async function cargarDeudasClientes(){
       total_a_favor_usd_equiv:aFavor,
       divisa:{
         total:divisa.total,
-        abonado:divisa.pagado,
+        abonado:divisaPagadoTotal,
         saldo:divisa.saldo,
-        a_favor:divisa.aFavor,
+        a_favor:divisaFavorTotal,
         pendientes:divisa.pendientes
       },
       bcv:{
         total:bcv.total,
-        abonado:bcv.pagado,
+        abonado:bcvPagadoTotal,
         saldo:bcv.saldo,
-        a_favor:bcv.aFavor,
+        a_favor:bcvFavorTotal,
         pendientes:bcv.pendientes
       },
       ultima_fecha_pedido:items[0]?.fecha || null
@@ -4507,8 +4523,21 @@ function pedidosPendientesCliente(cliente, tipo = null){
 
 function pintarDeudaModal(cliente){
   const cuenta = pedidosEstadoCuentaCliente(cliente, true);
-  const divisa = resumenCuentaClientePorTipo(cuenta, "DIVISA");
-  const bcv = resumenCuentaClientePorTipo(cuenta, "BCV");
+  const divisaBase = resumenCuentaClientePorTipo(cuenta, "DIVISA");
+  const bcvBase = resumenCuentaClientePorTipo(cuenta, "BCV");
+  const favorClienteDivisa = saldoFavorClientePorTipo(cliente.id, "DIVISA");
+  const favorClienteBcv = saldoFavorClientePorTipo(cliente.id, "BCV");
+
+  const divisa = {
+    ...divisaBase,
+    pagado:divisaBase.pagado + favorClienteDivisa,
+    aFavor:divisaBase.aFavor + favorClienteDivisa
+  };
+  const bcv = {
+    ...bcvBase,
+    pagado:bcvBase.pagado + favorClienteBcv,
+    aFavor:bcvBase.aFavor + favorClienteBcv
+  };
   const pendientes = cuenta.filter(x => x.saldo > 0.009);
 
   document.getElementById("deudaTitle").textContent = `Estado de cuenta · ${cliente.nombre}`;
@@ -4630,6 +4659,10 @@ function cobrarDeudaCliente(id){
 }
 
 function cerrarDeudaCliente(){
+  if(pagoGlobalClienteEnProceso){
+    mostrarToast("Pago en proceso. Espera a que termine.");
+    return;
+  }
   document.getElementById("deudaBackdrop").style.display = "none";
   deudaClienteActualId = null;
 }
@@ -4664,8 +4697,72 @@ function calcularPagoGlobalCliente(){
   resultado.textContent = `Cuenta ${tipoPago}: aplicará $${money(aplicado)} · Quedará $${money(restante)}${excedente > 0 ? " · A favor " + tipoPago + " $" + money(excedente) : ""}`;
 }
 
+function generarUuidPagoCliente(){
+  if(window.crypto && typeof window.crypto.randomUUID === "function"){
+    return window.crypto.randomUUID();
+  }
+
+  // Fallback para navegadores antiguos. La BD mantiene además un índice único.
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c){
+    const r = Math.random() * 16 | 0;
+    const v = c === "x" ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+function firmaOperacionPagoCliente(datos){
+  return [
+    Number(datos.clienteId || 0),
+    normalizarTipoCuentaCliente(datos.tipoPago),
+    money(datos.monto),
+    String(datos.metodo || "").trim(),
+    String(datos.referencia || "").trim(),
+    String(datos.nota || "").trim(),
+    String(datos.fechaPago || "")
+  ].join("|");
+}
+
+function bloquearFormularioPagoGlobalCliente(bloquear){
+  const btn = document.getElementById("btnAplicarPagoGlobalCliente");
+  const campos = [
+    "deudaPagoMonto",
+    "deudaPagoMoneda",
+    "deudaPagoMetodo",
+    "deudaPagoReferencia",
+    "deudaPagoNota"
+  ];
+
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.disabled = !!bloquear;
+  });
+
+  if(btn){
+    btn.disabled = !!bloquear;
+    if(bloquear){
+      if(!btn.dataset.textoOriginal) btn.dataset.textoOriginal = btn.textContent;
+      btn.textContent = "Procesando...";
+    }else{
+      btn.textContent = btn.dataset.textoOriginal || "Aplicar pago a deuda";
+    }
+  }
+}
+
+function limpiarFormularioPagoGlobalCliente(){
+  const monto = document.getElementById("deudaPagoMonto");
+  const metodo = document.getElementById("deudaPagoMetodo");
+  const referencia = document.getElementById("deudaPagoReferencia");
+  const nota = document.getElementById("deudaPagoNota");
+
+  if(monto) monto.value = "";
+  if(metodo) metodo.value = "";
+  if(referencia) referencia.value = "";
+  if(nota) nota.value = "";
+}
+
 async function aplicarPagoGlobalCliente(){
   if(!validarSupabase()) return;
+  if(pagoGlobalClienteEnProceso) return;
 
   const cliente = clientesDB.find(c => Number(c.id) === Number(deudaClienteActualId));
   if(!cliente){
@@ -4673,16 +4770,17 @@ async function aplicarPagoGlobalCliente(){
     return;
   }
 
-  const tipoPago = normalizarTipoCuentaCliente(document.getElementById("deudaPagoMoneda")?.value || "DIVISA");
+  const tipoPago = normalizarTipoCuentaCliente(
+    document.getElementById("deudaPagoMoneda")?.value || "DIVISA"
+  );
   const pendientes = pedidosPendientesCliente(cliente, tipoPago);
+
   if(!pendientes.length){
     alert(`La cuenta ${tipoPago} no tiene deuda pendiente. No se modificó la cuenta ${tipoPago === "BCV" ? "DIVISA" : "BCV"}.`);
     return;
   }
 
   const monto = numeroSeguro(document.getElementById("deudaPagoMonto")?.value || 0);
-  const moneda = tipoPago === "BCV" ? "BS" : "USD";
-  const tasa = 1;
   const metodo = String(document.getElementById("deudaPagoMetodo")?.value || "").trim();
   const referencia = String(document.getElementById("deudaPagoReferencia")?.value || "").trim();
   const nota = String(document.getElementById("deudaPagoNota")?.value || "").trim();
@@ -4691,142 +4789,73 @@ async function aplicarPagoGlobalCliente(){
     alert("Coloca el monto recibido.");
     return;
   }
+
   if(!metodo){
     alert("Selecciona el método de pago.");
     return;
   }
 
-  let disponibleUsd = monto;
   const registradoPor = typeof window.getSesionOperador === "function"
-    ? (window.getSesionOperador()?.nombre || "")
+    ? String(window.getSesionOperador()?.nombre || "").trim()
     : "";
   const fechaPago = fechaISOCliente();
-  const saldoCuentaAntes = pendientes.reduce((acc, item) => acc + numeroSeguro(item.saldo), 0);
 
-  let pagosAplicados = 0;
-  let pagoGeneralId = null;
-  let aplicadoRealDeuda = 0;
-  let favorReal = 0;
+  const firma = firmaOperacionPagoCliente({
+    clienteId:cliente.id,
+    tipoPago,
+    monto,
+    metodo,
+    referencia,
+    nota,
+    fechaPago
+  });
+
+  // Si una respuesta de red quedó incierta, el siguiente intento reutiliza
+  // exactamente el mismo UUID. La función SQL devolverá el pago existente
+  // en vez de volver a cobrarlo.
+  if(!pagoGlobalClienteOperacionPendiente || pagoGlobalClienteOperacionPendiente.firma !== firma){
+    pagoGlobalClienteOperacionPendiente = {
+      firma,
+      uuid:generarUuidPagoCliente()
+    };
+  }
+
+  const operacionUuid = pagoGlobalClienteOperacionPendiente.uuid;
+
+  pagoGlobalClienteEnProceso = true;
+  bloquearFormularioPagoGlobalCliente(true);
 
   try{
-    // Guarda una sola entrada de caja: por ejemplo, "recibimos $100 DIVISA".
-    const { data:pagoGeneral, error:pagoGeneralError } = await db()
-      .from("clientes_pagos")
-      .insert([{
-        cliente_id:cliente.id,
-        cliente_nombre:cliente.nombre || "",
-        monto_recibido:monto,
-        tipo_pago:tipoPago,
-        metodo_pago:metodo,
-        referencia:referencia || null,
-        nota:nota || null,
-        fecha_pago:fechaPago,
-        registrado_por:registradoPor || null,
-        saldo_antes:saldoCuentaAntes,
-        monto_aplicado:0,
-        saldo_a_favor:0,
-        pedidos_afectados:0
-      }])
-      .select("id")
-      .single();
+    const { data, error } = await db().rpc("registrar_pago_cliente_v1", {
+      p_operacion_uuid:operacionUuid,
+      p_cliente_id:Number(cliente.id),
+      p_tipo_pago:tipoPago,
+      p_monto:monto,
+      p_metodo:metodo,
+      p_referencia:referencia || null,
+      p_nota:nota || null,
+      p_fecha:fechaPago,
+      p_registrado_por:registradoPor || null,
+      p_origen:"CLIENTES",
+      p_pedido_id:null
+    });
 
-    if(pagoGeneralError) throw pagoGeneralError;
-    pagoGeneralId = Number(pagoGeneral.id);
+    if(error) throw error;
 
-    for(let i = 0; i < pendientes.length; i++){
-      if(disponibleUsd <= 0.009) break;
-
-      const item = pendientes[i];
-      const pedido = item.pedido;
-      const esUltimo = i === pendientes.length - 1;
-      const aplicarUsd = esUltimo ? disponibleUsd : Math.min(disponibleUsd, item.saldo);
-      if(aplicarUsd <= 0.009) continue;
-
-      const pagadoAntes = item.pagado;
-      const saldoAntes = item.saldo;
-      const aplicadoADeudaParte = Math.min(aplicarUsd, saldoAntes);
-      const favorParte = Math.max(aplicarUsd - saldoAntes, 0);
-      const nuevoPagado = pagadoAntes + aplicarUsd;
-      const nuevoSaldo = Math.max(item.total - nuevoPagado, 0);
-      const nuevoAFavor = Math.max(nuevoPagado - item.total, 0);
-      const itemFinal = {
-        ...item,
-        pagado:nuevoPagado,
-        saldo:nuevoSaldo,
-        aFavor:nuevoAFavor,
-        tasa:numeroSeguro(pedido.tasa_deuda || 1),
-        fecha:fechaPago
-      };
-      itemFinal.estado = estadoPagoCuentaDesdeItem(itemFinal);
-
-      const pagoPayload = {
-        cliente_pago_id:pagoGeneralId,
-        pedido_id: pedido.id,
-        cliente_id: cliente.id,
-        cliente_nombre: cliente.nombre || pedido.cliente || "",
-        pedido_descripcion: pedido.descripcion || "Pago global cliente",
-        monto_recibido: aplicarUsd,
-        moneda,
-        tasa_usada: tasa,
-        equivalente_usd: aplicarUsd,
-        metodo_pago: metodo,
-        metodo_otro: null,
-        referencia,
-        nota: PAGO_SIMPLE_CLIENTES_NOTA,
-        saldo_antes: saldoAntes,
-        saldo_despues: nuevoSaldo,
-        registrado_por: registradoPor || null,
-        fecha_pago: fechaPago,
-        tipo_movimiento: nuevoAFavor > 0.009 ? "A_FAVOR" : "ABONO",
-        monto_aplicado: aplicarUsd,
-        saldo_despues_simple: nuevoSaldo,
-        a_favor_despues: nuevoAFavor,
-        tipo_pago_simple: tipoPago,
-        moneda_deuda: tipoPago === "BCV" ? "BS" : "USD",
-        tipo_tasa_deuda: item.tipo === "BCV" ? "BS_BCV" : "USD_FIJO",
-        tasa_deuda: item.tipo === "BCV" && numeroSeguro(pedido.tasa_deuda) > 0 ? numeroSeguro(pedido.tasa_deuda) : 1,
-        total_deuda_usd: item.total,
-        total_deuda_bs: item.tipo === "BCV" && numeroSeguro(pedido.tasa_deuda) > 0 ? item.total * numeroSeguro(pedido.tasa_deuda) : null,
-        pago_aplicado_usd: aplicarUsd,
-        pago_aplicado_bs: item.tipo === "BCV" && numeroSeguro(pedido.tasa_deuda) > 0 ? aplicarUsd * numeroSeguro(pedido.tasa_deuda) : null,
-        saldo_antes_deuda: saldoAntes,
-        saldo_despues_deuda: nuevoSaldo
-      };
-
-      const { error:pagoError } = await db()
-        .from("pedidos_pagos")
-        .insert([pagoPayload]);
-
-      if(pagoError) throw pagoError;
-
-      const { error:updateError } = await db()
-        .from("pedidos")
-        .update(payloadPedidoCuenta(itemFinal, fechaPago))
-        .eq("id", pedido.id);
-
-      if(updateError) throw updateError;
-
-      disponibleUsd -= aplicarUsd;
-      aplicadoRealDeuda += aplicadoADeudaParte;
-      favorReal += favorParte;
-      pagosAplicados++;
+    const resultado = Array.isArray(data) ? (data[0] || {}) : (data || {});
+    if(resultado.ok !== true){
+      throw new Error("Supabase no confirmó el pago.");
     }
 
-    const { error:cerrarPagoError } = await db()
-      .from("clientes_pagos")
-      .update({
-        monto_aplicado:aplicadoRealDeuda,
-        saldo_a_favor:favorReal,
-        pedidos_afectados:pagosAplicados
-      })
-      .eq("id", pagoGeneralId);
-
-    if(cerrarPagoError) throw cerrarPagoError;
+    // Solo se descarta el UUID después de una respuesta confirmada.
+    pagoGlobalClienteOperacionPendiente = null;
 
     await cargarPedidos();
     await cargarClientes();
     await cargarDeudasClientes();
     filtrarClientes();
+
+    limpiarFormularioPagoGlobalCliente();
 
     const clienteActualizado = clientesDB.find(c => Number(c.id) === Number(cliente.id));
     if(clienteActualizado){
@@ -4834,24 +4863,35 @@ async function aplicarPagoGlobalCliente(){
       pintarDeudaModal(clienteActualizado);
     }
 
-    mostrarToast(`Pago de $${money(monto)} ${tipoPago} registrado y aplicado a ${pagosAplicados} pedido${pagosAplicados === 1 ? "" : "s"}`);
-  }catch(error){
-    // Conserva el movimiento parcial para auditoría, en vez de hacer desaparecer la entrada recibida.
-    if(pagoGeneralId){
-      try{
-        await db().from("clientes_pagos").update({
-          monto_aplicado:aplicadoRealDeuda,
-          saldo_a_favor:favorReal,
-          pedidos_afectados:pagosAplicados,
-          nota:[nota, "REGISTRO PARCIAL: ocurrió un error durante la distribución"].filter(Boolean).join(" · ")
-        }).eq("id", pagoGeneralId);
-      }catch(_errorRegistro){
-        console.warn("No se pudo marcar el pago general como parcial:", _errorRegistro);
-      }
-    }
+    const aplicado = numeroSeguro(resultado.monto_aplicado || 0);
+    const favor = numeroSeguro(resultado.saldo_a_favor || 0);
+    const afectados = Number(resultado.pedidos_afectados || 0);
+    const repetido = resultado.duplicado === true;
 
-    console.error("Error aplicando pago global:", error);
-    alert("No se pudo completar el pago global: " + (error.message || error));
+    if(repetido){
+      mostrarToast(`Pago ya registrado · no se duplicó · $${money(monto)} ${tipoPago}`);
+    }else{
+      mostrarToast(
+        `Pago $${money(monto)} ${tipoPago} · aplicado $${money(aplicado)}` +
+        `${favor > 0.009 ? " · a favor $" + money(favor) : ""}` +
+        ` · ${afectados} pedido${afectados === 1 ? "" : "s"}`
+      );
+    }
+  }catch(error){
+    console.error("Error aplicando pago global transaccional:", error);
+
+    // No intentamos "arreglar" tablas desde el navegador.
+    // La función de Supabase es atómica: si falla en BD, revierte todo.
+    // Si solo falló la respuesta de red, el UUID queda reservado para reintentar
+    // sin crear una segunda entrada.
+    alert(
+      "No se pudo confirmar el pago. Puedes pulsar Aplicar de nuevo; " +
+      "el sistema reutilizará la misma operación para evitar duplicados.\\n\\n" +
+      (error.message || error)
+    );
+  }finally{
+    pagoGlobalClienteEnProceso = false;
+    bloquearFormularioPagoGlobalCliente(false);
   }
 }
 
@@ -4892,7 +4932,7 @@ async function cargarPagosGeneralesCliente(cliente){
     if(cliente?.id){
       const { data, error } = await db()
         .from("clientes_pagos")
-        .select("id, cliente_id, cliente_nombre, monto_recibido, tipo_pago, metodo_pago, referencia, nota, fecha_pago, registrado_por, saldo_antes, monto_aplicado, saldo_a_favor, pedidos_afectados, created_at")
+        .select("id, cliente_id, cliente_nombre, monto_recibido, tipo_pago, metodo_pago, referencia, nota, fecha_pago, registrado_por, saldo_antes, monto_aplicado, saldo_a_favor, pedidos_afectados, operacion_uuid, origen, estado, anulado_en, anulado_por, motivo_anulacion, created_at")
         .eq("cliente_id", cliente.id)
         .order("created_at", { ascending:false });
 
@@ -4902,7 +4942,7 @@ async function cargarPagosGeneralesCliente(cliente){
     if(!pagos.length && cliente?.nombre){
       const { data, error } = await db()
         .from("clientes_pagos")
-        .select("id, cliente_id, cliente_nombre, monto_recibido, tipo_pago, metodo_pago, referencia, nota, fecha_pago, registrado_por, saldo_antes, monto_aplicado, saldo_a_favor, pedidos_afectados, created_at")
+        .select("id, cliente_id, cliente_nombre, monto_recibido, tipo_pago, metodo_pago, referencia, nota, fecha_pago, registrado_por, saldo_antes, monto_aplicado, saldo_a_favor, pedidos_afectados, operacion_uuid, origen, estado, anulado_en, anulado_por, motivo_anulacion, created_at")
         .ilike("cliente_nombre", cliente.nombre)
         .order("created_at", { ascending:false });
 
@@ -4931,21 +4971,42 @@ async function verHistorialCliente(id){
     cargarPagosGeneralesCliente(cliente)
   ]);
 
-  const total = cuenta.reduce((acc,x) => acc + x.total, 0);
-  const pagado = cuenta.reduce((acc,x) => acc + x.pagado, 0);
-  const saldo = cuenta.reduce((acc,x) => acc + x.saldo, 0);
-  const aFavor = cuenta.reduce((acc,x) => acc + x.aFavor, 0);
+  const favorClienteDivisa = saldoFavorClientePorTipo(cliente.id, "DIVISA");
+  const favorClienteBcv = saldoFavorClientePorTipo(cliente.id, "BCV");
+  const divisaHistBase = resumenCuentaClientePorTipo(cuenta, "DIVISA");
+  const bcvHistBase = resumenCuentaClientePorTipo(cuenta, "BCV");
+
+  const divisaHist = {
+    ...divisaHistBase,
+    pagado:divisaHistBase.pagado + favorClienteDivisa,
+    aFavor:divisaHistBase.aFavor + favorClienteDivisa
+  };
+  const bcvHist = {
+    ...bcvHistBase,
+    pagado:bcvHistBase.pagado + favorClienteBcv,
+    aFavor:bcvHistBase.aFavor + favorClienteBcv
+  };
 
   document.getElementById("historyTitle").textContent = `Historial · ${cliente.nombre}`;
 
   const body = document.getElementById("historyBody");
 
+  const resumenHistCuenta = (titulo, resumen) => `
+    <div class="deuda-account-card">
+      <div class="deuda-account-title">Cuenta ${titulo}</div>
+      <div class="deuda-account-values">
+        <div class="deuda-account-value"><label>Total</label><strong>$${money(resumen.total)}</strong></div>
+        <div class="deuda-account-value"><label>Pagado</label><strong>$${money(resumen.pagado)}</strong></div>
+        <div class="deuda-account-value"><label>Saldo</label><strong>$${money(resumen.saldo)}</strong></div>
+        <div class="deuda-account-value"><label>A favor</label><strong>$${money(resumen.aFavor)}</strong></div>
+      </div>
+    </div>
+  `;
+
   const resumenHtml = `
     <div class="deuda-modal-summary">
-      <div class="deuda-summary-box"><label>Total</label><strong>$${money(total)}</strong></div>
-      <div class="deuda-summary-box"><label>Pagado</label><strong>$${money(pagado)}</strong></div>
-      <div class="deuda-summary-box"><label>Saldo</label><strong>$${money(saldo)}</strong></div>
-      <div class="deuda-summary-box"><label>A favor</label><strong>$${money(aFavor)}</strong></div>
+      ${resumenHistCuenta("DIVISA", divisaHist)}
+      ${resumenHistCuenta("BCV", bcvHist)}
     </div>
   `;
 
@@ -5040,6 +5101,8 @@ async function verHistorialCliente(id){
             <span>Método: <b>${escapeHtml(pg.metodo_pago || "—")}</b></span>
             ${pg.referencia ? `<span>Referencia: <b>${escapeHtml(pg.referencia)}</b></span>` : ""}
             ${pg.registrado_por ? `<span>Registrado por: <b>${escapeHtml(pg.registrado_por)}</b></span>` : ""}
+            ${pg.origen ? `<span>Origen: <b>${escapeHtml(pg.origen)}</b></span>` : ""}
+            ${pg.estado ? `<span>Estado: <b>${escapeHtml(pg.estado)}</b></span>` : ""}
           </div>
           <div class="payment-receipt-summary">
             <span>Entrada recibida <b>$${money(recibido)}</b></span>
