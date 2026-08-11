@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v82 anulación centralizada");
+console.log("APP JS conectado correctamente v83 tipo de abono visible");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -1703,7 +1703,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v82_anulacion_centralizada";
+const PAGO_SIMPLE_VERSION = "v83_tipo_abono_visible";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 const PAGO_UNIFICADO_NOTA = "PAGO_UNIFICADO_V1";
 let pagoSimpleGuardando = false;
@@ -2129,7 +2129,7 @@ async function cargarHistorialPagoSimple(id) {
         anulado,
         origen: parent ? String(parent.origen || "") : "LEGACY",
         entradaMonto: parent ? numeroSeguro(parent.monto_recibido || 0) : 0,
-        tipoPago: parent ? String(parent.tipo_pago || "") : "",
+        tipoPago: parent ? String(parent.tipo_pago || "") : tipoPagoSimpleDesdePedido(getPedidoPorId(id) || {}),
         metodoPago: parent ? String(parent.metodo_pago || "") : String(p.metodo_pago || ""),
         anuladoPor: parent ? String(parent.anulado_por || "") : "",
         motivoAnulacion: parent ? String(parent.motivo_anulacion || "") : ""
@@ -2215,7 +2215,7 @@ function pintarModalPagoSimple() {
 
   if (accion === "ABONO") {
     pagadoPreview += nuevoAbono;
-    accionTexto = nuevoAbono > 0 ? "Se agregará abono de $" + money(nuevoAbono) : "Coloca el monto del abono";
+    accionTexto = nuevoAbono > 0 ? "Se agregará abono " + tipo + " de $" + money(nuevoAbono) : "Coloca el monto del abono";
   }
 
   if (accion === "LISTO") {
@@ -2262,7 +2262,7 @@ function pintarModalPagoSimple() {
 
         return `
         <div class="simple-hist-row ${a.anulado ? "is-anulado" : ""}">
-          <span class="simple-hist-main">${a.anulado ? "Anulado" : "Aplicado"} ${i + 1}: $${money(a.monto)}</span>
+          <span class="simple-hist-main">${a.anulado ? "Anulado" : "Abono"} ${a.tipoPago || item.tipo || "DIVISA"} ${i + 1}: $${money(a.monto)}</span>
           <small>${escapeHtml(fechaCortaPagoSimple(a.fecha))}${a.auto ? " · automático" : ""}${metaEntrada}${centralizado}${anuladoTxt}</small>
           ${boton}
         </div>`;
