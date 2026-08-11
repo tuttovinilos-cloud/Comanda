@@ -2942,7 +2942,7 @@ function cerrarNotificacionesSiFondo(event){
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v67 · anulación completa de entradas");
+console.log("CLIENTES HTML conectado v68 · tipo de abono visible");
 
 let clientesDB = [];
 let pedidosDB = [];
@@ -4817,6 +4817,19 @@ function pintarDeudaModal(cliente){
         ? `Pago: ${fechaCortaCliente(fechaPago)}`
         : "Sin pago registrado";
 
+      const tipoCuenta = normalizarTipoCuentaCliente(item.tipo);
+      const textoPagado = item.pagado > 0.009
+        ? (item.saldo > 0.009
+            ? `Abono ${tipoCuenta} $${money(item.pagado)}`
+            : `Pagado ${tipoCuenta} $${money(item.pagado)}`)
+        : `Sin abono ${tipoCuenta}`;
+
+      const textoSaldo = item.aFavor > 0.009
+        ? `A favor ${tipoCuenta} $${money(item.aFavor)}`
+        : (item.saldo > 0.009
+            ? `Debe ${tipoCuenta} $${money(item.saldo)}`
+            : `Saldo ${tipoCuenta} $0.00`);
+
       return `
         <div class="deuda-pedido-row estado-${clase}">
           <div class="deuda-pedido-id">#${escapeHtml(pedido.id)}</div>
@@ -4824,8 +4837,8 @@ function pintarDeudaModal(cliente){
             <strong>${escapeHtml(pedido.descripcion || "Sin descripción")}</strong>
             <small>${escapeHtml(textoFechaPago)} · ${escapeHtml(tipoTextoCuenta(item))} · ${escapeHtml(estadoLabelPagoSimple(item.estado))}</small>
           </div>
-          <div class="deuda-pedido-money pagado" title="Pagado">Pagado $${money(item.pagado)}</div>
-          <div class="deuda-pedido-money ${item.saldo > 0.009 ? "debe" : "pagado"}" title="Saldo">${escapeHtml(saldoTxt)}</div>
+          <div class="deuda-pedido-money pagado" title="${escapeHtml(textoPagado)}">${escapeHtml(textoPagado)}</div>
+          <div class="deuda-pedido-money ${item.saldo > 0.009 ? "debe" : "pagado"}" title="${escapeHtml(textoSaldo)}">${escapeHtml(textoSaldo)}</div>
         </div>
       `;
     }).join("");
