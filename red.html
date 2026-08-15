@@ -120,6 +120,449 @@ canvas{display:none}
   color:var(--muted);
   font-size:11px;
 }
+
+/* ============================================================
+   LED STUDIO · UI 2.0
+   ============================================================ */
+:root{
+  --border:var(--line);
+  --surface:#0d131d;
+  --surface2:#121a27;
+  --temp:#ff6576;
+  --hum:#5c9dff;
+  --shadow:0 18px 48px rgba(0,0,0,.22);
+}
+
+body{
+  background:
+    radial-gradient(circle at 6% 0%,rgba(110,124,255,.16),transparent 27%),
+    radial-gradient(circle at 94% 8%,rgba(92,157,255,.10),transparent 24%),
+    linear-gradient(180deg,#080b11 0%,#0a0e15 100%);
+}
+
+.app{padding:20px;max-width:1540px}
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px;
+  margin-bottom:16px;
+  padding:4px 2px;
+}
+
+.brandEyebrow{
+  color:#7f8cff;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1.6px;
+  margin-bottom:4px;
+}
+.brand h1{font-size:30px;line-height:1.05;letter-spacing:-1px}
+.brand p{font-size:12px;max-width:580px}
+
+.topRight{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.deviceState{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-height:45px;
+  padding:7px 12px;
+  background:rgba(17,23,34,.86);
+  border:1px solid var(--line);
+  border-radius:13px;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+}
+.deviceState strong{display:block;font-size:11px}
+.deviceState small{display:block;margin-top:3px;color:var(--muted);font-size:10px}
+.deviceDot{
+  width:9px;height:9px;border-radius:50%;
+  background:var(--good);
+  box-shadow:0 0 0 4px rgba(78,219,154,.10),0 0 14px rgba(78,219,154,.42);
+}
+
+.envMini{display:flex;gap:7px;align-items:center}
+.envChip{
+  display:grid;
+  grid-template-columns:24px auto;
+  grid-template-areas:"icon label" "icon value";
+  column-gap:7px;
+  min-width:105px;
+  padding:7px 10px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:rgba(17,23,34,.88);
+}
+.envChipIcon{
+  grid-area:icon;
+  align-self:center;
+  display:grid;
+  place-items:center;
+  width:24px;height:24px;
+  border-radius:8px;
+  font-weight:900;
+}
+.envChip.temp .envChipIcon{background:rgba(255,101,118,.14);color:var(--temp)}
+.envChip.hum .envChipIcon{background:rgba(92,157,255,.14);color:var(--hum)}
+.envChipLabel{grid-area:label;font-size:8px;color:var(--muted);font-weight:800;letter-spacing:.5px}
+.envChip b{grid-area:value;font-size:13px;line-height:1.1}
+.envChip.temp b{color:#ffd7dc}
+.envChip.hum b{color:#d5e7ff}
+
+.tabs{
+  position:sticky;
+  top:0;
+  z-index:20;
+  padding:7px;
+  margin:0 0 12px;
+  border:1px solid rgba(40,51,73,.9);
+  border-radius:15px;
+  background:rgba(8,11,17,.88);
+  backdrop-filter:blur(14px);
+}
+.tab{
+  border-color:transparent;
+  background:transparent;
+  padding:9px 14px;
+  border-radius:9px;
+  font-size:11px;
+  font-weight:700;
+}
+.tab:hover{background:#151d2a;color:#dce3f0}
+.tab.active{
+  background:linear-gradient(135deg,#6170ff,#7886ff);
+  box-shadow:0 6px 18px rgba(110,124,255,.25);
+}
+
+.card{
+  padding:17px;
+  border-radius:18px;
+  box-shadow:var(--shadow);
+}
+
+.field input,.field select{
+  background:#0b111a;
+  transition:border-color .15s,box-shadow .15s,background .15s;
+}
+.field input:focus,.field select:focus{
+  border-color:#6877ff;
+  box-shadow:0 0 0 3px rgba(110,124,255,.10);
+}
+
+.btn{
+  font-weight:700;
+  font-size:12px;
+  transition:transform .12s,filter .12s,border-color .12s;
+}
+.btn:hover{filter:brightness(1.08);border-color:#40506c}
+.btn:active{transform:translateY(1px)}
+
+.previewBar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin:0 0 10px;
+}
+.previewBar .legend{margin:0}
+.previewMetric{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+  padding:7px 10px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#0b111a;
+}
+.previewMetric span{font-size:9px;color:var(--muted);font-weight:800;letter-spacing:.4px}
+.previewMetric b{font-size:12px;color:#fff}
+
+/* HISTORY */
+.historyHead{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:24px;
+  margin-bottom:14px;
+}
+.sectionKicker{
+  color:#7886ff;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:1.25px;
+  text-transform:uppercase;
+}
+.historyHead h2{
+  margin:5px 0 6px;
+  font-size:24px;
+  line-height:1.15;
+  letter-spacing:-.55px;
+}
+.historyHead p{
+  margin:0;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.5;
+  max-width:720px;
+}
+.historyControls{
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+  flex:0 0 auto;
+}
+.historyPeriodField{min-width:190px}
+.historyRefreshBtn{height:41px}
+
+.historyStatusRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin:0 0 14px;
+  padding:9px 11px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#0b111a;
+}
+.livePill{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:11px}
+.livePulse{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--good);
+  box-shadow:0 0 0 4px rgba(78,219,154,.09);
+}
+.historySamples{
+  display:flex;
+  gap:7px;
+  align-items:center;
+  font-size:10px;
+  color:var(--muted);
+}
+.historySamples b{color:#fff;font-size:13px}
+
+.historyKpis{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:9px;
+  margin-bottom:12px;
+}
+.historyKpi{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-width:0;
+  padding:11px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:linear-gradient(180deg,#121a27,#0e151f);
+}
+.historyKpi .kpiIcon{
+  flex:0 0 auto;
+  display:grid;place-items:center;
+  width:31px;height:31px;
+  border-radius:9px;
+  font-size:10px;font-weight:900;
+}
+.historyKpi.temp .kpiIcon{background:rgba(255,101,118,.12);color:var(--temp)}
+.historyKpi.hum .kpiIcon{background:rgba(92,157,255,.12);color:var(--hum)}
+.kpiText{min-width:0}
+.kpiText span{
+  display:block;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  color:var(--muted);
+  font-size:8px;
+  text-transform:uppercase;
+  letter-spacing:.35px;
+  font-weight:800;
+}
+.kpiText strong{
+  display:block;
+  margin-top:4px;
+  font-size:17px;
+  white-space:nowrap;
+}
+.historyKpi.temp strong{color:#ffd7dc}
+.historyKpi.hum strong{color:#d7e8ff}
+
+.historyChartCard,.historyTableCard{
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:#0c121b;
+  overflow:hidden;
+}
+.historyChartCard{margin-bottom:12px}
+.historyCardHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:12px 14px;
+  border-bottom:1px solid var(--line);
+  background:#101722;
+}
+.historyCardHead h3{margin:3px 0 0;font-size:14px}
+.chartLegend{display:flex;align-items:center;gap:14px;color:var(--muted);font-size:10px}
+.chartLegend span{display:flex;align-items:center;gap:6px}
+.legendLine{display:inline-block;width:18px;height:3px;border-radius:10px}
+.legendLine.temp{background:var(--temp)}
+.legendLine.hum{background:var(--hum)}
+.historyHint{font-size:9px;color:var(--muted)}
+
+.historyChartWrap{
+  width:100%;
+  overflow:hidden;
+  padding:8px 10px 0;
+}
+#historyChart{
+  display:block;
+  width:100%;
+  height:300px;
+  min-width:0;
+  background:
+    radial-gradient(circle at 20% 0%,rgba(255,101,118,.035),transparent 28%),
+    radial-gradient(circle at 85% 10%,rgba(92,157,255,.045),transparent 27%);
+}
+
+.historyTableWrap{
+  max-height:520px;
+  overflow:auto;
+}
+.historyTable{
+  width:100%;
+  border-collapse:collapse;
+  font-size:11px;
+  white-space:nowrap;
+}
+.historyTable thead{
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:#111925;
+}
+.historyTable th{
+  padding:9px 11px;
+  color:#8290a7;
+  border-bottom:1px solid var(--line);
+  text-align:left;
+  font-size:8px;
+  letter-spacing:.45px;
+  text-transform:uppercase;
+}
+.historyTable td{
+  padding:9px 11px;
+  border-bottom:1px solid rgba(40,51,73,.62);
+  color:#c8d0df;
+}
+.historyTable tbody tr:hover{background:rgba(110,124,255,.035)}
+.historyTable .num{text-align:right}
+.historyTable .valueTemp{font-weight:800;color:#ffd4d9}
+.historyTable .valueHum{font-weight:800;color:#d1e4ff}
+.historyTable .emptyRow td{
+  padding:34px 12px;
+  text-align:center;
+  color:var(--muted);
+}
+
+/* Responsive */
+@media(max-width:1200px){
+  .historyKpis{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:900px){
+  .app{padding:12px}
+  .top{align-items:flex-start}
+  .topRight{width:100%;justify-content:flex-start}
+  .historyHead{flex-direction:column;gap:12px}
+  .historyControls{width:100%}
+  .historyPeriodField{min-width:0;flex:1}
+  .toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .effectGrid,.imageGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:640px){
+  .app{padding:8px}
+  .card{padding:10px;border-radius:14px}
+  .brand h1{font-size:25px}
+  .brand p{font-size:11px}
+  .top{margin-bottom:10px}
+  .deviceState{width:100%}
+  .envMini{width:100%}
+  .envChip{flex:1;min-width:0}
+  .tabs{margin-left:-2px;margin-right:-2px;padding:5px;top:0}
+  .tab{padding:8px 11px;font-size:10px}
+  .toolbar,.effectGrid,.imageGrid{grid-template-columns:1fr 1fr;gap:7px}
+  .actions .btn{flex:1 1 calc(50% - 8px)}
+  .previewBar{align-items:flex-start;flex-direction:column}
+  .previewMetric{width:100%;justify-content:space-between}
+
+  .historyHead h2{font-size:20px}
+  .historyControls{align-items:stretch}
+  .historyRefreshBtn{align-self:flex-end}
+  .historyKpis{grid-template-columns:1fr 1fr;gap:7px}
+  .historyKpi{padding:9px}
+  .kpiText strong{font-size:15px}
+  .historyStatusRow{align-items:flex-start}
+  .chartLegend{gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  #historyChart{height:230px}
+
+  .historyTableWrap{
+    max-height:none;
+    overflow:visible;
+    padding:8px;
+  }
+  .historyTable{display:block;white-space:normal}
+  .historyTable thead{display:none}
+  .historyTable tbody{display:grid;gap:8px}
+  .historyTable tr{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:#101722;
+    overflow:hidden;
+  }
+  .historyTable td{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    padding:8px 10px;
+    border-bottom:1px solid rgba(40,51,73,.55);
+    font-size:10px;
+    text-align:right!important;
+  }
+  .historyTable td::before{
+    content:attr(data-label);
+    color:#7f8aa0;
+    font-size:8px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.35px;
+    text-align:left;
+  }
+  .historyTable td:nth-last-child(-n+2){border-bottom:0}
+  .historyTable .emptyRow{display:block}
+  .historyTable .emptyRow td{display:block;text-align:center!important}
+  .historyTable .emptyRow td::before{display:none}
+}
+@media(max-width:430px){
+  .toolbar,.effectGrid,.imageGrid{grid-template-columns:1fr}
+  .historyKpis{grid-template-columns:1fr}
+  .historyControls{flex-direction:column}
+  .historyRefreshBtn{width:100%}
+  .historyTable tr{grid-template-columns:1fr}
+  .historyTable td{border-bottom:1px solid rgba(40,51,73,.55)!important}
+  .historyTable td:last-child{border-bottom:0!important}
+}
+
 </style>
 
 </head>
@@ -127,22 +570,33 @@ canvas{display:none}
 <div class="app">
   <div class="top">
     <div class="brand">
-      <h1>Tuttovinilos · LED Studio</h1>
-      <p>Mapa físico · efectos · imágenes pixeladas</p>
+      <div class="brandEyebrow">TUTTOVINILOS · CONTROL</div>
+      <h1>LED Studio</h1>
+      <p>Mapa físico, efectos, ambiente y automatización en un solo panel.</p>
     </div>
-    <div style="font-size:12px;color:#64748b;margin-bottom:6px">ESP32: efectos locales + Wi-Fi multired + portal automático</div>
-<div id="status" class="status">Supabase · listo</div>
-      <div id="envMini" style="display:flex;gap:8px;align-items:center;margin-left:auto">
-        <div style="display:flex;align-items:center;gap:5px;padding:6px 9px;border:1px solid var(--border);border-radius:999px;background:#fff;font-weight:800;font-size:12px;white-space:nowrap">
-          <span style="opacity:.65">TEMP</span>
-          <span id="envMiniTemp">--.-°C</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:5px;padding:6px 9px;border:1px solid var(--border);border-radius:999px;background:#fff;font-weight:800;font-size:12px;white-space:nowrap">
-          <span style="opacity:.65">HUM</span>
-          <span id="envMiniHum">--.-%</span>
+
+    <div class="topRight">
+      <div class="deviceState">
+        <span class="deviceDot"></span>
+        <div>
+          <strong>ESP32-S3 · esp32_01</strong>
+          <small id="status">Supabase · listo</small>
         </div>
       </div>
 
+      <div id="envMini" class="envMini">
+        <div class="envChip temp">
+          <span class="envChipIcon">°</span>
+          <span class="envChipLabel">TEMP</span>
+          <b id="envMiniTemp">--.-°C</b>
+        </div>
+        <div class="envChip hum">
+          <span class="envChipIcon">%</span>
+          <span class="envChipLabel">HUM</span>
+          <b id="envMiniHum">--.-%</b>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="tabs">
@@ -563,9 +1017,15 @@ canvas{display:none}
         <button class="btn danger" id="off">Apagar</button>
       </div>
 
-      <div class="legend">
-        <span><i class="dot"></i>Vista simulada</span>
-        <span>El ESP32 genera el movimiento localmente para que sea fluido.</span>
+      <div class="previewBar">
+        <div class="legend">
+          <span><i class="dot"></i>Vista previa física simulada</span>
+          <span>La cuadrícula usa la misma lógica, paleta, giro y velocidad del ESP32.</span>
+        </div>
+        <div class="previewMetric">
+          <span>TEST HTML</span>
+          <b id="testHtmlTime">—</b>
+        </div>
       </div>
 
       <div class="workspace"><div id="gridPreview" class="grid"></div></div>
@@ -704,88 +1164,130 @@ canvas{display:none}
 
 
     <section id="history" class="panel">
-      <div class="profileBanner">
-        <div class="profileBannerLeft">
-          <span class="profileDot"></span>
-          <span class="profileLabel">HISTORIAL AMBIENTAL</span>
-          <span class="profileName">Muestra automática cada 5 minutos</span>
-          <span class="profileState" id="historyState">Cargando...</span>
+      <div class="historyHead">
+        <div>
+          <div class="sectionKicker">SHT31 · HISTORIAL AMBIENTAL</div>
+          <h2>Fluctuación de temperatura y humedad</h2>
+          <p>El ESP32 registra una muestra cada 5 minutos. Consulta tendencias, máximos, mínimos y cada medición con fecha y hora.</p>
+        </div>
+
+        <div class="historyControls">
+          <div class="field historyPeriodField">
+            <label>PERÍODO</label>
+            <select id="historyPeriod">
+              <option value="today">Hoy</option>
+              <option value="24h">Últimas 24 horas</option>
+              <option value="7d">Últimos 7 días</option>
+              <option value="30d">Últimos 30 días</option>
+            </select>
+          </div>
+          <button class="btn historyRefreshBtn" id="historyRefresh">Actualizar</button>
         </div>
       </div>
 
-      <div class="toolbar" style="margin-top:14px">
-        <div class="field">
-          <label>PERÍODO</label>
-          <select id="historyPeriod">
-            <option value="today">Hoy</option>
-            <option value="24h">Últimas 24 horas</option>
-            <option value="7d">Últimos 7 días</option>
-            <option value="30d">Últimos 30 días</option>
-          </select>
+      <div class="historyStatusRow">
+        <div class="livePill">
+          <span class="livePulse"></span>
+          <span id="historyState">Cargando historial...</span>
         </div>
-        <button class="btn" id="historyRefresh">Actualizar historial</button>
-        <div class="stat"><span>MUESTRAS</span><b id="historyCount">0</b></div>
-      </div>
-
-      <div class="effectGrid" style="margin-top:14px">
-        <div class="field">
-          <label>TEMP. PROMEDIO</label>
-          <div id="histTempAvg" style="font-size:24px;font-weight:900;padding:12px;border:1px solid var(--border);border-radius:12px">--.- °C</div>
-        </div>
-        <div class="field">
-          <label>TEMP. MÁXIMA</label>
-          <div id="histTempMax" style="font-size:24px;font-weight:900;padding:12px;border:1px solid var(--border);border-radius:12px">--.- °C</div>
-        </div>
-        <div class="field">
-          <label>TEMP. MÍNIMA</label>
-          <div id="histTempMin" style="font-size:24px;font-weight:900;padding:12px;border:1px solid var(--border);border-radius:12px">--.- °C</div>
-        </div>
-        <div class="field">
-          <label>HUM. PROMEDIO</label>
-          <div id="histHumAvg" style="font-size:24px;font-weight:900;padding:12px;border:1px solid var(--border);border-radius:12px">--.- %</div>
-        </div>
-        <div class="field">
-          <label>HUM. MÁXIMA</label>
-          <div id="histHumMax" style="font-size:24px;font-weight:900;padding:12px;border:1px solid var(--border);border-radius:12px">--.- %</div>
-        </div>
-        <div class="field">
-          <label>HUM. MÍNIMA</label>
-          <div id="histHumMin" style="font-size:24px;font-weight:900;padding:12px;border:1px solid var(--border);border-radius:12px">--.- %</div>
+        <div class="historySamples">
+          <span>Muestras</span>
+          <b id="historyCount">0</b>
         </div>
       </div>
 
-      <div style="margin-top:16px;border:1px solid var(--border);border-radius:14px;overflow:hidden">
-        <div style="padding:12px 14px;font-weight:900;border-bottom:1px solid var(--border);background:#f8fafc">
-          Fluctuación en el tiempo
+      <div class="historyKpis">
+        <article class="historyKpi temp">
+          <div class="kpiIcon">°C</div>
+          <div class="kpiText">
+            <span>Temperatura promedio</span>
+            <strong id="histTempAvg">--.- °C</strong>
+          </div>
+        </article>
+
+        <article class="historyKpi temp">
+          <div class="kpiIcon up">↑</div>
+          <div class="kpiText">
+            <span>Temperatura máxima</span>
+            <strong id="histTempMax">--.- °C</strong>
+          </div>
+        </article>
+
+        <article class="historyKpi temp">
+          <div class="kpiIcon down">↓</div>
+          <div class="kpiText">
+            <span>Temperatura mínima</span>
+            <strong id="histTempMin">--.- °C</strong>
+          </div>
+        </article>
+
+        <article class="historyKpi hum">
+          <div class="kpiIcon">%</div>
+          <div class="kpiText">
+            <span>Humedad promedio</span>
+            <strong id="histHumAvg">--.- %</strong>
+          </div>
+        </article>
+
+        <article class="historyKpi hum">
+          <div class="kpiIcon up">↑</div>
+          <div class="kpiText">
+            <span>Humedad máxima</span>
+            <strong id="histHumMax">--.- %</strong>
+          </div>
+        </article>
+
+        <article class="historyKpi hum">
+          <div class="kpiIcon down">↓</div>
+          <div class="kpiText">
+            <span>Humedad mínima</span>
+            <strong id="histHumMin">--.- %</strong>
+          </div>
+        </article>
+      </div>
+
+      <div class="historyChartCard">
+        <div class="historyCardHead">
+          <div>
+            <span class="sectionKicker">TENDENCIA</span>
+            <h3>Variación en el tiempo</h3>
+          </div>
+          <div class="chartLegend">
+            <span><i class="legendLine temp"></i>Temperatura °C</span>
+            <span><i class="legendLine hum"></i>Humedad %</span>
+          </div>
         </div>
-        <div style="overflow:auto">
-          <svg id="historyChart" viewBox="0 0 1000 260" preserveAspectRatio="none" style="display:block;width:100%;min-width:720px;height:260px;background:#fff"></svg>
-        </div>
-        <div style="padding:8px 12px;font-size:11px;color:var(--muted);border-top:1px solid var(--border)">
-          Línea superior: temperatura °C · Línea inferior/segunda escala: humedad %
+
+        <div class="historyChartWrap">
+          <svg id="historyChart" viewBox="0 0 1000 300" preserveAspectRatio="none"></svg>
         </div>
       </div>
 
-      <div style="margin-top:16px;border:1px solid var(--border);border-radius:14px;overflow:hidden">
-        <div style="padding:12px 14px;font-weight:900;border-bottom:1px solid var(--border);background:#f8fafc">
-          Tabla de mediciones
+      <div class="historyTableCard">
+        <div class="historyCardHead">
+          <div>
+            <span class="sectionKicker">REGISTRO</span>
+            <h3>Mediciones cada 5 minutos</h3>
+          </div>
+          <div class="historyHint">Más reciente primero</div>
         </div>
-        <div style="overflow:auto;max-height:520px">
-          <table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap">
-            <thead style="position:sticky;top:0;background:#f8fafc;z-index:2">
+
+        <div class="historyTableWrap">
+          <table class="historyTable">
+            <thead>
               <tr>
-                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:left">Fecha</th>
-                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:left">Hora</th>
-                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:right">Temp °C</th>
-                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:right">Humedad %</th>
-                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:right">P. rocío °C</th>
-                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:right">Sensación °C</th>
-                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:right">Hum. abs. g/m³</th>
-                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:right">VPD kPa</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th class="num">Temp.</th>
+                <th class="num">Humedad</th>
+                <th class="num">P. rocío</th>
+                <th class="num">Sensación</th>
+                <th class="num">Hum. absoluta</th>
+                <th class="num">VPD</th>
               </tr>
             </thead>
             <tbody id="historyBody">
-              <tr><td colspan="8" style="padding:18px;text-align:center;color:var(--muted)">Sin datos todavía</td></tr>
+              <tr class="emptyRow"><td colspan="8">Sin datos todavía</td></tr>
             </tbody>
           </table>
         </div>
@@ -1647,23 +2149,20 @@ function historyStats(rows,key){
 
 function drawHistoryChart(rows){
   const svg=$('historyChart');
-
   if(!svg)return;
 
   if(!rows.length){
-    svg.innerHTML=
-      '<text x="500" y="130" text-anchor="middle" fill="#64748b" font-size="16">Sin datos para este período</text>';
+    svg.innerHTML=`
+      <rect x="0" y="0" width="1000" height="300" fill="transparent"/>
+      <text x="500" y="145" text-anchor="middle" fill="#8c98ad" font-size="18" font-weight="700">Sin datos para este período</text>
+      <text x="500" y="172" text-anchor="middle" fill="#667085" font-size="12">Las nuevas muestras aparecerán automáticamente cada 5 minutos.</text>
+    `;
     return;
   }
 
   const sorted=[...rows].reverse();
-
-  const temps=sorted
-    .map(r=>historyNumber(r.temperature_c));
-
-  const hums=sorted
-    .map(r=>historyNumber(r.humidity));
-
+  const temps=sorted.map(r=>historyNumber(r.temperature_c));
+  const hums=sorted.map(r=>historyNumber(r.humidity));
   const validT=temps.filter(v=>v!==null);
   const validH=hums.filter(v=>v!==null);
 
@@ -1672,57 +2171,66 @@ function drawHistoryChart(rows){
     return;
   }
 
-  const padX=50,padY=24,W=1000,H=260;
-  const innerW=W-padX*2;
-  const innerH=H-padY*2;
+  const W=1000,H=300,left=62,right=62,top=28,bottom=42;
+  const innerW=W-left-right,innerH=H-top-bottom;
 
   let tMin=Math.min(...validT),tMax=Math.max(...validT);
   let hMin=Math.min(...validH),hMax=Math.max(...validH);
 
-  if(tMax-tMin<1){tMin-=.5;tMax+=.5}
-  if(hMax-hMin<2){hMin-=1;hMax+=1}
+  const tPad=Math.max(.5,(tMax-tMin)*.18);
+  const hPad=Math.max(1.5,(hMax-hMin)*.18);
+  tMin-=tPad;tMax+=tPad;
+  hMin=Math.max(0,hMin-hPad);hMax=Math.min(100,hMax+hPad);
 
-  const x=i=>
-    padX+
-    (sorted.length<=1?innerW/2:i*innerW/(sorted.length-1));
+  const x=i=>left+(sorted.length<=1?innerW/2:i*innerW/(sorted.length-1));
+  const yTemp=v=>top+(tMax-v)/(tMax-tMin)*innerH;
+  const yHum=v=>top+(hMax-v)/(hMax-hMin)*innerH;
 
-  const yTemp=v=>
-    padY+
-    (tMax-v)/(tMax-tMin)*innerH;
+  const tempPts=sorted.map((r,i)=>{
+    const v=historyNumber(r.temperature_c);
+    return v===null?null:`${x(i)},${yTemp(v)}`;
+  }).filter(Boolean).join(' ');
 
-  const yHum=v=>
-    padY+
-    (hMax-v)/(hMax-hMin)*innerH;
+  const humPts=sorted.map((r,i)=>{
+    const v=historyNumber(r.humidity);
+    return v===null?null:`${x(i)},${yHum(v)}`;
+  }).filter(Boolean).join(' ');
 
-  const tempPts=sorted
-    .map((r,i)=>{
-      const v=historyNumber(r.temperature_c);
-      return v===null?null:`${x(i)},${yTemp(v)}`;
-    })
-    .filter(Boolean)
-    .join(' ');
+  const grid=[0,.25,.5,.75,1].map((q,idx)=>{
+    const y=top+q*innerH;
+    const tv=tMax-q*(tMax-tMin);
+    const hv=hMax-q*(hMax-hMin);
+    return `
+      <line x1="${left}" y1="${y}" x2="${W-right}" y2="${y}" stroke="#263248" stroke-width="1"/>
+      <text x="${left-12}" y="${y+4}" text-anchor="end" fill="#ff7b86" font-size="11">${tv.toFixed(1)}°</text>
+      <text x="${W-right+12}" y="${y+4}" text-anchor="start" fill="#6ba8ff" font-size="11">${hv.toFixed(0)}%</text>
+    `;
+  }).join('');
 
-  const humPts=sorted
-    .map((r,i)=>{
-      const v=historyNumber(r.humidity);
-      return v===null?null:`${x(i)},${yHum(v)}`;
-    })
-    .filter(Boolean)
-    .join(' ');
+  const labelIndexes=[0,Math.floor((sorted.length-1)/2),sorted.length-1]
+    .filter((v,i,a)=>a.indexOf(v)===i);
 
-  const grid=[0,.25,.5,.75,1].map(q=>{
-    const y=padY+q*innerH;
-    return `<line x1="${padX}" y1="${y}" x2="${W-padX}" y2="${y}" stroke="#e5e7eb" stroke-width="1"/>`;
+  const xLabels=labelIndexes.map(i=>{
+    const d=new Date(sorted[i].sampled_at);
+    const txt=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    return `<text x="${x(i)}" y="${H-12}" text-anchor="middle" fill="#778399" font-size="11">${txt}</text>`;
   }).join('');
 
   svg.innerHTML=`
+    <defs>
+      <linearGradient id="tempArea" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#ff6576" stop-opacity=".16"/>
+        <stop offset="100%" stop-color="#ff6576" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="humArea" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#5c9dff" stop-opacity=".12"/>
+        <stop offset="100%" stop-color="#5c9dff" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
     ${grid}
-    <polyline points="${tempPts}" fill="none" stroke="#ef4444" stroke-width="3" vector-effect="non-scaling-stroke"/>
-    <polyline points="${humPts}" fill="none" stroke="#2563eb" stroke-width="3" vector-effect="non-scaling-stroke"/>
-    <text x="12" y="28" fill="#ef4444" font-size="13" font-weight="700">${tMax.toFixed(1)}°</text>
-    <text x="12" y="${H-18}" fill="#ef4444" font-size="13" font-weight="700">${tMin.toFixed(1)}°</text>
-    <text x="${W-42}" y="28" fill="#2563eb" font-size="13" font-weight="700">${hMax.toFixed(1)}%</text>
-    <text x="${W-42}" y="${H-18}" fill="#2563eb" font-size="13" font-weight="700">${hMin.toFixed(1)}%</text>
+    ${xLabels}
+    <polyline points="${tempPts}" fill="none" stroke="#ff6576" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+    <polyline points="${humPts}" fill="none" stroke="#5c9dff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
   `;
 }
 
@@ -1751,7 +2259,7 @@ function paintEnvironmentHistory(){
 
   if(!rows.length){
     body.innerHTML=
-      '<tr><td colspan="8" style="padding:18px;text-align:center;color:var(--muted)">Sin datos todavía</td></tr>';
+      '<tr class="emptyRow"><td colspan="8">Sin datos todavía</td></tr>';
 
     drawHistoryChart([]);
     return;
@@ -1774,14 +2282,14 @@ function paintEnvironmentHistory(){
 
     return `
       <tr>
-        <td style="padding:9px 10px;border-bottom:1px solid var(--line)">${date}</td>
-        <td style="padding:9px 10px;border-bottom:1px solid var(--line)">${time}</td>
-        <td style="padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;font-weight:800">${f(r.temperature_c)}°</td>
-        <td style="padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;font-weight:800">${f(r.humidity)}%</td>
-        <td style="padding:9px 10px;border-bottom:1px solid var(--line);text-align:right">${f(r.dew_point_c)}</td>
-        <td style="padding:9px 10px;border-bottom:1px solid var(--line);text-align:right">${f(r.heat_index_c)}</td>
-        <td style="padding:9px 10px;border-bottom:1px solid var(--line);text-align:right">${f(r.absolute_humidity_gm3)}</td>
-        <td style="padding:9px 10px;border-bottom:1px solid var(--line);text-align:right">${f(r.vpd_kpa,2)}</td>
+        <td data-label="Fecha">${date}</td>
+        <td data-label="Hora">${time}</td>
+        <td data-label="Temperatura" class="num valueTemp">${f(r.temperature_c)} °C</td>
+        <td data-label="Humedad" class="num valueHum">${f(r.humidity)} %</td>
+        <td data-label="Punto de rocío" class="num">${f(r.dew_point_c)} °C</td>
+        <td data-label="Sensación" class="num">${f(r.heat_index_c)} °C</td>
+        <td data-label="Hum. absoluta" class="num">${f(r.absolute_humidity_gm3)} g/m³</td>
+        <td data-label="VPD" class="num">${f(r.vpd_kpa,2)} kPa</td>
       </tr>
     `;
   }).join('');
@@ -1964,10 +2472,11 @@ let __testHtmlStart=null;
 let __testHtmlCycle=-1;
 
 function updateTestHtmlTime(now,N,sp){
+  const out=$('testHtmlTime');
   if($('effect').value!=='test_time'){
     __testHtmlStart=null;
     __testHtmlCycle=-1;
-    $('testHtmlTime').textContent='—';
+    if(out)out.textContent='—';
     return;
   }
 
@@ -1978,10 +2487,10 @@ function updateTestHtmlTime(now,N,sp){
   if(__testHtmlStart===null){
     __testHtmlStart=now;
     __testHtmlCycle=cycle;
-    $('testHtmlTime').textContent='Midiendo...';
+    if(out)out.textContent='Midiendo...';
   }else if(cycle>__testHtmlCycle){
     const sec=(now-__testHtmlStart)/1000;
-    $('testHtmlTime').textContent=sec.toFixed(2)+' s';
+    if(out)out.textContent=sec.toFixed(2)+' s';
     __testHtmlStart=now;
     __testHtmlCycle=cycle;
   }
@@ -3063,7 +3572,17 @@ $('sendImage').onclick=async()=>{
   catch(e){$('status').textContent='Error';toast('Error: '+e.message)}
 };
 
-resetEventForm();loadSaved();loadPrograms();loadEnvironmentHistory();updateLabels();updateCalibrationLabels();requestAnimationFrame(preview);
+// La interfaz y la cuadrícula aparecen inmediatamente.
+// Luego Supabase sustituye los datos con el layout guardado.
+buildAll(true);
+resetEventForm();
+updateLabels();
+updateCalibrationLabels();
+requestAnimationFrame(preview);
+
+loadSaved();
+loadPrograms();
+loadEnvironmentHistory();
 </script>
 </body>
 </html>
