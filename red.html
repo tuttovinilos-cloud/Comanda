@@ -137,6 +137,7 @@ canvas{display:none}
   <div class="tabs">
     <button class="tab active" data-tab="config">Configuración</button>
     <button class="tab" data-tab="effects">Efectos</button>
+    <button class="tab" data-tab="calibration">Calibración</button>
     <button class="tab" data-tab="image">Imagen</button>
     <button class="tab" data-tab="program">Programación</button>
   </div>
@@ -553,6 +554,79 @@ canvas{display:none}
       </div>
 
       <div class="workspace"><div id="gridPreview" class="grid"></div></div>
+    </section>
+
+
+    <section id="calibration" class="panel">
+      <div class="profileBanner">
+        <div class="profileBannerLeft">
+          <span class="profileDot"></span>
+          <span class="profileLabel">CALIBRACIÓN FÍSICA DEL DISPOSITIVO</span>
+          <span class="profileName">ESP32 · esp32_01</span>
+          <span class="profileState">Se aplica a TODOS los efectos e imágenes</span>
+        </div>
+      </div>
+
+      <div class="effectGrid">
+        <div class="rangeWrap">
+          <label><span>GANANCIA ROJO</span><b id="calRedVal">100%</b></label>
+          <input id="calRed" type="range" min="0" max="200" step="1" value="100">
+        </div>
+
+        <div class="rangeWrap">
+          <label><span>GANANCIA VERDE</span><b id="calGreenVal">100%</b></label>
+          <input id="calGreen" type="range" min="0" max="200" step="1" value="100">
+        </div>
+
+        <div class="rangeWrap">
+          <label><span>GANANCIA AZUL</span><b id="calBlueVal">100%</b></label>
+          <input id="calBlue" type="range" min="0" max="200" step="1" value="100">
+        </div>
+
+        <div class="rangeWrap">
+          <label><span>GAMMA</span><b id="calGammaVal">1.00</b></label>
+          <input id="calGamma" type="range" min="0.50" max="3.00" step="0.05" value="1.00">
+        </div>
+
+        <div class="rangeWrap">
+          <label><span>SATURACIÓN</span><b id="calSatVal">100%</b></label>
+          <input id="calSat" type="range" min="0" max="200" step="1" value="100">
+        </div>
+
+        <div class="rangeWrap">
+          <label><span>BRILLO MÁXIMO FÍSICO</span><b id="calMaxBrightVal">100%</b></label>
+          <input id="calMaxBright" type="range" min="1" max="100" step="1" value="100">
+        </div>
+      </div>
+
+      <div class="actions" style="margin-top:12px">
+        <button class="btn good" id="saveCalibration">Guardar calibración</button>
+        <button class="btn" id="resetCalibration">Restablecer 100%</button>
+      </div>
+
+      <div class="help" style="margin-top:12px">
+        Esta calibración corrige físicamente la cinta completa. Por ejemplo, si el verde se ve demasiado fuerte, baja GANANCIA VERDE. No modifica los colores guardados en tus efectos; corrige la salida final del ESP32.
+      </div>
+
+      <div class="scheduleBox" style="margin-top:14px">
+        <div class="eventTop">
+          <h3 style="margin:0">Prueba de colores físicos</h3>
+          <span class="priorityBadge">Pulsa un color y observa la cinta</span>
+        </div>
+
+        <div class="actions" style="margin-top:12px">
+          <button class="btn" id="calTestRed" style="background:#ef4444;color:white">Rojo</button>
+          <button class="btn" id="calTestGreen" style="background:#22c55e;color:#07110a">Verde</button>
+          <button class="btn" id="calTestBlue" style="background:#3b82f6;color:white">Azul</button>
+          <button class="btn" id="calTestWhite" style="background:#f8fafc;color:#111827">Blanco</button>
+          <button class="btn" id="calTestGray" style="background:#808080;color:white">Gris 50%</button>
+          <button class="btn primary" id="calTestRGB">Secuencia RGB</button>
+        </div>
+
+        <div class="help">
+          Recomendación: primero prueba BLANCO y ajusta R/G/B hasta que se vea neutro. Después usa Rojo, Verde y Azul para afinar cada canal.
+        </div>
+      </div>
     </section>
 
     <section id="image" class="panel">
@@ -1119,6 +1193,78 @@ async function command(cmd){
     body:JSON.stringify({command:cmd,updated_at:new Date().toISOString()})
   });
 }
+
+function updateCalibrationLabels(){
+  $('calRedVal').textContent=$('calRed').value+'%';
+  $('calGreenVal').textContent=$('calGreen').value+'%';
+  $('calBlueVal').textContent=$('calBlue').value+'%';
+  $('calGammaVal').textContent=(+$('calGamma').value).toFixed(2);
+  $('calSatVal').textContent=$('calSat').value+'%';
+  $('calMaxBrightVal').textContent=$('calMaxBright').value+'%';
+}
+
+async function loadColorCalibration(){
+  try{
+    const r=await sb(
+      '/rest/v1/esp32_color_calibration?device_id=eq.'+DEVICE_ID+
+      '&select=red_gain,green_gain,blue_gain,gamma,saturation,max_brightness'
+    );
+
+    if(r?.length){
+      const c=r[0];
+      $('calRed').value=c.red_gain??100;
+      $('calGreen').value=c.green_gain??100;
+      $('calBlue').value=c.blue_gain??100;
+      $('calGamma').value=c.gamma??1.00;
+      $('calSat').value=c.saturation??100;
+      $('calMaxBright').value=c.max_brightness??100;
+    }
+
+    updateCalibrationLabels();
+  }catch(e){
+    console.warn('No se pudo cargar calibración:',e);
+  }
+}
+
+async function saveColorCalibration(){
+  const payload={
+    device_id:DEVICE_ID,
+    red_gain:Math.max(0,Math.min(200,+$('calRed').value||0)),
+    green_gain:Math.max(0,Math.min(200,+$('calGreen').value||0)),
+    blue_gain:Math.max(0,Math.min(200,+$('calBlue').value||0)),
+    gamma:Math.max(.5,Math.min(3,+$('calGamma').value||1)),
+    saturation:Math.max(0,Math.min(200,+$('calSat').value||0)),
+    max_brightness:Math.max(1,Math.min(100,+$('calMaxBright').value||100)),
+    updated_at:new Date().toISOString()
+  };
+
+  await sb('/rest/v1/esp32_color_calibration?on_conflict=device_id',{
+    method:'POST',
+    headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+    body:JSON.stringify(payload)
+  });
+
+  await command('color_calibration_reload');
+}
+
+async function sendCalibrationTest(hex,effect='solid'){
+  await saveColorCalibration();
+
+  // Conserva todos los controles actuales del usuario.
+  const originalEffect=$('effect').value;
+  const originalColor=$('color1').value;
+
+  $('effect').value=effect;
+  $('color1').value=hex;
+
+  await saveEffect(effect);
+  await command('effect_reload');
+
+  // Dejamos la interfaz como estaba.
+  $('effect').value=originalEffect;
+  $('color1').value=originalColor;
+}
+
 async function saveLayout(notify=true){
   if(!path.length)throw new Error('Dibuja primero el recorrido.');
   dims();
@@ -1154,6 +1300,7 @@ async function saveEffect(effectOverride=null){
 }
 async function loadSaved(){
   try{
+    await loadColorCalibration();
     const r=await sb('/rest/v1/esp32_layouts?device_id=eq.'+DEVICE_ID+'&select=*');
     if(r?.length){
       const a=r[0];
@@ -2062,6 +2209,76 @@ async function saveProgramEvent(){
   await loadProgramEvents();
 }
 
+
+['calRed','calGreen','calBlue','calGamma','calSat','calMaxBright'].forEach(id=>{
+  $(id).addEventListener('input',updateCalibrationLabels);
+});
+
+$('saveCalibration').onclick=async()=>{
+  try{
+    $('status').textContent='Guardando calibración...';
+    await saveColorCalibration();
+    $('status').textContent='Calibración enviada';
+    toast('Calibración guardada y enviada al ESP32');
+  }catch(e){
+    $('status').textContent='Error';
+    toast('Error: '+e.message);
+  }
+};
+
+$('resetCalibration').onclick=async()=>{
+  $('calRed').value=100;
+  $('calGreen').value=100;
+  $('calBlue').value=100;
+  $('calGamma').value=1.00;
+  $('calSat').value=100;
+  $('calMaxBright').value=100;
+  updateCalibrationLabels();
+
+  try{
+    await saveColorCalibration();
+    toast('Calibración restablecida');
+  }catch(e){
+    toast('Error: '+e.message);
+  }
+};
+
+$('calTestRed').onclick=async()=>{try{await sendCalibrationTest('#ff0000');toast('Prueba ROJO enviada')}catch(e){toast('Error: '+e.message)}};
+$('calTestGreen').onclick=async()=>{try{await sendCalibrationTest('#00ff00');toast('Prueba VERDE enviada')}catch(e){toast('Error: '+e.message)}};
+$('calTestBlue').onclick=async()=>{try{await sendCalibrationTest('#0000ff');toast('Prueba AZUL enviada')}catch(e){toast('Error: '+e.message)}};
+$('calTestWhite').onclick=async()=>{try{await sendCalibrationTest('#ffffff');toast('Prueba BLANCO enviada')}catch(e){toast('Error: '+e.message)}};
+$('calTestGray').onclick=async()=>{try{await sendCalibrationTest('#808080');toast('Prueba GRIS enviada')}catch(e){toast('Error: '+e.message)}};
+
+$('calTestRGB').onclick=async()=>{
+  try{
+    await saveColorCalibration();
+
+    // Usa el efecto palette_cycle con tres colores puros.
+    const oldCount=$('colorCount').value;
+    const old1=$('color1').value,old2=$('color2').value,old3=$('color3').value;
+    const oldFx=$('effect').value;
+
+    $('colorCount').value=3;
+    $('color1').value='#ff0000';
+    $('color2').value='#00ff00';
+    $('color3').value='#0000ff';
+    $('effect').value='palette_cycle';
+
+    await saveEffect('palette_cycle');
+    await command('effect_reload');
+
+    $('colorCount').value=oldCount;
+    $('color1').value=old1;
+    $('color2').value=old2;
+    $('color3').value=old3;
+    $('effect').value=oldFx;
+
+    toast('Secuencia RGB enviada');
+  }catch(e){
+    toast('Error: '+e.message);
+  }
+};
+
 // ---------- BOTONES ----------
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
@@ -2185,7 +2402,7 @@ $('sendImage').onclick=async()=>{
   catch(e){$('status').textContent='Error';toast('Error: '+e.message)}
 };
 
-resetEventForm();loadSaved();loadPrograms();updateLabels();requestAnimationFrame(preview);
+resetEventForm();loadSaved();loadPrograms();updateLabels();updateCalibrationLabels();requestAnimationFrame(preview);
 </script>
 </body>
 </html>
