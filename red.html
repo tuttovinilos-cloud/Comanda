@@ -138,6 +138,7 @@ canvas{display:none}
     <button class="tab active" data-tab="config">Configuración</button>
     <button class="tab" data-tab="effects">Efectos</button>
     <button class="tab" data-tab="calibration">Calibración</button>
+    <button class="tab" data-tab="environment">Ambiente</button>
     <button class="tab" data-tab="image">Imagen</button>
     <button class="tab" data-tab="program">Programación</button>
   </div>
@@ -191,6 +192,8 @@ canvas{display:none}
             </optgroup>
             <optgroup label="Información">
               <option value="digital_clock">Hora digital · HHMM</option>
+              <option value="sensor_temperature">Temperatura SHT31 · °C</option>
+              <option value="sensor_humidity">Humedad SHT31 · %</option>
             </optgroup>
             <optgroup label="Básicos">
               <option value="solid">Color fijo</option>
@@ -629,6 +632,64 @@ canvas{display:none}
       </div>
     </section>
 
+
+    <section id="environment" class="panel">
+      <div class="profileBanner">
+        <div class="profileBannerLeft">
+          <span class="profileDot" id="envDot"></span>
+          <span class="profileLabel">SENSOR SHT31-D</span>
+          <span class="profileName">Temperatura + Humedad</span>
+          <span class="profileState" id="envSensorState">Esperando lectura...</span>
+        </div>
+      </div>
+
+      <div class="effectGrid" style="margin-top:14px">
+        <div class="field">
+          <label>TEMPERATURA</label>
+          <div id="envTempC" style="font-size:32px;font-weight:900;padding:14px;border:1px solid var(--border);border-radius:12px;background:#0f172a;color:#fff">--.- °C</div>
+        </div>
+        <div class="field">
+          <label>HUMEDAD RELATIVA</label>
+          <div id="envHumidity" style="font-size:32px;font-weight:900;padding:14px;border:1px solid var(--border);border-radius:12px;background:#0f172a;color:#fff">--.- %</div>
+        </div>
+        <div class="field">
+          <label>TEMPERATURA °F</label>
+          <div id="envTempF" style="font-size:22px;font-weight:800;padding:12px;border:1px solid var(--border);border-radius:12px">--.- °F</div>
+        </div>
+        <div class="field">
+          <label>PUNTO DE ROCÍO</label>
+          <div id="envDew" style="font-size:22px;font-weight:800;padding:12px;border:1px solid var(--border);border-radius:12px">--.- °C</div>
+        </div>
+        <div class="field">
+          <label>SENSACIÓN TÉRMICA</label>
+          <div id="envHeat" style="font-size:22px;font-weight:800;padding:12px;border:1px solid var(--border);border-radius:12px">--.- °C</div>
+        </div>
+        <div class="field">
+          <label>HUMEDAD ABSOLUTA</label>
+          <div id="envAbs" style="font-size:22px;font-weight:800;padding:12px;border:1px solid var(--border);border-radius:12px">--.- g/m³</div>
+        </div>
+        <div class="field">
+          <label>VPD</label>
+          <div id="envVpd" style="font-size:22px;font-weight:800;padding:12px;border:1px solid var(--border);border-radius:12px">--.-- kPa</div>
+        </div>
+        <div class="field">
+          <label>ÚLTIMA ACTUALIZACIÓN</label>
+          <div id="envUpdated" style="font-size:16px;font-weight:700;padding:14px;border:1px solid var(--border);border-radius:12px">—</div>
+        </div>
+      </div>
+
+      <div class="help" style="margin-top:14px">
+        El SHT31 está conectado por I²C: SDA = GPIO1 · SCL = GPIO2. 
+        El ESP32 mide localmente y envía los datos a Supabase. Los efectos Temperatura y Humedad usan la lectura directa del sensor, por lo que siguen funcionando incluso si Internet se cae.
+      </div>
+
+      <div class="actions" style="margin-top:14px">
+        <button class="btn primary" id="envUseTemp">Mostrar TEMPERATURA en LEDs</button>
+        <button class="btn primary" id="envUseHumidity">Mostrar HUMEDAD en LEDs</button>
+        <button class="btn" id="envRefresh">Actualizar datos</button>
+      </div>
+    </section>
+
     <section id="image" class="panel">
       <div class="uploadBox">
         <div class="uploadTitle">Imagen → matriz LED</div>
@@ -891,6 +952,9 @@ canvas{display:none}
               </optgroup>
               <option value="test_time">TEST · medir tiempo 1→N</option>
               <option value="off">Apagado</option>
+
+<option value="sensor_temperature">Temperatura SHT31</option>
+<option value="sensor_humidity">Humedad SHT31</option>
 </select>
           </div>
 
@@ -1053,6 +1117,9 @@ canvas{display:none}
                 </optgroup>
               <option value="test_time">TEST · medir tiempo 1→N</option>
               <option value="off">Apagado</option>
+
+<option value="sensor_temperature">Temperatura SHT31</option>
+<option value="sensor_humidity">Humedad SHT31</option>
 </select>
             </div>
             <div class="field"><label>DURACIÓN DEL PASO (seg)</label><input id="seqSeconds" type="number" min="1" max="3600" value="10"></div>
@@ -1301,6 +1368,7 @@ async function saveEffect(effectOverride=null){
 async function loadSaved(){
   try{
     await loadColorCalibration();
+    await loadEnvironment();
     const r=await sb('/rest/v1/esp32_layouts?device_id=eq.'+DEVICE_ID+'&select=*');
     if(r?.length){
       const a=r[0];
@@ -1337,6 +1405,91 @@ async function loadSaved(){
   }
 }
 
+
+
+// ---------- SHT31 / AMBIENTE ----------
+let currentEnvironment={
+  temperature_c:null,
+  temperature_f:null,
+  humidity:null,
+  dew_point_c:null,
+  absolute_humidity_gm3:null,
+  heat_index_c:null,
+  vpd_kpa:null,
+  sensor_ok:false,
+  updated_at:null
+};
+
+function envFmt(v,d=1){
+  const n=Number(v);
+  return Number.isFinite(n)?n.toFixed(d):'--';
+}
+
+function paintEnvironment(){
+  const e=currentEnvironment||{};
+  $('envTempC').textContent=envFmt(e.temperature_c,1)+' °C';
+  $('envTempF').textContent=envFmt(e.temperature_f,1)+' °F';
+  $('envHumidity').textContent=envFmt(e.humidity,1)+' %';
+  $('envDew').textContent=envFmt(e.dew_point_c,1)+' °C';
+  $('envHeat').textContent=envFmt(e.heat_index_c,1)+' °C';
+  $('envAbs').textContent=envFmt(e.absolute_humidity_gm3,1)+' g/m³';
+  $('envVpd').textContent=envFmt(e.vpd_kpa,2)+' kPa';
+
+  const ok=!!e.sensor_ok;
+  $('envSensorState').textContent=ok?'Sensor conectado · lectura válida':'Sensor sin lectura válida';
+  $('envUpdated').textContent=e.updated_at?new Date(e.updated_at).toLocaleString():'—';
+
+  const dot=$('envDot');
+  if(dot) dot.style.background=ok?'#22c55e':'#ef4444';
+}
+
+async function loadEnvironment(){
+  try{
+    const r=await sb(
+      '/rest/v1/esp32_environment?device_id=eq.'+DEVICE_ID+
+      '&select=temperature_c,temperature_f,humidity,dew_point_c,absolute_humidity_gm3,heat_index_c,vpd_kpa,sensor_ok,updated_at&limit=1'
+    );
+    if(r?.length)currentEnvironment=r[0];
+    paintEnvironment();
+  }catch(e){
+    console.warn('SHT31:',e);
+  }
+}
+
+function sensorGlyphRows(ch){
+  const font={
+    '0':[7,5,5,5,7],'1':[2,6,2,2,7],'2':[7,1,7,4,7],'3':[7,1,7,1,7],
+    '4':[5,5,7,1,1],'5':[7,4,7,1,7],'6':[7,4,7,5,7],'7':[7,1,1,1,1],
+    '8':[7,5,7,5,7],'9':[7,5,7,1,7],
+    'C':[7,4,4,4,7],'H':[5,5,7,5,5]
+  };
+  return font[ch]||[0,0,0,0,0];
+}
+
+function sensorPreviewPixel(effect,x,y){
+  let value=effect==='sensor_humidity'?currentEnvironment.humidity:currentEnvironment.temperature_c;
+  value=Math.max(0,Math.min(99,Math.round(Number(value)||0)));
+  const chars=String(value).padStart(2,'0')+(effect==='sensor_humidity'?'H':'C');
+
+  const baseW=11,baseH=5;
+  const sx=Math.max(1,Math.floor(cols/baseW));
+  const sy=Math.max(1,Math.floor(rows/baseH));
+  const drawW=baseW*sx,drawH=baseH*sy;
+  const ox=Math.floor((cols-drawW)/2),oy=Math.floor((rows-drawH)/2);
+
+  const lx=Math.floor((x-ox)/sx),ly=Math.floor((y-oy)/sy);
+  if(lx<0||ly<0||ly>=5)return -1;
+
+  const starts=[0,4,8];
+  for(let d=0;d<3;d++){
+    const px=lx-starts[d];
+    if(px>=0&&px<3){
+      const rowsData=sensorGlyphRows(chars[d]);
+      if(((rowsData[ly]>>(2-px))&1)!==0)return d<2?0:1;
+    }
+  }
+  return -1;
+}
 
 // ---------- PALETA 1–6 COLORES ----------
 const defaultsPalette=['#0066ff','#ff2bd6','#ffffff','#00ff00','#ffff00','#00ffff'];
@@ -1654,7 +1807,7 @@ function genericPreviewEffect(fx,p,i,N,t,phase,c1,c2,sp,dir){
   }else if(fx==='gradient_bounce'){const period=Math.max(1,2*(N-1));let q=((Math.floor(Math.abs(phase)*5)%period)+period)%period;const h=q<N?q:period-q;const dd=Math.abs(i-h);col=mix(c1,c2,Math.min(1,dd/Math.max(1,N*.1)));m=Math.max(.01,1-dd/Math.max(4,N*.1));
   }else if(fx==='rainbow_path'){col=wheel(i/N*255+phase*30);m=1;
   }else if(fx==='travel_pulse'){const dd=Math.abs(i-head);const q=Math.exp(-(dd*dd)/Math.max(1,N*.08));col=mix(c1,c2,1-q);m=.02+.98*q;
-  }else if(['clock_hhmm_colon','clock_hh','clock_mm','clock_ss','counter_up','countdown','big_number','temperature','scroll_text'].includes(fx)){
+  }else if(['clock_hhmm_colon','clock_hh','clock_mm','clock_ss','counter_up','countdown','big_number','scroll_text'].includes(fx)){
     // Vista previa simplificada: usa el reloj HHMM como representación base.
     const px=digitalClockPixel(x,y);if(px?.on){col=px.hour?c1:c2;m=1}else{col=[0,0,0];m=0}
   }
@@ -1694,6 +1847,11 @@ function preview(now){
       const head=((Math.floor(phase*5)%N)+N)%N;
       col=[255,255,255];
       m=i===head?1:.01;
+    }else if(fx==='sensor_temperature'||fx==='sensor_humidity'){
+      const spx=sensorPreviewPixel(fx,rp.x,rp.y);
+      if(spx===0){col=c1;m=1}
+      else if(spx===1){col=c2;m=1}
+      else {col=[0,0,0];m=0}
     }else if(fx==='path_loop'){
       const step=Math.floor(phase*5);
       const head=((step%N)+N)%N;
@@ -1795,7 +1953,7 @@ function preview(now){
     }else if(fx==='checker'){
       const shift=Math.floor(t*(1+sp/25))*dir;
       col=(((rp.x+rp.y+shift)&1)===0)?c1:c2;m=1;
-    }else if(['path_bounce','long_tail','short_tail','two_chase','three_chase','block_chase','accelerate','decelerate','edge_bounce','color_path','wipe_lr','wipe_tb','wipe_diag','wipe_circle','expand_center','contract_center','rings','spiral','radar','rotate_line','cross_expand','x_expand','square_expand','square_contract','columns_up','rows_scroll','clock_hhmm_colon','clock_hh','clock_mm','clock_ss','counter_up','countdown','big_number','temperature','scroll_text','stars','fireflies','soft_random','zone_breathe','color_waves','aurora','clouds','water','rain','snow','soft_fire','strong_fire','slow_lava','sunset','white_flash','dual_flash','strobe','disco_rgb','disco_bars','fake_eq','column_eq','confetti','halloween','flag_2','flag_3','ad_flash','knight_rider','double_scanner','race_2','race_3','start_lights','checkered_flag','yellow_flag','red_flag','pit_lane','turbo','tachometer','rpm_bar','heart','circle','pulse_circle','diamond','arrow_left','arrow_right','arrow_up','arrow_down','check','x_symbol','wifi_symbol','battery','smile','sad','eye_blink','fill_hold','empty_one_by_one','fill_pause_empty','meet_center','split_center','chase_color2','gradient_tail','gradient_bounce','rainbow_path','travel_pulse'].includes(fx)){
+    }else if(['path_bounce','long_tail','short_tail','two_chase','three_chase','block_chase','accelerate','decelerate','edge_bounce','color_path','wipe_lr','wipe_tb','wipe_diag','wipe_circle','expand_center','contract_center','rings','spiral','radar','rotate_line','cross_expand','x_expand','square_expand','square_contract','columns_up','rows_scroll','clock_hhmm_colon','clock_hh','clock_mm','clock_ss','counter_up','countdown','big_number','scroll_text','stars','fireflies','soft_random','zone_breathe','color_waves','aurora','clouds','water','rain','snow','soft_fire','strong_fire','slow_lava','sunset','white_flash','dual_flash','strobe','disco_rgb','disco_bars','fake_eq','column_eq','confetti','halloween','flag_2','flag_3','ad_flash','knight_rider','double_scanner','race_2','race_3','start_lights','checkered_flag','yellow_flag','red_flag','pit_lane','turbo','tachometer','rpm_bar','heart','circle','pulse_circle','diamond','arrow_left','arrow_right','arrow_up','arrow_down','check','x_symbol','wifi_symbol','battery','smile','sad','eye_blink','fill_hold','empty_one_by_one','fill_pause_empty','meet_center','split_center','chase_color2','gradient_tail','gradient_bounce','rainbow_path','travel_pulse'].includes(fx)){
       const g=genericPreviewEffect(fx,rp,i,N,t,phase,c1,c2,sp,dir);col=g.col;m=g.m;
     }else if(fx==='chase'){
       const step=Math.floor(phase*5),head=((step%N)+N)%N;col=palette[((step%palette.length)+palette.length)%palette.length]||c1;m=i===head?1:.025;
@@ -1840,15 +1998,27 @@ function preview(now){
         const d=Math.abs(rp.x-q);col=[0,255,80];m=Math.max(.01,1-d/4);
       }
     }else if(fx==='tetris'){
-      const piece=Math.floor(t*(.5+sp/80)),local=(t*(.5+sp/80))%1;
-      const x0=hash(piece)%Math.max(1,cols-3),y0=Math.floor(local*(rows+4))-3;
-      const shape=hash(piece+99)%4;
-      const blocks=shape===0?[[0,0],[1,0],[2,0],[3,0]]:
-                   shape===1?[[0,0],[0,1],[1,1],[2,1]]:
-                   shape===2?[[0,0],[1,0],[0,1],[1,1]]:
-                             [[1,0],[0,1],[1,1],[2,1]];
-      const hit=blocks.some(b=>rp.x===x0+b[0]&&rp.y===y0+b[1]);
-      col=wheel(hash(piece)%256);m=hit?1:.015;
+      const drop=Math.max(.16,1.0-(sp/120));
+      const tick=Math.floor(t/drop);
+      const fillCol=tick%Math.max(1,cols);
+      const completedRows=Math.floor(tick/Math.max(1,cols));
+      const settledRows=completedRows%Math.max(1,rows);
+      const landingY=Math.max(0,rows-1-settledRows);
+      const fallSteps=Math.max(1,rows-settledRows);
+      const fallPos=Math.floor((t/(drop/3)))%fallSteps;
+      const pieceY=Math.min(landingY,fallPos);
+      const pieceType=completedRows%4,targetX=fillCol;
+      col=[0,0,0];m=0;
+      if(rp.y>landingY){col=palette[(rows-1-Math.round(rp.y))%palette.length]||c1;m=1}
+      if(Math.round(rp.y)===landingY&&Math.round(rp.x)<fillCol){col=palette[Math.max(0,Math.round(rp.x))%palette.length]||c1;m=1}
+      const pc=palette[(completedRows+fillCol)%palette.length]||c1;
+      const on=(x,y)=>Math.round(rp.x)===x&&Math.round(rp.y)===y;
+      let hit=false;
+      if(pieceType===0)hit=on(targetX,pieceY)||on(targetX,pieceY-1)||on(targetX,pieceY-2);
+      else if(pieceType===1)hit=on(targetX,pieceY)||on(targetX+1,pieceY)||on(targetX,pieceY-1)||on(targetX+1,pieceY-1);
+      else if(pieceType===2)hit=on(targetX,pieceY)||on(targetX,pieceY-1)||on(targetX+1,pieceY);
+      else hit=on(targetX,pieceY)||on(targetX-1,pieceY)||on(targetX+1,pieceY)||on(targetX,pieceY-1);
+      if(hit){col=pc;m=1}
     }
 
     c.style.background=css(col,bri*m);
@@ -2278,6 +2448,29 @@ $('calTestRGB').onclick=async()=>{
     toast('Error: '+e.message);
   }
 };
+
+
+$('envRefresh').onclick=()=>loadEnvironment();
+
+$('envUseTemp').onclick=async()=>{
+  try{
+    $('effect').value='sensor_temperature';
+    await saveEffect('sensor_temperature');
+    await command('effect_reload');
+    toast('Temperatura enviada a los LEDs');
+  }catch(e){toast('Error: '+e.message)}
+};
+
+$('envUseHumidity').onclick=async()=>{
+  try{
+    $('effect').value='sensor_humidity';
+    await saveEffect('sensor_humidity');
+    await command('effect_reload');
+    toast('Humedad enviada a los LEDs');
+  }catch(e){toast('Error: '+e.message)}
+};
+
+setInterval(loadEnvironment,5000);
 
 // ---------- BOTONES ----------
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
