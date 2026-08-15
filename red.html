@@ -763,6 +763,7 @@ async function sendImageFrame(){
     method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(frame)
   });
   await saveEffect('image');
+  await command('image_reload');
 }
 
 
@@ -1110,14 +1111,39 @@ $('sendLayout').onclick=async()=>{
   catch(e){toast('Error: '+e.message)}
 };
 $('testPath').onclick=async()=>{
-  try{await saveLayout();await saveEffect('path_test');toast('Prueba 1 → N enviada')}
-  catch(e){toast('Error: '+e.message)}
+  try{
+    await saveLayout();
+    await saveEffect('path_test');
+    await command('effect_reload');
+    toast('Prueba 1 → N enviada');
+  }catch(e){
+    toast('Error: '+e.message);
+  }
 };
 $('sendEffect').onclick=async()=>{
-  try{$('status').textContent='Enviando efecto...';await saveEffect();$('status').textContent='Efecto enviado';toast('Efecto enviado al ESP32')}
-  catch(e){toast('Error: '+e.message)}
+  try{
+    $('status').textContent='Enviando efecto...';
+    await saveEffect();
+    await command('effect_reload');
+    $('status').textContent='Efecto enviado';
+    toast('Efecto enviado al ESP32');
+  }catch(e){
+    $('status').textContent='Error';
+    toast('Error: '+e.message);
+  }
 };
-$('off').onclick=async()=>{try{await saveEffect('off');toast('Apagado enviado')}catch(e){toast('Error: '+e.message)}};
+
+$('off').onclick=async()=>{
+  try{
+    await saveEffect('off');
+    await command('effect_reload');
+    $('status').textContent='Apagado enviado';
+    toast('Apagado enviado al ESP32');
+  }catch(e){
+    $('status').textContent='Error';
+    toast('Error: '+e.message);
+  }
+};
 
 $('centerImage').onclick=()=>{
   $('zoom').value=100;$('offsetX').value=0;$('offsetY').value=0;updateLabels();renderImage();
