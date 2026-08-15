@@ -1490,6 +1490,7 @@ function sensorPreviewPixel(effect,x,y){
   const drawW=baseW*sx,drawH=baseH*sy;
   const ox=Math.floor((cols-drawW)/2),oy=Math.floor((rows-drawH)/2);
 
+  if(x<ox||y<oy)return -1;
   const lx=Math.floor((x-ox)/sx),ly=Math.floor((y-oy)/sy);
   if(lx<0||ly<0||ly>=5)return -1;
 
@@ -1498,7 +1499,7 @@ function sensorPreviewPixel(effect,x,y){
     const px=lx-starts[d];
     if(px>=0&&px<3){
       const rowsData=sensorGlyphRows(chars[d]);
-      if(((rowsData[ly]>>(2-px))&1)!==0)return d<2?0:1;
+      if(((rowsData[ly]>>(2-px))&1)!==0)return d;
     }
   }
   return -1;
@@ -1620,16 +1621,14 @@ function digitalClockPixel(x,y){
 // ---------- GIRO DEL DISEÑO ----------
 function rotateDesignPoint(x,y,degrees){
   const deg=((+degrees||0)%360+360)%360;
-  if(deg===0)return {x,y};
+  if(deg===0)return {x:Math.round(x),y:Math.round(y)};
 
   const cx=(cols-1)/2,cy=(rows-1)/2;
-  // Muestreamos con el ángulo inverso para que el diseño visual gire
-  // en el mismo sentido indicado por el usuario.
   const a=-deg*Math.PI/180;
   const dx=x-cx,dy=y-cy;
   return {
-    x:cx+dx*Math.cos(a)-dy*Math.sin(a),
-    y:cy+dx*Math.sin(a)+dy*Math.cos(a)
+    x:Math.round(cx+dx*Math.cos(a)-dy*Math.sin(a)),
+    y:Math.round(cy+dx*Math.sin(a)+dy*Math.cos(a))
   };
 }
 
@@ -1657,10 +1656,9 @@ function updateTestHtmlTime(now,N,sp){
     return;
   }
 
-  // Usa la misma fórmula visual del recorrido normal.
-  const phase=((now-animStart)/1000)*(0.35+sp/25);
-  const step=Math.floor(phase*5);
-  const cycle=Math.floor(step/Math.max(1,N));
+  const elapsed=now-animStart;
+  const step=Math.floor(elapsed/speedDelayPreview(sp));
+  const cycle=Math.floor(Math.abs(step)/Math.max(1,N));
 
   if(__testHtmlStart===null){
     __testHtmlStart=now;
@@ -1678,6 +1676,34 @@ function updateTestHtmlTime(now,N,sp){
 function hexRgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]}
 function mix(a,b,t){return a.map((v,i)=>Math.round(v+(b[i]-v)*t))}
 function css(c,b=1){return`rgb(${Math.round(c[0]*b)},${Math.round(c[1]*b)},${Math.round(c[2]*b)})`}
+
+function arduinoMapInt(x,inMin,inMax,outMin,outMax){
+  x=Math.trunc(x);
+  return outMin + Math.trunc((x-inMin)*(outMax-outMin)/(inMax-inMin));
+}
+function speedDelayPreview(speed){
+  const s=Math.max(1,Math.min(100,Math.trunc(+speed||50)));
+  return arduinoMapInt(s,1,100,127,10);
+}
+function wrapPreview(i,n){
+  if(n<=0)return 0;
+  i=Math.trunc(i)%n;
+  if(i<0)i+=n;
+  return i;
+}
+function paletteAtJs(palette,index){
+  if(!palette?.length)return [0,0,0];
+  return palette[wrapPreview(index,palette.length)];
+}
+function paletteBlendJs(palette,pos,maxPos){
+  if(!palette?.length)return [0,0,0];
+  if(palette.length===1||maxPos<=0)return palette[0];
+  const tt=(pos/maxPos)*(palette.length-1);
+  const a=Math.min(palette.length-1,Math.floor(tt));
+  const b=Math.min(palette.length-1,a+1);
+  return mix(palette[a],palette[b],tt-a);
+}
+
 function wheel(pos){
   pos=((pos%256)+256)%256;
   if(pos<85)return[255-pos*3,pos*3,0];
@@ -1705,124 +1731,188 @@ function shapePixel(name,x,y,t){
   const cx=(cols-1)/2,cy=(rows-1)/2;
   const dx=x-cx,dy=y-cy;
   const d=Math.sqrt(dx*dx+dy*dy);
-  const nx=cols>1?dx/(cols/2):0,ny=rows>1?dy/(rows/2):0;
-  const beat=.65+.35*((Math.sin(t*4)+1)/2);
+  const nx=cols>1?dx/(cols/2):0;
+  const ny=rows>1?dy/(rows/2):0;
+  const now=t*1000;
+  const beat=.65+.35*((Math.sin(now*.004)+1)/2);
 
   if(name==='heart'){
     const X=nx/beat,Y=ny/beat;
-    return Math.pow(X*X+Y*Y-0.3,3)-X*X*Math.pow(Y,3)<0;
+    return Math.pow(X*X+Y*Y-.3,3)-X*X*Math.pow(Y,3)<0;
   }
-  if(name==='circle')return near(d,Math.min(cols,rows)*.32,0.8);
+  if(name==='circle')return Math.abs(d-Math.min(cols,rows)*.32)<.8;
   if(name==='pulse_circle'){
-    const r=Math.min(cols,rows)*(.18+.15*((Math.sin(t*3)+1)/2));
-    return near(d,r,0.8);
+    const r=Math.min(cols,rows)*(.18+.15*((Math.sin(now*.003)+1)/2));
+    return Math.abs(d-r)<.8;
   }
-  if(name==='diamond')return near(Math.abs(dx)+Math.abs(dy),Math.min(cols,rows)*.34,0.8);
-  if(name==='arrow_left')return (x<cx&&near(Math.abs(dy),cx-x,.8))||(x>=cx-1&&x<=cx+2&&near(y,cy,.8));
-  if(name==='arrow_right')return (x>cx&&near(Math.abs(dy),x-cx,.8))||(x>=cx-2&&x<=cx+1&&near(y,cy,.8));
-  if(name==='arrow_up')return (y<cy&&near(Math.abs(dx),cy-y,.8))||(y>=cy-1&&y<=cy+2&&near(x,cx,.8));
-  if(name==='arrow_down')return (y>cy&&near(Math.abs(dx),y-cy,.8))||(y>=cy-2&&y<=cy+1&&near(x,cx,.8));
-  if(name==='check')return near(y,(rows*.60)-x*.35,.8)||near(y,(rows*.25)+x*.55,.8);
-  if(name==='x_symbol')return near(x,y*(cols/Math.max(1,rows)),.8)||near(x,(cols-1)-y*(cols/Math.max(1,rows)),.8);
-  if(name==='wifi_symbol'){
-    const ang=Math.atan2(-dy,dx),r=d;
-    const a=Math.abs(ang-Math.PI/2);
-    return (a<1.0&&near(r,Math.min(cols,rows)*.35,.8))||(a<1.0&&near(r,Math.min(cols,rows)*.22,.8))||d<1.2;
-  }
+  if(name==='diamond')return Math.abs(Math.abs(dx)+Math.abs(dy)-Math.min(cols,rows)*.34)<.8;
+  if(name==='x_symbol')return Math.abs(Math.abs(dx)-Math.abs(dy))<.8;
+  if(name==='check')return Math.abs(dy-(rows*.10-dx*.45))<.9||Math.abs(dy-(-rows*.10+dx*.55))<.9;
+  if(name==='arrow_left')return (dx<0&&Math.abs(Math.abs(dy)+dx)<.9)||(Math.abs(dy)<.8&&dx>-2);
+  if(name==='arrow_right')return (dx>0&&Math.abs(Math.abs(dy)-dx)<.9)||(Math.abs(dy)<.8&&dx<2);
+  if(name==='arrow_up')return (dy<0&&Math.abs(Math.abs(dx)+dy)<.9)||(Math.abs(dx)<.8&&dy>-2);
+  if(name==='arrow_down')return (dy>0&&Math.abs(Math.abs(dx)-dy)<.9)||(Math.abs(dx)<.8&&dy<2);
   if(name==='battery'){
-    const left=cols*.2,right=cols*.75,top=rows*.25,bottom=rows*.75;
-    const border=near(x,left,.7)||near(x,right,.7)||near(y,top,.7)||near(y,bottom,.7);
-    const tip=x>right&&x<right+2&&y>rows*.4&&y<rows*.6;
-    return (x>=left&&x<=right&&y>=top&&y<=bottom&&border)||tip;
+    const l=cols*.2,r=cols*.75,top=rows*.25,b=rows*.75;
+    const border=(Math.abs(x-l)<.8||Math.abs(x-r)<.8||Math.abs(y-top)<.8||Math.abs(y-b)<.8)&&x>=l&&x<=r&&y>=top&&y<=b;
+    const tip=x>r&&x<r+2&&y>rows*.4&&y<rows*.6;
+    return border||tip;
+  }
+  if(name==='wifi_symbol'){
+    const a=Math.abs(Math.atan2(-dy,dx)-Math.PI/2);
+    return (a<1.05&&Math.abs(d-Math.min(cols,rows)*.34)<.8)||(a<1.05&&Math.abs(d-Math.min(cols,rows)*.20)<.8)||d<1.2;
   }
   if(name==='smile'||name==='sad'){
-    const face=near(d,Math.min(cols,rows)*.35,.8);
-    const eyes=(Math.hypot(dx-cols*.1,dy+rows*.08)<1)||(Math.hypot(dx+cols*.1,dy+rows*.08)<1);
-    const mouth=name==='smile' ? near(dy,rows*.12-(dx*dx)/(Math.max(1,cols)*1.7),.7) : near(dy,rows*.02+(dx*dx)/(Math.max(1,cols)*1.7),.7);
+    const face=Math.abs(d-Math.min(cols,rows)*.35)<.8;
+    const eyes=Math.hypot(dx-cols*.1,dy+rows*.08)<1.2||Math.hypot(dx+cols*.1,dy+rows*.08)<1.2;
+    const curve=(dx*dx)/(Math.max(1,cols)*1.7);
+    const mouth=name==='smile'?Math.abs(dy-(rows*.12-curve))<.8:Math.abs(dy-(rows*.02+curve))<.8;
     return face||eyes||(Math.abs(dx)<cols*.22&&mouth);
   }
   if(name==='eye_blink'){
-    const blink=((Math.floor(t*2)%8)===0);
-    if(blink)return near(y,cy,.7)&&Math.abs(dx)<cols*.3;
-    const eye=(dx*dx)/(cols*cols*.12)+(dy*dy)/(rows*rows*.05);
-    return near(eye,1,.18)||d<1.2;
+    const blink=(Math.floor(now/500)%8)===0;
+    if(blink)return Math.abs(dy)<.8&&Math.abs(dx)<cols*.3;
+    const e=(dx*dx)/(cols*cols*.12)+(dy*dy)/(rows*rows*.05);
+    return Math.abs(e-1)<.18||d<1.2;
   }
   return false;
 }
 
-function genericPreviewEffect(fx,p,i,N,t,phase,c1,c2,sp,dir){
+function genericPreviewEffect(fx,p,i,N,t,phaseUnused,c1,c2,sp,dir){
   let col=[0,0,0],m=0;
   const x=p.x,y=p.y,cx=(cols-1)/2,cy=(rows-1)/2;
   const dx=x-cx,dy=y-cy,d=Math.sqrt(dx*dx+dy*dy);
-  const head=((Math.floor(phase*5)%Math.max(1,N))+Math.max(1,N))%Math.max(1,N);
+  const ms=t*1000;
+  const phase=ms*(.0015+sp*.00006)*dir;
+  let head=Math.floor(ms/Math.max(15,speedDelayPreview(sp)));
+  if(dir<0)head=-head;
+  const h=wrapPreview(head,N);
 
   if(fx==='path_bounce'||fx==='edge_bounce'||fx==='knight_rider'){
-    const period=Math.max(1,2*(N-1));let q=((Math.floor(Math.abs(phase)*5)%period)+period)%period;
-    const h=q<N?q:period-q;col=c1;m=i===h?1:.01;
-  }else if(fx==='long_tail'||fx==='gradient_tail'){
-    let dd=(head-i+N)%N;if(dir<0)dd=(i-head+N)%N;const len=Math.max(8,Math.round(N*.22));
-    col=fx==='gradient_tail'?mix(c1,c2,Math.min(1,dd/len)):c1;m=dd<len?1-dd/len:.01;
-  }else if(fx==='short_tail'){
-    let dd=(head-i+N)%N;if(dir<0)dd=(i-head+N)%N;const len=Math.max(3,Math.round(N*.07));
-    col=c1;m=dd<len?1-dd/len:.01;
+    if(N===1)return {col:c1,m:1};
+    const period=(N-1)*2;
+    const pp=Math.floor(ms/Math.max(15,speedDelayPreview(sp)))%period;
+    const pos=pp<N?pp:period-pp;
+    col=c1;m=i===pos?1:0;
+  }else if(fx==='long_tail'||fx==='short_tail'||fx==='gradient_tail'){
+    const len=fx==='short_tail'?Math.max(3,Math.floor(N/14)):Math.max(8,Math.floor(N/5));
+    let found=-1;
+    for(let j=0;j<len;j++)if(wrapPreview(head-j*dir,N)===i){found=j;break}
+    if(found>=0){
+      col=fx==='gradient_tail'?mix(c1,c2,found/Math.max(1,len)):c1;
+      m=(255-Math.floor(found*245/Math.max(1,len)))/255;
+    }
   }else if(fx==='two_chase'||fx==='race_2'){
-    const h2=(head+Math.floor(N/2))%N;col=i===h2?c2:c1;m=(i===head||i===h2)?1:.01;
+    const h2=(h+Math.floor(N/2))%N;col=i===h2?c2:c1;m=(i===h||i===h2)?1:0;
   }else if(fx==='three_chase'||fx==='race_3'){
-    const h2=(head+Math.floor(N/3))%N,h3=(head+Math.floor(2*N/3))%N;
-    col=i===h2?c2:i===h3?[255,255,255]:c1;m=(i===head||i===h2||i===h3)?1:.01;
+    const pal=getPaletteRgb();
+    const h2=(h+Math.floor(N/3))%N,h3=(h+Math.floor(2*N/3))%N;
+    col=i===h?paletteAtJs(pal,0):i===h2?paletteAtJs(pal,1):paletteAtJs(pal,2);
+    m=(i===h||i===h2||i===h3)?1:0;
   }else if(fx==='block_chase'){
-    const b=Math.max(2,Math.round(N*.05));let dd=(i-head+N)%N;col=c1;m=dd<b?1:.01;
-  }else if(fx==='accelerate'||fx==='decelerate'){
-    const u=(t%(fx==='accelerate'?4:5))/(fx==='accelerate'?4:5);
-    const pos=fx==='accelerate'?Math.floor((u*u)*N):Math.floor((1-Math.pow(1-u,2))*N);
-    col=c1;m=i===Math.min(N-1,pos)?1:.01;
-  }else if(fx==='color_path'){
-    col=wheel(i/N*255+phase*20);m=i===head?1:.08;
-  }else if(fx==='wipe_lr'){col=x<=((t*(1+sp/30))%1)*cols?c1:c2;m=1;
-  }else if(fx==='wipe_tb'){col=y<=((t*(1+sp/30))%1)*rows?c1:c2;m=1;
-  }else if(fx==='wipe_diag'){col=(x+y)<=((t*(1+sp/30))%(cols+rows))?c1:c2;m=1;
-  }else if(fx==='wipe_circle'||fx==='expand_center'){const r=((t*(1+sp/35))%1)*Math.hypot(cols,rows)/2;col=d<=r?c1:c2;m=1;
-  }else if(fx==='contract_center'){const r=(1-((t*(1+sp/35))%1))*Math.hypot(cols,rows)/2;col=d<=r?c1:c2;m=1;
-  }else if(fx==='rings'){const q=(Math.sin(d*1.5-phase*2)+1)/2;col=paletteSample(palette,q);m=1;
-  }else if(fx==='spiral'||fx==='vortex'){const q=(Math.sin(Math.atan2(dy,dx)*3-d*.8+phase*2)+1)/2;col=paletteSample(palette,q);m=1;
-  }else if(fx==='radar'||fx==='rotate_line'){const a=Math.atan2(dy,dx),target=(phase*.5)%(Math.PI*2);const da=Math.atan2(Math.sin(a-target),Math.cos(a-target));col=c1;m=Math.abs(da)<.18?1:.02;
-  }else if(fx==='cross_expand'){const r=((t*(1+sp/40))%1)*Math.max(cols,rows)/2;col=c1;m=(Math.abs(dx)<.7&&Math.abs(dy)<=r)||(Math.abs(dy)<.7&&Math.abs(dx)<=r)?1:0;
-  }else if(fx==='x_expand'){const r=((t*(1+sp/40))%1)*Math.max(cols,rows)/2;col=c1;m=((Math.abs(Math.abs(dx)-Math.abs(dy))<.8)&&d<=r)?1:0;
-  }else if(fx==='square_expand'||fx==='square_contract'){let r=((t*(1+sp/40))%1)*Math.min(cols,rows)/2;if(fx==='square_contract')r=Math.min(cols,rows)/2-r;col=c1;m=(near(Math.max(Math.abs(dx),Math.abs(dy)),r,.8))?1:0;
-  }else if(fx==='columns_up'){const q=(Math.sin(phase+x*.8-y*.5)+1)/2;col=mix(c1,c2,q);m=q;
-  }else if(fx==='rows_scroll'){const q=(Math.sin(phase+y*.9)+1)/2;col=mix(c1,c2,q);m=q;
-  }else if(['heart','circle','pulse_circle','diamond','arrow_left','arrow_right','arrow_up','arrow_down','check','x_symbol','wifi_symbol','battery','smile','sad','eye_blink'].includes(fx)){col=c1;m=shapePixel(fx,x,y,t)?1:0;
-  }else if(fx==='stars'||fx==='fireflies'||fx==='soft_random'){const seed=hash(i*31+Math.floor(t*(1+sp/30))*733);col=(seed&1)?c1:c2;m=.03+(seed%100)/100*.97;
-  }else if(fx==='zone_breathe'){const q=(Math.sin(phase+(x+y)*.4)+1)/2;col=mix(c1,c2,q);m=.15+.85*q;
-  }else if(fx==='color_waves'||fx==='aurora'||fx==='clouds'||fx==='water'){const q=(Math.sin(phase+x*.35+y*.25)+Math.sin(phase*.7-x*.22+y*.31)+2)/4;col=fx==='clouds'?mix([40,60,90],[255,255,255],q):fx==='water'?mix([0,20,120],[0,220,255],q):mix(c1,c2,q);m=.3+.7*q;
-  }else if(fx==='rain'||fx==='snow'){const seed=hash(x*97+Math.floor(t*(3+sp/20))*977);const h=(seed%rows);const dd=(h-y+rows)%rows;col=fx==='snow'?[255,255,255]:c1;m=dd<2?1:.01;
-  }else if(fx==='soft_fire'||fx==='strong_fire'||fx==='slow_lava'||fx==='sunset'){const q=(Math.sin(t*(fx==='slow_lava'?.5:1.5)+x*.35-y*.25)+1)/2;col=fx==='sunset'?mix([255,40,0],[70,0,120],q):mix([100,0,0],[255,180,20],q);m=fx==='soft_fire'?.55+.45*q:1;
-  }else if(fx==='white_flash'||fx==='strobe'){col=[255,255,255];m=(Math.floor(t*(fx==='strobe'?12:4))%2)?1:0;
-  }else if(fx==='dual_flash'){col=(Math.floor(t*6)%2)?c1:c2;m=1;
-  }else if(fx==='disco_rgb'||fx==='confetti'){const seed=hash(i+Math.floor(t*(4+sp/10))*997);col=wheel(seed%256);m=.35+(seed%65)/100;
-  }else if(fx==='disco_bars'||fx==='fake_eq'||fx==='column_eq'||fx==='rpm_bar'||fx==='tachometer'){const h=Math.floor(((Math.sin(t*(2+sp/30)+x*.7)+1)/2)*rows);col=mix(c1,c2,y/Math.max(1,rows-1));m=(rows-1-y)<=h?1:.02;
-  }else if(fx==='halloween'){col=((i+Math.floor(t*2))&1)?[255,80,0]:[130,0,255];m=1;
+    const b=Math.max(2,Math.floor(N/20));
+    const dd=wrapPreview(i-h,N);col=c1;m=dd<b?1:0;
+  }else if(fx==='color_path'||fx==='rainbow_path'){
+    col=wheel(i*255/Math.max(1,N)+ms/12);m=1;
+  }else if(fx==='gradient_bounce'){
+    const dd=Math.abs(i-h);col=mix(c1,c2,Math.min(1,dd*20/255));m=Math.max(10,255-dd*25)/255;
+  }else if(fx==='chase_color2'){
+    const h2=(h+Math.max(2,Math.floor(N/12)))%N;col=i===h2?c2:c1;m=(i===h||i===h2)?1:0;
+  }else if(fx==='travel_pulse'){
+    const dd=Math.abs(i-h),q=Math.exp(-(dd*dd)/Math.max(1,N*.08));col=mix(c2,c1,q);m=(10+245*q)/255;
+  }else if(fx==='wipe_lr'||fx==='wipe_tb'||fx==='wipe_diag'){
+    const u=(ms*(.00015+sp*.00001))%1;
+    const on=fx==='wipe_lr'?x<=u*cols:fx==='wipe_tb'?y<=u*rows:(x+y)<=u*(cols+rows);
+    col=on?c1:c2;m=1;
+  }else if(['wipe_circle','expand_center','contract_center','rings','spiral','radar','rotate_line','cross_expand','x_expand','square_expand','square_contract','columns_up','rows_scroll','vortex'].includes(fx)){
+    let on=false,cc=c1;
+    if(fx==='rings'){const q=(Math.sin(d*1.5-phase*2)+1)/2;cc=mix(c1,c2,q);on=true}
+    else if(fx==='spiral'||fx==='vortex'){const q=(Math.sin(Math.atan2(dy,dx)*3-d*.8+phase*2)+1)/2;cc=mix(c1,c2,q);on=true}
+    else if(fx==='radar'||fx==='rotate_line'){const da=Math.atan2(Math.sin(Math.atan2(dy,dx)-phase),Math.cos(Math.atan2(dy,dx)-phase));on=Math.abs(da)<.18}
+    else if(fx==='cross_expand'){const r=(ms*.002)%(Math.max(cols,rows)/2);on=(Math.abs(dx)<.7&&Math.abs(dy)<=r)||(Math.abs(dy)<.7&&Math.abs(dx)<=r)}
+    else if(fx==='x_expand'){const r=(ms*.002)%(Math.max(cols,rows)/2);on=Math.abs(Math.abs(dx)-Math.abs(dy))<.8&&d<=r}
+    else if(fx==='square_expand'||fx==='square_contract'){
+      let r=(ms*.002)%(Math.min(cols,rows)/2);if(fx==='square_contract')r=Math.min(cols,rows)/2-r;
+      on=Math.abs(Math.max(Math.abs(dx),Math.abs(dy))-r)<.8;
+    }else if(fx==='columns_up'){const q=(Math.sin(phase+x*.8-y*.5)+1)/2;cc=mix(c1,c2,q);on=true}
+    else if(fx==='rows_scroll'){const q=(Math.sin(phase+y*.9)+1)/2;cc=mix(c1,c2,q);on=true}
+    else{
+      let r=(ms*.002)%(Math.hypot(cols,rows)/2);
+      if(fx==='contract_center')r=Math.hypot(cols,rows)/2-r;
+      on=d<=r;
+    }
+    col=on?cc:c2;m=1;
+  }else if(['heart','circle','pulse_circle','diamond','arrow_left','arrow_right','arrow_up','arrow_down','check','x_symbol','wifi_symbol','battery','smile','sad','eye_blink'].includes(fx)){
+    col=c1;m=shapePixel(fx,x,y,t)?1:0;
+  }else if(fx==='white_flash'||fx==='strobe'){
+    col=[255,255,255];m=(Math.floor(ms/(fx==='strobe'?80:220))&1)?1:0;
+  }else if(fx==='dual_flash'){
+    col=(Math.floor(ms/140)&1)?c1:c2;m=1;
+  }else if(fx==='checkered_flag'){
+    col=((x+y)&1)?[255,255,255]:[0,0,0];m=1;
+  }else if(fx==='yellow_flag'){col=[255,255,0];m=1;
+  }else if(fx==='red_flag'){col=[255,0,0];m=1;
   }else if(fx==='flag_2'){col=x<cols/2?c1:c2;m=1;
   }else if(fx==='flag_3'){col=x<cols/3?c1:x<2*cols/3?c2:[255,255,255];m=1;
-  }else if(fx==='ad_flash'){const q=(Math.sin(t*8)+1)/2;col=mix(c1,[255,255,255],q);m=.2+.8*q;
-  }else if(fx==='double_scanner'){const period=Math.max(1,2*(N-1));let q=((Math.floor(Math.abs(phase)*6)%period)+period)%period;const h=q<N?q:period-q;const h2=N-1-h;col=i===h2?c2:c1;m=(i===h||i===h2)?1:.01;
-  }else if(fx==='start_lights'){const s=Math.min(5,Math.floor((t%6)));col=[255,0,0];m=i<Math.floor(N*s/5)?1:.01;
-  }else if(fx==='checkered_flag'){col=((x+y)&1)?[255,255,255]:[0,0,0];m=1;
-  }else if(fx==='yellow_flag'){col=[255,220,0];m=.4+.6*((Math.sin(phase+x*.4)+1)/2);
-  }else if(fx==='red_flag'){col=[255,0,0];m=.4+.6*((Math.sin(phase+x*.4)+1)/2);
-  }else if(fx==='pit_lane'){col=((i+Math.floor(t*4))%6<3)?[255,255,255]:[0,0,0];m=1;
-  }else if(fx==='turbo'){const q=(Math.sin(phase*3-i*.25)+1)/2;col=mix([0,80,255],[255,255,255],q);m=q;
-  }else if(fx==='fill_hold'||fx==='fill_pause_empty'){let s=Math.floor(t*(2+sp/25))%(N*2+10);let lit=s<N?s+1:s<N+5?N:Math.max(0,N-(s-N-5));col=c1;m=i<lit?1:0;
-  }else if(fx==='empty_one_by_one'){const lit=N-(Math.floor(t*(2+sp/25))%(N+1));col=c1;m=i<lit?1:0;
-  }else if(fx==='meet_center'){const s=Math.floor(t*(2+sp/25))%Math.ceil(N/2);const left=s,right=N-1-s;col=i===right?c2:c1;m=(i===left||i===right)?1:.01;
-  }else if(fx==='split_center'){const s=Math.floor(t*(2+sp/25))%Math.ceil(N/2);const left=Math.floor((N-1)/2)-s,right=Math.ceil((N-1)/2)+s;col=i===right?c2:c1;m=(i===left||i===right)?1:.01;
-  }else if(fx==='chase_color2'){const h2=(head+Math.max(2,Math.floor(N*.08)))%N;col=i===h2?c2:c1;m=(i===head||i===h2)?1:.01;
-  }else if(fx==='gradient_bounce'){const period=Math.max(1,2*(N-1));let q=((Math.floor(Math.abs(phase)*5)%period)+period)%period;const h=q<N?q:period-q;const dd=Math.abs(i-h);col=mix(c1,c2,Math.min(1,dd/Math.max(1,N*.1)));m=Math.max(.01,1-dd/Math.max(4,N*.1));
-  }else if(fx==='rainbow_path'){col=wheel(i/N*255+phase*30);m=1;
-  }else if(fx==='travel_pulse'){const dd=Math.abs(i-head);const q=Math.exp(-(dd*dd)/Math.max(1,N*.08));col=mix(c1,c2,1-q);m=.02+.98*q;
-  }else if(['clock_hhmm_colon','clock_hh','clock_mm','clock_ss','counter_up','countdown','big_number','scroll_text'].includes(fx)){
-    // Vista previa simplificada: usa el reloj HHMM como representación base.
-    const px=digitalClockPixel(x,y);if(px?.on){col=px.hour?c1:c2;m=1}else{col=[0,0,0];m=0}
+  }else if(fx==='christmas'){
+    col=((i+Math.floor(ms/300))&1)?[255,0,0]:[0,255,0];m=1;
+  }else if(fx==='halloween'){
+    col=((i+Math.floor(ms/350))&1)?[255,70,0]:[130,0,255];m=1;
+  }else if(fx==='pit_lane'){
+    col=((i+Math.floor(ms/100))%6<3)?[255,255,255]:[0,0,0];m=1;
+  }else if(fx==='turbo'){
+    const q=(Math.sin(phase*3-i*.25)+1)/2;col=mix([0,80,255],[255,255,255],q);m=1;
+  }else if(['disco_rgb','confetti','stars','fireflies','soft_random','random_flash'].includes(fx)){
+    const frame=Math.floor(ms/120),seed=hash(i*131+frame*977);
+    if(seed%15===0){col=wheel(seed%256);m=.32+((seed>>>8)%176)/255}else m=0;
+  }else if(['disco_bars','fake_eq','column_eq','rpm_bar','tachometer'].includes(fx)){
+    const hgt=Math.floor(((Math.sin(phase+x*.7)+1)/2)*rows);
+    if((rows-1-y)<=hgt){col=mix(c1,c2,y/Math.max(1,rows-1));m=1}
+  }else if(['soft_fire','strong_fire','slow_lava','fire','lava','sunset','sunrise'].includes(fx)){
+    const ph=fx==='slow_lava'?phase*.3:phase;
+    const q=(Math.sin(ph+x*.35-y*.25)+1)/2;
+    col=fx==='sunset'?mix([255,40,0],[70,0,120],q):mix([100,0,0],[255,180,20],q);m=1;
+  }else if(['aurora','clouds','water','color_waves'].includes(fx)){
+    const q=(Math.sin(phase+x*.35+y*.25)+Math.sin(phase*.7-x*.22+y*.31)+2)/4;
+    col=fx==='clouds'?mix([40,60,90],[255,255,255],q):fx==='water'?mix([0,20,120],[0,220,255],q):mix(c1,c2,q);m=1;
+  }else if(fx==='rain'||fx==='snow'||fx==='matrix_rain'){
+    const denom=Math.max(25,220-sp*2);
+    const hh=(Math.floor(ms/denom)+x*7)%Math.max(1,rows);
+    const dd=(hh-y+rows)%Math.max(1,rows);
+    if(dd<2){col=fx==='snow'?[255,255,255]:(dd===0?c2:c1);m=1}
+  }else if(fx==='zone_breathe'){
+    const q=(Math.sin(phase+(x+y)*.4)+1)/2;col=mix(c1,c2,q);m=(50+q*205)/255;
+  }else if(fx==='ad_flash'){
+    const q=(Math.sin(ms*.008)+1)/2;col=mix(c1,[255,255,255],q);m=1;
+  }else if(fx==='double_scanner'){
+    if(N<2){col=c1;m=i===0?1:0}
+    else{
+      const period=(N-1)*2,pp=Math.floor(ms/Math.max(15,speedDelayPreview(sp)))%period,pos=pp<N?pp:period-pp;
+      col=i===N-1-pos?c2:c1;m=(i===pos||i===N-1-pos)?1:0;
+    }
+  }else if(fx==='start_lights'){
+    const ss=Math.min(5,Math.floor(ms/850)%7);m=0;col=[255,0,0];
+    for(let kk=0;kk<ss;kk++){const idx=Math.floor((kk+1)*N/6);if(i===idx){m=1;break}}
+  }else if(fx==='fill_hold'||fx==='fill_pause_empty'||fx==='empty_one_by_one'){
+    const step=Math.floor(ms/Math.max(18,speedDelayPreview(sp)));
+    let lit=0;
+    if(fx==='empty_one_by_one')lit=N-(step%(N+1));
+    else{
+      const cyc=N*2+10,pp=step%cyc;
+      lit=pp<N?pp+1:pp<N+5?N:Math.max(0,N-(pp-N-5));
+    }
+    col=c1;m=i<Math.min(N,lit)?1:0;
+  }else if(fx==='meet_center'||fx==='split_center'){
+    const ss=Math.floor(ms/Math.max(18,speedDelayPreview(sp)))%Math.max(1,Math.floor(N/2));
+    let a,b;
+    if(fx==='meet_center'){a=ss;b=N-1-ss}
+    else{a=Math.floor(N/2)>ss?Math.floor(N/2)-ss:0;b=Math.min(N-1,Math.floor(N/2)+ss)}
+    col=i===b?c2:c1;m=(i===a||i===b)?1:0;
+  }else if(fx==='accelerate'||fx==='decelerate'){
+    const u=(ms%4000)/4000,q=fx==='accelerate'?u*u:1-Math.pow(1-u,2),pos=Math.min(N-1,Math.floor(q*N));
+    col=c1;m=i===pos?1:0;
+  }else if(['clock_hhmm_colon','clock_hh','clock_mm','clock_ss','counter_up','countdown','big_number','temperature','scroll_text'].includes(fx)){
+    const px=digitalClockPixel(x,y);if(px?.on){col=px.hour?c1:c2;m=1}
   }
   return {col,m};
 }
@@ -1834,207 +1924,224 @@ function preview(now){
   for(const c of previewCells.values()){c.style.background='';c.style.borderColor='';c.textContent=''}
   const fx=$('effect').value,c1=hexRgb($('color1').value),c2=hexRgb($('color2').value);
   const palette=getPaletteRgb();
-  const bri=1,sp=+$('speed').value,dir=+$('direction').value,rotation=+$('rotation').value||0;
-  const t=(now-animStart)/1000,phase=t*(.5+sp/18)*dir,N=path.length;
+  const sp=+$('speed').value,dir=+$('direction').value,rotation=+$('rotation').value||0;
+  const ms=now-animStart,t=ms/1000,N=path.length;
+  const delay=speedDelayPreview(sp);
+
+  updateTestHtmlTime(now,N,sp);
 
   path.forEach((p,i)=>{
     const c=previewCells.get(k(p.x,p.y));if(!c)return;
     const rp=rotateDesignPoint(p.x,p.y,rotation);
-    let col=[0,0,0],m=1;
+    let col=[0,0,0],m=0;
 
     if(fx==='palette_bands'){
-      col=palette[i%Math.max(1,palette.length)]||c1;m=1;
+      col=paletteAtJs(palette,i);m=1;
     }else if(fx==='palette_chase'){
-      const shift=Math.floor(phase*4);
-      col=palette[((i+shift)%palette.length+palette.length)%palette.length]||c1;m=1;
+      let shift=Math.floor(ms/Math.max(9,delay));if(dir<0)shift=-shift;
+      col=paletteAtJs(palette,i+shift);m=1;
     }else if(fx==='palette_wave'){
-      col=paletteSample(palette,(i/Math.max(1,N-1))+phase*.08);m=1;
+      let shift=Math.floor(ms/Math.max(6,Math.floor(delay/3)));if(dir<0)shift=-shift;
+      const pp=wrapPreview(i+shift,N);
+      col=paletteBlendJs(palette,pp,Math.max(1,N-1));m=1;
     }else if(fx==='palette_cycle'){
-      col=paletteSample(palette,phase*.08);m=1;
-    }else if(fx==='solid')col=c1;
-    else if(fx==='off'){col=[0,0,0];m=0}
-    else if(fx==='digital_clock'){
+      const hold=arduinoMapInt(sp,1,100,1800,120);
+      let step=Math.floor(ms/hold);if(dir<0)step=-step;
+      col=paletteAtJs(palette,step);m=1;
+    }else if(fx==='solid'){
+      col=c1;m=1;
+    }else if(fx==='off'){
+      col=[0,0,0];m=0;
+    }else if(fx==='digital_clock'){
       const px=digitalClockPixel(rp.x,rp.y);
-      if(px?.on){col=px.hour?c1:c2;m=1}else{col=[0,0,0];m=0}
-    }else if(fx==='test_time'){
-      const head=((Math.floor(phase*5)%N)+N)%N;
-      col=[255,255,255];
-      m=i===head?1:.01;
+      if(px?.on){col=px.hour?c1:c2;m=1}
     }else if(fx==='sensor_temperature'||fx==='sensor_humidity'){
-      const spx=sensorPreviewPixel(fx,rp.x,rp.y);
-      if(spx===0){col=c1;m=1}
-      else if(spx===1){col=c2;m=1}
-      else {col=[0,0,0];m=0}
-    }else if(fx==='path_loop'){
-      const step=Math.floor(phase*5);
-      const head=((step%N)+N)%N;
-      col=palette[((step%palette.length)+palette.length)%palette.length]||c1;m=i===head?1:.015;
+      const px=sensorPreviewPixel(fx,rp.x,rp.y);
+      if(px>=0){col=paletteAtJs(palette,px);m=1}
+    }else if(fx==='test_time'){
+      let step=Math.floor(ms/delay);if(dir<0)step=-step;
+      col=[255,255,255];m=i===wrapPreview(step,N)?1:0;
+    }else if(fx==='path_loop'||fx==='chase'){
+      let step=Math.floor(ms/delay);if(dir<0)step=-step;
+      const head=wrapPreview(step,N);
+      col=paletteAtJs(palette,step);m=i===head?1:0;
     }else if(fx==='path_fill'){
-      const step=((Math.floor(Math.abs(phase)*3)%(N+8))+1);
-      col=c1;m=i<Math.min(step,N)?1:.015;
+      const step=Math.floor(ms/Math.max(9,delay)),pos=step%(N+8),lit=Math.min(N,pos+1);
+      let on=false,palIndex=0;
+      if(dir>0){on=i<lit;palIndex=i}
+      else{on=i>=N-lit;palIndex=N-1-i}
+      if(on){col=paletteAtJs(palette,palIndex);m=1}
     }else if(fx==='comet'){
-      const step=Math.floor(phase*5),head=((step%N)+N)%N;
-      let d=(head-i+N)%N;if(dir<0)d=(i-head+N)%N;
-      const len=Math.max(5,Math.round(N*.14));
-      col=palette[((step-d)%palette.length+palette.length)%palette.length]||c1;m=d<len?Math.max(.04,1-d/len):.01;
+      let head=Math.floor(ms/delay);if(dir<0)head=-head;
+      const tail=Math.max(5,Math.floor(N/7));
+      let jj=-1;
+      for(let j=0;j<tail;j++)if(wrapPreview(head-j*dir,N)===i){jj=j;break}
+      if(jj>=0){col=paletteAtJs(palette,head-jj);m=(255-Math.floor(jj*245/tail))/255}
     }else if(fx==='dual_chase'){
-      const head=((Math.floor(phase*5)%N)+N)%N;
-      const runners=Math.max(1,palette.length);
-      m=.015;col=c1;
+      let head=Math.floor(ms/delay);if(dir<0)head=-head;
+      const runners=Math.min(6,Math.max(1,palette.length));
       for(let r=0;r<runners;r++){
-        const pos=(head+Math.floor(N*r/runners))%N;
-        if(i===pos){col=palette[r]||c1;m=1;break}
+        const idx=wrapPreview(head+Math.floor(N*r/runners),N);
+        if(i===idx){col=paletteAtJs(palette,r);m=1;break}
       }
     }else if(fx==='color_wipe'){
-      const shift=Math.floor(phase*3);
-      const seg=Math.max(1,Math.floor(N/Math.max(1,palette.length)));
-      col=palette[((Math.floor((i+shift)/seg)%palette.length)+palette.length)%palette.length]||c1;m=1;
-    }else if(fx==='theater_chase'){
-      const step=Math.floor(t*(2+sp/18))*dir;
-      col=((i+step)%6<3)?c1:c2;
-      m=((i+step)%3===0)?1:.025;
-    }else if(fx==='theater_rainbow'){
-      const step=Math.floor(t*(2+sp/18))*dir;
-      col=wheel((i*11+step*20)%256);
-      m=((i+step)%3===0)?1:.02;
-    }else if(fx==='gradient_static'){
-      const q=N<=1?0:i/(N-1);
+      let step=Math.floor(ms/Math.max(9,delay));if(dir<0)step=-step;
+      const segSize=Math.max(1,Math.floor(N/Math.max(1,palette.length)));
+      const segment=Math.trunc((i+step)/segSize);
+      col=paletteAtJs(palette,segment);m=1;
+    }else if(fx==='snake'){
+      let head=Math.floor(ms/delay);if(dir<0)head=-head;
+      const len=Math.max(3,Math.floor(N/10));
+      let jj=-1;
+      for(let j=0;j<len;j++)if(wrapPreview(head-j*dir,N)===i){jj=j;break}
+      if(jj>=0){col=paletteAtJs(palette,head-jj);m=(255-Math.floor(jj*220/len))/255}
+    }else if(fx==='rainbow'){
+      let ph=Math.floor(ms/Math.max(2,Math.floor(delay/5)));if(dir<0)ph=-ph;
+      col=wheel(ph+i*255/Math.max(1,N));m=1;
+    }else if(fx==='breathe'){
+      const period=arduinoMapInt(sp,1,100,5000,650),ph=(ms%period)/period*Math.PI*2;
+      const level=(20+((Math.sin(ph)+1)/2)*235)/255;
+      let step=Math.floor(ms/Math.max(250,Math.floor(period/2)));if(dir<0)step=-step;
+      col=paletteAtJs(palette,step);m=level;
+    }else if(fx==='scanner'){
+      if(N===1){col=paletteAtJs(palette,Math.floor(ms/500));m=1}
+      else{
+        const raw=Math.floor(ms/delay),period=(N-1)*2,pp=raw%period;
+        let head=pp<N?pp:period-pp;if(dir<0)head=N-1-head;
+        const dd=Math.abs(i-head);
+        if(dd<=4){col=paletteAtJs(palette,Math.floor(raw/Math.max(1,N)));m=(255-dd*45)/255}
+      }
+    }else if(fx==='alternate'){
+      let ph=Math.floor(ms/Math.max(30,delay));if(dir<0)ph=-ph;
+      col=paletteAtJs(palette,i+ph);m=1;
+    }else if(fx==='sparkle'||fx==='twinkle'){
+      // Misma paleta y densidad aproximada. La posición aleatoria no puede estar sincronizada
+      // al mismo frame sin compartir una semilla entre navegador y ESP32.
+      const frame=Math.floor(ms/120),seed=hash(i*131+frame*977);
+      const amount=fx==='sparkle'?arduinoMapInt(sp,1,100,1,8):arduinoMapInt(sp,1,100,1,5);
+      if(seed%Math.max(2,Math.floor(N/Math.max(1,amount)))===0){
+        col=paletteAtJs(palette,(seed>>>8)%Math.max(1,palette.length));m=fx==='twinkle'?.55+.45*((seed>>>16)%100)/100:1;
+      }
+    }else if(fx==='wave_h'||fx==='wave_v'||fx==='center'){
+      const ph=ms*(.0015+sp*.00008)*dir;
+      let q=0;
+      if(fx==='wave_h')q=(Math.sin(ph+rp.x/Math.max(1,cols-1)*Math.PI*2)+1)/2;
+      else if(fx==='wave_v')q=(Math.sin(ph+rp.y/Math.max(1,rows-1)*Math.PI*2)+1)/2;
+      else{
+        const dx=rp.x-(cols-1)/2,dy=rp.y-(rows-1)/2;
+        q=(Math.sin(ph-Math.sqrt(dx*dx+dy*dy)*.9)+1)/2;
+      }
       col=paletteSample(palette,q);m=1;
+    }else if(fx==='theater_chase'){
+      let step=Math.floor(ms/Math.max(20,delay));if(dir<0)step=-step;
+      let q=(i+step)%6;if(q<0)q+=6;
+      if(q%3===0){col=q<3?c1:c2;m=1}
+    }else if(fx==='theater_rainbow'){
+      let step=Math.floor(ms/Math.max(20,delay));if(dir<0)step=-step;
+      let q=(i+step)%3;if(q<0)q+=3;
+      if(q===0){col=wheel(i*11+step*20);m=1}
+    }else if(fx==='gradient_static'){
+      col=mix(c1,c2,N<=1?0:i/(N-1));m=1;
     }else if(fx==='gradient_move'){
-      const q=(Math.sin(phase+i/Math.max(1,N-1)*Math.PI*2)+1)/2;
+      const ph=ms*(.0012+sp*.00008)*dir,q=(Math.sin(ph+(N<=1?0:i/(N-1))*Math.PI*2)+1)/2;
       col=mix(c1,c2,q);m=1;
     }else if(fx==='pulse_dual'){
-      const q=(Math.sin(phase*1.5)+1)/2;
-      col=mix(c1,c2,q);m=.25+.75*q;
+      const ph=ms*(.0015+sp*.00009),q=(Math.sin(ph)+1)/2;
+      col=mix(c1,c2,q);m=(64+q*191)/255;
     }else if(fx==='heartbeat'){
-      const cyc=(t*(.6+sp/90))%1;
-      let beat=0;
-      if(cyc<.09)beat=Math.sin(cyc/.09*Math.PI);
-      else if(cyc>.16&&cyc<.25)beat=.75*Math.sin((cyc-.16)/.09*Math.PI);
-      col=c1;m=.05+.95*Math.max(0,beat);
+      const period=arduinoMapInt(sp,1,100,2200,800),xx=(ms%period)/period;
+      let beat=0;if(xx<.10)beat=Math.sin(xx/.10*Math.PI);else if(xx>.16&&xx<.28)beat=.72*Math.sin((xx-.16)/.12*Math.PI);
+      col=c1;m=(10+245*Math.max(0,beat))/255;
     }else if(fx==='fill_empty'){
-      const raw=Math.floor(t*(1+sp/22));
-      const period=Math.max(2,N*2);
-      let cut=((raw%period)+period)%period;
-      cut=cut<N?cut:period-1-cut;
-      col=i<=cut?c1:[0,0,0];m=i<=cut?1:0;
+      const raw=Math.floor(ms/Math.max(18,delay)),period=Math.max(2,N*2),pp=raw%period;
+      let lit=pp<N?pp+1:period-pp-1;lit=Math.min(N,lit);
+      const idx=dir>0?i:N-1-i;col=c1;m=idx<lit?1:0;
     }else if(fx==='bounce_pair'){
-      const period=Math.max(1,2*(N-1));
-      let p=((Math.floor(Math.abs(phase)*5)%period)+period)%period;
-      const head=p<N?p:period-p;
-      const other=N-1-head;
-      col=i===other?c2:c1;m=(i===head||i===other)?1:.015;
+      if(N===1){col=c1;m=1}else{
+        const raw=Math.floor(ms/Math.max(18,delay)),period=(N-1)*2,pp=raw%period;
+        let head=pp<N?pp:period-pp;if(dir<0)head=N-1-head;
+        const other=N-1-head;col=i===other?c2:c1;m=(i===head||i===other)?1:0;
+      }
     }else if(fx==='meteor'){
-      const head=((Math.floor(phase*5)%N)+N)%N;
-      let d=(head-i+N)%N;if(dir<0)d=(i-head+N)%N;
-      const len=Math.max(6,Math.round(N*.18));
-      col=d===0?c2:c1;m=d<len?Math.max(.02,1-d/len):.005;
+      let head=Math.floor(ms/Math.max(15,delay));if(dir<0)head=-head;
+      const tail=Math.max(6,Math.floor(N/6));let jj=-1;
+      for(let j=0;j<tail;j++)if(wrapPreview(head-j*dir,N)===i){jj=j;break}
+      if(jj>=0){col=jj===0?c2:c1;m=(255-Math.floor(jj*250/tail))/255}
     }else if(fx==='random_flash'){
-      const seed=hash(i*131+Math.floor(t*(3+sp/8))*977);
-      col=(seed&1)?c1:c2;m=(seed%19===0)?1:.015;
+      const frame=Math.floor(ms/90),seed=hash(i*31+frame*977),amount=arduinoMapInt(sp,1,100,1,10);
+      if(seed%Math.max(2,Math.floor(N/Math.max(1,amount)))===0){col=(seed&1)?c1:c2;m=1}
     }else if(fx==='fire'){
-      const q=(Math.sin(t*(2+sp/30)+i*.31)+Math.sin(t*3.1+i*.13)+2)/4;
-      col=mix([255,15,0],[255,210,20],q);m=.25+.75*q;
+      const q=(Math.sin((i*17+ms/Math.max(4,35-Math.floor(sp/4)))/255*Math.PI*2)+1)/2;
+      col=mix([255,12,0],[255,210,20],q);m=1;
     }else if(fx==='ocean'){
-      const q=(Math.sin(t*(1+sp/60)+rp.x*.45+rp.y*.2)+1)/2;
-      col=mix([0,25,120],[0,255,230],q);m=.35+.65*q;
+      const ph=ms*(.0010+sp*.00005),xx=cols>1?rp.x/(cols-1):i/Math.max(1,N);
+      const q=(Math.sin(ph+xx*8)+1)/2;col=mix([0,20,120],[0,255,220],q);m=1;
     }else if(fx==='lava'){
-      const q=(Math.sin(t*(1.2+sp/55)+rp.x*.35-rp.y*.28)+1)/2;
-      col=mix([120,0,0],[255,120,0],q);m=.3+.7*q;
+      const ph=ms*(.0011+sp*.00005),q=(Math.sin(ph+rp.x*.45-rp.y*.31)+1)/2;
+      col=mix([100,0,0],[255,120,0],q);m=1;
     }else if(fx==='matrix_rain'){
-      const head=(Math.floor(t*(3+sp/16)+rp.x*.73)%Math.max(1,rows)+rows)%rows;
-      const d=(head-rp.y+rows)%Math.max(1,rows);
-      col=d===0?c2:c1;m=d<4?Math.max(.05,1-d/4):.01;
+      const stepMs=arduinoMapInt(sp,1,100,220,35),step=Math.floor(ms/stepMs),head=(step+rp.x*13+7)%Math.max(1,rows);
+      let dd=head-rp.y;if(dd<0)dd+=rows;
+      if(dd===0){col=c2;m=1}else if(dd<4){col=c1;m=(255-dd*60)/255}
     }else if(fx==='color_cycle'){
-      col=wheel(t*(12+sp*.45)*dir+i*.8);m=1;
+      let hue=Math.floor(ms/Math.max(3,45-Math.floor(sp/3)));if(dir<0)hue=-hue;
+      col=wheel(hue);m=1;
     }else if(fx==='christmas'){
-      const shift=Math.floor(t*(1+sp/30))*dir;
-      col=((i+shift)&1)?[255,0,0]:[0,255,0];m=1;
+      let shift=Math.floor(ms/arduinoMapInt(sp,1,100,700,80));if(dir<0)shift=-shift;
+      col=((i+shift)&1)===0?[255,0,0]:[0,255,0];m=1;
     }else if(fx==='carnival'){
-      const shift=Math.floor(t*(2+sp/20))*dir;
-      const q=((i+shift)%3+3)%3;
-      col=q===0?c1:q===1?c2:[255,255,255];m=1;
+      let shift=Math.floor(ms/arduinoMapInt(sp,1,100,600,70));if(dir<0)shift=-shift;
+      if(palette.length>2)col=paletteAtJs(palette,i+shift);
+      else{let q=(i+shift)%3;if(q<0)q+=3;col=q===0?c1:q===1?c2:[255,255,255]}
+      m=1;
     }else if(fx==='sunrise'){
-      const q=(Math.sin(t*(.15+sp/500))+1)/2;
-      col=mix([0,0,0],mix([255,50,0],[255,220,120],q),q);m=.15+.85*q;
+      const period=arduinoMapInt(sp,1,100,16000,3500),ph=(ms%period)/period,q=(Math.sin(ph*Math.PI*2-Math.PI/2)+1)/2;
+      col=mix([255,45,0],[255,230,150],q);m=Math.max(10,q*255)/255;
     }else if(fx==='vortex'){
-      const cx=(cols-1)/2,cy=(rows-1)/2;
-      const dx=rp.x-cx,dy=rp.y-cy;
-      const ang=Math.atan2(dy,dx),dist=Math.sqrt(dx*dx+dy*dy);
-      const q=(Math.sin(ang*3-dist*.8+phase*2)+1)/2;
-      col=mix(c1,c2,q);m=.25+.75*q;
+      const ph=ms*(.0015+sp*.00007)*dir,dx=rp.x-(cols-1)/2,dy=rp.y-(rows-1)/2;
+      const q=(Math.sin(Math.atan2(dy,dx)*3-Math.hypot(dx,dy)*.8+ph*2)+1)/2;col=mix(c1,c2,q);m=1;
     }else if(fx==='checker'){
-      const shift=Math.floor(t*(1+sp/25))*dir;
-      col=(((rp.x+rp.y+shift)&1)===0)?c1:c2;m=1;
-    }else if(['path_bounce','long_tail','short_tail','two_chase','three_chase','block_chase','accelerate','decelerate','edge_bounce','color_path','wipe_lr','wipe_tb','wipe_diag','wipe_circle','expand_center','contract_center','rings','spiral','radar','rotate_line','cross_expand','x_expand','square_expand','square_contract','columns_up','rows_scroll','clock_hhmm_colon','clock_hh','clock_mm','clock_ss','counter_up','countdown','big_number','scroll_text','stars','fireflies','soft_random','zone_breathe','color_waves','aurora','clouds','water','rain','snow','soft_fire','strong_fire','slow_lava','sunset','white_flash','dual_flash','strobe','disco_rgb','disco_bars','fake_eq','column_eq','confetti','halloween','flag_2','flag_3','ad_flash','knight_rider','double_scanner','race_2','race_3','start_lights','checkered_flag','yellow_flag','red_flag','pit_lane','turbo','tachometer','rpm_bar','heart','circle','pulse_circle','diamond','arrow_left','arrow_right','arrow_up','arrow_down','check','x_symbol','wifi_symbol','battery','smile','sad','eye_blink','fill_hold','empty_one_by_one','fill_pause_empty','meet_center','split_center','chase_color2','gradient_tail','gradient_bounce','rainbow_path','travel_pulse'].includes(fx)){
-      const g=genericPreviewEffect(fx,rp,i,N,t,phase,c1,c2,sp,dir);col=g.col;m=g.m;
-    }else if(fx==='chase'){
-      const step=Math.floor(phase*5),head=((step%N)+N)%N;col=palette[((step%palette.length)+palette.length)%palette.length]||c1;m=i===head?1:.025;
-    }else if(fx==='snake'){
-      const head=((Math.floor(phase*5)%N)+N)%N,len=Math.max(3,Math.round(N*.10));
-      let d=(head-i+N)%N;if(dir<0)d=(i-head+N)%N;col=c1;m=d<len?1-d/len:.02;
-    }else if(fx==='rainbow')col=wheel(i/N*256+phase*22);
-    else if(fx==='breathe'){col=c1;m=.08+.92*((Math.sin(phase)+1)/2)}
-    else if(fx==='scanner'){
-      const period=Math.max(1,2*(N-1)),v=((Math.floor(Math.abs(phase)*7)%period)+period)%period;
-      const head=v<N?v:period-v,d=Math.abs(i-head);col=c1;m=Math.max(.02,1-d/5);
-    }else if(fx==='wave_h'){
-      const q=(Math.sin(phase+rp.x/Math.max(1,cols-1)*Math.PI*2)+1)/2;col=mix(c1,c2,q);
-    }else if(fx==='wave_v'){
-      const q=(Math.sin(phase+rp.y/Math.max(1,rows-1)*Math.PI*2)+1)/2;col=mix(c1,c2,q);
-    }else if(fx==='center'){
-      const dx=(rp.x-(cols-1)/2)/Math.max(1,cols/2),dy=(rp.y-(rows-1)/2)/Math.max(1,rows/2);
-      const q=(Math.sin(phase-Math.sqrt(dx*dx+dy*dy)*7)+1)/2;col=mix(c1,c2,q);
-    }else if(fx==='alternate')col=((i+Math.floor(phase*3))&1)?c1:c2;
-    else if(fx==='sparkle'){
-      const seed=hash(i+Math.floor(t*(2+sp/12))*1009);col=(seed%13===0)?c2:c1;m=(seed%13===0)?1:.08;
-    }else if(fx==='disco'){
-      col=wheel(hash(i+Math.floor(t*(2+sp/10))*977)%256);m=.3+(hash(i*7+Math.floor(t*8))%70)/100;
+      let shift=Math.floor(ms/arduinoMapInt(sp,1,100,850,90));if(dir<0)shift=-shift;
+      col=((rp.x+rp.y+shift)&1)===0?c1:c2;m=1;
     }else if(fx==='police'){
-      const side=rp.x<cols/2;const blink=Math.floor(t*(4+sp/15))%2;col=(side^blink)?[255,0,0]:[0,40,255];
+      const interval=arduinoMapInt(sp,1,100,500,70),flip=(Math.floor(ms/interval)&1)!==0,left=cols>1?rp.x<cols/2:i<N/2;
+      col=(left!==flip)?[255,0,0]:[0,0,255];m=1;
     }else if(fx==='f1_race'){
-      const car=((Math.floor(phase*7)%N)+N)%N;
-      const d=(i-car+N)%N;if(d<4){col=d===0?[255,255,255]:d===1?[255,0,0]:d===2?[255,255,0]:[0,120,255];m=1}else m=.01;
+      const stepMs=arduinoMapInt(sp,1,100,180,18);
+      let car=Math.floor(ms/stepMs);if(dir<0)car=-car;
+      const tail=[[255,255,255],[255,0,0],[255,255,0],[0,0,255]];
+      for(let j=0;j<4;j++)if(i===wrapPreview(car-j*dir,N)){col=tail[j];m=1;break}
     }else if(fx==='f1_start'){
-      const cyc=(t*1000)%8500;
+      const cyc=ms%8500;
       if(cyc<5000){
         const on=Math.min(5,Math.floor(cyc/850)+1);
-        let active=false;
-        for(let g=0;g<on;g++){
-          const gx=(g+1)*cols/6,gy=Math.max(1,rows*.22);
-          if(Math.hypot(rp.x-gx,rp.y-gy)<Math.max(1.2,Math.min(cols,rows)*.05))active=true;
-        }
-        col=[255,0,0];m=active?1:.01;
-      }else if(cyc<5800){col=[0,0,0];m=0}
-      else{
-        const q=((cyc-5800)/2700)*cols*1.5;
-        const d=Math.abs(rp.x-q);col=[0,255,80];m=Math.max(.01,1-d/4);
+        for(let g=0;g<on;g++)if(i===Math.floor((g+1)*N/6)){col=[255,0,0];m=1}
+      }else if(cyc>=5800){
+        const pos=Math.floor((cyc-5800)/2700*Math.max(1,N-1)),dd=Math.abs(i-pos);
+        if(dd<=3){col=[0,255,0];m=(255-dd*50)/255}
       }
     }else if(fx==='tetris'){
-      const drop=Math.max(.16,1.0-(sp/120));
-      const tick=Math.floor(t/drop);
-      const fillCol=tick%Math.max(1,cols);
-      const completedRows=Math.floor(tick/Math.max(1,cols));
-      const settledRows=completedRows%Math.max(1,rows);
-      const landingY=Math.max(0,rows-1-settledRows);
-      const fallSteps=Math.max(1,rows-settledRows);
-      const fallPos=Math.floor((t/(drop/3)))%fallSteps;
-      const pieceY=Math.min(landingY,fallPos);
-      const pieceType=completedRows%4,targetX=fillCol;
-      col=[0,0,0];m=0;
-      if(rp.y>landingY){col=palette[(rows-1-Math.round(rp.y))%palette.length]||c1;m=1}
-      if(Math.round(rp.y)===landingY&&Math.round(rp.x)<fillCol){col=palette[Math.max(0,Math.round(rp.x))%palette.length]||c1;m=1}
-      const pc=palette[(completedRows+fillCol)%palette.length]||c1;
-      const on=(x,y)=>Math.round(rp.x)===x&&Math.round(rp.y)===y;
+      const dropMs=arduinoMapInt(sp,1,100,650,90);
+      const tick=Math.floor(ms/dropMs),fillCol=tick%Math.max(1,cols),completedRows=Math.floor(tick/Math.max(1,cols));
+      const settledRows=completedRows%Math.max(1,rows),landingY=Math.max(0,rows-1-settledRows);
+      const fallSteps=Math.max(1,rows-settledRows),fallPos=Math.floor(ms/Math.max(25,Math.floor(dropMs/3)))%fallSteps;
+      const pieceY=Math.min(landingY,fallPos),pieceType=completedRows%4,targetX=fillCol;
+      if(rp.y>landingY){col=paletteAtJs(palette,rows-1-rp.y);m=1}
+      if(rp.y===landingY&&rp.x<fillCol){col=paletteAtJs(palette,rp.x);m=1}
+      const pc=paletteAtJs(palette,completedRows+fillCol);
+      const on=(x,y)=>rp.x===x&&rp.y===y;
       let hit=false;
       if(pieceType===0)hit=on(targetX,pieceY)||on(targetX,pieceY-1)||on(targetX,pieceY-2);
       else if(pieceType===1)hit=on(targetX,pieceY)||on(targetX+1,pieceY)||on(targetX,pieceY-1)||on(targetX+1,pieceY-1);
       else if(pieceType===2)hit=on(targetX,pieceY)||on(targetX,pieceY-1)||on(targetX+1,pieceY);
       else hit=on(targetX,pieceY)||on(targetX-1,pieceY)||on(targetX+1,pieceY)||on(targetX,pieceY-1);
       if(hit){col=pc;m=1}
+      if((tick%Math.max(1,cols))===cols-1&&(ms%dropMs)>dropMs*.72&&rp.y===landingY){col=[255,255,255];m=1}
+    }else{
+      const g=genericPreviewEffect(fx,rp,i,N,t,0,c1,c2,sp,dir);col=g.col;m=g.m;
     }
 
-    c.style.background=css(col,bri*m);
+    c.style.background=css(col,m);
     c.style.borderColor=m>.25?'rgba(255,255,255,.35)':'#202a3b';
     c.textContent=i+1;
   });
@@ -2368,6 +2475,16 @@ async function saveProgramEvent(){
     action_name:type==='image'?'image':type==='sequence'?'sequence':$('eventEffect').value,
     color1:$('eventColor1').value,
     color2:$('eventColor2').value,
+    colors:[
+      $('eventColor1').value,
+      $('eventColor2').value,
+      $('color3').value,
+      $('color4').value,
+      $('color5').value,
+      $('color6').value
+    ],
+    color_count:Math.max(1,Math.min(6,+$('colorCount').value||2)),
+    rotation:+$('rotation').value||0,
     brightness:Math.max(1,Math.min(100,+$('eventBrightness').value||70)),
     speed:Math.max(1,Math.min(100,+$('eventSpeed').value||50)),
     direction:+$('eventDirection').value===-1?-1:1,
