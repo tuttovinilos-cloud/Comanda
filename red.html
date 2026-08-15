@@ -150,6 +150,7 @@ canvas{display:none}
     <button class="tab" data-tab="effects">Efectos</button>
     <button class="tab" data-tab="calibration">Calibración</button>
     <button class="tab" data-tab="environment">Ambiente</button>
+    <button class="tab" data-tab="history">Historial</button>
     <button class="tab" data-tab="image">Imagen</button>
     <button class="tab" data-tab="program">Programación</button>
   </div>
@@ -698,6 +699,96 @@ canvas{display:none}
         <button class="btn primary" id="envUseTemp">Mostrar TEMPERATURA en LEDs</button>
         <button class="btn primary" id="envUseHumidity">Mostrar HUMEDAD en LEDs</button>
         <button class="btn" id="envRefresh">Actualizar datos</button>
+      </div>
+    </section>
+
+
+    <section id="history" class="panel">
+      <div class="profileBanner">
+        <div class="profileBannerLeft">
+          <span class="profileDot"></span>
+          <span class="profileLabel">HISTORIAL AMBIENTAL</span>
+          <span class="profileName">Muestra automática cada 5 minutos</span>
+          <span class="profileState" id="historyState">Cargando...</span>
+        </div>
+      </div>
+
+      <div class="toolbar" style="margin-top:14px">
+        <div class="field">
+          <label>PERÍODO</label>
+          <select id="historyPeriod">
+            <option value="today">Hoy</option>
+            <option value="24h">Últimas 24 horas</option>
+            <option value="7d">Últimos 7 días</option>
+            <option value="30d">Últimos 30 días</option>
+          </select>
+        </div>
+        <button class="btn" id="historyRefresh">Actualizar historial</button>
+        <div class="stat"><span>MUESTRAS</span><b id="historyCount">0</b></div>
+      </div>
+
+      <div class="effectGrid" style="margin-top:14px">
+        <div class="field">
+          <label>TEMP. PROMEDIO</label>
+          <div id="histTempAvg" style="font-size:24px;font-weight:900;padding:12px;border:1px solid var(--border);border-radius:12px">--.- °C</div>
+        </div>
+        <div class="field">
+          <label>TEMP. MÁXIMA</label>
+          <div id="histTempMax" style="font-size:24px;font-weight:900;padding:12px;border:1px solid var(--border);border-radius:12px">--.- °C</div>
+        </div>
+        <div class="field">
+          <label>TEMP. MÍNIMA</label>
+          <div id="histTempMin" style="font-size:24px;font-weight:900;padding:12px;border:1px solid var(--border);border-radius:12px">--.- °C</div>
+        </div>
+        <div class="field">
+          <label>HUM. PROMEDIO</label>
+          <div id="histHumAvg" style="font-size:24px;font-weight:900;padding:12px;border:1px solid var(--border);border-radius:12px">--.- %</div>
+        </div>
+        <div class="field">
+          <label>HUM. MÁXIMA</label>
+          <div id="histHumMax" style="font-size:24px;font-weight:900;padding:12px;border:1px solid var(--border);border-radius:12px">--.- %</div>
+        </div>
+        <div class="field">
+          <label>HUM. MÍNIMA</label>
+          <div id="histHumMin" style="font-size:24px;font-weight:900;padding:12px;border:1px solid var(--border);border-radius:12px">--.- %</div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+        <div style="padding:12px 14px;font-weight:900;border-bottom:1px solid var(--border);background:#f8fafc">
+          Fluctuación en el tiempo
+        </div>
+        <div style="overflow:auto">
+          <svg id="historyChart" viewBox="0 0 1000 260" preserveAspectRatio="none" style="display:block;width:100%;min-width:720px;height:260px;background:#fff"></svg>
+        </div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--muted);border-top:1px solid var(--border)">
+          Línea superior: temperatura °C · Línea inferior/segunda escala: humedad %
+        </div>
+      </div>
+
+      <div style="margin-top:16px;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+        <div style="padding:12px 14px;font-weight:900;border-bottom:1px solid var(--border);background:#f8fafc">
+          Tabla de mediciones
+        </div>
+        <div style="overflow:auto;max-height:520px">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap">
+            <thead style="position:sticky;top:0;background:#f8fafc;z-index:2">
+              <tr>
+                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:left">Fecha</th>
+                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:left">Hora</th>
+                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:right">Temp °C</th>
+                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:right">Humedad %</th>
+                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:right">P. rocío °C</th>
+                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:right">Sensación °C</th>
+                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:right">Hum. abs. g/m³</th>
+                <th style="padding:10px;border-bottom:1px solid var(--border);text-align:right">VPD kPa</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody">
+              <tr><td colspan="8" style="padding:18px;text-align:center;color:var(--muted)">Sin datos todavía</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -1503,6 +1594,230 @@ function sensorPreviewPixel(effect,x,y){
     }
   }
   return -1;
+}
+
+
+// ---------- HISTORIAL SHT31 · CADA 5 MINUTOS ----------
+let environmentHistory=[];
+
+function historyStartISO(period){
+  const now=new Date();
+
+  if(period==='today'){
+    const d=new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,0,0,0
+    );
+    return d.toISOString();
+  }
+
+  const hours=
+    period==='24h'?24:
+    period==='7d'?24*7:
+    24*30;
+
+  return new Date(
+    now.getTime()-hours*3600000
+  ).toISOString();
+}
+
+function historyNumber(v){
+  const n=Number(v);
+  return Number.isFinite(n)?n:null;
+}
+
+function historyStats(rows,key){
+  const a=rows
+    .map(r=>historyNumber(r[key]))
+    .filter(v=>v!==null);
+
+  if(!a.length)
+    return {avg:null,min:null,max:null};
+
+  const sum=a.reduce((s,v)=>s+v,0);
+
+  return {
+    avg:sum/a.length,
+    min:Math.min(...a),
+    max:Math.max(...a)
+  };
+}
+
+function drawHistoryChart(rows){
+  const svg=$('historyChart');
+
+  if(!svg)return;
+
+  if(!rows.length){
+    svg.innerHTML=
+      '<text x="500" y="130" text-anchor="middle" fill="#64748b" font-size="16">Sin datos para este período</text>';
+    return;
+  }
+
+  const sorted=[...rows].reverse();
+
+  const temps=sorted
+    .map(r=>historyNumber(r.temperature_c));
+
+  const hums=sorted
+    .map(r=>historyNumber(r.humidity));
+
+  const validT=temps.filter(v=>v!==null);
+  const validH=hums.filter(v=>v!==null);
+
+  if(!validT.length||!validH.length){
+    svg.innerHTML='';
+    return;
+  }
+
+  const padX=50,padY=24,W=1000,H=260;
+  const innerW=W-padX*2;
+  const innerH=H-padY*2;
+
+  let tMin=Math.min(...validT),tMax=Math.max(...validT);
+  let hMin=Math.min(...validH),hMax=Math.max(...validH);
+
+  if(tMax-tMin<1){tMin-=.5;tMax+=.5}
+  if(hMax-hMin<2){hMin-=1;hMax+=1}
+
+  const x=i=>
+    padX+
+    (sorted.length<=1?innerW/2:i*innerW/(sorted.length-1));
+
+  const yTemp=v=>
+    padY+
+    (tMax-v)/(tMax-tMin)*innerH;
+
+  const yHum=v=>
+    padY+
+    (hMax-v)/(hMax-hMin)*innerH;
+
+  const tempPts=sorted
+    .map((r,i)=>{
+      const v=historyNumber(r.temperature_c);
+      return v===null?null:`${x(i)},${yTemp(v)}`;
+    })
+    .filter(Boolean)
+    .join(' ');
+
+  const humPts=sorted
+    .map((r,i)=>{
+      const v=historyNumber(r.humidity);
+      return v===null?null:`${x(i)},${yHum(v)}`;
+    })
+    .filter(Boolean)
+    .join(' ');
+
+  const grid=[0,.25,.5,.75,1].map(q=>{
+    const y=padY+q*innerH;
+    return `<line x1="${padX}" y1="${y}" x2="${W-padX}" y2="${y}" stroke="#e5e7eb" stroke-width="1"/>`;
+  }).join('');
+
+  svg.innerHTML=`
+    ${grid}
+    <polyline points="${tempPts}" fill="none" stroke="#ef4444" stroke-width="3" vector-effect="non-scaling-stroke"/>
+    <polyline points="${humPts}" fill="none" stroke="#2563eb" stroke-width="3" vector-effect="non-scaling-stroke"/>
+    <text x="12" y="28" fill="#ef4444" font-size="13" font-weight="700">${tMax.toFixed(1)}°</text>
+    <text x="12" y="${H-18}" fill="#ef4444" font-size="13" font-weight="700">${tMin.toFixed(1)}°</text>
+    <text x="${W-42}" y="28" fill="#2563eb" font-size="13" font-weight="700">${hMax.toFixed(1)}%</text>
+    <text x="${W-42}" y="${H-18}" fill="#2563eb" font-size="13" font-weight="700">${hMin.toFixed(1)}%</text>
+  `;
+}
+
+function paintEnvironmentHistory(){
+  const rows=environmentHistory||[];
+
+  $('historyCount').textContent=rows.length;
+
+  const ts=historyStats(rows,'temperature_c');
+  const hs=historyStats(rows,'humidity');
+
+  $('histTempAvg').textContent=ts.avg===null?'--.- °C':ts.avg.toFixed(1)+' °C';
+  $('histTempMax').textContent=ts.max===null?'--.- °C':ts.max.toFixed(1)+' °C';
+  $('histTempMin').textContent=ts.min===null?'--.- °C':ts.min.toFixed(1)+' °C';
+
+  $('histHumAvg').textContent=hs.avg===null?'--.- %':hs.avg.toFixed(1)+' %';
+  $('histHumMax').textContent=hs.max===null?'--.- %':hs.max.toFixed(1)+' %';
+  $('histHumMin').textContent=hs.min===null?'--.- %':hs.min.toFixed(1)+' %';
+
+  $('historyState').textContent=
+    rows.length
+    ? `${rows.length} muestras · intervalo de 5 min`
+    : 'Todavía no hay muestras en este período';
+
+  const body=$('historyBody');
+
+  if(!rows.length){
+    body.innerHTML=
+      '<tr><td colspan="8" style="padding:18px;text-align:center;color:var(--muted)">Sin datos todavía</td></tr>';
+
+    drawHistoryChart([]);
+    return;
+  }
+
+  body.innerHTML=rows.map(r=>{
+    const dt=new Date(r.sampled_at);
+
+    const date=dt.toLocaleDateString();
+    const time=dt.toLocaleTimeString([],{
+      hour:'2-digit',
+      minute:'2-digit',
+      second:'2-digit'
+    });
+
+    const f=(v,d=1)=>{
+      const n=Number(v);
+      return Number.isFinite(n)?n.toFixed(d):'—';
+    };
+
+    return `
+      <tr>
+        <td style="padding:9px 10px;border-bottom:1px solid var(--line)">${date}</td>
+        <td style="padding:9px 10px;border-bottom:1px solid var(--line)">${time}</td>
+        <td style="padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;font-weight:800">${f(r.temperature_c)}°</td>
+        <td style="padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;font-weight:800">${f(r.humidity)}%</td>
+        <td style="padding:9px 10px;border-bottom:1px solid var(--line);text-align:right">${f(r.dew_point_c)}</td>
+        <td style="padding:9px 10px;border-bottom:1px solid var(--line);text-align:right">${f(r.heat_index_c)}</td>
+        <td style="padding:9px 10px;border-bottom:1px solid var(--line);text-align:right">${f(r.absolute_humidity_gm3)}</td>
+        <td style="padding:9px 10px;border-bottom:1px solid var(--line);text-align:right">${f(r.vpd_kpa,2)}</td>
+      </tr>
+    `;
+  }).join('');
+
+  drawHistoryChart(rows);
+}
+
+async function loadEnvironmentHistory(){
+  try{
+    $('historyState').textContent='Cargando historial...';
+
+    const start=
+      encodeURIComponent(
+        historyStartISO(
+          $('historyPeriod').value
+        )
+      );
+
+    const endpoint=
+      '/rest/v1/esp32_environment_history'+
+      '?device_id=eq.'+DEVICE_ID+
+      '&sampled_at=gte.'+start+
+      '&select=sampled_at,temperature_c,temperature_f,humidity,dew_point_c,absolute_humidity_gm3,heat_index_c,vpd_kpa,sensor_ok'+
+      '&order=sampled_at.desc'+
+      '&limit=10000';
+
+    const r=await sb(endpoint);
+
+    environmentHistory=
+      Array.isArray(r)?r:[];
+
+    paintEnvironmentHistory();
+  }catch(e){
+    console.warn('Historial SHT31:',e);
+    $('historyState').textContent='Error cargando historial';
+  }
 }
 
 // ---------- PALETA 1–6 COLORES ----------
@@ -2602,6 +2917,29 @@ $('envUseHumidity').onclick=async()=>{
 
 setInterval(loadEnvironment,5000);
 
+
+$('historyRefresh').onclick=
+  ()=>loadEnvironmentHistory();
+
+$('historyPeriod').addEventListener(
+  'change',
+  loadEnvironmentHistory
+);
+
+// Refresca la tabla una vez por minuto.
+// El ESP32 guarda una nueva muestra cada 5 minutos.
+setInterval(
+  ()=>{
+    const panel=$('history');
+    if(
+      panel &&
+      panel.classList.contains('active')
+    )
+      loadEnvironmentHistory();
+  },
+  60000
+);
+
 // ---------- BOTONES ----------
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
@@ -2725,7 +3063,7 @@ $('sendImage').onclick=async()=>{
   catch(e){$('status').textContent='Error';toast('Error: '+e.message)}
 };
 
-resetEventForm();loadSaved();loadPrograms();updateLabels();updateCalibrationLabels();requestAnimationFrame(preview);
+resetEventForm();loadSaved();loadPrograms();loadEnvironmentHistory();updateLabels();updateCalibrationLabels();requestAnimationFrame(preview);
 </script>
 </body>
 </html>
