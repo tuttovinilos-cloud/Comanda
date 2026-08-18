@@ -2694,7 +2694,7 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 .history-global-btn{background:#111827!important;color:#fff!important;border-color:#111827!important}
 .historial-general-modal{width:min(1080px,calc(100vw - 28px))!important;max-width:1080px!important;max-height:calc(100vh - 28px)!important}
 .historial-general-sub{margin-top:3px;color:var(--muted);font-size:11px;font-weight:700}
-.historial-general-filtros{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:8px;align-items:center;margin-bottom:10px}
+.historial-general-filtros{display:grid;grid-template-columns:minmax(0,1fr) 160px 170px;gap:8px;align-items:center;margin-bottom:10px}
 .historial-general-search{width:100%!important;max-width:none!important}
 .historial-general-search input{width:100%!important}
 .historial-general-resumen{margin-bottom:8px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:#f8f9ff;color:var(--muted2);font-family:var(--mono);font-size:10px;font-weight:800}
@@ -2702,7 +2702,7 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 .historial-general-row{display:grid;grid-template-columns:118px 94px minmax(145px,210px) minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-top:1px solid #eef1f7}
 .historial-general-row:first-child{border-top:0}
 .historial-general-time{font-family:var(--mono);font-size:9px;color:var(--muted);font-weight:800}
-.historial-general-badge{justify-self:start;border-radius:999px;padding:5px 8px;font-family:var(--head);font-size:7px;font-weight:900;letter-spacing:.35px;text-transform:uppercase;white-space:nowrap}
+.historial-general-badge{justify-self:start;border-radius:999px;padding:5px 9px;font-family:var(--head);font-size:7px;font-weight:900;letter-spacing:.35px;text-transform:uppercase;white-space:nowrap}
 .historial-general-badge.financiero{background:#ecfdf5;color:#15803d;border:1px solid #bbf7d0}
 .historial-general-badge.cambio{background:#eef1ff;color:#153bff;border:1px solid #c7d2fe}
 .historial-general-badge.anulado{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
@@ -2971,6 +2971,15 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
           <option value="FINANCIERO">Financiero</option>
           <option value="CAMBIO">Cambios</option>
         </select>
+        <select id="historialGeneralPeriodo" onchange="renderHistorialGeneral()" title="Filtrar historial por fecha">
+          <option value="HOY" selected>Hoy</option>
+          <option value="AYER">Ayer</option>
+          <option value="7_DIAS">Últimos 7 días</option>
+          <option value="30_DIAS">Últimos 30 días</option>
+          <option value="MES">Este mes</option>
+          <option value="MES_ANTERIOR">Mes anterior</option>
+          <option value="TODOS">Todo el historial</option>
+        </select>
       </div>
       <div class="historial-general-resumen" id="historialGeneralResumen">Cargando...</div>
       <div class="historial-general-list" id="historialGeneralBody">
@@ -3088,7 +3097,7 @@ function cerrarNotificacionesSiFondo(event){
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v70 · cuenta simple + historial general");
+console.log("CLIENTES HTML conectado v72 · historial general + etiquetas claras");
 
 let clientesDB = [];
 let pedidosDB = [];
@@ -5682,15 +5691,36 @@ function lineasCambiosAuditoria(cambios){
   }).filter(Boolean).join("");
 }
 
+function etiquetaCambioAuditoria(cambios, tipoEvento=""){
+  const obj = cambios && typeof cambios === "object" ? cambios : {};
+  const campos = Object.keys(obj);
+  const tiene = (...nombres) => nombres.some(n => campos.includes(n));
+
+  if(tiene("pago_simple_tipo","moneda_deuda","tipo_tasa_deuda")) return "Cambio de moneda";
+  if(tiene("pago_simple_total","precio_total","total_bs")) return "Cambio de monto";
+  if(tiene("estatus_pago","pago_simple_estado")) return "Cambio de estado";
+  if(tiene("pago_simple_pagado","monto_abonado","monto_abonado_bs")) return "Cambio de abono";
+  if(tiene("estatus_trabajo")) return "Cambio de trabajo";
+  if(tiene("cliente","cliente_id")) return "Cambio de cliente";
+  if(tiene("cantidad")) return "Cambio de cantidad";
+  if(tiene("tipo_entrega")) return "Cambio de entrega";
+  if(tiene("fecha_entrega")) return "Cambio de fecha";
+
+  const t = String(tipoEvento || "").toUpperCase();
+  if(t.includes("CREACION")) return "Pedido creado";
+  return "Cambio";
+}
+
 function cronologiaClienteHtml(auditoria, pagosGenerales){
   const eventos = [];
 
   (auditoria || []).forEach(a => {
+    const etiquetaMovimiento = etiquetaCambioAuditoria(a.cambios, a.tipo_evento);
     eventos.push({
       fecha:a.created_at,
-      tipo:"CAMBIO",
+      tipo:etiquetaMovimiento.toUpperCase(),
       clase:"cambio",
-      titulo:`Pedido #${a.pedido_id || "—"} · ${String(a.tipo_evento || "CAMBIO").replaceAll("_"," ")}`,
+      titulo:`Pedido #${a.pedido_id || "—"} · ${etiquetaMovimiento}`,
       cuerpo:(lineasCambiosAuditoria(a.cambios) || escapeHtml(a.detalle || "Cambio registrado")) +
         (a.operador ? `<span class="account-change-line">Operador: <strong>${escapeHtml(a.operador)}</strong></span>` : "")
     });
@@ -6093,6 +6123,7 @@ function construirEventosHistorialGeneral(pagos, auditoria, anteriores){
     eventos.push({
       categoria:"FINANCIERO",
       clase: anulado ? "anulado" : "financiero",
+      etiquetaMovimiento:"Pago recibido",
       fecha:pg.created_at || pg.fecha_pago,
       cliente,
       clienteId:Number(pg.cliente_id || 0),
@@ -6112,6 +6143,7 @@ function construirEventosHistorialGeneral(pagos, auditoria, anteriores){
       eventos.push({
         categoria:"FINANCIERO",
         clase:"anulado",
+        etiquetaMovimiento:"Pago anulado",
         fecha:pg.anulado_en,
         cliente,
         clienteId:Number(pg.cliente_id || 0),
@@ -6130,13 +6162,15 @@ function construirEventosHistorialGeneral(pagos, auditoria, anteriores){
   (auditoria || []).forEach(a => {
     const cliente = clienteNombreHistorialGeneral(a);
     const tipoEvento = String(a.tipo_evento || "CAMBIO").replaceAll("_"," ");
+    const etiquetaMovimiento = etiquetaCambioAuditoria(a.cambios, a.tipo_evento);
     eventos.push({
       categoria:"CAMBIO",
       clase:"cambio",
+      etiquetaMovimiento,
       fecha:a.created_at,
       cliente,
       clienteId:Number(a.cliente_id || 0),
-      titulo:`Pedido #${a.pedido_id || "—"} · ${tipoEvento}`,
+      titulo:`Pedido #${a.pedido_id || "—"} · ${etiquetaMovimiento}`,
       detalle:textoCambiosGeneral(a.cambios) +
         (a.operador ? `<span class="account-change-line">Operador: <strong>${escapeHtml(a.operador)}</strong></span>` : "") +
         (a.detalle ? `<span class="account-change-line">${escapeHtml(a.detalle)}</span>` : ""),
@@ -6154,6 +6188,7 @@ function construirEventosHistorialGeneral(pagos, auditoria, anteriores){
     eventos.push({
       categoria:"FINANCIERO",
       clase:"financiero",
+      etiquetaMovimiento:"Pago recibido",
       fecha:pg.created_at || pg.fecha_pago,
       cliente,
       clienteId:Number(pg.cliente_id || 0),
@@ -6209,6 +6244,62 @@ async function abrirHistorialGeneral(forzarRecarga=false){
   }
 }
 
+function fechaLocalHistorialGeneral(valor){
+  const d = new Date(valor || 0);
+  if(Number.isNaN(d.getTime())) return null;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function cumplePeriodoHistorialGeneral(fecha, periodo){
+  const p = String(periodo || "HOY").toUpperCase();
+  if(p === "TODOS") return true;
+
+  const f = fechaLocalHistorialGeneral(fecha);
+  if(!f) return false;
+
+  const ahora = new Date();
+  const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+
+  if(p === "HOY") return f.getTime() === hoy.getTime();
+
+  if(p === "AYER"){
+    const ayer = new Date(hoy);
+    ayer.setDate(ayer.getDate() - 1);
+    return f.getTime() === ayer.getTime();
+  }
+
+  if(p === "7_DIAS" || p === "30_DIAS"){
+    const dias = p === "7_DIAS" ? 7 : 30;
+    const inicio = new Date(hoy);
+    inicio.setDate(inicio.getDate() - (dias - 1));
+    return f >= inicio && f <= hoy;
+  }
+
+  if(p === "MES"){
+    return f.getFullYear() === hoy.getFullYear() && f.getMonth() === hoy.getMonth();
+  }
+
+  if(p === "MES_ANTERIOR"){
+    const anterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+    return f.getFullYear() === anterior.getFullYear() && f.getMonth() === anterior.getMonth();
+  }
+
+  return true;
+}
+
+function etiquetaPeriodoHistorialGeneral(periodo){
+  const etiquetas = {
+    HOY:"Hoy",
+    AYER:"Ayer",
+    "7_DIAS":"Últimos 7 días",
+    "30_DIAS":"Últimos 30 días",
+    MES:"Este mes",
+    MES_ANTERIOR:"Mes anterior",
+    TODOS:"Todo el historial"
+  };
+  return etiquetas[String(periodo || "HOY").toUpperCase()] || "Hoy";
+}
+
 function renderHistorialGeneral(){
   const body = document.getElementById("historialGeneralBody");
   const resumen = document.getElementById("historialGeneralResumen");
@@ -6216,16 +6307,18 @@ function renderHistorialGeneral(){
 
   const texto = normalizar(document.getElementById("historialGeneralBuscar")?.value || "");
   const tipo = String(document.getElementById("historialGeneralTipo")?.value || "TODOS").toUpperCase();
+  const periodo = String(document.getElementById("historialGeneralPeriodo")?.value || "HOY").toUpperCase();
 
   const filtrados = historialGeneralEventosDB.filter(e => {
     if(tipo !== "TODOS" && e.categoria !== tipo) return false;
+    if(!cumplePeriodoHistorialGeneral(e.fecha, periodo)) return false;
     if(texto && !normalizar(e.buscar || e.cliente || "").includes(texto)) return false;
     return true;
   });
 
   const financieros = filtrados.filter(e => e.categoria === "FINANCIERO").length;
   const cambios = filtrados.filter(e => e.categoria === "CAMBIO").length;
-  if(resumen) resumen.textContent = `${filtrados.length} movimientos · ${financieros} financieros · ${cambios} cambios`;
+  if(resumen) resumen.textContent = `${etiquetaPeriodoHistorialGeneral(periodo)} · ${filtrados.length} movimientos · ${financieros} financieros · ${cambios} cambios`;
 
   if(!filtrados.length){
     body.innerHTML = `<div class="empty">No hay movimientos para este filtro.</div>`;
@@ -6237,7 +6330,7 @@ function renderHistorialGeneral(){
     return `
       <div class="historial-general-row">
         <div class="historial-general-time">${escapeHtml(fechaHoraCortaCliente(e.fecha))}</div>
-        <div class="historial-general-badge ${escapeHtml(e.clase)}">${escapeHtml(e.clase === "anulado" ? "Anulado" : (e.categoria === "CAMBIO" ? "Cambio" : "Financiero"))}</div>
+        <div class="historial-general-badge ${escapeHtml(e.clase)}">${escapeHtml(e.etiquetaMovimiento || (e.clase === "anulado" ? "Pago anulado" : (e.categoria === "CAMBIO" ? "Cambio" : "Pago recibido")))}</div>
         <div class="historial-general-cliente" title="${escapeHtml(e.cliente)}">${escapeHtml(e.cliente)}</div>
         <div class="historial-general-detalle"><strong>${escapeHtml(e.titulo)}</strong>${e.detalle ? `<br>${e.detalle}` : ""}${puedeAnular ? `<div class="historial-general-action"><button class="anular-entry-btn" type="button" onclick="anularEntradaDesdeHistorialGeneral(${Number(e.pagoId)},${Number(e.clienteId || 0)})">Anular entrada</button></div>` : ""}</div>
         <div class="historial-general-money ${e.anulado ? "anulado" : "positivo"}">${e.monto===null ? "" : `${e.anulado ? "" : "+"}$${money(e.monto)}${e.tipo ? ` ${escapeHtml(e.tipo)}` : ""}`}</div>
