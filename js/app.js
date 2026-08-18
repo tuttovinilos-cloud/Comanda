@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v83 tipo de abono visible");
+console.log("APP JS conectado correctamente v84 auditoría financiera segura");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -105,6 +105,93 @@ function mostrarToast(mensaje) {
   setTimeout(() => {
     toast.style.display = "none";
   }, 2200);
+}
+
+
+// ===========================
+// AUDITORÍA DE CAMBIOS
+// ===========================
+const AUDITORIA_LABELS = {
+  cliente:"Cliente",
+  cantidad:"Cantidad",
+  tipo_entrega:"Forma de entrega",
+  estatus_trabajo:"Estado de trabajo",
+  estatus_pago:"Estado de pago",
+  pago_simple_total:"Monto de deuda",
+  pago_simple_tipo:"Tipo de cuenta",
+  pago_simple_pagado:"Pagado / abonado",
+  pago_simple_estado:"Estado financiero",
+  fecha_entrega:"Fecha de entrega"
+};
+
+function valorAuditoriaComparable(v){
+  if(v === null || v === undefined) return "";
+  if(typeof v === "number") return Math.round(v * 10000) / 10000;
+  return String(v);
+}
+
+function construirCambiosAuditoria(antes, despues, campos){
+  const out = {};
+  (campos || []).forEach(campo => {
+    const a = valorAuditoriaComparable(antes ? antes[campo] : null);
+    const d = valorAuditoriaComparable(despues ? despues[campo] : null);
+    if(String(a) === String(d)) return;
+    out[campo] = {
+      etiqueta:AUDITORIA_LABELS[campo] || campo,
+      antes:a === "" ? null : a,
+      despues:d === "" ? null : d
+    };
+  });
+  return out;
+}
+
+async function registrarAuditoriaPedido(id, tipoEvento, cambios, detalle = "", contexto = {}){
+  if(!db() || !id || !cambios || !Object.keys(cambios).length) return;
+  const pedido = contexto.pedido || getPedidoPorId(id) || {};
+  try{
+    const { error } = await db().from("pedidos_auditoria").insert([{
+      pedido_id:Number(id),
+      cliente_id:contexto.cliente_id || pedido.cliente_id || null,
+      cliente_nombre:contexto.cliente_nombre || pedido.cliente || null,
+      tipo_evento:String(tipoEvento || "CAMBIO").toUpperCase(),
+      origen:"INDEX",
+      operador:operadorActualNombre() || null,
+      cambios,
+      detalle:detalle || null
+    }]);
+    if(error) console.warn("No se pudo guardar auditoría del pedido:", error);
+  }catch(error){
+    console.warn("Error guardando auditoría del pedido:", error);
+  }
+}
+
+function cambiosCreacionPedido(payload){
+  return {
+    pago_simple_total:{etiqueta:"Monto de deuda",antes:null,despues:numeroSeguro(payload?.pago_simple_total || 0)},
+    pago_simple_tipo:{etiqueta:"Tipo de cuenta",antes:null,despues:String(payload?.pago_simple_tipo || "DIVISA")},
+    estatus_pago:{etiqueta:"Estado de pago",antes:null,despues:String(payload?.estatus_pago || "Pendiente")}
+  };
+}
+
+
+async function aplicarSaldoFavorDisponible(clienteId, tipoPago, pedidoId = null){
+  if(!db() || !clienteId) return {ok:true,monto_aplicado:0,pedidos_afectados:0};
+  try{
+    const { data, error } = await db().rpc("aplicar_saldo_favor_cliente_v1", {
+      p_cliente_id:Number(clienteId),
+      p_tipo_pago:String(tipoPago || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA",
+      p_pedido_id:pedidoId ? Number(pedidoId) : null,
+      p_operador:operadorActualNombre() || null
+    });
+    if(error){
+      console.warn("No se pudo aplicar saldo a favor automáticamente:", error);
+      return {ok:false,error};
+    }
+    return data || {ok:true,monto_aplicado:0,pedidos_afectados:0};
+  }catch(error){
+    console.warn("Error aplicando saldo a favor:", error);
+    return {ok:false,error};
+  }
 }
 
 // ===========================
@@ -1466,17 +1553,13 @@ async function saveQuickOrder() {
   const material = document.getElementById("q_material")?.value || "";
   const tipo_impresion = document.getElementById("q_impresion")?.value || "";
   const tipo_entrega = document.getElementById("q_tipo_entrega")?.value || "";
-  const monto_abonado = numeroSeguro(document.getElementById("q_monto_abonado")?.value || 0);
   const estatus_trabajo = document.getElementById("q_estatus_trabajo")?.value || "Solicitud";
-  let estatus_pago = document.getElementById("q_estatus_pago")?.value || "Pendiente";
   const fecha_entrega = document.getElementById("q_entrega")?.value || null;
   const deudaPayload = payloadDeudaDesdeFormulario("q");
 
   const opSesion = getOperadorSesionLocal();
-
   if (!puedeModificarOperadorLocal() && opSesion && opSesion.nombre) operador = opSesion.nombre;
   if (!fecha) fecha = new Date().toISOString().split("T")[0];
-  if (monto_abonado > 0 && estatus_pago === "Pendiente") estatus_pago = "Abonado";
 
   if (!cliente && !descripcion) {
     alert("Coloca al menos cliente o descripción.");
@@ -1484,40 +1567,59 @@ async function saveQuickOrder() {
   }
 
   const archivoData = await subirArchivoPedido();
-
   const decisionCliente = await resolverNombreClienteIdAntesDeGuardar(cliente);
   if (!decisionCliente.ok) return;
 
   cliente = decisionCliente.nombreFinal || cliente;
   const cliente_id = decisionCliente.id || null;
+  const tipoCuenta = deudaPayload.moneda_deuda === "BS" ? "BCV" : "DIVISA";
+  const pagoPayload = payloadPedidoSimple({
+    monto:numeroSeguro(deudaPayload.precio_total || 0),
+    tipo:tipoCuenta,
+    tasa:tipoCuenta === "BCV" ? numeroSeguro(deudaPayload.tasa_deuda || 0) : 0,
+    pagado:0,
+    fecha,
+    estado:numeroSeguro(deudaPayload.precio_total || 0) > 0 ? "PENDIENTE" : "SIN_MONTO"
+  });
 
-  const { error } = await db()
+  const payload = {
+    fecha,
+    operador,
+    cliente_id,
+    cliente,
+    descripcion,
+    cantidad,
+    material,
+    tipo_impresion,
+    tipo_entrega,
+    estatus_trabajo,
+    fecha_entrega,
+    ...pagoPayload,
+    archivo_url: archivoData.archivo_url,
+    archivo_nombre: archivoData.archivo_nombre
+  };
+
+  const { data:nuevoPedido, error } = await db()
     .from("pedidos")
-    .insert([{
-      fecha,
-      operador,
-      cliente_id,
-      cliente,
-      descripcion,
-      cantidad,
-      material,
-      tipo_impresion,
-      tipo_entrega,
-      estatus_trabajo,
-      estatus_pago,
-      monto_abonado,
-      fecha_entrega,
-      ...deudaPayload,
-      monto_abonado_bs: deudaPayload.moneda_deuda === "BS" ? (monto_abonado * deudaPayload.tasa_deuda) : 0,
-      ...payloadPagoSimpleInicial(deudaPayload, monto_abonado, fecha),
-      archivo_url: archivoData.archivo_url,
-      archivo_nombre: archivoData.archivo_nombre
-    }]);
+    .insert([payload])
+    .select("id")
+    .single();
 
   if (error) {
     console.error("Error guardando pedido rápido:", error);
     alert("Error guardando pedido: " + error.message);
     return;
+  }
+
+  if(nuevoPedido?.id){
+    await registrarAuditoriaPedido(
+      nuevoPedido.id,
+      "DEUDA_CREADA",
+      cambiosCreacionPedido(payload),
+      "Pedido creado desde fila rápida",
+      {cliente_id, cliente_nombre:cliente}
+    );
+    await aplicarSaldoFavorDisponible(cliente_id, tipoCuenta, nuevoPedido.id);
   }
 
   archivoSeleccionado = null;
@@ -1545,12 +1647,11 @@ async function saveOrder() {
   const material = document.getElementById("f_material")?.value || "";
   const tipo_impresion = document.getElementById("f_impresion")?.value || "";
   const tipo_entrega = document.getElementById("f_tipo_entrega")?.value || "";
-  const monto_abonado = numeroSeguro(document.getElementById("f_monto_abonado")?.value || 0);
   const fecha_entrega = document.getElementById("f_entrega")?.value || null;
   const deudaPayload = payloadDeudaDesdeFormulario("f");
+  const pedidoAnterior = pedidoEditandoId ? {...(getPedidoPorId(pedidoEditandoId) || {})} : null;
 
   const opSesion = getOperadorSesionLocal();
-
   if (!puedeModificarOperadorLocal() && opSesion && opSesion.nombre) operador = opSesion.nombre;
   if (!fecha) fecha = new Date().toISOString().split("T")[0];
 
@@ -1559,6 +1660,35 @@ async function saveOrder() {
 
   cliente = decisionCliente.nombreFinal || cliente;
   const cliente_id = decisionCliente.id || null;
+
+  const tipoCuentaNuevo = deudaPayload.moneda_deuda === "BS" ? "BCV" : "DIVISA";
+  const pagadoActual = pedidoAnterior ? numeroSeguro(pedidoAnterior.pago_simple_pagado || 0) : 0;
+  const tipoCuentaAnterior = pedidoAnterior ? tipoPagoSimpleDesdePedido(pedidoAnterior) : tipoCuentaNuevo;
+  const totalNuevo = numeroSeguro(deudaPayload.precio_total || 0);
+
+  if(pedidoAnterior && tipoCuentaNuevo !== tipoCuentaAnterior && pagadoActual > 0.009){
+    alert(
+      `No puedes cambiar este pedido de ${tipoCuentaAnterior} a ${tipoCuentaNuevo} porque ya tiene $${money(pagadoActual)} aplicado.
+
+` +
+      `Primero anula/reconcilia el pago desde Clientes.`
+    );
+    return;
+  }
+
+  if(pedidoAnterior && totalNuevo + 0.009 < pagadoActual){
+    alert(`El monto de la deuda no puede quedar por debajo de lo ya pagado ($${money(pagadoActual)}).`);
+    return;
+  }
+
+  const pagoPayload = payloadPedidoSimple({
+    monto:totalNuevo,
+    tipo:tipoCuentaNuevo,
+    tasa:tipoCuentaNuevo === "BCV" ? numeroSeguro(deudaPayload.tasa_deuda || 0) : 0,
+    pagado:pagadoActual,
+    fecha:pedidoAnterior?.pago_simple_fecha || fecha,
+    estado:estadoPagoSimpleDesdeMontos(totalNuevo, pagadoActual)
+  });
 
   const archivoData = await subirArchivoPedido();
 
@@ -1571,47 +1701,54 @@ async function saveOrder() {
     material,
     tipo_impresion,
     tipo_entrega,
-    monto_abonado,
     fecha_entrega,
-    ...deudaPayload,
-    monto_abonado_bs: deudaPayload.moneda_deuda === "BS" ? (monto_abonado * deudaPayload.tasa_deuda) : 0,
-    ...payloadPagoSimpleInicial(deudaPayload, monto_abonado, fecha)
+    ...pagoPayload
   };
 
-  if (monto_abonado > 0) {
-    datosPedido.estatus_pago = estadoSupabaseDesdePagoSimple(estadoPagoSimpleDesdeMontos(deudaPayload.precio_total, monto_abonado));
-  }
   if (puedeModificarCantidadLocal() || !pedidoEditandoId) datosPedido.cantidad = cantidad;
-
   if (archivoData.archivo_url) {
     datosPedido.archivo_url = archivoData.archivo_url;
     datosPedido.archivo_nombre = archivoData.archivo_nombre;
   }
 
-  let error;
+  let error = null;
+  let pedidoGuardadoId = pedidoEditandoId;
 
   if (pedidoEditandoId) {
-    const respuesta = await db()
-      .from("pedidos")
-      .update(datosPedido)
-      .eq("id", pedidoEditandoId);
-
+    const respuesta = await db().from("pedidos").update(datosPedido).eq("id", pedidoEditandoId);
     error = respuesta.error;
   } else {
     datosPedido.estatus_trabajo = "Solicitud";
-    datosPedido.estatus_pago = monto_abonado > 0 ? "Abonado" : "Pendiente";
-
-    const respuesta = await db()
-      .from("pedidos")
-      .insert([datosPedido]);
-
+    const respuesta = await db().from("pedidos").insert([datosPedido]).select("id").single();
     error = respuesta.error;
+    pedidoGuardadoId = respuesta.data?.id || null;
   }
 
   if (error) {
     console.error("Error guardando pedido:", error);
     alert("Error guardando pedido: " + error.message);
     return;
+  }
+
+  if(pedidoGuardadoId){
+    if(pedidoAnterior){
+      const despues = {...pedidoAnterior, ...datosPedido};
+      const cambios = construirCambiosAuditoria(
+        pedidoAnterior,
+        despues,
+        ["cliente","cantidad","tipo_entrega","estatus_pago","pago_simple_total","pago_simple_tipo","pago_simple_pagado","pago_simple_estado","fecha_entrega"]
+      );
+      await registrarAuditoriaPedido(pedidoGuardadoId, "PEDIDO_EDITADO", cambios, "Pedido editado desde modal", {cliente_id,cliente_nombre:cliente});
+    }else{
+      await registrarAuditoriaPedido(
+        pedidoGuardadoId,
+        "DEUDA_CREADA",
+        cambiosCreacionPedido(datosPedido),
+        "Pedido creado desde modal",
+        {cliente_id,cliente_nombre:cliente}
+      );
+    }
+    await aplicarSaldoFavorDisponible(cliente_id, tipoCuentaNuevo, pedidoGuardadoId);
   }
 
   pedidoEditandoId = null;
@@ -1664,6 +1801,21 @@ async function actualizarCampoPedido(id, campo, valor) {
     return;
   }
 
+  if(String(valorAnteriorPedidoOriginal ?? "") !== String(valor ?? "")) {
+    await registrarAuditoriaPedido(
+      id,
+      "CAMBIO_RAPIDO",
+      {
+        [campo]:{
+          etiqueta:AUDITORIA_LABELS[campo] || campo,
+          antes:valorAnteriorPedidoOriginal ?? null,
+          despues:valor ?? null
+        }
+      },
+      "Cambio realizado desde la tabla"
+    );
+  }
+
   if (campo === "estatus_trabajo") {
     await crearNotificacionPedidoListoFallback(id, pedidoOriginal, valorAnteriorPedidoOriginal, valor);
     await enviarWhatsAppCuandoPedidoListo(id, pedidoOriginal, valorAnteriorPedidoOriginal, valor);
@@ -1671,39 +1823,16 @@ async function actualizarCampoPedido(id, campo, valor) {
 }
 
 async function actualizarAbonoPedido(id, monto) {
-  if (!validarSupabase()) return;
-
-  const valor = numeroSeguro(monto);
-  const payload = { monto_abonado: valor };
-  if (valor > 0) payload.estatus_pago = "Abonado";
-
-  const pedidoLocal = pedidosDB.find(p => Number(p.id) === Number(id));
-  if (pedidoLocal) {
-    pedidoLocal.monto_abonado = valor;
-    if (valor > 0) pedidoLocal.estatus_pago = "Abonado";
-  }
-
-  const { error } = await db()
-    .from("pedidos")
-    .update(payload)
-    .eq("id", id);
-
-  if (error) {
-    console.error("No se pudo actualizar abono:", error);
-    alert("No se pudo actualizar abono. Revisa Supabase.");
-    await cargarPedidos(false);
-    return;
-  }
-
-  mostrarToast("Abono actualizado");
-  renderPedidosPaginados(false);
+  alert("Los abonos se registran desde el botón Pago para conservar el historial y la conciliación.");
+  await cargarPedidos(false);
+  return false;
 }
 
 
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v83_tipo_abono_visible";
+const PAGO_SIMPLE_VERSION = "v84_auditoria_financiera_segura";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 const PAGO_UNIFICADO_NOTA = "PAGO_UNIFICADO_V1";
 let pagoSimpleGuardando = false;
@@ -2159,10 +2288,20 @@ function itemModalPagoSimple() {
 }
 
 async function abrirModalPagoSimple(id) {
-  const pedido = getPedidoPorId(id);
+  let pedido = getPedidoPorId(id);
   if (!pedido) {
     alert("No se encontró el pedido. Recarga la página y prueba de nuevo.");
     return false;
+  }
+
+  const clienteId = clienteIdPorPedido(pedido);
+  if(clienteId){
+    const credito = await aplicarSaldoFavorDisponible(clienteId, tipoPagoSimpleDesdePedido(pedido), id);
+    if(numeroSeguro(credito?.monto_aplicado || 0) > 0.009){
+      await cargarPedidos(false);
+      pedido = getPedidoPorId(id) || pedido;
+      mostrarToast("Saldo a favor aplicado automáticamente ✅");
+    }
   }
 
   crearModalPagoSimple();
@@ -2274,7 +2413,28 @@ function pintarModalPagoSimple() {
 async function actualizarPedidoSimpleSupabase(id, itemFinal) {
   if (!validarSupabase()) return false;
 
+  const pedidoAnterior = {...(getPedidoPorId(id) || {})};
+  const tipoAnterior = tipoPagoSimpleDesdePedido(pedidoAnterior);
+  const pagadoAnterior = numeroSeguro(pedidoAnterior.pago_simple_pagado || 0);
   const payload = payloadPedidoSimple(itemFinal);
+  const tipoNuevo = String(payload.pago_simple_tipo || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA";
+  const totalNuevo = numeroSeguro(payload.pago_simple_total || 0);
+
+  if(tipoNuevo !== tipoAnterior && pagadoAnterior > 0.009){
+    alert(
+      `No puedes cambiar este pedido de ${tipoAnterior} a ${tipoNuevo} porque ya tiene $${money(pagadoAnterior)} aplicado.
+
+` +
+      `Primero anula/reconcilia el pago desde Clientes.`
+    );
+    return false;
+  }
+
+  if(totalNuevo + 0.009 < pagadoAnterior){
+    alert(`El monto no puede quedar por debajo de lo ya pagado ($${money(pagadoAnterior)}).`);
+    return false;
+  }
+
   const { error } = await db()
     .from("pedidos")
     .update(payload)
@@ -2285,6 +2445,14 @@ async function actualizarPedidoSimpleSupabase(id, itemFinal) {
     alert("No se pudo actualizar el saldo del pedido.\n\n" + error.message);
     return false;
   }
+
+  const despues = {...pedidoAnterior, ...payload};
+  const cambios = construirCambiosAuditoria(
+    pedidoAnterior,
+    despues,
+    ["pago_simple_total","pago_simple_tipo","pago_simple_pagado","pago_simple_estado","estatus_pago"]
+  );
+  await registrarAuditoriaPedido(id, "CAMBIO_FINANCIERO", cambios, "Cambio desde modal de Pago");
 
   const local = getPedidoPorId(id);
   if (local) Object.assign(local, payload);
@@ -2502,6 +2670,21 @@ async function guardarPagoSimple() {
 
     const okDefinicion = await actualizarPedidoSimpleSupabase(id, itemBase);
     if (!okDefinicion) return;
+
+    const pedidoDespuesDefinir = getPedidoPorId(id) || {};
+    const clienteIdCredito = clienteIdPorPedido(pedidoDespuesDefinir);
+    if(clienteIdCredito){
+      const credito = await aplicarSaldoFavorDisponible(clienteIdCredito, item.tipo, id);
+      if(numeroSeguro(credito?.monto_aplicado || 0) > 0.009){
+        await cargarPedidos(false);
+        if(accion === "LISTO"){
+          const fresco = resumenPagoSimplePedido(getPedidoPorId(id) || {});
+          delta = Math.max(fresco.total - fresco.pagado, 0);
+          itemBase.pagado = fresco.pagado;
+          itemBase.estado = fresco.estado;
+        }
+      }
+    }
 
     if (delta <= 0.009) {
       pagoSimpleOperacionUUIDPendiente = null;
