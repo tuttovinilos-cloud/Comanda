@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v76 WhatsApp plantilla confirmada");
+console.log("APP JS conectado correctamente v85 auditoría con operador real");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -105,6 +105,110 @@ function mostrarToast(mensaje) {
   setTimeout(() => {
     toast.style.display = "none";
   }, 2200);
+}
+
+
+// ===========================
+// AUDITORÍA DE CAMBIOS
+// ===========================
+const AUDITORIA_LABELS = {
+  cliente:"Cliente",
+  cantidad:"Cantidad",
+  tipo_entrega:"Forma de entrega",
+  estatus_trabajo:"Estado de trabajo",
+  estatus_pago:"Estado de pago",
+  pago_simple_total:"Monto de deuda",
+  pago_simple_tipo:"Tipo de cuenta",
+  pago_simple_pagado:"Pagado / abonado",
+  pago_simple_estado:"Estado financiero",
+  fecha_entrega:"Fecha de entrega"
+};
+
+function valorAuditoriaComparable(v){
+  if(v === null || v === undefined) return "";
+  if(typeof v === "number") return Math.round(v * 10000) / 10000;
+  return String(v);
+}
+
+function construirCambiosAuditoria(antes, despues, campos){
+  const out = {};
+  (campos || []).forEach(campo => {
+    const a = valorAuditoriaComparable(antes ? antes[campo] : null);
+    const d = valorAuditoriaComparable(despues ? despues[campo] : null);
+    if(String(a) === String(d)) return;
+    out[campo] = {
+      etiqueta:AUDITORIA_LABELS[campo] || campo,
+      antes:a === "" ? null : a,
+      despues:d === "" ? null : d
+    };
+  });
+  return out;
+}
+
+function operadorAuditoriaActual(contexto = {}){
+  const desdeContexto = String(contexto?.operador || "").trim();
+  if(desdeContexto) return desdeContexto;
+
+  const desdeSesion = String(operadorActualNombre() || "").trim();
+  if(desdeSesion) return desdeSesion;
+
+  // Solo como respaldo. En uso normal siempre debe existir un operador logueado.
+  return "Sistema";
+}
+
+async function registrarAuditoriaPedido(id, tipoEvento, cambios, detalle = "", contexto = {}){
+  if(!db() || !id || !cambios || !Object.keys(cambios).length) return;
+  const pedido = contexto.pedido || getPedidoPorId(id) || {};
+  const operadorCambio = operadorAuditoriaActual(contexto);
+
+  try{
+    const { error } = await db().from("pedidos_auditoria").insert([{
+      pedido_id:Number(id),
+      cliente_id:contexto.cliente_id || pedido.cliente_id || null,
+      cliente_nombre:contexto.cliente_nombre || pedido.cliente || null,
+      tipo_evento:String(tipoEvento || "CAMBIO").toUpperCase(),
+      origen:"INDEX",
+      operador:operadorCambio,
+      cambios,
+      detalle:detalle || null
+    }]);
+
+    if(error){
+      console.warn("No se pudo guardar auditoría del pedido:", error);
+      mostrarToast("Pedido guardado · auditoría pendiente");
+    }
+  }catch(error){
+    console.warn("Error guardando auditoría del pedido:", error);
+  }
+}
+
+function cambiosCreacionPedido(payload){
+  return {
+    pago_simple_total:{etiqueta:"Monto de deuda",antes:null,despues:numeroSeguro(payload?.pago_simple_total || 0)},
+    pago_simple_tipo:{etiqueta:"Tipo de cuenta",antes:null,despues:String(payload?.pago_simple_tipo || "DIVISA")},
+    estatus_pago:{etiqueta:"Estado de pago",antes:null,despues:String(payload?.estatus_pago || "Pendiente")}
+  };
+}
+
+
+async function aplicarSaldoFavorDisponible(clienteId, tipoPago, pedidoId = null){
+  if(!db() || !clienteId) return {ok:true,monto_aplicado:0,pedidos_afectados:0};
+  try{
+    const { data, error } = await db().rpc("aplicar_saldo_favor_cliente_v1", {
+      p_cliente_id:Number(clienteId),
+      p_tipo_pago:String(tipoPago || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA",
+      p_pedido_id:pedidoId ? Number(pedidoId) : null,
+      p_operador:operadorActualNombre() || null
+    });
+    if(error){
+      console.warn("No se pudo aplicar saldo a favor automáticamente:", error);
+      return {ok:false,error};
+    }
+    return data || {ok:true,monto_aplicado:0,pedidos_afectados:0};
+  }catch(error){
+    console.warn("Error aplicando saldo a favor:", error);
+    return {ok:false,error};
+  }
 }
 
 // ===========================
@@ -755,6 +859,51 @@ async function obtenerClienteWhatsApp(pedido) {
   return data || null;
 }
 
+async function verificarEntregaWhatsApp(wamid) {
+  const idMensaje = String(wamid || "").trim();
+  if (!idMensaje || !db()) return;
+
+  for (let intento = 0; intento < 12; intento++) {
+    await new Promise(resolve => setTimeout(resolve, 2500));
+
+    try {
+      const { data, error } = await db()
+        .from("whatsapp_mensajes")
+        .select("estado,error_code,error_title,error_message")
+        .eq("wamid", idMensaje)
+        .maybeSingle();
+
+      if (error || !data) continue;
+
+      const estado = String(data.estado || "").toLowerCase();
+
+      if (estado === "delivered" || estado === "read") {
+        mostrarToast(
+          estado === "read"
+            ? "WhatsApp entregado y leído ✅"
+            : "WhatsApp entregado ✅"
+        );
+        return;
+      }
+
+      if (estado === "failed") {
+        const detalle =
+          data.error_message ||
+          data.error_title ||
+          (data.error_code ? "Código " + data.error_code : "Meta no pudo entregar el mensaje");
+
+        mostrarToast("WhatsApp no entregado: " + String(detalle).slice(0, 120));
+        console.error("Fallo de entrega WhatsApp:", data);
+        return;
+      }
+    } catch (e) {
+      console.warn("No se pudo consultar el estado de entrega:", e);
+    }
+  }
+
+  mostrarToast("WhatsApp aceptado · entrega aún pendiente");
+}
+
 async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, estadoNuevo) {
   const anterior = normalizarEstadoNotificacion(estadoAnterior);
   const nuevo = normalizarEstadoNotificacion(estadoNuevo);
@@ -773,15 +922,26 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
     // Número fijo de prueba. Todos los avisos llegan aquí.
     const telefono = "584144143004";
 
-    // Plantilla oficial de prueba confirmada manualmente en Meta.
-    // Se usa sin parámetros para asegurar la entrega mientras se corrige
-    // la plantilla personalizada pedido_listo_detalle.
+    // Plantilla de utilidad para avisar cuando el pedido está listo.
+    // Variables:
+    // 1) Cliente
+    // 2) Entrega
+    // 3) Estado del pago
+    // 4) Saldo pendiente
+    const pagoWhatsApp = datosPagoWhatsApp(pedidoActual);
+
     const { data, error } = await db().functions.invoke("enviar-whatsapp", {
       body: {
+        pedido_id: Number(id),
         to: telefono,
-        template: "hello_world",
-        language: "en_US",
-        parameters: []
+        template: "pedido_listo_utilidad",
+        language: "es_ES",
+        parameters: [
+          pedidoActual.cliente || "Cliente",
+          textoEntregaWhatsApp(pedidoActual.tipo_entrega),
+          pagoWhatsApp.estado,
+          pagoWhatsApp.saldo
+        ]
       }
     });
 
@@ -809,17 +969,35 @@ async function enviarWhatsAppCuandoPedidoListo(id, pedidoBase, estadoAnterior, e
       pedidoId: id,
       cliente: pedidoActual.cliente || "",
       telefono,
-      template: "hello_world",
-      language: "en_US",
+      template: "pedido_listo_utilidad",
+      language: "es_ES",
       mensajeId,
       estadoMeta,
       respuestaCompleta: data
     });
 
-    mostrarToast("Pedido listo · WhatsApp de prueba enviado ✅");
+    mostrarToast("WhatsApp aceptado por Meta · verificando entrega…");
+    if (mensajeId) verificarEntregaWhatsApp(mensajeId);
   } catch (error) {
     console.error("No se pudo enviar WhatsApp para el pedido " + id + ":", error);
-    mostrarToast("Pedido listo, pero falló WhatsApp ⚠️");
+
+    let detalle = "Error desconocido";
+
+    try {
+      detalle =
+        error?.context?.data?.data?.error?.message ||
+        error?.context?.data?.error?.message ||
+        error?.context?.data?.error ||
+        error?.message ||
+        String(error);
+    } catch (e) {
+      detalle = error?.message || String(error);
+    }
+
+    console.error("Detalle exacto de Meta:", detalle);
+
+    const mensajeCorto = String(detalle || "Error desconocido").slice(0, 140);
+    mostrarToast("WhatsApp falló: " + mensajeCorto);
   }
 }
 
@@ -1392,17 +1570,13 @@ async function saveQuickOrder() {
   const material = document.getElementById("q_material")?.value || "";
   const tipo_impresion = document.getElementById("q_impresion")?.value || "";
   const tipo_entrega = document.getElementById("q_tipo_entrega")?.value || "";
-  const monto_abonado = numeroSeguro(document.getElementById("q_monto_abonado")?.value || 0);
   const estatus_trabajo = document.getElementById("q_estatus_trabajo")?.value || "Solicitud";
-  let estatus_pago = document.getElementById("q_estatus_pago")?.value || "Pendiente";
   const fecha_entrega = document.getElementById("q_entrega")?.value || null;
   const deudaPayload = payloadDeudaDesdeFormulario("q");
 
   const opSesion = getOperadorSesionLocal();
-
   if (!puedeModificarOperadorLocal() && opSesion && opSesion.nombre) operador = opSesion.nombre;
   if (!fecha) fecha = new Date().toISOString().split("T")[0];
-  if (monto_abonado > 0 && estatus_pago === "Pendiente") estatus_pago = "Abonado";
 
   if (!cliente && !descripcion) {
     alert("Coloca al menos cliente o descripción.");
@@ -1410,40 +1584,59 @@ async function saveQuickOrder() {
   }
 
   const archivoData = await subirArchivoPedido();
-
   const decisionCliente = await resolverNombreClienteIdAntesDeGuardar(cliente);
   if (!decisionCliente.ok) return;
 
   cliente = decisionCliente.nombreFinal || cliente;
   const cliente_id = decisionCliente.id || null;
+  const tipoCuenta = deudaPayload.moneda_deuda === "BS" ? "BCV" : "DIVISA";
+  const pagoPayload = payloadPedidoSimple({
+    monto:numeroSeguro(deudaPayload.precio_total || 0),
+    tipo:tipoCuenta,
+    tasa:tipoCuenta === "BCV" ? numeroSeguro(deudaPayload.tasa_deuda || 0) : 0,
+    pagado:0,
+    fecha,
+    estado:numeroSeguro(deudaPayload.precio_total || 0) > 0 ? "PENDIENTE" : "SIN_MONTO"
+  });
 
-  const { error } = await db()
+  const payload = {
+    fecha,
+    operador,
+    cliente_id,
+    cliente,
+    descripcion,
+    cantidad,
+    material,
+    tipo_impresion,
+    tipo_entrega,
+    estatus_trabajo,
+    fecha_entrega,
+    ...pagoPayload,
+    archivo_url: archivoData.archivo_url,
+    archivo_nombre: archivoData.archivo_nombre
+  };
+
+  const { data:nuevoPedido, error } = await db()
     .from("pedidos")
-    .insert([{
-      fecha,
-      operador,
-      cliente_id,
-      cliente,
-      descripcion,
-      cantidad,
-      material,
-      tipo_impresion,
-      tipo_entrega,
-      estatus_trabajo,
-      estatus_pago,
-      monto_abonado,
-      fecha_entrega,
-      ...deudaPayload,
-      monto_abonado_bs: deudaPayload.moneda_deuda === "BS" ? (monto_abonado * deudaPayload.tasa_deuda) : 0,
-      ...payloadPagoSimpleInicial(deudaPayload, monto_abonado, fecha),
-      archivo_url: archivoData.archivo_url,
-      archivo_nombre: archivoData.archivo_nombre
-    }]);
+    .insert([payload])
+    .select("id")
+    .single();
 
   if (error) {
     console.error("Error guardando pedido rápido:", error);
     alert("Error guardando pedido: " + error.message);
     return;
+  }
+
+  if(nuevoPedido?.id){
+    await registrarAuditoriaPedido(
+      nuevoPedido.id,
+      "DEUDA_CREADA",
+      cambiosCreacionPedido(payload),
+      "Pedido creado desde fila rápida",
+      {cliente_id, cliente_nombre:cliente, operador:operadorActualNombre()}
+    );
+    await aplicarSaldoFavorDisponible(cliente_id, tipoCuenta, nuevoPedido.id);
   }
 
   archivoSeleccionado = null;
@@ -1471,12 +1664,11 @@ async function saveOrder() {
   const material = document.getElementById("f_material")?.value || "";
   const tipo_impresion = document.getElementById("f_impresion")?.value || "";
   const tipo_entrega = document.getElementById("f_tipo_entrega")?.value || "";
-  const monto_abonado = numeroSeguro(document.getElementById("f_monto_abonado")?.value || 0);
   const fecha_entrega = document.getElementById("f_entrega")?.value || null;
   const deudaPayload = payloadDeudaDesdeFormulario("f");
+  const pedidoAnterior = pedidoEditandoId ? {...(getPedidoPorId(pedidoEditandoId) || {})} : null;
 
   const opSesion = getOperadorSesionLocal();
-
   if (!puedeModificarOperadorLocal() && opSesion && opSesion.nombre) operador = opSesion.nombre;
   if (!fecha) fecha = new Date().toISOString().split("T")[0];
 
@@ -1485,6 +1677,35 @@ async function saveOrder() {
 
   cliente = decisionCliente.nombreFinal || cliente;
   const cliente_id = decisionCliente.id || null;
+
+  const tipoCuentaNuevo = deudaPayload.moneda_deuda === "BS" ? "BCV" : "DIVISA";
+  const pagadoActual = pedidoAnterior ? numeroSeguro(pedidoAnterior.pago_simple_pagado || 0) : 0;
+  const tipoCuentaAnterior = pedidoAnterior ? tipoPagoSimpleDesdePedido(pedidoAnterior) : tipoCuentaNuevo;
+  const totalNuevo = numeroSeguro(deudaPayload.precio_total || 0);
+
+  if(pedidoAnterior && tipoCuentaNuevo !== tipoCuentaAnterior && pagadoActual > 0.009){
+    alert(
+      `No puedes cambiar este pedido de ${tipoCuentaAnterior} a ${tipoCuentaNuevo} porque ya tiene $${money(pagadoActual)} aplicado.
+
+` +
+      `Primero anula/reconcilia el pago desde Clientes.`
+    );
+    return;
+  }
+
+  if(pedidoAnterior && totalNuevo + 0.009 < pagadoActual){
+    alert(`El monto de la deuda no puede quedar por debajo de lo ya pagado ($${money(pagadoActual)}).`);
+    return;
+  }
+
+  const pagoPayload = payloadPedidoSimple({
+    monto:totalNuevo,
+    tipo:tipoCuentaNuevo,
+    tasa:tipoCuentaNuevo === "BCV" ? numeroSeguro(deudaPayload.tasa_deuda || 0) : 0,
+    pagado:pagadoActual,
+    fecha:pedidoAnterior?.pago_simple_fecha || fecha,
+    estado:estadoPagoSimpleDesdeMontos(totalNuevo, pagadoActual)
+  });
 
   const archivoData = await subirArchivoPedido();
 
@@ -1497,47 +1718,54 @@ async function saveOrder() {
     material,
     tipo_impresion,
     tipo_entrega,
-    monto_abonado,
     fecha_entrega,
-    ...deudaPayload,
-    monto_abonado_bs: deudaPayload.moneda_deuda === "BS" ? (monto_abonado * deudaPayload.tasa_deuda) : 0,
-    ...payloadPagoSimpleInicial(deudaPayload, monto_abonado, fecha)
+    ...pagoPayload
   };
 
-  if (monto_abonado > 0) {
-    datosPedido.estatus_pago = estadoSupabaseDesdePagoSimple(estadoPagoSimpleDesdeMontos(deudaPayload.precio_total, monto_abonado));
-  }
   if (puedeModificarCantidadLocal() || !pedidoEditandoId) datosPedido.cantidad = cantidad;
-
   if (archivoData.archivo_url) {
     datosPedido.archivo_url = archivoData.archivo_url;
     datosPedido.archivo_nombre = archivoData.archivo_nombre;
   }
 
-  let error;
+  let error = null;
+  let pedidoGuardadoId = pedidoEditandoId;
 
   if (pedidoEditandoId) {
-    const respuesta = await db()
-      .from("pedidos")
-      .update(datosPedido)
-      .eq("id", pedidoEditandoId);
-
+    const respuesta = await db().from("pedidos").update(datosPedido).eq("id", pedidoEditandoId);
     error = respuesta.error;
   } else {
     datosPedido.estatus_trabajo = "Solicitud";
-    datosPedido.estatus_pago = monto_abonado > 0 ? "Abonado" : "Pendiente";
-
-    const respuesta = await db()
-      .from("pedidos")
-      .insert([datosPedido]);
-
+    const respuesta = await db().from("pedidos").insert([datosPedido]).select("id").single();
     error = respuesta.error;
+    pedidoGuardadoId = respuesta.data?.id || null;
   }
 
   if (error) {
     console.error("Error guardando pedido:", error);
     alert("Error guardando pedido: " + error.message);
     return;
+  }
+
+  if(pedidoGuardadoId){
+    if(pedidoAnterior){
+      const despues = {...pedidoAnterior, ...datosPedido};
+      const cambios = construirCambiosAuditoria(
+        pedidoAnterior,
+        despues,
+        ["cliente","cantidad","tipo_entrega","estatus_pago","pago_simple_total","pago_simple_tipo","pago_simple_pagado","pago_simple_estado","fecha_entrega"]
+      );
+      await registrarAuditoriaPedido(pedidoGuardadoId, "PEDIDO_EDITADO", cambios, "Pedido editado desde modal", {cliente_id,cliente_nombre:cliente,operador:operadorActualNombre()});
+    }else{
+      await registrarAuditoriaPedido(
+        pedidoGuardadoId,
+        "DEUDA_CREADA",
+        cambiosCreacionPedido(datosPedido),
+        "Pedido creado desde modal",
+        {cliente_id,cliente_nombre:cliente,operador:operadorActualNombre()}
+      );
+    }
+    await aplicarSaldoFavorDisponible(cliente_id, tipoCuentaNuevo, pedidoGuardadoId);
   }
 
   pedidoEditandoId = null;
@@ -1590,6 +1818,21 @@ async function actualizarCampoPedido(id, campo, valor) {
     return;
   }
 
+  if(String(valorAnteriorPedidoOriginal ?? "") !== String(valor ?? "")) {
+    await registrarAuditoriaPedido(
+      id,
+      "CAMBIO_RAPIDO",
+      {
+        [campo]:{
+          etiqueta:AUDITORIA_LABELS[campo] || campo,
+          antes:valorAnteriorPedidoOriginal ?? null,
+          despues:valor ?? null
+        }
+      },
+      "Cambio realizado desde la tabla"
+    );
+  }
+
   if (campo === "estatus_trabajo") {
     await crearNotificacionPedidoListoFallback(id, pedidoOriginal, valorAnteriorPedidoOriginal, valor);
     await enviarWhatsAppCuandoPedidoListo(id, pedidoOriginal, valorAnteriorPedidoOriginal, valor);
@@ -1597,40 +1840,20 @@ async function actualizarCampoPedido(id, campo, valor) {
 }
 
 async function actualizarAbonoPedido(id, monto) {
-  if (!validarSupabase()) return;
-
-  const valor = numeroSeguro(monto);
-  const payload = { monto_abonado: valor };
-  if (valor > 0) payload.estatus_pago = "Abonado";
-
-  const pedidoLocal = pedidosDB.find(p => Number(p.id) === Number(id));
-  if (pedidoLocal) {
-    pedidoLocal.monto_abonado = valor;
-    if (valor > 0) pedidoLocal.estatus_pago = "Abonado";
-  }
-
-  const { error } = await db()
-    .from("pedidos")
-    .update(payload)
-    .eq("id", id);
-
-  if (error) {
-    console.error("No se pudo actualizar abono:", error);
-    alert("No se pudo actualizar abono. Revisa Supabase.");
-    await cargarPedidos(false);
-    return;
-  }
-
-  mostrarToast("Abono actualizado");
-  renderPedidosPaginados(false);
+  alert("Los abonos se registran desde el botón Pago para conservar el historial y la conciliación.");
+  await cargarPedidos(false);
+  return false;
 }
 
 
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v76_whatsapp_hello_world";
+const PAGO_SIMPLE_VERSION = "v85_auditoria_operador_real";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
+const PAGO_UNIFICADO_NOTA = "PAGO_UNIFICADO_V1";
+let pagoSimpleGuardando = false;
+let pagoSimpleOperacionUUIDPendiente = null;
 let pagoSimpleActualId = null;
 let pagoSimpleHistorialActual = [];
 
@@ -1847,7 +2070,57 @@ function getPedidoPorId(id) {
 }
 
 function totalAbonosPagoSimple(abonos) {
-  return (Array.isArray(abonos) ? abonos : []).reduce((s, a) => s + numeroSeguro(a && a.monto), 0);
+  return (Array.isArray(abonos) ? abonos : []).reduce((s, a) => {
+    if (!a || a.anulado) return s;
+    return s + numeroSeguro(a.monto);
+  }, 0);
+}
+
+function crearOperacionUUIDPagoSimple() {
+  try {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+      return window.crypto.randomUUID();
+    }
+  } catch (e) {}
+
+  const hex = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+  return hex.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    const v = c === "x" ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+function setPagoSimpleProcesando(procesando) {
+  pagoSimpleGuardando = !!procesando;
+
+  const btn = document.getElementById("pagoSimpleGuardar");
+  if (btn) {
+    if (!btn.dataset.textoOriginal) btn.dataset.textoOriginal = btn.textContent || "Guardar";
+    btn.disabled = !!procesando;
+    btn.textContent = procesando ? "Procesando..." : (btn.dataset.textoOriginal || "Guardar");
+  }
+
+  [
+    "pagoSimpleMonto",
+    "pagoSimpleTipo",
+    "pagoSimpleTasa",
+    "pagoSimpleAccion",
+    "pagoSimpleAbono",
+    "pagoSimpleFecha"
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = !!procesando;
+  });
+
+  const cerrar = document.getElementById("pagoSimpleCerrar");
+  const cancelar = document.getElementById("pagoSimpleCancelar");
+  if (cerrar) cerrar.disabled = !!procesando;
+  if (cancelar) cancelar.disabled = !!procesando;
+}
+
+function esRobertoSesion() {
+  return esRobertoLocal(getOperadorSesionLocal());
 }
 
 function setTextPagoSimple(id, value) {
@@ -1951,9 +2224,8 @@ async function cargarHistorialPagoSimple(id) {
   try {
     const { data, error } = await db()
       .from("pedidos_pagos")
-      .select("id,monto_recibido,monto_aplicado,fecha_pago,tipo_movimiento,metodo_pago,nota,created_at")
+      .select("id,cliente_pago_id,monto_recibido,monto_aplicado,fecha_pago,tipo_movimiento,metodo_pago,nota,created_at")
       .eq("pedido_id", id)
-      .eq("nota", PAGO_SIMPLE_NOTA)
       .order("id", { ascending: true });
 
     if (error) {
@@ -1961,12 +2233,54 @@ async function cargarHistorialPagoSimple(id) {
       return [];
     }
 
-    return (data || []).map(p => ({
-      pagoId: p.id,
-      monto: numeroSeguro(p.monto_aplicado || p.monto_recibido || 0),
-      fecha: String(p.fecha_pago || p.created_at || fechaISO()).slice(0, 10),
-      auto: String(p.tipo_movimiento || p.metodo_pago || "").toUpperCase().includes("LISTO")
-    })).filter(a => numeroSeguro(a.monto) > 0);
+    const movimientos = (data || []).filter(p => {
+      const nota = String(p.nota || "");
+      return nota === PAGO_SIMPLE_NOTA ||
+             nota === PAGO_UNIFICADO_NOTA ||
+             Number(p.cliente_pago_id || 0) > 0;
+    });
+
+    const parentIds = [...new Set(
+      movimientos
+        .map(p => Number(p.cliente_pago_id || 0))
+        .filter(Boolean)
+    )];
+
+    const padresMap = new Map();
+
+    if (parentIds.length) {
+      const { data: padres, error: errorPadres } = await db()
+        .from("clientes_pagos")
+        .select("id,estado,origen,monto_recibido,tipo_pago,metodo_pago,fecha_pago,anulado_en,anulado_por,motivo_anulacion")
+        .in("id", parentIds);
+
+      if (errorPadres) {
+        console.warn("No se pudieron leer entradas de pago:", errorPadres);
+      } else {
+        (padres || []).forEach(p => padresMap.set(Number(p.id), p));
+      }
+    }
+
+    return movimientos.map(p => {
+      const parentId = Number(p.cliente_pago_id || 0) || null;
+      const parent = parentId ? padresMap.get(parentId) : null;
+      const anulado = parent ? String(parent.estado || "ACTIVO").toUpperCase() === "ANULADO" : false;
+
+      return {
+        pagoId: Number(p.id),
+        clientePagoId: parentId,
+        monto: numeroSeguro(p.monto_aplicado || p.monto_recibido || 0),
+        fecha: String(p.fecha_pago || p.created_at || fechaISO()).slice(0, 10),
+        auto: String(p.tipo_movimiento || p.metodo_pago || "").toUpperCase().includes("LISTO"),
+        anulado,
+        origen: parent ? String(parent.origen || "") : "LEGACY",
+        entradaMonto: parent ? numeroSeguro(parent.monto_recibido || 0) : 0,
+        tipoPago: parent ? String(parent.tipo_pago || "") : tipoPagoSimpleDesdePedido(getPedidoPorId(id) || {}),
+        metodoPago: parent ? String(parent.metodo_pago || "") : String(p.metodo_pago || ""),
+        anuladoPor: parent ? String(parent.anulado_por || "") : "",
+        motivoAnulacion: parent ? String(parent.motivo_anulacion || "") : ""
+      };
+    }).filter(a => numeroSeguro(a.monto) > 0);
   } catch (e) {
     console.warn("Error leyendo historial de pago simple:", e);
     return [];
@@ -1977,14 +2291,13 @@ function itemModalPagoSimple() {
   const pedido = getPedidoPorId(pagoSimpleActualId);
   const base = resumenPagoSimplePedido(pedido || {});
   const abonos = Array.isArray(pagoSimpleHistorialActual) ? pagoSimpleHistorialActual : [];
-  const pagadoHistorial = abonos.length ? totalAbonosPagoSimple(abonos) : base.pagado;
 
   return {
     id: pagoSimpleActualId,
     monto: numeroSeguro(document.getElementById("pagoSimpleMonto")?.value || base.monto || 0),
     tipo: document.getElementById("pagoSimpleTipo")?.value || base.tipo || "DIVISA",
     tasa: numeroSeguro(document.getElementById("pagoSimpleTasa")?.value || base.tasa || 0),
-    pagado: pagadoHistorial,
+    pagado: numeroSeguro(base.pagado || 0),
     estado: base.estado,
     fecha: document.getElementById("pagoSimpleFecha")?.value || base.fecha || fechaISO(),
     abonos
@@ -1992,23 +2305,34 @@ function itemModalPagoSimple() {
 }
 
 async function abrirModalPagoSimple(id) {
-  const pedido = getPedidoPorId(id);
+  let pedido = getPedidoPorId(id);
   if (!pedido) {
     alert("No se encontró el pedido. Recarga la página y prueba de nuevo.");
     return false;
   }
 
+  const clienteId = clienteIdPorPedido(pedido);
+  if(clienteId){
+    const credito = await aplicarSaldoFavorDisponible(clienteId, tipoPagoSimpleDesdePedido(pedido), id);
+    if(numeroSeguro(credito?.monto_aplicado || 0) > 0.009){
+      await cargarPedidos(false);
+      pedido = getPedidoPorId(id) || pedido;
+      mostrarToast("Saldo a favor aplicado automáticamente ✅");
+    }
+  }
+
   crearModalPagoSimple();
+  pagoSimpleOperacionUUIDPendiente = null;
+  setPagoSimpleProcesando(false);
   pagoSimpleActualId = Number(id);
   pagoSimpleHistorialActual = await cargarHistorialPagoSimple(id);
 
   const item = resumenPagoSimplePedido(pedido);
-  const pagadoHistorial = pagoSimpleHistorialActual.length ? totalAbonosPagoSimple(pagoSimpleHistorialActual) : item.pagado;
 
   document.getElementById("pagoSimpleMonto").value = item.monto > 0 ? money(item.monto) : "";
   document.getElementById("pagoSimpleTipo").value = item.tipo || "DIVISA";
   document.getElementById("pagoSimpleTasa").value = item.tasa > 0 ? money(item.tasa) : "";
-  document.getElementById("pagoSimpleAccion").value = item.monto > 0 && pagadoHistorial > 0 ? "ABONO" : "PENDIENTE";
+  document.getElementById("pagoSimpleAccion").value = item.monto > 0 && item.pagado > 0 ? "ABONO" : "PENDIENTE";
   document.getElementById("pagoSimpleFecha").value = item.fecha || fechaISO();
   document.getElementById("pagoSimpleAbono").value = "";
 
@@ -2018,10 +2342,13 @@ async function abrirModalPagoSimple(id) {
 }
 
 function cerrarModalPagoSimple() {
+  if (pagoSimpleGuardando) return;
   const modal = document.getElementById("pagoSimpleBackdrop");
   if (modal) modal.style.display = "none";
   pagoSimpleActualId = null;
   pagoSimpleHistorialActual = [];
+  pagoSimpleOperacionUUIDPendiente = null;
+  setPagoSimpleProcesando(false);
 }
 
 function pintarModalPagoSimple() {
@@ -2044,7 +2371,7 @@ function pintarModalPagoSimple() {
 
   if (accion === "ABONO") {
     pagadoPreview += nuevoAbono;
-    accionTexto = nuevoAbono > 0 ? "Se agregará abono de $" + money(nuevoAbono) : "Coloca el monto del abono";
+    accionTexto = nuevoAbono > 0 ? "Se agregará abono " + tipo + " de $" + money(nuevoAbono) : "Coloca el monto del abono";
   }
 
   if (accion === "LISTO") {
@@ -2076,12 +2403,26 @@ function pintarModalPagoSimple() {
     if (!item.abonos.length) {
       hist.innerHTML = header + `<div class="simple-empty">Sin abonos registrados.</div>`;
     } else {
-      hist.innerHTML = header + item.abonos.map((a, i) => `
-        <div class="simple-hist-row">
-          <span class="simple-hist-main">Abono ${i + 1}: $${money(a.monto)}</span>
-          <small>${escapeHtml(fechaCortaPagoSimple(a.fecha))}${a.auto ? " · automático" : ""}</small>
-          <button class="simple-delete-pay" type="button" data-pago-id="${escapeHtml(a.pagoId)}" title="Borrar este pago">✕</button>
-        </div>`).join("");
+      const puedeAnular = esRobertoSesion();
+      hist.innerHTML = header + item.abonos.map((a, i) => {
+        const metaEntrada = a.clientePagoId
+          ? ` · Entrada #${escapeHtml(a.clientePagoId)}${a.origen ? " · " + escapeHtml(a.origen) : ""} · Entrada completa $${money(a.entradaMonto || a.monto)}`
+          : " · Registro anterior";
+        const anuladoTxt = a.anulado ? " · ANULADO" : "";
+        const boton = puedeAnular && !a.anulado && !a.clientePagoId
+          ? `<button class="simple-delete-pay" type="button" data-pago-id="${escapeHtml(a.pagoId)}" title="Corregir registro anterior">✕</button>`
+          : `<span></span>`;
+        const centralizado = a.clientePagoId && !a.anulado
+          ? " · Anulación: Clientes → Ver cuenta"
+          : "";
+
+        return `
+        <div class="simple-hist-row ${a.anulado ? "is-anulado" : ""}">
+          <span class="simple-hist-main">${a.anulado ? "Anulado" : "Abono"} ${a.tipoPago || item.tipo || "DIVISA"} ${i + 1}: $${money(a.monto)}</span>
+          <small>${escapeHtml(fechaCortaPagoSimple(a.fecha))}${a.auto ? " · automático" : ""}${metaEntrada}${centralizado}${anuladoTxt}</small>
+          ${boton}
+        </div>`;
+      }).join("");
     }
   }
 }
@@ -2089,7 +2430,28 @@ function pintarModalPagoSimple() {
 async function actualizarPedidoSimpleSupabase(id, itemFinal) {
   if (!validarSupabase()) return false;
 
+  const pedidoAnterior = {...(getPedidoPorId(id) || {})};
+  const tipoAnterior = tipoPagoSimpleDesdePedido(pedidoAnterior);
+  const pagadoAnterior = numeroSeguro(pedidoAnterior.pago_simple_pagado || 0);
   const payload = payloadPedidoSimple(itemFinal);
+  const tipoNuevo = String(payload.pago_simple_tipo || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA";
+  const totalNuevo = numeroSeguro(payload.pago_simple_total || 0);
+
+  if(tipoNuevo !== tipoAnterior && pagadoAnterior > 0.009){
+    alert(
+      `No puedes cambiar este pedido de ${tipoAnterior} a ${tipoNuevo} porque ya tiene $${money(pagadoAnterior)} aplicado.
+
+` +
+      `Primero anula/reconcilia el pago desde Clientes.`
+    );
+    return false;
+  }
+
+  if(totalNuevo + 0.009 < pagadoAnterior){
+    alert(`El monto no puede quedar por debajo de lo ya pagado ($${money(pagadoAnterior)}).`);
+    return false;
+  }
+
   const { error } = await db()
     .from("pedidos")
     .update(payload)
@@ -2100,6 +2462,14 @@ async function actualizarPedidoSimpleSupabase(id, itemFinal) {
     alert("No se pudo actualizar el saldo del pedido.\n\n" + error.message);
     return false;
   }
+
+  const despues = {...pedidoAnterior, ...payload};
+  const cambios = construirCambiosAuditoria(
+    pedidoAnterior,
+    despues,
+    ["pago_simple_total","pago_simple_tipo","pago_simple_pagado","pago_simple_estado","estatus_pago"]
+  );
+  await registrarAuditoriaPedido(id, "CAMBIO_FINANCIERO", cambios, "Cambio desde modal de Pago");
 
   const local = getPedidoPorId(id);
   if (local) Object.assign(local, payload);
@@ -2117,63 +2487,129 @@ function clienteIdPorPedido(pedido) {
   return cliente ? cliente.id : null;
 }
 
+async function asegurarClienteIdPedidoParaPago(id) {
+  const pedido = getPedidoPorId(id);
+  if (!pedido) return null;
+
+  let clienteId = clienteIdPorPedido(pedido);
+  if (clienteId) return clienteId;
+
+  const info = await asegurarClienteExiste(pedido.cliente || "");
+  clienteId = info && info.id ? Number(info.id) : null;
+
+  if (clienteId) {
+    const { error } = await db()
+      .from("pedidos")
+      .update({ cliente_id: clienteId })
+      .eq("id", id);
+
+    if (error) {
+      console.warn("No se pudo enlazar cliente_id al pedido:", error);
+    } else {
+      pedido.cliente_id = clienteId;
+    }
+  }
+
+  return clienteId;
+}
+
+async function confirmarPagoUnificadoPorUUID(uuid) {
+  if (!uuid || !db()) return null;
+
+  try {
+    const { data, error } = await db()
+      .from("clientes_pagos")
+      .select("id,estado,monto_recibido,monto_aplicado,saldo_a_favor,pedidos_afectados,operacion_uuid")
+      .eq("operacion_uuid", uuid)
+      .maybeSingle();
+
+    if (error) return null;
+    return data || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 async function registrarMovimientoPagoSimple(id, delta, itemFinal, auto, fechaPago) {
   if (!db() || delta <= 0) return null;
 
-  const pedido = getPedidoPorId(id) || {};
-  const pagadoAntes = Math.max(numeroSeguro(itemFinal.pagado) - numeroSeguro(delta), 0);
-  const saldoAntes = Math.max(numeroSeguro(itemFinal.monto) - pagadoAntes, 0);
-  const saldoDespues = Math.max(numeroSeguro(itemFinal.monto) - numeroSeguro(itemFinal.pagado), 0);
-
-  const payload = {
-    pedido_id: id,
-    cliente_id: clienteIdPorPedido(pedido),
-    cliente_nombre: pedido.cliente || "",
-    pedido_descripcion: pedido.descripcion || "Pago simple",
-    monto_recibido: delta,
-    moneda: "USD",
-    tasa_usada: itemFinal.tipo === "BCV" && itemFinal.tasa > 0 ? itemFinal.tasa : 1,
-    equivalente_usd: delta,
-    metodo_pago: auto ? "Listo automático" : "Abono simple",
-    metodo_otro: null,
-    referencia: "",
-    nota: PAGO_SIMPLE_NOTA,
-    saldo_antes: saldoAntes,
-    saldo_despues: saldoDespues,
-    registrado_por: operadorActualNombre() || null,
-    fecha_pago: fechaPago || fechaISO(),
-    tipo_movimiento: auto ? "LISTO" : "ABONO",
-    monto_aplicado: delta,
-    saldo_despues_simple: saldoDespues,
-    a_favor_despues: Math.max(numeroSeguro(itemFinal.pagado) - numeroSeguro(itemFinal.monto), 0),
-    tipo_pago_simple: itemFinal.tipo,
-    moneda_deuda: itemFinal.tipo === "BCV" ? "BS" : "USD",
-    tipo_tasa_deuda: itemFinal.tipo === "BCV" ? "BS_BCV" : "USD_FIJO",
-    tasa_deuda: itemFinal.tipo === "BCV" && itemFinal.tasa > 0 ? itemFinal.tasa : 1,
-    total_deuda_usd: itemFinal.monto,
-    total_deuda_bs: itemFinal.tipo === "BCV" && itemFinal.tasa > 0 ? itemFinal.monto * itemFinal.tasa : null,
-    pago_aplicado_usd: delta,
-    pago_aplicado_bs: itemFinal.tipo === "BCV" && itemFinal.tasa > 0 ? delta * itemFinal.tasa : null,
-    saldo_antes_deuda: saldoAntes,
-    saldo_despues_deuda: saldoDespues
-  };
-
-  const { data, error } = await db()
-    .from("pedidos_pagos")
-    .insert([payload])
-    .select("id")
-    .single();
-
-  if (error) {
-    console.error("No se pudo registrar el abono:", error);
-    alert("No se pudo registrar el abono.\n\n" + error.message);
+  const pedido = getPedidoPorId(id);
+  if (!pedido) {
+    alert("No se encontró el pedido.");
     return null;
   }
 
-  return data && data.id ? data.id : null;
+  const clienteId = await asegurarClienteIdPedidoParaPago(id);
+  if (!clienteId) {
+    alert("No se pudo identificar el cliente de este pedido.");
+    return null;
+  }
+
+  if (!pagoSimpleOperacionUUIDPendiente) {
+    pagoSimpleOperacionUUIDPendiente = crearOperacionUUIDPagoSimple();
+  }
+
+  const uuid = pagoSimpleOperacionUUIDPendiente;
+  const metodo = auto ? "Listo desde pedido" : "Abono desde pedido";
+
+  const parametros = {
+    p_operacion_uuid: uuid,
+    p_cliente_id: clienteId,
+    p_tipo_pago: itemFinal.tipo === "BCV" ? "BCV" : "DIVISA",
+    p_monto: numeroSeguro(delta),
+    p_metodo: metodo,
+    p_referencia: "Pedido #" + id,
+    p_nota: "Registrado desde Index · Pedido #" + id,
+    p_fecha: fechaPago || fechaISO(),
+    p_registrado_por: operadorActualNombre() || null,
+    p_origen: "INDEX",
+    p_pedido_id: Number(id)
+  };
+
+  try {
+    const { data, error } = await db().rpc("registrar_pago_cliente_v1", parametros);
+
+    if (error) {
+      const confirmado = await confirmarPagoUnificadoPorUUID(uuid);
+      if (confirmado && String(confirmado.estado || "ACTIVO").toUpperCase() !== "ANULADO") {
+        return {
+          ok: true,
+          recuperado: true,
+          pago_id: confirmado.id,
+          monto_aplicado: numeroSeguro(confirmado.monto_aplicado || 0),
+          saldo_a_favor: numeroSeguro(confirmado.saldo_a_favor || 0),
+          pedidos_afectados: numeroSeguro(confirmado.pedidos_afectados || 0)
+        };
+      }
+
+      console.error("No se pudo registrar el pago unificado:", error);
+      alert("No se pudo registrar el pago.\n\n" + (error.message || "Error desconocido"));
+      return null;
+    }
+
+    return data || null;
+  } catch (e) {
+    const confirmado = await confirmarPagoUnificadoPorUUID(uuid);
+    if (confirmado && String(confirmado.estado || "ACTIVO").toUpperCase() !== "ANULADO") {
+      return {
+        ok: true,
+        recuperado: true,
+        pago_id: confirmado.id,
+        monto_aplicado: numeroSeguro(confirmado.monto_aplicado || 0),
+        saldo_a_favor: numeroSeguro(confirmado.saldo_a_favor || 0),
+        pedidos_afectados: numeroSeguro(confirmado.pedidos_afectados || 0)
+      };
+    }
+
+    console.error("Error registrando pago unificado:", e);
+    alert("No se pudo confirmar el pago. Vuelve a intentar sin cambiar los valores.");
+    return null;
+  }
 }
 
 async function guardarPagoSimple() {
+  if (pagoSimpleGuardando) return;
+
   if (!pagoSimpleActualId) {
     alert("No hay pedido seleccionado.");
     return;
@@ -2188,23 +2624,30 @@ async function guardarPagoSimple() {
     const okCierre = confirm("¿Quieres ponerlo Listo sin agregar monto?\n\nNo registrará dinero, no quedará deuda y aparecerá como Listo/Sin monto.");
     if (!okCierre) return;
 
-    const itemFinal = {
-      monto: 0,
-      tipo: item.tipo,
-      tasa: item.tipo === "BCV" ? item.tasa : 0,
-      pagado: 0,
-      fecha: fechaPago,
-      abonos: Array.isArray(item.abonos) ? [...item.abonos] : [],
-      estado: "PAGADO"
-    };
+    setPagoSimpleProcesando(true);
 
-    const ok = await actualizarPedidoSimpleSupabase(id, itemFinal);
-    if (!ok) return;
+    try {
+      const itemFinal = {
+        monto: 0,
+        tipo: item.tipo,
+        tasa: item.tipo === "BCV" ? item.tasa : 0,
+        pagado: 0,
+        fecha: fechaPago,
+        abonos: Array.isArray(item.abonos) ? [...item.abonos] : [],
+        estado: "PAGADO"
+      };
 
-    cerrarModalPagoSimple();
-    mostrarToast("Pedido listo sin monto ✅");
-    await cargarPedidos(false);
-    return;
+      const ok = await actualizarPedidoSimpleSupabase(id, itemFinal);
+      if (!ok) return;
+
+      setPagoSimpleProcesando(false);
+      cerrarModalPagoSimple();
+      mostrarToast("Pedido listo sin monto ✅");
+      await cargarPedidos(false);
+      return;
+    } finally {
+      setPagoSimpleProcesando(false);
+    }
   }
 
   if (item.tipo === "BCV" && item.tasa <= 0) {
@@ -2212,8 +2655,6 @@ async function guardarPagoSimple() {
     if (!ok) return;
   }
 
-  let pagado = numeroSeguro(item.pagado);
-  let abonos = Array.isArray(item.abonos) ? [...item.abonos] : [];
   let delta = 0;
   let auto = false;
 
@@ -2223,74 +2664,187 @@ async function guardarPagoSimple() {
       alert("Coloca el monto del abono.");
       return;
     }
-    pagado += delta;
     auto = false;
   } else if (accion === "LISTO") {
-    delta = Math.max(item.monto - pagado, 0);
-    pagado += delta;
+    delta = Math.max(item.monto - numeroSeguro(item.pagado), 0);
     auto = true;
   }
 
-  const itemFinal = {
-    monto: item.monto,
-    tipo: item.tipo,
-    tasa: item.tipo === "BCV" ? item.tasa : 0,
-    pagado,
-    fecha: fechaPago,
-    abonos
-  };
-  itemFinal.estado = estadoPagoSimpleDesdeMontos(itemFinal.monto, itemFinal.pagado);
+  setPagoSimpleProcesando(true);
 
-  if (delta > 0) {
-    const pagoId = await registrarMovimientoPagoSimple(id, delta, itemFinal, auto, fechaPago);
-    if (!pagoId) return;
-    abonos.push({ pagoId, monto: delta, fecha: fechaPago, auto });
-    itemFinal.abonos = abonos;
+  try {
+    // Primero guarda únicamente la definición de la deuda. El dinero se registra
+    // después mediante una sola transacción en Supabase.
+    const itemBase = {
+      monto: item.monto,
+      tipo: item.tipo,
+      tasa: item.tipo === "BCV" ? item.tasa : 0,
+      pagado: numeroSeguro(item.pagado),
+      fecha: fechaPago,
+      abonos: Array.isArray(item.abonos) ? [...item.abonos] : []
+    };
+    itemBase.estado = estadoPagoSimpleDesdeMontos(itemBase.monto, itemBase.pagado);
+
+    const okDefinicion = await actualizarPedidoSimpleSupabase(id, itemBase);
+    if (!okDefinicion) return;
+
+    const pedidoDespuesDefinir = getPedidoPorId(id) || {};
+    const clienteIdCredito = clienteIdPorPedido(pedidoDespuesDefinir);
+    if(clienteIdCredito){
+      const credito = await aplicarSaldoFavorDisponible(clienteIdCredito, item.tipo, id);
+      if(numeroSeguro(credito?.monto_aplicado || 0) > 0.009){
+        await cargarPedidos(false);
+        if(accion === "LISTO"){
+          const fresco = resumenPagoSimplePedido(getPedidoPorId(id) || {});
+          delta = Math.max(fresco.total - fresco.pagado, 0);
+          itemBase.pagado = fresco.pagado;
+          itemBase.estado = fresco.estado;
+        }
+      }
+    }
+
+    if (delta <= 0.009) {
+      pagoSimpleOperacionUUIDPendiente = null;
+      setPagoSimpleProcesando(false);
+      cerrarModalPagoSimple();
+      mostrarToast("Pedido actualizado ✅");
+      await cargarPedidos(false);
+      return;
+    }
+
+    const resultado = await registrarMovimientoPagoSimple(id, delta, itemBase, auto, fechaPago);
+    if (!resultado || resultado.ok === false) return;
+
+    pagoSimpleOperacionUUIDPendiente = null;
+    setPagoSimpleProcesando(false);
+    cerrarModalPagoSimple();
+
+    const aplicado = numeroSeguro(resultado.monto_aplicado || delta);
+    const favor = numeroSeguro(resultado.saldo_a_favor || 0);
+
+    if (favor > 0.009) {
+      mostrarToast("Pago $" + money(aplicado) + " · A favor $" + money(favor));
+    } else {
+      mostrarToast("Pago registrado $" + money(aplicado) + " ✅");
+    }
+
+    await cargarPedidos(false);
+  } finally {
+    setPagoSimpleProcesando(false);
   }
-
-  const ok = await actualizarPedidoSimpleSupabase(id, itemFinal);
-  if (!ok) return;
-
-  cerrarModalPagoSimple();
-  mostrarToast("Pago guardado ✅");
-  await cargarPedidos(false);
 }
 
 async function eliminarPagoSimple(pagoId) {
   if (!pagoSimpleActualId || !pagoId) {
-    alert("No se encontró ese pago para borrar.");
+    alert("No se encontró ese pago.");
+    return;
+  }
+
+  if (!esRobertoSesion()) {
+    alert("Solo Roberto puede anular o eliminar pagos.");
     return;
   }
 
   const pago = pagoSimpleHistorialActual.find(p => Number(p.pagoId) === Number(pagoId));
-  const montoTxt = pago ? "$" + money(pago.monto) : "este pago";
-  const okConfirm = confirm("¿Borrar " + montoTxt + "?\n\nEl saldo del pedido se recalculará automáticamente.");
-  if (!okConfirm) return;
+  if (!pago) {
+    alert("No se encontró ese movimiento.");
+    return;
+  }
+
+  if (pago.anulado) {
+    alert("Ese pago ya está anulado.");
+    return;
+  }
 
   const id = pagoSimpleActualId;
+  const montoTxt = "$" + money(pago.monto);
+
+  // Pagos nuevos: nunca se borran. Se anula la entrada completa y Supabase
+  // revierte automáticamente todos los pedidos que haya afectado.
+  if (pago.clientePagoId) {
+    let detalle = "¿Anular " + montoTxt + "?";
+    if (pago.origen === "CLIENTES" && pago.entradaMonto > pago.monto + 0.009) {
+      detalle =
+        "Este abono pertenece a una entrada global de $" + money(pago.entradaMonto) + ".\n\n" +
+        "Al anularla se revertirán TODOS los pedidos afectados por esa entrada.";
+    } else {
+      detalle += "\n\nEl saldo del pedido se recalculará automáticamente.";
+    }
+
+    const okConfirm = confirm(detalle);
+    if (!okConfirm) return;
+
+    const motivo = prompt("Motivo de la anulación:", "Corrección de pago");
+    if (motivo === null) return;
+
+    try {
+      const { data, error } = await db().rpc("anular_pago_cliente_v1", {
+        p_cliente_pago_id: Number(pago.clientePagoId),
+        p_anulado_por: "Roberto",
+        p_motivo: String(motivo || "").trim() || "Corrección de pago"
+      });
+
+      if (error) {
+        console.error("No se pudo anular el pago:", error);
+        alert("No se pudo anular el pago.\n\n" + error.message);
+        return;
+      }
+
+      mostrarToast("Pago anulado ✅");
+      await cargarPedidos(false);
+
+      pagoSimpleActualId = id;
+      pagoSimpleHistorialActual = await cargarHistorialPagoSimple(id);
+      pintarModalPagoSimple();
+      return data;
+    } catch (e) {
+      console.error("Error anulando pago:", e);
+      alert("No se pudo anular el pago.");
+      return;
+    }
+  }
+
+  // Compatibilidad con registros antiguos que no tienen entrada en clientes_pagos.
+  const okConfirm = confirm(
+    "Este es un pago del sistema anterior.\n\n" +
+    "¿Borrar " + montoTxt + " y recalcular el pedido?"
+  );
+  if (!okConfirm) return;
 
   const { error } = await db()
     .from("pedidos_pagos")
     .delete()
     .eq("id", pagoId)
-    .eq("pedido_id", id);
+    .eq("pedido_id", id)
+    .is("cliente_pago_id", null);
 
   if (error) {
-    console.error("No se pudo borrar el pago:", error);
+    console.error("No se pudo borrar el pago anterior:", error);
     alert("No se pudo borrar el pago.\n\n" + error.message);
     return;
   }
 
   pagoSimpleHistorialActual = await cargarHistorialPagoSimple(id);
-  const item = itemModalPagoSimple();
-  item.abonos = pagoSimpleHistorialActual;
-  item.pagado = totalAbonosPagoSimple(pagoSimpleHistorialActual);
+
+  const pedido = getPedidoPorId(id) || {};
+  const base = resumenPagoSimplePedido(pedido);
+  const pagadoHistorial = totalAbonosPagoSimple(pagoSimpleHistorialActual);
+
+  const item = {
+    id,
+    monto: base.monto,
+    tipo: base.tipo,
+    tasa: base.tasa,
+    pagado: pagadoHistorial,
+    fecha: base.fecha || fechaISO(),
+    abonos: pagoSimpleHistorialActual
+  };
   item.estado = estadoPagoSimpleDesdeMontos(item.monto, item.pagado);
 
   const ok = await actualizarPedidoSimpleSupabase(id, item);
   if (!ok) return;
 
-  mostrarToast("Pago borrado ✅");
+  mostrarToast("Pago anterior eliminado ✅");
   await cargarPedidos(false);
 
   pagoSimpleActualId = id;
@@ -2427,6 +2981,8 @@ function instalarCSSPagoSimple() {
     .simple-hist-row{display:grid;grid-template-columns:minmax(0,1fr) auto 28px;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid #eef1ff;font-size:12px;font-weight:800;color:#111827}
     .simple-hist-main{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .simple-hist-row small{color:#64748b;font-family:var(--mono);font-size:10px;white-space:nowrap}
+    .simple-hist-row.is-anulado{opacity:.52;background:#f8f9ff}
+    .simple-hist-row.is-anulado .simple-hist-main{text-decoration:line-through}
     .simple-delete-pay{width:26px;height:26px;border-radius:999px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;font-size:12px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1}
     .simple-delete-pay:hover{background:#dc2626;color:#fff;border-color:#dc2626}
     .simple-modal-footer .btn-add{min-height:36px!important;padding:8px 14px!important}
@@ -2950,6 +3506,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   if (typeof aplicarPermisosComanda === "function") aplicarPermisosComanda();
 });
+
 
 
 
