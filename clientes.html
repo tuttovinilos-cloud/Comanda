@@ -952,7 +952,8 @@ tr:hover td{background:#ffffff03}
 
   #ordenClientes,
   #filtroTipoCliente,
-  #filtroEstadoCliente{
+  #filtroEstadoCliente,
+  #filtroDeudaCliente{
     flex:1 1 100%;
   }
 
@@ -1650,7 +1651,7 @@ body{
   top:62px!important;
   z-index:90!important;
   display:grid!important;
-  grid-template-columns:minmax(280px,1fr) 160px 130px 150px auto!important;
+  grid-template-columns:minmax(260px,1fr) 145px 120px 145px 145px auto!important;
   gap:10px!important;
   padding:12px 16px!important;
   background:#fff!important;
@@ -2617,6 +2618,21 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
   .payment-reconciliation-row{grid-template-columns:82px minmax(0,1fr) 82px;padding:8px}
   .payment-reconciliation-row .descripcion{font-size:10px}
 }
+
+/* CLIENTES v69 · cronología financiera y auditoría */
+.account-timeline{border:1px solid #d9deea;border-radius:15px;background:#fff;overflow:hidden;margin-bottom:12px}
+.account-timeline-head{padding:10px 12px;background:#eef1ff;border-bottom:1px solid #d9deea;font-family:var(--head);font-size:10px;font-weight:900;color:#153bff;letter-spacing:.55px;text-transform:uppercase}
+.account-timeline-list{max-height:360px;overflow:auto}
+.account-event{display:grid;grid-template-columns:128px 110px minmax(0,1fr);gap:10px;align-items:start;padding:10px 12px;border-top:1px solid #eef1f6}
+.account-event:first-child{border-top:0}
+.account-event-time{font-family:var(--mono);font-size:9px;color:#64748b}
+.account-event-type{font-family:var(--head);font-size:9px;font-weight:900;text-transform:uppercase;color:#153bff}
+.account-event-type.pago{color:#15803d}.account-event-type.anulado{color:#dc2626}.account-event-type.cambio{color:#92400e}
+.account-event-body{font-size:11px;color:#334155;line-height:1.45}
+.account-event-body strong{color:#111827}
+.account-change-line{display:block;margin-top:2px}
+.account-timeline-note{padding:9px 12px;background:#f8fafc;border-top:1px solid #e2e8f0;color:#64748b;font-size:10px}
+@media(max-width:650px){.account-event{grid-template-columns:1fr;gap:3px}.account-event-time{font-size:8.5px}}
 </style>
 
 </head>
@@ -2656,6 +2672,15 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
     <option value="">Todos</option>
     <option value="activo">Activos</option>
     <option value="inactivo">Inactivos</option>
+  </select>
+
+  <select id="filtroDeudaCliente" onchange="filtrarClientes()" title="Filtrar por estado de cuenta">
+    <option value="">Todos los saldos</option>
+    <option value="deuda">Con deuda</option>
+    <option value="deuda_divisa">Debe DIVISA</option>
+    <option value="deuda_bcv">Debe BCV</option>
+    <option value="favor">Con saldo a favor</option>
+    <option value="sin_deuda">Sin deuda</option>
   </select>
 
   <select id="ordenClientes" onchange="filtrarClientes()">
@@ -2942,7 +2967,7 @@ function cerrarNotificacionesSiFondo(event){
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v68 · tipo de abono visible");
+console.log("CLIENTES HTML conectado v69 · cuenta neta + filtro deuda + auditoría");
 
 let clientesDB = [];
 let pedidosDB = [];
@@ -3230,10 +3255,7 @@ function deudaClienteHtml(cliente){
     `;
   };
 
-  const pendientes = Number(d.pedidos_pendientes || 0);
-  const resumen = pendientes > 0
-    ? `${pendientes} pedido${pendientes === 1 ? "" : "s"} con saldo`
-    : "Cuentas separadas";
+  const resumen = "Saldo neto por cuenta";
 
   return `
     <div class="deuda-btn deuda-btn-separada deuda-btn-mixta" title="DIVISA y BCV se calculan por separado">
@@ -3292,23 +3314,22 @@ async function cargarDeudasClientes(){
 
   clientesDB.forEach(cliente => {
     const items = pedidosEstadoCuentaCliente(cliente, true);
-    const divisa = resumenCuentaClientePorTipo(items, "DIVISA");
-    const bcv = resumenCuentaClientePorTipo(items, "BCV");
+    const divisaBase = resumenCuentaClientePorTipo(items, "DIVISA");
+    const bcvBase = resumenCuentaClientePorTipo(items, "BCV");
 
-    // Los pagos unificados ya no inflan el último pedido cuando sobra dinero.
-    // Ese excedente vive en clientes_pagos y se suma aquí como crédito real del cliente.
-    const favorClienteDivisa = saldoFavorClientePorTipo(cliente.id, "DIVISA");
-    const favorClienteBcv = saldoFavorClientePorTipo(cliente.id, "BCV");
-
-    const divisaFavorTotal = divisa.aFavor + favorClienteDivisa;
-    const bcvFavorTotal = bcv.aFavor + favorClienteBcv;
-    const divisaPagadoTotal = divisa.pagado + favorClienteDivisa;
-    const bcvPagadoTotal = bcv.pagado + favorClienteBcv;
+    const divisa = resolverCuentaNetaCliente(
+      divisaBase,
+      saldoFavorClientePorTipo(cliente.id, "DIVISA")
+    );
+    const bcv = resolverCuentaNetaCliente(
+      bcvBase,
+      saldoFavorClientePorTipo(cliente.id, "BCV")
+    );
 
     const total = divisa.total + bcv.total;
-    const abonado = divisaPagadoTotal + bcvPagadoTotal;
+    const abonado = divisa.pagado + bcv.pagado;
     const saldo = divisa.saldo + bcv.saldo;
-    const aFavor = divisaFavorTotal + bcvFavorTotal;
+    const aFavor = divisa.aFavor + bcv.aFavor;
     const pendientes = divisa.pendientes + bcv.pendientes;
 
     clientesDeudaMap.set(Number(cliente.id || 0), {
@@ -3322,16 +3343,16 @@ async function cargarDeudasClientes(){
       total_a_favor_usd_equiv:aFavor,
       divisa:{
         total:divisa.total,
-        abonado:divisaPagadoTotal,
+        abonado:divisa.pagado,
         saldo:divisa.saldo,
-        a_favor:divisaFavorTotal,
+        a_favor:divisa.aFavor,
         pendientes:divisa.pendientes
       },
       bcv:{
         total:bcv.total,
-        abonado:bcvPagadoTotal,
+        abonado:bcv.pagado,
         saldo:bcv.saldo,
-        a_favor:bcvFavorTotal,
+        a_favor:bcv.aFavor,
         pendientes:bcv.pendientes
       },
       ultima_fecha_pedido:items[0]?.fecha || null
@@ -3488,6 +3509,7 @@ function filtrarClientes(reiniciarPagina = true){
   const texto = normalizar(document.getElementById("searchClientes")?.value || "");
   const tipoFiltro = document.getElementById("filtroTipoCliente")?.value || "";
   const estadoFiltro = document.getElementById("filtroEstadoCliente")?.value || "";
+  const deudaFiltro = document.getElementById("filtroDeudaCliente")?.value || "";
   const orden = document.getElementById("ordenClientes")?.value || "nombre_az";
 
   let lista = [...clientesDB];
@@ -3510,6 +3532,20 @@ function filtrarClientes(reiniciarPagina = true){
     if(!estadoFiltro && c.activo === false) return false;
     if(estadoFiltro === "activo" && c.activo === false) return false;
     if(estadoFiltro === "inactivo" && c.activo !== false) return false;
+
+    if(deudaFiltro){
+      const cuenta = deudaCliente(c);
+      const debeDivisa = numeroSeguro(cuenta.divisa?.saldo || 0) > 0.009;
+      const debeBcv = numeroSeguro(cuenta.bcv?.saldo || 0) > 0.009;
+      const tieneDeuda = debeDivisa || debeBcv;
+      const tieneFavor = numeroSeguro(cuenta.divisa?.a_favor || 0) > 0.009 || numeroSeguro(cuenta.bcv?.a_favor || 0) > 0.009;
+
+      if(deudaFiltro === "deuda" && !tieneDeuda) return false;
+      if(deudaFiltro === "deuda_divisa" && !debeDivisa) return false;
+      if(deudaFiltro === "deuda_bcv" && !debeBcv) return false;
+      if(deudaFiltro === "favor" && !tieneFavor) return false;
+      if(deudaFiltro === "sin_deuda" && tieneDeuda) return false;
+    }
 
     return true;
   });
@@ -4759,6 +4795,30 @@ function resumenCuentaClientePorTipo(cuenta, tipo){
   };
 }
 
+function resolverCuentaNetaCliente(resumenBase, favorCliente = 0){
+  const total = numeroSeguro(resumenBase?.total || 0);
+  const pagadoPedidos = numeroSeguro(resumenBase?.pagado || 0);
+  const saldoPedidos = numeroSeguro(resumenBase?.saldo || 0);
+  const favorPedidos = numeroSeguro(resumenBase?.aFavor || 0);
+  const credito = Math.max(numeroSeguro(favorCliente || 0) + favorPedidos, 0);
+  const neto = saldoPedidos - credito;
+  const saldo = Math.max(neto, 0);
+  const aFavor = Math.max(-neto, 0);
+  const creditoUsado = Math.min(credito, saldoPedidos);
+  const pagado = Math.min(total, pagadoPedidos + creditoUsado);
+
+  return {
+    ...resumenBase,
+    total,
+    pagado,
+    saldo,
+    aFavor,
+    creditoDisponible:credito,
+    creditoUsado,
+    pendientes: saldo > 0.009 ? numeroSeguro(resumenBase?.pendientes || 0) : 0
+  };
+}
+
 function pedidosPendientesCliente(cliente, tipo = null){
   const tipoNormalizado = tipo ? normalizarTipoCuentaCliente(tipo) : null;
 
@@ -4774,16 +4834,8 @@ function pintarDeudaModal(cliente){
   const favorClienteDivisa = saldoFavorClientePorTipo(cliente.id, "DIVISA");
   const favorClienteBcv = saldoFavorClientePorTipo(cliente.id, "BCV");
 
-  const divisa = {
-    ...divisaBase,
-    pagado:divisaBase.pagado + favorClienteDivisa,
-    aFavor:divisaBase.aFavor + favorClienteDivisa
-  };
-  const bcv = {
-    ...bcvBase,
-    pagado:bcvBase.pagado + favorClienteBcv,
-    aFavor:bcvBase.aFavor + favorClienteBcv
-  };
+  const divisa = resolverCuentaNetaCliente(divisaBase, favorClienteDivisa);
+  const bcv = resolverCuentaNetaCliente(bcvBase, favorClienteBcv);
   const pendientes = cuenta.filter(x => x.saldo > 0.009);
 
   document.getElementById("deudaTitle").textContent = `Estado de cuenta · ${cliente.nombre}`;
@@ -4794,8 +4846,8 @@ function pintarDeudaModal(cliente){
       <div class="deuda-account-values">
         <div class="deuda-account-value"><label>Total</label><strong>$${money(resumen.total)}</strong></div>
         <div class="deuda-account-value"><label>Pagado</label><strong>$${money(resumen.pagado)}</strong></div>
-        <div class="deuda-account-value"><label>Saldo</label><strong>$${money(resumen.saldo)}</strong></div>
-        <div class="deuda-account-value"><label>A favor</label><strong>$${money(resumen.aFavor)}</strong></div>
+        <div class="deuda-account-value"><label>Debe neto</label><strong>$${money(resumen.saldo)}</strong></div>
+        <div class="deuda-account-value"><label>A favor neto</label><strong>$${money(resumen.aFavor)}</strong></div>
       </div>
     </div>
   `;
@@ -5318,6 +5370,16 @@ async function aplicarPagoGlobalCliente(){
   bloquearFormularioPagoGlobalCliente(true);
 
   try{
+    // Antes de recibir dinero nuevo, consume cualquier saldo a favor previo
+    // de la MISMA cuenta. Así Clientes e Index quedan conciliados.
+    const { data:creditoPrevio, error:errorCreditoPrevio } = await db().rpc("aplicar_saldo_favor_cliente_v1", {
+      p_cliente_id:Number(cliente.id),
+      p_tipo_pago:tipoPago,
+      p_pedido_id:null,
+      p_operador:registradoPor || null
+    });
+    if(errorCreditoPrevio) throw errorCreditoPrevio;
+
     const { data, error } = await db().rpc("registrar_pago_cliente_v1", {
       p_operacion_uuid:operacionUuid,
       p_cliente_id:Number(cliente.id),
@@ -5448,6 +5510,114 @@ async function cargarPagosGeneralesCliente(cliente){
   return pagos;
 }
 
+async function cargarAuditoriaCliente(cliente){
+  if(!cliente || !db()) return [];
+  try{
+    const encontrados = new Map();
+
+    if(cliente.id){
+      const { data, error } = await db()
+        .from("pedidos_auditoria")
+        .select("id,pedido_id,cliente_id,cliente_nombre,tipo_evento,origen,operador,cambios,detalle,created_at")
+        .eq("cliente_id", cliente.id)
+        .order("created_at", { ascending:false })
+        .limit(1000);
+      if(error) console.warn("No se pudo cargar auditoría por cliente_id:", error);
+      else (data || []).forEach(x => encontrados.set(Number(x.id), x));
+    }
+
+    if(cliente.nombre){
+      const { data, error } = await db()
+        .from("pedidos_auditoria")
+        .select("id,pedido_id,cliente_id,cliente_nombre,tipo_evento,origen,operador,cambios,detalle,created_at")
+        .ilike("cliente_nombre", cliente.nombre)
+        .order("created_at", { ascending:false })
+        .limit(1000);
+      if(error) console.warn("No se pudo cargar auditoría por nombre:", error);
+      else (data || []).forEach(x => encontrados.set(Number(x.id), x));
+    }
+
+    return [...encontrados.values()].sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  }catch(error){
+    console.warn("Error cargando auditoría:", error);
+    return [];
+  }
+}
+
+function textoValorAuditoria(valor){
+  if(valor === null || valor === undefined || valor === "") return "—";
+  if(typeof valor === "number") return Number.isFinite(valor) ? String(valor) : "—";
+  return String(valor);
+}
+
+function lineasCambiosAuditoria(cambios){
+  const obj = cambios && typeof cambios === "object" ? cambios : {};
+  return Object.values(obj).map(c => {
+    if(!c || typeof c !== "object") return "";
+    const etiqueta = c.etiqueta || c.campo || "Cambio";
+    const antes = textoValorAuditoria(c.antes);
+    const despues = textoValorAuditoria(c.despues);
+    return `<span class="account-change-line"><strong>${escapeHtml(etiqueta)}:</strong> ${escapeHtml(antes)} → ${escapeHtml(despues)}</span>`;
+  }).filter(Boolean).join("");
+}
+
+function cronologiaClienteHtml(auditoria, pagosGenerales){
+  const eventos = [];
+
+  (auditoria || []).forEach(a => {
+    eventos.push({
+      fecha:a.created_at,
+      tipo:"CAMBIO",
+      clase:"cambio",
+      titulo:`Pedido #${a.pedido_id || "—"} · ${String(a.tipo_evento || "CAMBIO").replaceAll("_"," ")}`,
+      cuerpo:(lineasCambiosAuditoria(a.cambios) || escapeHtml(a.detalle || "Cambio registrado")) +
+        (a.operador ? `<span class="account-change-line">Operador: <strong>${escapeHtml(a.operador)}</strong></span>` : "")
+    });
+  });
+
+  (pagosGenerales || []).forEach(pg => {
+    const tipo = normalizarTipoCuentaCliente(pg.tipo_pago);
+    eventos.push({
+      fecha:pg.created_at || pg.fecha_pago,
+      tipo:"PAGO RECIBIDO",
+      clase:"pago",
+      titulo:`Entrada #${pg.id || "—"} · +$${money(pg.monto_recibido)} ${tipo}`,
+      cuerpo:`<strong>${escapeHtml(pg.metodo_pago || "Método no indicado")}</strong>` +
+        (pg.registrado_por ? ` · ${escapeHtml(pg.registrado_por)}` : "") +
+        `<span class="account-change-line">Aplicado $${money(pg.monto_aplicado)} · A favor $${money(pg.saldo_a_favor)}</span>`
+    });
+
+    if(String(pg.estado || "ACTIVO").toUpperCase() === "ANULADO" && pg.anulado_en){
+      eventos.push({
+        fecha:pg.anulado_en,
+        tipo:"ANULACIÓN",
+        clase:"anulado",
+        titulo:`Entrada #${pg.id || "—"} · $${money(pg.monto_recibido)} ${tipo}`,
+        cuerpo:`Anulado por <strong>${escapeHtml(pg.anulado_por || "Roberto")}</strong>` +
+          (pg.motivo_anulacion ? `<span class="account-change-line">Motivo: ${escapeHtml(pg.motivo_anulacion)}</span>` : "")
+      });
+    }
+  });
+
+  eventos.sort((a,b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
+  if(!eventos.length) return `<div class="empty">Todavía no hay movimientos auditados</div>`;
+
+  return `
+    <div class="account-timeline">
+      <div class="account-timeline-head">Cronología de movimientos</div>
+      <div class="account-timeline-list">
+        ${eventos.map(e => `
+          <div class="account-event">
+            <div class="account-event-time">${escapeHtml(fechaHoraCortaCliente(e.fecha))}</div>
+            <div class="account-event-type ${e.clase}">${escapeHtml(e.tipo)}</div>
+            <div class="account-event-body"><strong>${escapeHtml(e.titulo)}</strong>${e.cuerpo ? `<br>${e.cuerpo}` : ""}</div>
+          </div>
+        `).join("")}
+      </div>
+      <div class="account-timeline-note">Los cambios de pedido se registran desde la activación de esta auditoría. Los pagos conservan su historial completo.</div>
+    </div>`;
+}
+
 async function verHistorialCliente(id){
   const cliente = clientesDB.find(c => Number(c.id) === Number(id));
 
@@ -5459,9 +5629,10 @@ async function verHistorialCliente(id){
   const nombreNorm = normalizar(cliente.nombre);
   const pedidos = pedidosDB.filter(p => Number(p.cliente_id || 0) === Number(cliente.id) || normalizar(p.cliente) === nombreNorm);
   const cuenta = pedidos.map(p => resumenPagoSimpleCliente(p)).filter(x => x.total > 0.009 || x.pagado > 0.009);
-  const [pagos, pagosGenerales] = await Promise.all([
+  const [pagos, pagosGenerales, auditoria] = await Promise.all([
     cargarPagosCliente(cliente),
-    cargarPagosGeneralesCliente(cliente)
+    cargarPagosGeneralesCliente(cliente),
+    cargarAuditoriaCliente(cliente)
   ]);
 
   const favorClienteDivisa = saldoFavorClientePorTipo(cliente.id, "DIVISA");
@@ -5469,16 +5640,8 @@ async function verHistorialCliente(id){
   const divisaHistBase = resumenCuentaClientePorTipo(cuenta, "DIVISA");
   const bcvHistBase = resumenCuentaClientePorTipo(cuenta, "BCV");
 
-  const divisaHist = {
-    ...divisaHistBase,
-    pagado:divisaHistBase.pagado + favorClienteDivisa,
-    aFavor:divisaHistBase.aFavor + favorClienteDivisa
-  };
-  const bcvHist = {
-    ...bcvHistBase,
-    pagado:bcvHistBase.pagado + favorClienteBcv,
-    aFavor:bcvHistBase.aFavor + favorClienteBcv
-  };
+  const divisaHist = resolverCuentaNetaCliente(divisaHistBase, favorClienteDivisa);
+  const bcvHist = resolverCuentaNetaCliente(bcvHistBase, favorClienteBcv);
 
   document.getElementById("historyTitle").textContent = `Historial · ${cliente.nombre}`;
 
@@ -5490,8 +5653,8 @@ async function verHistorialCliente(id){
       <div class="deuda-account-values">
         <div class="deuda-account-value"><label>Total</label><strong>$${money(resumen.total)}</strong></div>
         <div class="deuda-account-value"><label>Pagado</label><strong>$${money(resumen.pagado)}</strong></div>
-        <div class="deuda-account-value"><label>Saldo</label><strong>$${money(resumen.saldo)}</strong></div>
-        <div class="deuda-account-value"><label>A favor</label><strong>$${money(resumen.aFavor)}</strong></div>
+        <div class="deuda-account-value"><label>Debe neto</label><strong>$${money(resumen.saldo)}</strong></div>
+        <div class="deuda-account-value"><label>A favor neto</label><strong>$${money(resumen.aFavor)}</strong></div>
       </div>
     </div>
   `;
@@ -5669,7 +5832,8 @@ async function verHistorialCliente(id){
     }).join("")}
   ` : "";
 
-  body.innerHTML = resumenHtml + pagosGeneralesHtml + pedidosHtml + pagosAnterioresHtml;
+  const cronologiaHtml = cronologiaClienteHtml(auditoria, pagosGenerales);
+  body.innerHTML = resumenHtml + cronologiaHtml + pagosGeneralesHtml + pedidosHtml + pagosAnterioresHtml;
 
   document.getElementById("historyBackdrop").style.display = "flex";
 }
