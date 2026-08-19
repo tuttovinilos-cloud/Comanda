@@ -1,454 +1,181 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>POV Holograma · ESP32-S3 Zero</title>
+<div id="povRpmSim">
 <style>
-*{box-sizing:border-box}
-:root{
-  --bg:#eef1f6;
-  --panel:#ffffff;
-  --text:#111827;
-  --muted:#6b7280;
-  --line:#e5e7eb;
-  --dark:#101827;
-  --accent:#2563eb;
-  --green:#16a34a;
-  --orange:#f59e0b;
-  --red:#dc2626;
-}
-body{
-  margin:0;
-  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  background:
-    radial-gradient(circle at top left,rgba(37,99,235,.10),transparent 26%),
-    var(--bg);
-  color:var(--text)
-}
-.wrap{max-width:1250px;margin:auto;padding:22px}
-.header{
-  display:flex;justify-content:space-between;align-items:center;gap:16px;
-  margin-bottom:18px
-}
-.brand{display:flex;align-items:center;gap:12px}
-.logo{
-  width:48px;height:48px;border-radius:15px;background:var(--dark);color:white;
-  display:grid;place-items:center;font-weight:900;font-size:15px
-}
-h1{margin:0;font-size:24px;letter-spacing:-.03em}
-.sub{color:var(--muted);font-size:13px;margin-top:3px}
-.badge{
-  padding:9px 13px;border-radius:999px;background:#fff;border:1px solid var(--line);
-  font-size:12px;font-weight:800;display:flex;align-items:center;gap:7px
-}
-.dot{width:8px;height:8px;border-radius:50%;background:#94a3b8}
-.layout{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
-.card{
-  background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:20px;
-  box-shadow:0 16px 40px rgba(15,23,42,.08)
-}
-.title{
-  font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.10em;
-  color:#7b8494;margin-bottom:14px
-}
-.preview-card{min-height:610px}
-.stage{
-  min-height:480px;border-radius:20px;background:
-    radial-gradient(circle at center,#172033 0,#0f172a 48%,#090e18 100%);
-  display:grid;place-items:center;position:relative;overflow:hidden;
-  border:1px solid #222c3f
-}
-.disc{
-  position:relative;width:min(78vw,440px);aspect-ratio:1;border-radius:50%;
-  border:1px solid rgba(255,255,255,.13);
-  box-shadow:inset 0 0 40px rgba(255,255,255,.03),0 0 70px rgba(37,99,235,.08);
-}
-.disc:before,.disc:after{
-  content:"";position:absolute;inset:9%;border:1px solid rgba(255,255,255,.05);border-radius:50%
-}
-.disc:after{inset:27%}
-.cross{position:absolute;inset:0;transition:transform .15s linear}
-.arm{
-  position:absolute;left:50%;top:50%;transform-origin:0 50%;
-  width:42%;height:28px;display:flex;align-items:center;justify-content:space-around;
-  padding-left:14px
-}
-.arm.r{transform:translateY(-50%) rotate(0deg)}
-.arm.d{transform:translateY(-50%) rotate(90deg)}
-.arm.l{transform:translateY(-50%) rotate(180deg)}
-.arm.u{transform:translateY(-50%) rotate(270deg)}
-.led{
-  width:14px;height:14px;border-radius:50%;background:#263144;
-  box-shadow:none;transition:.08s
-}
-.hub{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:56px;height:56px;border-radius:50%;background:#0b1220;border:3px solid #334155;
-  box-shadow:0 0 0 7px rgba(255,255,255,.03)
-}
-.angle-line{
-  position:absolute;left:50%;top:50%;width:46%;height:2px;background:#f59e0b;
-  transform-origin:0 50%;opacity:.8
-}
-.sensor{
-  position:absolute;left:50%;top:2%;transform:translateX(-50%);
-  font-size:10px;font-weight:900;color:#fbbf24;background:rgba(245,158,11,.12);
-  border:1px solid rgba(245,158,11,.35);padding:5px 8px;border-radius:999px
-}
-.image-preview{
-  position:absolute;inset:0;display:grid;place-items:center;pointer-events:none
-}
-.image-preview img{
-  max-width:54%;max-height:54%;object-fit:contain;opacity:.75;filter:drop-shadow(0 0 8px rgba(255,255,255,.2))
-}
-.empty-logo{
-  color:rgba(255,255,255,.35);font-size:12px;text-align:center;line-height:1.5
-}
-.stats{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px
-}
-.stat{
-  background:#f8fafc;border:1px solid var(--line);border-radius:15px;padding:12px
-}
-.stat b{display:block;font-size:20px}
-.stat span{font-size:11px;color:var(--muted)}
-.controls{display:grid;gap:18px}
-.group{padding-bottom:18px;border-bottom:1px solid var(--line)}
-.group:last-child{border-bottom:0;padding-bottom:0}
-.rowhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
-.label{font-size:14px;font-weight:850}
-.value{font-size:13px;color:var(--muted);font-weight:800}
-input[type=range]{width:100%;accent-color:var(--dark)}
-input[type=number],select{
-  width:100%;height:43px;border:1px solid var(--line);border-radius:12px;padding:0 12px;
-  font:inherit;background:white;color:var(--text)
-}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.upload{
-  border:1.5px dashed #cbd5e1;border-radius:16px;padding:16px;text-align:center;
-  background:#f8fafc;cursor:pointer
-}
-.upload input{display:none}
-.upload strong{display:block;font-size:14px}
-.upload span{display:block;color:var(--muted);font-size:12px;margin-top:5px}
-.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-button{
-  border:0;border-radius:13px;padding:12px 14px;font:inherit;font-weight:850;cursor:pointer
-}
-.primary{background:var(--dark);color:white}
-.secondary{background:#eef2f7;color:#172033;border:1px solid var(--line)}
-.smallrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.smallrow button{padding:10px 7px;font-size:12px}
-.switchrow{display:flex;justify-content:space-between;align-items:center}
-.switch{
-  width:54px;height:30px;border-radius:999px;background:#d8dee8;padding:3px;cursor:pointer
-}
-.switch:before{
-  content:"";display:block;width:24px;height:24px;background:white;border-radius:50%;
-  transition:.2s;box-shadow:0 2px 8px rgba(0,0,0,.15)
-}
-.switch.on{background:#111827}
-.switch.on:before{transform:translateX(24px)}
-.note{
-  margin-top:16px;padding:13px 14px;border-radius:15px;background:#fff7ed;color:#9a3412;
-  border:1px solid #fed7aa;font-size:12px;line-height:1.55
-}
-@media(max-width:900px){
-  .layout{grid-template-columns:1fr}
-  .preview-card{min-height:auto}
-}
-@media(max-width:600px){
-  .wrap{padding:12px}
-  .header{align-items:flex-start}
-  h1{font-size:20px}
-  .stats{grid-template-columns:1fr 1fr}
-  .card{padding:15px;border-radius:18px}
-}
+#povRpmSim{background:#070a0f;color:#f3f6fb;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;padding:20px;border-radius:0;min-height:650px}
+#povRpmSim *{box-sizing:border-box}
+#povRpmSim .shell{max-width:1120px;margin:auto;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);gap:18px}
+#povRpmSim .viewer,#povRpmSim .controls{background:#11161e;border:1px solid #252d39;border-radius:22px}
+#povRpmSim .viewer{padding:16px;min-width:0}
+#povRpmSim .controls{padding:18px;display:flex;flex-direction:column;gap:18px}
+#povRpmSim .head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
+#povRpmSim .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.13em;font-weight:850;color:#778293}
+#povRpmSim .title{font-size:20px;font-weight:900;margin-top:3px}
+#povRpmSim .badge{padding:8px 11px;border-radius:999px;background:#3d1d20;color:#ff9da5;font-size:12px;font-weight:850;white-space:nowrap}
+#povRpmSim .badge.mid{background:#413516;color:#ffd96c}
+#povRpmSim .badge.good{background:#163c2a;color:#8cf1b4}
+#povRpmSim .stage{position:relative;background:#010204;border:1px solid #202733;border-radius:18px;overflow:hidden;aspect-ratio:1;width:100%}
+#povRpmSim canvas{display:block;width:100%;height:100%}
+#povRpmSim .stats{position:absolute;left:10px;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;pointer-events:none}
+#povRpmSim .stat{background:rgba(4,7,12,.76);border:1px solid rgba(255,255,255,.09);backdrop-filter:blur(7px);border-radius:11px;padding:8px 9px;color:#fff}
+#povRpmSim .stat b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+#povRpmSim .stat span{font-size:9px;color:#9da9ba;text-transform:uppercase;letter-spacing:.08em}
+#povRpmSim .upload{display:grid;gap:8px}
+#povRpmSim .uploadBox{position:relative;border:1.5px dashed #394452;border-radius:15px;padding:15px;text-align:center;background:#0c1118;cursor:pointer;min-height:92px;display:grid;place-items:center}
+#povRpmSim .uploadBox input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+#povRpmSim .uploadText{font-size:13px;font-weight:800}
+#povRpmSim .uploadText small{display:block;color:#7d8795;font-weight:600;margin-top:4px}
+#povRpmSim .group{display:grid;gap:8px}
+#povRpmSim .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#povRpmSim label{font-size:13px;font-weight:800}
+#povRpmSim .value{font-size:13px;font-weight:900;font-variant-numeric:tabular-nums}
+#povRpmSim input[type=range]{width:100%;accent-color:#5a7cff}
+#povRpmSim .bigRpm{font-size:34px;font-weight:950;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+#povRpmSim .bigRpm small{font-size:13px;color:#7e8998;letter-spacing:0;margin-left:4px}
+#povRpmSim .buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#povRpmSim button{min-height:44px;border-radius:12px;border:1px solid #313a47;background:#171e28;color:inherit;font-weight:850;cursor:pointer}
+#povRpmSim button.primary{background:#5a7cff;color:white;border-color:#5a7cff}
+#povRpmSim .help{font-size:11px;line-height:1.5;color:#7f8a99}
+#povRpmSim .meter{height:8px;background:#252d38;border-radius:999px;overflow:hidden}
+#povRpmSim .meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#e45d67,#e5b649,#48c779);transition:width .12s}
+@media(max-width:760px){#povRpmSim{padding:12px}#povRpmSim .shell{grid-template-columns:1fr}#povRpmSim .bigRpm{font-size:30px}}
 </style>
-</head>
-<body>
-<div class="wrap">
-  <div class="header">
-    <div class="brand">
-      <div class="logo">POV</div>
-      <div>
-        <h1>Holograma ESP32-S3 Zero</h1>
-        <div class="sub">Prototipo cruz · 6 LEDs por brazo · 24 LEDs</div>
-      </div>
+
+<div class="shell">
+<section class="viewer">
+  <div class="head">
+    <div><div class="eyebrow">Simulación física</div><div class="title">Lo que vería tu ojo</div></div>
+    <div id="quality" class="badge">No se forma</div>
+  </div>
+  <div class="stage">
+    <canvas id="display" width="760" height="760" aria-label="Vista simulada del holograma POV"></canvas>
+    <div class="stats">
+      <div class="stat"><b id="sRpm">300</b><span>RPM</span></div>
+      <div class="stat"><b id="sRev">200 ms</b><span>Tiempo/vuelta</span></div>
+      <div class="stat"><b id="sHz">5.0 Hz</b><span>Vueltas/seg</span></div>
     </div>
-    <div class="badge"><span class="dot"></span> Simulador local</div>
+  </div>
+</section>
+
+<aside class="controls">
+  <div class="upload">
+    <div class="eyebrow">1 · Imagen</div>
+    <label class="uploadBox">
+      <input id="file" type="file" accept="image/*">
+      <span class="uploadText">Seleccionar imagen<small>PNG, JPG, WEBP…</small></span>
+    </label>
   </div>
 
-  <div class="layout">
-    <section class="card preview-card">
-      <div class="title">Vista previa</div>
-
-      <div class="stage">
-        <div class="disc">
-          <div class="sensor">0° · SENSOR HALL</div>
-          <div class="angle-line" id="angleLine"></div>
-
-          <div class="cross" id="cross">
-            <div class="arm r" id="armR"></div>
-            <div class="arm d" id="armD"></div>
-            <div class="arm l" id="armL"></div>
-            <div class="arm u" id="armU"></div>
-          </div>
-
-          <div class="hub"></div>
-
-          <div class="image-preview" id="imagePreview">
-            <div class="empty-logo" id="emptyLogo">Sube una imagen<br>PNG o JPG</div>
-            <img id="uploadedImage" style="display:none">
-          </div>
-        </div>
-      </div>
-
-      <div class="stats">
-        <div class="stat"><b id="rpmStat">360</b><span>RPM</span></div>
-        <div class="stat"><b id="rpsStat">6.0</b><span>vueltas/seg</span></div>
-        <div class="stat"><b id="columnsStat">120</b><span>columnas/vuelta</span></div>
-        <div class="stat"><b id="hzStat">720</b><span>actualizaciones/seg</span></div>
-      </div>
-
-      <div class="note">
-        La imagen de esta pantalla es una simulación visual. En el ESP32 real, el sensor Hall marca el inicio de cada vuelta y el firmware dispara una columna distinta de LEDs según el ángulo.
-      </div>
-    </section>
-
-    <section class="card controls">
-      <div class="title">Calibración POV</div>
-
-      <div class="group">
-        <div class="label" style="margin-bottom:10px">Imagen fija</div>
-        <label class="upload">
-          <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp">
-          <strong>Seleccionar imagen</strong>
-          <span>PNG, JPG o WEBP</span>
-        </label>
-      </div>
-
-      <div class="group">
-        <div class="rowhead">
-          <span class="label">RPM del motor</span>
-          <span class="value" id="rpmVal">360 RPM</span>
-        </div>
-        <input type="range" id="rpm" min="60" max="1200" value="360" step="10">
-      </div>
-
-      <div class="group">
-        <div class="rowhead">
-          <span class="label">Columnas por vuelta</span>
-          <span class="value" id="columnsVal">120</span>
-        </div>
-        <input type="range" id="columns" min="24" max="240" value="120" step="4">
-      </div>
-
-      <div class="group">
-        <div class="rowhead">
-          <span class="label">Ángulo de calibración</span>
-          <span class="value" id="angleVal">0°</span>
-        </div>
-        <input type="range" id="angle" min="0" max="359" value="0">
-
-        <div class="smallrow" style="margin-top:10px">
-          <button class="secondary" id="minus5">−5°</button>
-          <button class="secondary" id="zeroAngle">0°</button>
-          <button class="secondary" id="plus5">+5°</button>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="grid2">
-          <div>
-            <div class="rowhead">
-              <span class="label">Brillo</span>
-              <span class="value" id="brightnessVal">70%</span>
-            </div>
-            <input type="range" id="brightness" min="1" max="100" value="70">
-          </div>
-
-          <div>
-            <div class="rowhead">
-              <span class="label">Tamaño imagen</span>
-              <span class="value" id="sizeVal">54%</span>
-            </div>
-            <input type="range" id="size" min="15" max="90" value="54">
-          </div>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="switchrow">
-          <div>
-            <div class="label">Simular giro</div>
-            <div class="sub">Animación visual del rotor</div>
-          </div>
-          <div class="switch on" id="spinSwitch"></div>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="label" style="margin-bottom:10px">Prueba de brazos</div>
-        <div class="smallrow">
-          <button class="secondary armtest" data-test="u">Arriba</button>
-          <button class="secondary armtest" data-test="r">Derecha</button>
-          <button class="secondary armtest" data-test="d">Abajo</button>
-        </div>
-        <div class="smallrow" style="margin-top:8px">
-          <button class="secondary armtest" data-test="l">Izquierda</button>
-          <button class="secondary" id="allOn">Todos</button>
-          <button class="secondary" id="allOff">Apagar</button>
-        </div>
-      </div>
-
-      <div class="btnrow">
-        <button class="secondary" id="resetBtn">Restablecer</button>
-        <button class="primary" id="sendBtn">Enviar al ESP32</button>
-      </div>
-    </section>
+  <div class="group">
+    <div class="eyebrow">2 · Aumenta las RPM</div>
+    <div class="bigRpm"><span id="rpmBig">300</span><small>RPM</small></div>
+    <input id="rpm" type="range" min="60" max="5000" step="10" value="300" aria-label="RPM">
+    <div class="meter"><i id="meter"></i></div>
   </div>
+
+  <div class="group">
+    <div class="row"><label for="persistence">Persistencia visual</label><span id="persistVal" class="value">20 ms</span></div>
+    <input id="persistence" type="range" min="8" max="50" step="1" value="20">
+  </div>
+
+  <div class="group">
+    <div class="row"><label for="leds">LEDs en el brazo</label><span id="ledsVal" class="value">60</span></div>
+    <input id="leds" type="range" min="16" max="120" step="1" value="60">
+  </div>
+
+  <div class="buttons">
+    <button id="reset" type="button">Bajar RPM</button>
+    <button id="pause" type="button" class="primary">Pausar</button>
+  </div>
+
+  <div class="help">Con una sola barra, alrededor de <b>3000 RPM</b> equivale a unas 50 vueltas por segundo. La imagen cargada se convierte en puntos radiales, igual que lo harían los LEDs físicos al girar.</div>
+</aside>
 </div>
 
 <script>
-const rpm=document.getElementById('rpm');
-const columns=document.getElementById('columns');
-const angle=document.getElementById('angle');
-const brightness=document.getElementById('brightness');
-const size=document.getElementById('size');
-const cross=document.getElementById('cross');
-const angleLine=document.getElementById('angleLine');
-const img=document.getElementById('uploadedImage');
-const emptyLogo=document.getElementById('emptyLogo');
+(()=>{
+const root=document.getElementById('povRpmSim');
+if(root.dataset.init)return;root.dataset.init='1';
+const $=s=>root.querySelector(s);
+const cvs=$('#display'),ctx=cvs.getContext('2d');
+const trail=document.createElement('canvas');trail.width=cvs.width;trail.height=cvs.height;
+const tctx=trail.getContext('2d');
+const src=document.createElement('canvas');src.width=512;src.height=512;
+const sctx=src.getContext('2d',{willReadFrequently:true});
+let imgData=null,angle=0,last=performance.now(),running=true;
 
-let spinning=true;
-let rot=0;
-let last=performance.now();
+function placeholder(){
+ sctx.clearRect(0,0,512,512);sctx.fillStyle='#020407';sctx.fillRect(0,0,512,512);
+ sctx.save();sctx.translate(256,256);
+ sctx.strokeStyle='#32cfff';sctx.lineWidth=8;sctx.beginPath();sctx.arc(0,0,190,0,Math.PI*2);sctx.stroke();
+ sctx.fillStyle='#fff';sctx.textAlign='center';sctx.textBaseline='middle';sctx.font='900 54px Arial';sctx.fillText('TUTTO',0,-18);
+ sctx.fillStyle='#36d8ff';sctx.font='800 28px Arial';sctx.fillText('POV',0,45);sctx.restore();
+ imgData=sctx.getImageData(0,0,512,512);
+}
 
-['R','D','L','U'].forEach(k=>{
-  const arm=document.getElementById('arm'+k);
-  for(let i=0;i<6;i++){
-    const led=document.createElement('div');
-    led.className='led';
-    arm.appendChild(led);
+function loadImage(file){
+ const fr=new FileReader();
+ fr.onload=e=>{const im=new Image();im.onload=()=>{
+   sctx.fillStyle='#000';sctx.fillRect(0,0,512,512);
+   const scale=Math.min(512/im.width,512/im.height);const w=im.width*scale,h=im.height*scale;
+   sctx.drawImage(im,(512-w)/2,(512-h)/2,w,h);
+   imgData=sctx.getImageData(0,0,512,512);tctx.clearRect(0,0,760,760);
+ };im.src=e.target.result};fr.readAsDataURL(file);
+}
+
+function sample(a){
+ if(!imgData)return;
+ const leds=Number($('#leds').value),cx=380,cy=380,maxR=326;
+ tctx.save();tctx.globalCompositeOperation='lighter';
+ for(let i=0;i<leds;i++){
+  const r=(i/(leds-1))*maxR;
+  const nx=Math.cos(a),ny=Math.sin(a);
+  const sx=Math.round(256+(r/maxR)*245*nx),sy=Math.round(256+(r/maxR)*245*ny);
+  const p=(Math.max(0,Math.min(511,sy))*512+Math.max(0,Math.min(511,sx)))*4;
+  const rr=imgData.data[p],gg=imgData.data[p+1],bb=imgData.data[p+2];
+  const lum=Math.max(rr,gg,bb)/255;
+  if(lum>.025){
+    const x=cx+r*nx,y=cy+r*ny;
+    tctx.fillStyle=`rgba(${rr},${gg},${bb},${Math.max(.08,lum)})`;
+    tctx.shadowColor=`rgb(${rr},${gg},${bb})`;tctx.shadowBlur=7;
+    tctx.beginPath();tctx.arc(x,y,2.1,0,Math.PI*2);tctx.fill();
   }
-});
-
-function updateStats(){
-  const r=Number(rpm.value);
-  const c=Number(columns.value);
-  const rps=r/60;
-  const hz=rps*c;
-
-  document.getElementById('rpmVal').textContent=r+' RPM';
-  document.getElementById('columnsVal').textContent=c;
-  document.getElementById('angleVal').textContent=angle.value+'°';
-  document.getElementById('brightnessVal').textContent=brightness.value+'%';
-  document.getElementById('sizeVal').textContent=size.value+'%';
-
-  document.getElementById('rpmStat').textContent=r;
-  document.getElementById('rpsStat').textContent=rps.toFixed(1);
-  document.getElementById('columnsStat').textContent=c;
-  document.getElementById('hzStat').textContent=Math.round(hz);
-
-  angleLine.style.transform=`rotate(${angle.value-90}deg)`;
-  if(img.src) img.style.maxWidth=size.value+'%';
-  if(img.src) img.style.maxHeight=size.value+'%';
+ }
+ tctx.restore();
 }
 
-[rpm,columns,angle,brightness,size].forEach(el=>el.addEventListener('input',updateStats));
-
-document.getElementById('minus5').onclick=()=>{
-  angle.value=(Number(angle.value)-5+360)%360;updateStats()
-}
-document.getElementById('plus5').onclick=()=>{
-  angle.value=(Number(angle.value)+5)%360;updateStats()
-}
-document.getElementById('zeroAngle').onclick=()=>{angle.value=0;updateStats()}
-
-document.getElementById('fileInput').addEventListener('change',e=>{
-  const file=e.target.files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    img.src=ev.target.result;
-    img.style.display='block';
-    emptyLogo.style.display='none';
-    updateStats();
-  }
-  reader.readAsDataURL(file);
-});
-
-function setAll(color){
-  document.querySelectorAll('.led').forEach(led=>{
-    led.style.background=color;
-    led.style.boxShadow=color==='#263144'?'none':`0 0 14px ${color}`;
-    led.style.opacity=brightness.value/100;
-  });
-}
-function testArm(key){
-  setAll('#263144');
-  const map={u:'armU',r:'armR',d:'armD',l:'armL'};
-  document.querySelectorAll('#'+map[key]+' .led').forEach(led=>{
-    led.style.background='#4da3ff';
-    led.style.boxShadow='0 0 16px #4da3ff';
-    led.style.opacity=brightness.value/100;
-  });
-}
-document.querySelectorAll('.armtest').forEach(b=>b.onclick=()=>testArm(b.dataset.test));
-document.getElementById('allOn').onclick=()=>setAll('#4da3ff');
-document.getElementById('allOff').onclick=()=>setAll('#263144');
-
-document.getElementById('spinSwitch').onclick=function(){
-  spinning=!spinning;
-  this.classList.toggle('on',spinning);
-};
-
-document.getElementById('resetBtn').onclick=()=>{
-  rpm.value=360;
-  columns.value=120;
-  angle.value=0;
-  brightness.value=70;
-  size.value=54;
-  setAll('#263144');
-  updateStats();
-};
-
-document.getElementById('sendBtn').onclick=async()=>{
-  const config={
-    rpm:Number(rpm.value),
-    columns:Number(columns.value),
-    angleOffset:Number(angle.value),
-    brightness:Number(brightness.value),
-    imageSize:Number(size.value)
-  };
-  try{
-    const res=await fetch('/api/pov',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(config)
-    });
-    alert(res.ok?'Configuración enviada al ESP32':'No se pudo enviar');
-  }catch(e){
-    alert('Vista previa local. El ESP32 todavía no está conectado.');
-  }
-};
-
-function animate(t){
-  const dt=(t-last)/1000;
-  last=t;
-  if(spinning){
-    const degPerSec=Number(rpm.value)*6;
-    rot=(rot+degPerSec*dt)%360;
-    cross.style.transform=`rotate(${rot}deg)`;
-  }
-  requestAnimationFrame(animate);
+function updateInfo(){
+ const rpm=Number($('#rpm').value),persist=Number($('#persistence').value),hz=rpm/60,rev=60000/rpm;
+ $('#rpmBig').textContent=rpm;$('#sRpm').textContent=rpm;$('#sHz').textContent=hz.toFixed(1)+' Hz';$('#sRev').textContent=Math.round(rev)+' ms';
+ $('#persistVal').textContent=persist+' ms';$('#ledsVal').textContent=$('#leds').value;
+ const ratio=Math.min(1,persist/rev);$('#meter').style.width=(ratio*100)+'%';
+ const q=$('#quality');
+ if(ratio>.82){q.textContent='Imagen continua';q.className='badge good'}
+ else if(ratio>.38){q.textContent='Ya empieza a verse';q.className='badge mid'}
+ else{q.textContent='No se forma';q.className='badge'}
 }
 
-updateStats();
-setAll('#4da3ff');
-requestAnimationFrame(animate);
+function frame(now){
+ const dt=Math.min(.04,(now-last)/1000);last=now;
+ const rpm=Number($('#rpm').value),persist=Number($('#persistence').value);
+ if(running){
+  const old=angle;angle=(angle+dt*rpm/60*Math.PI*2)%(Math.PI*2);
+  let d=angle-old;if(d<0)d+=Math.PI*2;
+  const samples=Math.max(1,Math.min(100,Math.ceil(d/(Math.PI/720))));
+  for(let j=1;j<=samples;j++)sample(old+d*j/samples);
+ }
+ const fade=Math.min(.9,Math.max(.008,dt*1000/persist));
+ tctx.save();tctx.globalCompositeOperation='destination-out';tctx.fillStyle=`rgba(0,0,0,${fade})`;tctx.fillRect(0,0,760,760);tctx.restore();
+ ctx.fillStyle='#010204';ctx.fillRect(0,0,760,760);ctx.drawImage(trail,0,0);
+ ctx.save();ctx.strokeStyle='rgba(120,140,165,.20)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(380,380,326,0,Math.PI*2);ctx.stroke();
+ ctx.strokeStyle='rgba(180,195,215,.42)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(380,380);ctx.lineTo(380+Math.cos(angle)*326,380+Math.sin(angle)*326);ctx.stroke();
+ ctx.fillStyle='#687486';ctx.beginPath();ctx.arc(380,380,13,0,Math.PI*2);ctx.fill();ctx.restore();
+ requestAnimationFrame(frame);
+}
+
+$('#file').addEventListener('change',e=>{if(e.target.files&&e.target.files[0])loadImage(e.target.files[0])});
+['rpm','persistence','leds'].forEach(id=>$('#'+id).addEventListener('input',updateInfo));
+$('#reset').addEventListener('click',()=>{$('#rpm').value=300;tctx.clearRect(0,0,760,760);updateInfo()});
+$('#pause').addEventListener('click',()=>{running=!running;$('#pause').textContent=running?'Pausar':'Continuar'});
+placeholder();updateInfo();requestAnimationFrame(frame);
+})();
 </script>
-</body>
-</html>
+</div>
