@@ -3,113 +3,477 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prueba de Parpadeo</title>
+<title>Juego de Cobertura Circular</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b0f16;color:#fff;font-family:Arial,Helvetica,sans-serif}
-.app{width:min(620px,calc(100% - 24px));background:#131a24;border:1px solid #273142;border-radius:22px;padding:22px}
-h1{margin:0 0 4px;font-size:22px}.sub{color:#8895a7;font-size:13px;margin-bottom:22px}
-.stage{min-height:360px;display:grid;place-items:center;background:#070a0f;border-radius:18px;border:1px solid #222b38;margin-bottom:22px}
-.bulbWrap{display:grid;place-items:center;gap:12px}
-.bulb{position:relative;width:150px;height:150px;border-radius:50%;background:#252b35;border:3px solid #343d4a;transition:background .01s linear,box-shadow .01s linear}
-.bulb.on{background:#fff7c4;border-color:#fff3a1;box-shadow:0 0 30px rgba(255,239,130,.9),0 0 75px rgba(255,225,90,.65),0 0 140px rgba(255,212,55,.35)}
-.base{width:68px;height:74px;margin-top:-18px;background:linear-gradient(#aab2bd,#66717f);border-radius:10px 10px 22px 22px;position:relative}
-.base:before,.base:after{content:"";position:absolute;left:8px;right:8px;height:5px;background:#424c59;border-radius:5px}
-.base:before{top:20px}.base:after{top:38px}
-.status{font-size:13px;color:#9aa6b5}
-.controls{display:grid;gap:18px}.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
-label{font-size:14px;font-weight:700}.value{font-size:28px;font-weight:900}.value small{font-size:12px;color:#8b97a7;font-weight:700}
-input[type=range]{width:100%;accent-color:#5b7cff}
-.quick{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
-.quick button,.buttons button{min-height:42px;border:1px solid #344052;background:#192230;color:#fff;border-radius:10px;font-weight:800;cursor:pointer}
-.info{padding:12px 14px;background:#0d131c;border:1px solid #273240;border-radius:12px;font-size:12px;line-height:1.5;color:#98a4b3}
-.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}.buttons .primary{background:#5b7cff;border-color:#5b7cff}
-@media(max-width:480px){.app{padding:14px}.stage{min-height:300px}.bulb{width:125px;height:125px}.quick{grid-template-columns:repeat(3,1fr)}}
+body{
+  margin:0;
+  background:#eef1f5;
+  color:#172033;
+  font-family:Arial,Helvetica,sans-serif;
+}
+.app{
+  width:min(1000px,calc(100% - 20px));
+  margin:20px auto;
+}
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px;
+  margin-bottom:14px;
+}
+h1{
+  margin:0;
+  font-size:22px;
+}
+.sub{
+  margin-top:5px;
+  color:#6d7788;
+  font-size:13px;
+}
+.status{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:white;
+  border:1px solid #dde2e9;
+  border-radius:16px;
+  padding:10px 14px;
+}
+.bulb{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  background:#cbd1da;
+  border:3px solid #aeb6c2;
+  box-shadow:inset 0 0 10px rgba(0,0,0,.14);
+  transition:.15s;
+}
+.bulb.on{
+  background:#2bd86f;
+  border-color:#19ac51;
+  box-shadow:
+    0 0 14px rgba(43,216,111,.9),
+    0 0 34px rgba(43,216,111,.55);
+}
+.statusText b{
+  display:block;
+  font-size:18px;
+}
+.statusText span{
+  display:block;
+  color:#7a8493;
+  font-size:11px;
+  margin-top:2px;
+}
+.panel{
+  background:white;
+  border:1px solid #dde2e9;
+  border-radius:20px;
+  padding:14px;
+}
+.stage{
+  position:relative;
+  width:100%;
+  height:650px;
+  overflow:hidden;
+  border-radius:16px;
+  background:
+    linear-gradient(#f8fafc,#f8fafc),
+    repeating-linear-gradient(0deg,transparent,transparent 19px,#edf0f4 20px),
+    repeating-linear-gradient(90deg,transparent,transparent 19px,#edf0f4 20px);
+  border:1px solid #e3e7ed;
+  touch-action:none;
+}
+.target{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:260px;
+  height:260px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:rgba(20,28,42,.08);
+  border:4px solid #172033;
+  pointer-events:none;
+}
+.target::after{
+  content:"CÍRCULO OBJETIVO";
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  color:#172033;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.08em;
+  opacity:.5;
+}
+.piece{
+  position:absolute;
+  width:230px;
+  height:230px;
+  border-radius:50%;
+  border:3px solid currentColor;
+  cursor:grab;
+  user-select:none;
+  touch-action:none;
+  display:grid;
+  place-items:center;
+  font-size:34px;
+  font-weight:900;
+  color:#fff;
+  box-shadow:0 10px 25px rgba(0,0,0,.15);
+}
+.piece:active{cursor:grabbing}
+.p1{
+  left:25px;
+  top:35px;
+  background:rgba(78,121,255,.72);
+  color:#3359d5;
+}
+.p2{
+  right:25px;
+  top:35px;
+  background:rgba(255,100,100,.72);
+  color:#d94b4b;
+}
+.p3{
+  left:25px;
+  bottom:25px;
+  background:rgba(255,190,65,.76);
+  color:#d99b24;
+}
+.piece span{
+  color:white;
+  text-shadow:0 1px 3px rgba(0,0,0,.35);
+  pointer-events:none;
+}
+.footer{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-top:14px;
+}
+.coverage{
+  font-size:15px;
+  color:#657083;
+}
+.coverage b{
+  color:#172033;
+  font-size:20px;
+}
+button{
+  min-height:42px;
+  padding:0 18px;
+  border:0;
+  border-radius:11px;
+  background:#172033;
+  color:white;
+  font-weight:800;
+  cursor:pointer;
+}
+.legend{
+  margin-top:10px;
+  font-size:11px;
+  color:#858f9f;
+}
+@media(max-width:700px){
+  .app{margin:10px auto}
+  .top{align-items:flex-start;flex-direction:column}
+  .status{width:100%}
+  .stage{height:560px}
+  .piece{width:180px;height:180px}
+  .target{width:220px;height:220px}
+  .footer{align-items:flex-start;flex-direction:column}
+}
 </style>
 </head>
 <body>
-<div class="app">
-  <h1>Prueba de parpadeo</h1>
-  <div class="sub">Ajusta cuántas veces por segundo se enciende y apaga el bombillo.</div>
 
-  <div class="stage">
-    <div class="bulbWrap">
-      <div id="bulb" class="bulb on"></div>
-      <div class="base"></div>
-      <div id="status" class="status">Encendido</div>
+<div class="app">
+
+  <div class="top">
+    <div>
+      <h1>Cobertura del círculo</h1>
+      <div class="sub">Arrastra las 3 piezas hasta cubrir completamente el círculo central.</div>
+    </div>
+
+    <div class="status">
+      <div id="bulb" class="bulb"></div>
+      <div class="statusText">
+        <b id="statusPercent">0.0%</b>
+        <span id="statusLabel">Aún falta cobertura</span>
+      </div>
     </div>
   </div>
 
-  <div class="controls">
-    <div>
-      <div class="row">
-        <label for="hz">Frecuencia</label>
-        <div class="value"><span id="hzValue">1</span><small> Hz</small></div>
+  <div class="panel">
+
+    <div id="stage" class="stage">
+
+      <div id="target" class="target"></div>
+
+      <div class="piece p1" data-id="1">
+        <span>1</span>
       </div>
-      <input id="hz" type="range" min="0.2" max="120" step="0.1" value="1">
+
+      <div class="piece p2" data-id="2">
+        <span>2</span>
+      </div>
+
+      <div class="piece p3" data-id="3">
+        <span>3</span>
+      </div>
+
     </div>
 
-    <div class="quick">
-      <button type="button" data-hz="1">1 Hz</button>
-      <button type="button" data-hz="10">10 Hz</button>
-      <button type="button" data-hz="30">30 Hz</button>
-      <button type="button" data-hz="60">60 Hz</button>
-      <button type="button" data-hz="100">100 Hz</button>
+    <div class="footer">
+      <div class="coverage">
+        Cobertura actual:
+        <b id="coverage">0.0%</b>
+      </div>
+
+      <button id="reset" type="button">Reiniciar piezas</button>
     </div>
 
-    <div class="info">
-      <b id="periodText">1 ciclo cada 1000 ms</b><br>
-      Cada ciclo tiene una fase encendida y una apagada.
+    <div class="legend">
+      Círculo objetivo: 260 px de diámetro · Cada pieza: 230 px de diámetro.
+      El bombillo se enciende cuando la cobertura calculada alcanza el 100%.
     </div>
 
-    <div class="buttons">
-      <button id="stopBtn" type="button">Detener</button>
-      <button id="resumeBtn" class="primary" type="button">Continuar</button>
-    </div>
   </div>
 </div>
 
 <script>
-const bulb=document.getElementById("bulb");
-const hzInput=document.getElementById("hz");
-const hzValue=document.getElementById("hzValue");
-const periodText=document.getElementById("periodText");
-const statusText=document.getElementById("status");
-let running=true;
-let startTime=performance.now();
+(() => {
 
-function updateInfo(){
-  const hz=Number(hzInput.value);
-  hzValue.textContent=hz<10?hz.toFixed(1).replace(".0",""):hz.toFixed(0);
-  const period=1000/hz;
-  periodText.textContent="1 ciclo cada "+(period>=100?period.toFixed(0):period.toFixed(1))+" ms";
-}
+const stage = document.getElementById("stage");
+const target = document.getElementById("target");
+const pieces = [...document.querySelectorAll(".piece")];
 
-function animate(now){
-  const hz=Number(hzInput.value);
-  if(running){
-    const elapsed=(now-startTime)/1000;
-    const phase=(elapsed*hz)%1;
-    const on=phase<0.5;
-    bulb.classList.toggle("on",on);
-    statusText.textContent=on?"Encendido":"Apagado";
-  }
-  requestAnimationFrame(animate);
-}
+const coverageText = document.getElementById("coverage");
+const statusPercent = document.getElementById("statusPercent");
+const statusLabel = document.getElementById("statusLabel");
+const bulb = document.getElementById("bulb");
 
-hzInput.addEventListener("input",()=>{startTime=performance.now();updateInfo();});
-document.querySelectorAll("[data-hz]").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    hzInput.value=btn.dataset.hz;
-    startTime=performance.now();
-    updateInfo();
+let dragPiece = null;
+let grabDX = 0;
+let grabDY = 0;
+
+const originalPositions = [];
+
+function saveOriginalPositions(){
+  pieces.forEach(piece => {
+    originalPositions.push({
+      left: piece.offsetLeft,
+      top: piece.offsetTop
+    });
   });
-});
-document.getElementById("stopBtn").addEventListener("click",()=>{running=false;bulb.classList.remove("on");statusText.textContent="Detenido";});
-document.getElementById("resumeBtn").addEventListener("click",()=>{running=true;startTime=performance.now();});
+}
 
-updateInfo();
-requestAnimationFrame(animate);
+function pointerDown(e){
+
+  dragPiece = e.currentTarget;
+
+  const rect = dragPiece.getBoundingClientRect();
+
+  grabDX = e.clientX - rect.left;
+  grabDY = e.clientY - rect.top;
+
+  dragPiece.setPointerCapture(e.pointerId);
+}
+
+function pointerMove(e){
+
+  if(!dragPiece) return;
+
+  const stageRect = stage.getBoundingClientRect();
+
+  let x = e.clientX - stageRect.left - grabDX;
+  let y = e.clientY - stageRect.top - grabDY;
+
+  const maxX = stage.clientWidth - dragPiece.offsetWidth;
+  const maxY = stage.clientHeight - dragPiece.offsetHeight;
+
+  x = Math.max(0, Math.min(maxX, x));
+  y = Math.max(0, Math.min(maxY, y));
+
+  dragPiece.style.left = x + "px";
+  dragPiece.style.top = y + "px";
+  dragPiece.style.right = "auto";
+  dragPiece.style.bottom = "auto";
+
+  calculateCoverage();
+}
+
+function pointerUp(){
+  dragPiece = null;
+}
+
+pieces.forEach(piece => {
+  piece.addEventListener("pointerdown", pointerDown);
+  piece.addEventListener("pointermove", pointerMove);
+  piece.addEventListener("pointerup", pointerUp);
+  piece.addEventListener("pointercancel", pointerUp);
+});
+
+function calculateCoverage(){
+
+  const stageRect = stage.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+
+  const tx =
+    targetRect.left -
+    stageRect.left +
+    targetRect.width / 2;
+
+  const ty =
+    targetRect.top -
+    stageRect.top +
+    targetRect.height / 2;
+
+  const tr = targetRect.width / 2;
+
+  const pieceData = pieces.map(piece => {
+
+    const r = piece.getBoundingClientRect();
+
+    return {
+      x:
+        r.left -
+        stageRect.left +
+        r.width/2,
+
+      y:
+        r.top -
+        stageRect.top +
+        r.height/2,
+
+      radius:
+        r.width/2
+    };
+  });
+
+  /*
+    Muestreo del círculo objetivo.
+    120 x 120 = 14.400 pruebas máximas.
+    Es suficientemente preciso y muy ligero.
+  */
+
+  const grid = 120;
+
+  let total = 0;
+  let covered = 0;
+
+  for(let iy=0; iy<grid; iy++){
+
+    const py =
+      ty - tr +
+      ((iy + .5) / grid) *
+      tr * 2;
+
+    for(let ix=0; ix<grid; ix++){
+
+      const px =
+        tx - tr +
+        ((ix + .5) / grid) *
+        tr * 2;
+
+      const dx = px - tx;
+      const dy = py - ty;
+
+      if(dx*dx + dy*dy > tr*tr)
+        continue;
+
+      total++;
+
+      let isCovered = false;
+
+      for(const p of pieceData){
+
+        const pdx = px - p.x;
+        const pdy = py - p.y;
+
+        if(
+          pdx*pdx +
+          pdy*pdy <=
+          p.radius*p.radius
+        ){
+          isCovered = true;
+          break;
+        }
+      }
+
+      if(isCovered)
+        covered++;
+    }
+  }
+
+  const percent =
+    total === 0
+    ? 0
+    : covered / total * 100;
+
+  const shown =
+    Math.min(100, percent);
+
+  coverageText.textContent =
+    shown.toFixed(1) + "%";
+
+  statusPercent.textContent =
+    shown.toFixed(1) + "%";
+
+  /*
+    Se considera 100% si el muestreo
+    supera 99.95%, para evitar errores
+    mínimos por discretización.
+  */
+
+  const complete =
+    percent >= 99.95;
+
+  bulb.classList.toggle(
+    "on",
+    complete
+  );
+
+  statusLabel.textContent =
+    complete
+    ? "¡Cobertura completa!"
+    : "Aún falta cobertura";
+}
+
+document
+.getElementById("reset")
+.addEventListener("click", () => {
+
+  pieces.forEach((piece,index) => {
+
+    piece.style.left =
+      originalPositions[index].left +
+      "px";
+
+    piece.style.top =
+      originalPositions[index].top +
+      "px";
+
+    piece.style.right = "auto";
+    piece.style.bottom = "auto";
+  });
+
+  calculateCoverage();
+});
+
+requestAnimationFrame(() => {
+  saveOriginalPositions();
+  calculateCoverage();
+});
+
+})();
 </script>
+
 </body>
 </html>
