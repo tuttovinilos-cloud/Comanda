@@ -3,912 +3,113 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simulador POV LED</title>
+<title>Prueba de Parpadeo</title>
 <style>
 *{box-sizing:border-box}
-:root{
-  --bg:#070a0f;
-  --panel:#111720;
-  --panel2:#0c1118;
-  --border:#27313e;
-  --text:#f4f7fb;
-  --muted:#8490a0;
-  --accent:#5b7cff;
-  --good:#25c977;
-  --warn:#e6b84c;
-  --bad:#ee6570;
-}
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:Arial,Helvetica,sans-serif;
-}
-.app{
-  width:min(1140px,calc(100% - 20px));
-  margin:auto;
-  padding:16px 0 34px;
-}
-.layout{
-  display:grid;
-  grid-template-columns:minmax(0,1.4fr) minmax(300px,.6fr);
-  gap:16px;
-}
-.card{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:20px;
-}
-.viewer{padding:15px;min-width:0}
-.controls{
-  padding:18px;
-  display:flex;
-  flex-direction:column;
-  gap:20px;
-}
-.header{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:12px;
-  margin-bottom:13px;
-}
-.eyebrow{
-  color:#7d8999;
-  font-size:10px;
-  font-weight:900;
-  letter-spacing:.13em;
-  text-transform:uppercase;
-}
-h1{
-  margin:4px 0 0;
-  font-size:21px;
-}
-.badge{
-  padding:8px 11px;
-  border-radius:999px;
-  background:#421d22;
-  color:#ff9ba4;
-  font-size:11px;
-  font-weight:900;
-  white-space:nowrap;
-}
-.badge.mid{background:#433717;color:#ffda70}
-.badge.good{background:#153b29;color:#8ef2b7}
-.stage{
-  width:100%;
-  aspect-ratio:1;
-  position:relative;
-  border-radius:17px;
-  overflow:hidden;
-  background:#010204;
-  border:1px solid #202936;
-}
-canvas{
-  display:block;
-  width:100%;
-  height:100%;
-}
-.hud{
-  position:absolute;
-  left:10px;
-  right:10px;
-  bottom:10px;
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:6px;
-  pointer-events:none;
-}
-.hudItem{
-  padding:8px;
-  border-radius:10px;
-  background:rgba(3,7,12,.82);
-  border:1px solid rgba(255,255,255,.08);
-}
-.hudItem b{
-  display:block;
-  font-size:13px;
-  font-variant-numeric:tabular-nums;
-}
-.hudItem span{
-  color:#9da8b8;
-  font-size:8px;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-}
-.group{display:grid;gap:8px}
-.row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-}
-label{
-  font-size:13px;
-  font-weight:800;
-}
-.value{
-  font-size:13px;
-  font-weight:900;
-  font-variant-numeric:tabular-nums;
-}
-input[type=range]{
-  width:100%;
-  accent-color:var(--accent);
-}
-select{
-  width:100%;
-  height:44px;
-  border-radius:11px;
-  border:1px solid #34404e;
-  background:#0d131b;
-  color:white;
-  padding:0 12px;
-  font-size:16px;
-  font-weight:700;
-}
-.upload{
-  position:relative;
-  min-height:92px;
-  display:grid;
-  place-items:center;
-  text-align:center;
-  border:1.5px dashed #3b4756;
-  border-radius:14px;
-  background:var(--panel2);
-  padding:14px;
-  cursor:pointer;
-}
-.upload input{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  opacity:0;
-  cursor:pointer;
-}
-.upload strong{
-  display:block;
-  font-size:13px;
-}
-.upload small{
-  display:block;
-  margin-top:4px;
-  color:var(--muted);
-}
-.filename{
-  color:#929dac;
-  font-size:11px;
-}
-.rpmBig{
-  font-size:39px;
-  line-height:1;
-  font-weight:950;
-  letter-spacing:-.04em;
-}
-.rpmBig small{
-  font-size:12px;
-  margin-left:5px;
-  color:var(--muted);
-  letter-spacing:0;
-}
-.meter{
-  height:8px;
-  overflow:hidden;
-  border-radius:999px;
-  background:#26303b;
-}
-.meterFill{
-  width:0;
-  height:100%;
-  background:linear-gradient(90deg,var(--bad),var(--warn),var(--good));
-  transition:width .08s linear;
-}
-.info{
-  padding:11px 12px;
-  border-radius:12px;
-  border:1px solid #26303b;
-  background:#0b1118;
-  color:#a0aaba;
-  font-size:12px;
-  line-height:1.45;
-}
-.info b{color:#fff}
-.buttons{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-button{
-  min-height:44px;
-  border:1px solid #34404d;
-  border-radius:11px;
-  background:#18212c;
-  color:white;
-  font-weight:800;
-  cursor:pointer;
-}
-button.primary{
-  background:var(--accent);
-  border-color:var(--accent);
-}
-.note{
-  padding-top:13px;
-  border-top:1px solid var(--border);
-  color:var(--muted);
-  font-size:11px;
-  line-height:1.5;
-}
-@media(max-width:800px){
-  .layout{grid-template-columns:1fr}
-  .app{width:min(100% - 12px,650px);padding-top:7px}
-  .viewer,.controls{padding:12px}
-}
-@media(max-width:440px){
-  .hud{grid-template-columns:repeat(2,1fr)}
-  .rpmBig{font-size:34px}
-}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b0f16;color:#fff;font-family:Arial,Helvetica,sans-serif}
+.app{width:min(620px,calc(100% - 24px));background:#131a24;border:1px solid #273142;border-radius:22px;padding:22px}
+h1{margin:0 0 4px;font-size:22px}.sub{color:#8895a7;font-size:13px;margin-bottom:22px}
+.stage{min-height:360px;display:grid;place-items:center;background:#070a0f;border-radius:18px;border:1px solid #222b38;margin-bottom:22px}
+.bulbWrap{display:grid;place-items:center;gap:12px}
+.bulb{position:relative;width:150px;height:150px;border-radius:50%;background:#252b35;border:3px solid #343d4a;transition:background .01s linear,box-shadow .01s linear}
+.bulb.on{background:#fff7c4;border-color:#fff3a1;box-shadow:0 0 30px rgba(255,239,130,.9),0 0 75px rgba(255,225,90,.65),0 0 140px rgba(255,212,55,.35)}
+.base{width:68px;height:74px;margin-top:-18px;background:linear-gradient(#aab2bd,#66717f);border-radius:10px 10px 22px 22px;position:relative}
+.base:before,.base:after{content:"";position:absolute;left:8px;right:8px;height:5px;background:#424c59;border-radius:5px}
+.base:before{top:20px}.base:after{top:38px}
+.status{font-size:13px;color:#9aa6b5}
+.controls{display:grid;gap:18px}.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+label{font-size:14px;font-weight:700}.value{font-size:28px;font-weight:900}.value small{font-size:12px;color:#8b97a7;font-weight:700}
+input[type=range]{width:100%;accent-color:#5b7cff}
+.quick{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.quick button,.buttons button{min-height:42px;border:1px solid #344052;background:#192230;color:#fff;border-radius:10px;font-weight:800;cursor:pointer}
+.info{padding:12px 14px;background:#0d131c;border:1px solid #273240;border-radius:12px;font-size:12px;line-height:1.5;color:#98a4b3}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}.buttons .primary{background:#5b7cff;border-color:#5b7cff}
+@media(max-width:480px){.app{padding:14px}.stage{min-height:300px}.bulb{width:125px;height:125px}.quick{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
 <body>
-
 <div class="app">
-  <div class="layout">
+  <h1>Prueba de parpadeo</h1>
+  <div class="sub">Ajusta cuántas veces por segundo se enciende y apaga el bombillo.</div>
 
-    <section class="card viewer">
-      <div class="header">
-        <div>
-          <div class="eyebrow">Simulador POV</div>
-          <h1>Vista del rotor</h1>
-        </div>
-        <div id="quality" class="badge">Fragmentada</div>
+  <div class="stage">
+    <div class="bulbWrap">
+      <div id="bulb" class="bulb on"></div>
+      <div class="base"></div>
+      <div id="status" class="status">Encendido</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div>
+      <div class="row">
+        <label for="hz">Frecuencia</label>
+        <div class="value"><span id="hzValue">1</span><small> Hz</small></div>
       </div>
+      <input id="hz" type="range" min="0.2" max="120" step="0.1" value="1">
+    </div>
 
-      <div class="stage">
-        <canvas id="canvas" width="640" height="640"></canvas>
+    <div class="quick">
+      <button type="button" data-hz="1">1 Hz</button>
+      <button type="button" data-hz="10">10 Hz</button>
+      <button type="button" data-hz="30">30 Hz</button>
+      <button type="button" data-hz="60">60 Hz</button>
+      <button type="button" data-hz="100">100 Hz</button>
+    </div>
 
-        <div class="hud">
-          <div class="hudItem">
-            <b id="hudRpm">300</b>
-            <span>RPM</span>
-          </div>
+    <div class="info">
+      <b id="periodText">1 ciclo cada 1000 ms</b><br>
+      Cada ciclo tiene una fase encendida y una apagada.
+    </div>
 
-          <div class="hudItem">
-            <b id="hudArms">4</b>
-            <span>Brazos</span>
-          </div>
-
-          <div class="hudItem">
-            <b id="hudModules">30</b>
-            <span>Módulos / brazo</span>
-          </div>
-
-          <div class="hudItem">
-            <b id="hudAngle">90°</b>
-            <span>Separación</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <aside class="card controls">
-
-      <div class="group">
-        <div class="eyebrow">Imagen</div>
-
-        <label class="upload">
-          <input id="file" type="file" accept="image/*">
-          <span>
-            <strong>Añadir imagen</strong>
-            <small>PNG · JPG · WEBP</small>
-          </span>
-        </label>
-
-        <div id="filename" class="filename">Imagen de prueba</div>
-      </div>
-
-      <div class="group">
-        <div class="row">
-          <label for="arms">Cantidad de brazos/lados</label>
-          <span id="armsValue" class="value">4</span>
-        </div>
-
-        <select id="arms">
-          <option value="1">1 brazo</option>
-          <option value="2">2 brazos</option>
-          <option value="3">3 brazos</option>
-          <option value="4" selected>4 brazos</option>
-          <option value="5">5 brazos</option>
-          <option value="6">6 brazos</option>
-          <option value="7">7 brazos</option>
-          <option value="8">8 brazos</option>
-        </select>
-
-        <div id="angleInfo" class="info">
-          4 brazos distribuidos cada <b>90°</b>.
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="row">
-          <label for="modules">Módulos por brazo</label>
-          <span id="modulesValue" class="value">30</span>
-        </div>
-
-        <input id="modules" type="range" min="5" max="100" step="1" value="30">
-      </div>
-
-      <div class="group">
-        <div class="eyebrow">Velocidad</div>
-
-        <div class="rpmBig">
-          <span id="rpmNumber">300</span><small>RPM</small>
-        </div>
-
-        <input id="rpm" type="range" min="20" max="2500" step="10" value="300">
-
-        <div class="meter">
-          <div id="meter" class="meterFill"></div>
-        </div>
-      </div>
-
-      <div class="info">
-        Barridos visuales: <b id="passesInfo">20.0 por segundo</b><br>
-        Una vuelta completa tarda: <b id="revInfo">200 ms</b>
-      </div>
-
-      <div class="buttons">
-        <button id="reset" type="button">Reiniciar</button>
-        <button id="pause" class="primary" type="button">Pausar</button>
-      </div>
-
-      <div class="note">
-        Los brazos siempre se reparten de forma equidistante en los 360°. La cantidad de módulos determina la resolución radial de la imagen.
-      </div>
-
-    </aside>
-
+    <div class="buttons">
+      <button id="stopBtn" type="button">Detener</button>
+      <button id="resumeBtn" class="primary" type="button">Continuar</button>
+    </div>
   </div>
 </div>
 
 <script>
-(() => {
+const bulb=document.getElementById("bulb");
+const hzInput=document.getElementById("hz");
+const hzValue=document.getElementById("hzValue");
+const periodText=document.getElementById("periodText");
+const statusText=document.getElementById("status");
+let running=true;
+let startTime=performance.now();
 
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
-const source = document.createElement("canvas");
-source.width = canvas.width;
-source.height = canvas.height;
-const sctx = source.getContext("2d", {willReadFrequently:true});
-
-const polar = document.createElement("canvas");
-polar.width = canvas.width;
-polar.height = canvas.height;
-const pctx = polar.getContext("2d");
-
-const rpmInput = document.getElementById("rpm");
-const armsInput = document.getElementById("arms");
-const modulesInput = document.getElementById("modules");
-
-const rpmNumber = document.getElementById("rpmNumber");
-const armsValue = document.getElementById("armsValue");
-const modulesValue = document.getElementById("modulesValue");
-
-const hudRpm = document.getElementById("hudRpm");
-const hudArms = document.getElementById("hudArms");
-const hudModules = document.getElementById("hudModules");
-const hudAngle = document.getElementById("hudAngle");
-
-const angleInfo = document.getElementById("angleInfo");
-const passesInfo = document.getElementById("passesInfo");
-const revInfo = document.getElementById("revInfo");
-
-const meter = document.getElementById("meter");
-const quality = document.getElementById("quality");
-const filename = document.getElementById("filename");
-
-const CX = canvas.width/2;
-const CY = canvas.height/2;
-const R = canvas.width*0.445;
-
-let angle = 0;
-let running = true;
-let lastTime = performance.now();
-
-const PERSISTENCE_MS = 20;
-const ANGULAR_COLUMNS = 240;
-
-function demoImage(){
-
-  sctx.fillStyle="#000";
-  sctx.fillRect(0,0,source.width,source.height);
-
-  sctx.save();
-  sctx.translate(CX,CY);
-
-  sctx.strokeStyle="#14d9ff";
-  sctx.lineWidth=8;
-  sctx.beginPath();
-  sctx.arc(0,0,R*.83,0,Math.PI*2);
-  sctx.stroke();
-
-  sctx.fillStyle="#fff";
-  sctx.textAlign="center";
-  sctx.textBaseline="middle";
-  sctx.font="bold 72px Arial";
-  sctx.fillText("TUTTO",0,-28);
-
-  sctx.fillStyle="#14d9ff";
-  sctx.font="bold 34px Arial";
-  sctx.fillText("POV",0,45);
-
-  sctx.restore();
-
-  rebuildPolar();
+function updateInfo(){
+  const hz=Number(hzInput.value);
+  hzValue.textContent=hz<10?hz.toFixed(1).replace(".0",""):hz.toFixed(0);
+  const period=1000/hz;
+  periodText.textContent="1 ciclo cada "+(period>=100?period.toFixed(0):period.toFixed(1))+" ms";
 }
 
-function loadImage(file){
-
-  const reader=new FileReader();
-
-  reader.onload=e=>{
-
-    const img=new Image();
-
-    img.onload=()=>{
-
-      sctx.fillStyle="#000";
-      sctx.fillRect(0,0,source.width,source.height);
-
-      const available=R*2*.96;
-
-      const scale=Math.min(
-        available/img.width,
-        available/img.height
-      );
-
-      const w=img.width*scale;
-      const h=img.height*scale;
-
-      sctx.drawImage(
-        img,
-        CX-w/2,
-        CY-h/2,
-        w,
-        h
-      );
-
-      filename.textContent=file.name;
-
-      rebuildPolar();
-    };
-
-    img.src=e.target.result;
-  };
-
-  reader.readAsDataURL(file);
-}
-
-function rebuildPolar(){
-
-  const modules=Number(modulesInput.value);
-
-  pctx.fillStyle="#000";
-  pctx.fillRect(0,0,polar.width,polar.height);
-
-  const data=sctx.getImageData(
-    0,0,
-    source.width,
-    source.height
-  ).data;
-
-  const radialStep=R/modules;
-  const angularStep=(Math.PI*2)/ANGULAR_COLUMNS;
-
-  pctx.save();
-
-  for(let a=0;a<ANGULAR_COLUMNS;a++){
-
-    const theta=a*angularStep;
-    const cos=Math.cos(theta);
-    const sin=Math.sin(theta);
-
-    for(let m=0;m<modules;m++){
-
-      const r1=m*radialStep;
-      const r2=(m+1)*radialStep;
-
-      const sampleR=(r1+r2)/2;
-
-      const sx=Math.round(CX+cos*sampleR);
-      const sy=Math.round(CY+sin*sampleR);
-
-      if(
-        sx<0 || sx>=source.width ||
-        sy<0 || sy>=source.height
-      ) continue;
-
-      const index=(sy*source.width+sx)*4;
-
-      const red=data[index];
-      const green=data[index+1];
-      const blue=data[index+2];
-
-      if(Math.max(red,green,blue)<18)
-        continue;
-
-      pctx.fillStyle=`rgb(${red},${green},${blue})`;
-
-      pctx.beginPath();
-
-      pctx.arc(
-        CX,CY,
-        r2,
-        theta-angularStep*.55,
-        theta+angularStep*.55
-      );
-
-      pctx.arc(
-        CX,CY,
-        r1,
-        theta+angularStep*.55,
-        theta-angularStep*.55,
-        true
-      );
-
-      pctx.closePath();
-      pctx.fill();
-    }
-  }
-
-  pctx.restore();
-}
-
-function addSectorPath(start,end){
-
-  ctx.moveTo(CX,CY);
-
-  ctx.arc(
-    CX,CY,
-    R,
-    start,
-    end
-  );
-
-  ctx.closePath();
-}
-
-function drawPersistentImage(rpm,arms){
-
-  const omega=
-    (rpm/60)*Math.PI*2;
-
-  const persistenceSeconds=
-    PERSISTENCE_MS/1000;
-
-  let sweep=
-    omega*persistenceSeconds;
-
-  const spacing=
-    (Math.PI*2)/arms;
-
-  sweep=Math.min(
-    sweep,
-    spacing
-  );
-
-  ctx.save();
-
-  ctx.beginPath();
-
-  for(let i=0;i<arms;i++){
-
-    const current=
-      angle+i*spacing;
-
-    addSectorPath(
-      current-sweep,
-      current
-    );
-  }
-
-  ctx.clip();
-
-  ctx.drawImage(
-    polar,
-    0,0
-  );
-
-  ctx.restore();
-}
-
-function drawPhysicalArms(arms,modules){
-
-  const spacing=(Math.PI*2)/arms;
-
-  ctx.save();
-
-  for(let i=0;i<arms;i++){
-
-    const a=
-      angle+i*spacing;
-
-    const cos=Math.cos(a);
-    const sin=Math.sin(a);
-
-    ctx.strokeStyle=
-      "rgba(205,217,232,.42)";
-
-    ctx.lineWidth=2;
-
-    ctx.beginPath();
-    ctx.moveTo(CX,CY);
-
-    ctx.lineTo(
-      CX+cos*R,
-      CY+sin*R
-    );
-
-    ctx.stroke();
-
-    for(let m=1;m<=modules;m++){
-
-      const r=
-        (m/modules)*R;
-
-      const x=
-        CX+cos*r;
-
-      const y=
-        CY+sin*r;
-
-      ctx.fillStyle=
-        "rgba(170,187,207,.70)";
-
-      ctx.beginPath();
-
-      ctx.arc(
-        x,y,
-        modules>60?1.15:1.7,
-        0,
-        Math.PI*2
-      );
-
-      ctx.fill();
-    }
-  }
-
-  ctx.fillStyle="#718093";
-
-  ctx.beginPath();
-  ctx.arc(CX,CY,13,0,Math.PI*2);
-  ctx.fill();
-
-  ctx.restore();
-}
-
-function drawGuide(){
-
-  ctx.strokeStyle=
-    "rgba(120,140,165,.16)";
-
-  ctx.lineWidth=2;
-
-  ctx.beginPath();
-
-  ctx.arc(
-    CX,CY,R,
-    0,Math.PI*2
-  );
-
-  ctx.stroke();
-}
-
-function updateUI(){
-
-  const rpm=Number(rpmInput.value);
-  const arms=Number(armsInput.value);
-  const modules=Number(modulesInput.value);
-
-  const spacingDeg=360/arms;
-  const revSec=rpm/60;
-  const passes=revSec*arms;
-
-  const timeBetweenPasses=
-    1000/Math.max(passes,.001);
-
-  const coverage=Math.min(
-    1,
-    PERSISTENCE_MS/timeBetweenPasses
-  );
-
-  rpmNumber.textContent=rpm;
-  armsValue.textContent=arms;
-  modulesValue.textContent=modules;
-
-  hudRpm.textContent=rpm;
-  hudArms.textContent=arms;
-  hudModules.textContent=modules;
-  hudAngle.textContent=
-    spacingDeg.toFixed(
-      Number.isInteger(spacingDeg)?0:1
-    )+"°";
-
-  angleInfo.innerHTML=
-    arms+
-    (arms===1?" brazo distribuido":" brazos distribuidos")+
-    " cada <b>"+
-    spacingDeg.toFixed(
-      Number.isInteger(spacingDeg)?0:1
-    )+
-    "°</b>.";
-
-  passesInfo.textContent=
-    passes.toFixed(1)+
-    " por segundo";
-
-  revInfo.textContent=
-    Math.round(60000/rpm)+
-    " ms";
-
-  meter.style.width=
-    (coverage*100)+"%";
-
-  if(coverage>=.95){
-
-    quality.textContent=
-      "Imagen continua";
-
-    quality.className=
-      "badge good";
-
-  }else if(coverage>=.45){
-
-    quality.textContent=
-      "Ya se forma";
-
-    quality.className=
-      "badge mid";
-
-  }else{
-
-    quality.textContent=
-      "Fragmentada";
-
-    quality.className=
-      "badge";
-  }
-}
-
-function frame(now){
-
-  const dt=Math.min(
-    .05,
-    (now-lastTime)/1000
-  );
-
-  lastTime=now;
-
-  const rpm=Number(rpmInput.value);
-  const arms=Number(armsInput.value);
-  const modules=Number(modulesInput.value);
-
+function animate(now){
+  const hz=Number(hzInput.value);
   if(running){
-
-    angle +=
-      (rpm/60)*
-      Math.PI*2*
-      dt;
-
-    angle %= Math.PI*2;
+    const elapsed=(now-startTime)/1000;
+    const phase=(elapsed*hz)%1;
+    const on=phase<0.5;
+    bulb.classList.toggle("on",on);
+    statusText.textContent=on?"Encendido":"Apagado";
   }
-
-  ctx.fillStyle="#010204";
-
-  ctx.fillRect(
-    0,0,
-    canvas.width,
-    canvas.height
-  );
-
-  drawGuide();
-
-  drawPersistentImage(
-    rpm,
-    arms
-  );
-
-  drawPhysicalArms(
-    arms,
-    modules
-  );
-
-  requestAnimationFrame(frame);
+  requestAnimationFrame(animate);
 }
 
-document
-.getElementById("file")
-.addEventListener(
-  "change",
-  function(){
+hzInput.addEventListener("input",()=>{startTime=performance.now();updateInfo();});
+document.querySelectorAll("[data-hz]").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    hzInput.value=btn.dataset.hz;
+    startTime=performance.now();
+    updateInfo();
+  });
+});
+document.getElementById("stopBtn").addEventListener("click",()=>{running=false;bulb.classList.remove("on");statusText.textContent="Detenido";});
+document.getElementById("resumeBtn").addEventListener("click",()=>{running=true;startTime=performance.now();});
 
-    if(
-      this.files &&
-      this.files[0]
-    ){
-      loadImage(
-        this.files[0]
-      );
-    }
-  }
-);
-
-rpmInput.addEventListener(
-  "input",
-  updateUI
-);
-
-armsInput.addEventListener(
-  "change",
-  updateUI
-);
-
-modulesInput.addEventListener(
-  "input",
-  () => {
-
-    updateUI();
-
-    clearTimeout(
-      modulesInput._timer
-    );
-
-    modulesInput._timer=
-      setTimeout(
-        rebuildPolar,
-        120
-      );
-  }
-);
-
-document
-.getElementById("pause")
-.addEventListener(
-  "click",
-  function(){
-
-    running=!running;
-
-    this.textContent=
-      running
-      ?"Pausar"
-      :"Continuar";
-  }
-);
-
-document
-.getElementById("reset")
-.addEventListener(
-  "click",
-  () => {
-
-    rpmInput.value=300;
-    armsInput.value=4;
-    modulesInput.value=30;
-
-    updateUI();
-    rebuildPolar();
-  }
-);
-
-demoImage();
-updateUI();
-
-requestAnimationFrame(frame);
-
-})();
+updateInfo();
+requestAnimationFrame(animate);
 </script>
-
 </body>
 </html>
