@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Tuttovinilos</title>
-<!-- clientes.html v76 · movimientos reales de dinero por cliente -->
+<!-- clientes.html v77 · cuenta unificada: estado + movimientos -->
 <link rel="icon" href="data:,">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2887,6 +2887,23 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 }
 </style>
 
+
+<style id="clientes-v77-cuenta-unificada">
+/* V77 · Cuenta unificada: Estado actual + Movimientos. Solo UI. */
+.cuenta-clickable{cursor:pointer!important;transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease!important}
+.cuenta-clickable:hover{transform:translateY(-1px);border-color:#153bff!important;box-shadow:0 7px 18px rgba(21,59,255,.10)!important}
+.cuenta-clickable:focus{outline:3px solid rgba(21,59,255,.14)!important;outline-offset:2px!important}
+.cuenta-clickable>small{color:#153bff!important;font-size:8px!important;font-weight:900!important;letter-spacing:.65px!important}
+.cuenta-unificada-modal{width:min(900px,calc(100vw - 28px))!important;max-width:900px!important;max-height:calc(100vh - 28px)!important}
+.cuenta-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:10px 16px 0;background:#fff;border-top:1px solid #eef1f7}
+.cuenta-tab{min-height:38px;border:1px solid #c7d2fe;background:#fff;color:#153bff;border-radius:11px;font-family:var(--head);font-size:10px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;cursor:pointer}
+.cuenta-tab:hover{background:#eef1ff}
+.cuenta-tab.active{background:#153bff;color:#fff;border-color:#153bff}
+#cuentaVistaMovimientos[hidden],#cuentaVistaEstado[hidden]{display:none!important}
+#cuentaVistaMovimientos .modal-body{padding-top:12px!important}
+@media(max-width:600px){.cuenta-tabs{padding:9px 10px 0}.cuenta-unificada-modal{width:calc(100vw - 16px)!important;max-height:94vh!important}.cuenta-tab{font-size:9px}}
+</style>
+
 </head>
 
 <body>
@@ -3153,85 +3170,86 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 
 
 
-<div class="modal-backdrop" id="movimientosClienteBackdrop" onclick="cerrarMovimientosClienteSiFondo(event)">
-  <div class="modal movimientos-modal">
+<div class="modal-backdrop" id="deudaBackdrop" onclick="cerrarDeudaSiFondo(event)">
+  <div class="modal cuenta-unificada-modal">
     <div class="modal-header">
       <div>
-        <div class="modal-title" id="movimientosClienteTitle">Movimientos</div>
-        <div class="historial-general-sub">Entradas reales de dinero. La distribución entre pedidos queda como detalle.</div>
+        <div class="modal-title" id="deudaTitle">Cuenta</div>
+        <div class="historial-general-sub">Estado actual y entradas reales de dinero en un solo lugar.</div>
       </div>
-      <button class="mini-btn" type="button" onclick="cerrarMovimientosCliente()">Cerrar</button>
-    </div>
-    <div class="modal-body">
-      <div class="movimientos-resumen" id="movimientosClienteResumen"></div>
-      <div class="movimientos-lista" id="movimientosClienteBody">
-        <div class="movimientos-vacio">Cargando movimientos...</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop" id="deudaBackdrop" onclick="cerrarDeudaSiFondo(event)">
-  <div class="modal" style="max-width:760px">
-    <div class="modal-header">
-      <div class="modal-title" id="deudaTitle">Estado de cuenta</div>
       <button class="mini-btn" onclick="cerrarDeudaCliente()">Cerrar</button>
     </div>
 
-    <div class="modal-body">
-      <div class="deuda-modal-summary" id="deudaSummary"></div>
-
-      <div class="deuda-cobro-box" id="deudaCobroBox">
-        <div class="deuda-cobro-title">Registrar pago del cliente</div>
-        <div class="form-grid">
-          <div class="field">
-            <label>Monto recibido ($ equivalente)</label>
-            <input id="deudaPagoMonto" type="number" step="0.01" placeholder="0.00" oninput="calcularPagoGlobalCliente()"/>
-          </div>
-          <div class="field">
-            <label>Tipo de pago</label>
-            <select id="deudaPagoMoneda" onchange="actualizarMetodosPagoCliente(); calcularPagoGlobalCliente()">
-              <option value="DIVISA">DIVISA</option>
-              <option value="BCV">BCV</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Método de pago</label>
-            <select id="deudaPagoMetodo">
-              <option value="">Seleccionar...</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Referencia</label>
-            <input id="deudaPagoReferencia" type="text" placeholder="Referencia"/>
-          </div>
-          <div class="field">
-            <label>Nota</label>
-            <input id="deudaPagoNota" type="text" placeholder="Nota general"/>
-          </div>
-          <div class="field form-full">
-            <label>Resultado</label>
-            <div class="deuda-result" id="deudaPagoResultado">Coloca el monto recibido</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="deuda-historial-box">
-        <div class="deuda-historial-head">
-          <div>
-            <div class="deuda-historial-title">Historial de pagos recibidos</div>
-            <div class="deuda-historial-sub">Cada fila representa una entrada real de dinero, no la distribución entre pedidos.</div>
-          </div>
-        </div>
-        <div class="deuda-historial-list" id="deudaHistorialPagos">
-          <div class="deuda-historial-empty">Cargando historial...</div>
-        </div>
-      </div>
-
-      <div id="deudaPedidosLista"></div>
+    <div class="cuenta-tabs" role="tablist" aria-label="Secciones de la cuenta">
+      <button class="cuenta-tab active" id="cuentaTabEstado" type="button" onclick="cambiarVistaCuentaCliente('estado')">Estado actual</button>
+      <button class="cuenta-tab" id="cuentaTabMovimientos" type="button" onclick="cambiarVistaCuentaCliente('movimientos')">Movimientos</button>
     </div>
 
-    <div class="modal-footer">
+    <div id="cuentaVistaEstado">
+      <div class="modal-body">
+        <div class="deuda-modal-summary" id="deudaSummary"></div>
+
+        <div class="deuda-cobro-box" id="deudaCobroBox">
+          <div class="deuda-cobro-title">Registrar pago del cliente</div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Monto recibido ($ equivalente)</label>
+              <input id="deudaPagoMonto" type="number" step="0.01" placeholder="0.00" oninput="calcularPagoGlobalCliente()"/>
+            </div>
+            <div class="field">
+              <label>Tipo de pago</label>
+              <select id="deudaPagoMoneda" onchange="actualizarMetodosPagoCliente(); calcularPagoGlobalCliente()">
+                <option value="DIVISA">DIVISA</option>
+                <option value="BCV">BCV</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Método de pago</label>
+              <select id="deudaPagoMetodo">
+                <option value="">Seleccionar...</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Referencia</label>
+              <input id="deudaPagoReferencia" type="text" placeholder="Referencia"/>
+            </div>
+            <div class="field">
+              <label>Nota</label>
+              <input id="deudaPagoNota" type="text" placeholder="Nota general"/>
+            </div>
+            <div class="field form-full">
+              <label>Resultado</label>
+              <div class="deuda-result" id="deudaPagoResultado">Coloca el monto recibido</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="deuda-historial-box">
+          <div class="deuda-historial-head">
+            <div>
+              <div class="deuda-historial-title">Historial de pagos recibidos</div>
+              <div class="deuda-historial-sub">Cada fila representa una entrada real de dinero, no la distribución entre pedidos.</div>
+            </div>
+          </div>
+          <div class="deuda-historial-list" id="deudaHistorialPagos">
+            <div class="deuda-historial-empty">Cargando historial...</div>
+          </div>
+        </div>
+
+        <div id="deudaPedidosLista"></div>
+      </div>
+    </div>
+
+    <div id="cuentaVistaMovimientos" hidden>
+      <div class="modal-body">
+        <div class="movimientos-resumen" id="movimientosClienteResumen"></div>
+        <div class="movimientos-lista" id="movimientosClienteBody">
+          <div class="movimientos-vacio">Cargando movimientos...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer" id="deudaFooter">
       <button class="btn secondary" onclick="cerrarDeudaCliente()">Cancelar</button>
       <button class="btn success" id="btnAplicarPagoGlobalCliente" type="button" onclick="aplicarPagoGlobalCliente()">Registrar pago</button>
     </div>
@@ -3277,7 +3295,7 @@ function cerrarNotificacionesSiFondo(event){
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v76 · movimientos reales de dinero");
+console.log("CLIENTES HTML conectado v77 · cuenta unificada");
 
 let clientesDB = [];
 let pedidosDB = [];
@@ -3568,14 +3586,14 @@ function deudaClienteHtml(cliente){
   const resumen = "Saldo neto por cuenta";
 
   return `
-    <div class="deuda-btn deuda-btn-separada deuda-btn-mixta" title="DIVISA y BCV se calculan por separado">
+    <div class="deuda-btn deuda-btn-separada deuda-btn-mixta cuenta-clickable"
+         role="button" tabindex="0"
+         title="Abrir cuenta del cliente"
+         onclick="abrirCuentaCliente(${id}, 'estado')"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirCuentaCliente(${id}, 'estado')}">
       ${lineaCuenta("DIVISA", d.divisa)}
       ${lineaCuenta("BCV", d.bcv)}
-      <small>${resumen}</small>
-    </div>
-    <div class="deuda-actions">
-      <button class="mini-btn" onclick="verDeudaCliente(${id})">Ver cuenta</button>
-      <button class="mini-btn movimientos-btn" onclick="abrirMovimientosCliente(${id})">Movimientos</button>
+      <small>VER CUENTA →</small>
     </div>
   `;
 }
@@ -5348,7 +5366,7 @@ function pintarDeudaModal(cliente){
   const bcv = resolverCuentaNetaCliente(bcvBase, favorClienteBcv);
   const pendientes = cuenta.filter(x => x.saldo > 0.009);
 
-  document.getElementById("deudaTitle").textContent = `Estado de cuenta · ${cliente.nombre}`;
+  document.getElementById("deudaTitle").textContent = `Cuenta · ${cliente.nombre}`;
 
   const resumenCuentaHtml = (titulo, resumen) => `
     <div class="deuda-account-card">
@@ -5674,6 +5692,34 @@ async function pintarHistorialPagosCuentaCliente(cliente){
   }
 }
 
+// ============================================================
+// V77 · NAVEGACIÓN UNIFICADA DE CUENTA
+// Solo cambia presentación. No altera pagos, saldos ni RPC.
+// ============================================================
+function cambiarVistaCuentaCliente(vista = "estado"){
+  const esMovimientos = String(vista || "estado").toLowerCase() === "movimientos";
+  const estado = document.getElementById("cuentaVistaEstado");
+  const movimientos = document.getElementById("cuentaVistaMovimientos");
+  const tabEstado = document.getElementById("cuentaTabEstado");
+  const tabMovimientos = document.getElementById("cuentaTabMovimientos");
+  const footer = document.getElementById("deudaFooter");
+
+  if(estado) estado.hidden = esMovimientos;
+  if(movimientos) movimientos.hidden = !esMovimientos;
+  if(tabEstado) tabEstado.classList.toggle("active", !esMovimientos);
+  if(tabMovimientos) tabMovimientos.classList.toggle("active", esMovimientos);
+  if(footer) footer.style.display = esMovimientos ? "none" : "flex";
+
+  if(esMovimientos && deudaClienteActualId){
+    cargarMovimientosClienteEnCuenta(deudaClienteActualId);
+  }
+}
+
+function abrirCuentaCliente(id, vista = "estado"){
+  abrirDeudaCliente(id, false);
+  cambiarVistaCuentaCliente(vista);
+}
+
 function abrirDeudaCliente(id, modoCobrar = false){
   const cliente = clientesDB.find(c => Number(c.id) === Number(id));
   if(!cliente){
@@ -5698,6 +5744,7 @@ function abrirDeudaCliente(id, modoCobrar = false){
 
   pintarDeudaModal(cliente);
   pintarHistorialPagosCuentaCliente(cliente);
+  cambiarVistaCuentaCliente("estado");
   document.getElementById("deudaBackdrop").style.display = "flex";
 
   if(modoCobrar){
@@ -6553,20 +6600,16 @@ function tarjetaMovimientoLegacyHtml(pg){
     </div>`;
 }
 
-async function abrirMovimientosCliente(id){
+async function cargarMovimientosClienteEnCuenta(id){
   if(!validarSupabase()) return;
   const cliente = clientesDB.find(c => Number(c.id) === Number(id));
-  if(!cliente){ alert("No se encontró el cliente."); return; }
+  if(!cliente) return;
 
-  const modal = document.getElementById("movimientosClienteBackdrop");
-  const titulo = document.getElementById("movimientosClienteTitle");
   const resumen = document.getElementById("movimientosClienteResumen");
   const body = document.getElementById("movimientosClienteBody");
 
-  if(titulo) titulo.textContent = `Movimientos · ${cliente.nombre}`;
   if(resumen) resumen.innerHTML = "";
   if(body) body.innerHTML = `<div class="movimientos-vacio">Cargando movimientos...</div>`;
-  if(modal) modal.style.display = "flex";
 
   try{
     const { pagos, porPago, legacy } = await cargarMovimientosRealesCliente(cliente);
@@ -6576,9 +6619,6 @@ async function abrirMovimientosCliente(id){
     const recibidosActivos = entradas
       .filter(pg => String(pg.estado || "ACTIVO").toUpperCase() !== "ANULADO")
       .reduce((acc,pg) => acc + numeroSeguro(pg.monto_recibido || 0), 0);
-    const aplicadoActivo = entradas
-      .filter(pg => String(pg.estado || "ACTIVO").toUpperCase() !== "ANULADO")
-      .reduce((acc,pg) => acc + numeroSeguro(pg.monto_aplicado || 0), 0);
     const favorActual = entradas
       .filter(pg => String(pg.estado || "ACTIVO").toUpperCase() !== "ANULADO")
       .reduce((acc,pg) => acc + numeroSeguro(pg.saldo_a_favor || 0), 0);
@@ -6604,15 +6644,20 @@ async function abrirMovimientosCliente(id){
   }
 }
 
+async function abrirMovimientosCliente(id){
+  abrirCuentaCliente(id, "movimientos");
+}
+
 function cerrarMovimientosCliente(){
-  const modal = document.getElementById("movimientosClienteBackdrop");
-  if(modal) modal.style.display = "none";
+  cerrarDeudaCliente();
 }
 
 function cerrarMovimientosClienteSiFondo(event){
-  if(event?.target?.id === "movimientosClienteBackdrop") cerrarMovimientosCliente();
+  if(event?.target?.id === "deudaBackdrop") cerrarDeudaCliente();
 }
 
+window.abrirCuentaCliente = abrirCuentaCliente;
+window.cambiarVistaCuentaCliente = cambiarVistaCuentaCliente;
 window.abrirMovimientosCliente = abrirMovimientosCliente;
 window.cerrarMovimientosCliente = cerrarMovimientosCliente;
 window.cerrarMovimientosClienteSiFondo = cerrarMovimientosClienteSiFondo;
@@ -6639,7 +6684,7 @@ function pintarDeudaModal(cliente){
   const divisaEstado = estadoNetoCuentaV70(divisa);
   const bcvEstado = estadoNetoCuentaV70(bcv);
 
-  document.getElementById("deudaTitle").textContent = `Estado de cuenta · ${cliente.nombre}`;
+  document.getElementById("deudaTitle").textContent = `Cuenta · ${cliente.nombre}`;
   document.getElementById("deudaSummary").innerHTML = `
     <div class="account-net-card">
       <div class="account-net-head">Estado actual</div>
@@ -6983,7 +7028,7 @@ document.addEventListener("DOMContentLoaded", function(){
   inicializarClientes();
 });
 </script>
-<script>console.log("CLIENTES v76 · movimientos reales de dinero + historial con operador real");</script>
+<script>console.log("CLIENTES v77 · cuenta unificada + movimientos reales + historial con operador real");</script>
 </body>
 </html>
 
