@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Tuttovinilos</title>
-<!-- clientes.html v70 · cuenta simple + historial general -->
+<!-- clientes.html v74 · saldo neto único en estado y registro de pago -->
 <link rel="icon" href="data:,">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3097,7 +3097,7 @@ function cerrarNotificacionesSiFondo(event){
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v73 · historial general en vivo");
+console.log("CLIENTES HTML conectado v74 · saldo neto unificado");
 
 let clientesDB = [];
 let pedidosDB = [];
@@ -4949,6 +4949,21 @@ function resolverCuentaNetaCliente(resumenBase, favorCliente = 0){
   };
 }
 
+/* V74 · fuente única del saldo de una cuenta.
+   Usa exactamente la misma lógica para:
+   - tarjeta de Clientes
+   - Estado actual
+   - Resultado de Registrar pago
+*/
+function resumenNetoCuentaCliente(cliente, tipo){
+  const tipoNormalizado = normalizarTipoCuentaCliente(tipo);
+  const cuenta = pedidosEstadoCuentaCliente(cliente, true);
+  const base = resumenCuentaClientePorTipo(cuenta, tipoNormalizado);
+  const favorCliente = saldoFavorClientePorTipo(cliente?.id, tipoNormalizado);
+
+  return resolverCuentaNetaCliente(base, favorCliente);
+}
+
 function pedidosPendientesCliente(cliente, tipo = null){
   const tipoNormalizado = tipo ? normalizarTipoCuentaCliente(tipo) : null;
 
@@ -5302,9 +5317,12 @@ function abrirDeudaCliente(id, modoCobrar = false){
   }
 
   deudaClienteActualId = Number(id);
-  const cuenta = pedidosEstadoCuentaCliente(cliente, true);
-  const hayDivisaPendiente = cuenta.some(x => x.tipo === "DIVISA" && x.saldo > 0.009);
-  const hayBcvPendiente = cuenta.some(x => x.tipo === "BCV" && x.saldo > 0.009);
+
+  // V74: elegir la cuenta según el saldo NETO, no por deudas brutas de pedidos.
+  const divisaNeta = resumenNetoCuentaCliente(cliente, "DIVISA");
+  const bcvNeta = resumenNetoCuentaCliente(cliente, "BCV");
+  const hayDivisaPendiente = divisaNeta.saldo > 0.009;
+  const hayBcvPendiente = bcvNeta.saldo > 0.009;
 
   document.getElementById("deudaPagoMonto").value = "";
   document.getElementById("deudaPagoMoneda").value = hayDivisaPendiente ? "DIVISA" : (hayBcvPendiente ? "BCV" : "DIVISA");
@@ -5353,27 +5371,56 @@ function calcularPagoGlobalCliente(){
   const resultado = document.getElementById("deudaPagoResultado");
   if(!resultado || !cliente) return;
 
-  const tipoPago = normalizarTipoCuentaCliente(document.getElementById("deudaPagoMoneda")?.value || "DIVISA");
-  const pendientes = pedidosPendientesCliente(cliente, tipoPago);
-  const saldo = pendientes.reduce((acc,x) => acc + x.saldo, 0);
+  const tipoPago = normalizarTipoCuentaCliente(
+    document.getElementById("deudaPagoMoneda")?.value || "DIVISA"
+  );
+
+  // V74: usa exactamente el mismo saldo neto mostrado en ESTADO ACTUAL.
+  // Ejemplo: deuda bruta 263 - crédito 3 = saldo real 260.
+  const cuentaNeta = resumenNetoCuentaCliente(cliente, tipoPago);
+  const saldo = numeroSeguro(cuentaNeta.saldo || 0);
+  const favorActual = numeroSeguro(cuentaNeta.aFavor || 0);
+
   const monto = numeroSeguro(document.getElementById("deudaPagoMonto")?.value || 0);
   const aplicado = Math.min(monto, saldo);
   const restante = Math.max(saldo - aplicado, 0);
-  const excedente = Math.max(monto - saldo, 0);
+  const excedenteNuevo = Math.max(monto - saldo, 0);
+  const favorFinal = favorActual + excedenteNuevo;
 
-  if(!pendientes.length){
-    resultado.textContent = monto > 0
-      ? `Cuenta ${tipoPago}: no tiene deuda · quedará a favor $${money(monto)} en ${tipoPago}`
-      : `Cuenta ${tipoPago}: sin deuda · cualquier pago quedará como saldo a favor`;
+  if(saldo <= 0.009){
+    if(monto > 0){
+      resultado.textContent =
+        `Cuenta ${tipoPago}: sin deuda · saldo a favor final $${money(favorFinal)}`;
+    }else if(favorActual > 0.009){
+      resultado.textContent =
+        `Cuenta ${tipoPago}: a favor $${money(favorActual)} · no tiene deuda`;
+    }else{
+      resultado.textContent =
+        `Cuenta ${tipoPago}: sin deuda $0.00`;
+    }
     return;
   }
 
   if(monto <= 0){
-    resultado.textContent = `Cuenta ${tipoPago}: saldo $${money(saldo)} · Coloca el monto recibido`;
+    resultado.textContent =
+      `Cuenta ${tipoPago}: saldo neto $${money(saldo)} · Coloca el monto recibido`;
     return;
   }
 
-  resultado.textContent = `Cuenta ${tipoPago}: aplicará $${money(aplicado)} · Quedará $${money(restante)}${excedente > 0 ? " · A favor " + tipoPago + " $" + money(excedente) : ""}`;
+  if(restante > 0.009){
+    resultado.textContent =
+      `Cuenta ${tipoPago}: aplicará $${money(aplicado)} · Quedará debiendo $${money(restante)}`;
+    return;
+  }
+
+  if(excedenteNuevo > 0.009){
+    resultado.textContent =
+      `Cuenta ${tipoPago}: aplicará $${money(saldo)} · Quedará a favor $${money(favorFinal)}`;
+    return;
+  }
+
+  resultado.textContent =
+    `Cuenta ${tipoPago}: aplicará $${money(aplicado)} · Quedará sin deuda $0.00`;
 }
 
 function generarUuidPagoCliente(){
@@ -5452,7 +5499,11 @@ async function aplicarPagoGlobalCliente(){
   const tipoPago = normalizarTipoCuentaCliente(
     document.getElementById("deudaPagoMoneda")?.value || "DIVISA"
   );
-  const pendientes = pedidosPendientesCliente(cliente, tipoPago);
+
+  // V74: snapshot del saldo neto antes del pago.
+  // La distribución real sigue siendo transaccional en Supabase.
+  const cuentaNetaAntes = resumenNetoCuentaCliente(cliente, tipoPago);
+  const saldoNetoAntes = numeroSeguro(cuentaNetaAntes.saldo || 0);
 
   const monto = numeroSeguro(document.getElementById("deudaPagoMonto")?.value || 0);
   const metodo = String(document.getElementById("deudaPagoMetodo")?.value || "").trim();
@@ -5473,6 +5524,13 @@ async function aplicarPagoGlobalCliente(){
     ? String(window.getSesionOperador()?.nombre || "").trim()
     : "";
   const fechaPago = fechaISOCliente();
+
+  console.log("Pago cliente V74 · saldo neto antes:", {
+    cliente: cliente.nombre,
+    tipoPago,
+    saldoNetoAntes,
+    monto
+  });
 
   const firma = firmaOperacionPagoCliente({
     clienteId:cliente.id,
