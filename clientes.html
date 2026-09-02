@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Tuttovinilos</title>
-<!-- clientes.html v77 · cuenta unificada: estado + movimientos -->
+<!-- clientes.html v78 · cuenta unificada + cronología de pedidos y pagos -->
 <link rel="icon" href="data:,">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2738,7 +2738,7 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 .movimientos-modal{width:min(900px,calc(100vw - 28px))!important;max-width:900px!important}
 .movimientos-resumen{
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(4,1fr);
   gap:8px;
 }
 .movimientos-resumen-box{
@@ -2780,6 +2780,15 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
   border-left-color:#153bff;
   background:#f8f9ff;
 }
+/* V78 · pedido emitido dentro de la cronología de cuenta */
+.movimiento-real.pedido-emitido{
+  border-color:#fed7aa;
+  border-left-color:#f59e0b;
+  background:#fffaf0;
+}
+.movimiento-real.pedido-emitido .movimiento-real-titulo strong{color:#b45309}
+.movimiento-real.pedido-emitido .movimiento-real-meta span{border-color:#fde3bd}
+.movimiento-real.pedido-emitido .movimiento-real-balance div{border-color:#fde3bd}
 .movimiento-real-head{
   display:grid;
   grid-template-columns:minmax(0,1fr) auto;
@@ -3295,7 +3304,7 @@ function cerrarNotificacionesSiFondo(event){
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v77 · cuenta unificada");
+console.log("CLIENTES HTML conectado v78 · cuenta unificada + pedidos en movimientos");
 
 let clientesDB = [];
 let pedidosDB = [];
@@ -6600,6 +6609,79 @@ function tarjetaMovimientoLegacyHtml(pg){
     </div>`;
 }
 
+// ============================================================
+// V78 · PEDIDOS EMITIDOS EN MOVIMIENTOS
+// Solo lectura. Un pedido con monto aparece como el nacimiento
+// de una obligación; los pagos siguen siendo entradas reales.
+// ============================================================
+function datosPedidoMovimiento(pedido){
+  const totalSimple = numeroSeguro(pedido?.pago_simple_total || 0);
+  const total = totalSimple > 0.009 ? totalSimple : numeroSeguro(pedido?.precio_total || 0);
+
+  const pagadoSimple = numeroSeguro(pedido?.pago_simple_pagado || 0);
+  const pagadoLegacy = numeroSeguro(pedido?.monto_abonado || 0);
+  const pagado = pagadoSimple > 0.009 ? pagadoSimple : pagadoLegacy;
+  const saldo = Math.max(total - pagado, 0);
+
+  const tipoSimple = String(pedido?.pago_simple_tipo || "").toUpperCase();
+  const monedaDeuda = String(pedido?.moneda_deuda || "").toUpperCase();
+  const tipoTasa = String(pedido?.tipo_tasa_deuda || "").toUpperCase();
+  const tipo = tipoSimple === "BCV" || monedaDeuda === "BS" || tipoTasa === "BS_BCV" ? "BCV" : "DIVISA";
+
+  return {
+    pedido,
+    id:Number(pedido?.id || 0),
+    total,
+    pagado,
+    saldo,
+    tipo,
+    fecha:String(pedido?.fecha || "").slice(0,10),
+    descripcion:String(pedido?.descripcion || "").trim(),
+    estado:String(pedido?.estatus_pago || pedido?.pago_simple_estado || "Pendiente").trim()
+  };
+}
+
+function pedidosEmitidosMovimientoCliente(cliente){
+  return obtenerPedidosClienteIndexados(cliente?.nombre, cliente?.id)
+    .map(datosPedidoMovimiento)
+    .filter(x => x.id && x.total > 0.009);
+}
+
+function fechaOrdenPedidoMovimiento(fecha){
+  const f = String(fecha || "").slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f)) return 0;
+  const t = new Date(`${f}T00:00:00`).getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+
+function tarjetaPedidoEmitidoMovimientoHtml(item){
+  const estadoActual = item.saldo <= 0.009 && item.total > 0.009
+    ? "Pagado"
+    : (item.pagado > 0.009 ? "Abonado" : (item.estado || "Pendiente"));
+
+  const meta = [
+    item.descripcion || "Sin descripción",
+    `Estado actual: ${estadoActual}`
+  ].filter(Boolean);
+
+  return `
+    <div class="movimiento-real pedido-emitido">
+      <div class="movimiento-real-head">
+        <div class="movimiento-real-titulo">
+          <small>Pedido emitido · #${escapeHtml(item.id || "—")}</small>
+          <strong>$${money(item.total)} ${escapeHtml(item.tipo)}</strong>
+        </div>
+        <div class="movimiento-real-fecha">${escapeHtml(fechaCortaCliente(item.fecha))}</div>
+      </div>
+      <div class="movimiento-real-meta">${meta.map(x => `<span>${escapeHtml(x)}</span>`).join("")}</div>
+      <div class="movimiento-real-balance">
+        <div><label>Total pedido</label><strong>$${money(item.total)}</strong></div>
+        <div><label>Pagado actual</label><strong>$${money(item.pagado)}</strong></div>
+        <div><label>Debe actual</label><strong>$${money(item.saldo)}</strong></div>
+      </div>
+    </div>`;
+}
+
 async function cargarMovimientosClienteEnCuenta(id){
   if(!validarSupabase()) return;
   const cliente = clientesDB.find(c => Number(c.id) === Number(id));
@@ -6613,8 +6695,9 @@ async function cargarMovimientosClienteEnCuenta(id){
 
   try{
     const { pagos, porPago, legacy } = await cargarMovimientosRealesCliente(cliente);
-    const entradas = [...pagos].sort((a,b) => new Date(b.created_at || b.fecha_pago || 0) - new Date(a.created_at || a.fecha_pago || 0));
-    const legacyOrdenados = [...legacy].sort((a,b) => new Date(b.created_at || b.fecha_pago || 0) - new Date(a.created_at || a.fecha_pago || 0));
+    const entradas = [...pagos];
+    const legacyOrdenados = [...legacy];
+    const pedidosEmitidos = pedidosEmitidosMovimientoCliente(cliente);
 
     const recibidosActivos = entradas
       .filter(pg => String(pg.estado || "ACTIVO").toUpperCase() !== "ANULADO")
@@ -6625,18 +6708,45 @@ async function cargarMovimientosClienteEnCuenta(id){
 
     if(resumen){
       resumen.innerHTML = `
+        <div class="movimientos-resumen-box"><label>Pedidos con monto</label><strong>${pedidosEmitidos.length}</strong></div>
         <div class="movimientos-resumen-box"><label>Entradas activas</label><strong>${entradas.filter(pg => String(pg.estado || "ACTIVO").toUpperCase() !== "ANULADO").length}</strong></div>
         <div class="movimientos-resumen-box"><label>Recibido histórico activo</label><strong>$${money(recibidosActivos)}</strong></div>
         <div class="movimientos-resumen-box"><label>Saldo a favor actual</label><strong>$${money(favorActual)}</strong></div>`;
     }
 
-    const html = [
-      ...entradas.map(pg => tarjetaMovimientoRealHtml(pg, porPago.get(Number(pg.id || 0)) || [])),
-      ...legacyOrdenados.map(pg => tarjetaMovimientoLegacyHtml(pg))
-    ].join("");
+    // V78: una sola cronología. Los pedidos crean obligación; los pagos
+    // representan entradas reales de dinero. La distribución sigue plegada.
+    const eventos = [
+      ...pedidosEmitidos.map(item => ({
+        tipo:"PEDIDO",
+        fechaOrden:fechaOrdenPedidoMovimiento(item.fecha),
+        idOrden:Number(item.id || 0),
+        html:tarjetaPedidoEmitidoMovimientoHtml(item)
+      })),
+      ...entradas.map(pg => ({
+        tipo:"PAGO",
+        fechaOrden:new Date(pg.created_at || pg.fecha_pago || 0).getTime() || 0,
+        idOrden:Number(pg.id || 0),
+        html:tarjetaMovimientoRealHtml(pg, porPago.get(Number(pg.id || 0)) || [])
+      })),
+      ...legacyOrdenados.map(pg => ({
+        tipo:"LEGACY",
+        fechaOrden:new Date(pg.created_at || pg.fecha_pago || 0).getTime() || 0,
+        idOrden:Number(pg.id || 0),
+        html:tarjetaMovimientoLegacyHtml(pg)
+      }))
+    ].sort((a,b) => {
+      if(b.fechaOrden !== a.fechaOrden) return b.fechaOrden - a.fechaOrden;
+      // En el mismo día, primero muestra el pago y luego el pedido.
+      const prioridad = { PAGO:3, LEGACY:2, PEDIDO:1 };
+      if((prioridad[b.tipo] || 0) !== (prioridad[a.tipo] || 0)) return (prioridad[b.tipo] || 0) - (prioridad[a.tipo] || 0);
+      return b.idOrden - a.idOrden;
+    });
+
+    const html = eventos.map(e => e.html).join("");
 
     if(body){
-      body.innerHTML = html || `<div class="movimientos-vacio">Este cliente todavía no tiene entradas de dinero registradas.</div>`;
+      body.innerHTML = html || `<div class="movimientos-vacio">Este cliente todavía no tiene pedidos con monto ni entradas de dinero registradas.</div>`;
     }
   }catch(error){
     console.error("No se pudieron cargar movimientos reales del cliente:", error);
