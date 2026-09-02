@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v84 auditoría financiera segura");
+console.log("APP JS conectado correctamente v85 saldo a favor por cuenta");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -13,6 +13,9 @@ let tiposImpresionMap = new Map();
 let clientesBusquedaDB = [];
 let clientesCatalogoDB = [];
 let ultimosPagosPorPedido = new Map();
+
+// V85 · evita conciliaciones simultáneas mientras se recargan pedidos.
+let conciliandoSaldosFavorIndex = false;
 
 // Las funciones globales de pago se asignan al final del archivo,
  // cuando ya existen las funciones internas. Así evitamos recursión.
@@ -176,21 +179,117 @@ function cambiosCreacionPedido(payload){
 
 async function aplicarSaldoFavorDisponible(clienteId, tipoPago, pedidoId = null){
   if(!db() || !clienteId) return {ok:true,monto_aplicado:0,pedidos_afectados:0};
+
+  const tipo = String(tipoPago || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA";
+
   try{
     const { data, error } = await db().rpc("aplicar_saldo_favor_cliente_v1", {
       p_cliente_id:Number(clienteId),
-      p_tipo_pago:String(tipoPago || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA",
+      p_tipo_pago:tipo,
       p_pedido_id:pedidoId ? Number(pedidoId) : null,
       p_operador:operadorActualNombre() || null
     });
+
     if(error){
       console.warn("No se pudo aplicar saldo a favor automáticamente:", error);
-      return {ok:false,error};
+      return {ok:false,error,monto_aplicado:0,pedidos_afectados:0};
     }
-    return data || {ok:true,monto_aplicado:0,pedidos_afectados:0};
+
+    return {
+      ok:data?.ok !== false,
+      tipo_pago:tipo,
+      monto_aplicado:numeroSeguro(data?.monto_aplicado || 0),
+      pedidos_afectados:Number(data?.pedidos_afectados || 0)
+    };
   }catch(error){
     console.warn("Error aplicando saldo a favor:", error);
-    return {ok:false,error};
+    return {ok:false,error,monto_aplicado:0,pedidos_afectados:0};
+  }
+}
+
+/* =========================================================
+   V85 · SALDO A FAVOR = CRÉDITO DE LA CUENTA DEL CLIENTE
+   ---------------------------------------------------------
+   - DIVISA y BCV nunca se cruzan.
+   - Si existe saldo a favor y también deuda en la misma cuenta,
+     el crédito se consume automáticamente.
+   - Supabase lo distribuye por pedido_id ASC (deuda más antigua primero).
+   - El crédito NO pertenece al pedido que originó el excedente.
+========================================================= */
+async function conciliarSaldosFavorCuentaIndex(){
+  if(!db() || conciliandoSaldosFavorIndex) {
+    return {monto_aplicado:0, cuentas_afectadas:0};
+  }
+
+  conciliandoSaldosFavorIndex = true;
+
+  try{
+    const { data:creditos, error } = await db()
+      .from("clientes_pagos")
+      .select("cliente_id,tipo_pago,saldo_a_favor,estado")
+      .eq("estado","ACTIVO")
+      .gt("saldo_a_favor",0.009);
+
+    if(error){
+      console.warn("No se pudieron revisar créditos de clientes:", error);
+      return {monto_aplicado:0, cuentas_afectadas:0};
+    }
+
+    const cuentas = new Map();
+
+    for(const c of creditos || []){
+      const clienteId = Number(c?.cliente_id || 0);
+      if(!clienteId) continue;
+
+      const tipo = String(c?.tipo_pago || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA";
+      const key = `${clienteId}|${tipo}`;
+      const actual = cuentas.get(key) || {clienteId,tipo,credito:0};
+      actual.credito += numeroSeguro(c?.saldo_a_favor || 0);
+      cuentas.set(key, actual);
+    }
+
+    let aplicadoTotal = 0;
+    let cuentasAfectadas = 0;
+
+    for(const cuenta of cuentas.values()){
+      if(cuenta.credito <= 0.009) continue;
+
+      // Solo llamar la RPC cuando de verdad exista deuda pendiente
+      // en la misma cuenta del mismo cliente.
+      const tieneDeuda = pedidosDB.some(p => {
+        if(Number(p?.cliente_id || 0) !== cuenta.clienteId) return false;
+        if(tipoPagoSimpleDesdePedido(p) !== cuenta.tipo) return false;
+
+        const r = resumenPagoSimplePedido(p);
+        return r.total > 0.009 && r.saldo > 0.009;
+      });
+
+      if(!tieneDeuda) continue;
+
+      // IMPORTANTE: null = cuenta completa.
+      // Supabase la reparte en orden de pedido más antiguo a más nuevo.
+      const r = await aplicarSaldoFavorDisponible(
+        cuenta.clienteId,
+        cuenta.tipo,
+        null
+      );
+
+      const aplicado = numeroSeguro(r?.monto_aplicado || 0);
+      if(aplicado > 0.009){
+        aplicadoTotal += aplicado;
+        cuentasAfectadas++;
+      }
+    }
+
+    return {
+      monto_aplicado:aplicadoTotal,
+      cuentas_afectadas:cuentasAfectadas
+    };
+  }catch(error){
+    console.warn("No se pudieron conciliar los saldos a favor:", error);
+    return {monto_aplicado:0, cuentas_afectadas:0};
+  }finally{
+    conciliandoSaldosFavorIndex = false;
   }
 }
 
@@ -1017,7 +1116,7 @@ async function cargarUltimosPagosPedidos() {
 async function cargarPedidos(resetPage = true) {
   if (!validarSupabase()) return;
 
-  const { data, error } = await db()
+  let { data, error } = await db()
     .from("pedidos")
     .select("*")
     .order("id", { ascending: false });
@@ -1029,6 +1128,26 @@ async function cargarPedidos(resetPage = true) {
   }
 
   pedidosDB = data || [];
+
+  // V85: antes de pintar, concilia cualquier crédito real del cliente
+  // contra sus deudas de la MISMA cuenta.
+  const conciliacion = await conciliarSaldosFavorCuentaIndex();
+
+  if(numeroSeguro(conciliacion?.monto_aplicado || 0) > 0.009){
+    const refresco = await db()
+      .from("pedidos")
+      .select("*")
+      .order("id", { ascending: false });
+
+    if(!refresco.error && Array.isArray(refresco.data)){
+      pedidosDB = refresco.data;
+    }else if(refresco.error){
+      console.warn("Se concilió crédito pero no se pudo refrescar pedidos:", refresco.error);
+    }
+
+    console.log("Saldo a favor conciliado en Index:", conciliacion);
+  }
+
   console.log("Pedidos cargados:", pedidosDB.length);
 
   await cargarUltimosPagosPedidos();
@@ -1619,7 +1738,7 @@ async function saveQuickOrder() {
       "Pedido creado desde fila rápida",
       {cliente_id, cliente_nombre:cliente}
     );
-    await aplicarSaldoFavorDisponible(cliente_id, tipoCuenta, nuevoPedido.id);
+    await aplicarSaldoFavorDisponible(cliente_id, tipoCuenta, null);
   }
 
   archivoSeleccionado = null;
@@ -1748,7 +1867,7 @@ async function saveOrder() {
         {cliente_id,cliente_nombre:cliente}
       );
     }
-    await aplicarSaldoFavorDisponible(cliente_id, tipoCuentaNuevo, pedidoGuardadoId);
+    await aplicarSaldoFavorDisponible(cliente_id, tipoCuentaNuevo, null);
   }
 
   pedidoEditandoId = null;
@@ -1832,7 +1951,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v84_auditoria_financiera_segura";
+const PAGO_SIMPLE_VERSION = "v85_saldo_favor_por_cuenta";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 const PAGO_UNIFICADO_NOTA = "PAGO_UNIFICADO_V1";
 let pagoSimpleGuardando = false;
@@ -2013,9 +2132,11 @@ function htmlBotonPagoSimple(id, pedido) {
     sub = "Cerrado" + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
   } else if (item.total > 0) {
     if (item.aFavor > 0.009 || item.estado === "A_FAVOR") {
+      // V85: esto solo debería aparecer en registros históricos aún no migrados.
+      // Los pagos nuevos guardan el excedente como crédito del CLIENTE.
       clase = "simple-favor";
-      titulo = "A favor $" + money(item.aFavor);
-      sub = "Pagó $" + money(item.pagado) + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
+      titulo = "A favor histórico $" + money(item.aFavor);
+      sub = "Requiere conciliación de cuenta" + (item.fecha ? " · " + fechaCortaPagoSimple(item.fecha) : "");
     } else if (item.estado === "PAGADO" || item.pagado >= item.total - 0.009) {
       clase = "simple-ok";
       titulo = "Pagado $" + money(item.total);
@@ -2296,11 +2417,11 @@ async function abrirModalPagoSimple(id) {
 
   const clienteId = clienteIdPorPedido(pedido);
   if(clienteId){
-    const credito = await aplicarSaldoFavorDisponible(clienteId, tipoPagoSimpleDesdePedido(pedido), id);
+    const credito = await aplicarSaldoFavorDisponible(clienteId, tipoPagoSimpleDesdePedido(pedido), null);
     if(numeroSeguro(credito?.monto_aplicado || 0) > 0.009){
       await cargarPedidos(false);
       pedido = getPedidoPorId(id) || pedido;
-      mostrarToast("Saldo a favor aplicado automáticamente ✅");
+      mostrarToast("Saldo a favor aplicado a la cuenta ✅");
     }
   }
 
@@ -2674,7 +2795,7 @@ async function guardarPagoSimple() {
     const pedidoDespuesDefinir = getPedidoPorId(id) || {};
     const clienteIdCredito = clienteIdPorPedido(pedidoDespuesDefinir);
     if(clienteIdCredito){
-      const credito = await aplicarSaldoFavorDisponible(clienteIdCredito, item.tipo, id);
+      const credito = await aplicarSaldoFavorDisponible(clienteIdCredito, item.tipo, null);
       if(numeroSeguro(credito?.monto_aplicado || 0) > 0.009){
         await cargarPedidos(false);
         if(accion === "LISTO"){
