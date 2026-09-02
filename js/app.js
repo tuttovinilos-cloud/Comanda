@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v85 saldo a favor por cuenta");
+console.log("APP JS conectado correctamente v86 pendiente incluye sin definir");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -1233,10 +1233,22 @@ function pedidoCumpleFiltros(p) {
     const aFavor = numeroSeguro(item.aFavor || item.favor || 0);
     const estadoSimple = String(item.estado || "").toUpperCase();
 
-    // Filtro simple:
-    // Pendiente = todo pedido que todavía debe, tenga abono o no.
+    // Filtro simple V86:
+    // Pendiente = pedidos que todavía deben + pedidos financieros "Sin definir".
+    // Importante: pedidos antiguos cerrados como PAGADO con monto 0 NO entran aquí.
     // Pagado = pedido saldado, incluyendo los que quedaron con saldo a favor.
-    const pendiente = total > 0.009 && saldo > 0.009 && estadoSimple !== "PAGADO" && estadoSimple !== "A_FAVOR";
+    const sinDefinir =
+      total <= 0.009 &&
+      estadoSimple !== "PAGADO" &&
+      estadoSimple !== "A_FAVOR";
+
+    const pendienteConDeuda =
+      total > 0.009 &&
+      saldo > 0.009 &&
+      estadoSimple !== "PAGADO" &&
+      estadoSimple !== "A_FAVOR";
+
+    const pendiente = sinDefinir || pendienteConDeuda;
     const pagadoCompleto = (total > 0.009 && saldo <= 0.009) || estadoSimple === "PAGADO";
     const pagadoOAFavor = pagadoCompleto || aFavor > 0.009 || estadoSimple === "A_FAVOR";
 
@@ -1951,7 +1963,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v85_saldo_favor_por_cuenta";
+const PAGO_SIMPLE_VERSION = "v86_pendiente_incluye_sin_definir";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 const PAGO_UNIFICADO_NOTA = "PAGO_UNIFICADO_V1";
 let pagoSimpleGuardando = false;
