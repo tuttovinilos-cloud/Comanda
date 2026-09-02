@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Tuttovinilos</title>
-<!-- clientes.html v74 · saldo neto único en estado y registro de pago -->
+<!-- clientes.html v75 · saldo neto + eliminación segura con historial -->
 <link rel="icon" href="data:,">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3097,7 +3097,7 @@ function cerrarNotificacionesSiFondo(event){
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v74 · saldo neto unificado");
+console.log("CLIENTES HTML conectado v75 · saldo neto + eliminación segura");
 
 let clientesDB = [];
 let pedidosDB = [];
@@ -4427,28 +4427,178 @@ function mezclarDatosCliente(base, nuevo, preguntarConflictos = false){
   };
 }
 
-async function eliminarClienteFisicoOOcultar(id, nombreDestino = ""){
-  if(!id) return;
+// =========================================================
+// V75 · ELIMINACIÓN SEGURA DE CLIENTES
+// ---------------------------------------------------------
+// Un cliente solo se borra físicamente cuando NO tiene
+// absolutamente ningún historial relacionado.
+// Si tiene pedidos, pagos, auditoría, cotizaciones, contactos,
+// contabilidad, producción u otro vínculo, se conserva y se
+// marca activo:false.
+//
+// Importante: varias FK de Supabase usan ON DELETE SET NULL.
+// Por eso no se puede confiar en que DELETE falle: podría
+// desprender el historial del cliente silenciosamente.
+// =========================================================
+async function contarReferenciaCliente(tabla, columna, valor){
+  try{
+    const { count, error } = await db()
+      .from(tabla)
+      .select("id", { count:"exact", head:true })
+      .eq(columna, valor);
+
+    if(error) return { count:0, error };
+    return { count:Number(count || 0), error:null };
+  }catch(error){
+    return { count:0, error };
+  }
+}
+
+async function contarReferenciaClienteLegacy(tabla, columnaId, columnaNombre, clienteId, nombre){
+  if(!nombre) return { count:0, error:null };
+
+  try{
+    const { count, error } = await db()
+      .from(tabla)
+      .select("id", { count:"exact", head:true })
+      .is(columnaId, null)
+      .ilike(columnaNombre, nombre);
+
+    if(error) return { count:0, error };
+    return { count:Number(count || 0), error:null };
+  }catch(error){
+    return { count:0, error };
+  }
+}
+
+async function revisarHistorialClienteSeguro(cliente){
+  const id = Number(cliente?.id || 0);
+  const nombre = String(cliente?.nombre || "").trim();
+
+  if(!id){
+    return {
+      tieneHistorial:true,
+      errorVerificacion:true,
+      total:0,
+      detalles:[{ etiqueta:"Cliente", count:0, error:new Error("ID de cliente inválido") }]
+    };
+  }
+
+  const fuentes = [
+    { tabla:"pedidos", columna:"cliente_id", nombreCol:"cliente", etiqueta:"Pedidos" },
+    { tabla:"clientes_pagos", columna:"cliente_id", nombreCol:"cliente_nombre", etiqueta:"Pagos del cliente" },
+    { tabla:"pedidos_pagos", columna:"cliente_id", nombreCol:"cliente_nombre", etiqueta:"Aplicaciones de pago" },
+    { tabla:"pedidos_auditoria", columna:"cliente_id", nombreCol:"cliente_nombre", etiqueta:"Auditoría" },
+    { tabla:"cotizaciones", columna:"cliente_id", nombreCol:"cliente", etiqueta:"Cotizaciones" },
+    { tabla:"contabilidad_documentos", columna:"cliente_id", nombreCol:"cliente_nombre", etiqueta:"Documentos contables" },
+    { tabla:"organizador_ideas", columna:"cliente_id", nombreCol:"cliente_nombre", etiqueta:"Organizador / ideas" },
+    { tabla:"prod_pedidos", columna:"cliente_id", nombreCol:"cliente_nombre", etiqueta:"Producción" },
+    { tabla:"clientes_contactos", columna:"cliente_id", nombreCol:null, etiqueta:"Contactos vinculados" },
+    { tabla:"contactos", columna:"cliente_origen_id", nombreCol:null, etiqueta:"Contacto de origen" }
+  ];
+
+  const detalles = [];
+
+  for(const fuente of fuentes){
+    const porId = await contarReferenciaCliente(fuente.tabla, fuente.columna, id);
+    let count = Number(porId.count || 0);
+    let error = porId.error || null;
+
+    // Compatibilidad con registros antiguos que quedaron sin cliente_id
+    // pero conservan el nombre del cliente.
+    if(fuente.nombreCol && nombre){
+      const legacy = await contarReferenciaClienteLegacy(
+        fuente.tabla,
+        fuente.columna,
+        fuente.nombreCol,
+        id,
+        nombre
+      );
+      count += Number(legacy.count || 0);
+      if(!error && legacy.error) error = legacy.error;
+    }
+
+    detalles.push({ ...fuente, count, error });
+  }
+
+  const total = detalles.reduce((acc,x) => acc + Number(x.count || 0), 0);
+  const errorVerificacion = detalles.some(x => !!x.error);
+
+  // Si alguna consulta falla, se adopta la opción conservadora:
+  // NO borrar físicamente.
+  return {
+    tieneHistorial: total > 0 || errorVerificacion,
+    errorVerificacion,
+    total,
+    detalles
+  };
+}
+
+function resumenHistorialClienteTexto(historial){
+  const lineas = (historial?.detalles || [])
+    .filter(x => Number(x.count || 0) > 0)
+    .map(x => `• ${x.etiqueta}: ${Number(x.count || 0)}`);
+
+  if(historial?.errorVerificacion){
+    lineas.push("• Algunas fuentes no pudieron verificarse; por seguridad no se borrará físicamente.");
+  }
+
+  return lineas.length ? lineas.join("\n") : "Sin historial relacionado";
+}
+
+async function desactivarClienteSeguro(id, nombreDestino = ""){
+  const clienteActual = clientesDB.find(c => Number(c.id) === Number(id));
+  const notaNueva = nombreDestino
+    ? `Cliente fusionado con: ${nombreDestino}`
+    : "Cliente archivado para conservar historial";
+
+  const notas = unirNotas(clienteActual?.notas || "", notaNueva);
+
+  const { error } = await db()
+    .from("clientes")
+    .update({ activo:false, notas })
+    .eq("id", Number(id));
+
+  if(error) throw error;
+  return { eliminado:false, archivado:true };
+}
+
+async function eliminarClienteFisicoOOcultar(id, nombreDestino = "", historialPrecalculado = null){
+  if(!id) return { eliminado:false, archivado:false };
+
+  const cliente = clientesDB.find(c => Number(c.id) === Number(id)) || { id:Number(id), nombre:"" };
+
+  // Una fusión nunca borra físicamente el registro anterior.
+  // Se conserva inactivo como rastro de la identidad previa.
+  if(nombreDestino){
+    return await desactivarClienteSeguro(id, nombreDestino);
+  }
+
+  const historial = historialPrecalculado || await revisarHistorialClienteSeguro(cliente);
+
+  if(historial.tieneHistorial){
+    return {
+      ...(await desactivarClienteSeguro(id)),
+      historial
+    };
+  }
 
   const { error:deleteError } = await db()
     .from("clientes")
     .delete()
-    .eq("id", id);
+    .eq("id", Number(id));
 
-  if(!deleteError) return;
+  if(!deleteError){
+    return { eliminado:true, archivado:false, historial };
+  }
 
-  console.warn("No se pudo borrar cliente. Se marcará como inactivo:", deleteError);
-
-  const nota = nombreDestino
-    ? `Cliente fusionado con: ${nombreDestino}`
-    : "Cliente eliminado/desactivado";
-
-  const { error:updateError } = await db()
-    .from("clientes")
-    .update({ activo:false, notas: nota })
-    .eq("id", id);
-
-  if(updateError) throw updateError;
+  // Última barrera: si Supabase rechaza el DELETE, jamás forzarlo.
+  console.warn("No se pudo borrar físicamente. Se archivará:", deleteError);
+  return {
+    ...(await desactivarClienteSeguro(id)),
+    historial,
+    deleteError
+  };
 }
 
 async function actualizarPedidosDeCliente(nombreAnterior, nombreNuevo, clienteIdDestino = null){
@@ -4776,6 +4926,8 @@ async function eliminarCliente(id){
     return;
   }
 
+  // Los pedidos actuales siguen siendo una razón para NO permitir eliminación manual.
+  // En ese caso debe fusionarse/corregirse primero para no dejar pedidos huérfanos.
   const pedidos = contarPedidosCliente(cliente.nombre, cliente.id);
 
   if(pedidos > 0){
@@ -4788,24 +4940,56 @@ async function eliminarCliente(id){
     return;
   }
 
-  const confirmar = confirm(
-    `¿Seguro que deseas eliminar este cliente?\n\n` +
-    `Cliente: ${cliente.nombre}\n\n` +
-    `Esta acción no se puede deshacer.`
-  );
+  let historial;
+  try{
+    historial = await revisarHistorialClienteSeguro(cliente);
+  }catch(error){
+    console.error("No se pudo verificar el historial del cliente:", error);
+    historial = {
+      tieneHistorial:true,
+      errorVerificacion:true,
+      total:0,
+      detalles:[]
+    };
+  }
 
-  if(!confirmar) return;
+  if(historial.tieneHistorial){
+    const confirmarArchivo = confirm(
+      `Este cliente tiene historial y NO se eliminará físicamente.\n\n` +
+      `Cliente: ${cliente.nombre}\n\n` +
+      `${resumenHistorialClienteTexto(historial)}\n\n` +
+      `Se marcará como INACTIVO para conservar pagos, auditorías y relaciones.\n\n` +
+      `¿Deseas archivarlo?`
+    );
+
+    if(!confirmarArchivo) return;
+  }else{
+    const confirmarEliminar = confirm(
+      `Este cliente no tiene pedidos ni historial relacionado.\n\n` +
+      `Cliente: ${cliente.nombre}\n\n` +
+      `Se puede eliminar físicamente. Esta acción no se puede deshacer.\n\n` +
+      `¿Deseas eliminarlo?`
+    );
+
+    if(!confirmarEliminar) return;
+  }
 
   try{
-    await eliminarClienteFisicoOOcultar(id);
+    const resultado = await eliminarClienteFisicoOOcultar(id, "", historial);
+
     await cargarPedidos();
     await cargarClientes();
     await cargarDeudasClientes();
     filtrarClientes();
-    mostrarToast("Cliente eliminado");
+
+    if(resultado?.eliminado){
+      mostrarToast("Cliente eliminado definitivamente");
+    }else if(resultado?.archivado){
+      mostrarToast("Cliente archivado · historial conservado");
+    }
   }catch(error){
-    console.error("Error eliminando cliente:", error);
-    alert("Error eliminando cliente: " + (error.message || error));
+    console.error("Error eliminando/archivando cliente:", error);
+    alert("Error eliminando/archivando cliente: " + (error.message || error));
   }
 }
 
