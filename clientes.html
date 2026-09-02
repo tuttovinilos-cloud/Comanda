@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Tuttovinilos</title>
-<!-- clientes.html v75 · saldo neto + eliminación segura con historial -->
+<!-- clientes.html v76 · movimientos reales de dinero por cliente -->
 <link rel="icon" href="data:,">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2726,6 +2726,167 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 }
 </style>
 
+
+<style id="clientes-v76-movimientos-reales">
+/* V76 · MOVIMIENTOS REALES DE DINERO POR CLIENTE */
+.movimientos-btn{
+  background:#111827!important;
+  border-color:#111827!important;
+  color:#fff!important;
+}
+.movimientos-btn:hover{background:#0f172a!important;border-color:#0f172a!important;color:#fff!important}
+.movimientos-modal{width:min(900px,calc(100vw - 28px))!important;max-width:900px!important}
+.movimientos-resumen{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+.movimientos-resumen-box{
+  border:1px solid #d9deea;
+  border-radius:14px;
+  background:#f8f9ff;
+  padding:10px 12px;
+}
+.movimientos-resumen-box label{
+  display:block;
+  margin-bottom:4px;
+  font-family:var(--head);
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.45px;
+  color:#64748b;
+  text-transform:uppercase;
+}
+.movimientos-resumen-box strong{
+  font-family:var(--mono);
+  font-size:16px;
+  color:#111827;
+}
+.movimientos-lista{display:grid;gap:10px}
+.movimiento-real{
+  border:1px solid #bbf7d0;
+  border-left:5px solid #16a34a;
+  border-radius:16px;
+  background:#f0fdf4;
+  overflow:hidden;
+}
+.movimiento-real.anulado{
+  border-color:#fecaca;
+  border-left-color:#dc2626;
+  background:#fef2f2;
+}
+.movimiento-real.legacy{
+  border-color:#c7d2fe;
+  border-left-color:#153bff;
+  background:#f8f9ff;
+}
+.movimiento-real-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:12px;
+  align-items:start;
+  padding:12px 14px;
+}
+.movimiento-real-titulo small{
+  display:block;
+  margin-bottom:4px;
+  font-family:var(--head);
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.65px;
+  color:#64748b;
+  text-transform:uppercase;
+}
+.movimiento-real-titulo strong{
+  display:block;
+  font-family:var(--mono);
+  font-size:22px;
+  line-height:1.05;
+  color:#15803d;
+}
+.movimiento-real.anulado .movimiento-real-titulo strong{color:#dc2626;text-decoration:line-through}
+.movimiento-real.legacy .movimiento-real-titulo strong{color:#153bff}
+.movimiento-real-fecha{text-align:right;font-family:var(--mono);font-size:9px;color:#64748b;white-space:nowrap}
+.movimiento-real-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  padding:0 14px 11px;
+}
+.movimiento-real-meta span{
+  border:1px solid #d9deea;
+  border-radius:999px;
+  background:#fff;
+  padding:5px 8px;
+  font-size:10px;
+  color:#475569;
+}
+.movimiento-real-balance{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+  padding:0 14px 12px;
+}
+.movimiento-real-balance div{
+  border:1px solid #d9deea;
+  border-radius:11px;
+  background:#fff;
+  padding:8px;
+}
+.movimiento-real-balance label{
+  display:block;
+  margin-bottom:3px;
+  font-family:var(--head);
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.4px;
+  color:#64748b;
+  text-transform:uppercase;
+}
+.movimiento-real-balance strong{font-family:var(--mono);font-size:12px;color:#111827}
+.movimiento-distribucion{
+  border-top:1px solid #d9deea;
+  background:#fff;
+}
+.movimiento-distribucion summary{
+  cursor:pointer;
+  list-style:none;
+  padding:10px 14px;
+  color:#153bff;
+  font-family:var(--head);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.45px;
+  text-transform:uppercase;
+  user-select:none;
+}
+.movimiento-distribucion summary::-webkit-details-marker{display:none}
+.movimiento-distribucion summary::after{content:" +"}
+.movimiento-distribucion[open] summary::after{content:" −"}
+.movimiento-distribucion-lista{border-top:1px solid #eef1f6}
+.movimiento-distribucion-row{
+  display:grid;
+  grid-template-columns:100px minmax(0,1fr) 105px;
+  gap:8px;
+  align-items:center;
+  padding:9px 14px;
+  border-top:1px solid #eef1f6;
+  font-size:10px;
+}
+.movimiento-distribucion-row:first-child{border-top:0}
+.movimiento-distribucion-row .pedido{font-family:var(--mono);font-weight:900;color:#153bff}
+.movimiento-distribucion-row .descripcion{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#475569}
+.movimiento-distribucion-row .monto{text-align:right;font-family:var(--mono);font-weight:900;color:#15803d}
+.movimientos-vacio{padding:24px;text-align:center;color:#64748b;font-family:var(--head);font-size:11px;font-weight:900;text-transform:uppercase}
+@media(max-width:650px){
+  .movimientos-resumen{grid-template-columns:1fr}
+  .movimiento-real-head{grid-template-columns:1fr}
+  .movimiento-real-fecha{text-align:left}
+  .movimiento-real-balance{grid-template-columns:1fr}
+  .movimiento-distribucion-row{grid-template-columns:82px minmax(0,1fr) 72px;padding:8px 10px}
+}
+</style>
+
 </head>
 
 <body>
@@ -2991,6 +3152,25 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 
 
 
+
+<div class="modal-backdrop" id="movimientosClienteBackdrop" onclick="cerrarMovimientosClienteSiFondo(event)">
+  <div class="modal movimientos-modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="movimientosClienteTitle">Movimientos</div>
+        <div class="historial-general-sub">Entradas reales de dinero. La distribución entre pedidos queda como detalle.</div>
+      </div>
+      <button class="mini-btn" type="button" onclick="cerrarMovimientosCliente()">Cerrar</button>
+    </div>
+    <div class="modal-body">
+      <div class="movimientos-resumen" id="movimientosClienteResumen"></div>
+      <div class="movimientos-lista" id="movimientosClienteBody">
+        <div class="movimientos-vacio">Cargando movimientos...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="deudaBackdrop" onclick="cerrarDeudaSiFondo(event)">
   <div class="modal" style="max-width:760px">
     <div class="modal-header">
@@ -3097,7 +3277,7 @@ function cerrarNotificacionesSiFondo(event){
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v75 · saldo neto + eliminación segura");
+console.log("CLIENTES HTML conectado v76 · movimientos reales de dinero");
 
 let clientesDB = [];
 let pedidosDB = [];
@@ -3395,6 +3575,7 @@ function deudaClienteHtml(cliente){
     </div>
     <div class="deuda-actions">
       <button class="mini-btn" onclick="verDeudaCliente(${id})">Ver cuenta</button>
+      <button class="mini-btn movimientos-btn" onclick="abrirMovimientosCliente(${id})">Movimientos</button>
     </div>
   `;
 }
@@ -6243,6 +6424,199 @@ function cerrarHistorialSiFondo(event){
 
 
 
+
+// ============================================================
+// V76 · MOVIMIENTOS REALES DE DINERO POR CLIENTE
+// ------------------------------------------------------------
+// Solo lectura/presentación. No modifica pagos ni conciliación.
+// clientes_pagos = entrada real de dinero.
+// pedidos_pagos  = distribución de esa entrada entre pedidos.
+// ============================================================
+async function cargarMovimientosRealesCliente(cliente){
+  const pagos = await cargarPagosGeneralesCliente(cliente);
+  let aplicaciones = [];
+
+  try{
+    if(cliente?.id){
+      const { data, error } = await db()
+        .from("pedidos_pagos")
+        .select("id,cliente_pago_id,pedido_id,cliente_id,cliente_nombre,monto_recibido,monto_aplicado,equivalente_usd,moneda,metodo_pago,referencia,nota,fecha_pago,tipo_movimiento,estado,created_at")
+        .eq("cliente_id", Number(cliente.id))
+        .order("created_at", { ascending:false });
+      if(!error && Array.isArray(data)) aplicaciones = data;
+    }
+
+    if(!aplicaciones.length && cliente?.nombre){
+      const { data, error } = await db()
+        .from("pedidos_pagos")
+        .select("id,cliente_pago_id,pedido_id,cliente_id,cliente_nombre,monto_recibido,monto_aplicado,equivalente_usd,moneda,metodo_pago,referencia,nota,fecha_pago,tipo_movimiento,estado,created_at")
+        .ilike("cliente_nombre", cliente.nombre)
+        .order("created_at", { ascending:false });
+      if(!error && Array.isArray(data)) aplicaciones = data;
+    }
+  }catch(error){
+    console.warn("No se pudo cargar distribución de movimientos:", error);
+  }
+
+  const porPago = new Map();
+  const legacy = [];
+
+  (aplicaciones || []).forEach(ap => {
+    const padre = Number(ap.cliente_pago_id || 0);
+    if(padre > 0){
+      const lista = porPago.get(padre) || [];
+      lista.push(ap);
+      porPago.set(padre, lista);
+    }else{
+      legacy.push(ap);
+    }
+  });
+
+  return { pagos:pagos || [], porPago, legacy };
+}
+
+function descripcionPedidoMovimiento(pedidoId){
+  const p = pedidosDB.find(x => Number(x.id) === Number(pedidoId));
+  return p?.descripcion || "Aplicación a pedido";
+}
+
+function movimientoDistribucionHtml(aplicaciones){
+  const activas = (aplicaciones || []).filter(ap => String(ap?.estado || "ACTIVO").toUpperCase() !== "ANULADO");
+  const lista = activas.length ? activas : (aplicaciones || []);
+  if(!lista.length) return "";
+
+  return `
+    <details class="movimiento-distribucion">
+      <summary>Ver distribución · ${lista.length} pedido${lista.length === 1 ? "" : "s"}</summary>
+      <div class="movimiento-distribucion-lista">
+        ${lista.map(ap => {
+          const monto = numeroSeguro(ap.monto_aplicado || ap.equivalente_usd || ap.monto_recibido || 0);
+          return `
+            <div class="movimiento-distribucion-row">
+              <span class="pedido">Pedido #${escapeHtml(ap.pedido_id || "—")}</span>
+              <span class="descripcion" title="${escapeHtml(descripcionPedidoMovimiento(ap.pedido_id))}">${escapeHtml(descripcionPedidoMovimiento(ap.pedido_id))}</span>
+              <span class="monto">$${money(monto)}</span>
+            </div>`;
+        }).join("")}
+      </div>
+    </details>`;
+}
+
+function tarjetaMovimientoRealHtml(pg, aplicaciones){
+  const monto = numeroSeguro(pg.monto_recibido || 0);
+  const aplicado = numeroSeguro(pg.monto_aplicado || 0);
+  const favor = numeroSeguro(pg.saldo_a_favor || 0);
+  const tipo = normalizarTipoCuentaCliente(pg.tipo_pago || "DIVISA");
+  const anulado = String(pg.estado || "ACTIVO").toUpperCase() === "ANULADO";
+  const origen = String(pg.origen || "").toUpperCase();
+  const origenTxt = origen === "INDEX" ? "Pago desde Index" : (origen === "CLIENTES" ? "Pago general en Clientes" : "Pago recibido");
+  const meta = [
+    pg.metodo_pago,
+    pg.referencia ? `Ref. ${pg.referencia}` : "",
+    pg.registrado_por ? `Operador: ${pg.registrado_por}` : "",
+    anulado ? "ANULADO" : ""
+  ].filter(Boolean);
+
+  return `
+    <div class="movimiento-real ${anulado ? "anulado" : ""}">
+      <div class="movimiento-real-head">
+        <div class="movimiento-real-titulo">
+          <small>${escapeHtml(origenTxt)} · Entrada #${escapeHtml(pg.id || "—")}</small>
+          <strong>${anulado ? "" : "+"}$${money(monto)} ${escapeHtml(tipo)}</strong>
+        </div>
+        <div class="movimiento-real-fecha">${escapeHtml(fechaHoraCortaCliente(pg.created_at || pg.fecha_pago))}</div>
+      </div>
+      ${meta.length ? `<div class="movimiento-real-meta">${meta.map(x => `<span>${escapeHtml(x)}</span>`).join("")}</div>` : ""}
+      <div class="movimiento-real-balance">
+        <div><label>Recibido</label><strong>$${money(monto)}</strong></div>
+        <div><label>Aplicado</label><strong>$${money(aplicado)}</strong></div>
+        <div><label>A favor</label><strong>$${money(favor)}</strong></div>
+      </div>
+      ${movimientoDistribucionHtml(aplicaciones)}
+    </div>`;
+}
+
+function tarjetaMovimientoLegacyHtml(pg){
+  const monto = numeroSeguro(pg.monto_aplicado || pg.equivalente_usd || pg.monto_recibido || 0);
+  const tipo = String(pg.moneda || "USD").toUpperCase() === "BS" ? "BCV" : "DIVISA";
+  const meta = [pg.metodo_pago, pg.referencia ? `Ref. ${pg.referencia}` : "", "Registro anterior"].filter(Boolean);
+  return `
+    <div class="movimiento-real legacy">
+      <div class="movimiento-real-head">
+        <div class="movimiento-real-titulo">
+          <small>Pago anterior · Pedido #${escapeHtml(pg.pedido_id || "—")}</small>
+          <strong>+$${money(monto)} ${escapeHtml(tipo)}</strong>
+        </div>
+        <div class="movimiento-real-fecha">${escapeHtml(fechaHoraCortaCliente(pg.created_at || pg.fecha_pago))}</div>
+      </div>
+      <div class="movimiento-real-meta">${meta.map(x => `<span>${escapeHtml(x)}</span>`).join("")}</div>
+    </div>`;
+}
+
+async function abrirMovimientosCliente(id){
+  if(!validarSupabase()) return;
+  const cliente = clientesDB.find(c => Number(c.id) === Number(id));
+  if(!cliente){ alert("No se encontró el cliente."); return; }
+
+  const modal = document.getElementById("movimientosClienteBackdrop");
+  const titulo = document.getElementById("movimientosClienteTitle");
+  const resumen = document.getElementById("movimientosClienteResumen");
+  const body = document.getElementById("movimientosClienteBody");
+
+  if(titulo) titulo.textContent = `Movimientos · ${cliente.nombre}`;
+  if(resumen) resumen.innerHTML = "";
+  if(body) body.innerHTML = `<div class="movimientos-vacio">Cargando movimientos...</div>`;
+  if(modal) modal.style.display = "flex";
+
+  try{
+    const { pagos, porPago, legacy } = await cargarMovimientosRealesCliente(cliente);
+    const entradas = [...pagos].sort((a,b) => new Date(b.created_at || b.fecha_pago || 0) - new Date(a.created_at || a.fecha_pago || 0));
+    const legacyOrdenados = [...legacy].sort((a,b) => new Date(b.created_at || b.fecha_pago || 0) - new Date(a.created_at || a.fecha_pago || 0));
+
+    const recibidosActivos = entradas
+      .filter(pg => String(pg.estado || "ACTIVO").toUpperCase() !== "ANULADO")
+      .reduce((acc,pg) => acc + numeroSeguro(pg.monto_recibido || 0), 0);
+    const aplicadoActivo = entradas
+      .filter(pg => String(pg.estado || "ACTIVO").toUpperCase() !== "ANULADO")
+      .reduce((acc,pg) => acc + numeroSeguro(pg.monto_aplicado || 0), 0);
+    const favorActual = entradas
+      .filter(pg => String(pg.estado || "ACTIVO").toUpperCase() !== "ANULADO")
+      .reduce((acc,pg) => acc + numeroSeguro(pg.saldo_a_favor || 0), 0);
+
+    if(resumen){
+      resumen.innerHTML = `
+        <div class="movimientos-resumen-box"><label>Entradas activas</label><strong>${entradas.filter(pg => String(pg.estado || "ACTIVO").toUpperCase() !== "ANULADO").length}</strong></div>
+        <div class="movimientos-resumen-box"><label>Recibido histórico activo</label><strong>$${money(recibidosActivos)}</strong></div>
+        <div class="movimientos-resumen-box"><label>Saldo a favor actual</label><strong>$${money(favorActual)}</strong></div>`;
+    }
+
+    const html = [
+      ...entradas.map(pg => tarjetaMovimientoRealHtml(pg, porPago.get(Number(pg.id || 0)) || [])),
+      ...legacyOrdenados.map(pg => tarjetaMovimientoLegacyHtml(pg))
+    ].join("");
+
+    if(body){
+      body.innerHTML = html || `<div class="movimientos-vacio">Este cliente todavía no tiene entradas de dinero registradas.</div>`;
+    }
+  }catch(error){
+    console.error("No se pudieron cargar movimientos reales del cliente:", error);
+    if(body) body.innerHTML = `<div class="movimientos-vacio">No se pudieron cargar los movimientos.</div>`;
+  }
+}
+
+function cerrarMovimientosCliente(){
+  const modal = document.getElementById("movimientosClienteBackdrop");
+  if(modal) modal.style.display = "none";
+}
+
+function cerrarMovimientosClienteSiFondo(event){
+  if(event?.target?.id === "movimientosClienteBackdrop") cerrarMovimientosCliente();
+}
+
+window.abrirMovimientosCliente = abrirMovimientosCliente;
+window.cerrarMovimientosCliente = cerrarMovimientosCliente;
+window.cerrarMovimientosClienteSiFondo = cerrarMovimientosClienteSiFondo;
+
 // ============================================================
 // V70 · CUENTA SIMPLE + HISTORIAL GENERAL
 // ============================================================
@@ -6609,7 +6983,7 @@ document.addEventListener("DOMContentLoaded", function(){
   inicializarClientes();
 });
 </script>
-<script>console.log("CLIENTES v74 · historial con operador real");</script>
+<script>console.log("CLIENTES v76 · movimientos reales de dinero + historial con operador real");</script>
 </body>
 </html>
 
