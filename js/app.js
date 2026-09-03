@@ -1,4 +1,4 @@
-console.log("APP JS conectado correctamente v86 pendiente incluye sin definir");
+console.log("APP JS conectado correctamente v88 historial con fecha completa");
 console.log("Supabase window:", window.supabaseClient);
 
 let pedidoEditandoId = null;
@@ -1963,7 +1963,7 @@ async function actualizarAbonoPedido(id, monto) {
 // ===========================
 // PAGO SIMPLE DEFINITIVO V58
 // ===========================
-const PAGO_SIMPLE_VERSION = "v86_pendiente_incluye_sin_definir";
+const PAGO_SIMPLE_VERSION = "v88_historial_fecha_completa";
 const PAGO_SIMPLE_NOTA = "PAGO_SIMPLE_V58";
 const PAGO_UNIFICADO_NOTA = "PAGO_UNIFICADO_V1";
 let pagoSimpleGuardando = false;
@@ -1980,6 +1980,36 @@ function fechaCortaPagoSimple(iso) {
   const p = String(iso).slice(0, 10).split("-");
   if (p.length !== 3) return String(iso).slice(0, 10);
   return p[2] + "/" + p[1];
+}
+
+function fechaCompletaPagoSimple(iso, createdAt = null) {
+  const rawFecha = String(iso || "").trim();
+  if (!rawFecha) return "";
+
+  const p = rawFecha.slice(0, 10).split("-");
+  let fecha = rawFecha.slice(0, 10);
+
+  if (p.length === 3) {
+    fecha = `${p[2]}/${p[1]}/${p[0]}`;
+  }
+
+  const rawCreated = String(createdAt || "").trim();
+  if (!rawCreated || rawCreated.length < 16) return fecha;
+
+  try {
+    const d = new Date(rawCreated);
+    if (Number.isNaN(d.getTime())) return fecha;
+
+    const hora = d.toLocaleTimeString("es-VE", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+
+    return `${fecha} · ${hora}`;
+  } catch (e) {
+    return fecha;
+  }
 }
 
 function tipoPagoSimpleDesdePedido(pedido) {
@@ -2387,6 +2417,7 @@ async function cargarHistorialPagoSimple(id) {
         clientePagoId: parentId,
         monto: numeroSeguro(p.monto_aplicado || p.monto_recibido || 0),
         fecha: String(p.fecha_pago || p.created_at || fechaISO()).slice(0, 10),
+        createdAt: String(p.created_at || ""),
         auto: String(p.tipo_movimiento || p.metodo_pago || "").toUpperCase().includes("LISTO"),
         anulado,
         origen: parent ? String(parent.origen || "") : "LEGACY",
@@ -2527,7 +2558,7 @@ function pintarModalPagoSimple() {
         const anuladoTxt = a.anulado ? " · ANULADO" : "";
         const boton = puedeAnular && !a.anulado && !a.clientePagoId
           ? `<button class="simple-delete-pay" type="button" data-pago-id="${escapeHtml(a.pagoId)}" title="Corregir registro anterior">✕</button>`
-          : `<span></span>`;
+          : ``;
         const centralizado = a.clientePagoId && !a.anulado
           ? " · Anulación: Clientes → Ver cuenta"
           : "";
@@ -2535,7 +2566,7 @@ function pintarModalPagoSimple() {
         return `
         <div class="simple-hist-row ${a.anulado ? "is-anulado" : ""}">
           <span class="simple-hist-main">${a.anulado ? "Anulado" : "Abono"} ${a.tipoPago || item.tipo || "DIVISA"} ${i + 1}: $${money(a.monto)}</span>
-          <small>${escapeHtml(fechaCortaPagoSimple(a.fecha))}${a.auto ? " · automático" : ""}${metaEntrada}${centralizado}${anuladoTxt}</small>
+          <small>${escapeHtml(fechaCompletaPagoSimple(a.fecha, a.createdAt))}${a.auto ? " · automático" : ""}${metaEntrada}${centralizado}${anuladoTxt}</small>
           ${boton}
         </div>`;
       }).join("");
@@ -3094,9 +3125,46 @@ function instalarCSSPagoSimple() {
     .simple-historial{border:1px solid #d9deea;border-radius:12px;background:#fff;overflow:hidden}
     .simple-hist-title{padding:8px 10px;background:#eef1ff;color:#153bff;font-family:var(--head);font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.5px}
     .simple-empty{padding:10px;color:#64748b;font-size:12px;font-weight:700}
-    .simple-hist-row{display:grid;grid-template-columns:minmax(0,1fr) auto 28px;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid #eef1ff;font-size:12px;font-weight:800;color:#111827}
-    .simple-hist-main{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .simple-hist-row small{color:#64748b;font-family:var(--mono);font-size:10px;white-space:nowrap}
+    .simple-hist-row{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 28px;
+      grid-template-rows:auto auto;
+      align-items:start;
+      column-gap:8px;
+      row-gap:3px;
+      padding:9px 10px;
+      border-top:1px solid #eef1ff;
+      font-size:12px;
+      font-weight:800;
+      color:#111827;
+      min-width:0;
+    }
+    .simple-hist-main{
+      grid-column:1;
+      min-width:0;
+      overflow:visible;
+      text-overflow:clip;
+      white-space:normal;
+      overflow-wrap:anywhere;
+      line-height:1.25;
+    }
+    .simple-hist-row small{
+      grid-column:1;
+      min-width:0;
+      color:#64748b;
+      font-family:var(--mono);
+      font-size:9.5px;
+      white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+      line-height:1.35;
+    }
+    .simple-hist-row .simple-delete-pay{
+      grid-column:2;
+      grid-row:1 / span 2;
+      align-self:start;
+      justify-self:end;
+    }
     .simple-hist-row.is-anulado{opacity:.52;background:#f8f9ff}
     .simple-hist-row.is-anulado .simple-hist-main{text-decoration:line-through}
     .simple-delete-pay{width:26px;height:26px;border-radius:999px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;font-size:12px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1}
@@ -3622,6 +3690,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   if (typeof aplicarPermisosComanda === "function") aplicarPermisosComanda();
 });
+
 
 
 
