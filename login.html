@@ -415,19 +415,7 @@ select{
 <script>
 const AUTH_KEY = "comanda_operador_actual";
 const $ = (id) => document.getElementById(id);
-
-const FALLBACK_OPERADORES = [
-  { nombre:"Roberto", activo:true, puede_pedidos:true, puede_clientes:true, puede_materiales:true, puede_precios:true, puede_estadisticas:true, puede_marketing:true, puede_cotizador:true, puede_organizador:true, puede_configuracion:true },
-  { nombre:"Ricardo", activo:true, puede_pedidos:true, puede_clientes:true, puede_materiales:true, puede_precios:true, puede_estadisticas:true, puede_marketing:true, puede_cotizador:true, puede_organizador:true, puede_configuracion:true },
-  { nombre:"Ruben", activo:true, puede_pedidos:true },
-  { nombre:"Chico", activo:true, puede_pedidos:true },
-  { nombre:"Carlos", activo:true, puede_pedidos:true },
-  { nombre:"Ana", activo:true, puede_marketing:true },
-  { nombre:"Miguel", activo:true, puede_pedidos:true }
-];
-
 let operadoresDB = [];
-let usandoSupabase = false;
 
 function normalizar(v){
   return String(v || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
@@ -444,45 +432,42 @@ function setStatus(text, ok=false){
   if(statusText) statusText.textContent = text;
   if(statusPill) statusPill.classList.toggle("ok", ok);
 }
-function db(){ return window.supabaseClient; }
+async function getDb(){
+  for(let i=0;i<80;i++){
+    if(window.supabaseClient) return window.supabaseClient;
+    await new Promise(r=>setTimeout(r,50));
+  }
+  throw new Error("Supabase no disponible");
+}
 function isRoberto(op){ return normalizar(op?.nombre) === "roberto"; }
-function permiso(op, key){ return isRoberto(op) || op?.[key] === true; }
 function firstAllowedPage(op){
   if(isRoberto(op)) return "index.html";
   const pages = [
     ["puede_pedidos","index.html"],
-    ["puede_clientes","clientes.html"],
-    ["puede_materiales","materiales.html"],
     ["puede_precios","precios.html"],
-    ["puede_estadisticas","estadisticas.html"],
-    ["puede_marketing","marketing.html"],
+    ["puede_clientes","clientes.html"],
+    ["puede_label","label.html"],
     ["puede_cotizador","Cotizador.html"],
     ["puede_organizador","Organizador de ideas.html"],
+    ["puede_estadisticas","estadisticas.html"],
+    ["puede_marketing","marketing.html"],
+    ["puede_materiales","materiales.html"],
+    ["puede_compras","compras.html"],
+    ["puede_contabilidad","contabilidad.html"],
     ["puede_configuracion","configuracion.html"]
   ];
   const found = pages.find(([key]) => op?.[key] === true);
   return found ? found[1] : "index.html";
 }
 function safeOperatorForStorage(op){
-  const copy = {...op};
+  const copy = {...(op || {})};
   delete copy.clave;
   delete copy.password;
   delete copy.pass;
   delete copy.pin;
+  delete copy.auth_email;
+  delete copy.auth_user_id;
   return copy;
-}
-function operatorSecret(op){
-  return String(op?.clave ?? op?.password ?? op?.pass ?? op?.pin ?? "");
-}
-function validatePassword(op, pass){
-  const secret = operatorSecret(op);
-  if(secret) return String(pass || "") === secret;
-  // Compatibilidad con login viejo: si no hay clave en Supabase, permite vacío o 1234.
-  return !String(pass || "").trim() || String(pass || "") === "1234";
-}
-function permissionBadges(op){
-  if(!op) return [`<span class="op-badge">Selecciona un usuario</span>`];
-  return [`<span class="op-badge ok">Operador seleccionado</span>`];
 }
 function renderSelect(){
   const sel = $("operadorSelect");
@@ -511,74 +496,103 @@ function updatePreview(){
     preview.innerHTML = `<div class="op-name">Sin operador</div><div class="op-meta"><span class="op-badge">Selecciona un usuario</span></div>`;
     return;
   }
-  preview.innerHTML = `
-    <div class="op-name">${String(op.nombre || "Operador")}</div>
-    <div class="op-meta">${permissionBadges(op).join("")}</div>
-  `;
+  preview.innerHTML = `<div class="op-name">${String(op.nombre || "Operador")}</div><div class="op-meta"><span class="op-badge ok">Operador seleccionado</span></div>`;
 }
 async function cargarOperadores(){
   setStatus("Cargando", false);
-  usandoSupabase = false;
   try{
-    if(!db()) throw new Error("Sin cliente Supabase");
-    const { data, error } = await db()
-      .from("operadores")
-      .select("*")
-      .eq("activo", true)
-      .order("nombre", { ascending:true });
+    const db = await getDb();
+    const { data, error } = await db.functions.invoke("comanda-login", { body:{ action:"list" } });
     if(error) throw error;
-    if(!Array.isArray(data) || !data.length) throw new Error("Sin operadores activos");
-    operadoresDB = data;
-    usandoSupabase = true;
-    setStatus("Supabase", true);
+    if(!data?.ok || !Array.isArray(data?.operadores)) throw new Error(data?.error || "No se pudieron cargar operadores");
+    operadoresDB = data.operadores;
+    setStatus("Seguro", true);
+    renderSelect();
   }catch(error){
-    console.warn("Usando operadores locales:", error);
-    operadoresDB = FALLBACK_OPERADORES;
-    setStatus("Local", false);
-    showToast("No se cargaron operadores. Usando lista local.", "warn");
+    console.error("Error cargando operadores:", error);
+    operadoresDB = [];
+    renderSelect();
+    setStatus("Sin conexión", false);
+    showToast("No se pudo conectar con el acceso seguro.", "err");
   }
-  renderSelect();
 }
-function legacyRole(op){
-  if(isRoberto(op) || normalizar(op?.nombre) === "ricardo") return "total";
-  if(op?.puede_materiales || op?.puede_clientes || op?.puede_estadisticas) return "medio";
-  return "impresion";
-}
-function login(){
+async function login(){
   const op = selectedOperator();
+  const clave = $("passInput").value;
   if(!op){ showToast("Selecciona un operador", "err"); return; }
-  if(op.activo === false){ showToast("Operador inactivo", "err"); return; }
-  if(!validatePassword(op, $("passInput").value)){
-    showToast("Clave incorrecta", "err");
-    return;
+  if(!clave){ showToast("Coloca la clave", "err"); return; }
+
+  const btn = $("loginBtn");
+  const texto = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Verificando...";
+
+  try{
+    const db = await getDb();
+
+    // 1) El servidor valida nombre + clave y crea/vincula la identidad Auth si aún no existe.
+    const { data: acceso, error: accesoError } = await db.functions.invoke("comanda-login", {
+      body:{ action:"login", nombre:op.nombre, clave }
+    });
+    if(accesoError) throw accesoError;
+    if(!acceso?.ok || !acceso?.session?.access_token || !acceso?.session?.refresh_token) throw new Error(acceso?.error || "Acceso denegado");
+
+    // 2) El servidor ya generó una identidad Supabase segura; el navegador solo instala la sesión JWT.
+    const { error: authError } = await db.auth.setSession({
+      access_token: acceso.session.access_token,
+      refresh_token: acceso.session.refresh_token
+    });
+    if(authError) throw authError;
+
+    // 3) El perfil/permisos se leen desde la identidad autenticada, no desde localStorage.
+    const { data: perfilData, error: perfilError } = await db.rpc("comanda_mi_operador");
+    if(perfilError) throw perfilError;
+    const perfil = Array.isArray(perfilData) ? perfilData[0] : perfilData;
+    if(!perfil?.id || perfil.activo === false) throw new Error("Operador no autorizado");
+
+    const clean = safeOperatorForStorage(perfil);
+    localStorage.setItem(AUTH_KEY, JSON.stringify(clean));
+    // Compatibilidad temporal con archivos viejos. Ya no se usan como autenticación real.
+    localStorage.setItem("user", normalizar(clean.nombre));
+    localStorage.setItem("role", isRoberto(clean) ? "total" : "operador");
+
+    showToast("Acceso correcto", "ok");
+    setTimeout(()=>{ location.href = firstAllowedPage(clean); }, 200);
+  }catch(error){
+    console.error("Login:", error);
+    try{ (await getDb()).auth.signOut(); }catch(_e){}
+    showToast("Clave incorrecta o acceso no disponible", "err");
+  }finally{
+    btn.disabled = false;
+    btn.textContent = texto;
   }
-  const clean = safeOperatorForStorage(op);
-  localStorage.setItem(AUTH_KEY, JSON.stringify(clean));
-  // compatibilidad con archivos viejos
-  localStorage.setItem("user", normalizar(clean.nombre));
-  localStorage.setItem("role", legacyRole(clean));
-  showToast("Acceso correcto", "ok");
-  setTimeout(()=>{ location.href = firstAllowedPage(clean); }, 250);
 }
-function limpiarSesion(){
+async function limpiarSesion(){
+  try{
+    const db = await getDb();
+    await db.auth.signOut();
+  }catch(_e){}
   localStorage.removeItem(AUTH_KEY);
   localStorage.removeItem("user");
   localStorage.removeItem("role");
-  $("passInput").value = "";
-  showToast("Sesión limpiada", "ok");
+  if($("passInput")) $("passInput").value = "";
 }
-document.addEventListener("DOMContentLoaded", ()=>{
-  if(new URLSearchParams(location.search).has("logout")) limpiarSesion();
+
+document.addEventListener("DOMContentLoaded", async ()=>{
+  if(new URLSearchParams(location.search).has("logout")){
+    await limpiarSesion();
+    showToast("Sesión cerrada", "ok");
+  }
   $("operadorSelect").addEventListener("change", updatePreview);
   $("loginBtn").addEventListener("click", login);
   $("reloadBtn").addEventListener("click", cargarOperadores);
-  $("clearBtn").addEventListener("click", limpiarSesion);
+  $("clearBtn").addEventListener("click", async ()=>{ await limpiarSesion(); showToast("Sesión limpiada", "ok"); });
   $("passInput").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
   $("togglePass").addEventListener("click", ()=>{
     const p = $("passInput");
     p.type = p.type === "password" ? "text" : "password";
   });
-  cargarOperadores();
+  await cargarOperadores();
 });
 </script>
 </body>
