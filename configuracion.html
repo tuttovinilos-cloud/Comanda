@@ -419,7 +419,7 @@ input,select,textarea{width:100%;background:#fff;border:1px solid var(--border);
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log('CONFIGURACION HTML conectado v42 historial de llegadas');
+console.log('CONFIGURACION HTML conectado v43 seguridad operadores');
 function cerrarNotificacionesModal(){const el=document.getElementById('notiBackdrop');if(el)el.style.display='none'}
 function cerrarNotiSiFondo(e){if(e&&e.target&&e.target.id==='notiBackdrop')cerrarNotificacionesModal()}
 const AUTH_KEY = 'comanda_operador_actual';
@@ -450,7 +450,25 @@ function toast(msg,type='ok'){const t=document.getElementById('toast');t.textCon
 function validarSupabase(){if(!db()){alert('No existe conexión Supabase. Revisa js/supabase.js');return false}return true}
 function getSesion(){try{return JSON.parse(localStorage.getItem(AUTH_KEY)||'null')}catch{return null}}
 function esRoberto(op){return normalizar(op?.nombre)==='roberto'}
-function verificarAcceso(){const op=getSesion();if(!op||op.activo===false){location.href='login.html';return false}if(!esRoberto(op)&&op.puede_configuracion!==true){alert('No tienes acceso a Configuración.');location.href='index.html';return false}return true}
+async function verificarAcceso(){
+  try{
+    const op=window.obtenerOperadorAutenticado?await window.obtenerOperadorAutenticado():null;
+    if(!op||op.activo===false){location.href='login.html';return false}
+    if(!esRoberto(op)){alert('Configuración de operadores es exclusiva de Roberto.');location.href='index.html';return false}
+    return true;
+  }catch(error){
+    console.error('Error verificando acceso:',error);
+    location.href='login.html';
+    return false;
+  }
+}
+async function adminOperadores(action,payload={}){
+  if(!validarSupabase())throw new Error('Supabase no disponible');
+  const {data,error}=await db().functions.invoke('comanda-admin-operadores',{body:{action,...payload}});
+  if(error)throw error;
+  if(!data?.ok)throw new Error(data?.error||'Operación no autorizada');
+  return data;
+}
 function renderPermisosGrid(op={}){const grid=document.getElementById('permisosGrid');grid.innerHTML=PERMISOS.map(p=>`<label class="check-card"><input type="checkbox" id="perm_${p.key}" ${op[p.key]===true?'checked':''}><div><div class="check-title">${p.label}</div><div class="check-sub">${p.sub}</div></div></label>`).join('')}
 function fechaCaracasISO(){
   const partes=new Intl.DateTimeFormat('en-US',{timeZone:'America/Caracas',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
@@ -489,9 +507,8 @@ async function cargarOperadores(){
   const body=document.getElementById('operadoresBody');
   body.innerHTML='<tr><td colspan="6" class="empty">Cargando operadores y horarios...</td></tr>';
   try{
-    const {data,error}=await db().from('operadores').select('*').order('nombre',{ascending:true});
-    if(error)throw error;
-    operadoresDB=data||[];
+    const respuesta=await adminOperadores('list');
+    operadoresDB=respuesta.operadores||[];
     poblarOperadoresHistorial();
     await asegurarRegistrosHoy();
     const fechaEl=document.getElementById('fechaRegistroHoy');
@@ -793,9 +810,52 @@ function editarOperador(id){const op=operadoresDB.find(o=>Number(o.id)===Number(
 function cerrarModal(){document.getElementById('operadorBackdrop').style.display='none'}
 function cerrarSiFondo(e){if(e.target.id==='operadorBackdrop')cerrarModal()}
 function datosFormulario(){const datos={nombre:document.getElementById('opNombre').value.trim(),clave:document.getElementById('opClave').value.trim(),activo:document.getElementById('opActivo').value==='true',nota:document.getElementById('opNota').value.trim(),cedula:document.getElementById('opCedula').value.trim(),telefono:document.getElementById('opTelefono').value.trim(),direccion:document.getElementById('opDireccion').value.trim(),correo:document.getElementById('opCorreo').value.trim(),fecha_nacimiento:document.getElementById('opNacimiento').value||null,contacto_emergencia_nombre:document.getElementById('opContactoNombre').value.trim(),contacto_emergencia_telefono:document.getElementById('opContactoTelefono').value.trim(),contacto_emergencia_parentesco:document.getElementById('opContactoParentesco').value.trim()};PERMISOS.forEach(p=>{datos[p.key]=document.getElementById('perm_'+p.key)?.checked===true});if(normalizar(datos.nombre)==='roberto'){PERMISOS.forEach(p=>datos[p.key]=true);datos.activo=true}return datos}
-async function guardarOperador(){if(!validarSupabase())return;const id=document.getElementById('opId').value;const datos=datosFormulario();if(!datos.nombre){alert('Coloca el nombre del operador.');return}try{let res;if(id){res=await db().from('operadores').update(datos).eq('id',id).select().single()}else{const dup=operadoresDB.find(o=>normalizar(o.nombre)===normalizar(datos.nombre));if(dup&&!confirm('Ya existe un operador con nombre parecido. ¿Crear igual?'))return;res=await db().from('operadores').insert([datos]).select().single()}if(res.error)throw res.error;cerrarModal();await cargarOperadores();toast('Operador guardado','ok')}catch(error){console.error(error);alert('Error guardando operador: '+(error.message||error))}}
-async function toggleActivo(id){const op=operadoresDB.find(o=>Number(o.id)===Number(id));if(!op)return;if(normalizar(op.nombre)==='roberto'&&op.activo!==false){alert('No recomiendo inactivar a Roberto porque puedes bloquear la configuración.');return}const nuevo=op.activo===false;const {error}=await db().from('operadores').update({activo:nuevo}).eq('id',id);if(error){alert('Error actualizando estado: '+error.message);return}await cargarOperadores();toast(nuevo?'Operador activado':'Operador inactivado','ok')}
-async function eliminarOperador(id){const op=operadoresDB.find(o=>Number(o.id)===Number(id));if(!op)return;if(normalizar(op.nombre)==='roberto'){alert('No se debe eliminar Roberto.');return}if(!confirm(`¿Eliminar operador ${op.nombre}? Esta acción no borra pedidos existentes.`))return;const {error}=await db().from('operadores').delete().eq('id',id);if(error){alert('Error eliminando: '+error.message);return}await cargarOperadores();toast('Operador eliminado','ok')}
+async function guardarOperador(){
+  if(!validarSupabase())return;
+  const id=Number(document.getElementById('opId').value||0);
+  const datos=datosFormulario();
+  if(!datos.nombre){alert('Coloca el nombre del operador.');return}
+  try{
+    if(!id){
+      const dup=operadoresDB.find(o=>normalizar(o.nombre)===normalizar(datos.nombre));
+      if(dup&&!confirm('Ya existe un operador con nombre parecido. ¿Crear igual?'))return;
+    }
+    await adminOperadores('save',{id:id||null,operador:datos});
+    cerrarModal();
+    await cargarOperadores();
+    toast('Operador guardado','ok');
+  }catch(error){
+    console.error(error);
+    alert('Error guardando operador: '+(error.message||error));
+  }
+}
+async function toggleActivo(id){
+  const op=operadoresDB.find(o=>Number(o.id)===Number(id));
+  if(!op)return;
+  if(normalizar(op.nombre)==='roberto'&&op.activo!==false){alert('Roberto no puede ser inactivado.');return}
+  try{
+    const respuesta=await adminOperadores('toggle',{id:Number(id)});
+    await cargarOperadores();
+    toast(respuesta.activo?'Operador activado':'Operador inactivado','ok');
+  }catch(error){
+    console.error(error);
+    alert('Error actualizando estado: '+(error.message||error));
+  }
+}
+async function eliminarOperador(id){
+  const op=operadoresDB.find(o=>Number(o.id)===Number(id));
+  if(!op)return;
+  if(normalizar(op.nombre)==='roberto'){alert('Roberto no puede ser eliminado.');return}
+  if(!confirm(`¿Eliminar operador ${op.nombre}? Esta acción no borra pedidos existentes.`))return;
+  try{
+    await adminOperadores('delete',{id:Number(id)});
+    await cargarOperadores();
+    toast('Operador eliminado','ok');
+  }catch(error){
+    console.error(error);
+    alert('Error eliminando: '+(error.message||error));
+  }
+}
 
 const BACKUP_TABLAS = [
   'pedidos',
@@ -843,6 +903,10 @@ function fechaArchivoBackup(){
 }
 
 async function leerTablaCompleta(nombreTabla){
+  if(nombreTabla==='operadores'){
+    const respuesta=await adminOperadores('list');
+    return respuesta.operadores||[];
+  }
   const pageSize=1000;
   let from=0;
   let filas=[];
@@ -916,7 +980,15 @@ async function descargarRespaldoCompleto(){
   }
 }
 
-document.addEventListener('DOMContentLoaded',()=>{if(verificarAcceso())cargarOperadores()});
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    if(window.authReady)await window.authReady;
+    if(await verificarAcceso())await cargarOperadores();
+  }catch(error){
+    console.error('Error iniciando Configuración:',error);
+    alert('No se pudo validar la sesión de Configuración.');
+  }
+});
 </script>
 </body>
 </html>
