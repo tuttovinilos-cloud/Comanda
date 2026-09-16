@@ -1,6 +1,6 @@
 // Auth centralizado COMANDA
-// Aplica control de sesión, permisos por página y filtrado de menú.
-// v29 · agrega Compras y Contabilidad con permisos independientes.
+// v30 · Supabase Auth real + compatibilidad temporal con localStorage.
+// localStorage conserva una copia de UI, pero ya NO autentica al usuario.
 
 (function () {
   const AUTH_KEY = "comanda_operador_actual";
@@ -59,11 +59,21 @@
   }
 
   function setSesionOperador(op) {
-    localStorage.setItem(AUTH_KEY, JSON.stringify(op));
+    if (!op) return;
+    const clean = { ...op };
+    delete clean.clave;
+    delete clean.password;
+    delete clean.pass;
+    delete clean.pin;
+    delete clean.auth_email;
+    delete clean.auth_user_id;
+    localStorage.setItem(AUTH_KEY, JSON.stringify(clean));
   }
 
   function clearSesionOperador() {
     localStorage.removeItem(AUTH_KEY);
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
   }
 
   function esRoberto(op) {
@@ -74,6 +84,7 @@
     return !!op && op.activo !== false;
   }
 
+  // Esto controla solamente la UI. La autorización real se irá cerrando en RLS/RPC.
   function tienePermiso(op, permiso) {
     if (!operadorActivo(op)) return false;
     if (esRoberto(op)) return true;
@@ -89,14 +100,12 @@
       const perm = PAGE_PERMISSIONS[page];
       if (tienePermiso(op, perm)) return page;
     }
-
     return "login.html";
   }
 
   function filtrarMenu(op) {
     const menu = document.getElementById("authMenu");
     if (!menu) return;
-
     const items = Array.from(menu.querySelectorAll("a.tab-btn"));
     items.forEach(a => {
       const hrefRaw = a.getAttribute("href") || "";
@@ -107,18 +116,58 @@
     });
   }
 
-  function aplicarPermisosComanda() {
+  async function esperarSupabase() {
+    for (let i = 0; i < 80; i++) {
+      if (window.supabaseClient) return window.supabaseClient;
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    return null;
+  }
+
+  async function obtenerOperadorAutenticado() {
+    const db = await esperarSupabase();
+    if (!db) return null;
+
+    const { data: sessionData, error: sessionError } = await db.auth.getSession();
+    if (sessionError || !sessionData?.session?.user) return null;
+
+    const { data, error } = await db.rpc("comanda_mi_operador");
+    if (error) {
+      console.error("No se pudo cargar el operador autenticado:", error);
+      return null;
+    }
+
+    const op = Array.isArray(data) ? data[0] : data;
+    if (!operadorActivo(op)) return null;
+
+    setSesionOperador(op);
+    // Compatibilidad con módulos antiguos. Estos valores NO conceden permisos en Supabase.
+    localStorage.setItem("user", normalizar(op.nombre));
+    localStorage.setItem("role", esRoberto(op) ? "total" : "operador");
+    return op;
+  }
+
+  async function cerrarSesionComanda() {
+    const db = await esperarSupabase();
+    try {
+      if (db) await db.auth.signOut();
+    } catch (e) {
+      console.warn("No se pudo cerrar la sesión remota:", e);
+    }
+    clearSesionOperador();
+  }
+
+  async function aplicarPermisosComanda() {
     if (PAGE === "login.html") return true;
 
-    const op = getSesionOperador();
-
-    if (!operadorActivo(op)) {
+    const op = await obtenerOperadorAutenticado();
+    if (!op) {
+      clearSesionOperador();
       location.href = "login.html";
       return false;
     }
 
     const permisoRequerido = PAGE_PERMISSIONS[PAGE];
-
     if (permisoRequerido && !tienePermiso(op, permisoRequerido)) {
       location.href = primeraPaginaPermitida(op);
       return false;
@@ -131,12 +180,18 @@
   window.getSesionOperador = getSesionOperador;
   window.setSesionOperador = setSesionOperador;
   window.clearSesionOperador = clearSesionOperador;
+  window.cerrarSesionComanda = cerrarSesionComanda;
+  window.obtenerOperadorAutenticado = obtenerOperadorAutenticado;
   window.esRoberto = esRoberto;
   window.operadorActivo = operadorActivo;
   window.tienePermisoComanda = tienePermiso;
   window.aplicarPermisosComanda = aplicarPermisosComanda;
   window.PAGE_PERMISSIONS_COMANDA = PAGE_PERMISSIONS;
 
-  document.addEventListener("DOMContentLoaded", aplicarPermisosComanda);
-})();
+  function iniciar() {
+    window.authReady = aplicarPermisosComanda();
+  }
 
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar, { once: true });
+  else iniciar();
+})();
