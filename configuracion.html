@@ -414,7 +414,7 @@ input,select,textarea{width:100%;background:#fff;border:1px solid var(--border);
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=29"></script>
-<script src="js/auth.js?v=29"></script>
+<script src="js/auth.js?v=30"></script>
 <script src="js/menu.js?v=45"></script>
 <script src="js/notificaciones.js?v=35"></script>
 
@@ -464,8 +464,31 @@ async function verificarAcceso(){
 }
 async function adminOperadores(action,payload={}){
   if(!validarSupabase())throw new Error('Supabase no disponible');
-  const {data,error}=await db().functions.invoke('comanda-admin-operadores',{body:{action,...payload}});
-  if(error)throw error;
+
+  const {data:sesionData,error:sesionError}=await db().auth.getSession();
+  const accessToken=sesionData?.session?.access_token||'';
+  if(sesionError||!accessToken){
+    throw new Error('Sesión de Supabase vencida. Cierra sesión y vuelve a entrar.');
+  }
+
+  const {data,error}=await db().functions.invoke('comanda-admin-operadores',{
+    body:{action,...payload},
+    headers:{Authorization:`Bearer ${accessToken}`}
+  });
+
+  if(error){
+    let detalle=error.message||'Error llamando al administrador de operadores';
+    try{
+      const resp=error.context;
+      if(resp&&typeof resp.clone==='function'){
+        const json=await resp.clone().json();
+        if(json?.error)detalle=json.error;
+        else if(json?.message)detalle=json.message;
+      }
+    }catch(_){ }
+    throw new Error(detalle);
+  }
+
   if(!data?.ok)throw new Error(data?.error||'Operación no autorizada');
   return data;
 }
@@ -517,7 +540,7 @@ async function cargarOperadores(){
   }catch(error){
     console.error(error);
     body.innerHTML='<tr><td colspan="6" class="empty">Error cargando operadores u horarios</td></tr>';
-    alert('Error cargando el registro diario. Verifica que hayas ejecutado el nuevo SQL: '+(error.message||error));
+    alert('Error cargando Configuración: '+(error.message||error));
   }
 }
 function filtrarOperadores(){const q=normalizar(document.getElementById('searchOperadores')?.value||'');const estado=document.getElementById('filtroEstado')?.value||'';let lista=[...operadoresDB];if(q)lista=lista.filter(o=>normalizar([o.nombre,o.clave,o.nota,o.cedula,o.telefono,o.correo,o.direccion,o.contacto_emergencia_nombre,o.contacto_emergencia_telefono,o.contacto_emergencia_parentesco].join(' ')).includes(q));if(estado==='activo')lista=lista.filter(o=>o.activo!==false);if(estado==='inactivo')lista=lista.filter(o=>o.activo===false);renderOperadores(lista)}
