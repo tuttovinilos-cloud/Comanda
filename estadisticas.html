@@ -722,6 +722,12 @@ tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font
 }
 </style>
 
+<style>
+[hidden]{display:none!important}
+.quick-filters{padding:16px}.quick-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.quick-row+.quick-row{margin-top:12px}.quick-row label{font-size:13px;display:flex;align-items:center;gap:8px}.quick-row input{padding:8px;border:1px solid var(--border);border-radius:8px;min-width:140px}
+.finance{border-top:4px solid var(--accent);padding:16px}.production-summary{padding:16px}.finance-grid,.work-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}.finance-number{font-size:25px;font-weight:900;margin:8px 0;font-variant-numeric:tabular-nums}.finance-tile,.work-tile{background:var(--panel2);border:1px solid var(--border);padding:14px;border-radius:12px}.work-tile b{font-size:24px;display:block;margin-top:6px}.finance .card-sub{line-height:1.6}.finance-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0}.finance-controls select{padding:8px;border-radius:8px;border:1px solid var(--border)}.finance td{text-align:right}.finance td:first-child{text-align:left}.warning-text{color:#a63e0a;font-size:13px;padding:10px 0}.empty{line-height:1.6}#metrosPorMes{max-height:580px;overflow:auto}#overdueList{max-height:270px;overflow:auto}.overdue-row{padding:10px 0;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:14px;font-size:13px}.overdue-row time{white-space:nowrap;color:var(--red)}
+@media(max-width:760px){.finance-grid,.work-grid{grid-template-columns:1fr 1fr}.quick-row label{width:100%;justify-content:space-between}.quick-row input{width:auto}.finance-number{font-size:20px}.finance-controls{align-items:stretch}.finance-controls select{width:100%}}
+</style>
 </head>
 <body>
 <header class="header">
@@ -740,8 +746,8 @@ tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font
 </header>
 
 <div class="toolbar">
-  <select id="filterYear" onchange="renderEstadisticas()"><option value="all">Todos los años</option></select>
-  <select id="filterMonth" onchange="renderEstadisticas()">
+  <select id="filterYear" aria-label="Año" onchange="limpiarRangoStats()"><option value="all">Todos los años</option></select>
+  <select id="filterMonth" aria-label="Mes" onchange="limpiarRangoStats()">
     <option value="all">Todo el año</option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
   </select>
   <div class="search-wrap" title="Escribe parte del nombre del cliente">
@@ -749,10 +755,16 @@ tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font
     <datalist id="clientesStatsList"></datalist>
   </div>
   <button class="btn danger" type="button" onclick="limpiarClienteStats()">Limpiar cliente</button>
-  <button class="btn secondary" type="button" onclick="cargarPedidosStats()">⟳ Recargar</button>
+  <button class="btn secondary" type="button" id="reloadStats" onclick="cargarPedidosStats()">⟳ Recargar</button>
 </div>
 
 <div class="layout">
+<section class="card quick-filters" aria-label="Filtrar período">
+ <div class="quick-row"><strong>Período</strong><button class="btn secondary" onclick="periodoStats('hoy')">Hoy</button><button class="btn secondary" onclick="periodoStats('semana')">Esta semana</button><button class="btn secondary" onclick="periodoStats('mes')">Este mes</button><button class="btn secondary" onclick="periodoStats('todo')">Todo el historial</button></div>
+ <div class="quick-row"><label>Desde <input type="date" id="filterFrom" onchange="rangoStats()"></label><label>Hasta <input type="date" id="filterTo" onchange="rangoStats()"></label><span class="card-sub" id="loadStatus" role="status" aria-live="polite">Verificando acceso…</span></div>
+</section>
+<section id="finanzasStats" class="card finance" hidden aria-label="Cuentas por cobrar"><div class="card-title">Cuentas por cobrar</div><p class="card-sub">Saldo actual de todos los períodos. Se aplica únicamente la búsqueda de cliente. BCV y divisa no se compensan entre sí.</p><div id="financeContent"></div></section>
+<section class="card production-summary"><div class="card-title">Producción pendiente</div><p class="card-sub">Pedidos del período seleccionado. Vencidos: entrega anterior a hoy y trabajo sin terminar.</p><div class="work-grid" id="workCounts"></div><div id="overdueList"></div></section>
   <div class="filter-info" id="filterInfo">
     <span>Viendo estadísticas de <strong>todos los clientes</strong>.</span>
     <span id="filterCount">0 pedidos filtrados</span>
@@ -760,24 +772,24 @@ tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font
 
   <section class="cards">
     <div class="stat-card"><div class="stat-label">Pedidos</div><div class="stat-num" id="kpiPedidos">0</div><div class="stat-sub">Total filtrado</div></div>
-    <div class="stat-card"><div class="stat-label">Metros</div><div class="stat-num" id="kpiMetros">0</div><div class="stat-sub">Cantidad sumada</div></div>
+    <div class="stat-card"><div class="stat-label">Cantidad</div><div class="stat-num" id="kpiMetros">0</div><div class="stat-sub">Suma del campo cantidad; sin conversión a m²</div></div>
     <div class="stat-card"><div class="stat-label">Clientes</div><div class="stat-num" id="kpiClientes">0</div><div class="stat-sub">Clientes únicos</div></div>
     <div class="stat-card"><div class="stat-label">Listos</div><div class="stat-num" id="kpiListos">0</div><div class="stat-sub">Trabajos terminados</div></div>
     <div class="stat-card"><div class="stat-label">Pagados</div><div class="stat-num" id="kpiPagados">0</div><div class="stat-sub">Pagos cerrados</div></div>
   </section>
 
   <section class="grid">
-    <div class="card"><div class="card-header"><div><div class="card-title">Clientes top por metros</div><div class="card-sub">Clientes que más cantidad/metraje han generado.</div></div></div><div class="list" id="topClientes"></div></div>
+    <div class="card"><div class="card-header"><div><div class="card-title">Clientes por cantidad</div><div class="card-sub">Clientes que más cantidad han generado.</div></div></div><div class="list" id="topClientes"></div></div>
     <div class="card"><div class="card-header"><div><div class="card-title">Clientes recurrentes</div><div class="card-sub">Clientes con más pedidos.</div></div></div><div class="list" id="clientesRecurrentes"></div></div>
     <div class="card"><div class="card-header"><div><div class="card-title">Materiales usados</div><div class="card-sub">Suma de cantidad por material.</div></div></div><div class="list" id="materialesUsados"></div></div>
     <div class="card"><div class="card-header"><div><div class="card-title">Tipos de impresión</div><div class="card-sub">Suma de cantidad por tipo de impresión.</div></div></div><div class="list" id="impresionesUsadas"></div></div>
     <div class="card"><div class="card-header"><div><div class="card-title">Operadores</div><div class="card-sub">Todos los operadores registrados · Ricardo Ortiz/Añadir/Sin dato agrupados en Ricardo.</div></div></div><div class="list" id="operadoresUsados"></div></div>
-    <div class="card"><div class="card-header"><div><div class="card-title">Producción por mes</div><div class="card-sub">Orden fijo: enero, febrero, marzo, abril...</div></div></div><div class="list" id="metrosPorMes"></div></div>
+    <div class="card"><div class="card-header"><div><div class="card-title">Producción por mes</div><div class="card-sub">Historial cronológico por año y mes · incluye meses sin pedidos.</div></div></div><div class="list" id="metrosPorMes"></div></div>
   </section>
 
   <section class="card">
     <div class="card-header"><div><div class="card-title">Resumen por cliente</div><div class="card-sub">Pedidos, cantidad, listos, pagos y pendientes por cliente.</div></div></div>
-    <div class="table-scroll"><table><thead><tr><th>Cliente</th><th>Pedidos</th><th>Metros</th><th>Primer pedido</th><th>Último pedido</th><th>Listos</th><th>Pagados</th><th>Pendientes</th></tr></thead><tbody id="tablaClientes"><tr><td colspan="8" class="empty">Cargando clientes...</td></tr></tbody></table></div>
+    <div class="table-scroll"><table><thead><tr><th>Cliente</th><th>Pedidos</th><th>Cantidad</th><th>Primer pedido</th><th>Último pedido</th><th>Listos</th><th>Pagados</th><th>Pendientes</th></tr></thead><tbody id="tablaClientes"><tr><td colspan="8" class="empty">Cargando clientes...</td></tr></tbody></table></div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
@@ -798,7 +810,562 @@ tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font
   </div>
 </div>
 
-<script src="js/estadisticas.js?v=68"></script>
+<script>
+(()=>{
+// Estadísticas v70 · archivo integrado · consultas de solo lectura.
+
+let pedidosStats = [];
+let operadoresStatsDB = [];
+const $ = id => document.getElementById(id);
+
+function db(){
+  return window.supabaseClient;
+}
+
+function normalizar(v){
+  return String(v || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+function limpiarTexto(v, fallback='Sin dato'){
+  const t = String(v ?? '').trim();
+  const n = normalizar(t);
+  if(!t || n === 'empty' || n === 'null') return fallback;
+  return t.replace(/\s+/g,' ').trim();
+}
+
+function escapeHtml(v){
+  return String(v ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#039;');
+}
+
+function numero(v){
+  if(typeof v === 'number') return Number.isFinite(v) ? v : 0;
+  const m = String(v ?? '').replace(',', '.').match(/-?\d+(\.\d+)?/);
+  return m ? Number(m[0]) : 0;
+}
+
+function fmt(n){
+  const x = Number(n || 0);
+  if(!Number.isFinite(x)) return '0';
+  return x.toLocaleString('es-VE',{maximumFractionDigits:2});
+}
+
+function showToast(msg){
+  const t=$('toast');
+  if(!t){ console.log(msg); return; }
+  t.textContent=msg;
+  t.style.display='block';
+  setTimeout(()=>t.style.display='none',2200);
+}
+
+async function cargarOperadoresStats(){
+  if(!db()) return [];
+
+  try{
+    const { data, error } = await db()
+      .from('operadores')
+      .select('id,nombre,activo,rol')
+      .eq('activo', true)
+      .order('id', { ascending:true });
+
+    if(error) throw error;
+
+    operadoresStatsDB = (data || [])
+      .filter(op => op && limpiarTexto(op.nombre, '') !== '')
+      .map(op => ({
+        id: Number(op.id || 9999),
+        nombre: limpiarTexto(op.nombre, 'Sin dato'),
+        rol: limpiarTexto(op.rol, ''),
+        activo: op.activo !== false
+      }));
+
+    return operadoresStatsDB;
+  }catch(e){
+    console.warn('No se pudo cargar operadores registrados:', e);
+    operadoresStatsDB = [];
+    return [];
+  }
+}
+
+function llenarFiltros(){
+  const ySel = $('filterYear');
+  if(ySel){
+    const oldY = ySel.value || 'all';
+    const years = [...new Set(
+      pedidosStats
+        .map(p => String(p.fecha || '').slice(0,4))
+        .filter(y => /^\d{4}$/.test(y))
+    )].sort((a,b)=>b.localeCompare(a));
+
+    ySel.innerHTML = '<option value="all">Todos los años</option>' +
+      years.map(y => `<option value="${escapeHtml(y)}">${escapeHtml(y)}</option>`).join('');
+
+    ySel.value = years.includes(oldY) ? oldY : 'all';
+  }
+
+  const clientesMap = new Map();
+  pedidosStats.forEach(p => {
+    const nombre = limpiarTexto(p.cliente, '');
+    const key = normalizar(nombre);
+    if(key && !clientesMap.has(key)) clientesMap.set(key, nombre);
+  });
+
+  const clientes = [...clientesMap.values()].sort((a,b)=>a.localeCompare(b,'es'));
+  const list = $('clientesStatsList');
+  if(list){
+    list.innerHTML = clientes.map(c => `<option value="${escapeHtml(c)}"></option>`).join('');
+  }
+}
+
+function filtrarPedidos(){
+  const year = $('filterYear')?.value || 'all';
+  const month = $('filterMonth')?.value || 'all';
+  const clienteQ = normalizar($('filterClienteSearch')?.value || '');
+
+  return pedidosStats.filter(p => {
+    const fecha = String(p.fecha || '');
+
+    if(year !== 'all' && fecha.slice(0,4) !== year) return false;
+    if(month !== 'all' && fecha.slice(5,7) !== month) return false;
+    if(clienteQ && !normalizar(p.cliente).includes(clienteQ)) return false;
+    const desde = $('filterFrom').value, hasta = $('filterTo').value;
+    if(desde && fecha.slice(0,10) < desde) return false;
+    if(hasta && (!fecha || fecha.slice(0,10) > hasta)) return false;
+
+    return true;
+  });
+}
+
+function estadoPagoPedidoStats(p){
+  const nuevo=normalizar(p.pago_simple_estado);
+  if(nuevo) return ['pagado','a favor'].includes(nuevo) ? 'pagado' : 'pendiente';
+  return normalizar(p.estatus_pago)==='pagado' ? 'pagado' : 'pendiente';
+}
+
+function pedidoPagadoStats(p){
+  return estadoPagoPedidoStats(p) === 'pagado';
+}
+
+function pedidoPendienteStats(p){
+  return !pedidoPagadoStats(p);
+}
+
+function crearGrupo(key, extra={}){
+  return {
+    key,
+    pedidos:0,
+    metros:0,
+    listos:0,
+    pagados:0,
+    pendientes:0,
+    primero:null,
+    ultimo:null,
+    items:[],
+    registrado:false,
+    orden:9999,
+    ...extra
+  };
+}
+
+function sumarPedidoGrupo(g, p){
+  g.pedidos += 1;
+  g.metros += numero(p.cantidad);
+
+  if(normalizar(p.estatus_trabajo) === 'listo') g.listos += 1;
+  if(pedidoPagadoStats(p)) g.pagados += 1;
+  if(pedidoPendienteStats(p)) g.pendientes += 1;
+
+  const f = String(p.fecha || '').slice(0,10);
+  if(f){
+    if(!g.primero || f < g.primero) g.primero = f;
+    if(!g.ultimo || f > g.ultimo) g.ultimo = f;
+  }
+
+  g.items.push(p);
+}
+
+function groupBy(rows, keyFn){
+  const map = new Map();
+
+  rows.forEach(p => {
+    const show = limpiarTexto(keyFn(p), 'Sin dato');
+    const key = normalizar(show) || 'sin dato';
+
+    if(!map.has(key)) map.set(key, crearGrupo(show));
+    sumarPedidoGrupo(map.get(key), p);
+  });
+
+  return [...map.values()];
+}
+
+function nombreOperadorCanonico(nombre){
+  const limpio = limpiarTexto(nombre, '');
+  const n = normalizar(limpio);
+
+  // Todo lo que venía vacío, "Añadir" o "Sin dato" fue cargado como operador accidental.
+  // Roberto pidió agruparlo como Ricardo.
+  if(!n || n === 'sin dato' || n === 'empty' || n === 'null' || n === 'anadir' || n === 'operador') return 'Ricardo';
+  if(n.includes('ricardo')) return 'Ricardo';
+
+  if(n.includes('roberto')) return 'Roberto';
+  if(n.includes('chico') || n.includes('francisco')) return 'Chico';
+  if(n.includes('gabriela') || n === 'm gabriela') return 'M. Gabriela';
+  if(n.includes('ruben')) return 'Rubén';
+  if(n.includes('miguel')) return 'Miguel Gonzales';
+  if(n.includes('ana virginia') || n.includes('ana santana')) return 'Ana Virginia Santana';
+  if(n.includes('carlos')) return 'Carlos Miguel';
+
+  return limpio || 'Ricardo';
+}
+
+function operadoresBaseRegistrados(){
+  const map = new Map();
+
+  operadoresStatsDB.forEach((op, index) => {
+    const nombre = nombreOperadorCanonico(op.nombre);
+    const key = normalizar(nombre);
+    if(!key) return;
+
+    if(!map.has(key)){
+      map.set(key, crearGrupo(nombre, {
+        registrado:true,
+        orden:Number(op.id || index + 1),
+        rol:op.rol || ''
+      }));
+    }else{
+      const g = map.get(key);
+      g.registrado = true;
+      g.orden = Math.min(g.orden || 9999, Number(op.id || index + 1));
+    }
+  });
+
+  // Fallback mínimo por si la consulta de operadores falla.
+  ['Roberto','Ricardo','Chico','M. Gabriela','Rubén'].forEach((nombre, idx) => {
+    const key = normalizar(nombre);
+    if(!map.has(key)){
+      map.set(key, crearGrupo(nombre, { registrado:false, orden:9000 + idx }));
+    }
+  });
+
+  return map;
+}
+
+function groupOperadores(rows){
+  const map = operadoresBaseRegistrados();
+
+  rows.forEach(p => {
+    const nombre = nombreOperadorCanonico(p.operador);
+    const key = normalizar(nombre) || 'ricardo';
+
+    if(!map.has(key)){
+      map.set(key, crearGrupo(nombre, { registrado:false, orden:9500 }));
+    }
+
+    sumarPedidoGrupo(map.get(key), p);
+  });
+
+  return [...map.values()].sort((a,b) => {
+    const aCon = a.pedidos > 0;
+    const bCon = b.pedidos > 0;
+    if(aCon !== bCon) return aCon ? -1 : 1;
+    if(b.pedidos !== a.pedidos) return b.pedidos - a.pedidos;
+    return (a.orden || 9999) - (b.orden || 9999) || a.key.localeCompare(b.key, 'es');
+  });
+}
+
+function renderList(id, rows, mode='metros'){
+  const el = $(id);
+  if(!el) return;
+
+  if(!rows.length){
+    el.innerHTML = '<div class="empty">Sin datos</div>';
+    return;
+  }
+
+  const ordenados = id === 'metrosPorMes' ? rows : rows.slice(0,10);
+  const max = Math.max(...ordenados.map(r => mode === 'pedidos' ? r.pedidos : r.metros), 1);
+
+  el.innerHTML = ordenados.map((r, i) => {
+    const val = mode === 'pedidos' ? r.pedidos : r.metros;
+    const label = mode === 'pedidos' ? `${fmt(r.pedidos)} pedidos` : `${fmt(r.metros)} cant.`;
+    const pct = Math.max(3, (val / max) * 100);
+
+    return `<div class="stat-mini">
+      <div class="stat-mini-top">
+        <div class="stat-mini-name">${i + 1}. ${escapeHtml(r.key)}</div>
+        <div class="stat-mini-value">${escapeHtml(label)}</div>
+      </div>
+      <div class="stat-mini-meta">${fmt(r.pedidos)} pedido${r.pedidos===1?'':'s'} · Listos: ${fmt(r.listos)} · Pagados: ${fmt(r.pagados)}</div>
+      <div class="stat-mini-track">
+        <div class="stat-mini-fill" style="width:${pct}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderOperadores(rows){
+  const el = $('operadoresUsados');
+  if(!el) return;
+
+  if(!rows.length){
+    el.innerHTML = '<div class="empty">Sin operadores</div>';
+    return;
+  }
+
+  const max = Math.max(...rows.map(r => r.pedidos), 1);
+
+  el.innerHTML = rows.map((r, i) => {
+    const pct = r.pedidos > 0 ? Math.max(4, (r.pedidos / max) * 100) : 0;
+    const estado = r.pedidos > 0 ? `${fmt(r.pedidos)} pedidos` : 'Sin pedidos';
+    const claseCero = r.pedidos > 0 ? '' : ' is-zero';
+
+    return `<div class="operator-mini${claseCero}">
+      <div class="operator-head">
+        <div class="operator-title"><span>${i + 1}.</span> ${escapeHtml(r.key)}</div>
+        <div class="operator-total">${escapeHtml(estado)}</div>
+      </div>
+      <div class="operator-grid">
+        <span><b>${fmt(r.metros)}</b><small>cantidad</small></span>
+        <span><b>${fmt(r.listos)}</b><small>listos</small></span>
+        <span><b>${fmt(r.pagados)}</b><small>pagados</small></span>
+        <span><b>${fmt(r.pendientes)}</b><small>pend.</small></span>
+      </div>
+      <div class="stat-mini-track operator-track">
+        <div class="stat-mini-fill" style="width:${pct}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderMeses(rows){
+  const groups = new Map();
+  rows.forEach(p => {
+    const key = String(p.fecha || '').slice(0,7);
+    if(!/^\d{4}-\d{2}$/.test(key)) return;
+    if(!groups.has(key)) groups.set(key, crearGrupo(key));
+    sumarPedidoGrupo(groups.get(key),p);
+  });
+  const keys = [...groups.keys()].sort();
+  if(keys.length){
+    const cursor = new Date(keys[0]+'-01T12:00:00Z');
+    const last = new Date(keys[keys.length-1]+'-01T12:00:00Z');
+    let guard=0;
+    while(cursor<=last && guard++<1200){
+      const key=cursor.toISOString().slice(0,7);
+      if(!groups.has(key)) groups.set(key,crearGrupo(key));
+      cursor.setUTCMonth(cursor.getUTCMonth()+1);
+    }
+  }
+  renderList('metrosPorMes',[...groups.values()].sort((a,b)=>a.key.localeCompare(b.key)),'metros');
+}
+
+function renderTablaClientes(grupos){
+  const tbody = $('tablaClientes');
+  if(!tbody) return;
+
+  if(!grupos.length){
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin clientes</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = grupos.map(g => `
+    <tr>
+      <td><b>${escapeHtml(g.key)}</b></td>
+      <td>${fmt(g.pedidos)}</td>
+      <td><b>${fmt(g.metros)}</b></td>
+      <td>${escapeHtml(g.primero || '—')}</td>
+      <td>${escapeHtml(g.ultimo || '—')}</td>
+      <td><span class="pill green">${fmt(g.listos)}</span></td>
+      <td><span class="pill blue">${fmt(g.pagados)}</span></td>
+      <td><span class="pill red">${fmt(g.pendientes)}</span></td>
+    </tr>`).join('');
+}
+
+function renderEstadisticas(){
+  const rows = filtrarPedidos();
+  if($('filterFrom').value && $('filterTo').value && $('filterFrom').value > $('filterTo').value){$('filterInfo').textContent='La fecha inicial debe ser anterior o igual a la final.';return;}
+  renderTrabajo(rows);
+  renderFinanzas();
+
+  const clientes = groupBy(rows, p => p.cliente).sort((a,b)=>b.metros-a.metros);
+  const recurrentes = [...clientes].sort((a,b)=>b.pedidos-a.pedidos);
+  const materiales = groupBy(rows, p => p.material).sort((a,b)=>b.metros-a.metros);
+  const impresiones = groupBy(rows, p => p.tipo_impresion).sort((a,b)=>b.metros-a.metros);
+  const operadores = groupOperadores(rows);
+
+  const totalMetros = rows.reduce((a,p)=>a+numero(p.cantidad),0);
+
+  if($('kpiPedidos')) $('kpiPedidos').textContent = fmt(rows.length);
+  if($('kpiMetros')) $('kpiMetros').textContent = fmt(totalMetros);
+  if($('kpiClientes')) $('kpiClientes').textContent = fmt(clientes.length);
+  if($('kpiListos')) $('kpiListos').textContent = fmt(rows.filter(p => normalizar(p.estatus_trabajo) === 'listo').length);
+  if($('kpiPagados')) $('kpiPagados').textContent = fmt(rows.filter(pedidoPagadoStats).length);
+
+  const q = $('filterClienteSearch')?.value.trim() || '';
+
+  if($('filterInfo')){
+    const pagados = rows.filter(pedidoPagadoStats).length;
+    const pendientes = rows.length - pagados;
+    const activos = operadores.filter(o => o.pedidos > 0).length;
+    $('filterInfo').innerHTML = `<span>Viendo estadísticas de <strong>${q ? escapeHtml(q) : 'todos los clientes'}</strong>.</span><span id="filterCount">${rows.length} pedido${rows.length===1?'':'s'} · ${fmt(totalMetros)} cant. · ${fmt(pagados)} pagado${pagados===1?'':'s'} · ${fmt(pendientes)} pendiente${pendientes===1?'':'s'} · ${fmt(activos)} operador${activos===1?'':'es'}</span>`;
+  }
+
+  renderList('topClientes', clientes, 'metros');
+  renderList('clientesRecurrentes', recurrentes, 'pedidos');
+  renderList('materialesUsados', materiales, 'metros');
+  renderList('impresionesUsadas', impresiones, 'metros');
+  renderOperadores(operadores);
+  renderMeses(rows);
+  renderTablaClientes(clientes);
+}
+
+function limpiarClienteStats(){
+  const input = $('filterClienteSearch');
+  if(input) input.value = '';
+  renderEstadisticas();
+}
+
+function setEmptyAll(msg){
+  ['topClientes','clientesRecurrentes','materialesUsados','impresionesUsadas','operadoresUsados','metrosPorMes'].forEach(id => {
+    const el=$(id);
+    if(el) el.innerHTML = `<div class="empty">${escapeHtml(msg)}</div>`;
+  });
+
+  const tbody = $('tablaClientes');
+  if(tbody) tbody.innerHTML = `<tr><td colspan="8" class="empty">${escapeHtml(msg)}</td></tr>`;
+}
+
+
+let loading=false, allowedFinance=false, financeRows=[], financeError='', financeSort='DIVISA';
+let generation=0, authBound=false;
+const BASE_FIELDS='id,fecha,operador,cliente,descripcion,cantidad,material,tipo_impresion,estatus_trabajo,estatus_pago,fecha_entrega,pago_simple_estado';
+function hoyCaracas(){const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/Caracas',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}`;}
+function limpiarRangoStats(){ $('filterFrom').value='';$('filterTo').value='';renderEstadisticas(); }
+function rangoStats(){ $('filterYear').value='all';$('filterMonth').value='all';renderEstadisticas(); }
+function periodoStats(tipo){
+ const hoy=hoyCaracas();let inicio=hoy;
+ if(tipo==='mes')inicio=hoy.slice(0,8)+'01';
+ if(tipo==='semana'){const d=new Date(hoy+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7));inicio=d.toISOString().slice(0,10);}
+ $('filterFrom').value=tipo==='todo'?'':inicio;$('filterTo').value=tipo==='todo'?'':hoy;rangoStats();
+}
+function renderTrabajo(rows){
+ const counts=new Map();rows.forEach(p=>{const s=limpiarTexto(p.estatus_trabajo,'Sin estado');counts.set(s,(counts.get(s)||0)+1);});
+ const vencidos=rows.filter(p=> !['listo','entregado','anulado','cancelado'].includes(normalizar(p.estatus_trabajo)) && /^\d{4}-\d{2}-\d{2}/.test(String(p.fecha_entrega||'')) && String(p.fecha_entrega).slice(0,10)<hoyCaracas()).sort((a,b)=>String(a.fecha_entrega).localeCompare(String(b.fecha_entrega)));
+ $('workCounts').innerHTML=[...counts].map(([s,n])=>`<div class="work-tile">${escapeHtml(s)}<b>${fmt(n)}</b></div>`).join('')+`<div class="work-tile">Entrega vencida<b style="color:var(--red)">${fmt(vencidos.length)}</b></div>`;
+ $('overdueList').innerHTML=vencidos.slice(0,30).map(p=>`<div class="overdue-row"><span><b>#${escapeHtml(p.id)} · ${escapeHtml(p.cliente)}</b><br>${escapeHtml(p.descripcion||'Sin descripción')}</span><time>${escapeHtml(String(p.fecha_entrega).slice(0,10))}</time></div>`).join('')+(vencidos.length>30?'<p class="card-sub">Se muestran los primeros 30 vencidos.</p>':'');
+}
+// Keyset pagination continues even when the server's cap is below 500 rows.
+async function leerCompleto(tabla,campos,run){
+ const rows=[];let last=null;
+ while(true){
+  if(run!==generation)throw new Error('Carga cancelada');
+  let q=db().from(tabla).select(campos).order('id',{ascending:true}).limit(500);
+  if(last!==null)q=q.gt('id',last);
+  const {data,error}=await q;if(error)throw error;
+  if(!data?.length)break;
+  const next=data[data.length-1].id;
+  if(next==null||next===last)throw new Error('No se pudo completar la lectura de '+tabla);
+  rows.push(...data);last=next;
+ }
+ return rows;
+}
+function limpiarFinanzas(){allowedFinance=false;financeRows=[];financeError='';$('finanzasStats').hidden=true;$('financeContent').replaceChildren();}
+async function verificarPerfil(){
+ if(!db())throw new Error('No se pudo conectar. Recarga la página.');
+ const {data,error}=await db().rpc('comanda_mi_operador');
+ const op=Array.isArray(data)?data[0]:data;
+ if(error||!op||op.activo===false)throw new Error('No se pudo verificar tu sesión. Vuelve a iniciar sesión.');
+ if(Number(op.id)!==1 && op.puede_estadisticas!==true)throw new Error('No tienes permiso para ver estadísticas.');
+ return op;
+}
+async function cargarPedidosStats(){
+ if(loading)return;
+ loading=true;const run=++generation;limpiarFinanzas();
+ $('reloadStats').disabled=true;$('loadStatus').textContent='Verificando acceso…';
+ pedidosStats=[];renderEstadisticas();setEmptyAll('Cargando…');
+ try{
+  if(window.authReady && await window.authReady===false)throw new Error('Acceso no autorizado.');
+  const op=await verificarPerfil();
+  // Read a protected operator column using the ID returned by the authenticated RPC.
+  const permiso=await db().from('operadores').select('id,puede_ver_deudas_estadisticas').eq('id',op.id).single();
+  if(run!==generation)return;
+  allowedFinance=!permiso.error && permiso.data?.puede_ver_deudas_estadisticas===true;
+  if(!authBound && db().auth?.onAuthStateChange){
+   authBound=true;db().auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){++generation;limpiarFinanzas();pedidosStats=[];renderEstadisticas();$('loadStatus').textContent='Sesión cerrada';}});
+  }
+  $('loadStatus').textContent='Cargando historial completo…';
+  const results=await Promise.allSettled([leerCompleto('pedidos',BASE_FIELDS,run),cargarOperadoresStats()]);
+  if(run!==generation)return;
+  if(results[0].status==='rejected')throw results[0].reason;
+  pedidosStats=results[0].value;llenarFiltros();renderEstadisticas();
+  if(allowedFinance){
+   $('finanzasStats').hidden=false;$('financeContent').innerHTML='<div class="empty">Cargando cuentas…</div>';
+   try{
+    const result=await Promise.allSettled([
+     leerCompleto('pedidos','id,cliente_id,cliente,fecha,estatus_trabajo,pago_simple_total,pago_simple_pagado,pago_simple_tipo',run),
+     leerCompleto('clientes_pagos','id,cliente_id,tipo_pago,saldo_a_favor,estado',run),
+     leerCompleto('clientes','id,nombre',run)
+    ]);
+    if(run!==generation)return;
+    const bad=result.find(r=>r.status==='rejected');if(bad)throw bad.reason;
+    financeRows=construirCuentas(...result.map(r=>r.value));
+   }catch(error){if(run!==generation)return;financeRows=[];financeError='No se pudieron cargar todas las cuentas. Pulsa Recargar; no se muestran totales parciales.';}
+   renderFinanzas();
+  }
+  $('loadStatus').textContent=`${fmt(pedidosStats.length)} pedidos cargados · Actualizado ${new Date().toLocaleTimeString('es-VE',{timeZone:'America/Caracas',hour:'2-digit',minute:'2-digit'})}`;
+ }catch(error){
+  if(run!==generation)return;
+  limpiarFinanzas();pedidosStats=[];renderEstadisticas();setEmptyAll('No se pudo cargar el historial.');$('loadStatus').textContent=error.message||'No se pudo cargar. Pulsa Recargar.';
+ }finally{loading=false;$('reloadStats').disabled=false;}
+}
+function centavos(v){return Math.round(numero(v)*100);}
+function construirCuentas(pedidos,pagos,clientes){
+ const cuentas=new Map(),byId=new Map(clientes.map(c=>[String(c.id),c])),byName=new Map();
+ clientes.forEach(c=>{const n=normalizar(c.nombre);byName.set(n,byName.has(n)?null:c);});
+ const ensure=(key,nombre,tipo)=>{const k=key+'|'+tipo;if(!cuentas.has(k))cuentas.set(k,{key,nombre,tipo,deuda:0,credito:0,listos:0,antigua:'',pedidos:0});return cuentas.get(k);};
+ pedidos.forEach(p=>{
+  const total=centavos(p.pago_simple_total),pagado=centavos(p.pago_simple_pagado);
+  if(total===0&&pagado===0)return;
+  const c=byId.get(String(p.cliente_id)) || (!p.cliente_id ? byName.get(normalizar(p.cliente)):null);
+  const key=c?'id:'+c.id:p.cliente_id?'id:'+p.cliente_id:'nombre:'+normalizar(p.cliente);
+  const tipo=String(p.pago_simple_tipo||'DIVISA').toUpperCase()==='BCV'?'BCV':'DIVISA';
+  const g=ensure(key,c?.nombre||p.cliente||'Sin cliente',tipo);const saldo=Math.max(total-pagado,0);
+  g.deuda+=saldo;g.credito+=Math.max(pagado-total,0);
+  if(saldo>0){g.pedidos++;if(normalizar(p.estatus_trabajo)==='listo')g.listos+=saldo;const f=String(p.fecha||'').slice(0,10);if(/^\d{4}-\d{2}-\d{2}$/.test(f)&&(!g.antigua||f<g.antigua))g.antigua=f;}
+ });
+ pagos.forEach(p=>{if(String(p.estado||'ACTIVO').toUpperCase()==='ANULADO'||!p.cliente_id)return;const credito=centavos(p.saldo_a_favor);if(credito<=0)return;const c=byId.get(String(p.cliente_id));ensure('id:'+p.cliente_id,c?.nombre||('Cliente #'+p.cliente_id),String(p.tipo_pago||'DIVISA').toUpperCase()==='BCV'?'BCV':'DIVISA').credito+=credito;});
+ return [...cuentas.values()].map(g=>({...g,saldo:Math.max(g.deuda-g.credito,0),favor:Math.max(g.credito-g.deuda,0)}));
+}
+function renderFinanzas(){
+ if(!allowedFinance)return;
+ $('finanzasStats').hidden=false;
+ if(financeError){$('financeContent').innerHTML=`<p class="warning-text" role="alert">${escapeHtml(financeError)}</p>`;return;}
+ const q=normalizar($('filterClienteSearch').value),rows=financeRows.filter(r=>!q||normalizar(r.nombre).includes(q));
+ const sum=(tipo,key)=>rows.filter(r=>r.tipo===tipo).reduce((a,r)=>a+r[key],0);
+ const money=n=>'$ '+(n/100).toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const cards=['DIVISA','BCV'].map(tipo=>`<div class="finance-tile"><b>Por cobrar · ${tipo}</b><div class="finance-number">${money(sum(tipo,'saldo'))}</div><div class="card-sub">Saldo neto tras créditos de la misma cuenta</div></div><div class="finance-tile"><b>A favor · ${tipo}</b><div class="finance-number">${money(sum(tipo,'favor'))}</div><div class="card-sub">Crédito restante de los clientes</div></div>`).join('');
+ const deuda=rows.filter(r=>r.tipo===financeSort&&r.saldo>0).sort((a,b)=>b.saldo-a.saldo||a.nombre.localeCompare(b.nombre,'es'));
+ const fechaHoy=new Date(hoyCaracas()+'T12:00:00Z');
+ $('financeContent').innerHTML=`<div class="finance-grid">${cards}</div><p class="card-sub">BCV se expresa en dólares de la cuenta BCV, no en bolívares. Se usa el sistema actual de pagos de Clientes. No incluye documentos independientes de Contabilidad.</p><div class="finance-controls"><b>Clientes con deuda · mayor a menor</b><select id="debtSort" aria-label="Tipo de cuenta"><option value="DIVISA" ${financeSort==='DIVISA'?'selected':''}>Divisa</option><option value="BCV" ${financeSort==='BCV'?'selected':''}>BCV</option></select></div><div class="table-scroll"><table><thead><tr><th>Cliente</th><th>Saldo neto ${financeSort}</th><th>Pedido con saldo más antiguo</th><th>Antigüedad</th></tr></thead><tbody>${deuda.length?deuda.map(r=>`<tr><td>${escapeHtml(r.nombre)}</td><td><b>${money(r.saldo)}</b></td><td>${escapeHtml(r.antigua||'—')}</td><td>${r.antigua?Math.max(0,Math.floor((fechaHoy-new Date(r.antigua+'T12:00:00Z'))/86400000))+' días':'—'}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">Sin deudas en esta cuenta</td></tr>'}</tbody></table></div><p class="card-sub" style="margin-top:14px">Listos con saldo pendiente por pedido: <b>${money(sum('DIVISA','listos'))} divisa</b> · <b>${money(sum('BCV','listos'))} BCV</b>. Este detalle y la antigüedad son anteriores a aplicar créditos generales; no se suman al saldo neto.</p>`;
+ $('debtSort').addEventListener('change',e=>{financeSort=e.target.value;renderFinanzas();});
+}
+Object.assign(window,{cargarPedidosStats,renderEstadisticas,limpiarClienteStats,periodoStats,rangoStats,limpiarRangoStats});
+document.addEventListener('DOMContentLoaded',cargarPedidosStats);
+window.addEventListener('pagehide',()=>{++generation;limpiarFinanzas();});
+window.addEventListener('pageshow',e=>{if(e.persisted)cargarPedidosStats();});
+
+})();
+</script>
 
 </body>
 </html>
