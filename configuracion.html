@@ -419,7 +419,7 @@ input,select,textarea{width:100%;background:#fff;border:1px solid var(--border);
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log('CONFIGURACION HTML conectado v43 seguridad operadores');
+console.log('CONFIGURACION HTML v44 permiso de deudas en estadísticas');
 function cerrarNotificacionesModal(){const el=document.getElementById('notiBackdrop');if(el)el.style.display='none'}
 function cerrarNotiSiFondo(e){if(e&&e.target&&e.target.id==='notiBackdrop')cerrarNotificacionesModal()}
 const AUTH_KEY = 'comanda_operador_actual';
@@ -432,7 +432,8 @@ const PERMISOS = [
   {key:'puede_clientes', label:'Clientes', sub:'Base de clientes e historial'},
   {key:'puede_materiales', label:'Materiales', sub:'Catálogos y materiales'},
   {key:'puede_precios', label:'Precios', sub:'Listado y administración de precios'},
-  {key:'puede_estadisticas', label:'Estadísticas', sub:'Métricas y reportes'},
+  {key:'puede_estadisticas', label:'Ver estadísticas', sub:'Producción, cantidades y estados'},
+  {key:'puede_ver_deudas_estadisticas', label:'Ver deudas en estadísticas', sub:'Montos BCV/divisa, saldos a favor y clientes deudores. Requiere acceso a Estadísticas'},
   {key:'puede_marketing', label:'Marketing', sub:'Módulo de Ana/marketing'},
   {key:'puede_cotizador', label:'Cotizador', sub:'Cotizaciones y PDF'},
   {key:'puede_label', label:'Label', sub:'Optimizador de etiquetas'},
@@ -833,6 +834,7 @@ function editarOperador(id){const op=operadoresDB.find(o=>Number(o.id)===Number(
 function cerrarModal(){document.getElementById('operadorBackdrop').style.display='none'}
 function cerrarSiFondo(e){if(e.target.id==='operadorBackdrop')cerrarModal()}
 function datosFormulario(){const datos={nombre:document.getElementById('opNombre').value.trim(),clave:document.getElementById('opClave').value.trim(),activo:document.getElementById('opActivo').value==='true',nota:document.getElementById('opNota').value.trim(),cedula:document.getElementById('opCedula').value.trim(),telefono:document.getElementById('opTelefono').value.trim(),direccion:document.getElementById('opDireccion').value.trim(),correo:document.getElementById('opCorreo').value.trim(),fecha_nacimiento:document.getElementById('opNacimiento').value||null,contacto_emergencia_nombre:document.getElementById('opContactoNombre').value.trim(),contacto_emergencia_telefono:document.getElementById('opContactoTelefono').value.trim(),contacto_emergencia_parentesco:document.getElementById('opContactoParentesco').value.trim()};PERMISOS.forEach(p=>{datos[p.key]=document.getElementById('perm_'+p.key)?.checked===true});if(normalizar(datos.nombre)==='roberto'){PERMISOS.forEach(p=>datos[p.key]=true);datos.activo=true}return datos}
+document.getElementById('permisosGrid').addEventListener('change',e=>{if(e.target.id==='perm_puede_ver_deudas_estadisticas' && e.target.checked)document.getElementById('perm_puede_estadisticas').checked=true;if(e.target.id==='perm_puede_estadisticas' && !e.target.checked)document.getElementById('perm_puede_ver_deudas_estadisticas').checked=false;});
 async function guardarOperador(){
   if(!validarSupabase())return;
   const id=Number(document.getElementById('opId').value||0);
