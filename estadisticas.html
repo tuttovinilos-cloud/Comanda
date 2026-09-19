@@ -7,726 +7,31 @@
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800;900&family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f0f2f9;
-  --panel:#ffffff;
-  --panel2:#f8f9ff;
-  --border:#d9deea;
-  --border2:#cbd3e6;
-  --text:#111827;
-  --muted:#6b7280;
-  --muted2:#475569;
-  --accent:#153bff;
-  --accent2:#0b1f7a;
-  --green:#16a34a;
-  --red:#dc2626;
-  --yellow:#f59e0b;
-  --orange:#ff8616;
-  --mono:'Roboto Mono',monospace;
-  --head:'Montserrat',Arial,sans-serif;
-  --body:'Inter',Arial,sans-serif;
-}
-html{scroll-behavior:smooth}
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:var(--body);
-  min-height:100vh;
-  padding-bottom:90px;
-  -webkit-tap-highlight-color:transparent;
-}
-button,input,select{font:inherit}
-button{touch-action:manipulation}
-#authTopbar{display:none!important}
-.header{
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  color:#fff;
-  padding:10px 16px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  min-height:58px;
-  position:sticky;
-  top:0;
-  z-index:300;
-  box-shadow:0 8px 24px rgba(21,59,255,.24);
-  flex-wrap:wrap;
-}
-.logo{
-  font-family:var(--head);
-  font-size:20px;
-  font-weight:900;
-  letter-spacing:2.6px;
-  color:#fff;
-  text-transform:uppercase;
-  white-space:nowrap;
-  border:1px dashed rgba(255,255,255,.55);
-  border-radius:10px;
-  padding:8px 12px;
-}
-.logo small{color:rgba(255,255,255,.72);font-weight:700;font-size:10px;letter-spacing:1.4px;margin-left:6px}
-.mobile-menu-btn{
-  display:none;
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  padding:8px 12px;
-  border:1px solid rgba(255,255,255,.22);
-  background:rgba(255,255,255,.09);
-  color:#fff;
-  border-radius:999px;
-  cursor:pointer;
-  margin-left:auto;
-}
-.header-tabs{display:flex;gap:6px;margin-left:auto;align-items:center;flex-wrap:wrap}
-.tab-btn,.menu-status{
-  font-family:var(--head);
-  font-size:11px;
-  font-weight:900;
-  letter-spacing:.7px;
-  text-transform:uppercase;
-  padding:8px 13px;
-  border:1px solid rgba(255,255,255,.22);
-  background:rgba(255,255,255,.08);
-  color:rgba(255,255,255,.84);
-  cursor:pointer;
-  border-radius:999px;
-  transition:all .2s;
-  text-decoration:none;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  min-height:38px;
-}
-.tab-btn:hover{background:rgba(255,255,255,.16);color:#fff}
-.tab-btn.active{background:#fff;color:var(--accent);border-color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.14)}
-.menu-status{cursor:default}
-.status-dot{width:9px;height:9px;border-radius:50%;background:#22c55e;display:inline-block}
-.menu-extra{display:flex;align-items:center;gap:8px}
-.toolbar{
-  display:grid;
-  grid-template-columns:150px 150px minmax(260px,1fr) auto auto;
-  gap:10px;
-  padding:14px 16px;
-  border-bottom:1px solid var(--border);
-  align-items:center;
-  position:sticky;
-  top:58px;
-  z-index:260;
-  background:rgba(255,255,255,.96);
-  backdrop-filter:blur(10px);
-  box-shadow:0 8px 22px rgba(15,23,42,.08);
-}
-.search-wrap{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  background:#fff;
-  border:1.5px solid var(--border);
-  border-radius:999px;
-  padding:9px 13px;
-  min-height:42px;
-}
-.search-wrap input{
-  border:0;
-  outline:0;
-  background:transparent;
-  width:100%;
-  min-height:auto;
-  padding:0;
-  font-family:var(--body);
-  font-size:14px;
-  color:var(--text);
-}
-input,select{
-  background:#fff;
-  border:1.5px solid var(--border);
-  color:var(--text);
-  border-radius:999px;
-  padding:9px 12px;
-  outline:none;
-  font-family:var(--body);
-  font-size:13px;
-  font-weight:700;
-  min-height:42px;
-}
-input:focus,select:focus,.search-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(21,59,255,.10)}
-.btn{
-  font-family:var(--head);
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.6px;
-  text-transform:uppercase;
-  padding:11px 15px;
-  background:var(--accent);
-  color:#fff;
-  border:none;
-  border-radius:999px;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  transition:.2s;
-  white-space:nowrap;
-  min-height:42px;
-}
-.btn:hover{filter:brightness(1.06)}
-.btn.secondary{background:#fff;color:var(--accent);border:1.5px solid var(--border)}
-.btn.danger{background:#fee2e2;color:#dc2626;border:1px solid #fecaca}
-.layout{padding:16px;display:grid;gap:16px}
-.filter-info{
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:12px 14px;
-  color:var(--muted2);
-  font-size:13px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  flex-wrap:wrap;
-}
-.filter-info strong{color:var(--accent2)}
-.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
-.stat-card{
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:16px;
-  box-shadow:0 4px 18px rgba(0,0,0,.055);
-}
-.stat-label{font-family:var(--head);font-size:11px;font-weight:900;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
-.stat-num{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--text)}
-.stat-sub{color:var(--muted2);font-size:12px;margin-top:6px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.card{
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:16px;
-  overflow:hidden;
-  box-shadow:0 4px 18px rgba(0,0,0,.055);
-}
-.card-header{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:#fff}
-.card-title{font-family:var(--head);font-size:18px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;color:var(--accent2)}
-.card-sub{font-size:12px;color:var(--muted2);margin-top:3px}
-.list{padding:12px 16px 16px;display:flex;flex-direction:column;gap:10px}
-.row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
-.row-title{font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row-val{font-family:var(--mono);font-size:13px;color:var(--accent);white-space:nowrap;font-weight:700}
-.row-sub{grid-column:1/-1;color:var(--muted2);font-size:11px;line-height:1.35}
-.bar-wrap{grid-column:1/-1;height:8px;background:#eef1ff;border:1px solid var(--border);border-radius:999px;overflow:hidden}
-.bar{height:100%;background:linear-gradient(90deg,var(--accent),#60a5fa);border-radius:999px;min-width:2px}
-.empty{color:var(--muted);padding:28px;text-align:center;font-family:var(--head);font-weight:900;letter-spacing:.8px;text-transform:uppercase}
-.table-scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:920px}
-th{background:#eef1ff;color:var(--muted);font-family:var(--head);font-size:11px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;text-align:left;padding:11px 10px;border-bottom:1px solid var(--border)}
-td{padding:10px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text)}
-tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font-weight:900;letter-spacing:.7px;padding:5px 9px;border-radius:999px;text-transform:uppercase;display:inline-flex;align-items:center;gap:4px}.pill.green{color:var(--green);border:1px solid #86efac;background:#dcfce7}.pill.red{color:var(--red);border:1px solid #fecaca;background:#fee2e2}.pill.yellow{color:#a16207;border:1px solid #fde68a;background:#fef3c7}.pill.blue{color:var(--accent);border:1px solid #bfdbfe;background:#dbeafe}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 18px;border-radius:10px;box-shadow:0 10px 35px #0004;z-index:1000;font-family:var(--head);font-size:13px;font-weight:900;letter-spacing:.5px;display:none;text-align:center}
-@media(max-width:1200px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}.toolbar{grid-template-columns:150px 150px minmax(220px,1fr) auto}}
-@media(max-width:900px){.grid{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr 1fr}.toolbar .search-wrap{grid-column:1/-1}.toolbar .btn{width:100%}}
-@media(max-width:760px){.header{padding:10px 12px}.logo{font-size:19px}.logo small{display:none}.mobile-menu-btn{display:inline-flex}.header-tabs{display:none;width:100%;margin-left:0;padding-top:14px;border-top:1px solid rgba(255,255,255,.18)}.header-tabs.open{display:grid;grid-template-columns:1fr;gap:8px}.tab-btn,.menu-status{width:100%;justify-content:center;font-size:11px;min-height:42px;padding:9px 8px;border-radius:8px}.menu-extra{display:flex;flex-direction:column;gap:8px}.toolbar{position:relative;top:0;padding:10px;grid-template-columns:1fr}.layout{padding:10px}.cards{grid-template-columns:1fr 1fr}}
-@media(max-width:480px){.cards{grid-template-columns:1fr}input,select{width:100%}}
-</style>
+
 
 <link rel="stylesheet" href="css/menu.css?v=35">
 
-<style>
-/* PATCH MENU UNIFICADO v30 · estas páginas usan el mismo header que index/clientes */
-#authTopbar{display:none!important}
-.header .logo img{display:block!important;width:112px!important;max-width:112px!important;height:auto!important;object-fit:contain!important}
-.header .logo small{display:none!important}
-.header-tabs[data-auth-menu]{margin-left:auto!important}
-@media(max-width:980px){.header .logo img{width:118px!important;max-width:118px!important}}
-</style>
 
-<style>
-/* ESTADÍSTICAS v40 · método preferido corregido */
-.header{
-  background:#172bd8!important;
-  border-bottom:0!important;
-  box-shadow:0 8px 20px rgba(21,59,255,.18)!important;
-  min-height:64px!important;
-  height:64px!important;
-  padding:14px 18px!important;
-  display:flex!important;
-  align-items:center!important;
-  gap:14px!important;
-  position:sticky!important;
-  top:0!important;
-  z-index:300!important;
-  flex-wrap:nowrap!important;
-  overflow:hidden!important;
-}
-.header .logo{
-  display:flex!important;
-  align-items:center!important;
-  min-width:150px!important;
-  border:0!important;
-  padding:0!important;
-  margin:0!important;
-}
-.header .logo img{
-  display:block!important;
-  width:118px!important;
-  max-width:118px!important;
-  height:auto!important;
-}
-.header .logo small{display:none!important}
-.header-tabs[data-auth-menu]{margin-left:auto!important}
-.header-tabs .tab-btn,
-.header-tabs .storage-pill,
-.tab-btn,
-.menu-status{
-  min-height:32px!important;
-  height:32px!important;
-  padding:0 12px!important;
-  border-radius:999px!important;
-  font-size:10px!important;
-  font-weight:900!important;
-  letter-spacing:.35px!important;
-  line-height:1!important;
-}
-.toolbar{
-  top:64px!important;
-  grid-template-columns:150px 150px minmax(300px,1fr) auto auto!important;
-  gap:10px!important;
-  padding:12px 16px!important;
-  box-shadow:0 4px 16px rgba(15,23,42,.045)!important;
-}
-.stat-card,.card,.filter-info{
-  border-radius:18px!important;
-  box-shadow:0 8px 24px rgba(15,23,42,.07)!important;
-}
-.stat-num{color:#153bff!important}
-.card-title{color:#153bff!important}
-.row{
-  background:#f8f9ff!important;
-  border:1px solid #d9deea!important;
-  border-radius:14px!important;
-  padding:10px 12px!important;
-}
-.bar-wrap{
-  height:12px!important;
-  background:#e8edff!important;
-  border:1px solid #d4dcff!important;
-}
-.bar{
-  background:linear-gradient(90deg,#153bff,#60a5fa)!important;
-}
-@media(max-width:980px){
-  .header{
-    height:auto!important;
-    min-height:60px!important;
-    flex-wrap:wrap!important;
-    overflow:visible!important;
-  }
-  .toolbar{
-    position:relative!important;
-    top:0!important;
-    grid-template-columns:1fr 1fr!important;
-    padding:10px!important;
-  }
-  .toolbar .search-wrap,
-  .toolbar .btn{
-    grid-column:1 / -1!important;
-    width:100%!important;
-  }
-  .grid{grid-template-columns:1fr!important}
-}
-@media(max-width:760px){
-  .cards{grid-template-columns:1fr 1fr!important}
-  .layout{padding:10px!important}
-}
-@media(max-width:480px){
-  .cards{grid-template-columns:1fr!important}
-}
-</style>
+
+
+
+
+
+
+
+
+
+
+
 
 
 <style>
-/* ESTADÍSTICAS v68 · operadores agrupados */
-.list{
-  gap:9px!important;
-  padding:14px 16px 16px!important;
-}
+*{box-sizing:border-box}html,body{margin:0;max-width:100%;min-width:0}body{background:#f0f2f9;color:#111827;font-family:Inter,Arial,sans-serif;padding-bottom:32px;line-height:1.4} :root{--accent:#153bff;--accent2:#0b1f7a;--border:#d9deea;--muted2:#475569;--head:Montserrat,Arial,sans-serif;--body:Inter,Arial,sans-serif;--panel2:#f8f9ff;--green:#16a34a;--red:#dc2626}button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:wait}[hidden]{display:none!important}#authTopbar{display:none!important}.header{background:#172bd8;color:white;padding:12px 18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;position:relative;z-index:300;min-width:0}.logo{display:flex;flex:0 0 auto}.logo img{width:112px;height:34px;object-fit:contain}.logo small{display:none}.header-tabs{margin-left:auto;min-width:0;display:flex;gap:6px;flex-wrap:wrap;align-items:center}.mobile-menu-btn{display:none}.noti-btn{position:relative;border:1px solid #ffffff55;border-radius:50%;background:#ffffff20;color:#fff;width:36px;height:36px;flex:0 0 auto}.noti-count{position:absolute;right:-5px;top:-5px;min-width:16px;padding:0 4px;border-radius:12px;background:#dc2626;font-size:10px}.noti-count.empty{background:#94a3b8}.tab-btn{color:white;text-decoration:none;padding:8px;border:1px solid #ffffff40;border-radius:8px;font-size:11px}.toolbar{display:grid;grid-template-columns:145px 155px minmax(180px,1fr) auto auto;align-items:center;gap:10px;padding:14px 18px;background:#fff;border-bottom:1px solid var(--border);min-width:0}.toolbar select,.search-wrap{width:100%;min-width:0;border:1px solid var(--border);border-radius:10px;background:#f8f9ff;min-height:44px;padding:10px;color:#111827}.search-wrap{display:flex;gap:8px;align-items:center}.search-wrap input{min-width:0;width:100%;border:0;background:transparent;outline:0}.btn{min-height:44px;padding:10px 14px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:12px;font-weight:800}.btn.secondary{background:white;color:var(--accent)}.btn.danger{background:#f8f9ff;border-color:var(--border);color:#475569}.layout{display:grid;gap:18px;max-width:1400px;margin:0 auto;padding:24px 18px;min-width:0}.page-heading h1{font:900 23px var(--head);margin:0 0 5px}.page-heading p{margin:0;font-size:12px;color:#64748b}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.stat-card,.card{background:white;border:1px solid var(--border);border-radius:16px;min-width:0;box-shadow:0 4px 18px #0b1f7a08}.stat-card{padding:20px}.stat-label{font:800 11px var(--head);text-transform:uppercase;letter-spacing:.6px;color:#64748b;overflow-wrap:anywhere}.stat-num{font:700 clamp(26px,3vw,36px) 'Roboto Mono',monospace;margin:9px 0;color:var(--accent2);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.stat-sub,.card-sub{font-size:12px;color:#64748b;margin:4px 0 0;line-height:1.6}.filter-info{display:flex;gap:8px 18px;flex-wrap:wrap;justify-content:space-between;font-size:12px;color:#64748b;overflow-wrap:anywhere}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;min-width:0}.card-header{padding:18px;border-bottom:1px solid var(--border)}.card-title{font:900 16px var(--head);text-transform:uppercase;color:var(--accent2);margin:0;overflow-wrap:anywhere}.list{display:grid;gap:18px;padding:18px}.stat-mini{min-width:0}.stat-mini-top{display:flex;gap:10px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}.stat-mini-name{font-weight:700;font-size:13px;flex:1 1 140px;min-width:0;overflow-wrap:anywhere}.stat-mini-value{font-size:13px;font-weight:800;color:var(--accent);max-width:100%;overflow-wrap:anywhere}.stat-mini-meta{font-size:11px;color:#64748b;margin:5px 0 7px}.stat-mini-track{height:7px;background:#eef1ff;border-radius:6px;overflow:hidden}.stat-mini-fill{height:100%;background:linear-gradient(90deg,#153bff,#60a5fa);border-radius:6px}.finance{padding:20px;border-top:4px solid var(--accent)}.finance-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:16px 0}.finance-tile{background:var(--panel2);border:1px solid var(--border);padding:16px;border-radius:12px;min-width:0}.finance-number{font-weight:900;font-size:clamp(21px,3vw,32px);margin:8px 0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.debt-title{font-weight:800;font-size:13px;margin:20px 0 12px}.debt-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;min-width:0}.debt-panel{border:1px solid var(--border);border-radius:12px;min-width:0;overflow:hidden}.debt-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;background:#eef1ff}.debt-heading h3{font-size:12px;margin:0;color:var(--accent2)}.debt-heading span{font-size:11px;color:#64748b}.debt-list{max-height:440px;overflow-y:auto}.debt-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 14px;border-top:1px solid #edf0f7;min-width:0}.debt-name{font-size:12px;min-width:0;overflow-wrap:anywhere}.debt-name small{color:#94a3b8}.debt-row strong{font-size:13px;flex:0 0 auto;font-variant-numeric:tabular-nums;max-width:55%;overflow-wrap:anywhere;text-align:right}.empty{padding:24px;text-align:center;font-size:13px;color:#64748b}.warning-text{color:#a63e0a;font-size:13px}.toast{display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#111827;color:white;padding:12px;z-index:6000;max-width:90%;border-radius:10px}.modal-backdrop{position:fixed;inset:0;z-index:5000;background:#11182790;display:none;align-items:center;justify-content:center;padding:16px}.modal-card{background:white;width:min(560px,100%);max-height:85vh;overflow:auto;border-radius:16px}.modal-head{padding:16px;display:flex;gap:12px;justify-content:space-between;border-bottom:1px solid var(--border)}.modal-close{border:0;border-radius:50%;width:36px;height:36px}.modal-title{font-weight:800;color:var(--accent2)}#notiList{padding:16px}.noti-item{padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px}.noti-item-msg{font-size:13px;overflow-wrap:anywhere}.noti-item-meta{font-size:11px;color:#64748b}.noti-actions{display:flex;gap:8px;flex-wrap:wrap}.noti-seen-btn,.btn-add{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px}
+@media(max-width:1100px){.toolbar{grid-template-columns:140px 150px minmax(120px,1fr)}.toolbar>.btn{grid-row:2}.toolbar>.btn:last-child{grid-column:3}.toolbar>.btn.danger{grid-column:1/3}}
+@media(max-width:980px){.header{padding:10px 12px}.noti-btn{margin-left:auto}.mobile-menu-btn{display:inline-flex;align-items:center;justify-content:center;background:#ffffff18;color:white;border:1px solid #ffffff50;border-radius:10px;min-height:40px;padding:8px 12px;font-size:12px;font-weight:800}.header-tabs[data-auth-menu]{display:none!important;width:100%;flex:1 1 100%;margin-left:0;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.header-tabs[data-auth-menu].open{display:grid!important}.header-tabs .tab-btn{width:100%;min-width:0;white-space:normal!important;text-align:center}.header-tabs .menu-extra{min-width:0;flex-wrap:wrap}}
+@media(max-width:700px){.toolbar{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px;gap:8px}.toolbar .search-wrap{grid-column:1/-1;grid-row:2}.toolbar>.btn{grid-row:3!important;grid-column:auto!important}.toolbar input,.toolbar select{font-size:16px}.layout{padding:18px 12px;gap:14px}.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.cards>.stat-card:first-child{grid-column:1/-1}.stat-card{padding:15px}.stat-label{font-size:10px}.stat-num{font-size:28px}.stat-sub{font-size:11px}.grid,.debt-columns{grid-template-columns:minmax(0,1fr)}.finance{padding:14px}.finance-grid{gap:8px}.finance-tile{padding:12px}.finance-number{font-size:clamp(18px,5vw,25px)}.finance-tile .card-sub{font-size:11px}.card-title{font-size:15px}.card-header,.list{padding:15px}.debt-list{max-height:340px}}
+@media(max-width:350px){.header{gap:8px}.logo img{width:95px}.mobile-menu-btn{padding:8px}.finance-tile{padding:9px}.finance-number{font-size:18px}.stat-num{font-size:25px}.btn{font-size:11px;padding:9px}}
 
-.stat-mini{
-  display:grid!important;
-  gap:6px!important;
-  background:#f8f9ff!important;
-  border:1px solid #d9deea!important;
-  border-radius:14px!important;
-  padding:9px 12px!important;
-}
-
-.stat-mini-top{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:space-between!important;
-  gap:12px!important;
-}
-
-.stat-mini-name{
-  min-width:0!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-  white-space:nowrap!important;
-  font-weight:900!important;
-  font-size:13px!important;
-  color:#111827!important;
-}
-
-.stat-mini-value{
-  white-space:nowrap!important;
-  font-family:var(--mono)!important;
-  font-size:13px!important;
-  font-weight:900!important;
-  color:#153bff!important;
-}
-
-.stat-mini-meta{
-  font-size:11px!important;
-  color:#64748b!important;
-  font-weight:700!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-}
-
-.stat-mini-track{
-  height:7px!important;
-  width:100%!important;
-  background:#eef1ff!important;
-  border:1px solid #d4dcff!important;
-  border-radius:999px!important;
-  overflow:hidden!important;
-}
-
-.stat-mini-fill{
-  height:100%!important;
-  background:#153bff!important;
-  border-radius:999px!important;
-  min-width:3px!important;
-}
-
-.row,.row-title,.row-val,.row-sub,.bar-wrap,.bar{
-  all:unset;
-}
-
-.card{
-  overflow:hidden!important;
-}
-</style>
-
-
-<style>
-/* ESTADÍSTICAS v68 · bloque operadores más ordenado */
-.operator-mini{
-  display:grid!important;
-  gap:8px!important;
-  background:#fff!important;
-  border:1px solid #d9deea!important;
-  border-radius:16px!important;
-  padding:11px 12px!important;
-  box-shadow:0 3px 12px rgba(15,23,42,.045)!important;
-}
-.operator-mini.is-zero{
-  opacity:.72!important;
-  background:#f8fafc!important;
-}
-.operator-head{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:space-between!important;
-  gap:10px!important;
-}
-.operator-title{
-  min-width:0!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-  white-space:nowrap!important;
-  font-family:var(--head)!important;
-  font-size:13px!important;
-  font-weight:900!important;
-  color:#111827!important;
-}
-.operator-title span{
-  color:#64748b!important;
-  font-family:var(--mono)!important;
-  font-size:12px!important;
-}
-.operator-total{
-  white-space:nowrap!important;
-  font-family:var(--mono)!important;
-  font-size:12px!important;
-  font-weight:900!important;
-  color:#153bff!important;
-}
-.operator-grid{
-  display:grid!important;
-  grid-template-columns:repeat(4,minmax(0,1fr))!important;
-  gap:6px!important;
-}
-.operator-grid span{
-  display:grid!important;
-  gap:1px!important;
-  background:#f8f9ff!important;
-  border:1px solid #e1e7ff!important;
-  border-radius:10px!important;
-  padding:6px 7px!important;
-  text-align:center!important;
-}
-.operator-grid b{
-  font-family:var(--mono)!important;
-  font-size:12px!important;
-  color:#111827!important;
-}
-.operator-grid small{
-  font-size:9px!important;
-  font-weight:900!important;
-  text-transform:uppercase!important;
-  letter-spacing:.35px!important;
-  color:#64748b!important;
-}
-.operator-track{
-  height:8px!important;
-}
-@media(max-width:480px){
-  .operator-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-}
-</style>
-
-
-<style>
-/* =========================================================
-   HEADER GLOBAL UNIFICADO · index/clientes/cotizador/label/configuracion
-   Aplicado a precios, materiales y estadísticas.
-========================================================= */
-#authTopbar{display:none!important}
-.header{
-  background:#172bd8!important;
-  border-bottom:0!important;
-  box-shadow:0 8px 20px rgba(21,59,255,.18)!important;
-  min-height:64px!important;
-  height:64px!important;
-  padding:14px 18px!important;
-  display:flex!important;
-  align-items:center!important;
-  gap:12px!important;
-  position:sticky!important;
-  top:0!important;
-  z-index:300!important;
-  flex-wrap:nowrap!important;
-  overflow:hidden!important;
-}
-.header .logo{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:flex-start!important;
-  flex:0 0 auto!important;
-  width:auto!important;
-  min-width:120px!important;
-  max-width:none!important;
-  height:auto!important;
-  color:#fff!important;
-  border:0!important;
-  padding:0!important;
-  margin:0!important;
-  letter-spacing:0!important;
-  white-space:nowrap!important;
-  background:transparent!important;
-}
-.header .logo img{
-  display:block!important;
-  height:32px!important;
-  width:auto!important;
-  max-width:128px!important;
-  max-height:32px!important;
-  object-fit:contain!important;
-  filter:drop-shadow(0 4px 8px rgba(0,0,0,.18));
-}
-.header .logo small{display:none!important}
-.noti-btn,#notiBtnGlobal{
-  position:relative!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  width:38px!important;
-  min-width:38px!important;
-  height:34px!important;
-  min-height:34px!important;
-  padding:0!important;
-  margin:0!important;
-  border-radius:999px!important;
-  border:1px solid rgba(255,255,255,.30)!important;
-  background:rgba(255,255,255,.12)!important;
-  color:#fff!important;
-  font-size:14px!important;
-  cursor:pointer!important;
-}
-.noti-btn:hover,#notiBtnGlobal:hover{background:rgba(255,255,255,.18)!important}
-#notiBtnGlobal .noti-count,.noti-count{
-  position:absolute!important;
-  right:-5px!important;
-  top:-6px!important;
-  min-width:16px!important;
-  height:16px!important;
-  padding:0 4px!important;
-  border-radius:999px!important;
-  background:#94a3b8!important;
-  color:#fff!important;
-  font-size:10px!important;
-  font-weight:900!important;
-  line-height:16px!important;
-  text-align:center!important;
-}
-#notiBtnGlobal .noti-count.empty,.noti-count.empty{background:#94a3b8!important;color:#fff!important}
-#notiBtnGlobal .noti-count:not(.empty),.noti-count:not(.empty){background:#dc2626!important;color:#fff!important}
-.mobile-menu-btn{
-  display:none!important;
-  align-items:center!important;
-  justify-content:center!important;
-  margin-left:auto!important;
-  color:#fff!important;
-  background:rgba(255,255,255,.12)!important;
-  border:1px solid rgba(255,255,255,.28)!important;
-  border-radius:999px!important;
-  min-height:34px!important;
-  padding:8px 14px!important;
-  font-family:var(--head, Montserrat, Arial, sans-serif)!important;
-  font-size:12px!important;
-  font-weight:900!important;
-  letter-spacing:.6px!important;
-  text-transform:uppercase!important;
-  cursor:pointer!important;
-}
-.header-tabs[data-auth-menu]{
-  flex:1 1 auto!important;
-  min-width:0!important;
-  margin-left:auto!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:flex-end!important;
-  gap:5px!important;
-  flex-wrap:nowrap!important;
-  overflow:visible!important;
-}
-.listado-head{top:var(--listado-head-top,64px)!important}
-.toolbar{top:64px!important}
-.modal-backdrop,.backdrop#notiBackdrop,#notiBackdrop{
-  position:fixed;
-  inset:0;
-  z-index:5000;
-  background:rgba(15,23,42,.55);
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-}
-.modal-card,.noti-modal-card{
-  width:min(560px,100%);
-  max-height:82vh;
-  overflow:auto;
-  background:#fff;
-  border-radius:18px;
-  border:1px solid #d9deea;
-  box-shadow:0 24px 70px rgba(15,23,42,.30);
-}
-.modal-head,.noti-modal-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:16px 18px;
-  border-bottom:1px solid #d9deea;
-}
-.modal-title,.noti-modal-title{
-  font-family:var(--head, Montserrat, Arial, sans-serif);
-  font-size:16px;
-  font-weight:900;
-  color:#153bff;
-  text-transform:uppercase;
-  letter-spacing:.4px;
-}
-.modal-close,.noti-modal-close{
-  border:0;
-  background:#f1f5f9;
-  color:#0f172a;
-  border-radius:999px;
-  width:34px;
-  height:34px;
-  font-weight:900;
-  cursor:pointer;
-}
-#notiList{padding:16px;display:grid;gap:10px}
-.noti-item{border:1px solid #d9deea;border-radius:14px;background:#f8f9ff;padding:12px;display:grid;gap:6px}
-.noti-item-title{font-weight:900;color:#153bff}
-.noti-item-msg{font-size:13px;color:#111827;line-height:1.35}
-.noti-item-meta{font-size:11px;color:#64748b;font-weight:800;text-transform:uppercase}
-.noti-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
-.noti-seen-btn,.noti-read-all-btn,.btn-add.secondary{
-  border:0;
-  border-radius:999px;
-  background:#153bff;
-  color:#fff;
-  padding:9px 12px;
-  font-weight:900;
-  font-size:12px;
-  cursor:pointer;
-}
-.btn-add.secondary{background:#f1f5f9;color:#153bff;border:1px solid #d9deea}
-@media(max-width:980px){
-  .header{
-    height:auto!important;
-    min-height:58px!important;
-    overflow:visible!important;
-    flex-wrap:wrap!important;
-    justify-content:space-between!important;
-    padding:10px 12px!important;
-  }
-  .header .logo{min-width:112px!important;flex:0 0 auto!important}
-  .header .logo img{height:30px!important;max-width:118px!important}
-  .noti-btn,#notiBtnGlobal{width:34px!important;min-width:34px!important;height:32px!important;min-height:32px!important}
-  .mobile-menu-btn{display:inline-flex!important;flex:0 0 auto!important}
-  .header-tabs[data-auth-menu]{
-    display:none!important;
-    width:100%!important;
-    flex:1 1 100%!important;
-    margin-left:0!important;
-    padding-top:10px!important;
-    border-top:1px solid rgba(255,255,255,.22)!important;
-    grid-template-columns:1fr 1fr!important;
-    gap:8px!important;
-  }
-  .header-tabs[data-auth-menu].open{display:grid!important}
-  .header-tabs[data-auth-menu] .tab-btn,
-  .header-tabs[data-auth-menu] .storage-pill,
-  .header-tabs[data-auth-menu] .menu-status{
-    width:100%!important;
-    min-height:34px!important;
-    height:34px!important;
-    font-size:9px!important;
-    justify-content:center!important;
-  }
-}
-@media(max-width:560px){
-  .header-tabs[data-auth-menu]{grid-template-columns:1fr!important}
-  .toolbar{position:relative!important;top:auto!important}
-}
-</style>
-
-<style>
-[hidden]{display:none!important}
-.quick-filters{padding:16px}.quick-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.quick-row+.quick-row{margin-top:12px}.quick-row label{font-size:13px;display:flex;align-items:center;gap:8px}.quick-row input{padding:8px;border:1px solid var(--border);border-radius:8px;min-width:140px}
-.finance{border-top:4px solid var(--accent);padding:16px}.production-summary{padding:16px}.finance-grid,.work-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}.finance-number{font-size:25px;font-weight:900;margin:8px 0;font-variant-numeric:tabular-nums}.finance-tile,.work-tile{background:var(--panel2);border:1px solid var(--border);padding:14px;border-radius:12px}.work-tile b{font-size:24px;display:block;margin-top:6px}.finance .card-sub{line-height:1.6}.finance-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0}.finance-controls select{padding:8px;border-radius:8px;border:1px solid var(--border)}.finance td{text-align:right}.finance td:first-child{text-align:left}.warning-text{color:#a63e0a;font-size:13px;padding:10px 0}.empty{line-height:1.6}#metrosPorMes{max-height:580px;overflow:auto}#overdueList{max-height:270px;overflow:auto}.overdue-row{padding:10px 0;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:14px;font-size:13px}.overdue-row time{white-space:nowrap;color:var(--red)}
-@media(max-width:760px){.finance-grid,.work-grid{grid-template-columns:1fr 1fr}.quick-row label{width:100%;justify-content:space-between}.quick-row input{width:auto}.finance-number{font-size:20px}.finance-controls{align-items:stretch}.finance-controls select{width:100%}}
 </style>
 </head>
 <body>
@@ -746,9 +51,9 @@ tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font
 </header>
 
 <div class="toolbar">
-  <select id="filterYear" aria-label="Año" onchange="limpiarRangoStats()"><option value="all">Todos los años</option></select>
-  <select id="filterMonth" aria-label="Mes" onchange="limpiarRangoStats()">
-    <option value="all">Todo el año</option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+  <select id="filterYear" aria-label="Año" onchange="renderEstadisticas()"><option value="all">Todos los años</option></select>
+  <select id="filterMonth" aria-label="Mes" onchange="renderEstadisticas()">
+    <option value="all">Todos los meses</option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
   </select>
   <div class="search-wrap" title="Escribe parte del nombre del cliente">
     🔎 <input id="filterClienteSearch" type="text" list="clientesStatsList" placeholder="Buscar cliente específico..." oninput="renderEstadisticas()" autocomplete="off">
@@ -758,40 +63,24 @@ tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font
   <button class="btn secondary" type="button" id="reloadStats" onclick="cargarPedidosStats()">⟳ Recargar</button>
 </div>
 
-<div class="layout">
-<section class="card quick-filters" aria-label="Filtrar período">
- <div class="quick-row"><strong>Período</strong><button class="btn secondary" onclick="periodoStats('hoy')">Hoy</button><button class="btn secondary" onclick="periodoStats('semana')">Esta semana</button><button class="btn secondary" onclick="periodoStats('mes')">Este mes</button><button class="btn secondary" onclick="periodoStats('todo')">Todo el historial</button></div>
- <div class="quick-row"><label>Desde <input type="date" id="filterFrom" onchange="rangoStats()"></label><label>Hasta <input type="date" id="filterTo" onchange="rangoStats()"></label><span class="card-sub" id="loadStatus" role="status" aria-live="polite">Verificando acceso…</span></div>
-</section>
-<section id="finanzasStats" class="card finance" hidden aria-label="Cuentas por cobrar"><div class="card-title">Cuentas por cobrar</div><p class="card-sub">Saldo actual de todos los períodos. Se aplica únicamente la búsqueda de cliente. BCV y divisa no se compensan entre sí.</p><div id="financeContent"></div></section>
-<section class="card production-summary"><div class="card-title">Producción pendiente</div><p class="card-sub">Pedidos del período seleccionado. Vencidos: entrega anterior a hoy y trabajo sin terminar.</p><div class="work-grid" id="workCounts"></div><div id="overdueList"></div></section>
-  <div class="filter-info" id="filterInfo">
-    <span>Viendo estadísticas de <strong>todos los clientes</strong>.</span>
-    <span id="filterCount">0 pedidos filtrados</span>
-  </div>
-
-  <section class="cards">
-    <div class="stat-card"><div class="stat-label">Pedidos</div><div class="stat-num" id="kpiPedidos">0</div><div class="stat-sub">Total filtrado</div></div>
-    <div class="stat-card"><div class="stat-label">Cantidad</div><div class="stat-num" id="kpiMetros">0</div><div class="stat-sub">Suma del campo cantidad; sin conversión a m²</div></div>
-    <div class="stat-card"><div class="stat-label">Clientes</div><div class="stat-num" id="kpiClientes">0</div><div class="stat-sub">Clientes únicos</div></div>
-    <div class="stat-card"><div class="stat-label">Listos</div><div class="stat-num" id="kpiListos">0</div><div class="stat-sub">Trabajos terminados</div></div>
-    <div class="stat-card"><div class="stat-label">Pagados</div><div class="stat-num" id="kpiPagados">0</div><div class="stat-sub">Pagos cerrados</div></div>
+<main class="layout">
+  <div class="page-heading"><div><h1>Estadísticas</h1><p id="loadStatus" role="status" aria-live="polite">Verificando acceso…</p></div></div>
+  <section class="cards" aria-label="Resumen del período">
+    <div class="stat-card"><div class="stat-label">Cantidad de metros</div><div class="stat-num" id="kpiMetros">0</div><div class="stat-sub">Metros registrados en el período</div></div>
+    <div class="stat-card"><div class="stat-label">Pedidos tomados</div><div class="stat-num" id="kpiPedidos">0</div><div class="stat-sub">Pedidos registrados en el período</div></div>
+    <div class="stat-card"><div class="stat-label">Pedidos pendientes</div><div class="stat-num" id="kpiPendientes">0</div><div class="stat-sub">Solicitados, revisados y en proceso</div></div>
   </section>
-
-  <section class="grid">
-    <div class="card"><div class="card-header"><div><div class="card-title">Clientes por cantidad</div><div class="card-sub">Clientes que más cantidad han generado.</div></div></div><div class="list" id="topClientes"></div></div>
-    <div class="card"><div class="card-header"><div><div class="card-title">Clientes recurrentes</div><div class="card-sub">Clientes con más pedidos.</div></div></div><div class="list" id="clientesRecurrentes"></div></div>
-    <div class="card"><div class="card-header"><div><div class="card-title">Materiales usados</div><div class="card-sub">Suma de cantidad por material.</div></div></div><div class="list" id="materialesUsados"></div></div>
-    <div class="card"><div class="card-header"><div><div class="card-title">Tipos de impresión</div><div class="card-sub">Suma de cantidad por tipo de impresión.</div></div></div><div class="list" id="impresionesUsadas"></div></div>
-    <div class="card"><div class="card-header"><div><div class="card-title">Operadores</div><div class="card-sub">Todos los operadores registrados · Ricardo Ortiz/Añadir/Sin dato agrupados en Ricardo.</div></div></div><div class="list" id="operadoresUsados"></div></div>
-    <div class="card"><div class="card-header"><div><div class="card-title">Producción por mes</div><div class="card-sub">Historial cronológico por año y mes · incluye meses sin pedidos.</div></div></div><div class="list" id="metrosPorMes"></div></div>
+  <div class="filter-info" id="filterInfo"></div>
+  <section id="finanzasStats" class="card finance" hidden aria-label="Cuentas por cobrar">
+    <div class="card-title">Cuentas por cobrar</div>
+    <p class="card-sub">Saldo actual de todos los períodos. La búsqueda de cliente sí se aplica.</p>
+    <div id="financeContent"></div>
   </section>
-
-  <section class="card">
-    <div class="card-header"><div><div class="card-title">Resumen por cliente</div><div class="card-sub">Pedidos, cantidad, listos, pagos y pendientes por cliente.</div></div></div>
-    <div class="table-scroll"><table><thead><tr><th>Cliente</th><th>Pedidos</th><th>Cantidad</th><th>Primer pedido</th><th>Último pedido</th><th>Listos</th><th>Pagados</th><th>Pendientes</th></tr></thead><tbody id="tablaClientes"><tr><td colspan="8" class="empty">Cargando clientes...</td></tr></tbody></table></div>
+  <section class="grid" aria-label="Clientes destacados">
+    <div class="card"><div class="card-header"><div><h2 class="card-title">Clientes por cantidad</h2><p class="card-sub">Los 10 clientes con más metros registrados.</p></div></div><div class="list" id="topClientes"></div></div>
+    <div class="card"><div class="card-header"><div><h2 class="card-title">Clientes recurrentes</h2><p class="card-sub">Los 10 clientes con más pedidos tomados.</p></div></div><div class="list" id="clientesRecurrentes"></div></div>
   </section>
-</div>
+</main>
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -812,10 +101,10 @@ tr:hover td{background:#f8f9ff}.pill{font-family:var(--head);font-size:11px;font
 
 <script>
 (()=>{
-// Estadísticas v70 · archivo integrado · consultas de solo lectura.
+// Estadísticas v71 · archivo integrado · consultas de solo lectura.
 
 let pedidosStats = [];
-let operadoresStatsDB = [];
+
 const $ = id => document.getElementById(id);
 
 function db(){
@@ -868,35 +157,6 @@ function showToast(msg){
   setTimeout(()=>t.style.display='none',2200);
 }
 
-async function cargarOperadoresStats(){
-  if(!db()) return [];
-
-  try{
-    const { data, error } = await db()
-      .from('operadores')
-      .select('id,nombre,activo,rol')
-      .eq('activo', true)
-      .order('id', { ascending:true });
-
-    if(error) throw error;
-
-    operadoresStatsDB = (data || [])
-      .filter(op => op && limpiarTexto(op.nombre, '') !== '')
-      .map(op => ({
-        id: Number(op.id || 9999),
-        nombre: limpiarTexto(op.nombre, 'Sin dato'),
-        rol: limpiarTexto(op.rol, ''),
-        activo: op.activo !== false
-      }));
-
-    return operadoresStatsDB;
-  }catch(e){
-    console.warn('No se pudo cargar operadores registrados:', e);
-    operadoresStatsDB = [];
-    return [];
-  }
-}
-
 function llenarFiltros(){
   const ySel = $('filterYear');
   if(ySel){
@@ -938,10 +198,6 @@ function filtrarPedidos(){
     if(year !== 'all' && fecha.slice(0,4) !== year) return false;
     if(month !== 'all' && fecha.slice(5,7) !== month) return false;
     if(clienteQ && !normalizar(p.cliente).includes(clienteQ)) return false;
-    const desde = $('filterFrom').value, hasta = $('filterTo').value;
-    if(desde && fecha.slice(0,10) < desde) return false;
-    if(hasta && (!fecha || fecha.slice(0,10) > hasta)) return false;
-
     return true;
   });
 }
@@ -1008,81 +264,6 @@ function groupBy(rows, keyFn){
   return [...map.values()];
 }
 
-function nombreOperadorCanonico(nombre){
-  const limpio = limpiarTexto(nombre, '');
-  const n = normalizar(limpio);
-
-  // Todo lo que venía vacío, "Añadir" o "Sin dato" fue cargado como operador accidental.
-  // Roberto pidió agruparlo como Ricardo.
-  if(!n || n === 'sin dato' || n === 'empty' || n === 'null' || n === 'anadir' || n === 'operador') return 'Ricardo';
-  if(n.includes('ricardo')) return 'Ricardo';
-
-  if(n.includes('roberto')) return 'Roberto';
-  if(n.includes('chico') || n.includes('francisco')) return 'Chico';
-  if(n.includes('gabriela') || n === 'm gabriela') return 'M. Gabriela';
-  if(n.includes('ruben')) return 'Rubén';
-  if(n.includes('miguel')) return 'Miguel Gonzales';
-  if(n.includes('ana virginia') || n.includes('ana santana')) return 'Ana Virginia Santana';
-  if(n.includes('carlos')) return 'Carlos Miguel';
-
-  return limpio || 'Ricardo';
-}
-
-function operadoresBaseRegistrados(){
-  const map = new Map();
-
-  operadoresStatsDB.forEach((op, index) => {
-    const nombre = nombreOperadorCanonico(op.nombre);
-    const key = normalizar(nombre);
-    if(!key) return;
-
-    if(!map.has(key)){
-      map.set(key, crearGrupo(nombre, {
-        registrado:true,
-        orden:Number(op.id || index + 1),
-        rol:op.rol || ''
-      }));
-    }else{
-      const g = map.get(key);
-      g.registrado = true;
-      g.orden = Math.min(g.orden || 9999, Number(op.id || index + 1));
-    }
-  });
-
-  // Fallback mínimo por si la consulta de operadores falla.
-  ['Roberto','Ricardo','Chico','M. Gabriela','Rubén'].forEach((nombre, idx) => {
-    const key = normalizar(nombre);
-    if(!map.has(key)){
-      map.set(key, crearGrupo(nombre, { registrado:false, orden:9000 + idx }));
-    }
-  });
-
-  return map;
-}
-
-function groupOperadores(rows){
-  const map = operadoresBaseRegistrados();
-
-  rows.forEach(p => {
-    const nombre = nombreOperadorCanonico(p.operador);
-    const key = normalizar(nombre) || 'ricardo';
-
-    if(!map.has(key)){
-      map.set(key, crearGrupo(nombre, { registrado:false, orden:9500 }));
-    }
-
-    sumarPedidoGrupo(map.get(key), p);
-  });
-
-  return [...map.values()].sort((a,b) => {
-    const aCon = a.pedidos > 0;
-    const bCon = b.pedidos > 0;
-    if(aCon !== bCon) return aCon ? -1 : 1;
-    if(b.pedidos !== a.pedidos) return b.pedidos - a.pedidos;
-    return (a.orden || 9999) - (b.orden || 9999) || a.key.localeCompare(b.key, 'es');
-  });
-}
-
 function renderList(id, rows, mode='metros'){
   const el = $(id);
   if(!el) return;
@@ -1097,15 +278,15 @@ function renderList(id, rows, mode='metros'){
 
   el.innerHTML = ordenados.map((r, i) => {
     const val = mode === 'pedidos' ? r.pedidos : r.metros;
-    const label = mode === 'pedidos' ? `${fmt(r.pedidos)} pedidos` : `${fmt(r.metros)} cant.`;
-    const pct = Math.max(3, (val / max) * 100);
+    const label = mode === 'pedidos' ? `${fmt(r.pedidos)} pedidos` : `${fmt(r.metros)} m`;
+    const pct = val > 0 ? Math.max(3, (val / max) * 100) : 0;
 
     return `<div class="stat-mini">
       <div class="stat-mini-top">
         <div class="stat-mini-name">${i + 1}. ${escapeHtml(r.key)}</div>
         <div class="stat-mini-value">${escapeHtml(label)}</div>
       </div>
-      <div class="stat-mini-meta">${fmt(r.pedidos)} pedido${r.pedidos===1?'':'s'} · Listos: ${fmt(r.listos)} · Pagados: ${fmt(r.pagados)}</div>
+      <div class="stat-mini-meta">${fmt(r.pedidos)} pedido${r.pedidos===1?'':'s'} · ${fmt(r.items.filter(pedidoPendienteProduccion).length)} pendientes</div>
       <div class="stat-mini-track">
         <div class="stat-mini-fill" style="width:${pct}%"></div>
       </div>
@@ -1113,120 +294,21 @@ function renderList(id, rows, mode='metros'){
   }).join('');
 }
 
-function renderOperadores(rows){
-  const el = $('operadoresUsados');
-  if(!el) return;
-
-  if(!rows.length){
-    el.innerHTML = '<div class="empty">Sin operadores</div>';
-    return;
-  }
-
-  const max = Math.max(...rows.map(r => r.pedidos), 1);
-
-  el.innerHTML = rows.map((r, i) => {
-    const pct = r.pedidos > 0 ? Math.max(4, (r.pedidos / max) * 100) : 0;
-    const estado = r.pedidos > 0 ? `${fmt(r.pedidos)} pedidos` : 'Sin pedidos';
-    const claseCero = r.pedidos > 0 ? '' : ' is-zero';
-
-    return `<div class="operator-mini${claseCero}">
-      <div class="operator-head">
-        <div class="operator-title"><span>${i + 1}.</span> ${escapeHtml(r.key)}</div>
-        <div class="operator-total">${escapeHtml(estado)}</div>
-      </div>
-      <div class="operator-grid">
-        <span><b>${fmt(r.metros)}</b><small>cantidad</small></span>
-        <span><b>${fmt(r.listos)}</b><small>listos</small></span>
-        <span><b>${fmt(r.pagados)}</b><small>pagados</small></span>
-        <span><b>${fmt(r.pendientes)}</b><small>pend.</small></span>
-      </div>
-      <div class="stat-mini-track operator-track">
-        <div class="stat-mini-fill" style="width:${pct}%"></div>
-      </div>
-    </div>`;
-  }).join('');
+function pedidoPendienteProduccion(p){
+  return !['listo','entregado','anulado','cancelado'].includes(normalizar(p.estatus_trabajo));
 }
-
-function renderMeses(rows){
-  const groups = new Map();
-  rows.forEach(p => {
-    const key = String(p.fecha || '').slice(0,7);
-    if(!/^\d{4}-\d{2}$/.test(key)) return;
-    if(!groups.has(key)) groups.set(key, crearGrupo(key));
-    sumarPedidoGrupo(groups.get(key),p);
-  });
-  const keys = [...groups.keys()].sort();
-  if(keys.length){
-    const cursor = new Date(keys[0]+'-01T12:00:00Z');
-    const last = new Date(keys[keys.length-1]+'-01T12:00:00Z');
-    let guard=0;
-    while(cursor<=last && guard++<1200){
-      const key=cursor.toISOString().slice(0,7);
-      if(!groups.has(key)) groups.set(key,crearGrupo(key));
-      cursor.setUTCMonth(cursor.getUTCMonth()+1);
-    }
-  }
-  renderList('metrosPorMes',[...groups.values()].sort((a,b)=>a.key.localeCompare(b.key)),'metros');
-}
-
-function renderTablaClientes(grupos){
-  const tbody = $('tablaClientes');
-  if(!tbody) return;
-
-  if(!grupos.length){
-    tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin clientes</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = grupos.map(g => `
-    <tr>
-      <td><b>${escapeHtml(g.key)}</b></td>
-      <td>${fmt(g.pedidos)}</td>
-      <td><b>${fmt(g.metros)}</b></td>
-      <td>${escapeHtml(g.primero || '—')}</td>
-      <td>${escapeHtml(g.ultimo || '—')}</td>
-      <td><span class="pill green">${fmt(g.listos)}</span></td>
-      <td><span class="pill blue">${fmt(g.pagados)}</span></td>
-      <td><span class="pill red">${fmt(g.pendientes)}</span></td>
-    </tr>`).join('');
-}
-
 function renderEstadisticas(){
-  const rows = filtrarPedidos();
-  if($('filterFrom').value && $('filterTo').value && $('filterFrom').value > $('filterTo').value){$('filterInfo').textContent='La fecha inicial debe ser anterior o igual a la final.';return;}
-  renderTrabajo(rows);
+  const rows=filtrarPedidos();
+  const clientes=groupBy(rows,p=>p.cliente).sort((a,b)=>b.metros-a.metros);
+  const recurrentes=[...clientes].sort((a,b)=>b.pedidos-a.pedidos||b.metros-a.metros);
+  $('kpiPedidos').textContent=fmt(rows.length);
+  $('kpiMetros').textContent=fmt(rows.reduce((a,p)=>a+numero(p.cantidad),0));
+  $('kpiPendientes').textContent=fmt(rows.filter(pedidoPendienteProduccion).length);
+  const q=$('filterClienteSearch').value.trim();
+  $('filterInfo').innerHTML=`<span>${q?'Cliente: <strong>'+escapeHtml(q)+'</strong>':'Todos los clientes'}</span><span>${fmt(clientes.length)} clientes · Pendientes de trabajo, independientemente del pago.</span>`;
+  renderList('topClientes',clientes,'metros');
+  renderList('clientesRecurrentes',recurrentes,'pedidos');
   renderFinanzas();
-
-  const clientes = groupBy(rows, p => p.cliente).sort((a,b)=>b.metros-a.metros);
-  const recurrentes = [...clientes].sort((a,b)=>b.pedidos-a.pedidos);
-  const materiales = groupBy(rows, p => p.material).sort((a,b)=>b.metros-a.metros);
-  const impresiones = groupBy(rows, p => p.tipo_impresion).sort((a,b)=>b.metros-a.metros);
-  const operadores = groupOperadores(rows);
-
-  const totalMetros = rows.reduce((a,p)=>a+numero(p.cantidad),0);
-
-  if($('kpiPedidos')) $('kpiPedidos').textContent = fmt(rows.length);
-  if($('kpiMetros')) $('kpiMetros').textContent = fmt(totalMetros);
-  if($('kpiClientes')) $('kpiClientes').textContent = fmt(clientes.length);
-  if($('kpiListos')) $('kpiListos').textContent = fmt(rows.filter(p => normalizar(p.estatus_trabajo) === 'listo').length);
-  if($('kpiPagados')) $('kpiPagados').textContent = fmt(rows.filter(pedidoPagadoStats).length);
-
-  const q = $('filterClienteSearch')?.value.trim() || '';
-
-  if($('filterInfo')){
-    const pagados = rows.filter(pedidoPagadoStats).length;
-    const pendientes = rows.length - pagados;
-    const activos = operadores.filter(o => o.pedidos > 0).length;
-    $('filterInfo').innerHTML = `<span>Viendo estadísticas de <strong>${q ? escapeHtml(q) : 'todos los clientes'}</strong>.</span><span id="filterCount">${rows.length} pedido${rows.length===1?'':'s'} · ${fmt(totalMetros)} cant. · ${fmt(pagados)} pagado${pagados===1?'':'s'} · ${fmt(pendientes)} pendiente${pendientes===1?'':'s'} · ${fmt(activos)} operador${activos===1?'':'es'}</span>`;
-  }
-
-  renderList('topClientes', clientes, 'metros');
-  renderList('clientesRecurrentes', recurrentes, 'pedidos');
-  renderList('materialesUsados', materiales, 'metros');
-  renderList('impresionesUsadas', impresiones, 'metros');
-  renderOperadores(operadores);
-  renderMeses(rows);
-  renderTablaClientes(clientes);
 }
 
 function limpiarClienteStats(){
@@ -1246,24 +328,10 @@ function setEmptyAll(msg){
 }
 
 
-let loading=false, allowedFinance=false, financeRows=[], financeError='', financeSort='DIVISA';
+let loading=false, allowedFinance=false, financeRows=[], financeError='';
 let generation=0, authBound=false;
 const BASE_FIELDS='id,fecha,operador,cliente,descripcion,cantidad,material,tipo_impresion,estatus_trabajo,estatus_pago,fecha_entrega,pago_simple_estado';
 function hoyCaracas(){const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/Caracas',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}`;}
-function limpiarRangoStats(){ $('filterFrom').value='';$('filterTo').value='';renderEstadisticas(); }
-function rangoStats(){ $('filterYear').value='all';$('filterMonth').value='all';renderEstadisticas(); }
-function periodoStats(tipo){
- const hoy=hoyCaracas();let inicio=hoy;
- if(tipo==='mes')inicio=hoy.slice(0,8)+'01';
- if(tipo==='semana'){const d=new Date(hoy+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7));inicio=d.toISOString().slice(0,10);}
- $('filterFrom').value=tipo==='todo'?'':inicio;$('filterTo').value=tipo==='todo'?'':hoy;rangoStats();
-}
-function renderTrabajo(rows){
- const counts=new Map();rows.forEach(p=>{const s=limpiarTexto(p.estatus_trabajo,'Sin estado');counts.set(s,(counts.get(s)||0)+1);});
- const vencidos=rows.filter(p=> !['listo','entregado','anulado','cancelado'].includes(normalizar(p.estatus_trabajo)) && /^\d{4}-\d{2}-\d{2}/.test(String(p.fecha_entrega||'')) && String(p.fecha_entrega).slice(0,10)<hoyCaracas()).sort((a,b)=>String(a.fecha_entrega).localeCompare(String(b.fecha_entrega)));
- $('workCounts').innerHTML=[...counts].map(([s,n])=>`<div class="work-tile">${escapeHtml(s)}<b>${fmt(n)}</b></div>`).join('')+`<div class="work-tile">Entrega vencida<b style="color:var(--red)">${fmt(vencidos.length)}</b></div>`;
- $('overdueList').innerHTML=vencidos.slice(0,30).map(p=>`<div class="overdue-row"><span><b>#${escapeHtml(p.id)} · ${escapeHtml(p.cliente)}</b><br>${escapeHtml(p.descripcion||'Sin descripción')}</span><time>${escapeHtml(String(p.fecha_entrega).slice(0,10))}</time></div>`).join('')+(vencidos.length>30?'<p class="card-sub">Se muestran los primeros 30 vencidos.</p>':'');
-}
 // Keyset pagination continues even when the server's cap is below 500 rows.
 async function leerCompleto(tabla,campos,run){
  const rows=[];let last=null;
@@ -1304,7 +372,7 @@ async function cargarPedidosStats(){
    authBound=true;db().auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){++generation;limpiarFinanzas();pedidosStats=[];renderEstadisticas();$('loadStatus').textContent='Sesión cerrada';}});
   }
   $('loadStatus').textContent='Cargando historial completo…';
-  const results=await Promise.allSettled([leerCompleto('pedidos',BASE_FIELDS,run),cargarOperadoresStats()]);
+  const results=await Promise.allSettled([leerCompleto('pedidos',BASE_FIELDS,run)]);
   if(run!==generation)return;
   if(results[0].status==='rejected')throw results[0].reason;
   pedidosStats=results[0].value;llenarFiltros();renderEstadisticas();
@@ -1353,13 +421,14 @@ function renderFinanzas(){
  const q=normalizar($('filterClienteSearch').value),rows=financeRows.filter(r=>!q||normalizar(r.nombre).includes(q));
  const sum=(tipo,key)=>rows.filter(r=>r.tipo===tipo).reduce((a,r)=>a+r[key],0);
  const money=n=>'$ '+(n/100).toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2});
- const cards=['DIVISA','BCV'].map(tipo=>`<div class="finance-tile"><b>Por cobrar · ${tipo}</b><div class="finance-number">${money(sum(tipo,'saldo'))}</div><div class="card-sub">Saldo neto tras créditos de la misma cuenta</div></div><div class="finance-tile"><b>A favor · ${tipo}</b><div class="finance-number">${money(sum(tipo,'favor'))}</div><div class="card-sub">Crédito restante de los clientes</div></div>`).join('');
- const deuda=rows.filter(r=>r.tipo===financeSort&&r.saldo>0).sort((a,b)=>b.saldo-a.saldo||a.nombre.localeCompare(b.nombre,'es'));
- const fechaHoy=new Date(hoyCaracas()+'T12:00:00Z');
- $('financeContent').innerHTML=`<div class="finance-grid">${cards}</div><p class="card-sub">BCV se expresa en dólares de la cuenta BCV, no en bolívares. Se usa el sistema actual de pagos de Clientes. No incluye documentos independientes de Contabilidad.</p><div class="finance-controls"><b>Clientes con deuda · mayor a menor</b><select id="debtSort" aria-label="Tipo de cuenta"><option value="DIVISA" ${financeSort==='DIVISA'?'selected':''}>Divisa</option><option value="BCV" ${financeSort==='BCV'?'selected':''}>BCV</option></select></div><div class="table-scroll"><table><thead><tr><th>Cliente</th><th>Saldo neto ${financeSort}</th><th>Pedido con saldo más antiguo</th><th>Antigüedad</th></tr></thead><tbody>${deuda.length?deuda.map(r=>`<tr><td>${escapeHtml(r.nombre)}</td><td><b>${money(r.saldo)}</b></td><td>${escapeHtml(r.antigua||'—')}</td><td>${r.antigua?Math.max(0,Math.floor((fechaHoy-new Date(r.antigua+'T12:00:00Z'))/86400000))+' días':'—'}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">Sin deudas en esta cuenta</td></tr>'}</tbody></table></div><p class="card-sub" style="margin-top:14px">Listos con saldo pendiente por pedido: <b>${money(sum('DIVISA','listos'))} divisa</b> · <b>${money(sum('BCV','listos'))} BCV</b>. Este detalle y la antigüedad son anteriores a aplicar créditos generales; no se suman al saldo neto.</p>`;
- $('debtSort').addEventListener('change',e=>{financeSort=e.target.value;renderFinanzas();});
+ const cards=['DIVISA','BCV'].map(tipo=>`<div class="finance-tile"><div class="stat-label">Por cobrar · ${tipo}</div><div class="finance-number">${money(sum(tipo,'saldo'))}</div><p class="card-sub">Saldo a favor de clientes: <strong>${money(sum(tipo,'favor'))}</strong></p></div>`).join('');
+ const listas=['DIVISA','BCV'].map(tipo=>{
+  const deuda=rows.filter(r=>r.tipo===tipo&&r.saldo>0).sort((a,b)=>b.saldo-a.saldo||a.nombre.localeCompare(b.nombre,'es'));
+  return `<section class="debt-panel" aria-label="Clientes con deuda ${tipo}"><div class="debt-heading"><h3>${tipo}</h3><span>${deuda.length} cliente${deuda.length===1?'':'s'}</span></div><div class="debt-list">${deuda.length?deuda.map((r,i)=>`<div class="debt-row"><span class="debt-name"><small>${i+1}.</small> ${escapeHtml(r.nombre)}</span><strong>${money(r.saldo)}</strong></div>`).join(''):'<div class="empty">Sin deudas en esta cuenta</div>'}</div></section>`;
+ }).join('');
+ $('financeContent').innerHTML=`<div class="finance-grid">${cards}</div><p class="card-sub">BCV expresado en dólares a tasa BCV. Saldos de pedidos, con créditos descontados en su misma cuenta.</p><div class="debt-title">Clientes con deuda · de mayor a menor</div><div class="debt-columns">${listas}</div>`;
 }
-Object.assign(window,{cargarPedidosStats,renderEstadisticas,limpiarClienteStats,periodoStats,rangoStats,limpiarRangoStats});
+Object.assign(window,{cargarPedidosStats,renderEstadisticas,limpiarClienteStats});
 document.addEventListener('DOMContentLoaded',cargarPedidosStats);
 window.addEventListener('pagehide',()=>{++generation;limpiarFinanzas();});
 window.addEventListener('pageshow',e=>{if(e.persisted)cargarPedidosStats();});
