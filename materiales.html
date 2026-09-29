@@ -274,18 +274,18 @@ input,select{width:100%;background:#fff;border:1px solid var(--border2);color:va
 </div>
 
 <div class="hint-box">
-  <strong>Tiempo m²/h:</strong> aquí defines la velocidad de producción. Si un material tiene velocidad, domina sobre el tipo de impresión. Ejemplo: <strong>Glasse = 5 m²/h</strong> sin importar si es Normal, Barniz o CBC.
+  <strong>Cálculo de tiempo:</strong> cada material tiene su propio <strong>Fee (min)</strong> por pedido. La velocidad en <strong>m²/h</strong> se define en el tipo de impresión. Ejemplo: Vinil = 2 min de fee + Normal = 5 m²/h.
 </div>
 
 <div class="layout">
   <section class="card">
     <div class="card-header">
-      <div><div class="card-title">Materiales</div><div class="card-sub">Precio base, color visual y velocidad especial por material.</div></div>
+      <div><div class="card-title">Materiales</div><div class="card-sub">Precio base, color visual y fee por pedido de cada material.</div></div>
       <div class="card-actions"><span class="badge ok" id="materialesCount">0 activos</span><button class="btn" onclick="nuevoMaterial()">+ Añadir</button><button class="btn success" onclick="guardarTodosMateriales()">Guardar cambios</button></div>
     </div>
     <div class="table-scroll">
       <table>
-        <thead><tr><th>Nombre</th><th>Precio base</th><th>m²/h</th><th>Fondo</th><th>Letra</th><th>Vista</th><th>Estado</th><th>Eliminar</th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Precio base</th><th>Fee (min)</th><th>Fondo</th><th>Letra</th><th>Vista</th><th>Estado</th><th>Eliminar</th></tr></thead>
         <tbody id="materialesBody"><tr><td colspan="8" class="empty">Cargando materiales...</td></tr></tbody>
       </table>
     </div>
@@ -338,20 +338,20 @@ function safeColor(v, def){const s=String(v||'').trim();return /^#[0-9a-fA-F]{6}
 function activoVal(v){return v !== false}
 function num(v){const n=Number(String(v??'').replace(',','.'));return Number.isFinite(n)?n:0}
 function velDefaultTipo(nombre){const n=normalizar(nombre); if(n==='normal')return 10; if(n==='barniz')return 5; if(n==='5 capas')return 2; if(n==='cbc')return 7; if(n==='placa especial')return 5; if(n==='sobre impresion')return 5; return 0}
-function velDefaultMaterial(nombre){const n=normalizar(nombre); if(['glasse','glase','glasee'].includes(n))return 5; return 0}
+function feeDefaultMaterial(){return 2}
 
 async function cargarCatalogos(){if(!validarSupabase()) return; await Promise.all([cargarMateriales(), cargarTiposImpresion()]); filtrarCatalogos();}
 
 async function cargarMateriales(){
-  let res = await db().from('materiales').select('id,nombre,precio_base,activo,color_fondo,color_texto,velocidad_m2_h').order('nombre',{ascending:true});
+  let res = await db().from('materiales').select('id,nombre,precio_base,activo,color_fondo,color_texto,fee_minutos').order('nombre',{ascending:true});
   if(res.error){
     const msg = String(res.error.message || '');
-    if(msg.includes('color_fondo') || msg.includes('color_texto') || msg.includes('velocidad_m2_h') || msg.includes('schema cache')){
+    if(msg.includes('color_fondo') || msg.includes('color_texto') || msg.includes('fee_minutos') || msg.includes('schema cache')){
       res = await db().from('materiales').select('id,nombre,precio_base,activo').order('nombre',{ascending:true});
     }
   }
   if(res.error){console.error(res.error);document.getElementById('materialesBody').innerHTML=`<tr><td colspan="8" class="empty">Error: ${esc(res.error.message)}</td></tr>`;return;}
-  materialesDB=(res.data||[]).map(x=>({...x,color_fondo:safeColor(x.color_fondo,DEFAULT_BG),color_texto:safeColor(x.color_texto,DEFAULT_TXT),velocidad_m2_h:num(x.velocidad_m2_h)||velDefaultMaterial(x.nombre)}));
+  materialesDB=(res.data||[]).map(x=>({...x,color_fondo:safeColor(x.color_fondo,DEFAULT_BG),color_texto:safeColor(x.color_texto,DEFAULT_TXT),fee_minutos:(x.fee_minutos===null||x.fee_minutos===undefined||x.fee_minutos==='')?feeDefaultMaterial():num(x.fee_minutos)}));
 }
 
 async function cargarTiposImpresion(){
@@ -374,11 +374,15 @@ function rowHTML(tipo,item,precioCampo){
   const arr=tipo==='mat'?materialesDB:impresionDB;
   const idx=arr.indexOf(item);
   const bg=safeColor(item.color_fondo,DEFAULT_BG), txt=safeColor(item.color_texto,DEFAULT_TXT);
-  const vel=num(item.velocidad_m2_h);
+  const tiempoCampo = tipo==='mat' ? 'fee_minutos' : 'velocidad_m2_h';
+  const tiempoValor = tipo==='mat'
+    ? ((item.fee_minutos===null||item.fee_minutos===undefined||item.fee_minutos==='') ? 2 : num(item.fee_minutos))
+    : num(item.velocidad_m2_h);
+  const tiempoPlaceholder = tipo==='mat' ? '2' : '0';
   return `<tr data-type="${tipo}" data-index="${idx}">
     <td><input class="name-input" value="${esc(item.nombre||'')}" oninput="editarCatalogo('${tipo}',${idx},'nombre',this.value)"></td>
     <td><input class="price-input" type="number" step="0.01" value="${Number(item[precioCampo]||0)}" oninput="editarCatalogo('${tipo}',${idx},'${precioCampo}',this.value)"></td>
-    <td><input class="speed-input" type="number" step="0.01" min="0" value="${vel || ''}" placeholder="0" oninput="editarCatalogo('${tipo}',${idx},'velocidad_m2_h',this.value)"></td>
+    <td><input class="speed-input" type="number" step="0.01" min="0" value="${tiempoValor}" placeholder="${tiempoPlaceholder}" oninput="editarCatalogo('${tipo}',${idx},'${tiempoCampo}',this.value)"></td>
     <td><input class="color-input" type="color" value="${esc(bg)}" oninput="editarCatalogo('${tipo}',${idx},'color_fondo',this.value)"></td>
     <td><input class="color-input" type="color" value="${esc(txt)}" oninput="editarCatalogo('${tipo}',${idx},'color_texto',this.value)"></td>
     <td><span class="pill-preview" data-preview="${tipo}-${idx}" style="background:${esc(bg)};color:${esc(txt)}">${esc(item.nombre||'Vista')}</span></td>
@@ -390,28 +394,28 @@ function rowHTML(tipo,item,precioCampo){
 function editarCatalogo(tipo,idx,campo,valor){
   const arr=tipo==='mat'?materialesDB:impresionDB;
   if(!arr[idx])return;
-  if(campo==='precio_base'||campo==='precio_extra'||campo==='velocidad_m2_h') valor=num(valor);
+  if(campo==='precio_base'||campo==='precio_extra'||campo==='velocidad_m2_h'||campo==='fee_minutos') valor=num(valor);
   arr[idx][campo]=valor;
   const pill=document.querySelector(`[data-preview="${tipo}-${idx}"]`);
   if(pill){pill.textContent=arr[idx].nombre||'Vista'; pill.style.background=safeColor(arr[idx].color_fondo,DEFAULT_BG); pill.style.color=safeColor(arr[idx].color_texto,DEFAULT_TXT);}
 }
 
-function nuevoMaterial(){materialesDB.push({id:null,nombre:'Nuevo material',precio_base:0,velocidad_m2_h:0,activo:true,color_fondo:'#e5e7eb',color_texto:'#111827'}); filtrarCatalogos(); toast('Material añadido. Edita y guarda.');}
+function nuevoMaterial(){materialesDB.push({id:null,nombre:'Nuevo material',precio_base:0,fee_minutos:2,activo:true,color_fondo:'#e5e7eb',color_texto:'#111827'}); filtrarCatalogos(); toast('Material añadido. Edita y guarda.');}
 function nuevoTipoImpresion(){impresionDB.push({id:null,nombre:'Nuevo tipo',precio_extra:0,velocidad_m2_h:0,activo:true,color_fondo:'#e5e7eb',color_texto:'#111827'}); filtrarCatalogos(); toast('Tipo añadido. Edita y guarda.');}
-async function guardarTodosMateriales(){await guardarLista('materiales',materialesDB,'precio_base');}
-async function guardarTodosTiposImpresion(){await guardarLista('tipos_impresion',impresionDB,'precio_extra');}
+async function guardarTodosMateriales(){await guardarLista('materiales',materialesDB,'precio_base','fee_minutos');}
+async function guardarTodosTiposImpresion(){await guardarLista('tipos_impresion',impresionDB,'precio_extra','velocidad_m2_h');}
 
-async function guardarLista(tabla,lista,precioCampo){
+async function guardarLista(tabla,lista,precioCampo,tiempoCampo){
   if(!validarSupabase())return;
   try{
     for(const x of lista){
-      const datosFull={nombre:String(x.nombre||'').trim(),[precioCampo]:num(x[precioCampo]),velocidad_m2_h:num(x.velocidad_m2_h),activo:activoVal(x.activo),color_fondo:safeColor(x.color_fondo,DEFAULT_BG),color_texto:safeColor(x.color_texto,DEFAULT_TXT)};
+      const datosFull={nombre:String(x.nombre||'').trim(),[precioCampo]:num(x[precioCampo]),[tiempoCampo]:num(x[tiempoCampo]),activo:activoVal(x.activo),color_fondo:safeColor(x.color_fondo,DEFAULT_BG),color_texto:safeColor(x.color_texto,DEFAULT_TXT)};
       if(!datosFull.nombre) continue;
       let res;
       if(x.id){res = await db().from(tabla).update(datosFull).eq('id',x.id);}else{res = await db().from(tabla).insert([datosFull]).select().single();}
       if(res.error){
         const msg = String(res.error.message || '');
-        const fallback = msg.includes('color_fondo') || msg.includes('color_texto') || msg.includes('velocidad_m2_h') || msg.includes('schema cache');
+        const fallback = msg.includes('color_fondo') || msg.includes('color_texto') || msg.includes('velocidad_m2_h') || msg.includes('fee_minutos') || msg.includes('schema cache');
         if(!fallback) throw res.error;
         const datosBase={nombre:datosFull.nombre,[precioCampo]:datosFull[precioCampo],activo:datosFull.activo};
         if(x.id){res = await db().from(tabla).update(datosBase).eq('id',x.id);}else{res = await db().from(tabla).insert([datosBase]).select().single();}
