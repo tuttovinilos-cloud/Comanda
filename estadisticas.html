@@ -321,7 +321,7 @@ html.menu-ready .header-tabs,
 .page-heading p{margin:0;font-size:12px;color:#64748b}
 .cards{
   display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-columns:repeat(4,minmax(0,1fr));
   gap:14px
 }
 .stat-card,.card{
@@ -709,7 +709,6 @@ html.menu-ready .header-tabs,
     grid-template-columns:repeat(2,minmax(0,1fr));
     gap:10px
   }
-  .cards>.stat-card:first-child{grid-column:1/-1}
   .stat-card{padding:15px}
   .stat-label{font-size:10px}
   .stat-num{font-size:28px}
@@ -886,6 +885,12 @@ html.menu-ready .header-tabs,
       <div class="stat-num" id="kpiPendientes">0</div>
       <div class="stat-sub">Solicitados, revisados y en proceso</div>
     </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Clientes nuevos</div>
+      <div class="stat-num" id="kpiClientesNuevos">0</div>
+      <div class="stat-sub"><strong id="kpiClientesTotales">0</strong> clientes totales históricos</div>
+    </div>
   </section>
 
   <div class="filter-info" id="filterInfo"></div>
@@ -976,10 +981,11 @@ html.menu-ready .header-tabs,
 
 <script>
 (()=>{
-// Estadísticas v73 · archivo integrado · consultas de solo lectura.
-// Añade M² por mes y M² por año.
+// Estadísticas v74 · carga optimizada · mismo control de acceso.
+// Abre en el mes actual y añade clientes nuevos / clientes totales.
 
 let pedidosStats = [];
+let filtrosInicialesAplicados = false;
 
 const $ = id => document.getElementById(id);
 
@@ -1081,7 +1087,23 @@ function llenarFiltros(){
         .map(y => `<option value="${escapeHtml(y)}">${escapeHtml(y)}</option>`)
         .join('');
 
-    ySel.value = years.includes(oldY) ? oldY : 'all';
+    if(!filtrosInicialesAplicados){
+      const hoy = hoyCaracas();
+      const yearActual = hoy.slice(0,4);
+      const mesActual = hoy.slice(5,7);
+
+      if(years.includes(yearActual)){
+        ySel.value = yearActual;
+        if($('filterMonth')) $('filterMonth').value = mesActual;
+      }else{
+        ySel.value = years[0] || 'all';
+        if($('filterMonth')) $('filterMonth').value = 'all';
+      }
+
+      filtrosInicialesAplicados = true;
+    }else{
+      ySel.value = years.includes(oldY) ? oldY : 'all';
+    }
   }
 
   const clientesMap = new Map();
@@ -1227,6 +1249,50 @@ function pedidoPendienteProduccion(p){
   ].includes(normalizar(p.estatus_trabajo));
 }
 
+function claveClientePedido(p){
+  if(p?.cliente_id !== null && p?.cliente_id !== undefined && String(p.cliente_id).trim() !== ''){
+    return 'id:' + String(p.cliente_id);
+  }
+
+  const nombre = normalizar(p?.cliente);
+  return nombre ? 'nombre:' + nombre : '';
+}
+
+function resumenClientes(rowsFiltrados){
+  const primeraFecha = new Map();
+
+  pedidosStats.forEach(p=>{
+    const key = claveClientePedido(p);
+    const fecha = String(p.fecha || '').slice(0,10);
+
+    if(!key || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)){
+      return;
+    }
+
+    const anterior = primeraFecha.get(key);
+    if(!anterior || fecha < anterior){
+      primeraFecha.set(key, fecha);
+    }
+  });
+
+  const nuevos = new Set();
+
+  rowsFiltrados.forEach(p=>{
+    const key = claveClientePedido(p);
+    if(!key) return;
+
+    const fecha = String(p.fecha || '').slice(0,10);
+    if(primeraFecha.get(key) === fecha){
+      nuevos.add(key);
+    }
+  });
+
+  return {
+    nuevos:nuevos.size,
+    totales:primeraFecha.size
+  };
+}
+
 function renderEstadisticas(){
   const rows = filtrarPedidos();
 
@@ -1245,6 +1311,10 @@ function renderEstadisticas(){
   $('kpiPendientes').textContent = fmt(
     rows.filter(pedidoPendienteProduccion).length
   );
+
+  const clientesResumen = resumenClientes(rows);
+  $('kpiClientesNuevos').textContent = fmt(clientesResumen.nuevos);
+  $('kpiClientesTotales').textContent = fmt(clientesResumen.totales);
 
   const q = $('filterClienteSearch').value.trim();
 
@@ -1290,7 +1360,7 @@ let refreshQueued=false;
 let generation=0;
 let authBound=false;
 
-const BASE_FIELDS='id,fecha,cliente,cantidad,estatus_trabajo';
+const BASE_FIELDS='id,fecha,cliente,cliente_id,cantidad,estatus_trabajo';
 
 function hoyCaracas(){
   const p = Object.fromEntries(
@@ -1321,7 +1391,7 @@ async function leerCompleto(tabla,campos,run){
       .from(tabla)
       .select(campos)
       .order('id',{ascending:true})
-      .limit(500);
+      .limit(1000);
 
     if(last!==null){
       q=q.gt('id',last);
@@ -1407,9 +1477,10 @@ async function cargarPedidosStats(){
   pedidosStats=[];
   renderEstadisticas();
 
-  ['kpiMetros','kpiPedidos','kpiPendientes'].forEach(id=>{
+  ['kpiMetros','kpiPedidos','kpiPendientes','kpiClientesNuevos'].forEach(id=>{
     $(id).textContent='—';
   });
+  $('kpiClientesTotales').textContent='—';
 
   setEmptyAll('Cargando…');
 
@@ -1455,21 +1526,28 @@ async function cargarPedidosStats(){
       });
     }
 
-    $('loadStatus').textContent='Cargando historial completo…';
+    $('loadStatus').textContent='Cargando estadísticas…';
 
-    const results=await Promise.allSettled([
-      leerCompleto('pedidos',BASE_FIELDS,run)
-    ]);
+    const camposPedidos = allowedFinance
+      ? BASE_FIELDS + ',pago_simple_total,pago_simple_pagado,pago_simple_tipo'
+      : BASE_FIELDS;
+
+    // Para Roberto/Ricardo, las tablas auxiliares de cuentas se cargan en paralelo.
+    const pedidosPromise = leerCompleto('pedidos',camposPedidos,run);
+    const pagosPromise = allowedFinance
+      ? leerCompleto('clientes_pagos','id,cliente_id,tipo_pago,saldo_a_favor,estado',run)
+      : null;
+    const clientesPromise = allowedFinance
+      ? leerCompleto('clientes','id,nombre',run)
+      : null;
+
+    const pedidos = await pedidosPromise;
 
     if(run!==generation){
       return;
     }
 
-    if(results[0].status==='rejected'){
-      throw results[0].reason;
-    }
-
-    pedidosStats=results[0].value;
+    pedidosStats=pedidos;
 
     llenarFiltros();
     renderEstadisticas();
@@ -1481,21 +1559,8 @@ async function cargarPedidosStats(){
 
       try{
         const result=await Promise.allSettled([
-          leerCompleto(
-            'pedidos',
-            'id,cliente_id,cliente,fecha,estatus_trabajo,pago_simple_total,pago_simple_pagado,pago_simple_tipo',
-            run
-          ),
-          leerCompleto(
-            'clientes_pagos',
-            'id,cliente_id,tipo_pago,saldo_a_favor,estado',
-            run
-          ),
-          leerCompleto(
-            'clientes',
-            'id,nombre',
-            run
-          )
+          pagosPromise,
+          clientesPromise
         ]);
 
         if(run!==generation){
@@ -1509,7 +1574,9 @@ async function cargarPedidosStats(){
         }
 
         financeRows=construirCuentas(
-          ...result.map(r=>r.value)
+          pedidos,
+          result[0].value,
+          result[1].value
         );
 
         financeReady=true;
@@ -1549,9 +1616,10 @@ async function cargarPedidosStats(){
     renderEstadisticas();
     setEmptyAll('No se pudo cargar el historial.');
 
-    ['kpiMetros','kpiPedidos','kpiPendientes'].forEach(id=>{
+    ['kpiMetros','kpiPedidos','kpiPendientes','kpiClientesNuevos'].forEach(id=>{
       $(id).textContent='—';
     });
+    $('kpiClientesTotales').textContent='—';
 
     $('loadStatus').textContent=
       error.message || 'No se pudo cargar. Pulsa Recargar.';
