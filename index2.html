@@ -2937,7 +2937,7 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 }
 .estado-cuenta-resumen{
   display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-columns:repeat(4,minmax(0,1fr));
   gap:7px;
 }
 .estado-cuenta-kpi{
@@ -3659,6 +3659,11 @@ function operadorPuedeAnularPagos(){
   return operadorPuedeFusionarClientes();
 }
 
+function operadorPuedeEliminarClientes(){
+  // Eliminar y archivar clientes queda reservado a Roberto.
+  return operadorPuedeFusionarClientes();
+}
+
 function aplicarPermisosFusionClientes(){
   const puedeFusionar = operadorPuedeFusionarClientes();
   const tools = document.getElementById('fusionTools');
@@ -3775,13 +3780,17 @@ function obtenerPedidosClienteIndexados(nombre, clienteId = null){
   const porId = id ? (pedidosPorClienteIdMap.get(id) || []) : [];
   const porNombre = claveNombre ? (pedidosPorNombreMap.get(claveNombre) || []) : [];
 
-  if(!porId.length) return porNombre;
-  if(!porNombre.length) return porId;
+  // V82 · si existe cliente_id, ese ID manda.
+  // El nombre se usa únicamente para pedidos realmente antiguos que no tienen cliente_id.
+  if(id){
+    const legacySinId = porNombre.filter(p => !Number(p?.cliente_id || 0));
+    const unicos = new Map();
+    porId.forEach(p => unicos.set(Number(p.id), p));
+    legacySinId.forEach(p => unicos.set(Number(p.id), p));
+    return [...unicos.values()];
+  }
 
-  const unicos = new Map();
-  porId.forEach(p => unicos.set(Number(p.id), p));
-  porNombre.forEach(p => unicos.set(Number(p.id), p));
-  return [...unicos.values()];
+  return porNombre;
 }
 
 function contarPedidosCliente(nombre, clienteId = null){
@@ -4419,6 +4428,7 @@ function cambiarPaginaClientes(direccion){
 
 function renderClientes(lista){
   const puedeFusionar = operadorPuedeFusionarClientes();
+  const puedeEliminar = operadorPuedeEliminarClientes();
   if(!puedeFusionar) clientesSeleccionados.clear();
   limpiarSeleccionesOcultas(lista);
 
@@ -4496,11 +4506,13 @@ function renderClientes(lista){
         <td>
           <div class="actions-row">
             <button class="mini-btn" onclick="editarCliente(${Number(c.id)})">Editar</button>
-            ${pedidos > 0
-              ? (c.activo === false
-                  ? `<button class="mini-btn del" type="button" disabled title="Cliente inactivo con historial protegido">Protegido</button>`
-                  : `<button class="mini-btn del" type="button" onclick="eliminarCliente(${Number(c.id)})">Archivar</button>`)
-              : `<button class="mini-btn del" type="button" onclick="eliminarCliente(${Number(c.id)})">Eliminar</button>`}
+            ${puedeEliminar
+              ? (pedidos > 0
+                  ? (c.activo === false
+                      ? `<button class="mini-btn del" type="button" disabled title="Cliente inactivo con historial protegido">Protegido</button>`
+                      : `<button class="mini-btn del" type="button" onclick="eliminarCliente(${Number(c.id)})">Archivar</button>`)
+                  : `<button class="mini-btn del" type="button" onclick="eliminarCliente(${Number(c.id)})">Eliminar</button>`)
+              : ""}
           </div>
         </td>
       </tr>
@@ -5083,6 +5095,10 @@ function resumenHistorialClienteTexto(historial){
 }
 
 async function desactivarClienteSeguro(id, nombreDestino = ""){
+  if(!operadorPuedeEliminarClientes()){
+    throw new Error("Solo Roberto puede archivar clientes.");
+  }
+
   const clienteActual = clientesDB.find(c => Number(c.id) === Number(id));
   const notaNueva = nombreDestino
     ? `Cliente fusionado con: ${nombreDestino}`
@@ -5100,6 +5116,9 @@ async function desactivarClienteSeguro(id, nombreDestino = ""){
 }
 
 async function eliminarClienteFisicoOOcultar(id, nombreDestino = "", historialPrecalculado = null){
+  if(!operadorPuedeEliminarClientes()){
+    throw new Error("Solo Roberto puede eliminar o archivar clientes.");
+  }
   if(!id) return { eliminado:false, archivado:false };
 
   const cliente = clientesDB.find(c => Number(c.id) === Number(id)) || { id:Number(id), nombre:"" };
@@ -5162,6 +5181,8 @@ async function actualizarPedidosDeCliente(nombreAnterior, nombreNuevo, clienteId
 }
 
 async function fusionarDuplicadosExactosCliente(nombreFinal, idPrincipal){
+  if(!operadorPuedeFusionarClientes()) return 0;
+
   const clave = normalizar(nombreFinal);
   if(!clave || !idPrincipal) return 0;
 
@@ -5247,6 +5268,14 @@ async function guardarClienteModal(){
   try{
     let mensaje = "Cliente guardado";
     let clienteIdGuardado = id ? Number(id) : null;
+
+    if(duplicado && !operadorPuedeFusionarClientes()){
+      alert(
+        `Ya existe otro cliente con el nombre "${nombre}".\n\n` +
+        `Solo Roberto puede fusionar clientes. Cambia el nombre o solicita a Roberto realizar la fusión.`
+      );
+      return;
+    }
 
     if(duplicado){
       // Si el nombre nuevo ya existe, NO crea otro registro. Fusiona en el cliente existente.
@@ -5453,6 +5482,10 @@ function cantidadDatosCliente(c){
 }
 
 async function eliminarCliente(id){
+  if(!operadorPuedeEliminarClientes()){
+    alert("Solo Roberto puede eliminar o archivar clientes.");
+    return;
+  }
   if(!validarSupabase()) return;
 
   const cliente = clientesDB.find(c => Number(c.id) === Number(id));
@@ -6663,8 +6696,7 @@ async function verHistorialCliente(id){
     return;
   }
 
-  const nombreNorm = normalizar(cliente.nombre);
-  const pedidos = pedidosDB.filter(p => Number(p.cliente_id || 0) === Number(cliente.id) || normalizar(p.cliente) === nombreNorm);
+  const pedidos = obtenerPedidosClienteIndexados(cliente.nombre, cliente.id);
   const cuenta = pedidos.map(p => resumenPagoSimpleCliente(p)).filter(x => x.total > 0.009 || x.pagado > 0.009);
   const [pagos, pagosGenerales, auditoria] = await Promise.all([
     cargarPagosCliente(cliente),
@@ -6896,37 +6928,59 @@ function cerrarHistorialSiFondo(event){
 // pedidos_pagos  = distribución de esa entrada entre pedidos.
 // ============================================================
 async function cargarMovimientosRealesCliente(cliente){
-  const pagos = await cargarPagosGeneralesCliente(cliente);
+  const selectAplicacion = "id,cliente_pago_id,pedido_id,cliente_id,cliente_nombre,monto_recibido,monto_aplicado,equivalente_usd,moneda,tipo_pago_simple,metodo_pago,referencia,nota,fecha_pago,registrado_por,tipo_movimiento,estado,created_at";
+  const selectPago = "id,cliente_id,cliente_nombre,monto_recibido,tipo_pago,metodo_pago,referencia,nota,fecha_pago,registrado_por,saldo_antes,monto_aplicado,saldo_a_favor,pedidos_afectados,operacion_uuid,origen,estado,anulado_en,anulado_por,motivo_anulacion,created_at";
+
+  const pedidosCliente = obtenerPedidosClienteIndexados(cliente?.nombre, cliente?.id);
+  const pedidoIds = [...new Set(
+    (pedidosCliente || []).map(p => Number(p?.id || 0)).filter(Boolean)
+  )];
+
   let aplicaciones = [];
 
   try{
-    if(cliente?.id){
+    // V82 · se sigue el pedido actual, no el cliente_id histórico del movimiento.
+    // Esto conserva la conciliación incluso después de fusionar clientes.
+    for(let i=0; i<pedidoIds.length; i+=200){
+      const lote = pedidoIds.slice(i, i+200);
       const { data, error } = await db()
         .from("pedidos_pagos")
-        .select("id,cliente_pago_id,pedido_id,cliente_id,cliente_nombre,monto_recibido,monto_aplicado,equivalente_usd,moneda,metodo_pago,referencia,nota,fecha_pago,tipo_movimiento,estado,created_at")
-        .eq("cliente_id", Number(cliente.id))
+        .select(selectAplicacion)
+        .in("pedido_id", lote)
         .order("created_at", { ascending:false });
-      if(!error && Array.isArray(data)) aplicaciones = data;
-    }
 
-    if(!aplicaciones.length && cliente?.nombre){
-      const { data, error } = await db()
-        .from("pedidos_pagos")
-        .select("id,cliente_pago_id,pedido_id,cliente_id,cliente_nombre,monto_recibido,monto_aplicado,equivalente_usd,moneda,metodo_pago,referencia,nota,fecha_pago,tipo_movimiento,estado,created_at")
-        .ilike("cliente_nombre", cliente.nombre)
-        .order("created_at", { ascending:false });
-      if(!error && Array.isArray(data)) aplicaciones = data;
+      if(error) throw error;
+      if(Array.isArray(data)) aplicaciones.push(...data);
     }
   }catch(error){
-    console.warn("No se pudo cargar distribución de movimientos:", error);
+    console.warn("No se pudo cargar distribución por pedidos:", error);
+    aplicaciones = [];
+  }
+
+  // Fallback para clientes sin pedidos indexados o información antigua incompleta.
+  if(!aplicaciones.length){
+    try{
+      if(cliente?.id){
+        const { data, error } = await db()
+          .from("pedidos_pagos")
+          .select(selectAplicacion)
+          .eq("cliente_id", Number(cliente.id))
+          .order("created_at", { ascending:false });
+        if(!error && Array.isArray(data)) aplicaciones = data;
+      }
+    }catch(error){
+      console.warn("No se pudo cargar distribución por cliente_id:", error);
+    }
   }
 
   const porPago = new Map();
   const legacy = [];
+  const idsPadres = new Set();
 
   (aplicaciones || []).forEach(ap => {
     const padre = Number(ap.cliente_pago_id || 0);
     if(padre > 0){
+      idsPadres.add(padre);
       const lista = porPago.get(padre) || [];
       lista.push(ap);
       porPago.set(padre, lista);
@@ -6935,7 +6989,33 @@ async function cargarMovimientosRealesCliente(cliente){
     }
   });
 
-  return { pagos:pagos || [], porPago, legacy };
+  // Pagos que pertenecen actualmente al cliente.
+  const mapaPagos = new Map();
+  const pagosPropios = await cargarPagosGeneralesCliente(cliente);
+  (pagosPropios || []).forEach(pg => mapaPagos.set(Number(pg.id), pg));
+
+  // V82 · recupera también pagos padre que quedaron con el ID anterior
+  // después de una fusión, siempre que estén vinculados a pedidos del cliente actual.
+  const faltantes = [...idsPadres].filter(id => !mapaPagos.has(Number(id)));
+  try{
+    for(let i=0; i<faltantes.length; i+=200){
+      const lote = faltantes.slice(i, i+200);
+      const { data, error } = await db()
+        .from("clientes_pagos")
+        .select(selectPago)
+        .in("id", lote);
+
+      if(error) throw error;
+      (data || []).forEach(pg => mapaPagos.set(Number(pg.id), pg));
+    }
+  }catch(error){
+    console.warn("No se pudieron recuperar pagos históricos de clientes fusionados:", error);
+  }
+
+  const pagos = [...mapaPagos.values()]
+    .sort((a,b) => new Date(b.created_at || b.fecha_pago || 0) - new Date(a.created_at || a.fecha_pago || 0));
+
+  return { pagos, porPago, legacy };
 }
 
 function descripcionPedidoMovimiento(pedidoId){
@@ -7228,9 +7308,7 @@ async function verHistorialCliente(id){
   const cliente = clientesDB.find(c => Number(c.id) === Number(id));
   if(!cliente){ alert("No se encontró el cliente."); return; }
 
-  const nombreNorm = normalizar(cliente.nombre);
-  const pedidos = pedidosDB
-    .filter(p => Number(p.cliente_id || 0) === Number(cliente.id) || normalizar(p.cliente) === nombreNorm)
+  const pedidos = obtenerPedidosClienteIndexados(cliente.nombre, cliente.id)
     .sort((a,b) => Number(b.id || 0) - Number(a.id || 0));
 
   document.getElementById("historyTitle").textContent = `Pedidos · ${cliente.nombre}`;
@@ -7570,6 +7648,32 @@ function estadoActualTextoV79(resumen){
   return { clase:"ok", texto:"SIN DEUDA $0.00" };
 }
 
+function saldoFirmadoActualV82(resumen){
+  return numeroSeguro(resumen?.saldo || 0) - numeroSeguro(resumen?.aFavor || 0);
+}
+
+function saldoReconstruidoV82(eventos, tipo){
+  const cuenta = normalizarTipoCuentaCliente(tipo);
+  const ultimo = (eventos || []).find(ev => normalizarTipoCuentaCliente(ev?.cuenta) === cuenta);
+  return ultimo ? numeroSeguro(ultimo.saldoDespues || 0) : 0;
+}
+
+function estadoConciliacionGeneralV82(eventos, divisaActual, bcvActual){
+  const difDivisa = saldoReconstruidoV82(eventos, "DIVISA") - saldoFirmadoActualV82(divisaActual);
+  const difBcv = saldoReconstruidoV82(eventos, "BCV") - saldoFirmadoActualV82(bcvActual);
+  const okDivisa = Math.abs(difDivisa) <= 0.01;
+  const okBcv = Math.abs(difBcv) <= 0.01;
+
+  if(okDivisa && okBcv){
+    return { clase:"ok", texto:"CONCILIADO" };
+  }
+
+  const partes = [];
+  if(!okDivisa) partes.push(`DIVISA ${money(Math.abs(difDivisa))}`);
+  if(!okBcv) partes.push(`BCV ${money(Math.abs(difBcv))}`);
+  return { clase:"debe", texto:`REVISAR ${partes.join(" · ")}` };
+}
+
 function fechaMovimientoV79(valor, soloFecha=false){
   if(!valor) return { fecha:"—", hora:"" };
   if(soloFecha){
@@ -7704,7 +7808,10 @@ async function construirEstadoCuentaClienteV79(cliente){
 
   (legacy || []).forEach(pg => {
     const anulado = String(pg.estado || "ACTIVO").toUpperCase() === "ANULADO";
-    const cuenta = String(pg.moneda || "USD").toUpperCase() === "BS" ? "BCV" : "DIVISA";
+    const cuenta = normalizarTipoCuentaCliente(
+      pg.tipo_pago_simple ||
+      (String(pg.moneda || "USD").toUpperCase() === "BS" ? "BCV" : "DIVISA")
+    );
     eventos.push({
       tipo:"PAGO",
       fecha:pg.created_at || pg.fecha_pago,
@@ -7759,6 +7866,7 @@ async function cargarMovimientosClienteEnCuenta(id){
     const bcvActual = resumenNetoCuentaCliente(cliente, "BCV");
     const divisaTxt = estadoActualTextoV79(divisaActual);
     const bcvTxt = estadoActualTextoV79(bcvActual);
+    const conciliacionTxt = estadoConciliacionGeneralV82(eventos, divisaActual, bcvActual);
     const pendientes = pedidosPendientesCliente(cliente).length;
 
     if(resumen){
@@ -7768,6 +7876,7 @@ async function cargarMovimientosClienteEnCuenta(id){
             <div class="estado-cuenta-kpi"><label>DIVISA actual</label><strong class="${divisaTxt.clase}">${escapeHtml(divisaTxt.texto)}</strong></div>
             <div class="estado-cuenta-kpi"><label>BCV actual</label><strong class="${bcvTxt.clase}">${escapeHtml(bcvTxt.texto)}</strong></div>
             <div class="estado-cuenta-kpi"><label>Pedidos pendientes</label><strong>${pendientes}</strong></div>
+            <div class="estado-cuenta-kpi"><label>Conciliación</label><strong class="${conciliacionTxt.clase}">${escapeHtml(conciliacionTxt.texto)}</strong></div>
           </div>
           <button class="estado-cuenta-copy" type="button" onclick="copiarEstadoCuentaClienteV79(${Number(cliente.id)})">Copiar estado de cuenta</button>
         </div>`;
@@ -7785,7 +7894,7 @@ async function cargarMovimientosClienteEnCuenta(id){
             <div>Fecha</div><div>Movimiento</div><div style="text-align:right">Cargo</div><div style="text-align:right">Abono</div><div style="text-align:right">Saldo</div>
           </div>
           <div>${eventos.map(filaEstadoCuentaV79).join("")}</div>
-          <div class="estado-cuenta-nota">Más reciente arriba · Cargo = pedido emitido · Abono = dinero recibido · abre “Ver conciliación” para comprobar cómo se forma cada saldo.</div>
+          <div class="estado-cuenta-nota">Más reciente arriba · Cargo = pedido emitido · Abono = dinero recibido · “Ver conciliación” muestra Saldo anterior + Cargo − Abono = Saldo resultante.</div>
         </div>`;
     }
   }catch(error){
@@ -7863,7 +7972,7 @@ async function copiarEstadoCuentaClienteV79(id){
 
 window.copiarEstadoCuentaClienteV79 = copiarEstadoCuentaClienteV79;
 window.cargarMovimientosClienteEnCuenta = cargarMovimientosClienteEnCuenta;
-console.log("CLIENTES v81 · últimos movimientos arriba + conciliación cargo/abono/saldo + borrado seguro");
+console.log("CLIENTES v82 · conciliación por historial financiero + eliminación solo Roberto");
 </script>
 
 </body>
