@@ -1909,6 +1909,13 @@ td:nth-child(7){
   color:#dc2626!important;
   border-color:#fecaca!important;
 }
+.actions-row .mini-btn:disabled{
+  opacity:.55!important;
+  cursor:not-allowed!important;
+  background:#f8fafc!important;
+  color:#64748b!important;
+  border-color:#e2e8f0!important;
+}
 
 /* Badges */
 .badge{
@@ -3116,6 +3123,77 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
   .estado-cuenta-copy{width:100%}
   .estado-cuenta-wrap{overflow-x:auto}
   .estado-cuenta-head,.estado-cuenta-row{grid-template-columns:82px minmax(220px,1fr) 78px 78px 110px;min-width:650px}
+}
+
+/* V81 · conciliación visible por movimiento */
+.estado-cuenta-conciliacion{margin-top:5px}
+.estado-cuenta-conciliacion summary{
+  cursor:pointer;
+  list-style:none;
+  color:#153bff;
+  font-family:var(--head);
+  font-size:7.5px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.3px;
+}
+.estado-cuenta-conciliacion summary::-webkit-details-marker{display:none}
+.estado-cuenta-conciliacion summary::after{content:" +"}
+.estado-cuenta-conciliacion[open] summary::after{content:" −"}
+.estado-cuenta-conciliacion-body{
+  margin-top:6px;
+  border:1px solid #d9deea;
+  border-radius:9px;
+  background:#f8fafc;
+  padding:7px 8px;
+  display:grid;
+  gap:5px;
+}
+.estado-cuenta-conciliacion-formula{
+  font-family:var(--mono);
+  font-size:8px;
+  font-weight:900;
+  color:#334155;
+  line-height:1.45;
+}
+.estado-cuenta-conciliacion-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:5px;
+}
+.estado-cuenta-conciliacion-grid span{
+  border:1px solid #e2e8f0;
+  border-radius:7px;
+  background:#fff;
+  padding:5px 6px;
+  min-width:0;
+}
+.estado-cuenta-conciliacion-grid small{
+  display:block;
+  color:#64748b;
+  font-family:var(--head);
+  font-size:6.5px;
+  font-weight:900;
+  text-transform:uppercase;
+  margin-bottom:2px;
+}
+.estado-cuenta-conciliacion-grid strong{
+  display:block;
+  font-family:var(--mono);
+  font-size:8px;
+  color:#111827;
+  white-space:nowrap;
+}
+.estado-cuenta-conciliacion-grid strong.cargo{color:#b45309}
+.estado-cuenta-conciliacion-grid strong.abono{color:#15803d}
+.estado-cuenta-conciliacion-grid strong.saldo{color:#153bff}
+.estado-cuenta-conciliacion-aviso{
+  font-size:7.5px;
+  color:#dc2626;
+  font-weight:800;
+}
+@media(max-width:760px){
+  .estado-cuenta-conciliacion-grid{grid-template-columns:1fr 1fr}
 }
 </style>
 
@@ -4418,7 +4496,11 @@ function renderClientes(lista){
         <td>
           <div class="actions-row">
             <button class="mini-btn" onclick="editarCliente(${Number(c.id)})">Editar</button>
-            <button class="mini-btn del" onclick="eliminarCliente(${Number(c.id)})">Eliminar</button>
+            ${pedidos > 0
+              ? (c.activo === false
+                  ? `<button class="mini-btn del" type="button" disabled title="Cliente inactivo con historial protegido">Protegido</button>`
+                  : `<button class="mini-btn del" type="button" onclick="eliminarCliente(${Number(c.id)})">Archivar</button>`)
+              : `<button class="mini-btn del" type="button" onclick="eliminarCliente(${Number(c.id)})">Eliminar</button>`}
           </div>
         </td>
       </tr>
@@ -5380,17 +5462,82 @@ async function eliminarCliente(id){
     return;
   }
 
-  // Los pedidos actuales siguen siendo una razón para NO permitir eliminación manual.
-  // En ese caso debe fusionarse/corregirse primero para no dejar pedidos huérfanos.
+  // V81 · nunca ocultar/eliminar un cliente con deuda o saldo a favor.
+  // Evita repetir casos donde un saldo queda escondido dentro de un cliente inactivo.
+  const cuenta = deudaCliente(cliente);
+  const saldoDivisa = numeroSeguro(cuenta?.divisa?.saldo || 0);
+  const saldoBcv = numeroSeguro(cuenta?.bcv?.saldo || 0);
+  const favorDivisa = numeroSeguro(cuenta?.divisa?.a_favor || 0);
+  const favorBcv = numeroSeguro(cuenta?.bcv?.a_favor || 0);
+  const tieneSaldoFinanciero =
+    saldoDivisa > 0.009 ||
+    saldoBcv > 0.009 ||
+    favorDivisa > 0.009 ||
+    favorBcv > 0.009;
+
+  if(tieneSaldoFinanciero){
+    alert(
+      `No se puede eliminar ni archivar este cliente porque tiene saldo financiero.
+
+` +
+      `Cliente: ${cliente.nombre}
+` +
+      `DIVISA · Debe $${money(saldoDivisa)} · A favor $${money(favorDivisa)}
+` +
+      `BCV · Debe $${money(saldoBcv)} · A favor $${money(favorBcv)}
+
+` +
+      `Primero debes corregir/fusionar la cuenta para que el saldo no quede oculto.`
+    );
+    return;
+  }
+
   const pedidos = contarPedidosCliente(cliente.nombre, cliente.id);
 
+  // Si conserva pedidos históricos ya saldados, no se borra físicamente:
+  // se archiva para preservar trazabilidad.
   if(pedidos > 0){
-    alert(
-      `No puedes eliminar este cliente todavía.\n\n` +
-      `Cliente: ${cliente.nombre}\n` +
-      `Pedidos asociados: ${pedidos}\n\n` +
-      `Primero debes fusionarlo con otro cliente o cambiar esos pedidos a otro nombre.`
+    if(cliente.activo === false){
+      alert(
+        `Este cliente ya está INACTIVO y conserva historial.
+
+` +
+        `Cliente: ${cliente.nombre}
+` +
+        `Pedidos históricos: ${pedidos}
+
+` +
+        `No se eliminará físicamente para no romper pedidos, pagos o auditoría.`
+      );
+      return;
+    }
+
+    const confirmarArchivo = confirm(
+      `Este cliente tiene ${pedidos} pedido${pedidos === 1 ? "" : "s"} histórico${pedidos === 1 ? "" : "s"}, pero no tiene deuda ni saldo a favor.
+
+` +
+      `Cliente: ${cliente.nombre}
+
+` +
+      `Por seguridad se marcará como INACTIVO en lugar de borrar su historial.
+
+` +
+      `¿Deseas archivarlo?`
     );
+
+    if(!confirmarArchivo) return;
+
+    try{
+      await desactivarClienteSeguro(id);
+      await cargarPedidos();
+      await cargarClientes();
+      await cargarDeudasClientes();
+      filtrarClientes();
+      mostrarToast("Cliente archivado · historial conservado");
+    }catch(error){
+      console.error("Error archivando cliente:", error);
+      alert("Error archivando cliente: " + (error.message || error));
+    }
     return;
   }
 
@@ -5409,19 +5556,33 @@ async function eliminarCliente(id){
 
   if(historial.tieneHistorial){
     const confirmarArchivo = confirm(
-      `Este cliente tiene historial y NO se eliminará físicamente.\n\n` +
-      `Cliente: ${cliente.nombre}\n\n` +
-      `${resumenHistorialClienteTexto(historial)}\n\n` +
-      `Se marcará como INACTIVO para conservar pagos, auditorías y relaciones.\n\n` +
+      `Este cliente tiene historial relacionado y NO se eliminará físicamente.
+
+` +
+      `Cliente: ${cliente.nombre}
+
+` +
+      `${resumenHistorialClienteTexto(historial)}
+
+` +
+      `Se marcará como INACTIVO para conservar pagos, auditorías y relaciones.
+
+` +
       `¿Deseas archivarlo?`
     );
 
     if(!confirmarArchivo) return;
   }else{
     const confirmarEliminar = confirm(
-      `Este cliente no tiene pedidos ni historial relacionado.\n\n` +
-      `Cliente: ${cliente.nombre}\n\n` +
-      `Se puede eliminar físicamente. Esta acción no se puede deshacer.\n\n` +
+      `Este cliente está vacío: no tiene pedidos, deuda ni historial relacionado.
+
+` +
+      `Cliente: ${cliente.nombre}
+
+` +
+      `Se eliminará físicamente. Esta acción no se puede deshacer.
+
+` +
       `¿Deseas eliminarlo?`
     );
 
@@ -7439,6 +7600,37 @@ function detalleDistribucionCompactoV79(aplicaciones){
     </details>`;
 }
 
+function conciliacionMovimientoHtmlV81(mov){
+  const cuenta = normalizarTipoCuentaCliente(mov.cuenta || "DIVISA");
+  const anterior = numeroSeguro(mov.saldoAntes || 0);
+  const cargo = numeroSeguro(mov.cargo || 0);
+  const abonoReal = numeroSeguro(mov.abono || 0);
+  const abonoEfectivo = mov.anulado ? 0 : abonoReal;
+  const resultado = numeroSeguro(mov.saldoDespues || 0);
+
+  const txtAnterior = estadoSaldoMovimientoV79(anterior).texto;
+  const txtResultado = estadoSaldoMovimientoV79(resultado).texto;
+
+  return `
+    <details class="estado-cuenta-conciliacion">
+      <summary>Ver conciliación</summary>
+      <div class="estado-cuenta-conciliacion-body">
+        <div class="estado-cuenta-conciliacion-formula">
+          ${escapeHtml(txtAnterior)} + $${money(cargo)} − $${money(abonoEfectivo)} = ${escapeHtml(txtResultado)} · ${escapeHtml(cuenta)}
+        </div>
+        <div class="estado-cuenta-conciliacion-grid">
+          <span><small>Saldo anterior</small><strong>${escapeHtml(txtAnterior)}</strong></span>
+          <span><small>Cargo</small><strong class="cargo">$${money(cargo)}</strong></span>
+          <span><small>Abono</small><strong class="abono">$${money(abonoEfectivo)}</strong></span>
+          <span><small>Saldo resultante</small><strong class="saldo">${escapeHtml(txtResultado)}</strong></span>
+        </div>
+        ${mov.anulado && abonoReal > 0.009
+          ? `<div class="estado-cuenta-conciliacion-aviso">El abono original de $${money(abonoReal)} está ANULADO y no afecta el saldo.</div>`
+          : ""}
+      </div>
+    </details>`;
+}
+
 function filaEstadoCuentaV79(mov){
   const f = fechaMovimientoV79(mov.fecha, mov.tipo === "PEDIDO");
   const saldo = estadoSaldoMovimientoV79(mov.saldoDespues);
@@ -7453,6 +7645,7 @@ function filaEstadoCuentaV79(mov){
         <strong>${escapeHtml(mov.titulo)} ${anuladoTag}</strong>
         <small title="${escapeHtml(mov.detalle || "")}">${escapeHtml(mov.detalle || "")}</small>
         ${mov.detalleDistribucion || ""}
+        ${conciliacionMovimientoHtmlV81(mov)}
       </div>
       <div class="estado-cuenta-money ${mov.cargo > 0.009 ? "cargo" : "vacio"}">${cargo}${mov.cargo > 0.009 ? ` <small>${escapeHtml(mov.cuenta)}</small>` : ""}</div>
       <div class="estado-cuenta-money ${mov.abono > 0.009 ? "abono" : "vacio"}">${mov.anulado && mov.abono > 0.009 ? `<s>${abono}</s>` : abono}${mov.abono > 0.009 ? ` <small>${escapeHtml(mov.cuenta)}</small>` : ""}</div>
@@ -7538,12 +7731,14 @@ async function construirEstadoCuentaClienteV79(cliente){
   const saldos = { DIVISA:0, BCV:0 };
   eventos.forEach(ev => {
     const cuenta = normalizarTipoCuentaCliente(ev.cuenta);
+    ev.saldoAntes = saldos[cuenta];
     if(ev.tipo === "PEDIDO") saldos[cuenta] += numeroSeguro(ev.cargo || 0);
     else if(!ev.anulado) saldos[cuenta] -= numeroSeguro(ev.abono || 0);
     ev.saldoDespues = saldos[cuenta];
   });
 
-  return eventos;
+  // V81: el cálculo se hace cronológicamente, pero se muestra del más reciente al más antiguo.
+  return eventos.slice().reverse();
 }
 
 async function cargarMovimientosClienteEnCuenta(id){
@@ -7590,7 +7785,7 @@ async function cargarMovimientosClienteEnCuenta(id){
             <div>Fecha</div><div>Movimiento</div><div style="text-align:right">Cargo</div><div style="text-align:right">Abono</div><div style="text-align:right">Saldo</div>
           </div>
           <div>${eventos.map(filaEstadoCuentaV79).join("")}</div>
-          <div class="estado-cuenta-nota">Cargo = pedido emitido · Abono = dinero recibido · Saldo = cómo quedó esa cuenta después de cada movimiento.</div>
+          <div class="estado-cuenta-nota">Más reciente arriba · Cargo = pedido emitido · Abono = dinero recibido · abre “Ver conciliación” para comprobar cómo se forma cada saldo.</div>
         </div>`;
     }
   }catch(error){
@@ -7668,7 +7863,7 @@ async function copiarEstadoCuentaClienteV79(id){
 
 window.copiarEstadoCuentaClienteV79 = copiarEstadoCuentaClienteV79;
 window.cargarMovimientosClienteEnCuenta = cargarMovimientosClienteEnCuenta;
-console.log("CLIENTES v79 · movimientos como estado de cuenta compacto + copiar");
+console.log("CLIENTES v81 · últimos movimientos arriba + conciliación cargo/abono/saldo + borrado seguro");
 </script>
 
 </body>
