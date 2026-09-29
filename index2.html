@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Tuttovinilos</title>
-<!-- clientes.html v78 · cuenta unificada + cronología de pedidos y pagos -->
+<!-- clientes.html v80 · filtro de estado corregido + ID visible -->
 <link rel="icon" href="data:,">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3119,6 +3119,43 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 }
 </style>
 
+
+<style id="clientes-v80-filtro-estado-id">
+/* V80 · filtro Todos/Activos/Inactivos + ID visible por cliente */
+.client-name-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  min-width:0;
+}
+.client-name-row .client-name{
+  flex:1 1 auto;
+  min-width:0;
+}
+.client-id-badge{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:24px;
+  padding:4px 7px;
+  border:1px solid #d9deea;
+  border-radius:999px;
+  background:#f8fafc;
+  color:#64748b;
+  font-family:var(--mono);
+  font-size:9px;
+  font-weight:900;
+  line-height:1;
+  white-space:nowrap;
+}
+@media(max-width:600px){
+  .client-name-row{gap:7px}
+  .client-id-badge{font-size:8px;padding:3px 6px;min-height:21px}
+}
+</style>
+
 </head>
 
 <body>
@@ -3510,7 +3547,7 @@ function cerrarNotificacionesSiFondo(event){
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v78 · cuenta unificada + pedidos en movimientos");
+console.log("CLIENTES HTML conectado v80 · filtro de estado corregido + ID visible");
 
 let clientesDB = [];
 let pedidosDB = [];
@@ -4060,6 +4097,7 @@ function filtrarClientes(reiniciarPagina = true){
 
   lista = lista.filter(c => {
     const contenido = normalizar([
+      c.id,
       c.nombre,
       c.tipo_cliente,
       c.telefono_general || c.telefono,
@@ -4071,10 +4109,9 @@ function filtrarClientes(reiniciarPagina = true){
     if(texto && !contenido.includes(texto)) return false;
     if(tipoFiltro && c.tipo_cliente !== tipoFiltro) return false;
 
-    // Por defecto NO se muestran clientes inactivos.
-    // Esto evita que un cliente fusionado quede visible si Supabase no permite borrarlo físicamente.
-    if(!estadoFiltro && c.activo === false) return false;
-    if(estadoFiltro === "activo" && c.activo === false) return false;
+    // Filtro de estado:
+    // "" = Todos, "activo" = solo activos, "inactivo" = solo inactivos.
+    if(estadoFiltro === "activo" && c.activo !== true) return false;
     if(estadoFiltro === "inactivo" && c.activo !== false) return false;
 
     if(deudaFiltro){
@@ -4349,7 +4386,10 @@ function renderClientes(lista){
           <input class="client-check" type="checkbox" value="${Number(c.id)}" ${clientesSeleccionados.has(Number(c.id)) ? "checked" : ""} onchange="toggleClienteSeleccionado(${Number(c.id)}, this.checked)"/>
         </td>
         <td class="client-main">
-          <div class="client-name">${escapeHtml(c.nombre || "")}</div>
+          <div class="client-name-row">
+            <div class="client-name">${escapeHtml(c.nombre || "")}</div>
+            <span class="client-id-badge">ID ${Number(c.id)}</span>
+          </div>
           <div class="client-meta">
             <span>${escapeHtml(tipo)}</span>
             <span>📞 ${escapeHtml(telefono)}</span>
@@ -7633,6 +7673,3 @@ console.log("CLIENTES v79 · movimientos como estado de cuenta compacto + copiar
 
 </body>
 </html>
-
-
-
