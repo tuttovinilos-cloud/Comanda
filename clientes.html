@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Tuttovinilos</title>
-<!-- clientes.html v78 · cuenta unificada + cronología de pedidos y pagos -->
+<!-- clientes.html v80 · filtro de estado corregido + ID visible -->
 <link rel="icon" href="data:,">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1909,6 +1909,13 @@ td:nth-child(7){
   color:#dc2626!important;
   border-color:#fecaca!important;
 }
+.actions-row .mini-btn:disabled{
+  opacity:.55!important;
+  cursor:not-allowed!important;
+  background:#f8fafc!important;
+  color:#64748b!important;
+  border-color:#e2e8f0!important;
+}
 
 /* Badges */
 .badge{
@@ -2913,6 +2920,320 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 @media(max-width:600px){.cuenta-tabs{padding:9px 10px 0}.cuenta-unificada-modal{width:calc(100vw - 16px)!important;max-height:94vh!important}.cuenta-tab{font-size:9px}}
 </style>
 
+
+
+<style id="clientes-v79-estado-cuenta-compacto">
+/* =========================================================
+   V79 · MOVIMIENTOS COMO ESTADO DE CUENTA
+   Solo lectura/presentación. NO modifica pagos, RPC ni BD.
+========================================================= */
+#movimientosClienteResumen.movimientos-resumen{display:block!important}
+.estado-cuenta-top{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:10px;
+  align-items:center;
+  margin-bottom:10px;
+}
+.estado-cuenta-resumen{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+}
+.estado-cuenta-kpi{
+  border:1px solid #d9deea;
+  border-radius:12px;
+  background:#f8f9ff;
+  padding:8px 10px;
+  min-width:0;
+}
+.estado-cuenta-kpi label{
+  display:block;
+  margin-bottom:3px;
+  font-family:var(--head);
+  font-size:7.5px;
+  font-weight:900;
+  letter-spacing:.45px;
+  color:#64748b;
+  text-transform:uppercase;
+}
+.estado-cuenta-kpi strong{
+  display:block;
+  font-family:var(--mono);
+  font-size:13px;
+  font-weight:900;
+  color:#111827;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.estado-cuenta-kpi strong.debe{color:#dc2626}
+.estado-cuenta-kpi strong.favor{color:#153bff}
+.estado-cuenta-kpi strong.ok{color:#15803d}
+.estado-cuenta-copy{
+  min-height:38px!important;
+  padding:0 12px!important;
+  border:1px solid #153bff!important;
+  border-radius:11px!important;
+  background:#153bff!important;
+  color:#fff!important;
+  font-family:var(--head)!important;
+  font-size:9px!important;
+  font-weight:900!important;
+  letter-spacing:.4px!important;
+  text-transform:uppercase!important;
+  cursor:pointer!important;
+  white-space:nowrap;
+}
+.estado-cuenta-copy:hover{filter:brightness(1.07)}
+.estado-cuenta-wrap{
+  border:1px solid #d9deea;
+  border-radius:14px;
+  overflow:hidden;
+  background:#fff;
+}
+.estado-cuenta-head,
+.estado-cuenta-row{
+  display:grid;
+  grid-template-columns:96px minmax(260px,1fr) 92px 92px 128px;
+  gap:8px;
+  align-items:center;
+}
+.estado-cuenta-head{
+  min-height:34px;
+  padding:7px 10px;
+  background:#eef1ff;
+  border-bottom:1px solid #d9deea;
+  color:#475569;
+  font-family:var(--head);
+  font-size:7.5px;
+  font-weight:900;
+  letter-spacing:.45px;
+  text-transform:uppercase;
+}
+.estado-cuenta-row{
+  min-height:50px;
+  padding:7px 10px;
+  border-top:1px solid #eef1f6;
+}
+.estado-cuenta-row:first-child{border-top:0}
+.estado-cuenta-row:hover{background:#f8f9ff}
+.estado-cuenta-row.pedido{border-left:4px solid #f59e0b}
+.estado-cuenta-row.pago{border-left:4px solid #16a34a}
+.estado-cuenta-row.anulado{border-left-color:#dc2626;background:#fff7f7}
+.estado-cuenta-fecha{
+  font-family:var(--mono);
+  font-size:9px;
+  color:#64748b;
+  line-height:1.3;
+}
+.estado-cuenta-fecha small{display:block;font-size:8px;color:#94a3b8}
+.estado-cuenta-movimiento{min-width:0}
+.estado-cuenta-movimiento strong{
+  display:block;
+  color:#111827;
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:900;
+  line-height:1.25;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.estado-cuenta-movimiento small{
+  display:block;
+  margin-top:2px;
+  color:#64748b;
+  font-size:9px;
+  line-height:1.25;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.estado-cuenta-money{
+  text-align:right;
+  font-family:var(--mono);
+  font-size:10px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.estado-cuenta-money.cargo{color:#b45309}
+.estado-cuenta-money.abono{color:#15803d}
+.estado-cuenta-money.vacio{color:#cbd5e1}
+.estado-cuenta-saldo{
+  text-align:right;
+  font-family:var(--mono);
+  font-size:9.5px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.estado-cuenta-saldo.debe{color:#dc2626}
+.estado-cuenta-saldo.favor{color:#153bff}
+.estado-cuenta-saldo.ok{color:#15803d}
+.estado-cuenta-anulado{
+  display:inline-flex;
+  margin-left:5px;
+  padding:2px 5px;
+  border-radius:999px;
+  background:#fee2e2;
+  color:#dc2626;
+  border:1px solid #fecaca;
+  font-family:var(--head);
+  font-size:6.5px;
+  font-weight:900;
+  vertical-align:middle;
+}
+.estado-cuenta-detalle{margin-top:3px}
+.estado-cuenta-detalle summary{
+  cursor:pointer;
+  list-style:none;
+  color:#153bff;
+  font-family:var(--head);
+  font-size:7.5px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.estado-cuenta-detalle summary::-webkit-details-marker{display:none}
+.estado-cuenta-detalle-body{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+  margin-top:5px;
+}
+.estado-cuenta-detalle-body span{
+  display:inline-flex;
+  border:1px solid #d9deea;
+  border-radius:999px;
+  padding:3px 6px;
+  background:#fff;
+  color:#475569;
+  font-family:var(--mono);
+  font-size:7.5px;
+}
+.estado-cuenta-nota{
+  padding:8px 10px;
+  border-top:1px solid #eef1f6;
+  background:#f8fafc;
+  color:#64748b;
+  font-size:9px;
+}
+@media(max-width:760px){
+  .estado-cuenta-top{grid-template-columns:1fr}
+  .estado-cuenta-resumen{grid-template-columns:1fr 1fr}
+  .estado-cuenta-copy{width:100%}
+  .estado-cuenta-wrap{overflow-x:auto}
+  .estado-cuenta-head,.estado-cuenta-row{grid-template-columns:82px minmax(220px,1fr) 78px 78px 110px;min-width:650px}
+}
+
+/* V81 · conciliación visible por movimiento */
+.estado-cuenta-conciliacion{margin-top:5px}
+.estado-cuenta-conciliacion summary{
+  cursor:pointer;
+  list-style:none;
+  color:#153bff;
+  font-family:var(--head);
+  font-size:7.5px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.3px;
+}
+.estado-cuenta-conciliacion summary::-webkit-details-marker{display:none}
+.estado-cuenta-conciliacion summary::after{content:" +"}
+.estado-cuenta-conciliacion[open] summary::after{content:" −"}
+.estado-cuenta-conciliacion-body{
+  margin-top:6px;
+  border:1px solid #d9deea;
+  border-radius:9px;
+  background:#f8fafc;
+  padding:7px 8px;
+  display:grid;
+  gap:5px;
+}
+.estado-cuenta-conciliacion-formula{
+  font-family:var(--mono);
+  font-size:8px;
+  font-weight:900;
+  color:#334155;
+  line-height:1.45;
+}
+.estado-cuenta-conciliacion-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:5px;
+}
+.estado-cuenta-conciliacion-grid span{
+  border:1px solid #e2e8f0;
+  border-radius:7px;
+  background:#fff;
+  padding:5px 6px;
+  min-width:0;
+}
+.estado-cuenta-conciliacion-grid small{
+  display:block;
+  color:#64748b;
+  font-family:var(--head);
+  font-size:6.5px;
+  font-weight:900;
+  text-transform:uppercase;
+  margin-bottom:2px;
+}
+.estado-cuenta-conciliacion-grid strong{
+  display:block;
+  font-family:var(--mono);
+  font-size:8px;
+  color:#111827;
+  white-space:nowrap;
+}
+.estado-cuenta-conciliacion-grid strong.cargo{color:#b45309}
+.estado-cuenta-conciliacion-grid strong.abono{color:#15803d}
+.estado-cuenta-conciliacion-grid strong.saldo{color:#153bff}
+.estado-cuenta-conciliacion-aviso{
+  font-size:7.5px;
+  color:#dc2626;
+  font-weight:800;
+}
+@media(max-width:760px){
+  .estado-cuenta-conciliacion-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+
+
+<style id="clientes-v80-filtro-estado-id">
+/* V80 · filtro Todos/Activos/Inactivos + ID visible por cliente */
+.client-name-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  min-width:0;
+}
+.client-name-row .client-name{
+  flex:1 1 auto;
+  min-width:0;
+}
+.client-id-badge{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:24px;
+  padding:4px 7px;
+  border:1px solid #d9deea;
+  border-radius:999px;
+  background:#f8fafc;
+  color:#64748b;
+  font-family:var(--mono);
+  font-size:9px;
+  font-weight:900;
+  line-height:1;
+  white-space:nowrap;
+}
+@media(max-width:600px){
+  .client-name-row{gap:7px}
+  .client-id-badge{font-size:8px;padding:3px 6px;min-height:21px}
+}
+</style>
+
 </head>
 
 <body>
@@ -3304,7 +3625,7 @@ function cerrarNotificacionesSiFondo(event){
 <script src="js/notificaciones.js?v=35"></script>
 
 <script>
-console.log("CLIENTES HTML conectado v78 · cuenta unificada + pedidos en movimientos");
+console.log("CLIENTES HTML conectado v80 · filtro de estado corregido + ID visible");
 
 let clientesDB = [];
 let pedidosDB = [];
@@ -3335,6 +3656,11 @@ function operadorPuedeFusionarClientes(){
 }
 
 function operadorPuedeAnularPagos(){
+  return operadorPuedeFusionarClientes();
+}
+
+function operadorPuedeEliminarClientes(){
+  // Eliminar y archivar clientes queda reservado a Roberto.
   return operadorPuedeFusionarClientes();
 }
 
@@ -3454,13 +3780,17 @@ function obtenerPedidosClienteIndexados(nombre, clienteId = null){
   const porId = id ? (pedidosPorClienteIdMap.get(id) || []) : [];
   const porNombre = claveNombre ? (pedidosPorNombreMap.get(claveNombre) || []) : [];
 
-  if(!porId.length) return porNombre;
-  if(!porNombre.length) return porId;
+  // V82 · si existe cliente_id, ese ID manda.
+  // El nombre se usa únicamente para pedidos realmente antiguos que no tienen cliente_id.
+  if(id){
+    const legacySinId = porNombre.filter(p => !Number(p?.cliente_id || 0));
+    const unicos = new Map();
+    porId.forEach(p => unicos.set(Number(p.id), p));
+    legacySinId.forEach(p => unicos.set(Number(p.id), p));
+    return [...unicos.values()];
+  }
 
-  const unicos = new Map();
-  porId.forEach(p => unicos.set(Number(p.id), p));
-  porNombre.forEach(p => unicos.set(Number(p.id), p));
-  return [...unicos.values()];
+  return porNombre;
 }
 
 function contarPedidosCliente(nombre, clienteId = null){
@@ -3854,6 +4184,7 @@ function filtrarClientes(reiniciarPagina = true){
 
   lista = lista.filter(c => {
     const contenido = normalizar([
+      c.id,
       c.nombre,
       c.tipo_cliente,
       c.telefono_general || c.telefono,
@@ -3865,10 +4196,9 @@ function filtrarClientes(reiniciarPagina = true){
     if(texto && !contenido.includes(texto)) return false;
     if(tipoFiltro && c.tipo_cliente !== tipoFiltro) return false;
 
-    // Por defecto NO se muestran clientes inactivos.
-    // Esto evita que un cliente fusionado quede visible si Supabase no permite borrarlo físicamente.
-    if(!estadoFiltro && c.activo === false) return false;
-    if(estadoFiltro === "activo" && c.activo === false) return false;
+    // Filtro de estado:
+    // "" = Todos, "activo" = solo activos, "inactivo" = solo inactivos.
+    if(estadoFiltro === "activo" && c.activo !== true) return false;
     if(estadoFiltro === "inactivo" && c.activo !== false) return false;
 
     if(deudaFiltro){
@@ -4098,6 +4428,7 @@ function cambiarPaginaClientes(direccion){
 
 function renderClientes(lista){
   const puedeFusionar = operadorPuedeFusionarClientes();
+  const puedeEliminar = operadorPuedeEliminarClientes();
   if(!puedeFusionar) clientesSeleccionados.clear();
   limpiarSeleccionesOcultas(lista);
 
@@ -4143,7 +4474,10 @@ function renderClientes(lista){
           <input class="client-check" type="checkbox" value="${Number(c.id)}" ${clientesSeleccionados.has(Number(c.id)) ? "checked" : ""} onchange="toggleClienteSeleccionado(${Number(c.id)}, this.checked)"/>
         </td>
         <td class="client-main">
-          <div class="client-name">${escapeHtml(c.nombre || "")}</div>
+          <div class="client-name-row">
+            <div class="client-name">${escapeHtml(c.nombre || "")}</div>
+            <span class="client-id-badge">ID ${Number(c.id)}</span>
+          </div>
           <div class="client-meta">
             <span>${escapeHtml(tipo)}</span>
             <span>📞 ${escapeHtml(telefono)}</span>
@@ -4172,7 +4506,13 @@ function renderClientes(lista){
         <td>
           <div class="actions-row">
             <button class="mini-btn" onclick="editarCliente(${Number(c.id)})">Editar</button>
-            <button class="mini-btn del" onclick="eliminarCliente(${Number(c.id)})">Eliminar</button>
+            ${puedeEliminar
+              ? (pedidos > 0
+                  ? (c.activo === false
+                      ? `<button class="mini-btn del" type="button" disabled title="Cliente inactivo con historial protegido">Protegido</button>`
+                      : `<button class="mini-btn del" type="button" onclick="eliminarCliente(${Number(c.id)})">Archivar</button>`)
+                  : `<button class="mini-btn del" type="button" onclick="eliminarCliente(${Number(c.id)})">Eliminar</button>`)
+              : ""}
           </div>
         </td>
       </tr>
@@ -4755,6 +5095,10 @@ function resumenHistorialClienteTexto(historial){
 }
 
 async function desactivarClienteSeguro(id, nombreDestino = ""){
+  if(!operadorPuedeEliminarClientes()){
+    throw new Error("Solo Roberto puede archivar clientes.");
+  }
+
   const clienteActual = clientesDB.find(c => Number(c.id) === Number(id));
   const notaNueva = nombreDestino
     ? `Cliente fusionado con: ${nombreDestino}`
@@ -4772,6 +5116,9 @@ async function desactivarClienteSeguro(id, nombreDestino = ""){
 }
 
 async function eliminarClienteFisicoOOcultar(id, nombreDestino = "", historialPrecalculado = null){
+  if(!operadorPuedeEliminarClientes()){
+    throw new Error("Solo Roberto puede eliminar o archivar clientes.");
+  }
   if(!id) return { eliminado:false, archivado:false };
 
   const cliente = clientesDB.find(c => Number(c.id) === Number(id)) || { id:Number(id), nombre:"" };
@@ -4834,6 +5181,8 @@ async function actualizarPedidosDeCliente(nombreAnterior, nombreNuevo, clienteId
 }
 
 async function fusionarDuplicadosExactosCliente(nombreFinal, idPrincipal){
+  if(!operadorPuedeFusionarClientes()) return 0;
+
   const clave = normalizar(nombreFinal);
   if(!clave || !idPrincipal) return 0;
 
@@ -4919,6 +5268,14 @@ async function guardarClienteModal(){
   try{
     let mensaje = "Cliente guardado";
     let clienteIdGuardado = id ? Number(id) : null;
+
+    if(duplicado && !operadorPuedeFusionarClientes()){
+      alert(
+        `Ya existe otro cliente con el nombre "${nombre}".\n\n` +
+        `Solo Roberto puede fusionar clientes. Cambia el nombre o solicita a Roberto realizar la fusión.`
+      );
+      return;
+    }
 
     if(duplicado){
       // Si el nombre nuevo ya existe, NO crea otro registro. Fusiona en el cliente existente.
@@ -5125,6 +5482,10 @@ function cantidadDatosCliente(c){
 }
 
 async function eliminarCliente(id){
+  if(!operadorPuedeEliminarClientes()){
+    alert("Solo Roberto puede eliminar o archivar clientes.");
+    return;
+  }
   if(!validarSupabase()) return;
 
   const cliente = clientesDB.find(c => Number(c.id) === Number(id));
@@ -5134,17 +5495,82 @@ async function eliminarCliente(id){
     return;
   }
 
-  // Los pedidos actuales siguen siendo una razón para NO permitir eliminación manual.
-  // En ese caso debe fusionarse/corregirse primero para no dejar pedidos huérfanos.
+  // V81 · nunca ocultar/eliminar un cliente con deuda o saldo a favor.
+  // Evita repetir casos donde un saldo queda escondido dentro de un cliente inactivo.
+  const cuenta = deudaCliente(cliente);
+  const saldoDivisa = numeroSeguro(cuenta?.divisa?.saldo || 0);
+  const saldoBcv = numeroSeguro(cuenta?.bcv?.saldo || 0);
+  const favorDivisa = numeroSeguro(cuenta?.divisa?.a_favor || 0);
+  const favorBcv = numeroSeguro(cuenta?.bcv?.a_favor || 0);
+  const tieneSaldoFinanciero =
+    saldoDivisa > 0.009 ||
+    saldoBcv > 0.009 ||
+    favorDivisa > 0.009 ||
+    favorBcv > 0.009;
+
+  if(tieneSaldoFinanciero){
+    alert(
+      `No se puede eliminar ni archivar este cliente porque tiene saldo financiero.
+
+` +
+      `Cliente: ${cliente.nombre}
+` +
+      `DIVISA · Debe $${money(saldoDivisa)} · A favor $${money(favorDivisa)}
+` +
+      `BCV · Debe $${money(saldoBcv)} · A favor $${money(favorBcv)}
+
+` +
+      `Primero debes corregir/fusionar la cuenta para que el saldo no quede oculto.`
+    );
+    return;
+  }
+
   const pedidos = contarPedidosCliente(cliente.nombre, cliente.id);
 
+  // Si conserva pedidos históricos ya saldados, no se borra físicamente:
+  // se archiva para preservar trazabilidad.
   if(pedidos > 0){
-    alert(
-      `No puedes eliminar este cliente todavía.\n\n` +
-      `Cliente: ${cliente.nombre}\n` +
-      `Pedidos asociados: ${pedidos}\n\n` +
-      `Primero debes fusionarlo con otro cliente o cambiar esos pedidos a otro nombre.`
+    if(cliente.activo === false){
+      alert(
+        `Este cliente ya está INACTIVO y conserva historial.
+
+` +
+        `Cliente: ${cliente.nombre}
+` +
+        `Pedidos históricos: ${pedidos}
+
+` +
+        `No se eliminará físicamente para no romper pedidos, pagos o auditoría.`
+      );
+      return;
+    }
+
+    const confirmarArchivo = confirm(
+      `Este cliente tiene ${pedidos} pedido${pedidos === 1 ? "" : "s"} histórico${pedidos === 1 ? "" : "s"}, pero no tiene deuda ni saldo a favor.
+
+` +
+      `Cliente: ${cliente.nombre}
+
+` +
+      `Por seguridad se marcará como INACTIVO en lugar de borrar su historial.
+
+` +
+      `¿Deseas archivarlo?`
     );
+
+    if(!confirmarArchivo) return;
+
+    try{
+      await desactivarClienteSeguro(id);
+      await cargarPedidos();
+      await cargarClientes();
+      await cargarDeudasClientes();
+      filtrarClientes();
+      mostrarToast("Cliente archivado · historial conservado");
+    }catch(error){
+      console.error("Error archivando cliente:", error);
+      alert("Error archivando cliente: " + (error.message || error));
+    }
     return;
   }
 
@@ -5163,19 +5589,33 @@ async function eliminarCliente(id){
 
   if(historial.tieneHistorial){
     const confirmarArchivo = confirm(
-      `Este cliente tiene historial y NO se eliminará físicamente.\n\n` +
-      `Cliente: ${cliente.nombre}\n\n` +
-      `${resumenHistorialClienteTexto(historial)}\n\n` +
-      `Se marcará como INACTIVO para conservar pagos, auditorías y relaciones.\n\n` +
+      `Este cliente tiene historial relacionado y NO se eliminará físicamente.
+
+` +
+      `Cliente: ${cliente.nombre}
+
+` +
+      `${resumenHistorialClienteTexto(historial)}
+
+` +
+      `Se marcará como INACTIVO para conservar pagos, auditorías y relaciones.
+
+` +
       `¿Deseas archivarlo?`
     );
 
     if(!confirmarArchivo) return;
   }else{
     const confirmarEliminar = confirm(
-      `Este cliente no tiene pedidos ni historial relacionado.\n\n` +
-      `Cliente: ${cliente.nombre}\n\n` +
-      `Se puede eliminar físicamente. Esta acción no se puede deshacer.\n\n` +
+      `Este cliente está vacío: no tiene pedidos, deuda ni historial relacionado.
+
+` +
+      `Cliente: ${cliente.nombre}
+
+` +
+      `Se eliminará físicamente. Esta acción no se puede deshacer.
+
+` +
       `¿Deseas eliminarlo?`
     );
 
@@ -6256,8 +6696,7 @@ async function verHistorialCliente(id){
     return;
   }
 
-  const nombreNorm = normalizar(cliente.nombre);
-  const pedidos = pedidosDB.filter(p => Number(p.cliente_id || 0) === Number(cliente.id) || normalizar(p.cliente) === nombreNorm);
+  const pedidos = obtenerPedidosClienteIndexados(cliente.nombre, cliente.id);
   const cuenta = pedidos.map(p => resumenPagoSimpleCliente(p)).filter(x => x.total > 0.009 || x.pagado > 0.009);
   const [pagos, pagosGenerales, auditoria] = await Promise.all([
     cargarPagosCliente(cliente),
@@ -6489,37 +6928,59 @@ function cerrarHistorialSiFondo(event){
 // pedidos_pagos  = distribución de esa entrada entre pedidos.
 // ============================================================
 async function cargarMovimientosRealesCliente(cliente){
-  const pagos = await cargarPagosGeneralesCliente(cliente);
+  const selectAplicacion = "id,cliente_pago_id,pedido_id,cliente_id,cliente_nombre,monto_recibido,monto_aplicado,equivalente_usd,moneda,tipo_pago_simple,metodo_pago,referencia,nota,fecha_pago,registrado_por,tipo_movimiento,estado,created_at";
+  const selectPago = "id,cliente_id,cliente_nombre,monto_recibido,tipo_pago,metodo_pago,referencia,nota,fecha_pago,registrado_por,saldo_antes,monto_aplicado,saldo_a_favor,pedidos_afectados,operacion_uuid,origen,estado,anulado_en,anulado_por,motivo_anulacion,created_at";
+
+  const pedidosCliente = obtenerPedidosClienteIndexados(cliente?.nombre, cliente?.id);
+  const pedidoIds = [...new Set(
+    (pedidosCliente || []).map(p => Number(p?.id || 0)).filter(Boolean)
+  )];
+
   let aplicaciones = [];
 
   try{
-    if(cliente?.id){
+    // V82 · se sigue el pedido actual, no el cliente_id histórico del movimiento.
+    // Esto conserva la conciliación incluso después de fusionar clientes.
+    for(let i=0; i<pedidoIds.length; i+=200){
+      const lote = pedidoIds.slice(i, i+200);
       const { data, error } = await db()
         .from("pedidos_pagos")
-        .select("id,cliente_pago_id,pedido_id,cliente_id,cliente_nombre,monto_recibido,monto_aplicado,equivalente_usd,moneda,metodo_pago,referencia,nota,fecha_pago,tipo_movimiento,estado,created_at")
-        .eq("cliente_id", Number(cliente.id))
+        .select(selectAplicacion)
+        .in("pedido_id", lote)
         .order("created_at", { ascending:false });
-      if(!error && Array.isArray(data)) aplicaciones = data;
-    }
 
-    if(!aplicaciones.length && cliente?.nombre){
-      const { data, error } = await db()
-        .from("pedidos_pagos")
-        .select("id,cliente_pago_id,pedido_id,cliente_id,cliente_nombre,monto_recibido,monto_aplicado,equivalente_usd,moneda,metodo_pago,referencia,nota,fecha_pago,tipo_movimiento,estado,created_at")
-        .ilike("cliente_nombre", cliente.nombre)
-        .order("created_at", { ascending:false });
-      if(!error && Array.isArray(data)) aplicaciones = data;
+      if(error) throw error;
+      if(Array.isArray(data)) aplicaciones.push(...data);
     }
   }catch(error){
-    console.warn("No se pudo cargar distribución de movimientos:", error);
+    console.warn("No se pudo cargar distribución por pedidos:", error);
+    aplicaciones = [];
+  }
+
+  // Fallback para clientes sin pedidos indexados o información antigua incompleta.
+  if(!aplicaciones.length){
+    try{
+      if(cliente?.id){
+        const { data, error } = await db()
+          .from("pedidos_pagos")
+          .select(selectAplicacion)
+          .eq("cliente_id", Number(cliente.id))
+          .order("created_at", { ascending:false });
+        if(!error && Array.isArray(data)) aplicaciones = data;
+      }
+    }catch(error){
+      console.warn("No se pudo cargar distribución por cliente_id:", error);
+    }
   }
 
   const porPago = new Map();
   const legacy = [];
+  const idsPadres = new Set();
 
   (aplicaciones || []).forEach(ap => {
     const padre = Number(ap.cliente_pago_id || 0);
     if(padre > 0){
+      idsPadres.add(padre);
       const lista = porPago.get(padre) || [];
       lista.push(ap);
       porPago.set(padre, lista);
@@ -6528,7 +6989,33 @@ async function cargarMovimientosRealesCliente(cliente){
     }
   });
 
-  return { pagos:pagos || [], porPago, legacy };
+  // Pagos que pertenecen actualmente al cliente.
+  const mapaPagos = new Map();
+  const pagosPropios = await cargarPagosGeneralesCliente(cliente);
+  (pagosPropios || []).forEach(pg => mapaPagos.set(Number(pg.id), pg));
+
+  // V82 · recupera también pagos padre que quedaron con el ID anterior
+  // después de una fusión, siempre que estén vinculados a pedidos del cliente actual.
+  const faltantes = [...idsPadres].filter(id => !mapaPagos.has(Number(id)));
+  try{
+    for(let i=0; i<faltantes.length; i+=200){
+      const lote = faltantes.slice(i, i+200);
+      const { data, error } = await db()
+        .from("clientes_pagos")
+        .select(selectPago)
+        .in("id", lote);
+
+      if(error) throw error;
+      (data || []).forEach(pg => mapaPagos.set(Number(pg.id), pg));
+    }
+  }catch(error){
+    console.warn("No se pudieron recuperar pagos históricos de clientes fusionados:", error);
+  }
+
+  const pagos = [...mapaPagos.values()]
+    .sort((a,b) => new Date(b.created_at || b.fecha_pago || 0) - new Date(a.created_at || a.fecha_pago || 0));
+
+  return { pagos, porPago, legacy };
 }
 
 function descripcionPedidoMovimiento(pedidoId){
@@ -6821,9 +7308,7 @@ async function verHistorialCliente(id){
   const cliente = clientesDB.find(c => Number(c.id) === Number(id));
   if(!cliente){ alert("No se encontró el cliente."); return; }
 
-  const nombreNorm = normalizar(cliente.nombre);
-  const pedidos = pedidosDB
-    .filter(p => Number(p.cliente_id || 0) === Number(cliente.id) || normalizar(p.cliente) === nombreNorm)
+  const pedidos = obtenerPedidosClienteIndexados(cliente.nombre, cliente.id)
     .sort((a,b) => Number(b.id || 0) - Number(a.id || 0));
 
   document.getElementById("historyTitle").textContent = `Pedidos · ${cliente.nombre}`;
@@ -7139,8 +7624,356 @@ document.addEventListener("DOMContentLoaded", function(){
 });
 </script>
 <script>console.log("CLIENTES v77 · cuenta unificada + movimientos reales + historial con operador real");</script>
+
+
+<script id="clientes-v79-estado-cuenta-compacto-js">
+// ============================================================
+// V79 · ESTADO DE CUENTA COMPACTO + COPIAR
+// Solo presentación/lectura. No modifica pagos ni Supabase.
+// ============================================================
+const estadoCuentaClienteCacheV79 = new Map();
+
+function estadoSaldoMovimientoV79(valor){
+  const n = numeroSeguro(valor || 0);
+  if(n > 0.009) return { clase:"debe", texto:`DEBE $${money(n)}` };
+  if(n < -0.009) return { clase:"favor", texto:`A FAVOR $${money(Math.abs(n))}` };
+  return { clase:"ok", texto:"$0.00" };
+}
+
+function estadoActualTextoV79(resumen){
+  const saldo = numeroSeguro(resumen?.saldo || 0);
+  const favor = numeroSeguro(resumen?.aFavor || 0);
+  if(saldo > 0.009) return { clase:"debe", texto:`DEBE $${money(saldo)}` };
+  if(favor > 0.009) return { clase:"favor", texto:`A FAVOR $${money(favor)}` };
+  return { clase:"ok", texto:"SIN DEUDA $0.00" };
+}
+
+function saldoFirmadoActualV82(resumen){
+  return numeroSeguro(resumen?.saldo || 0) - numeroSeguro(resumen?.aFavor || 0);
+}
+
+function saldoReconstruidoV82(eventos, tipo){
+  const cuenta = normalizarTipoCuentaCliente(tipo);
+  const ultimo = (eventos || []).find(ev => normalizarTipoCuentaCliente(ev?.cuenta) === cuenta);
+  return ultimo ? numeroSeguro(ultimo.saldoDespues || 0) : 0;
+}
+
+function estadoConciliacionGeneralV82(eventos, divisaActual, bcvActual){
+  const difDivisa = saldoReconstruidoV82(eventos, "DIVISA") - saldoFirmadoActualV82(divisaActual);
+  const difBcv = saldoReconstruidoV82(eventos, "BCV") - saldoFirmadoActualV82(bcvActual);
+  const okDivisa = Math.abs(difDivisa) <= 0.01;
+  const okBcv = Math.abs(difBcv) <= 0.01;
+
+  if(okDivisa && okBcv){
+    return { clase:"ok", texto:"CONCILIADO" };
+  }
+
+  const partes = [];
+  if(!okDivisa) partes.push(`DIVISA ${money(Math.abs(difDivisa))}`);
+  if(!okBcv) partes.push(`BCV ${money(Math.abs(difBcv))}`);
+  return { clase:"debe", texto:`REVISAR ${partes.join(" · ")}` };
+}
+
+function fechaMovimientoV79(valor, soloFecha=false){
+  if(!valor) return { fecha:"—", hora:"" };
+  if(soloFecha){
+    return { fecha:fechaCortaCliente(String(valor).slice(0,10)), hora:"" };
+  }
+  const d = new Date(valor);
+  if(Number.isNaN(d.getTime())) return { fecha:fechaCortaCliente(valor), hora:"" };
+  return {
+    fecha:d.toLocaleDateString("es-VE", {day:"2-digit",month:"2-digit",year:"numeric"}),
+    hora:d.toLocaleTimeString("es-VE", {hour:"2-digit",minute:"2-digit"})
+  };
+}
+
+function detalleDistribucionCompactoV79(aplicaciones){
+  const activas = (aplicaciones || []).filter(ap => String(ap?.estado || "ACTIVO").toUpperCase() !== "ANULADO");
+  const lista = activas.length ? activas : (aplicaciones || []);
+  if(!lista.length) return "";
+
+  return `
+    <details class="estado-cuenta-detalle">
+      <summary>Detalle · ${lista.length} pedido${lista.length === 1 ? "" : "s"}</summary>
+      <div class="estado-cuenta-detalle-body">
+        ${lista.map(ap => {
+          const monto = numeroSeguro(ap.monto_aplicado || ap.equivalente_usd || ap.monto_recibido || 0);
+          return `<span>#${escapeHtml(ap.pedido_id || "—")} · $${money(monto)}</span>`;
+        }).join("")}
+      </div>
+    </details>`;
+}
+
+function conciliacionMovimientoHtmlV81(mov){
+  const cuenta = normalizarTipoCuentaCliente(mov.cuenta || "DIVISA");
+  const anterior = numeroSeguro(mov.saldoAntes || 0);
+  const cargo = numeroSeguro(mov.cargo || 0);
+  const abonoReal = numeroSeguro(mov.abono || 0);
+  const abonoEfectivo = mov.anulado ? 0 : abonoReal;
+  const resultado = numeroSeguro(mov.saldoDespues || 0);
+
+  const txtAnterior = estadoSaldoMovimientoV79(anterior).texto;
+  const txtResultado = estadoSaldoMovimientoV79(resultado).texto;
+
+  return `
+    <details class="estado-cuenta-conciliacion">
+      <summary>Ver conciliación</summary>
+      <div class="estado-cuenta-conciliacion-body">
+        <div class="estado-cuenta-conciliacion-formula">
+          ${escapeHtml(txtAnterior)} + $${money(cargo)} − $${money(abonoEfectivo)} = ${escapeHtml(txtResultado)} · ${escapeHtml(cuenta)}
+        </div>
+        <div class="estado-cuenta-conciliacion-grid">
+          <span><small>Saldo anterior</small><strong>${escapeHtml(txtAnterior)}</strong></span>
+          <span><small>Cargo</small><strong class="cargo">$${money(cargo)}</strong></span>
+          <span><small>Abono</small><strong class="abono">$${money(abonoEfectivo)}</strong></span>
+          <span><small>Saldo resultante</small><strong class="saldo">${escapeHtml(txtResultado)}</strong></span>
+        </div>
+        ${mov.anulado && abonoReal > 0.009
+          ? `<div class="estado-cuenta-conciliacion-aviso">El abono original de $${money(abonoReal)} está ANULADO y no afecta el saldo.</div>`
+          : ""}
+      </div>
+    </details>`;
+}
+
+function filaEstadoCuentaV79(mov){
+  const f = fechaMovimientoV79(mov.fecha, mov.tipo === "PEDIDO");
+  const saldo = estadoSaldoMovimientoV79(mov.saldoDespues);
+  const cargo = mov.cargo > 0.009 ? `$${money(mov.cargo)}` : "—";
+  const abono = mov.abono > 0.009 ? `$${money(mov.abono)}` : "—";
+  const anuladoTag = mov.anulado ? `<span class="estado-cuenta-anulado">ANULADO</span>` : "";
+
+  return `
+    <div class="estado-cuenta-row ${mov.tipo === "PEDIDO" ? "pedido" : "pago"} ${mov.anulado ? "anulado" : ""}">
+      <div class="estado-cuenta-fecha">${escapeHtml(f.fecha)}${f.hora ? `<small>${escapeHtml(f.hora)}</small>` : ""}</div>
+      <div class="estado-cuenta-movimiento">
+        <strong>${escapeHtml(mov.titulo)} ${anuladoTag}</strong>
+        <small title="${escapeHtml(mov.detalle || "")}">${escapeHtml(mov.detalle || "")}</small>
+        ${mov.detalleDistribucion || ""}
+        ${conciliacionMovimientoHtmlV81(mov)}
+      </div>
+      <div class="estado-cuenta-money ${mov.cargo > 0.009 ? "cargo" : "vacio"}">${cargo}${mov.cargo > 0.009 ? ` <small>${escapeHtml(mov.cuenta)}</small>` : ""}</div>
+      <div class="estado-cuenta-money ${mov.abono > 0.009 ? "abono" : "vacio"}">${mov.anulado && mov.abono > 0.009 ? `<s>${abono}</s>` : abono}${mov.abono > 0.009 ? ` <small>${escapeHtml(mov.cuenta)}</small>` : ""}</div>
+      <div class="estado-cuenta-saldo ${saldo.clase}">${escapeHtml(saldo.texto)} <small>${escapeHtml(mov.cuenta)}</small></div>
+    </div>`;
+}
+
+async function construirEstadoCuentaClienteV79(cliente){
+  const { pagos, porPago, legacy } = await cargarMovimientosRealesCliente(cliente);
+  const pedidosEmitidos = pedidosEmitidosMovimientoCliente(cliente);
+  const eventos = [];
+
+  pedidosEmitidos.forEach(item => {
+    eventos.push({
+      tipo:"PEDIDO",
+      fecha:item.fecha,
+      fechaOrden:fechaOrdenPedidoMovimiento(item.fecha),
+      idOrden:Number(item.id || 0),
+      cuenta:normalizarTipoCuentaCliente(item.tipo),
+      cargo:numeroSeguro(item.total || 0),
+      abono:0,
+      anulado:false,
+      titulo:`Pedido #${item.id}`,
+      detalle:item.descripcion || "Sin descripción",
+      pedidoId:Number(item.id || 0),
+      detalleDistribucion:""
+    });
+  });
+
+  (pagos || []).forEach(pg => {
+    const anulado = String(pg.estado || "ACTIVO").toUpperCase() === "ANULADO";
+    const aplicaciones = porPago.get(Number(pg.id || 0)) || [];
+    const origen = String(pg.origen || "").toUpperCase();
+    const titulo = origen === "INDEX" ? "Pago desde pedido" : "Pago general en Clientes";
+    const detalle = [
+      pg.metodo_pago || "Método no indicado",
+      pg.registrado_por ? `Operador: ${pg.registrado_por}` : "",
+      pg.referencia ? `Ref. ${pg.referencia}` : ""
+    ].filter(Boolean).join(" · ");
+
+    eventos.push({
+      tipo:"PAGO",
+      fecha:pg.created_at || pg.fecha_pago,
+      fechaOrden:new Date(pg.created_at || pg.fecha_pago || 0).getTime() || 0,
+      idOrden:Number(pg.id || 0),
+      cuenta:normalizarTipoCuentaCliente(pg.tipo_pago || "DIVISA"),
+      cargo:0,
+      abono:numeroSeguro(pg.monto_recibido || 0),
+      anulado,
+      titulo,
+      detalle,
+      pagoId:Number(pg.id || 0),
+      detalleDistribucion:detalleDistribucionCompactoV79(aplicaciones)
+    });
+  });
+
+  (legacy || []).forEach(pg => {
+    const anulado = String(pg.estado || "ACTIVO").toUpperCase() === "ANULADO";
+    const cuenta = normalizarTipoCuentaCliente(
+      pg.tipo_pago_simple ||
+      (String(pg.moneda || "USD").toUpperCase() === "BS" ? "BCV" : "DIVISA")
+    );
+    eventos.push({
+      tipo:"PAGO",
+      fecha:pg.created_at || pg.fecha_pago,
+      fechaOrden:new Date(pg.created_at || pg.fecha_pago || 0).getTime() || 0,
+      idOrden:Number(pg.id || 0),
+      cuenta,
+      cargo:0,
+      abono:numeroSeguro(pg.monto_aplicado || pg.equivalente_usd || pg.monto_recibido || 0),
+      anulado,
+      titulo:`Pago desde pedido #${pg.pedido_id || "—"}`,
+      detalle:[pg.metodo_pago || pg.tipo_movimiento || "Pago", pg.referencia ? `Ref. ${pg.referencia}` : ""].filter(Boolean).join(" · "),
+      pagoId:Number(pg.id || 0),
+      detalleDistribucion:""
+    });
+  });
+
+  eventos.sort((a,b) => {
+    if(a.fechaOrden !== b.fechaOrden) return a.fechaOrden - b.fechaOrden;
+    const prioridad = { PEDIDO:1, PAGO:2 };
+    if((prioridad[a.tipo] || 0) !== (prioridad[b.tipo] || 0)) return (prioridad[a.tipo] || 0) - (prioridad[b.tipo] || 0);
+    return a.idOrden - b.idOrden;
+  });
+
+  const saldos = { DIVISA:0, BCV:0 };
+  eventos.forEach(ev => {
+    const cuenta = normalizarTipoCuentaCliente(ev.cuenta);
+    ev.saldoAntes = saldos[cuenta];
+    if(ev.tipo === "PEDIDO") saldos[cuenta] += numeroSeguro(ev.cargo || 0);
+    else if(!ev.anulado) saldos[cuenta] -= numeroSeguro(ev.abono || 0);
+    ev.saldoDespues = saldos[cuenta];
+  });
+
+  // V81: el cálculo se hace cronológicamente, pero se muestra del más reciente al más antiguo.
+  return eventos.slice().reverse();
+}
+
+async function cargarMovimientosClienteEnCuenta(id){
+  if(!validarSupabase()) return;
+  const cliente = clientesDB.find(c => Number(c.id) === Number(id));
+  if(!cliente) return;
+
+  const resumen = document.getElementById("movimientosClienteResumen");
+  const body = document.getElementById("movimientosClienteBody");
+  if(resumen) resumen.innerHTML = "";
+  if(body) body.innerHTML = `<div class="movimientos-vacio">Cargando estado de cuenta...</div>`;
+
+  try{
+    const eventos = await construirEstadoCuentaClienteV79(cliente);
+    estadoCuentaClienteCacheV79.set(Number(cliente.id), eventos);
+
+    const divisaActual = resumenNetoCuentaCliente(cliente, "DIVISA");
+    const bcvActual = resumenNetoCuentaCliente(cliente, "BCV");
+    const divisaTxt = estadoActualTextoV79(divisaActual);
+    const bcvTxt = estadoActualTextoV79(bcvActual);
+    const conciliacionTxt = estadoConciliacionGeneralV82(eventos, divisaActual, bcvActual);
+    const pendientes = pedidosPendientesCliente(cliente).length;
+
+    if(resumen){
+      resumen.innerHTML = `
+        <div class="estado-cuenta-top">
+          <div class="estado-cuenta-resumen">
+            <div class="estado-cuenta-kpi"><label>DIVISA actual</label><strong class="${divisaTxt.clase}">${escapeHtml(divisaTxt.texto)}</strong></div>
+            <div class="estado-cuenta-kpi"><label>BCV actual</label><strong class="${bcvTxt.clase}">${escapeHtml(bcvTxt.texto)}</strong></div>
+            <div class="estado-cuenta-kpi"><label>Pedidos pendientes</label><strong>${pendientes}</strong></div>
+            <div class="estado-cuenta-kpi"><label>Conciliación</label><strong class="${conciliacionTxt.clase}">${escapeHtml(conciliacionTxt.texto)}</strong></div>
+          </div>
+          <button class="estado-cuenta-copy" type="button" onclick="copiarEstadoCuentaClienteV79(${Number(cliente.id)})">Copiar estado de cuenta</button>
+        </div>`;
+    }
+
+    if(!eventos.length){
+      if(body) body.innerHTML = `<div class="movimientos-vacio">Este cliente todavía no tiene movimientos con monto.</div>`;
+      return;
+    }
+
+    if(body){
+      body.innerHTML = `
+        <div class="estado-cuenta-wrap">
+          <div class="estado-cuenta-head">
+            <div>Fecha</div><div>Movimiento</div><div style="text-align:right">Cargo</div><div style="text-align:right">Abono</div><div style="text-align:right">Saldo</div>
+          </div>
+          <div>${eventos.map(filaEstadoCuentaV79).join("")}</div>
+          <div class="estado-cuenta-nota">Más reciente arriba · Cargo = pedido emitido · Abono = dinero recibido · “Ver conciliación” muestra Saldo anterior + Cargo − Abono = Saldo resultante.</div>
+        </div>`;
+    }
+  }catch(error){
+    console.error("No se pudo cargar el estado de cuenta compacto:", error);
+    if(body) body.innerHTML = `<div class="movimientos-vacio">No se pudo cargar el estado de cuenta.</div>`;
+  }
+}
+
+function lineaTextoMovimientoV79(ev){
+  const f = fechaMovimientoV79(ev.fecha, ev.tipo === "PEDIDO");
+  const fecha = f.hora ? `${f.fecha} ${f.hora}` : f.fecha;
+  const saldo = estadoSaldoMovimientoV79(ev.saldoDespues).texto;
+
+  if(ev.tipo === "PEDIDO"){
+    return `${fecha} · ${ev.titulo} · ${ev.detalle || "Sin descripción"}\nCargo: $${money(ev.cargo)} ${ev.cuenta} · Saldo: ${saldo} ${ev.cuenta}`;
+  }
+
+  const estado = ev.anulado ? " · ANULADO" : "";
+  return `${fecha} · ${ev.titulo}${estado} · ${ev.detalle || ""}\nAbono: $${money(ev.abono)} ${ev.cuenta} · Saldo: ${saldo} ${ev.cuenta}`;
+}
+
+async function copiarTextoPortapapelesV79(texto){
+  if(navigator.clipboard && window.isSecureContext){
+    await navigator.clipboard.writeText(texto);
+    return;
+  }
+  const ta = document.createElement("textarea");
+  ta.value = texto;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  document.execCommand("copy");
+  ta.remove();
+}
+
+async function copiarEstadoCuentaClienteV79(id){
+  const cliente = clientesDB.find(c => Number(c.id) === Number(id));
+  if(!cliente){
+    alert("No se encontró el cliente.");
+    return;
+  }
+
+  try{
+    let eventos = estadoCuentaClienteCacheV79.get(Number(cliente.id));
+    if(!eventos){
+      eventos = await construirEstadoCuentaClienteV79(cliente);
+      estadoCuentaClienteCacheV79.set(Number(cliente.id), eventos);
+    }
+
+    const divisa = estadoActualTextoV79(resumenNetoCuentaCliente(cliente, "DIVISA"));
+    const bcv = estadoActualTextoV79(resumenNetoCuentaCliente(cliente, "BCV"));
+    const consulta = new Date().toLocaleString("es-VE", {
+      day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit"
+    });
+
+    const texto = [
+      `ESTADO DE CUENTA · ${String(cliente.nombre || "Cliente").toUpperCase()}`,
+      `Fecha de consulta: ${consulta}`,
+      "",
+      ...(eventos.length ? eventos.map(lineaTextoMovimientoV79) : ["Sin movimientos registrados."]),
+      "",
+      `SALDO ACTUAL DIVISA: ${divisa.texto}`,
+      `SALDO ACTUAL BCV: ${bcv.texto}`
+    ].join("\n\n");
+
+    await copiarTextoPortapapelesV79(texto);
+    mostrarToast("Estado de cuenta copiado");
+  }catch(error){
+    console.error("No se pudo copiar el estado de cuenta:", error);
+    alert("No se pudo copiar el estado de cuenta.");
+  }
+}
+
+window.copiarEstadoCuentaClienteV79 = copiarEstadoCuentaClienteV79;
+window.cargarMovimientosClienteEnCuenta = cargarMovimientosClienteEnCuenta;
+console.log("CLIENTES v82 · conciliación por historial financiero + eliminación solo Roberto");
+</script>
+
 </body>
 </html>
-
-
-
