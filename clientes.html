@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Clientes · Tuttovinilos</title>
-<!-- clientes.html v80 · filtro de estado corregido + ID visible -->
+<!-- clientes.html · fusión integral transaccional de clientes + seguridad Roberto -->
 <link rel="icon" href="data:,">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3304,7 +3304,7 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
 <div class="layout">
 
   <div class="note">
-    <strong>Clientes:</strong> marca varios clientes con la casilla y usa “Fusionar seleccionados” para unir nombres duplicados. La deuda se calcula desde los pagos nuevos del sistema.
+    <strong>Clientes:</strong> marca varios clientes y usa “Fusionar seleccionados”. La fusión mueve pedidos, pagos, cotizaciones, contactos y demás historial al cliente principal. Solo Roberto puede fusionar o eliminar.
   </div>
 
   <section class="card">
@@ -4333,61 +4333,44 @@ async function deshacerUltimaFusionClientes(){
   if(!validarSupabase()) return;
 
   const backup = leerBackupFusionClientes();
-  if(!backup){
-    alert('No hay una fusión reciente para deshacer.');
+  if(!backup?.fusion_id){
+    alert('No hay una fusión integral reciente para deshacer desde este navegador.');
     return;
   }
 
   const confirmar = confirm(
-    `Deshacer última fusión:\n\nCliente final: ${backup.nombre_final || ''}\nClientes fusionados: ${(backup.clientes_originales || []).map(c => c.nombre).join(', ')}\n\nEsto restaurará los nombres anteriores en pedidos y volverá a crear los clientes eliminados si es posible.`
+    `ATENCIÓN · DESHACER FUSIÓN COMPLETA\n\n` +
+    `Fusión #${backup.fusion_id}\n` +
+    `Cliente final: ${backup.nombre_final || ''}\n` +
+    `Clientes: ${(backup.clientes_originales || []).map(c => `${c.nombre} · ID ${c.id}`).join(', ')}\n\n` +
+    `Se restaurarán los vínculos anteriores de pedidos, pagos, cotizaciones, auditoría, producción, contactos y demás historial incluido en la fusión.\n\n` +
+    `Solo Roberto puede realizar esta acción.\n\n¿Deseas continuar?`
   );
 
   if(!confirmar) return;
 
   try{
-    // 1) Restaurar pedidos a su cliente anterior.
-    for(const pedido of (backup.pedidos_originales || [])){
-      const { error } = await db()
-        .from('pedidos')
-        .update({ cliente: pedido.cliente, cliente_id: pedido.cliente_id || null })
-        .eq('id', pedido.id);
+    const operador = nombreOperadorSesionClientes();
+    const { error } = await db().rpc('deshacer_fusion_clientes_v1', {
+      p_fusion_id:Number(backup.fusion_id),
+      p_operador:operador
+    });
 
-      if(error) throw error;
-    }
-
-    // 2) Restaurar el cliente principal como estaba antes de la fusión.
-    if(backup.principal_original?.id){
-      const original = {...backup.principal_original};
-      delete original.id;
-
-      const { error } = await db()
-        .from('clientes')
-        .update(original)
-        .eq('id', backup.principal_original.id);
-
-      if(error) throw error;
-    }
-
-    // 3) Reinsertar clientes que se habían eliminado.
-    for(const cliente of (backup.clientes_eliminados || [])){
-      const existe = clientesDB.some(c => Number(c.id) === Number(cliente.id));
-      if(!existe){
-        await insertarClienteRestaurado(cliente);
-      }
-    }
+    if(error) throw error;
 
     limpiarBackupFusionClientes();
     limpiarSeleccionClientes(false);
     await cargarPedidos();
     await cargarClientes();
     await cargarContactosParaBusqueda();
+    await cargarSaldosFavorClientes();
     await cargarDeudasClientes();
     filtrarClientes();
 
-    mostrarToast('Fusión deshecha');
+    mostrarToast('Fusión completa deshecha');
   }catch(error){
     console.error('Error deshaciendo fusión:', error);
-    alert('No se pudo deshacer completamente la fusión: ' + (error.message || error));
+    alert('No se pudo deshacer la fusión: ' + (error.message || error));
   }
 }
 
@@ -5180,22 +5163,111 @@ async function actualizarPedidosDeCliente(nombreAnterior, nombreNuevo, clienteId
   return pedidosActualizar.length;
 }
 
-async function fusionarDuplicadosExactosCliente(nombreFinal, idPrincipal){
+function nombreOperadorSesionClientes(){
+  const op = typeof window.getSesionOperador === "function" ? window.getSesionOperador() : null;
+  return String(op?.nombre || op?.name || "").trim();
+}
+
+function textoAvisoFusionCompleta(clientes, nombreFinal){
+  const lista = (clientes || []).map(c => `• ${c.nombre} · ID ${c.id}`).join("\n");
+  return (
+    `ATENCIÓN · FUSIÓN COMPLETA DE CLIENTES\n\n` +
+    `${lista}\n\n` +
+    `Cliente final: ${nombreFinal}\n\n` +
+    `Se trasladará al cliente principal TODO el historial relacionado:\n` +
+    `• Pedidos\n` +
+    `• Pagos recibidos y aplicaciones de pago\n` +
+    `• Auditoría\n` +
+    `• Cotizaciones\n` +
+    `• Documentos contables\n` +
+    `• Organizador / ideas\n` +
+    `• Producción\n` +
+    `• Contactos y relaciones\n\n` +
+    `Los clientes secundarios quedarán INACTIVOS para conservar trazabilidad.\n` +
+    `La operación se ejecutará completa en Supabase: si una parte falla, no se aplica la fusión.\n\n` +
+    `Solo Roberto puede realizar esta acción.\n\n¿Deseas continuar?`
+  );
+}
+
+async function ejecutarFusionCompletaClientes(principal, todosAFusionar, nombreFinal, datosFusionados){
+  if(!operadorPuedeFusionarClientes()){
+    throw new Error("Solo Roberto puede fusionar clientes.");
+  }
+
+  const operador = nombreOperadorSesionClientes();
+  if(normalizar(operador) !== "roberto"){
+    throw new Error("La sesión actual no tiene permiso para fusionar clientes.");
+  }
+
+  const ids = [...new Set(
+    (todosAFusionar || [])
+      .map(c => Number(c?.id || 0))
+      .filter(Boolean)
+      .concat(Number(principal?.id || 0) || [])
+  )];
+
+  if(ids.length < 2) return null;
+
+  const payloadPrincipal = {
+    nombre:nombreFinal,
+    tipo_cliente:datosFusionados?.tipo_cliente ?? principal?.tipo_cliente ?? "Cliente Standar",
+    precio_especial:datosFusionados?.precio_especial ?? principal?.precio_especial ?? null,
+    telefono:datosFusionados?.telefono ?? principal?.telefono ?? "",
+    correo:datosFusionados?.correo ?? principal?.correo ?? "",
+    rif_cedula:datosFusionados?.rif_cedula ?? principal?.rif_cedula ?? "",
+    direccion:datosFusionados?.direccion ?? principal?.direccion ?? "",
+    notas:datosFusionados?.notas ?? principal?.notas ?? "",
+    naturaleza_cliente:datosFusionados?.naturaleza_cliente ?? principal?.naturaleza_cliente ?? null,
+    telefono_general:datosFusionados?.telefono_general ?? datosFusionados?.telefono ?? principal?.telefono_general ?? principal?.telefono ?? "",
+    correo_general:datosFusionados?.correo_general ?? datosFusionados?.correo ?? principal?.correo_general ?? principal?.correo ?? "",
+    activo:true
+  };
+
+  const { data, error } = await db().rpc("fusionar_clientes_completo_v1", {
+    p_principal_id:Number(principal.id),
+    p_ids:ids,
+    p_nombre_final:nombreFinal,
+    p_datos_principal:payloadPrincipal,
+    p_operador:operador
+  });
+
+  if(error) throw error;
+
+  const fila = Array.isArray(data) ? data[0] : data;
+  if(fila?.fusion_id){
+    guardarBackupFusionClientes({
+      fusion_id:Number(fila.fusion_id),
+      nombre_final:nombreFinal,
+      principal_id:Number(principal.id),
+      clientes_originales:(todosAFusionar || []).map(c => ({ id:c.id, nombre:c.nombre }))
+    });
+  }
+
+  return fila || null;
+}
+
+async function fusionarDuplicadosExactosCliente(nombreFinal, idPrincipal, confirmacionPrevia = false){
   if(!operadorPuedeFusionarClientes()) return 0;
 
   const clave = normalizar(nombreFinal);
   if(!clave || !idPrincipal) return 0;
 
   await cargarClientes();
-  await cargarPedidos();
 
-  const duplicados = clientesDB.filter(c => {
-    return normalizar(c.nombre) === clave && Number(c.id) !== Number(idPrincipal);
-  });
+  const principal = clientesDB.find(c => Number(c.id) === Number(idPrincipal));
+  if(!principal) return 0;
+
+  const duplicados = clientesDB.filter(c =>
+    normalizar(c.nombre) === clave && Number(c.id) !== Number(idPrincipal)
+  );
 
   if(!duplicados.length) return 0;
 
-  const principal = clientesDB.find(c => Number(c.id) === Number(idPrincipal));
+  const todos = [principal, ...duplicados];
+  if(!confirmacionPrevia && !confirm(textoAvisoFusionCompleta(todos, nombreFinal))){
+    return 0;
+  }
+
   let datosFusionados = {
     nombre:nombreFinal,
     tipo_cliente:'Cliente Standar',
@@ -5208,28 +5280,12 @@ async function fusionarDuplicadosExactosCliente(nombreFinal, idPrincipal){
     activo:true
   };
 
-  if(principal){
-    datosFusionados = mezclarDatosCliente(datosFusionados, principal, false);
+  for(const c of todos){
+    datosFusionados = mezclarDatosCliente(datosFusionados, c, true);
   }
-
-  for(const dup of duplicados){
-    datosFusionados = mezclarDatosCliente(datosFusionados, dup, false);
-    await actualizarPedidosDeCliente(dup.nombre, nombreFinal, idPrincipal);
-  }
-
   datosFusionados.nombre = nombreFinal;
 
-  const { error:updatePrincipalError } = await db()
-    .from("clientes")
-    .update(datosFusionados)
-    .eq("id", idPrincipal);
-
-  if(updatePrincipalError) throw updatePrincipalError;
-
-  for(const dup of duplicados){
-    await eliminarClienteFisicoOOcultar(dup.id, nombreFinal);
-  }
-
+  await ejecutarFusionCompletaClientes(principal, todos, nombreFinal, datosFusionados);
   return duplicados.length;
 }
 
@@ -5278,27 +5334,32 @@ async function guardarClienteModal(){
     }
 
     if(duplicado){
-      // Si el nombre nuevo ya existe, NO crea otro registro. Fusiona en el cliente existente.
-      const datosFusionados = mezclarDatosCliente(duplicado, datos, true);
-
-      const { error:updateError } = await db()
-        .from("clientes")
-        .update(datosFusionados)
-        .eq("id", duplicado.id);
-
-      if(updateError) throw updateError;
-      clienteIdGuardado = Number(duplicado.id);
-
-      if(clienteOriginal){
-        await actualizarPedidosDeCliente(clienteOriginal.nombre, nombre, duplicado.id);
-
-        await eliminarClienteFisicoOOcultar(clienteOriginal.id, nombre);
+      // El nombre ya existe: la fusión debe ser completa, explícita y solo para Roberto.
+      const todosAFusionar = clientesDB.filter(c => normalizar(c.nombre) === normalizar(nombre));
+      if(clienteOriginal && !todosAFusionar.some(c => Number(c.id) === Number(clienteOriginal.id))){
+        todosAFusionar.push(clienteOriginal);
+      }
+      if(!todosAFusionar.some(c => Number(c.id) === Number(duplicado.id))){
+        todosAFusionar.push(duplicado);
       }
 
-      await actualizarPedidosDeCliente(duplicado.nombre, nombre, duplicado.id);
-      await fusionarDuplicadosExactosCliente(nombre, duplicado.id);
+      if(!confirm(textoAvisoFusionCompleta(todosAFusionar, nombre))){
+        return;
+      }
 
-      mensaje = "Cliente fusionado y pedidos actualizados";
+      let datosFusionados = mezclarDatosCliente(duplicado, clienteOriginal || {}, true);
+      datosFusionados = mezclarDatosCliente(datosFusionados, datos, true);
+      datosFusionados.nombre = nombre;
+
+      await ejecutarFusionCompletaClientes(
+        duplicado,
+        todosAFusionar,
+        nombre,
+        datosFusionados
+      );
+
+      clienteIdGuardado = Number(duplicado.id);
+      mensaje = "Cliente fusionado completamente";
     }else if(id){
       // Editar cliente normal: actualiza también todos los pedidos que tenían el nombre viejo.
       const { error:updateError } = await db()
@@ -5314,7 +5375,6 @@ async function guardarClienteModal(){
         mensaje = "Cliente actualizado y pedidos renombrados";
       }
 
-      await fusionarDuplicadosExactosCliente(nombre, id);
     }else{
       // Cliente nuevo: antes de insertar ya se validó que no exista igual.
       const { data:clienteCreado, error:insertError } = await db()
@@ -5357,7 +5417,7 @@ async function fusionarClientesSeleccionados(){
     return;
   }
 
-  const resumen = seleccionados.map(c => `- ${c.nombre}`).join('\n');
+  const resumen = seleccionados.map(c => `- ${c.nombre} · ID ${c.id}`).join('\n');
   const sugerido = nombreBonito(seleccionados[0].nombre || '');
   const nombreFinalInput = prompt(
     `Vas a fusionar estos clientes:\n\n${resumen}\n\n¿Qué nombre final deseas colocarle?`,
@@ -5370,20 +5430,12 @@ async function fusionarClientesSeleccionados(){
     return;
   }
 
-  const confirmar = confirm(
-    `Confirmar fusión:\n\n${resumen}\n\nNombre final:\n${nombreFinal}\n\nEsto actualizará todos los pedidos de esos clientes y dejará un solo registro.`
-  );
-
-  if(!confirmar) return;
-
   try{
-    // Si ya existe un cliente con ese nombre fuera de la selección, se usa como principal.
     let principal = clientesDB.find(c =>
       normalizar(c.nombre) === normalizar(nombreFinal) &&
       !clientesSeleccionados.has(Number(c.id))
     );
 
-    // Si no existe fuera, usamos el seleccionado con más información.
     if(!principal){
       principal = seleccionados
         .slice()
@@ -5395,28 +5447,10 @@ async function fusionarClientesSeleccionados(){
       todosAFusionar.push(principal);
     }
 
-    const nombresAFusionar = todosAFusionar.map(c => normalizar(c.nombre));
-    const pedidosOriginales = pedidosDB
-      .filter(p => nombresAFusionar.includes(normalizar(p.cliente)))
-      .map(p => ({ id:p.id, cliente:p.cliente, cliente_id:p.cliente_id || null }));
-
-    const backupFusion = {
-      nombre_final:nombreFinal,
-      principal_id:principal.id,
-      principal_original:{...principal},
-      clientes_originales:todosAFusionar.map(c => ({...c})),
-      clientes_eliminados:todosAFusionar
-        .filter(c => Number(c.id) !== Number(principal.id))
-        .map(c => ({...c})),
-      pedidos_originales:pedidosOriginales
-    };
-
-    // Mover pedidos de todos los nombres seleccionados al nombre final.
-    for(const c of todosAFusionar){
-      await actualizarPedidosDeCliente(c.nombre, nombreFinal, principal.id);
+    if(!confirm(textoAvisoFusionCompleta(todosAFusionar, nombreFinal))){
+      return;
     }
 
-    // Mezclar datos: conserva teléfono/correo/notas si existen.
     let datosFusionados = {
       nombre:nombreFinal,
       tipo_cliente:'Cliente Standar',
@@ -5432,39 +5466,32 @@ async function fusionarClientesSeleccionados(){
     for(const c of todosAFusionar){
       datosFusionados = mezclarDatosCliente(datosFusionados, c, true);
     }
-
     datosFusionados.nombre = nombreFinal;
 
-    const { error:updateError } = await db()
-      .from('clientes')
-      .update(datosFusionados)
-      .eq('id', principal.id);
+    const resultado = await ejecutarFusionCompletaClientes(
+      principal,
+      todosAFusionar,
+      nombreFinal,
+      datosFusionados
+    );
 
-    if(updateError) throw updateError;
-
-    const idsEliminar = todosAFusionar
-      .filter(c => Number(c.id) !== Number(principal.id))
-      .map(c => c.id);
-
-    if(idsEliminar.length){
-      for(const idEliminar of idsEliminar){
-        await eliminarClienteFisicoOOcultar(idEliminar, nombreFinal);
-      }
-    }
-
-    // Limpieza extra: elimina duplicados exactos que hayan quedado con el mismo nombre.
-    await cargarPedidos();
-    await cargarClientes();
-    await fusionarDuplicadosExactosCliente(nombreFinal, principal.id);
-
-    guardarBackupFusionClientes(backupFusion);
     limpiarSeleccionClientes(false);
     await cargarPedidos();
     await cargarClientes();
+    await cargarContactosParaBusqueda();
+    await cargarSaldosFavorClientes();
     await cargarDeudasClientes();
     filtrarClientes();
 
-    mostrarToast(`Clientes fusionados como ${nombreFinal}`);
+    const r = resultado?.resumen || {};
+    const detalle = [
+      r.pedidos ? `${r.pedidos} pedidos` : '',
+      r.pagos_cliente ? `${r.pagos_cliente} pagos` : '',
+      r.cotizaciones ? `${r.cotizaciones} cotizaciones` : '',
+      r.contactos_relaciones ? `${r.contactos_relaciones} relaciones de contacto` : ''
+    ].filter(Boolean).join(' · ');
+
+    mostrarToast(`Fusión completa: ${nombreFinal}${detalle ? ` · ${detalle}` : ''}`);
   }catch(error){
     console.error('Error fusionando clientes seleccionados:', error);
     alert('Error fusionando clientes: ' + (error.message || error));
@@ -5555,6 +5582,9 @@ async function eliminarCliente(id){
       `Por seguridad se marcará como INACTIVO en lugar de borrar su historial.
 
 ` +
+      `Solo Roberto puede realizar esta acción.
+
+` +
       `¿Deseas archivarlo?`
     );
 
@@ -5598,7 +5628,10 @@ async function eliminarCliente(id){
       `${resumenHistorialClienteTexto(historial)}
 
 ` +
-      `Se marcará como INACTIVO para conservar pagos, auditorías y relaciones.
+      `Se marcará como INACTIVO para conservar pagos, auditorías, cotizaciones, contactos y relaciones.
+
+` +
+      `Solo Roberto puede realizar esta acción.
 
 ` +
       `¿Deseas archivarlo?`
