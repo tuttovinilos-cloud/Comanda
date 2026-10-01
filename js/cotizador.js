@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v74 historial completo paginado estable 40/60/100");
+console.log("COTIZADOR JS conectado v75 responsive y sincronización PC/móvil");
 
 const $ = (id) => document.getElementById(id);
 
@@ -3128,6 +3128,48 @@ function activarTab(cual){
   }
 }
 
+/* v75 · Mantiene ambas vistas sincronizadas sin reconstruir el campo activo. */
+function sincronizarCampoItem(origen){
+  const {index,field} = origen.dataset;
+  if(!/^\d+$/.test(String(index)) || !["desc","qty","price"].includes(field)) return;
+  document.querySelectorAll(`[data-index="${index}"][data-field="${field}"]`).forEach(campo => {
+    if(campo !== origen) campo.value = origen.value;
+  });
+}
+
+/* Mide el encabezado real, incluido el menú abierto, y la barra inferior. */
+function iniciarResponsiveCotizador(){
+  const header = document.querySelector(".header");
+  const barra = document.querySelector("nav.fixed");
+  let frame = 0;
+  let anchoAnterior = 0;
+  const medir = () => {
+    frame = 0;
+    const root = document.documentElement;
+    if(header) root.style.setProperty("--cotizador-header-height", `${Math.ceil(header.getBoundingClientRect().height)}px`);
+    if(barra) root.style.setProperty("--cotizador-bottom-height", `${Math.ceil(barra.getBoundingClientRect().height)}px`);
+    const ancho = root.clientWidth;
+    if(ancho !== anchoAnterior){
+      anchoAnterior = ancho;
+      ajustarNotasAuto();
+    }
+  };
+  const programar = () => {
+    if(!frame) frame = requestAnimationFrame(medir);
+  };
+  if(typeof ResizeObserver !== "undefined"){
+    const observer = new ResizeObserver(programar);
+    if(header) observer.observe(header);
+    if(barra) observer.observe(barra);
+  }else if(header && typeof MutationObserver !== "undefined"){
+    new MutationObserver(programar).observe(header,{attributes:true,childList:true,subtree:true});
+  }
+  window.addEventListener("resize",programar,{passive:true});
+  if(window.visualViewport) window.visualViewport.addEventListener("resize",programar,{passive:true});
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(programar);
+  programar();
+}
+
 function bindEvents(){
   if(eventosCotizadorVinculados) return;
   eventosCotizadorVinculados = true;
@@ -3155,6 +3197,7 @@ function bindEvents(){
           ? parseNumeroLocal(value)
           : value;
 
+      sincronizarCampoItem(e.target);
       updateItemVisualTotal(index);
       updateTotals();
     }
@@ -3172,6 +3215,7 @@ function bindEvents(){
       if(field === "price"){
         e.target.value = formatoPrecioUnitario(data.items[index]?.[field] || 0);
       }
+      sincronizarCampoItem(e.target);
     }
   }, true);
 
@@ -3455,3 +3499,5 @@ async function iniciarCotizador(){
 
 document.addEventListener("DOMContentLoaded", iniciarCotizador);
 
+
+document.addEventListener("DOMContentLoaded", iniciarResponsiveCotizador);
