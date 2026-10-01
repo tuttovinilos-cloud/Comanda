@@ -1,10 +1,16 @@
-console.log("COTIZADOR JS conectado v72 pie de página actualizado");
+console.log("COTIZADOR JS conectado v74 historial completo paginado estable 40/60/100");
 
 const $ = (id) => document.getElementById(id);
 
 let clientesDB = [];
 let cotizacionesDB = [];
 let cotizacionSeleccionada = null;
+
+// Historial: se cargan todas las cotizaciones, pero solo se renderiza una página a la vez.
+let paginaCotizaciones = 1;
+let cotizacionesPorPagina = 40;
+const COTIZACIONES_LOTE_CARGA = 500;
+let cargandoCotizacionesPrevias = false;
 
 const TUTTO_LOGO_SRC = "img/logo-tutto.svg?v=10";
 let tuttoLogoPngPromise = null;
@@ -477,55 +483,38 @@ function ajustarNotasAuto(){
 }
 
 async function obtenerSiguienteNumeroDocumento(fechaISO){
-  const fecha = fechaISO || todayISO();
+  if(!validarSupabase()) return crearNumeroDocumento(1, fechaISO);
 
-  if(!validarSupabase()) return crearNumeroDocumento(1, fecha);
-
-  /*
-    FIX v71 · CORRELATIVO CALCULADO DESDE EL NÚMERO
-
-    No depende de la columna `fecha`, porque algunos registros antiguos pueden
-    tener una fecha distinta a la incluida en su número. Se buscan documentos
-    que terminen en DD-MM-AAAA y se toma el correlativo más alto.
-  */
-  const sufijo = formatoFechaNumero(fecha);
+  const sufijo = formatoFechaNumero(fechaISO);
 
   const { data: rows, error } = await db()
     .from("cotizaciones")
     .select("numero")
-    .like("numero", `%-${sufijo}`);
+    .eq("fecha", fechaISO);
 
   if(error){
-    console.warn("No se pudo calcular el correlativo:", error);
-    return crearNumeroDocumento(1, fecha);
+    console.warn("No se pudo calcular consecutivo:", error);
+    return crearNumeroDocumento(1, fechaISO);
   }
 
   let max = 0;
-  const sufijoSeguro = sufijo.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
-  const patron = new RegExp(`^(\\d+)-${sufijoSeguro}$`);
 
   (rows || []).forEach(r => {
-    const numero = cleanText(r?.numero || "");
-    const match = numero.match(patron);
-    if(!match) return;
+    const numero = String(r.numero || "");
+    if(!numero.endsWith(sufijo)) return;
 
-    const correlativo = Number(match[1]);
-    if(Number.isFinite(correlativo)){
-      max = Math.max(max, correlativo);
-    }
+    const primero = Number(numero.split("-")[0]);
+    if(Number.isFinite(primero)) max = Math.max(max, primero);
   });
 
-  return crearNumeroDocumento(max + 1, fecha);
+  return crearNumeroDocumento(max + 1, fechaISO);
 }
 
 async function numeroExiste(numero){
-  const limpio = cleanText(numero || "");
-  if(!limpio) return false;
-
   const { data: rows, error } = await db()
     .from("cotizaciones")
     .select("id")
-    .eq("numero", limpio)
+    .eq("numero", numero)
     .limit(1);
 
   if(error) throw error;
@@ -533,81 +522,16 @@ async function numeroExiste(numero){
   return (rows || []).length > 0;
 }
 
-function correlativoDesdeNumero(numero){
-  const primero = String(numero || "").split("-")[0];
-  const valor = Number(primero);
-  return Number.isFinite(valor) && valor >= 0 ? valor : 0;
-}
-
-async function obtenerNumeroDisponibleDocumento(fechaISO, numeroPreferido=""){
-  const fecha = fechaISO || todayISO();
-  const sufijo = formatoFechaNumero(fecha);
-  let numero = cleanText(numeroPreferido || "");
-
-  if(!validarSupabase()){
-    return numero || crearNumeroDocumento(1, fecha);
-  }
-
-  const perteneceAFecha = numero.endsWith(`-${sufijo}`);
-
-  if(!numero || !perteneceAFecha || await numeroExiste(numero)){
-    numero = await obtenerSiguienteNumeroDocumento(fecha);
-  }
-
-  // Segunda barrera: cubre huecos, registros antiguos y números visibles que
-  // aparezcan entre la consulta del máximo y esta comprobación.
-  let intentos = 0;
-
-  while(await numeroExiste(numero)){
-    numero = crearNumeroDocumento(correlativoDesdeNumero(numero) + 1, fecha);
-    intentos += 1;
-
-    if(intentos > 1000){
-      throw new Error("No se pudo encontrar un número de documento disponible.");
-    }
-  }
-
-  return numero;
-}
-
-async function obtenerNumeroPosteriorAColision(numeroActual, fechaISO){
-  const fecha = fechaISO || todayISO();
-  const sugeridoBD = await obtenerSiguienteNumeroDocumento(fecha);
-  const correlativoBD = correlativoDesdeNumero(sugeridoBD);
-  const correlativoActual = correlativoDesdeNumero(numeroActual);
-
-  // Aunque una política RLS o una consulta desactualizada no permita ver todos
-  // los registros, después de una colisión siempre se avanza como mínimo uno.
-  let numero = crearNumeroDocumento(
-    Math.max(correlativoBD, correlativoActual + 1, 1),
-    fecha
-  );
-
-  let intentos = 0;
-  while(await numeroExiste(numero)){
-    numero = crearNumeroDocumento(correlativoDesdeNumero(numero) + 1, fecha);
-    intentos += 1;
-
-    if(intentos > 1000){
-      throw new Error("No se pudo avanzar el correlativo después de una colisión.");
-    }
-  }
-
-  return numero;
-}
-
-async function asegurarNumeroDisponible(fechaForzada=""){
+async function asegurarNumeroDisponible(){
   const form = getForm();
 
   if(esFacturaTipo(form.tipo)){
-    return form.numero || "";
+    return;
   }
 
-  const fecha = fechaForzada || form.fecha || todayISO();
-  const numero = await obtenerNumeroDisponibleDocumento(fecha, form.numero || "");
-
-  if($("numero")) $("numero").value = numero;
-  return numero;
+  if(!form.numero || await numeroExiste(form.numero)){
+    $("numero").value = await obtenerSiguienteNumeroDocumento(form.fecha || todayISO());
+  }
 }
 
 async function initDates(){
@@ -1578,14 +1502,13 @@ function drawPdfHeaderFooter(doc,footer,form){
   doc.setFontSize(7.5);
   doc.setTextColor(95,99,104);
 
-  // Pie fijo para cotizaciones, presupuestos, notas y propuestas.
-  // El formato especial de Factura permanece sin modificaciones.
-  doc.text("Valencia, Carabobo", W/2, H-13, { align:"center" });
-  doc.text("Tel: +58 414-4961122 | tuttovinilos@gmail.com", W/2, H-7.7, { align:"center" });
+  const dirLines = doc.splitTextToSize(footer?.direccion || "", W-28);
+  doc.text(dirLines.slice(0,2), W/2, H-13, { align:"center" });
+  doc.text(footer?.contacto || "", W/2, H-7.7, { align:"center" });
 
   doc.setFontSize(7.2);
   doc.setTextColor(120,124,130);
-  doc.text(`Documento preparado por: ${form?.responsable || ""}`, W/2, H-3.1, { align:"center" });
+  doc.text(`${footer?.preparado_texto || "Documento preparado por:"} ${form?.responsable || ""}`, W/2, H-3.1, { align:"center" });
 }
 
 function formatFechaFactura(fechaISO){
@@ -2246,39 +2169,6 @@ function abrirBlobPdf(blob){
   setTimeout(() => URL.revokeObjectURL(url),60000);
 }
 
-function esErrorNumeroDuplicado(error){
-  const code = String(error?.code || "");
-  const msg = String(error?.message || error?.details || "").toLowerCase();
-
-  return code === "23505" && (
-    msg.includes("cotizaciones_numero_key") ||
-    msg.includes("duplicate key") ||
-    msg.includes("numero")
-  );
-}
-
-function esErrorCompatibilidadCotizacion(error){
-  const code = String(error?.code || "");
-  const msg = String(error?.message || error?.details || "").toLowerCase();
-
-  return code === "PGRST204" ||
-    code === "PGRST205" ||
-    msg.includes("schema cache") ||
-    msg.includes("could not find the") ||
-    msg.includes("column") && (
-      msg.includes("pdf_base64") ||
-      msg.includes("pdf_mime") ||
-      msg.includes("pdf_nombre") ||
-      msg.includes("rif_cedula") ||
-      msg.includes("telefono") ||
-      msg.includes("correo") ||
-      msg.includes("direccion") ||
-      msg.includes("vence") ||
-      msg.includes("pdf_path") ||
-      msg.includes("pdf_url")
-    );
-}
-
 async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null,snapshotOverride=null){
   const snapshot = snapshotOverride || crearSnapshotActual();
   const form = snapshot.form;
@@ -2297,14 +2187,14 @@ async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null,snaps
     responsable: form.responsable,
     vence: form.vence || null,
     items:{
-      version:8,
+      version:7,
       modo:"texto_json_con_pdf_opcional",
       rows:snapshot.items,
       footer:snapshot.footer,
       iva_aplicado:form.iva,
       proyecto:form.proyecto || "",
       moneda:normalizarMonedaDocumento(form.moneda,form.tipo),
-      modalidad_precio:form.modalidad_precio || "BCV",
+      modalidad_precio:form.modalidad_precio || "DIVISA",
       mostrar_monto_final:form.mostrar_monto_final !== false
     },
     notas: form.notas,
@@ -2315,64 +2205,53 @@ async function guardarRegistroCotizacionTexto(clienteGuardado,pdfInfo=null,snaps
     pdf_url:""
   };
 
-  const variantes = [
-    {
-      ...registroBase,
-      pdf_base64: pdfInfo?.base64 || "",
-      pdf_mime: pdfInfo?.mime || "application/pdf",
-      pdf_nombre: pdfInfo?.nombre || ""
-    },
-    {
-      ...registroBase,
-      pdf_mime: pdfInfo?.mime || "application/pdf",
-      pdf_nombre: pdfInfo?.nombre || ""
-    },
-    {...registroBase},
-    {
-      fecha:registroBase.fecha,
-      numero:registroBase.numero,
-      tipo_documento:registroBase.tipo_documento,
-      cliente:registroBase.cliente,
-      responsable:registroBase.responsable,
-      items:registroBase.items,
-      notas:registroBase.notas,
-      subtotal:registroBase.subtotal,
-      iva:registroBase.iva,
-      total:registroBase.total
-    }
-  ];
+  const variantes = [];
+
+  variantes.push({
+    ...registroBase,
+    pdf_base64: pdfInfo?.base64 || "",
+    pdf_mime: pdfInfo?.mime || "application/pdf",
+    pdf_nombre: pdfInfo?.nombre || ""
+  });
+
+  variantes.push({
+    ...registroBase,
+    pdf_mime: pdfInfo?.mime || "application/pdf",
+    pdf_nombre: pdfInfo?.nombre || ""
+  });
+
+  variantes.push({...registroBase});
+
+  // Fallback adicional si faltan columnas de cliente/contacto en cotizaciones.
+  const basico = {
+    fecha:registroBase.fecha,
+    numero:registroBase.numero,
+    tipo_documento:registroBase.tipo_documento,
+    cliente:registroBase.cliente,
+    responsable:registroBase.responsable,
+    items:registroBase.items,
+    notas:registroBase.notas,
+    subtotal:registroBase.subtotal,
+    iva:registroBase.iva,
+    total:registroBase.total
+  };
+  variantes.push(basico);
 
   let ultimoError = null;
 
-  for(let i=0;i<variantes.length;i++){
-    const payload = variantes[i];
-
-    /*
-      IMPORTANTE v71:
-      No se usa `.select().single()` después del INSERT. Con RLS, el registro
-      puede insertarse correctamente pero no ser devuelto; el código anterior
-      interpretaba eso como fallo e intentaba insertarlo otra vez, provocando
-      `cotizaciones_numero_key`.
-    */
-    const { error } = await db()
+  for(const payload of variantes){
+    const { data, error } = await db()
       .from("cotizaciones")
-      .insert([payload]);
+      .insert([payload])
+      .select()
+      .single();
 
     if(!error){
-      return { numero:payload.numero, ...payload };
-    }
-
-    if(esErrorNumeroDuplicado(error)){
-      throw error;
+      return data;
     }
 
     ultimoError = error;
     console.warn("Falló variante guardando cotización:", error.message || error);
-
-    // Solo se prueba una variante más básica cuando realmente faltan columnas.
-    if(!esErrorCompatibilidadCotizacion(error)){
-      throw error;
-    }
   }
 
   throw ultimoError || new Error("No se pudo guardar la cotización.");
@@ -2483,32 +2362,6 @@ async function previsualizarDocumento(){
   }
 }
 
-async function actualizarPreviewConNumero(numero){
-  if(!previewSnapshot) return;
-
-  const limpio = cleanText(numero || "");
-  previewSnapshot.form.numero = limpio;
-
-  if($("numero")) $("numero").value = limpio;
-
-  previewPdfDoc = await crearDocumentoSegunTipo(previewSnapshot);
-  previewPdfBlob = previewPdfDoc.output("blob");
-
-  if(previewPdfUrl){
-    URL.revokeObjectURL(previewPdfUrl);
-  }
-
-  previewPdfUrl = URL.createObjectURL(previewPdfBlob);
-
-  const frame = $("previewFrame");
-  if(frame) frame.src = previewPdfUrl;
-
-  const title = $("previewTitle");
-  if(title){
-    title.textContent = `Previsualizador · ${previewSnapshot.form.tipo || "Documento"} ${limpio}`;
-  }
-}
-
 async function guardarDocumentoDesdePreview(){
   const btn = $("guardarPreview");
 
@@ -2526,10 +2379,8 @@ async function guardarDocumentoDesdePreview(){
     }
 
     const form = previewSnapshot.form;
-    const esFactura = esFacturaTipo(form.tipo);
 
-    if(esFactura){
-      // Factura conserva su número manual y su funcionamiento original.
+    if(esFacturaTipo(form.tipo)){
       if(!form.numero){
         showToast("Coloca el N° de factura", "err");
         return;
@@ -2539,71 +2390,31 @@ async function guardarDocumentoDesdePreview(){
         showToast("Ese N° de factura/documento ya existe", "err");
         return;
       }
-    }else{
-      // Comprobación final inmediatamente antes del INSERT.
-      const numeroDisponible = await obtenerNumeroDisponibleDocumento(
-        form.fecha || todayISO(),
-        form.numero || ""
-      );
-
-      if(numeroDisponible !== form.numero){
-        await actualizarPreviewConNumero(numeroDisponible);
-        showToast(`El correlativo cambió a ${numeroDisponible} para evitar un duplicado.`, "warn");
-      }
     }
 
     const clienteGuardado = await guardarOActualizarClienteDesdeCotizacion();
+    const pdfNombre = nombreArchivoPDF(previewSnapshot);
 
-    let pdfNombreFinal = "";
-    let guardado = false;
-    let intentoColision = 0;
-    const MAX_REINTENTOS_COLISION = 20;
-
-    while(!guardado){
-      pdfNombreFinal = nombreArchivoPDF(previewSnapshot);
-
-      let pdfBase64 = "";
-      try{
-        pdfBase64 = await blobToBase64(previewPdfBlob);
-      }catch(e){
-        console.warn("No se pudo convertir PDF a base64, se guardará texto:", e);
-      }
-
-      try{
-        await guardarRegistroCotizacionTexto(clienteGuardado,{
-          base64:pdfBase64,
-          mime:"application/pdf",
-          nombre:pdfNombreFinal
-        },previewSnapshot);
-
-        guardado = true;
-      }catch(errorInsert){
-        if(esFactura || !esErrorNumeroDuplicado(errorInsert)){
-          throw errorInsert;
-        }
-
-        intentoColision += 1;
-        if(intentoColision > MAX_REINTENTOS_COLISION){
-          throw new Error("No se pudo reservar un correlativo después de varios intentos.");
-        }
-
-        const numeroNuevo = await obtenerNumeroPosteriorAColision(
-          previewSnapshot.form.numero,
-          previewSnapshot.form.fecha || todayISO()
-        );
-
-        await actualizarPreviewConNumero(numeroNuevo);
-        showToast(`El número ya había sido utilizado. Se cambió automáticamente a ${numeroNuevo}.`, "warn");
-      }
+    let pdfBase64 = "";
+    try{
+      pdfBase64 = await blobToBase64(previewPdfBlob);
+    }catch(e){
+      console.warn("No se pudo convertir PDF a base64, se guardará texto:", e);
     }
 
-    previewPdfDoc.save(pdfNombreFinal);
+    await guardarRegistroCotizacionTexto(clienteGuardado,{
+      base64:pdfBase64,
+      mime:"application/pdf",
+      nombre:pdfNombre
+    },previewSnapshot);
+
+    previewPdfDoc.save(pdfNombre);
 
     showToast("Documento guardado", "ok");
 
     await cargarCotizacionesPrevias();
 
-    if(!esFactura){
+    if(!esFacturaTipo(form.tipo)){
       await refrescarNumeroPorFecha();
     }
 
@@ -2613,12 +2424,7 @@ async function guardarDocumentoDesdePreview(){
     if(tabPrevias) tabPrevias.click();
   }catch(err){
     console.error("Error guardando documento:", err);
-
-    if(esErrorNumeroDuplicado(err)){
-      showToast("El correlativo ya fue usado. Recarga la página e intenta nuevamente.", "err");
-    }else{
-      showToast("Error guardando: " + (err.message || err), "err");
-    }
+    showToast("Error guardando: " + (err.message || err), "err");
   }finally{
     if(btn){
       btn.classList.remove("loading");
@@ -2690,7 +2496,7 @@ function normalizarSnapshotDesdeRegistro(reg){
     notas: reg?.notas || "",
     iva: ivaAplicado,
     footer: footer || {
-      direccion:"Valencia, Carabobo",
+      direccion:"Avenida Universidad, Urbanización La Granja, Edificio Diario El Carabobeño, en el Municipio Naguanagua del estado Carabobo.",
       contacto:"Tel: +58 414-4961122 | tuttovinilos@gmail.com",
       preparado_texto:"Documento preparado por:"
     }
@@ -2710,61 +2516,138 @@ function normalizarSnapshotDesdeRegistro(reg){
   };
 }
 
-async function cargarCotizacionesPrevias(){
-  if(!validarSupabase()) return;
+async function cargarTodasCotizacionesConSelect(sel){
+  const todas = [];
+  let desde = 0;
 
-  const body = $("cotizacionesBody");
+  while(true){
+    const hasta = desde + COTIZACIONES_LOTE_CARGA - 1;
 
-  if(body){
-    body.innerHTML = `<tr><td colspan="9" class="empty">Cargando...</td></tr>`;
-  }
-
-  const selects = [
-    `id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
-     responsable,vence,items,notas,subtotal,iva,total,pdf_url,pdf_path,pdf_nombre,
-     pdf_mime,aprobado,aprobado_at,aprobado_por,errada,errada_at,errada_por,created_at`,
-
-    `id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
-     responsable,vence,items,notas,subtotal,iva,total,pdf_url,pdf_path,pdf_nombre,
-     pdf_mime,created_at`,
-
-    `id,fecha,numero,tipo_documento,cliente,responsable,items,notas,subtotal,iva,total,created_at`,
-
-    `*`
-  ];
-
-  let res = null;
-
-  for(const sel of selects){
-    res = await db()
+    const res = await db()
       .from("cotizaciones")
       .select(sel)
       .order("created_at",{ ascending:false })
-      .limit(200);
+      .range(desde,hasta);
 
-    if(!res.error) break;
+    if(res.error) return res;
 
-    console.warn("Falló select cotizaciones previas, probando fallback:", res.error.message || res.error);
-  }
+    const lote = res.data || [];
+    todas.push(...lote);
 
-  if(res.error){
-    console.error("Error cargando cotizaciones:", res.error);
-
-    if(body){
-      body.innerHTML = `<tr><td colspan="9" class="empty">Error cargando cotizaciones: ${html(res.error.message || "")}</td></tr>`;
+    if(lote.length < COTIZACIONES_LOTE_CARGA){
+      return { data:todas, error:null };
     }
 
-    showToast("Error cargando cotizaciones","err");
-    return;
+    desde += COTIZACIONES_LOTE_CARGA;
+  }
+}
+
+async function cargarCotizacionesPrevias(){
+  if(!validarSupabase()) return;
+
+  // Evita dos cargas simultáneas (por ejemplo: carga inicial + clic en la pestaña).
+  // Una carga paralela podía dejar el texto "Cargando historial..." sin actualizar.
+  if(cargandoCotizacionesPrevias) return;
+  cargandoCotizacionesPrevias = true;
+
+  const body = $("cotizacionesBody");
+  const info = $("cotizacionesPaginacionInfo");
+  const prev = $("cotizacionesPaginaAnterior");
+  const next = $("cotizacionesPaginaSiguiente");
+
+  if(body && !cotizacionesDB.length){
+    body.innerHTML = `<tr><td colspan="9" class="empty">Cargando historial completo...</td></tr>`;
   }
 
-  cotizacionesDB = (res.data || []).map(c => ({
-    ...c,
-    aprobado:c.aprobado === true,
-    errada:c.errada === true
-  }));
+  if(info) info.textContent = "Cargando historial...";
+  if(prev) prev.disabled = true;
+  if(next) next.disabled = true;
 
-  renderCotizacionesPrevias();
+  try{
+    const selects = [
+      `id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
+       responsable,vence,items,notas,subtotal,iva,total,pdf_url,pdf_path,pdf_nombre,
+       pdf_mime,aprobado,aprobado_at,aprobado_por,errada,errada_at,errada_por,created_at`,
+
+      `id,fecha,numero,tipo_documento,cliente,rif_cedula,telefono,correo,direccion,
+       responsable,vence,items,notas,subtotal,iva,total,pdf_url,pdf_path,pdf_nombre,
+       pdf_mime,created_at`,
+
+      `id,fecha,numero,tipo_documento,cliente,responsable,items,notas,subtotal,iva,total,created_at`
+    ];
+
+    let res = null;
+
+    for(const sel of selects){
+      res = await cargarTodasCotizacionesConSelect(sel);
+
+      if(!res.error) break;
+
+      console.warn("Falló select cotizaciones previas, probando fallback:", res.error.message || res.error);
+    }
+
+    if(!res || res.error){
+      const error = res?.error || new Error("No se pudo cargar el historial.");
+      console.error("Error cargando cotizaciones:", error);
+
+      if(body && !cotizacionesDB.length){
+        body.innerHTML = `<tr><td colspan="9" class="empty">Error cargando cotizaciones: ${html(error.message || "")}</td></tr>`;
+      }
+
+      actualizarPaginacionCotizaciones(cotizacionesDB.length);
+      showToast("Error cargando cotizaciones","err");
+      return;
+    }
+
+    cotizacionesDB = (res.data || []).map(c => ({
+      ...c,
+      aprobado:c.aprobado === true,
+      errada:c.errada === true
+    }));
+
+    paginaCotizaciones = 1;
+    renderCotizacionesPrevias();
+
+  }catch(error){
+    console.error("Error inesperado cargando historial:", error);
+
+    if(body && !cotizacionesDB.length){
+      body.innerHTML = `<tr><td colspan="9" class="empty">Error cargando cotizaciones: ${html(error?.message || error || "")}</td></tr>`;
+    }
+
+    actualizarPaginacionCotizaciones(cotizacionesDB.length);
+    showToast("Error cargando cotizaciones","err");
+  }finally{
+    cargandoCotizacionesPrevias = false;
+
+    // Garantía visual: nunca dejar el pie de historial clavado en "Cargando...".
+    // renderCotizacionesPrevias() normalmente ya lo actualiza, pero este fallback
+    // cubre cualquier salida anticipada o carga concurrente.
+    if(info && /cargando/i.test(info.textContent || "")){
+      renderCotizacionesPrevias();
+    }
+  }
+}
+
+function actualizarPaginacionCotizaciones(total){
+  const info = $("cotizacionesPaginacionInfo");
+  const prev = $("cotizacionesPaginaAnterior");
+  const next = $("cotizacionesPaginaSiguiente");
+  const totalPaginas = Math.max(1, Math.ceil(total / cotizacionesPorPagina));
+
+  paginaCotizaciones = Math.min(Math.max(1,paginaCotizaciones),totalPaginas);
+
+  const inicio = total ? ((paginaCotizaciones - 1) * cotizacionesPorPagina) + 1 : 0;
+  const fin = total ? Math.min(paginaCotizaciones * cotizacionesPorPagina,total) : 0;
+
+  if(info){
+    info.textContent = total
+      ? `Mostrando ${inicio}–${fin} de ${total} · Página ${paginaCotizaciones} de ${totalPaginas}`
+      : "0 cotizaciones";
+  }
+
+  if(prev) prev.disabled = total === 0 || paginaCotizaciones <= 1;
+  if(next) next.disabled = total === 0 || paginaCotizaciones >= totalPaginas;
 }
 
 function renderCotizacionesPrevias(){
@@ -2809,12 +2692,20 @@ function renderCotizacionesPrevias(){
     lista = lista.filter(c => c.errada === true);
   }
 
-  if(!lista.length){
+  const total = lista.length;
+  const totalPaginas = Math.max(1, Math.ceil(total / cotizacionesPorPagina));
+  paginaCotizaciones = Math.min(Math.max(1,paginaCotizaciones),totalPaginas);
+  actualizarPaginacionCotizaciones(total);
+
+  if(!total){
     body.innerHTML = `<tr><td colspan="9" class="empty">Sin cotizaciones</td></tr>`;
     return;
   }
 
-  body.innerHTML = lista.map(c => {
+  const desde = (paginaCotizaciones - 1) * cotizacionesPorPagina;
+  const listaPagina = lista.slice(desde, desde + cotizacionesPorPagina);
+
+  body.innerHTML = listaPagina.map(c => {
     const meta = metaCotizacionDesdeRegistro(c);
     const aprobadoMeta = c.aprobado
       ? `<span class="approved-meta">${html(c.aprobado_por || "")} ${c.aprobado_at ? "· " + html(String(c.aprobado_at).slice(0,10)) : ""}</span>`
@@ -3442,9 +3333,55 @@ function bindEvents(){
   $("tabNueva")?.addEventListener("click", () => activarTab("nueva"));
   $("tabPrevias")?.addEventListener("click", () => activarTab("previas"));
 
-  $("recargarCotizaciones")?.addEventListener("click", cargarCotizacionesPrevias);
-  $("buscarCotizaciones")?.addEventListener("input", renderCotizacionesPrevias);
-  $("filtroAprobado")?.addEventListener("change", renderCotizacionesPrevias);
+  $("recargarCotizaciones")?.addEventListener("click", () => {
+    paginaCotizaciones = 1;
+    cargarCotizacionesPrevias();
+  });
+
+  $("buscarCotizaciones")?.addEventListener("input", () => {
+    paginaCotizaciones = 1;
+    renderCotizacionesPrevias();
+  });
+
+  $("filtroAprobado")?.addEventListener("change", () => {
+    paginaCotizaciones = 1;
+    renderCotizacionesPrevias();
+  });
+
+  $("cantidadCotizacionesPagina")?.addEventListener("change", e => {
+    cotizacionesPorPagina = Number(e.target.value) || 40;
+    paginaCotizaciones = 1;
+    renderCotizacionesPrevias();
+  });
+
+  $("cotizacionesPaginaAnterior")?.addEventListener("click", () => {
+    if(paginaCotizaciones <= 1) return;
+    paginaCotizaciones -= 1;
+    renderCotizacionesPrevias();
+  });
+
+  $("cotizacionesPaginaSiguiente")?.addEventListener("click", () => {
+    const q = normalizar($("buscarCotizaciones")?.value || "");
+    const filtroAprobado = $("filtroAprobado")?.value || "";
+
+    let lista = [...cotizacionesDB];
+    if(q){
+      lista = lista.filter(c => {
+        const meta = metaCotizacionDesdeRegistro(c);
+        const texto = [c.fecha,c.numero,c.cliente,meta.proyecto,c.responsable,c.telefono,c.total,c.tipo_documento,meta.moneda,meta.modalidad_precio,estadoTextoCotizacion(c)].join(" ");
+        return normalizar(texto).includes(q);
+      });
+    }
+    if(filtroAprobado === "aprobadas") lista = lista.filter(c => c.aprobado === true && c.errada !== true);
+    if(filtroAprobado === "pendientes") lista = lista.filter(c => c.aprobado !== true && c.errada !== true);
+    if(filtroAprobado === "erradas") lista = lista.filter(c => c.errada === true);
+
+    const totalPaginas = Math.max(1,Math.ceil(lista.length / cotizacionesPorPagina));
+    if(paginaCotizaciones >= totalPaginas) return;
+
+    paginaCotizaciones += 1;
+    renderCotizacionesPrevias();
+  });
 
   $("cerrarDetalle")?.addEventListener("click", cerrarDetalle);
 
