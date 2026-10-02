@@ -1,4 +1,4 @@
-m<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es" class="loading-menu">
 <head>
 <meta charset="UTF-8">
@@ -334,9 +334,79 @@ function sampleTransformedLength(el,matrix){
   for(let i=1;i<=count;i++){const p=at(n*i/count);total+=segment(n*(i-1)/count,n*i/count,last,p);last=p;}
   return total;
 }
+// Limpia el encabezado XML sin consultar DTD ni recursos externos.
+function cleanSvgXml(raw){
+  const literals=new Map(),blocked=new Set();
+  let cleaned='',pos=0;
+  const protectedToken=/<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\?[\s\S]*?\?>|<!DOCTYPE\b/gi;
+  let match;
+  while((match=protectedToken.exec(raw))){
+    cleaned+=raw.slice(pos,match.index);
+    if(!/^<!DOCTYPE\b/i.test(match[0])){cleaned+=match[0];pos=protectedToken.lastIndex;continue;}
+    let i=protectedToken.lastIndex,depth=0,quote='',end=-1;
+    for(;i<raw.length;i++){
+      const ch=raw[i];
+      if(quote){if(ch===quote)quote='';continue;}
+      if(raw.startsWith('<!--',i)){const j=raw.indexOf('-->',i+4);if(j<0)break;i=j+2;continue;}
+      if(ch==='"'||ch==="'"){quote=ch;continue;}
+      if(ch==='[')depth++;
+      else if(ch===']')depth--;
+      else if(ch==='>'&&depth===0){end=i+1;break;}
+    }
+    if(end<0||depth!==0)throw new Error('La declaración XML del SVG está incompleta. Vuelve a guardar el archivo.');
+    const declaration=raw.slice(match.index,end).replace(/<!--[\s\S]*?-->/g,'');
+    const entities=declaration.match(/<!ENTITY\s+(?:[^>"']|"[^"]*"|'[^']*')*>/gi)||[];
+    for(const entity of entities){
+      if(/^<!ENTITY\s+%/i.test(entity))continue;
+      const literal=entity.match(/^<!ENTITY\s+([A-Za-z_][\w.:-]*)\s+(["'])([\s\S]*)\2\s*>$/i);
+      const name=entity.match(/^<!ENTITY\s+([A-Za-z_][\w.:-]*)/i)?.[1];
+      if(!name)throw new Error('El SVG contiene una declaración de entidad XML inválida.');
+      if(literals.has(name)||blocked.has(name))continue; // XML utiliza la primera declaración.
+      if(literal&&!/[<%]/.test(literal[3]))literals.set(name,literal[3]);else blocked.add(name);
+      if(literals.size+blocked.size>256)throw new Error('El SVG contiene demasiadas entidades XML.');
+    }
+    pos=end;protectedToken.lastIndex=end;
+  }
+  cleaned+=raw.slice(pos);
+  const predefined={amp:'&',lt:'<',gt:'>',quot:'"',apos:"'"},cache=new Map();
+  function replaceRefs(value,pattern,convert,limit){
+    const chunks=[];let last=0,size=0,m;
+    const push=part=>{size+=part.length;if(size>limit)throw new Error('Las entidades XML del SVG superan el tamaño permitido.');chunks.push(part);};
+    while((m=pattern.exec(value))){push(value.slice(last,m.index));push(convert(m[0],m[1]));last=pattern.lastIndex;}
+    push(value.slice(last));return chunks.join('');
+  }
+  const decode=(value,chain=[])=>replaceRefs(value,/&(#x[\da-f]+|#\d+|[A-Za-z_][\w.:-]*);/gi,(reference,name)=>{
+    if(Object.prototype.hasOwnProperty.call(predefined,name))return predefined[name];
+    if(name[0]==='#'){
+      const code=name[1].toLowerCase()==='x'?parseInt(name.slice(2),16):Number(name.slice(1));
+      if(!(code===9||code===10||code===13||code>=32&&code<=0xd7ff||code>=0xe000&&code<=0xfffd||code>=0x10000&&code<=0x10ffff))throw new Error('El SVG contiene un carácter XML inválido.');
+      return String.fromCodePoint(code);
+    }
+    return resolve(name,chain);
+  },65536);
+  function resolve(name,chain=[]){
+    if(cache.has(name))return cache.get(name);
+    if(chain.includes(name)||chain.length>=16)throw new Error('El SVG contiene entidades XML circulares o demasiado anidadas.');
+    if(!literals.has(name))throw new Error(`La entidad «${name}» depende de una definición externa o no está declarada. Guarda el SVG incluyendo el dibujo y sus estilos dentro del archivo.`);
+    const value=decode(literals.get(name),[...chain,name]);
+    if(value.length>65536)throw new Error('Una entidad XML del SVG es demasiado grande.');
+    cache.set(name,value);return value;
+  }
+  const escapeXml=value=>value.replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[ch]));
+  // Los comentarios, CDATA e instrucciones XML no contienen referencias XML activas.
+  const parts=cleaned.split(/(<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\?[\s\S]*?\?>)/g);
+  let size=0;
+  for(let i=0;i<parts.length;i++){
+    if(!/^(?:<!--|<!\[CDATA\[|<\?)/.test(parts[i]))parts[i]=replaceRefs(parts[i],/&([A-Za-z_][\w.:-]*);/g,(ref,name)=>Object.prototype.hasOwnProperty.call(predefined,name)?ref:escapeXml(resolve(name)),8*1024*1024-size);
+    size+=parts[i].length;
+    if(size>8*1024*1024)throw new Error('El SVG expandido supera 8 MB. Simplifica el archivo.');
+  }
+  return parts.join('');
+}
+
 async function normaliseSvg(raw){
   if(raw.length>8*1024*1024)throw new Error('SVG demasiado grande (máximo 8 MB por detalle).');
-  if(/<!DOCTYPE|<!ENTITY/i.test(raw))throw new Error('Exporta el SVG sin declaraciones DTD ni entidades.');
+  raw=cleanSvgXml(raw);
   const doc=new DOMParser().parseFromString(raw,'image/svg+xml'),root=doc.documentElement;
   if(doc.querySelector('parsererror')||root.localName!=='svg'||root.namespaceURI!==SVG_NS)throw new Error('El archivo no es un SVG válido.');
   const allowed=new Set(['svg','g','defs','style','path','rect','circle','ellipse','polygon','polyline','line','title','desc','metadata']);
