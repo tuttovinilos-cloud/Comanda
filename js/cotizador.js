@@ -1,4 +1,4 @@
-console.log("COTIZADOR JS conectado v75 responsive y sincronización PC/móvil");
+console.log("COTIZADOR JS conectado v76 orden manual de ítems");
 
 const $ = (id) => document.getElementById(id);
 
@@ -695,6 +695,45 @@ function addSeparator(){
   render();
 }
 
+/* =========================================================
+   v76 · ORDEN MANUAL DE ÍTEMS / SEPARADORES / IMÁGENES
+   Se usa ↑ / ↓ en vez de drag & drop para que también sea
+   estable en móviles y no interfiera con inputs editables.
+========================================================= */
+function moverItem(index,direccion){
+  const origen = Number(index);
+  const paso = Number(direccion);
+  const destino = origen + paso;
+
+  if(!Number.isInteger(origen) || !Number.isInteger(paso)) return;
+  if(!Array.isArray(data.items)) return;
+  if(origen < 0 || origen >= data.items.length) return;
+  if(destino < 0 || destino >= data.items.length) return;
+
+  guardarEstadoDeshacer();
+
+  const temporal = data.items[origen];
+  data.items[origen] = data.items[destino];
+  data.items[destino] = temporal;
+
+  render();
+}
+
+function botonesOrdenItem(index){
+  const primero = index === 0;
+  const ultimo = index === data.items.length - 1;
+
+  return `
+    <div class="row-order-actions">
+      <button class="btn-move-item" data-move-item="${index}" data-move-dir="-1" type="button"
+        title="Subir" aria-label="Subir elemento" ${primero ? "disabled" : ""}>↑</button>
+      <button class="btn-move-item" data-move-item="${index}" data-move-dir="1" type="button"
+        title="Bajar" aria-label="Bajar elemento" ${ultimo ? "disabled" : ""}>↓</button>
+      <button class="btn btn-red" data-remove="${index}" type="button" title="Eliminar" aria-label="Eliminar elemento">✕</button>
+    </div>
+  `;
+}
+
 function procesarImagenCotizador(file,maxPx=100){
   return new Promise((resolve,reject) => {
     if(!file || !String(file.type || "").startsWith("image/")){
@@ -1126,8 +1165,8 @@ function render(){
           <td colspan="4">
             <input value="${html(item.desc)}" placeholder="Título de sección" data-index="${index}" data-field="desc" style="text-align:center;font-weight:900;color:var(--azulOsc)">
           </td>
-          <td class="center">
-            <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
+          <td class="center action-cell">
+            ${botonesOrdenItem(index)}
           </td>
         </tr>
       `);
@@ -1136,7 +1175,7 @@ function render(){
         <div class="item-card">
           <div class="item-head">
             <span>Separador</span>
-            <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
+            ${botonesOrdenItem(index)}
           </div>
           <div class="item-body">
             <div class="field">
@@ -1179,8 +1218,8 @@ function render(){
               ${imagenesHtml}
             </div>
           </td>
-          <td class="center">
-            <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
+          <td class="center action-cell">
+            ${botonesOrdenItem(index)}
           </td>
         </tr>
       `);
@@ -1189,7 +1228,7 @@ function render(){
         <div class="item-card">
           <div class="item-head">
             <span>Imagen</span>
-            <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
+            ${botonesOrdenItem(index)}
           </div>
           <div class="item-body">
             <div class="quote-image-box mobile-image-box">
@@ -1230,8 +1269,8 @@ function render(){
         <td class="center total-cell">
           <input readonly data-total-index="${index}" value="${totalItemTexto}">
         </td>
-        <td class="center">
-          <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
+        <td class="center action-cell">
+          ${botonesOrdenItem(index)}
         </td>
       </tr>
     `);
@@ -1240,7 +1279,7 @@ function render(){
       <div class="item-card">
         <div class="item-head">
           <span>Ítem ${number}</span>
-          <button class="btn btn-red" data-remove="${index}" type="button">✕</button>
+          ${botonesOrdenItem(index)}
         </div>
 
         <div class="item-body">
@@ -3286,6 +3325,16 @@ function bindEvents(){
       if($("modalidadPrecio")) $("modalidadPrecio").value = modalidad;
       aplicarOpcionesPrecioUI(monedaActualCodigo(),modalidad);
       render();
+      return;
+    }
+
+    const mover = e.target.closest("[data-move-item]");
+
+    if(mover){
+      moverItem(
+        Number(mover.dataset.moveItem),
+        Number(mover.dataset.moveDir)
+      );
       return;
     }
 
