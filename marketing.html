@@ -483,53 +483,47 @@ body{padding-bottom:30px}
 <script>
 (function(){
   'use strict';
+
   const STORAGE_KEY='tuttovinilos_marketing_ideas_v1';
+  const MIGRATION_KEY='tuttovinilos_marketing_supabase_migrated_v1';
   const CATEGORIAS=['Redes sociales','Prospección','Seguimiento','Reactivación','Campaña','Web / Google','Ideas de productos','Alianzas','Análisis','Otro'];
+  const TABLE_IDEAS='marketing_ideas';
+  const TABLE_AGENDAS='marketing_agendas';
+
   let ideas=[];
   let mesVisible=new Date(new Date().getFullYear(),new Date().getMonth(),1);
+  let db=null;
+  let operadorActual=null;
+  let dbCargando=true;
+  let guardando=false;
 
   const $=id=>document.getElementById(id);
-  const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
+  const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
   const norm=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
   const pad=n=>String(n).padStart(2,'0');
   const isoDate=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   const todayISO=()=>isoDate(new Date());
-  const currentMonthKey=()=>monthKey(todayISO());
   const parseDate=s=>s?new Date(`${s}T12:00:00`):null;
   const monthKey=s=>String(s||'').slice(0,7);
   const toast=msg=>{const t=$('toast');t.textContent=msg;t.style.display='block';clearTimeout(window.__tvToast);window.__tvToast=setTimeout(()=>t.style.display='none',2200)};
 
-  function seed(){
-    try{
-      const raw=localStorage.getItem(STORAGE_KEY);
-      ideas=raw?JSON.parse(raw):[];
-      if(!Array.isArray(ideas))ideas=[];
-      // Compatibilidad con versiones anteriores:
-      // si tenía fecha, se considera agenda; si no tenía fecha, se considera idea.
-      ideas=ideas.map(x=>({
-        ...x,
-        tipo:x.tipo||(x.fecha?'agenda':'idea'),
-        color:isHexColor(x.color)?x.color:'#153bff'
-      }));
-      persist();
-    }catch(e){ideas=[]}
-  }
-  function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(ideas))}
   function isHexColor(v){return /^#[0-9a-fA-F]{6}$/.test(String(v||''))}
   function safeColor(v){return isHexColor(v)?v:'#153bff'}
   function esIdea(x){return (x?.tipo||'')==='idea' || (!x?.tipo&&!x?.fecha)}
   function esAgenda(x){return (x?.tipo||'')==='agenda' || (!x?.tipo&&!!x?.fecha)}
-  function id(){return `${Date.now()}_${Math.random().toString(36).slice(2,8)}`}
+  function idLocal(){return `${Date.now()}_${Math.random().toString(36).slice(2,8)}`}
+
   function poblarCategorias(){
     $('filterCategoria').innerHTML='<option value="">Todas las categorías</option>'+CATEGORIAS.map(c=>`<option>${esc(c)}</option>`).join('');
     $('fCategoria').innerHTML=CATEGORIAS.map(c=>`<option>${esc(c)}</option>`).join('');
   }
   function formatMonth(d){return new Intl.DateTimeFormat('es-VE',{month:'long',year:'numeric'}).format(d).replace(/^./m,m=>m.toUpperCase())}
   function formatLong(s){if(!s)return '';return new Intl.DateTimeFormat('es-VE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}).format(parseDate(s)).replace(/\./g,'')}
-  function isOverdue(x){return x.estado!=='Realizado'&&x.estado!=='Descartado'&&x.fecha&&x.fecha<todayISO()}
+  function isOverdue(x){return esAgenda(x)&&x.estado!=='Realizado'&&x.estado!=='Descartado'&&x.fecha&&x.fecha<todayISO()}
   function startOfWeek(d){const x=new Date(d);const day=x.getDay();const diff=(day===0?-6:1)-day;x.setDate(x.getDate()+diff);x.setHours(0,0,0,0);return x}
   function endOfWeek(d){const x=startOfWeek(d);x.setDate(x.getDate()+6);return x}
   function inPeriod(x,period){
+    if(!esAgenda(x))return false;
     if(period==='todas')return true;if(!x.fecha)return false;
     const f=parseDate(x.fecha),t=parseDate(todayISO());
     if(period==='hoy')return x.fecha===todayISO();
@@ -551,6 +545,7 @@ body{padding-bottom:30px}
       return p(a.prioridad)-p(b.prioridad)||String(a.titulo).localeCompare(String(b.titulo));
     });
   }
+
   function renderKPIs(){
     const visibleMonth=`${mesVisible.getFullYear()}-${pad(mesVisible.getMonth()+1)}`;
     const agendadasEsteMes=ideas.filter(x=>esAgenda(x)&&x.fecha&&monthKey(x.fecha)===visibleMonth&&x.estado!=='Descartado').length;
@@ -568,8 +563,9 @@ body{padding-bottom:30px}
     else if(tipo==='hoy'){ $('filterPeriodo').value='hoy'; $('filterEstado').value=''; mesVisible=new Date(new Date().getFullYear(),new Date().getMonth(),1); }
     else if(tipo==='vencidas'){ $('filterPeriodo').value='vencidas'; $('filterEstado').value=''; }
     else if(tipo==='realizadas'){ $('filterPeriodo').value='mes'; $('filterEstado').value='Realizado'; }
-    render();
+    cambiarVista('lista');render();
   };
+
   function chip(x){
     const pr=norm(x.prioridad),st=norm(x.estado),color=safeColor(x.color);
     return `<button class="idea-chip ${pr} ${st}" type="button" onclick="event.stopPropagation();editarIdea('${esc(x.id)}')">
@@ -580,7 +576,7 @@ body{padding-bottom:30px}
   function matchesForCalendar(x){
     const q=norm($('searchInput').value),cat=$('filterCategoria').value,st=$('filterEstado').value,pr=$('filterPrioridad').value;
     const text=norm(`${x.titulo} ${x.notas} ${x.categoria} ${x.responsable}`);
-    return x.fecha&&(!q||text.includes(q))&&(!cat||x.categoria===cat)&&(!st||x.estado===st)&&(!pr||x.prioridad===pr);
+    return esAgenda(x)&&x.fecha&&(!q||text.includes(q))&&(!cat||x.categoria===cat)&&(!st||x.estado===st)&&(!pr||x.prioridad===pr);
   }
   function renderCalendar(){
     const cal=$('calendar');let out='';
@@ -602,7 +598,7 @@ body{padding-bottom:30px}
     $('agendaEmpty').style.display=list.length?'none':'block';
     body.innerHTML=list.map(x=>`<tr>
       <td><span class="date-main">${esc(x.fecha?formatLong(x.fecha):'Sin fecha')}</span>${x.fecha_limite?`<span class="date-rel">Límite: ${esc(formatLong(x.fecha_limite))}</span>`:''}</td>
-      <td><div class="idea-main">${esc(x.titulo)}</div>${x.notas?`<span class="idea-note">${esc(x.notas)}</span>`:''}</td>
+      <td><div class="idea-main"><i class="agenda-color-dot" style="background:${safeColor(x.color)}"></i>${esc(x.titulo)}</div>${x.notas?`<span class="idea-note">${esc(x.notas)}</span>`:''}</td>
       <td><span class="pill cat">${esc(x.categoria)}</span></td>
       <td><span class="pill p-${norm(x.prioridad)}">${esc(x.prioridad)}</span></td>
       <td><span class="pill s-${norm(x.estado).replace('en curso','curso')}">${esc(x.estado)}</span>${isOverdue(x)?'<div style="font-size:8px;color:#dc2626;font-weight:900;margin-top:3px">VENCIDA</div>':''}</td>
@@ -610,7 +606,7 @@ body{padding-bottom:30px}
     </tr>`).join('');
   }
   function renderIdeasPanel(){
-    const list=ideas.filter(x=>!x.fecha&&x.estado!=='Descartado').sort((a,b)=>{
+    const list=ideas.filter(x=>esIdea(x)&&x.estado!=='Descartado').sort((a,b)=>{
       const p=v=>v==='Alta'?-1:v==='Media'?0:1;return p(a.prioridad)-p(b.prioridad)||String(a.created_at||'').localeCompare(String(b.created_at||''));
     });
     $('ideasCount').textContent=list.length;
@@ -622,90 +618,167 @@ body{padding-bottom:30px}
         <span class="idea-item-title"><i class="agenda-color-dot" style="background:${safeColor(x.color)}"></i>${esc(x.titulo)}</span>
         <span class="idea-item-meta">${esc(x.categoria)} · ${esc(x.prioridad)}</span>
       </div>
-      <div class="idea-item-actions">
-        <button class="idea-mini-btn" type="button" onclick="editarIdea('${esc(x.id)}')" title="Editar idea">✎</button>
-      </div>
+      <div class="idea-item-actions"><button class="idea-mini-btn" type="button" onclick="event.stopPropagation();editarIdea('${esc(x.id)}')" title="Editar idea">✎</button></div>
     </div>`).join('');
   }
   window.render=()=>{renderKPIs();renderCalendar();renderList();renderIdeasPanel()};
   window.cambiarMes=delta=>{mesVisible=new Date(mesVisible.getFullYear(),mesVisible.getMonth()+delta,1);$('filterPeriodo').value='mes';render()};
   window.irHoy=()=>{mesVisible=new Date(new Date().getFullYear(),new Date().getMonth(),1);$('filterPeriodo').value='hoy';render()};
   window.cambiarVista=v=>{$('calendarView').classList.toggle('active',v==='calendario');$('listView').classList.toggle('active',v==='lista');$('viewTitle').textContent=v==='calendario'?'Calendario de agenda':'Agenda de acciones'};
+
   function prepararModal(x,mode,fecha){
-    const isIdea=mode==='idea', isAgenda=mode==='agenda';
-    $('modalMode').value=mode;$('ideaId').value=x?.id||'';
-    $('fTitulo').value=x?.titulo||'';
+    const isIdea=mode==='idea',isAgenda=mode==='agenda';
+    $('modalMode').value=mode;$('ideaId').value=x?.id||'';$('fTitulo').value=x?.titulo||'';
     $('fFecha').value=isAgenda?(fecha ?? x?.fecha ?? todayISO()):'';
     $('fFechaLimite').value=isAgenda?(x?.fecha_limite||''):'';
-    $('fCategoria').value=x?.categoria||'Redes sociales';
-    $('fPrioridad').value=x?.prioridad||'Media';
-    $('fEstado').value=x?.estado||'Pendiente';
-    $('fResponsable').value=x?.responsable||'';
-    $('fColor').value=safeColor(x?.color);
-    $('fNotas').value=x?.notas||'';
-
-    $('fechaField').style.display=isIdea?'none':'flex';
-    $('fechaLimiteField').style.display=isIdea?'none':'flex';
-    $('fechaLabel').textContent='Fecha de agenda';
-    $('modalTitle').textContent=isAgenda?(x?'EDITAR AGENDA':'NUEVA AGENDA'):(x?'EDITAR IDEA':'NUEVA IDEA');
-    $('btnGuardarIdea').textContent=isIdea?'Guardar idea':'Guardar agenda';
-    $('btnEliminar').style.display=x?'inline-flex':'none';
-    $('modalHint').textContent=isIdea
-      ? 'Las ideas no llevan fecha. Son una lista independiente de cosas que queremos hacer y pensar más adelante.'
-      : 'Las agendas son acciones con fecha. Se crean desde el calendario y aparecen únicamente en la agenda.';
-    $('ideaBackdrop').style.display='flex';
-    setTimeout(()=>$('fTitulo').focus(),60);
+    $('fCategoria').value=x?.categoria||'Redes sociales';$('fPrioridad').value=x?.prioridad||'Media';$('fEstado').value=x?.estado||'Pendiente';$('fResponsable').value=x?.responsable||'';$('fColor').value=safeColor(x?.color);$('fNotas').value=x?.notas||'';
+    $('fechaField').style.display=isIdea?'none':'flex';$('fechaLimiteField').style.display=isIdea?'none':'flex';$('fechaLabel').textContent='Fecha de agenda';
+    $('modalTitle').textContent=isAgenda?(x?'EDITAR AGENDA':'NUEVA AGENDA'):(x?'EDITAR IDEA':'NUEVA IDEA');$('btnGuardarIdea').textContent=isIdea?'Guardar idea':'Guardar agenda';$('btnEliminar').style.display=x?'inline-flex':'none';
+    $('modalHint').textContent=isIdea?'Las ideas no llevan fecha. Son una lista independiente de cosas que queremos hacer y pensar más adelante.':'Las agendas son acciones con fecha. Se crean desde el calendario y aparecen únicamente en la agenda.';
+    $('ideaBackdrop').style.display='flex';setTimeout(()=>$('fTitulo').focus(),60);
   }
   window.abrirNuevaIdea=()=>prepararModal(null,'idea','');
   window.abrirNuevaAgenda=(fecha)=>prepararModal(null,'agenda',fecha||todayISO());
-  window.editarIdea=key=>{
-    const x=ideas.find(i=>i.id===key);
-    if(x)prepararModal(x,esAgenda(x)?'agenda':'idea',x.fecha||'');
-  };
+  window.editarIdea=key=>{const x=ideas.find(i=>i.id===key);if(x)prepararModal(x,esAgenda(x)?'agenda':'idea',x.fecha||'')};
   window.cerrarModal=()=>{$('ideaBackdrop').style.display='none'};
   window.cerrarSiFondo=e=>{if(e.target.id==='ideaBackdrop')cerrarModal()};
-  window.guardarIdea=()=>{
-    const titulo=$('fTitulo').value.trim(),mode=$('modalMode').value;
-    const esModoIdea=mode==='idea', esModoAgenda=mode==='agenda';
+
+  async function esperarSupabase(){
+    for(let i=0;i<120;i++){
+      if(window.supabaseClient)return window.supabaseClient;
+      await new Promise(r=>setTimeout(r,50));
+    }
+    return null;
+  }
+  async function obtenerOperador(){
+    try{
+      if(typeof window.obtenerOperadorAutenticado==='function'){
+        const op=await window.obtenerOperadorAutenticado();
+        if(op)return op;
+      }
+      return typeof window.getSesionOperador==='function'?window.getSesionOperador():null;
+    }catch(e){console.warn('No se pudo obtener el operador:',e);return null}
+  }
+
+  function normalizarIdeaDb(row){
+    return {id:`idea:${row.id}`,db_id:row.id,tipo:'idea',titulo:row.titulo,categoria:row.categoria||'Redes sociales',prioridad:row.prioridad||'Media',estado:row.estado||'Pendiente',responsable:row.responsable||'',color:safeColor(row.color),notas:row.notas||'',created_at:row.created_at,updated_at:row.updated_at};
+  }
+  function normalizarAgendaDb(row){
+    return {id:`agenda:${row.id}`,db_id:row.id,tipo:'agenda',titulo:row.titulo,fecha:row.fecha,fecha_limite:row.fecha_limite||'',hora:row.hora||'',categoria:row.categoria||'Redes sociales',prioridad:row.prioridad||'Media',estado:row.estado||'Pendiente',responsable:row.responsable||'',color:safeColor(row.color),notas:row.notas||'',recordatorio:!!row.recordatorio,recordatorio_minutos:row.recordatorio_minutos??null,created_at:row.created_at,updated_at:row.updated_at};
+  }
+
+  function leerCacheLocal(){
+    try{
+      const raw=localStorage.getItem(STORAGE_KEY);const cached=raw?JSON.parse(raw):[];
+      if(!Array.isArray(cached))return [];
+      return cached.map(x=>({...x,tipo:x.tipo||(x.fecha?'agenda':'idea'),color:safeColor(x.color)}));
+    }catch(e){return []}
+  }
+  function guardarCache(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(ideas))}catch(e){}}
+
+  async function importarCacheSiHaceFalta(){
+    const cache=leerCacheLocal();
+    if(!cache.length)return;
+    const marker=localStorage.getItem(MIGRATION_KEY);
+    if(marker)return;
+    const [ri,ra]=await Promise.all([
+      db.from(TABLE_IDEAS).select('id',{count:'exact',head:true}),
+      db.from(TABLE_AGENDAS).select('id',{count:'exact',head:true})
+    ]);
+    if(ri.error||ra.error){console.warn('No se pudo comprobar migración de Marketing:',ri.error||ra.error);return}
+    const localIdeas=cache.filter(esIdea).map(x=>({legacy_id:String(x.id),titulo:x.titulo,categoria:x.categoria||'Redes sociales',prioridad:x.prioridad||'Media',estado:x.estado||'Pendiente',responsable:x.responsable||null,color:safeColor(x.color),notas:x.notas||null,creado_por:operadorActual?.id||null,actualizado_por:operadorActual?.id||null,created_at:x.created_at||new Date().toISOString(),updated_at:x.updated_at||new Date().toISOString()}));
+    const localAgendas=cache.filter(esAgenda).filter(x=>x.fecha).map(x=>({legacy_id:String(x.id),titulo:x.titulo,fecha:x.fecha,hora:x.hora||null,fecha_limite:x.fecha_limite||null,categoria:x.categoria||'Redes sociales',prioridad:x.prioridad||'Media',estado:x.estado||'Pendiente',responsable:x.responsable||null,color:safeColor(x.color),notas:x.notas||null,recordatorio:!!x.recordatorio,recordatorio_minutos:x.recordatorio_minutos??null,creado_por:operadorActual?.id||null,actualizado_por:operadorActual?.id||null,created_at:x.created_at||new Date().toISOString(),updated_at:x.updated_at||new Date().toISOString()}));
+    let migrated=false;
+    if((ri.count||0)===0 && localIdeas.length){
+      const {error}=await db.from(TABLE_IDEAS).upsert(localIdeas,{onConflict:'legacy_id'});
+      if(error){console.error('Migración de ideas falló:',error);return}
+      migrated=true;
+    }
+    if((ra.count||0)===0 && localAgendas.length){
+      const {error}=await db.from(TABLE_AGENDAS).upsert(localAgendas,{onConflict:'legacy_id'});
+      if(error){console.error('Migración de agendas falló:',error);return}
+      migrated=true;
+    }
+    if(migrated){
+      localStorage.setItem(MIGRATION_KEY,'ok');
+      toast('Datos locales migrados a Supabase');
+    } else {
+      localStorage.setItem(MIGRATION_KEY,'ok');
+    }
+  }
+
+  async function cargarDatosSupabase(){
+    db=await esperarSupabase();
+    if(!db){dbCargando=false;toast('No se pudo conectar con Supabase');return}
+    operadorActual=await obtenerOperador();
+    await importarCacheSiHaceFalta();
+    const [ri,ra]=await Promise.all([
+      db.from(TABLE_IDEAS).select('*').order('created_at',{ascending:false}),
+      db.from(TABLE_AGENDAS).select('*').order('fecha',{ascending:true}).order('created_at',{ascending:true})
+    ]);
+    if(ri.error||ra.error){
+      console.error('Error cargando Marketing desde Supabase:',ri.error||ra.error);
+      const cache=leerCacheLocal();if(cache.length)ideas=cache;
+      toast('No se pudieron cargar los datos de Marketing');
+    }else{
+      ideas=[...(ri.data||[]).map(normalizarIdeaDb),...(ra.data||[]).map(normalizarAgendaDb)];
+      guardarCache();
+    }
+    dbCargando=false;render();
+  }
+
+  function payloadIdea(){return {titulo:$('fTitulo').value.trim(),categoria:$('fCategoria').value,prioridad:$('fPrioridad').value,estado:$('fEstado').value,responsable:$('fResponsable').value.trim()||null,color:safeColor($('fColor').value),notas:$('fNotas').value.trim()||null,actualizado_por:operadorActual?.id||null,updated_at:new Date().toISOString()}}
+  function payloadAgenda(){return {...payloadIdea(),fecha:$('fFecha').value,fecha_limite:$('fFechaLimite').value||null,recordatorio:false,recordatorio_minutos:null}}
+
+  window.guardarIdea=async()=>{
+    if(guardando)return;
+    const titulo=$('fTitulo').value.trim(),mode=$('modalMode').value,key=$('ideaId').value;
+    const esModoIdea=mode==='idea',esModoAgenda=mode==='agenda';
     if(!titulo){toast(esModoIdea?'Escribe la idea':'Escribe la acción');$('fTitulo').focus();return}
     if(esModoAgenda&&!$('fFecha').value){toast('Selecciona una fecha para la agenda');return}
-
-    const payload={
-      titulo,
-      tipo:esModoIdea?'idea':'agenda',
-      fecha:esModoAgenda?$('fFecha').value:'',
-      fecha_limite:esModoAgenda?$('fFechaLimite').value:'',
-      categoria:$('fCategoria').value,
-      prioridad:$('fPrioridad').value,
-      estado:$('fEstado').value,
-      responsable:$('fResponsable').value.trim(),
-      color:safeColor($('fColor').value),
-      notas:$('fNotas').value.trim(),
-      updated_at:new Date().toISOString()
-    };
-
-    const key=$('ideaId').value;
-    if(key){
-      const idx=ideas.findIndex(i=>i.id===key);
-      if(idx>=0)ideas[idx]={...ideas[idx],...payload};
-    }else{
-      ideas.push({id:id(),created_at:new Date().toISOString(),...payload});
+    if(!db){toast('Supabase todavía no está listo');return}
+    guardando=true;$('btnGuardarIdea').disabled=true;$('btnGuardarIdea').textContent='Guardando...';
+    try{
+      const old=key?ideas.find(i=>i.id===key):null;
+      if(old){
+        const table=esModoAgenda?TABLE_AGENDAS:TABLE_IDEAS;
+        const payload=esModoAgenda?payloadAgenda():payloadIdea();
+        const {data,error}=await db.from(table).update(payload).eq('id',old.db_id).select('*').single();
+        if(error)throw error;
+        const normalized=esModoAgenda?normalizarAgendaDb(data):normalizarIdeaDb(data);
+        const idx=ideas.findIndex(i=>i.id===key);if(idx>=0)ideas[idx]=normalized;
+      }else{
+        const table=esModoAgenda?TABLE_AGENDAS:TABLE_IDEAS;
+        const payload=esModoAgenda?payloadAgenda():payloadIdea();
+        payload.legacy_id=idLocal();payload.creado_por=operadorActual?.id||null;payload.created_at=new Date().toISOString();
+        const {data,error}=await db.from(table).insert(payload).select('*').single();
+        if(error)throw error;
+        ideas.push(esModoAgenda?normalizarAgendaDb(data):normalizarIdeaDb(data));
+      }
+      guardarCache();cerrarModal();render();toast(esModoIdea?(key?'Idea actualizada':'Idea guardada'):(key?'Agenda actualizada':'Agenda creada'));
+    }catch(error){
+      console.error('Error guardando Marketing:',error);
+      toast('No se pudo guardar en Supabase');
+    }finally{
+      guardando=false;$('btnGuardarIdea').disabled=false;$('btnGuardarIdea').textContent=esModoIdea?'Guardar idea':'Guardar agenda';
     }
-
-    persist();cerrarModal();render();
-    toast(esModoIdea?(key?'Idea actualizada':'Idea guardada'):(key?'Agenda actualizada':'Agenda creada'));
   };
-  window.eliminarIdea=key=>{
-    const x=ideas.find(i=>i.id===key);if(!x)return;
-    if(!confirm(`¿Eliminar la idea?\n\n${x.titulo}`))return;
-    ideas=ideas.filter(i=>i.id!==key);persist();render();toast('Idea eliminada');
+
+  window.eliminarIdea=async key=>{
+    const x=ideas.find(i=>i.id===key);if(!x||!db)return;
+    if(!confirm(`¿Eliminar ${esAgenda(x)?'la agenda':'la idea'}?\n\n${x.titulo}`))return;
+    try{
+      const table=esAgenda(x)?TABLE_AGENDAS:TABLE_IDEAS;
+      const {error}=await db.from(table).delete().eq('id',x.db_id);
+      if(error)throw error;
+      ideas=ideas.filter(i=>i.id!==key);guardarCache();render();toast(esAgenda(x)?'Agenda eliminada':'Idea eliminada');
+    }catch(error){console.error('Error eliminando Marketing:',error);toast('No se pudo eliminar en Supabase')}
   };
   window.eliminarDesdeModal=()=>{const key=$('ideaId').value;if(key)eliminarIdea(key);cerrarModal()};
+
   function setPushButton(label){
-    const btn=$('pushBtn');
-    if(!btn)return;
-    btn.innerHTML=`<svg class="push-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><span>${esc(label)}</span>`;
-    btn.classList.add('enabled');
+    const btn=$('pushBtn');if(!btn)return;
+    btn.innerHTML=`<span class="push-emoji" aria-hidden="true">🔔</span><span>${esc(label)}</span>`;btn.classList.add('enabled');
   }
   window.activarPush=async()=>{
     const btn=$('pushBtn');
@@ -713,33 +786,22 @@ body{padding-bottom:30px}
     try{
       const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();
       if(permission!=='granted'){toast('Permiso de notificaciones no concedido');return}
-      // Preparado para Web Push real. Requiere service worker + clave pública VAPID en producción.
       const registration=await navigator.serviceWorker.register('sw-marketing.js',{scope:'./'});
       const existing=await registration.pushManager.getSubscription();
       if(existing){setPushButton('Activadas');toast('Notificaciones ya activadas');return}
       const vapidKey=window.COMANDA_VAPID_PUBLIC_KEY||'';
       if(!vapidKey){setPushButton('Permiso OK');toast('Permiso activado. Falta conectar Push con Supabase');return}
-      const applicationServerKey=base64UrlToUint8Array(vapidKey);
-      const subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey});
-      // La suscripción queda disponible para guardarla en Supabase en el siguiente paso.
-      console.log('Web Push subscription:',subscription.toJSON());
-      setPushButton('Activadas');toast('Notificaciones activadas');
+      const subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:base64UrlToUint8Array(vapidKey)});
+      console.log('Web Push subscription:',subscription.toJSON());setPushButton('Activadas');toast('Notificaciones activadas');
     }catch(error){console.error(error);toast('No se pudieron activar las notificaciones')}
   };
-  function base64UrlToUint8Array(base64String){
-    const padding='='.repeat((4-base64String.length%4)%4);
-    const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
-    const raw=atob(base64);const output=new Uint8Array(raw.length);
-    for(let i=0;i<raw.length;i++)output[i]=raw.charCodeAt(i);
-    return output;
-  }
-  async function comprobarPush(){
-    const btn=$('pushBtn');
-    if(!btn||!('Notification' in window))return;
-    if(Notification.permission==='granted'){setPushButton('Activadas')}
-  }
+  function base64UrlToUint8Array(base64String){const padding='='.repeat((4-base64String.length%4)%4),base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(base64),output=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)output[i]=raw.charCodeAt(i);return output}
+  async function comprobarPush(){const btn=$('pushBtn');if(!btn||!('Notification' in window))return;if(Notification.permission==='granted')setPushButton('Activadas')}
+
   document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrarModal()});
-  seed();poblarCategorias();render();comprobarPush();
+  poblarCategorias();render();comprobarPush();
+  const authReady=window.authReady||Promise.resolve(true);
+  Promise.resolve(authReady).then(()=>cargarDatosSupabase()).catch(error=>{console.error(error);dbCargando=false;render()});
 })();
 </script>
 </body>
