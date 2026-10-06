@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>Organizador de Ideas · Tuttovinilos</title>
+<title>Organizador de Ideas · Tuttovinilos · Local</title>
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -57,7 +57,10 @@ th:nth-child(1),td:nth-child(1){width:44px;text-align:center}th:nth-child(2),td:
   <div class="logo"><img src="Logo tutto1.svg" alt="Tutto Vinilos"><small>COMANDA</small></div>
   <button class="noti-btn" id="notiBtnGlobal" type="button" onclick="abrirNotificaciones && abrirNotificaciones()">🔔 <span class="noti-count empty" id="notiCount">0</span></button>
   <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menú">☰ Menú</button>
-  <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
+  <nav class="header-tabs" id="authMenu">
+    <a class="tab-btn active" href="#">Organizador</a>
+    <button class="tab-btn" type="button" onclick="exportarJSON()">Exportar</button>
+  </nav>
 </header>
 
 <section class="hero">
@@ -225,13 +228,12 @@ function delIdea(id){if(!confirm('¿Eliminar esta idea?'))return;ideas=ideas.fil
 function duplicarIdea(id){const i=ideas.find(x=>x.id===id);if(!i)return;const n={...i,id:uid(),numero:nextNum(),cliente:i.cliente+' copia',created_at:new Date().toISOString(),updated_at:new Date().toISOString()};ideas.unshift(n);save();render();toast('Duplicado')}
 function openDesc(id){const i=ideas.find(x=>x.id===id);if(!i)return;$('descText').innerHTML=`<b>${esc(i.numero)} · ${esc(i.cliente)}</b>\n\n${esc(i.descripcion||'Sin descripción')}\n\nTipo: ${esc(i.tipo_letrero||'')}\nEstado: ${esc(i.estado||'')}\nMonto: ${money(i.monto)} · Abono: ${money(i.abono)} · ${esc(deudaInfo(i).txt)}${i.observaciones?'\n\nObservaciones:\n'+esc(i.observaciones):''}`;$('descBackdrop').style.display='flex'}
 function closeModal(id){$(id).style.display='none'}function bdClick(e,id){if(e.target&&e.target.id===id)closeModal(id)}
+function abrirNotificaciones(){toast('Versión local sin notificaciones.')}
+function initMenuLocal(){const btn=$('mobileMenuBtn'), menu=$('authMenu'); if(btn&&menu){btn.onclick=function(){menu.classList.toggle('open')}}}
 function limpiarFiltros(){['searchInput','filterEstado','filterPago','filterTipo','filterFechaDesde','filterFechaHasta'].forEach(id=>$(id).value='');render()}
 function exportarJSON(){const blob=new Blob([JSON.stringify(ideas,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='organizador_ideas_local.json';a.click();URL.revokeObjectURL(a.href)}
-function init(){llenarSelects();load();$('q_fecha').value=hoy();clearQuickEntry();render();document.documentElement.classList.remove('loading-menu');document.documentElement.classList.add('menu-ready')}
+function init(){llenarSelects();load();$('q_fecha').value=hoy();clearQuickEntry();render();initMenuLocal();document.documentElement.classList.remove('loading-menu');document.documentElement.classList.add('menu-ready')}
 window.addEventListener('DOMContentLoaded',init);
 </script>
-<script src="js/auth.js?v=27"></script>
-<script src="js/menu.js?v=43"></script>
-<script src="js/notificaciones.js?v=35"></script>
 </body>
 </html>
