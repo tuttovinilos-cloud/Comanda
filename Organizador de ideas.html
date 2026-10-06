@@ -3,301 +3,236 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>Organizador de Ideas · Tuttovinilos · Local V5</title>
+<title>Organizador de Ideas · Tuttovinilos</title>
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/menu.css?v=35">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f0f2f9;--panel:#ffffff;--panel2:#f8f9ff;--border:#d9deea;--border2:#cbd3e6;
-  --text:#111827;--muted:#6b7280;--muted2:#475569;--accent:#153bff;--accent2:#0b1f7a;
-  --red:#dc2626;--yellow:#f59e0b;--green:#16a34a;--orange:#ff8616;
-  --mono:'Roboto Mono',monospace;--head:'Montserrat',Arial,sans-serif;--body:'Inter',Arial,sans-serif;
-}
-html{scroll-behavior:smooth;background:var(--bg);color-scheme:light}
-body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;-webkit-tap-highlight-color:transparent;padding-bottom:110px;font-size:14px;line-height:1.35}
-button,input,select,textarea{font:inherit;color-scheme:light}button{touch-action:manipulation;cursor:pointer}
-.hidden{display:none!important}::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:#eef1ff}::-webkit-scrollbar-thumb{background:#cbd3e6;border-radius:4px}
-
-/* HEADER IGUAL AL ESTILO COMANDA */
-.header{position:sticky;top:0;z-index:900;display:grid;grid-template-columns:155px 44px minmax(0,1fr);align-items:center;gap:8px;width:100%;min-height:58px;height:58px;padding:10px 16px;overflow:hidden;background:#172bd8;border-bottom:0;box-shadow:0 8px 20px rgba(21,59,255,.18)}
-.logo{grid-column:1;grid-row:1;width:155px;min-width:155px;max-width:155px;height:38px;display:flex;align-items:center;justify-content:flex-start;padding:0;margin:0;border:0;overflow:hidden;font-family:var(--head);font-weight:900;text-transform:uppercase}.logo img{display:block;width:auto;height:34px;max-width:138px;max-height:34px;object-fit:contain}.logo small{display:none}
-.noti-btn,#notiBtnGlobal{grid-column:2;grid-row:1;position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;min-width:38px;max-width:38px;height:34px;min-height:34px;max-height:34px;padding:0;margin:0;border-radius:999px;border:1px solid rgba(255,255,255,.30);background:rgba(255,255,255,.12);color:#fff;font-size:13px;box-shadow:none;cursor:pointer}.noti-btn:hover{background:rgba(255,255,255,.18)}
-#notiBtnGlobal .noti-count{position:absolute;right:-4px;top:-5px;transform:none;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#e5e7eb;color:#64748b;font-family:var(--mono);font-size:8px;font-weight:900;border:1px solid rgba(255,255,255,.45);display:inline-flex;align-items:center;justify-content:center}#notiBtnGlobal .noti-count:not(.empty){background:#dc2626;color:#fff}.noti-count.empty{background:#e5e7eb;color:#64748b}
-.header-tabs{grid-column:3;grid-row:1;display:flex;align-items:center;justify-content:flex-end;gap:5px;width:100%;max-width:100%;min-width:0;height:36px;padding:0;margin:0;border:0;overflow:hidden;opacity:1;visibility:visible;flex-wrap:nowrap}html.loading-menu .header-tabs{opacity:0;visibility:hidden}html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1;visibility:visible}.tab-btn,.header-tabs .tab-btn,.header-tabs .storage-pill{flex:0 1 auto;height:30px;min-height:30px;max-height:30px;padding:0 9px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#fff;font-family:var(--head);font-size:9.5px;font-weight:900;letter-spacing:.25px;line-height:1;text-transform:uppercase;text-decoration:none;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:4px;box-shadow:none;overflow:hidden;cursor:pointer}.tab-btn:hover,.header-tabs .tab-btn:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.45);color:#fff}.tab-btn.active,.header-tabs .tab-btn.active{background:#fff;color:#153bff;border-color:#fff}.mobile-menu-btn{display:none;margin-left:auto;min-height:31px;height:31px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.30);background:rgba(255,255,255,.12);color:#fff;font-family:var(--head);font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
-
-
-/* MENÚ LOCAL COMPLETO · sin login, con todas las páginas visibles */
-.header-tabs.local-menu{
-  justify-content:flex-start;
-  overflow-x:auto;
-  overflow-y:hidden;
-  scrollbar-width:thin;
-  padding-bottom:1px;
-}
-.header-tabs.local-menu .tab-btn,
-.header-tabs.local-menu .storage-pill{
-  flex:0 0 auto;
-}
-.header-tabs.local-menu::-webkit-scrollbar{height:4px}
-.header-tabs.local-menu::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35);border-radius:999px}
-.header-tabs.local-menu .storage-pill{
-  opacity:.9;
-  cursor:default;
-}
-@media(max-width:980px){
-  .header-tabs.local-menu{overflow:visible;padding-bottom:0}
-  .header-tabs.local-menu .tab-btn,
-  .header-tabs.local-menu .storage-pill{flex:1 1 auto}
-}
-
-/* HERO / ESTADÍSTICAS */
-.hero{background:#fff;border-bottom:1px solid #d9deea;padding:14px 14px 10px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}.hero h1{font-family:var(--head);font-size:22px;font-weight:900;color:#111827;letter-spacing:-.4px;text-transform:uppercase}.hero p{margin-top:4px;color:#64748b;font-size:12px;font-weight:700}.hero-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.btn-main{min-height:38px;border-radius:12px;border:1px solid #153bff;background:#153bff;color:#fff;font-family:var(--head);font-size:11px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;padding:9px 13px}.btn-soft{min-height:38px;border-radius:12px;border:1px solid #cbd3e6;background:#fff;color:#153bff;font-family:var(--head);font-size:11px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;padding:9px 13px}.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;background:#f0f2f9;padding:10px 14px}.stat{background:#fff;border:1px solid #d9deea;border-radius:14px;padding:10px 12px;min-height:62px;box-shadow:0 1px 2px rgba(15,23,42,.04)}.stat b{font-family:var(--mono);font-size:22px;font-weight:900;color:#111827}.stat span{display:block;margin-top:4px;color:#64748b;font-family:var(--head);font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.5px}.stat.red b{color:#dc2626}.stat.green b{color:#16a34a}.stat.yellow b{color:#f59e0b}
-
-/* TOOLBAR */
-.toolbar{position:sticky;top:58px;z-index:700;display:grid;grid-template-columns:minmax(280px,1.4fr) 130px 180px 145px 145px auto;gap:8px;align-items:center;width:100%;padding:10px 14px;background:#fff;border-bottom:1px solid #d9deea;box-shadow:0 4px 18px rgba(0,0,0,.045);margin:0}.search-wrap{width:100%;min-width:0;min-height:42px;display:flex;align-items:center;gap:8px;border-radius:14px;background:#fff;border:1px solid #d9deea;padding:9px 12px}.search-wrap input{width:100%;min-width:0;background:none;border:none;outline:none;color:#111827;font-family:var(--mono);font-size:13px}.search-wrap input::placeholder{color:#8a94a6}.filter-sel{width:100%;min-width:0;min-height:42px;height:42px;border-radius:12px;border:1px solid #d9deea;background:#fff;color:#153bff;font-family:var(--head);font-size:11px;font-weight:900;padding:8px 10px;outline:none;cursor:pointer}.filter-sel option,select option,select optgroup{background:#fff;color:#111827}
-
-/* TABLA */
-.table-wrap{overflow-x:auto;margin-top:0;padding:0 0 130px;-webkit-overflow-scrolling:touch;background:#f0f2f9;position:relative;z-index:1}.table-card{margin:0 0 0;background:#fff}table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:1120px;background:#fff}thead tr{border-bottom:1px solid #d9deea;background:#eef1ff}th{position:static;z-index:40;background:#eef1ff;font-family:var(--head);font-size:10px;font-weight:900;letter-spacing:.35px;text-transform:uppercase;color:#5b6474;padding:10px;text-align:left;white-space:nowrap}td{padding:10px;font-size:12px;line-height:1.25;vertical-align:middle;border-bottom:1px solid #e4e8f2;color:#111827;background:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}tbody tr:nth-child(even) td{background:#fbfcff}tbody tr:hover td{background:#f3f6ff}tbody::before{content:"";display:block;height:6px}
-th:nth-child(1),td:nth-child(1){width:44px;text-align:center}th:nth-child(2),td:nth-child(2){width:90px}th:nth-child(3),td:nth-child(3){width:110px}th:nth-child(4),td:nth-child(4){width:170px}th:nth-child(5),td:nth-child(5){width:285px;max-width:285px}th:nth-child(6),td:nth-child(6){width:190px}th:nth-child(7),td:nth-child(7){width:118px;text-align:center}th:nth-child(8),td:nth-child(8){width:140px;text-align:center}th:nth-child(9),td:nth-child(9){width:105px;text-align:center}th:nth-child(10),td:nth-child(10){width:88px;text-align:center}
-
-.quick-entry-row th{background:#f8f9ff;padding:6px;border-bottom:1px solid #d9deea}.quick-input,.quick-select,.quick-btn,.cell-edit,.cell-select{width:100%;background:#fff;border:1px solid #d9deea;color:#111827;border-radius:10px;padding:7px 8px;font-family:var(--body);font-size:12px;outline:none;transition:none}.quick-input:focus,.quick-select:focus,.cell-edit:focus,.cell-select:focus{border-color:#153bff;box-shadow:0 0 0 3px rgba(21,59,255,.10)}.quick-textarea{min-height:38px;max-height:54px;resize:vertical;line-height:1.25}.quick-textarea:focus{min-height:78px;max-height:120px}.quick-btn{font-family:var(--head);font-size:12px;font-weight:900;letter-spacing:.35px;text-transform:uppercase;background:#153bff;border-color:#153bff;cursor:pointer;color:#fff;min-height:34px;border-radius:12px;border:1px solid #153bff;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}.quick-btn.secondary,.modal-close{background:#fff;color:#153bff;border-color:#cbd3e6}.add-symbol-btn{width:52px;min-width:52px;height:38px;min-height:38px;font-size:25px;font-weight:900;line-height:1;padding:4px 8px;border-radius:14px;margin-inline:auto;display:flex;align-items:center;justify-content:center}.quick-money{text-align:right;font-family:var(--mono);font-weight:900}.quick-hint{font-size:10px;color:#6b7280;margin-top:2px;text-align:left}
-
-.status-revisado,.estado-revisado,select.estado-revisado{color:#92400e!important;border-color:#fde68a!important;background:#fef3c7!important;font-weight:800!important}
-.status-solicitud,.estado-solicitud,select.estado-solicitud{color:#dc2626!important;border-color:#fecaca!important;background:#fee2e2!important;font-weight:800!important}.status-diseno,.estado-diseno,select.estado-diseno{color:#153bff!important;border-color:#c7d2fe!important;background:#eef2ff!important;font-weight:800!important}.status-cotizando,.estado-cotizando,select.estado-cotizando{color:#92400e!important;border-color:#fde68a!important;background:#fef3c7!important;font-weight:800!important}.status-aprobado,.estado-aprobado,select.estado-aprobado{color:#166534!important;border-color:#86efac!important;background:#dcfce7!important;font-weight:800!important}.status-en-curso,.estado-en-curso,select.estado-en-curso{color:#fff!important;border-color:#111827!important;background:#111827!important;font-weight:800!important}.status-pausado,.estado-pausado,select.estado-pausado{color:#5b21b6!important;border-color:#ddd6fe!important;background:#f3e8ff!important;font-weight:800!important}.status-listo,.estado-listo,select.estado-listo{color:#166534!important;border-color:#86efac!important;background:#dcfce7!important;font-weight:800!important}.pago-pendiente,select.pago-pendiente{color:#dc2626!important;border-color:#fecaca!important;background:#fee2e2!important;font-weight:800!important}.pago-abonado,select.pago-abonado{color:#92400e!important;border-color:#fde68a!important;background:#fef3c7!important;font-weight:800!important}.pago-pagado,select.pago-pagado{color:#166534!important;border-color:#86efac!important;background:#dcfce7!important;font-weight:800!important}
-#ideasBody td select.estado-solicitud,#ideasBody td select.estado-diseno,#ideasBody td select.estado-cotizando,#ideasBody td select.estado-aprobado,#ideasBody td select.estado-en-curso,#ideasBody td select.estado-pausado,#ideasBody td select.estado-listo,#ideasBody td select.pago-pendiente,#ideasBody td select.pago-abonado,#ideasBody td select.pago-pagado{border-radius:999px!important;min-height:34px!important;text-align:center!important;text-align-last:center!important;padding-left:10px!important;padding-right:26px!important;box-shadow:none!important}
-.deuda-pill{display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:34px;padding:5px 7px;border-radius:10px;border:1px solid #64748b;background:#64748b;color:#fff;font-family:var(--head);font-size:8.5px;font-weight:900;letter-spacing:.35px;text-transform:uppercase;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.deuda-pill.debe{background:#dc2626;border-color:#dc2626;color:#fff}.deuda-pill.abono{background:#f59e0b;border-color:#f59e0b;color:#111827}.deuda-pill.pagado{background:#16a34a;border-color:#16a34a;color:#fff}.deuda-pill.sinmonto{background:#64748b;border-color:#64748b;color:#fff}.money-cell{font-family:var(--mono);font-weight:900}.desc-preview{cursor:help;font-weight:700}.tipo-pill{display:inline-flex;align-items:center;justify-content:center;max-width:100%;border-radius:999px;padding:6px 9px;font-size:9.5px;font-weight:900;background:#eef1ff;color:#153bff;border:1px solid #c7d2fe;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.file-chip{display:inline-flex;align-items:center;justify-content:center;gap:5px;max-width:100%;border-radius:999px;padding:5px 8px;font-size:9px;font-weight:900;background:#fff;border:1px solid #cbd3e6;color:#153bff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row-actions{display:flex;align-items:center;justify-content:center;gap:5px}.icon-btn{width:30px;height:30px;border-radius:9px;border:1px solid #cbd3e6;background:#fff;color:#153bff;font-size:11px;font-weight:900}.icon-btn.red{color:#dc2626;border-color:#fecaca;background:#fff5f5}.icon-btn.green{color:#166534;border-color:#bbf7d0;background:#f0fdf4}.empty{text-align:center;padding:60px 20px;color:#6b7280;font-family:var(--head);font-size:15px;letter-spacing:2px}.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#111827;color:#fff;border:1px solid #111827;border-radius:10px;padding:10px 16px;z-index:999999;display:none;box-shadow:0 12px 35px #0008;font-family:var(--head);font-size:13px;font-weight:800;letter-spacing:.35px;text-transform:uppercase;max-width:90vw;text-align:center}
-
+:root{--bg:#f0f2f9;--panel:#fff;--panel2:#f8f9ff;--border:#d9deea;--border2:#cbd3e6;--text:#111827;--muted:#6b7280;--muted2:#475569;--accent:#153bff;--accent2:#0b1f7a;--red:#dc2626;--yellow:#f59e0b;--green:#16a34a;--mono:'Roboto Mono',monospace;--head:'Montserrat',Arial,sans-serif;--body:'Inter',Arial,sans-serif}
+html{scroll-behavior:smooth;background:var(--bg);color-scheme:light}body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;-webkit-tap-highlight-color:transparent;padding-bottom:110px;font-size:14px;line-height:1.35}button,input,select,textarea{font:inherit;color-scheme:light}button{touch-action:manipulation;cursor:pointer}::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:#eef1ff}::-webkit-scrollbar-thumb{background:#cbd3e6;border-radius:4px}.hidden{display:none!important}
+/* HEADER IGUAL AL INDEX */
+.header{position:sticky;top:0;z-index:900;display:grid;grid-template-columns:155px 44px minmax(0,1fr);align-items:center;gap:8px;width:100%;min-height:58px;height:58px;padding:10px 16px;overflow:hidden;background:#172bd8;border-bottom:0;box-shadow:0 8px 20px rgba(21,59,255,.18)}.logo{grid-column:1;grid-row:1;width:155px;min-width:155px;max-width:155px;height:38px;display:flex;align-items:center;justify-content:flex-start;overflow:hidden;font-family:var(--head);font-weight:900;text-transform:uppercase}.logo img{display:block;width:auto;height:34px;max-width:138px;max-height:34px;object-fit:contain}.logo small{display:none}.noti-btn,#notiBtnGlobal{grid-column:2;grid-row:1;position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;min-width:38px;max-width:38px;height:34px;min-height:34px;max-height:34px;padding:0;margin:0;border-radius:999px;border:1px solid rgba(255,255,255,.30);background:rgba(255,255,255,.12);color:#fff;font-size:13px;box-shadow:none;cursor:pointer}.noti-btn:hover{background:rgba(255,255,255,.18)}.noti-count{min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--red);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px}#notiBtnGlobal .noti-count{position:absolute;right:-4px;top:-5px;transform:none;min-width:16px;height:16px;padding:0 4px;background:#e5e7eb;color:#64748b;font-size:8px;font-weight:900;border:1px solid rgba(255,255,255,.45)}#notiBtnGlobal .noti-count:not(.empty){background:#dc2626;color:#fff}.noti-count.empty{background:#e5e7eb;color:#64748b}.header-tabs{grid-column:3;grid-row:1;display:flex;align-items:center;justify-content:flex-end;gap:5px;width:100%;max-width:100%;min-width:0;height:36px;padding:0;margin:0;border:0;overflow:hidden;opacity:1;visibility:visible;flex-wrap:nowrap}html.loading-menu .header-tabs{opacity:0;visibility:hidden}html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1;visibility:visible}.tab-btn,.header-tabs .tab-btn,.header-tabs .storage-pill{flex:0 1 auto;height:30px;min-height:30px;max-height:30px;padding:0 9px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#fff;font-family:var(--head);font-size:9.5px;font-weight:900;letter-spacing:.25px;line-height:1;text-transform:uppercase;text-decoration:none;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:4px;box-shadow:none;overflow:hidden;cursor:pointer}.tab-btn:hover,.header-tabs .tab-btn:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.45);color:#fff}.tab-btn.active,.header-tabs .tab-btn.active{background:#fff;color:#153bff;border-color:#fff}.mobile-menu-btn{display:none;margin-left:auto;min-height:31px;height:31px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.30);background:rgba(255,255,255,.12);color:#fff;font-family:var(--head);font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+/* HERO */
+.idea-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px 8px;background:#f0f2f9}.idea-title{font-family:var(--head);font-size:18px;font-weight:900;color:#111827;letter-spacing:.2px}.idea-sub{font-size:11px;color:#64748b;font-weight:800;margin-top:2px}.idea-actions{display:flex;gap:8px;align-items:center}.btn-top{min-height:36px;border-radius:999px;border:1px solid #cbd3e6;background:#fff;color:#153bff;font-family:var(--head);font-size:10px;font-weight:900;text-transform:uppercase;padding:8px 13px}.btn-top.primary{background:#153bff;color:#fff;border-color:#153bff}.db-status{font-family:var(--mono);font-size:10px;color:#64748b;font-weight:800;margin-top:4px}
+/* TOOLBAR IGUAL INDEX */
+.toolbar{position:sticky;top:58px;z-index:700;display:grid;grid-template-columns:minmax(340px,1fr) 140px 140px 135px 135px 130px;gap:8px;align-items:center;width:100%;padding:10px 14px;background:#fff;border-bottom:1px solid #d9deea;box-shadow:0 4px 18px rgba(0,0,0,.045);margin:0}.search-wrap{width:100%;min-width:0;min-height:42px;display:flex;align-items:center;gap:8px;border-radius:14px;background:#fff;border:1px solid #d9deea;padding:9px 12px;box-shadow:none}.search-wrap input{width:100%;min-width:0;background:none;border:none;outline:none;color:#111827;font-family:var(--mono);font-size:13px}.search-wrap input::placeholder{color:#8a94a6}.filter-sel{width:100%;min-width:0;max-width:none;min-height:42px;height:42px;border-radius:12px;border:1px solid #d9deea;background:#fff;color:#153bff;font-family:var(--head);font-size:11px;font-weight:900;padding:8px 10px;outline:none;cursor:pointer;flex:none}.storage-badge{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border2);border-radius:7px;padding:8px 10px;white-space:nowrap;min-height:40px}.storage-dot{width:8px;height:8px;border-radius:50%;background:var(--yellow)}.storage-badge.ok .storage-dot{background:var(--green)}.storage-badge span{font-family:var(--head);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--muted2);text-transform:uppercase}
+/* TABLE */
+.table-wrap{overflow-x:auto;margin-top:0;padding:0 0 130px;-webkit-overflow-scrolling:touch;background:#f0f2f9;position:relative;z-index:1}table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:1320px;background:#fff}thead tr{border-bottom:1px solid #d9deea;background:#eef1ff}th{position:static;z-index:40;background:#eef1ff;font-family:var(--head);font-size:10px;font-weight:900;letter-spacing:.35px;text-transform:uppercase;color:#5b6474;padding:10px;text-align:left;white-space:nowrap}td{padding:10px;font-size:12px;line-height:1.25;vertical-align:middle;border-bottom:1px solid #e4e8f2;color:#111827;background:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}tbody tr{transition:none;cursor:pointer}tbody tr:nth-child(even) td{background:#fbfcff}tbody tr:hover td{background:#f3f6ff}tbody::before{content:"";display:block;height:6px}th:nth-child(1),td:nth-child(1){width:56px;min-width:56px;text-align:center}th:nth-child(2),td:nth-child(2){width:92px;min-width:92px}th:nth-child(3),td:nth-child(3){width:120px;min-width:120px}th:nth-child(4),td:nth-child(4){width:185px;min-width:185px}th:nth-child(5),td:nth-child(5){width:290px;min-width:290px;max-width:290px}th:nth-child(6),td:nth-child(6){width:80px;min-width:80px}th:nth-child(7),td:nth-child(7){width:190px;min-width:190px}th:nth-child(8),td:nth-child(8){width:120px;min-width:120px;text-align:center}th:nth-child(9),td:nth-child(9){width:110px;min-width:110px;text-align:center}th:nth-child(10),td:nth-child(10){width:145px;min-width:145px;text-align:center}th:nth-child(11),td:nth-child(11){width:105px;min-width:105px;text-align:center}.client-name{font-weight:900;color:#0b1f7a}.desc-cell{cursor:help;color:#111827}.quick-entry-row th{background:#f8f9ff;padding:6px;border-bottom:1px solid #d9deea;position:static;z-index:20}.quick-input,.quick-select,.cell-edit,.cell-select{width:100%;background:#fff;border:1px solid #d9deea;color:#111827;border-radius:10px;padding:7px 8px;font-family:var(--body);font-size:12px;outline:none;transition:none}.quick-input:focus,.quick-select:focus,.cell-select:focus{border-color:#153bff;box-shadow:0 0 0 3px rgba(21,59,255,.10)}.quick-textarea{min-height:38px;max-height:54px;resize:vertical;line-height:1.25}.quick-textarea:focus{min-height:78px;max-height:120px}.quick-btn,.btn-add{font-family:var(--head);font-size:12px;font-weight:900;letter-spacing:.35px;text-transform:uppercase;background:#153bff;border-color:#153bff;cursor:pointer;color:#fff;min-height:34px;border-radius:12px;border:1px solid #153bff;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;padding:7px 12px}.quick-btn.secondary,.btn-add.secondary,.quick-mini-btn,.modal-close{background:#fff;color:#153bff;border-color:#cbd3e6;box-shadow:none}.quick-mini-btn{width:34px;min-width:34px;height:34px;border-radius:7px;border:1px dashed #cbd3e6;background:#fff;color:#153bff;cursor:pointer;font-weight:700}.add-symbol-btn{width:52px;min-width:52px;height:38px;min-height:38px;font-size:25px;font-weight:900;line-height:1;padding:4px 8px;border-radius:14px;margin-inline:auto;display:flex;align-items:center;justify-content:center}.quick-hint{font-size:10px;color:#6b7280;margin-top:2px;text-align:left}
+/* STATUS */
+.status-solicitud,.estado-solicitud,select.estado-solicitud{color:#dc2626!important;border-color:#fecaca!important;background:#fee2e2!important;font-weight:800!important}.status-en-curso,.estado-en-curso,select.estado-en-curso{color:#fff!important;border-color:#111827!important;background:#111827!important;font-weight:800!important}.status-revisado,.estado-revisado,select.estado-revisado{color:#92400e!important;border-color:#fde68a!important;background:#fef3c7!important;font-weight:800!important}.status-listo,.estado-listo,select.estado-listo{color:#166534!important;border-color:#86efac!important;background:#dcfce7!important;font-weight:800!important}.tipo-chip{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900;line-height:1;min-height:24px;background:#eef1ff;color:#153bff;border:1px solid #cbd3e6;white-space:nowrap}.file-link-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #cbd3e6;border-radius:999px;background:#eef1ff;color:#153bff;cursor:pointer;font-family:var(--head);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;transition:none}.empty{text-align:center;padding:60px 20px;color:#6b7280;font-family:var(--head);font-size:15px;letter-spacing:2px}
+/* DEUDA */
+.debt-btn{width:100%;min-width:0;max-width:none;min-height:34px;padding:5px 7px;border-radius:10px;border:1px solid #153bff;background:#153bff;color:#fff;cursor:pointer;font-family:var(--head);font-size:9px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;line-height:1.05;white-space:nowrap;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;overflow:hidden}.debt-btn span,.debt-btn small{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.debt-btn small{font-size:7px;opacity:.9;letter-spacing:.25px}.debt-btn.debe{background:#dc2626;border-color:#dc2626;color:#fff}.debt-btn.abonado{background:#f59e0b;border-color:#f59e0b;color:#111827}.debt-btn.pagado{background:#16a34a;border-color:#16a34a;color:#fff}.debt-btn.sinmonto{background:#64748b;border-color:#64748b;color:#fff}.pay-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid #d9deea;border-radius:12px;overflow:hidden;background:#f8f9ff}.pay-summary-box{padding:12px;border-right:1px solid #d9deea}.pay-summary-box:last-child{border-right:0}.pay-summary-label{font-family:var(--head);font-size:9px;font-weight:900;letter-spacing:.55px;color:#6b7280;text-transform:uppercase;margin-bottom:5px}.pay-summary-value{font-family:var(--mono);font-size:17px;font-weight:900;color:#111827}.pay-summary-value.ok{color:#16a34a}.pay-summary-value.bad{color:#dc2626}.pay-result-box{border:1px solid #d9deea;border-radius:12px;padding:13px 14px;background:#f8f9ff}.pay-result-label{font-family:var(--head);font-size:10px;font-weight:900;color:#6b7280;letter-spacing:.45px;text-transform:uppercase;margin-bottom:6px}.pay-result-money{font-family:var(--mono);font-size:24px;font-weight:900;color:#16a34a;line-height:1}.pay-result-text{margin-top:5px;font-size:12px;color:#475569;font-weight:800}.pay-readonly{background:#f8f9ff!important;color:#475569!important}
 /* MODAL */
-.backdrop{position:fixed;inset:0;background:rgba(17,24,39,.35);z-index:1000;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px);padding:0}.modal{background:#fff;border:1px solid #d9deea;width:100%;max-width:640px;max-height:94vh;overflow-y:auto;border-radius:14px 14px 0 0;box-shadow:0 24px 80px rgba(17,24,39,.22);animation:slideUp .22s ease}@keyframes slideUp{from{transform:translateY(50px);opacity:0}to{transform:none;opacity:1}}.modal-handle{width:36px;height:4px;background:#cbd3e6;border-radius:2px;margin:10px auto 0}.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #d9deea;background:#fff}.modal-title{font-family:var(--head);font-size:18px;font-weight:900;letter-spacing:.35px;color:#153bff;text-transform:uppercase}.modal-close{width:32px;height:32px;border-radius:7px;border:1px solid #cbd3e6;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}.modal-close:hover{border-color:#dc2626;color:#dc2626}.modal-body{padding:20px;display:flex;flex-direction:column;gap:14px}.modal-footer{padding:14px 20px;border-top:1px solid #d9deea;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;background:#fff}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-full{grid-column:1/-1}.field{display:flex;flex-direction:column;gap:5px}.field label{font-family:var(--head);font-size:10px;font-weight:700;letter-spacing:.35px;color:#6b7280;text-transform:uppercase}.field input,.field select,.field textarea{background:#fff;border:1px solid #d9deea;color:#111827;border-radius:8px;padding:10px 12px;font-family:var(--body);font-size:14px;outline:none;width:100%}.field input:focus,.field select:focus,.field textarea:focus{border-color:#153bff;box-shadow:0 0 0 3px rgba(21,59,255,.10)}.field textarea{resize:vertical;min-height:76px}.readonly-box{background:#f8f9ff;border:1px solid #d9deea;border-radius:12px;padding:12px}.readonly-box b{font-family:var(--mono);font-size:22px}.readonly-box span{display:block;color:#64748b;font-family:var(--head);font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
-
-.pay-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid #d9deea;border-radius:12px;overflow:hidden;background:#f8f9ff}.pay-summary-box{padding:12px;border-right:1px solid #d9deea}.pay-summary-box:last-child{border-right:0}.pay-summary-label{font-family:var(--head);font-size:9px;font-weight:900;letter-spacing:.55px;color:#6b7280;text-transform:uppercase;margin-bottom:5px}.pay-summary-value{font-family:var(--mono);font-size:17px;font-weight:900;color:#111827}.pay-summary-value.ok{color:#16a34a}.pay-readonly{background:#f8f9ff!important;color:#475569!important}.pay-history{border:1px solid #d9deea;border-radius:12px;background:#fff;overflow:hidden}.pay-history-title{padding:9px 11px;border-bottom:1px solid #d9deea;font-family:var(--head);font-size:10px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;color:#6b7280}.pay-history-row{display:flex;justify-content:space-between;gap:10px;padding:8px 11px;border-bottom:1px solid #eef2f8;font-size:12px;font-weight:800;color:#334155}.pay-history-row:last-child{border-bottom:0}.pay-history-row small{color:#64748b;font-weight:800}.deuda-pill{cursor:pointer}.deuda-pill:hover{filter:brightness(.96)}
+.backdrop{position:fixed;inset:0;background:rgba(17,24,39,.35);z-index:1000;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px);padding:0}.modal{background:#fff;border:1px solid #d9deea;width:100%;max-width:560px;max-height:94vh;overflow-y:auto;border-radius:14px 14px 0 0;box-shadow:0 24px 80px rgba(17,24,39,.22);animation:slideUp .22s ease}@keyframes slideUp{from{transform:translateY(50px);opacity:0}to{transform:none;opacity:1}}.modal-handle{width:36px;height:4px;background:#cbd3e6;border-radius:2px;margin:10px auto 0}.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #d9deea;background:#fff}.modal-title{font-family:var(--head);font-size:18px;font-weight:900;letter-spacing:.35px;color:#153bff;text-transform:uppercase}.modal-close{width:32px;height:32px;border-radius:7px;border:1px solid #cbd3e6;background:#fff;color:#153bff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}.modal-close:hover{border-color:#dc2626;color:#dc2626}.modal-body{padding:20px;display:flex;flex-direction:column;gap:14px}.modal-footer{padding:14px 20px;border-top:1px solid #d9deea;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;background:#fff}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-full{grid-column:1/-1}.field{display:flex;flex-direction:column;gap:5px}.field label{font-family:var(--head);font-size:10px;font-weight:700;letter-spacing:.35px;color:#6b7280;text-transform:uppercase}.field input,.field select,.field textarea{background:#fff;border:1px solid #d9deea;color:#111827;border-radius:8px;padding:10px 12px;font-family:var(--body);font-size:14px;outline:none;width:100%}.field input:focus,.field select:focus,.field textarea:focus{border-color:#153bff;box-shadow:0 0 0 3px rgba(21,59,255,.10)}.field textarea{resize:vertical;min-height:76px}.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#111827;color:#fff;border:1px solid #111827;border-radius:10px;padding:10px 16px;z-index:999999;display:none;box-shadow:0 12px 35px #0008;font-family:var(--head);font-size:13px;font-weight:800;letter-spacing:.35px;text-transform:uppercase;max-width:90vw;text-align:center}.pagination-bar{position:sticky;left:0;bottom:0;z-index:120;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:12px 14px;background:rgba(255,255,255,.96);border-top:1px solid #d9deea;box-shadow:0 -8px 24px rgba(15,23,42,.08);backdrop-filter:blur(8px)}.page-btn,.page-select,.page-info{min-height:36px;border-radius:999px;border:1px solid #cbd3e6;background:#fff;color:#153bff;font-family:var(--head);font-size:11px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;padding:8px 12px;white-space:nowrap}.page-btn,.page-select{cursor:pointer}.page-info{background:#eef1ff;color:#0b1f7a;border-color:#c7d2fe}
 @media(min-width:600px){.backdrop{align-items:center;padding:16px}.modal{border-radius:12px;animation:popIn .18s ease}@keyframes popIn{from{transform:scale(.96) translateY(10px);opacity:0}to{transform:none;opacity:1}}}
-@media(max-width:1280px){.header{grid-template-columns:130px 42px minmax(0,1fr);padding:10px 12px}.logo{width:130px;min-width:130px;max-width:130px}.logo img{max-width:118px;height:31px}.header-tabs .tab-btn,.header-tabs .storage-pill{font-size:8.7px;padding:0 7px}.toolbar{grid-template-columns:minmax(260px,1fr) 120px 120px 130px 130px 120px auto}.stats{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:980px){body{padding-bottom:92px}.header{grid-template-columns:1fr 36px auto;height:auto;min-height:48px;overflow:visible;padding:7px 9px;gap:6px}.logo{grid-column:1;grid-row:1;width:118px;min-width:118px;max-width:118px;height:31px}.logo img{height:26px;max-width:112px}.noti-btn,#notiBtnGlobal{grid-column:2;grid-row:1;width:32px;min-width:32px;max-width:32px;height:31px;min-height:31px;max-height:31px;font-size:12px}.mobile-menu-btn{grid-column:3;grid-row:1;display:inline-flex;align-items:center;justify-content:center}.header-tabs{grid-column:1 / -1;grid-row:2;display:none;width:100%;height:auto;margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,.22);overflow:visible;grid-template-columns:1fr 1fr;gap:6px}.header-tabs.open{display:grid}.header-tabs .tab-btn,.header-tabs .storage-pill,.tab-btn{width:100%;min-height:31px;height:31px;font-size:8.5px;padding:0 7px;border-radius:7px;letter-spacing:.8px}.hero{grid-template-columns:1fr;padding:10px 9px}.hero-actions{justify-content:flex-start}.toolbar{position:relative;top:auto;z-index:500;grid-template-columns:1fr 1fr;padding:7px 9px;gap:6px}.search-wrap{grid-column:1 / -1;min-height:32px;height:32px;padding:5px 8px;border-radius:10px}.search-wrap input{font-size:10px}.filter-sel{min-height:32px;height:32px;font-size:9px;padding:5px 7px;border-radius:9px}.stats{grid-template-columns:repeat(2,1fr);padding:8px}.table-wrap{margin:0 7px;border-radius:8px;padding-bottom:95px}table{min-width:1080px;font-size:9px}table th:nth-child(1),table td:nth-child(1),table th:nth-child(2),table td:nth-child(2),table th:nth-child(3),table td:nth-child(3),.quick-entry-row th:nth-child(1),.quick-entry-row th:nth-child(2),.quick-entry-row th:nth-child(3){display:none}table th:nth-child(4),table td:nth-child(4){width:190px;min-width:190px;padding-left:16px}table th:nth-child(5),table td:nth-child(5){width:220px;min-width:220px}table th:nth-child(6),table td:nth-child(6){width:170px;min-width:170px}table th:nth-child(13),table td:nth-child(13){width:72px;min-width:72px}th{font-size:7.5px;padding:4px 4px;height:25px}td{font-size:8.8px;padding:4px 4px;height:28px}.quick-input,.quick-select,.quick-btn,.cell-edit,.cell-select{min-height:27px;height:27px;font-size:8.8px;padding:3px 5px;border-radius:6px}.quick-textarea{min-height:27px;max-height:38px}.add-symbol-btn{width:58px;min-width:58px;height:34px;min-height:34px;font-size:24px}.form-grid{grid-template-columns:1fr}}
+@media(max-width:1280px){.header{grid-template-columns:130px 42px minmax(0,1fr);padding:10px 12px}.logo{width:130px;min-width:130px;max-width:130px}.logo img{max-width:118px;height:31px}.header-tabs{gap:4px}.header-tabs .tab-btn,.header-tabs .storage-pill{font-size:8.7px;padding:0 7px;gap:3px}.toolbar{grid-template-columns:minmax(300px,1fr) 130px 130px 125px 125px 120px}}
+@media(max-width:980px){body{padding-bottom:92px}.header{grid-template-columns:1fr 36px auto;height:auto;min-height:48px;overflow:visible;padding:7px 9px;gap:6px}.logo{grid-column:1;grid-row:1;width:118px;min-width:118px;max-width:118px;height:31px}.logo img{height:26px;max-width:112px}.noti-btn,#notiBtnGlobal{grid-column:2;grid-row:1;width:32px;min-width:32px;max-width:32px;height:31px;min-height:31px;max-height:31px;font-size:12px}.mobile-menu-btn{grid-column:3;grid-row:1;display:inline-flex;align-items:center;justify-content:center}.header-tabs{grid-column:1 / -1;grid-row:2;display:none;width:100%;height:auto;margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,.22);overflow:visible;grid-template-columns:1fr 1fr;gap:6px}.header-tabs.open{display:grid}.header-tabs .tab-btn,.header-tabs .storage-pill,.tab-btn{width:100%;min-height:31px;height:31px;font-size:8.5px;padding:0 7px;border-radius:7px;letter-spacing:.8px}.idea-head{grid-template-columns:1fr;padding:10px 8px}.idea-actions{justify-content:stretch}.btn-top{flex:1}.toolbar{position:relative;top:auto;z-index:500;grid-template-columns:1fr 1fr;padding:7px 9px;gap:6px}.search-wrap{grid-column:1 / -1;min-height:32px;height:32px;padding:5px 8px;border-radius:10px}.search-wrap input{font-size:10px}#filterFechaDesde,#filterFechaHasta{display:none}.filter-sel{min-height:32px;height:32px;font-size:9px;padding:5px 7px;border-radius:9px}.table-wrap{margin:0 7px;border-radius:8px;padding-bottom:95px}table{min-width:1030px;font-size:9px}table th:nth-child(1),table td:nth-child(1),table th:nth-child(2),table td:nth-child(2),table th:nth-child(3),table td:nth-child(3),.quick-entry-row th:nth-child(1),.quick-entry-row th:nth-child(2),.quick-entry-row th:nth-child(3){display:none}table th:nth-child(4),table td:nth-child(4){width:200px;min-width:200px;padding-left:22px}table th:nth-child(5),table td:nth-child(5){width:230px;min-width:230px}table th:nth-child(6),table td:nth-child(6){width:64px;min-width:64px}table th:nth-child(7),table td:nth-child(7){width:170px;min-width:170px}table th:nth-child(10),table td:nth-child(10){width:116px;min-width:116px}th{font-size:7.5px;padding:4px 4px;height:25px}td{font-size:8.8px;padding:4px 4px;height:28px}.quick-input,.quick-select,.quick-btn,.cell-edit,.cell-select{min-height:27px;height:27px;font-size:8.8px;padding:3px 5px;border-radius:6px}.quick-textarea{min-height:27px;max-height:38px}.add-symbol-btn{width:58px;min-width:58px;height:34px;min-height:34px;font-size:24px}.pagination-bar{position:relative;bottom:auto;padding:10px;gap:6px}.page-btn,.page-info,.page-select{flex:1 1 calc(50% - 6px);font-size:10px;padding:8px 8px}.form-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <header class="header">
   <div class="logo"><img src="Logo tutto1.svg" alt="Tutto Vinilos"><small>COMANDA</small></div>
-  <button class="noti-btn" id="notiBtnGlobal" type="button" onclick="if(window.abrirNotificaciones){abrirNotificaciones()}else{alert('Notificaciones no disponibles en esta versión local')}">🔔 <span class="noti-count empty" id="notiCount">0</span></button>
+  <button class="noti-btn" id="notiBtnGlobal" type="button" onclick="abrirNotificaciones && abrirNotificaciones()">🔔 <span class="noti-count empty" id="notiCount">0</span></button>
   <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menú">☰ Menú</button>
-  <nav class="header-tabs local-menu" id="authMenu">
-    <a class="tab-btn" href="index.html">▣ Pedido</a>
-    <a class="tab-btn" href="precios.html">💲 Precio</a>
-    <a class="tab-btn" href="clientes.html">♟ Cliente</a>
-    <a class="tab-btn" href="label.html">🏷 Label</a>
-    <a class="tab-btn" href="Cotizador.html">▣ Cotizador</a>
-    <a class="tab-btn active" href="Organizador de ideas.html">💡 Organizador</a>
-    <a class="tab-btn" href="estadisticas.html">▥ Estadísticas</a>
-    <a class="tab-btn" href="marketing.html">◄ Marketing</a>
-    <a class="tab-btn" href="materiales.html">$ Materiales</a>
-    <a class="tab-btn" href="compras.html">🛒 Compras</a>
-    <a class="tab-btn" href="contabilidad.html">▤ Contabilidad</a>
-    <a class="tab-btn" href="configuracion.html">⚙ Configuración</a>
-    <button class="tab-btn" type="button" onclick="exportarJSON()">Exportar</button>
-    <div class="storage-pill"><span>LOCAL</span></div>
-  </nav>
+  <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
 </header>
 
-<section class="hero">
+<div class="idea-head">
   <div>
-    <h1>Organizador de Ideas</h1>
-    <p>Comanda rápida para corpóreos, cajas de luz, cortes y letreros. Versión local para revisar flujo antes de conectar Supabase.</p>
+    <div class="idea-title">Organizador de Ideas</div>
+    <div class="idea-sub">Vista tipo Index para corpóreos/letreros. Guarda en pedidos para que Clientes vea la deuda.</div>
+    <div class="db-status" id="dbStatus">Conectando con Supabase...</div>
   </div>
-  <div class="hero-actions">
-    <button class="btn-main" type="button" onclick="openIdea()">Nuevo</button>
-    <button class="btn-soft" type="button" onclick="exportarJSON()">Exportar</button>
-    <button class="btn-soft" type="button" onclick="limpiarFiltros()">Limpiar filtros</button>
+  <div class="idea-actions">
+    <button class="btn-top" type="button" onclick="cargarTodo(true)">Recargar</button>
+    <button class="btn-top primary" type="button" onclick="openNewOrder()">Nuevo</button>
   </div>
-</section>
-
-<section class="stats">
-  <div class="stat"><b id="sTotal">0</b><span>Total</span></div>
-  <div class="stat red"><b id="sSolicitudes">0</b><span>Solicitudes</span></div>
-  <div class="stat"><b id="sProceso">0</b><span>En curso</span></div>
-  <div class="stat yellow"><b id="sRevisado">0</b><span>Revisados</span></div>
-  <div class="stat green"><b id="sListo">0</b><span>Listos</span></div>
-  <div class="stat red"><b id="sDeuda">$0.00</b><span>Deuda visual</span></div>
-</section>
+</div>
 
 <div class="toolbar">
   <div class="search-wrap">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input id="searchInput" type="text" placeholder="Cliente, descripción, tipo de letrero..." oninput="render()"/>
+    <input id="searchInput" type="text" placeholder="Cliente, descripción o tipo de letrero..." oninput="renderPedidos(true)"/>
   </div>
-  <select class="filter-sel" id="filterEstado" onchange="render()">
-    <option value="">Estado</option><option>Solicitud</option><option>En curso</option><option>Revisado</option><option>Listo</option>
-  </select>
-  <select class="filter-sel" id="filterTipo" onchange="render()"><option value="">Tipo de letrero</option></select>
-  <input class="filter-sel" id="filterFechaDesde" type="date" onchange="render()" title="Desde"/>
-  <input class="filter-sel" id="filterFechaHasta" type="date" onchange="render()" title="Hasta"/>
-  <button class="btn-main" type="button" onclick="openIdea()">+</button>
+  <select class="filter-sel" id="filterStatus" onchange="renderPedidos(true)"><option value="">Estatus</option><option>Solicitud</option><option>En curso</option><option>Revisado</option><option>Listo</option></select>
+  <select class="filter-sel" id="filterTipo" onchange="renderPedidos(true)"><option value="">Tipo de letrero</option></select>
+  <input class="filter-sel" id="filterFechaDesde" type="date" onchange="renderPedidos(true)" title="Desde"/>
+  <input class="filter-sel" id="filterFechaHasta" type="date" onchange="renderPedidos(true)" title="Hasta"/>
+  <select class="filter-sel" id="filterOperador" onchange="renderPedidos(true)"><option value="">Operador</option></select>
 </div>
 
 <div class="table-wrap">
-  <div class="table-card">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th><th>Fecha</th><th>Operador</th><th>Cliente</th><th>Descripción</th><th>Tipo de letrero</th><th>Estatus</th><th>Deuda</th><th>Entrega</th><th>Acción</th>
-        </tr>
-        <tr class="quick-entry-row">
-          <th><button class="quick-btn secondary" type="button" onclick="clearQuickEntry()">✕</button></th>
-          <th><input class="quick-input" id="q_fecha" type="date"></th>
-          <th><select class="quick-select" id="q_operador"></select></th>
-          <th><input class="quick-input" id="q_cliente" placeholder="Cliente"></th>
-          <th><textarea class="quick-input quick-textarea" id="q_descripcion" placeholder="Descripción"></textarea></th>
-          <th><select class="quick-select" id="q_tipo_letrero"></select></th>
-          <th><select class="quick-select" id="q_estado"><option>Solicitud</option><option>En curso</option><option>Revisado</option><option>Listo</option></select></th>
-          <th><div class="quick-hint" id="quickDebtHint">Definir deuda</div></th>
-          <th><input class="quick-input" id="q_entrega" type="date"></th>
-          <th><button class="quick-btn add-symbol-btn" type="button" onclick="saveQuickIdea()">+</button></th>
-        </tr>
-      </thead>
-      <tbody id="ideasBody"></tbody>
-    </table>
-    <div id="emptyState" class="empty" style="display:none">— SIN IDEAS —</div>
-  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th><th>Fecha</th><th>Operador</th><th>Cliente</th><th>Descripción</th><th>Cant.</th><th>Tipo de letrero</th><th>Estatus</th><th>Entrega</th><th>Deuda</th><th>Archivo</th>
+      </tr>
+      <tr class="quick-entry-row">
+        <th><button class="quick-btn secondary" type="button" onclick="clearQuickEntry()">✕</button></th>
+        <th><input class="quick-input" id="q_fecha" type="date"/></th>
+        <th><select class="quick-select" id="q_operador"><option value="">Operador</option></select></th>
+        <th><input class="quick-input" id="q_cliente" type="text" placeholder="Cliente" list="clientesDatalist" autocomplete="off"/><datalist id="clientesDatalist"></datalist><div class="quick-hint" id="quickClientHint"></div></th>
+        <th><textarea class="quick-input quick-textarea" id="q_descripcion" placeholder="Descripción"></textarea></th>
+        <th><input class="quick-input" id="q_cantidad" type="text" placeholder="Cant."/></th>
+        <th><select class="quick-select" id="q_tipo_letrero"></select></th>
+        <th><select class="quick-select" id="q_estatus_trabajo"><option>Solicitud</option><option>En curso</option><option>Revisado</option><option>Listo</option></select></th>
+        <th><input class="quick-input" id="q_entrega" type="date"/></th>
+        <th><div class="quick-hint">Luego en Deuda</div></th>
+        <th><button class="quick-mini-btn" type="button" title="Adjuntar archivo" onclick="openQuickAttach()">📎</button><button class="quick-btn add-symbol-btn" type="button" onclick="saveQuickOrder()" style="margin-top:5px" title="Guardar">+</button></th>
+      </tr>
+    </thead>
+    <tbody id="orderTableBody"></tbody>
+  </table>
+  <div id="emptyState" class="empty" style="display:none">— SIN IDEAS —</div>
+  <div id="paginationBar" class="pagination-bar"></div>
 </div>
 
-<div class="backdrop" id="ideaBackdrop" style="display:none" onclick="bdClick(event,'ideaBackdrop')">
+<div class="backdrop" id="orderBackdrop" style="display:none" onclick="bdClick(event,'orderBackdrop')">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-header"><span class="modal-title" id="ideaModalTitle">NUEVA IDEA</span><button class="modal-close" type="button" onclick="closeModal('ideaBackdrop')">✕</button></div>
+    <div class="modal-header"><span class="modal-title" id="orderModalTitle">NUEVA IDEA</span><button class="modal-close" type="button" onclick="closeModal('orderBackdrop')">✕</button></div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="field"><label>N° pedido</label><input id="f_numero" placeholder="Automático"></div>
-        <div class="field"><label>Fecha</label><input id="f_fecha" type="date"></div>
-        <div class="field"><label>Operador</label><select id="f_operador"></select></div>
-        <div class="field"><label>Cliente</label><input id="f_cliente" placeholder="Cliente"></div>
-        <div class="field form-full"><label>Descripción</label><textarea id="f_descripcion" rows="3" placeholder="Describe el trabajo..."></textarea></div>
-        <div class="field"><label>Tipo de letrero</label><select id="f_tipo_letrero"></select></div>
-        <div class="field"><label>Estatus</label><select id="f_estado"><option>Solicitud</option><option>En curso</option><option>Revisado</option><option>Listo</option></select></div>
-        <div class="field"><label>Fecha entrega</label><input id="f_entrega" type="date"></div>
-        <div class="field"><label>Prioridad</label><select id="f_prioridad"><option>Media</option><option>Baja</option><option>Alta</option><option>Urgente</option></select></div>
-        <div class="field"><label>Archivo / referencia</label><input id="f_archivo" placeholder="Nombre o link del archivo"></div>
+        <div class="field"><label>Fecha</label><input type="date" id="f_fecha"/></div>
+        <div class="field"><label>Operador</label><select id="f_operador"><option value="">Seleccionar…</option></select></div>
       </div>
-      <div class="readonly-box"><b>Deuda / pagos</b><span>Se editan desde el botón de la columna Deuda.</span></div>
-      <div class="field"><label>Observaciones técnicas</label><textarea id="f_observaciones" placeholder="Luz, base, canto, instalación, pintura, ganchos, etc." rows="4"></textarea></div>
+      <div class="field"><label>Cliente</label><input type="text" id="f_cliente" placeholder="Nombre del cliente..." autocomplete="off" list="clientesDatalist"/></div>
+      <div class="field"><label>Descripción del trabajo</label><textarea id="f_descripcion" placeholder="Ej: Logo corpóreo en PVC + acrílico..." rows="3"></textarea></div>
+      <div class="form-grid">
+        <div class="field"><label>Cantidad</label><input type="text" id="f_cantidad" placeholder="Ej: 1 unidad"/></div>
+        <div class="field"><label>Fecha de entrega</label><input type="date" id="f_entrega"/></div>
+      </div>
+      <div class="field"><label>Tipo de letrero</label><select id="f_tipo_letrero"></select></div>
+      <div class="field"><label>Archivo / referencia</label><input type="file" id="f_archivo" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.zip,.rar"/></div>
     </div>
-    <div class="modal-footer"><button class="btn-soft" type="button" onclick="closeModal('ideaBackdrop')">Cancelar</button><button class="btn-main" type="button" onclick="saveIdeaModal()">Guardar</button></div>
+    <div class="modal-footer"><button class="btn-add secondary" type="button" onclick="closeModal('orderBackdrop')">Cancelar</button><button class="btn-add" type="button" onclick="saveOrder()">Guardar</button></div>
   </div>
 </div>
 
-<div class="backdrop" id="descBackdrop" style="display:none" onclick="bdClick(event,'descBackdrop')">
-  <div class="modal" style="max-width:560px">
+<div class="backdrop" id="deudaBackdrop" style="display:none" onclick="bdClick(event,'deudaBackdrop')">
+  <div class="modal" style="max-width:580px">
     <div class="modal-handle"></div>
-    <div class="modal-header"><span class="modal-title">DESCRIPCIÓN</span><button class="modal-close" type="button" onclick="closeModal('descBackdrop')">✕</button></div>
-    <div class="modal-body"><div id="descText" style="white-space:pre-wrap;line-height:1.45;font-size:15px;color:var(--text)"></div></div>
-  </div>
-</div>
-
-<div class="backdrop" id="pagoBackdrop" style="display:none" onclick="bdClick(event,'pagoBackdrop')">
-  <div class="modal" style="max-width:560px">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><span class="modal-title">REGISTRAR PAGO / ABONO</span><button class="modal-close" type="button" onclick="closeModal('pagoBackdrop')">✕</button></div>
+    <div class="modal-header"><span class="modal-title">DEUDA DEL PEDIDO</span><button class="modal-close" type="button" onclick="closeModal('deudaBackdrop')">✕</button></div>
     <div class="modal-body">
-      <div class="field"><label>Cliente</label><input class="pay-readonly" id="pago_cliente" readonly></div>
-      <div class="field"><label>Pedido / descripción</label><textarea class="pay-readonly" id="pago_descripcion" rows="3" readonly></textarea></div>
-      <div class="field"><label>Monto total / deuda base</label><input id="pago_total_edit" type="number" step="0.01" placeholder="0.00" oninput="calcularPagoLocal()"></div>
+      <div class="field"><label>Cliente</label><input class="pay-readonly" type="text" id="deuda_cliente" readonly/></div>
+      <div class="field"><label>Pedido / descripción</label><textarea class="pay-readonly" id="deuda_descripcion" rows="3" readonly></textarea></div>
       <div class="pay-summary">
-        <div class="pay-summary-box"><div class="pay-summary-label">Total</div><div class="pay-summary-value" id="pago_total">$0.00</div></div>
-        <div class="pay-summary-box"><div class="pay-summary-label">Pagado</div><div class="pay-summary-value ok" id="pago_pagado">$0.00</div></div>
-        <div class="pay-summary-box"><div class="pay-summary-label">Saldo</div><div class="pay-summary-value" id="pago_saldo">$0.00</div></div>
+        <div class="pay-summary-box"><div class="pay-summary-label">Total</div><div class="pay-summary-value" id="deuda_total">$0.00</div></div>
+        <div class="pay-summary-box"><div class="pay-summary-label">Pagado</div><div class="pay-summary-value ok" id="deuda_pagado">$0.00</div></div>
+        <div class="pay-summary-box"><div class="pay-summary-label">Saldo</div><div class="pay-summary-value bad" id="deuda_saldo">$0.00</div></div>
       </div>
       <div class="form-grid">
-        <div class="field"><label>Monto recibido</label><input id="pago_monto" type="number" step="0.01" placeholder="0.00" oninput="calcularPagoLocal()"></div>
-        <div class="field"><label>Método</label><select id="pago_metodo"><option>Efectivo USD</option><option>Efectivo Bs</option><option>Pago móvil</option><option>Transferencia</option><option>Zelle</option><option>Binance</option><option>Otro</option></select></div>
+        <div class="field"><label>Monto que debe</label><input type="number" id="deuda_monto" step="0.01" placeholder="Ej: 100.00" oninput="pintarDeudaModal()"/></div>
+        <div class="field"><label>Tipo</label><select id="deuda_tipo" onchange="pintarDeudaModal()"><option value="DIVISA">Divisa</option><option value="BCV">BCV</option></select></div>
       </div>
-      <div class="field"><label>Nota / referencia</label><textarea id="pago_nota" rows="3" placeholder="Referencia, banco, observación..."></textarea></div>
-      <div class="readonly-box"><b id="pago_resultado">$0.00</b><span>Saldo después de aplicar este pago</span></div>
-      <div id="pago_historial" class="pay-history"></div>
+      <div class="field" id="deuda_tasa_wrap"><label>Tasa BCV</label><input type="number" id="deuda_tasa" step="0.0001" placeholder="Ej: 40.00" oninput="pintarDeudaModal()"/></div>
+      <div class="form-grid">
+        <div class="field"><label>Acción</label><select id="deuda_accion" onchange="pintarDeudaModal()"><option value="PENDIENTE">Solo guardar deuda</option><option value="ABONO">Agregar abono</option><option value="LISTO">Pagar restante</option></select></div>
+        <div class="field"><label>Fecha</label><input type="date" id="deuda_fecha" onchange="pintarDeudaModal()"/></div>
+      </div>
+      <div class="field" id="deuda_abono_wrap"><label>Nuevo abono</label><input type="number" id="deuda_abono" step="0.01" placeholder="Ej: 20.00" oninput="pintarDeudaModal()"/></div>
+      <div class="pay-result-box"><div class="pay-result-label">Resultado</div><div class="pay-result-money" id="deuda_resultado_monto">$0.00</div><div class="pay-result-text" id="deuda_resultado_texto">Sin monto definido</div></div>
     </div>
-    <div class="modal-footer"><button class="btn-soft" type="button" onclick="closeModal('pagoBackdrop')">Cancelar</button><button class="btn-soft" type="button" onclick="guardarDeudaLocal()">Guardar deuda</button><button class="btn-main" type="button" onclick="aplicarPagoLocal()">Aplicar pago</button></div>
+    <div class="modal-footer"><button class="btn-add secondary" type="button" onclick="closeModal('deudaBackdrop')">Cancelar</button><button class="btn-add" type="button" onclick="guardarDeudaPedido()">Guardar</button></div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
-<script>
-const STORAGE_KEY='tutto_organizador_ideas_local_v4';
-const TIPOS_LETRERO=[
-  'ACRILICO 3MM','ACRILICO 5MM','ACRILICO 8MM','ACRILICO LAMINADO','AUTOMOTRIZ 15MM','AUTOMOTRIZ 15MM BACKLIGHT','AUTOMOTRIZ 30MM','AUTOMOTRIZ 30MM BACKLIGHT','CAJA DE LUZ','FRONT LIT','FRONT LIT SIN LUZ','PVC 15MM + ACRILICO','PVC 15MM LAMINADO','PVC 3MM','PVC 5MM LAMINADO','SERVICIO DE CORTE 15MM','SERVICIO DE CORTE 9MM','SERVICIO GALVANIZADO','SERVICIO SS'
-];
-const OPERADORES=['Roberto','Ricardo','Marie Gabriela','Rubén','Carlos','Chico','Alejandro','Patricia','Ana'];
-let ideas=[];let editingId=null;let pagoIdeaActiva=null;
-function $(id){return document.getElementById(id)}
-function hoy(){return new Date().toISOString().slice(0,10)}
-function uid(){return (crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)}
-function num(v){const n=Number(String(v??'').replace(/[^0-9,.-]/g,'').replace(',','.'));return Number.isFinite(n)?n:0}
-function money(v){return '$'+Number(num(v)).toFixed(2)}
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
-function norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim()}
-function toast(msg){const t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',1800)}
-function normalizarEstadoIdea(v){v=String(v||'Solicitud').trim();if(['En curso','En proceso','Diseño','Cotizando','Aprobado','Pausado'].includes(v))return'En curso';if(v==='Revisado')return'Revisado';if(v==='Listo')return'Listo';return'Solicitud'}
-function normalizarPagoIdea(v){return String(v||'Pendiente').trim()==='Pagado'?'Pagado':'Pendiente'}
-function normalizarIdeaLocal(i){i=i||{};i.estado=normalizarEstadoIdea(i.estado);i.pago=normalizarPagoIdea(i.pago);i.monto=num(i.monto);i.pagado=num(i.pagado!=null?i.pagado:i.abono);if(i.pago==='Pagado'&&i.monto>0&&i.pagado<i.monto)i.pagado=i.monto;i.pagos=Array.isArray(i.pagos)?i.pagos:[];delete i.abono;return i}
-function load(){try{ideas=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch(e){ideas=[]}ideas=ideas.map(normalizarIdeaLocal);save()}
-function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(ideas))}
-function nextNum(){let max=0;ideas.forEach(x=>{const m=String(x.numero||'').match(/(\d+)$/);if(m)max=Math.max(max,Number(m[1]))});return 'IDEA-'+String(max+1).padStart(5,'0')}
-function llenarSelects(){
-  const tipoOpts='<option value="">Tipo de letrero</option>'+TIPOS_LETRERO.map(x=>`<option>${esc(x)}</option>`).join('');
-  $('filterTipo').innerHTML=tipoOpts;$('q_tipo_letrero').innerHTML=tipoOpts;$('f_tipo_letrero').innerHTML=tipoOpts;
-  const opOpts=OPERADORES.map(x=>`<option>${esc(x)}</option>`).join('');$('q_operador').innerHTML=opOpts;$('f_operador').innerHTML=opOpts;
-}
-function claseEstado(v){const n=norm(v);if(n==='revisado')return'estado-revisado';if(n==='en curso')return'estado-en-curso';if(n==='listo')return'estado-listo';return'estado-solicitud'}
-function clasePago(v){const n=norm(v);if(n==='pagado')return'pago-pagado';return'pago-pendiente'}
-function deudaInfo(i){const monto=num(i.monto),pagado=num(i.pagado);const deuda=Math.max(monto-pagado,0);if(monto<=0)return{deuda,pagado,cls:'sinmonto',txt:'Sin monto'};if(deuda<=0)return{deuda:0,pagado,cls:'pagado',txt:'Pagado'};if(pagado>0)return{deuda,pagado,cls:'abono',txt:'Debe '+money(deuda)};return{deuda,pagado,cls:'debe',txt:'Debe '+money(deuda)}}
-function fechaCorta(f){if(!f)return'';const d=new Date(f+'T00:00:00');if(isNaN(d))return f;return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')}
-function autoPago(monto,pagado){monto=num(monto);pagado=num(pagado);if(monto>0&&pagado>=monto)return'Pagado';return'Pendiente'}
-function filtered(){
-  const q=norm($('searchInput').value),estado=$('filterEstado').value,tipo=$('filterTipo').value,fd=$('filterFechaDesde').value,fh=$('filterFechaHasta').value;
-  return ideas.filter(i=>{
-    const txt=norm([i.numero,i.fecha,i.operador,i.cliente,i.descripcion,i.tipo_letrero,i.estado,i.entrega,i.archivo,i.observaciones].join(' '));
-    return (!q||txt.includes(q))&&(!estado||i.estado===estado)&&(!tipo||i.tipo_letrero===tipo)&&(!fd||String(i.fecha||'')>=fd)&&(!fh||String(i.fecha||'')<=fh);
-  }).sort((a,b)=>String(b.fecha||'').localeCompare(String(a.fecha||''))||String(b.created_at||'').localeCompare(String(a.created_at||'')));
-}
-function render(){
-  const data=filtered(),body=$('ideasBody'),empty=$('emptyState');
-  $('sTotal').textContent=ideas.length;$('sSolicitudes').textContent=ideas.filter(x=>x.estado==='Solicitud').length;$('sProceso').textContent=ideas.filter(x=>x.estado==='En curso').length;$('sRevisado').textContent=ideas.filter(x=>x.estado==='Revisado').length;$('sListo').textContent=ideas.filter(x=>x.estado==='Listo').length;$('sDeuda').textContent=money(ideas.reduce((a,x)=>a+deudaInfo(x).deuda,0));
-  empty.style.display=data.length?'none':'block';
-  body.innerHTML=data.map((i,idx)=>rowHTML(i,idx)).join('');
-}
-function rowHTML(i,idx){const d=deudaInfo(i);return `<tr onclick="openIdea('${i.id}')">
-<td>${idx+1}</td><td>${esc(fechaCorta(i.fecha)||i.fecha||'')}</td><td>${esc(i.operador||'')}</td><td><b style="color:#153bff">${esc(i.cliente||'')}</b></td>
-<td class="desc-preview" onclick="event.stopPropagation();openDesc('${i.id}')">${esc(i.descripcion||'')}</td><td><span class="tipo-pill">${esc(i.tipo_letrero||'')}</span></td>
-<td onclick="event.stopPropagation()"><select class="cell-select ${claseEstado(i.estado)}" onchange="quickEstado('${i.id}',this.value)"><option ${i.estado==='Solicitud'?'selected':''}>Solicitud</option><option ${i.estado==='En curso'?'selected':''}>En curso</option><option ${i.estado==='Revisado'?'selected':''}>Revisado</option><option ${i.estado==='Listo'?'selected':''}>Listo</option></select></td>
-<td onclick="event.stopPropagation();openPagoModal('${i.id}')"><span class="deuda-pill ${d.cls}">${esc(d.txt)}</span></td><td>${esc(fechaCorta(i.entrega)||i.entrega||'')}</td>
-<td onclick="event.stopPropagation()"><div class="row-actions"><button class="icon-btn" onclick="openIdea('${i.id}')">✎</button><button class="icon-btn green" onclick="duplicarIdea('${i.id}')">⧉</button><button class="icon-btn red" onclick="delIdea('${i.id}')">×</button></div></td></tr>`}
-function clearQuickEntry(){['q_cliente','q_descripcion','q_entrega'].forEach(id=>$(id).value='');$('q_fecha').value=hoy();$('q_estado').value='Solicitud';$('q_tipo_letrero').value='';autoPagoQuick()}
-function autoPagoQuick(){$('quickDebtHint').textContent='Definir deuda'}
-function saveQuickIdea(){const item={id:uid(),numero:nextNum(),fecha:$('q_fecha').value||hoy(),operador:$('q_operador').value,cliente:$('q_cliente').value.trim(),descripcion:$('q_descripcion').value.trim(),tipo_letrero:$('q_tipo_letrero').value,estado:$('q_estado').value,pago:'Pendiente',monto:0,pagado:0,pagos:[],entrega:$('q_entrega').value,archivo:'',prioridad:'Media',observaciones:'',created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
-  if(!item.cliente||!item.descripcion){alert('Coloca cliente y descripción.');return}ideas.unshift(item);save();clearQuickEntry();render();toast('Idea agregada ✅')}
-function openIdea(id){editingId=id||null;const i=id?ideas.find(x=>x.id===id):null;$('ideaModalTitle').textContent=i?'EDITAR IDEA':'NUEVA IDEA';$('f_numero').value=i?i.numero:nextNum();$('f_fecha').value=i?i.fecha:hoy();$('f_operador').value=i?i.operador:OPERADORES[0];$('f_cliente').value=i?i.cliente:'';$('f_descripcion').value=i?i.descripcion:'';$('f_tipo_letrero').value=i?i.tipo_letrero:'';$('f_estado').value=i?i.estado:'Solicitud';$('f_entrega').value=i?i.entrega:'';$('f_prioridad').value=i?i.prioridad:'Media';$('f_archivo').value=i?i.archivo:'';$('f_observaciones').value=i?i.observaciones:'';calcularModal();$('ideaBackdrop').style.display='flex'}
-function calcularModal(){}
-function saveIdeaModal(){const viejo=editingId?(ideas.find(x=>x.id===editingId)||{}):{};const monto=num(viejo.monto);const pagado=num(viejo.pagado);const item={id:editingId||uid(),numero:$('f_numero').value||nextNum(),fecha:$('f_fecha').value||hoy(),operador:$('f_operador').value,cliente:$('f_cliente').value.trim(),descripcion:$('f_descripcion').value.trim(),tipo_letrero:$('f_tipo_letrero').value,estado:$('f_estado').value,pago:autoPago(monto,pagado),entrega:$('f_entrega').value,monto,pagado,pagos:Array.isArray(viejo.pagos)?viejo.pagos:[],prioridad:$('f_prioridad').value,archivo:$('f_archivo').value.trim(),observaciones:$('f_observaciones').value.trim(),created_at:editingId?viejo.created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
-  if(!item.cliente||!item.descripcion){alert('Coloca cliente y descripción.');return}if(editingId){const ix=ideas.findIndex(x=>x.id===editingId);ideas[ix]=item}else ideas.unshift(item);save();closeModal('ideaBackdrop');render();toast('Guardado ✅')}
-function quickEstado(id,v){const i=ideas.find(x=>x.id===id);if(!i)return;i.estado=v;i.updated_at=new Date().toISOString();save();render();toast('Estado actualizado')}
-function quickPago(id,v){const i=ideas.find(x=>x.id===id);if(!i)return;i.pago=normalizarPagoIdea(v);if(i.pago==='Pagado')i.pagado=num(i.monto);i.updated_at=new Date().toISOString();save();render();toast('Pago actualizado')}
-function delIdea(id){if(!confirm('¿Eliminar esta idea?'))return;ideas=ideas.filter(x=>x.id!==id);save();render();toast('Eliminado')}
-function duplicarIdea(id){const i=ideas.find(x=>x.id===id);if(!i)return;const n={...i,id:uid(),numero:nextNum(),cliente:i.cliente+' copia',created_at:new Date().toISOString(),updated_at:new Date().toISOString()};ideas.unshift(n);save();render();toast('Duplicado')}
-function openDesc(id){const i=ideas.find(x=>x.id===id);if(!i)return;const d=deudaInfo(i);$('descText').innerHTML=`<b>${esc(i.numero)} · ${esc(i.cliente)}</b>\n\n${esc(i.descripcion||'Sin descripción')}\n\nTipo: ${esc(i.tipo_letrero||'')}\nEstado: ${esc(i.estado||'')}\nPago: ${esc(i.pago||'Pendiente')}\nMonto: ${money(i.monto)} · Pagado: ${money(d.pagado)} · ${esc(d.txt)}${i.observaciones?'\n\nObservaciones:\n'+esc(i.observaciones):''}`;$('descBackdrop').style.display='flex'}
+<input type="file" id="rowFileInput" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" style="display:none" onchange="handleRowFileSelect(event)"/>
 
-function openPagoModal(id){const i=ideas.find(x=>x.id===id);if(!i)return;pagoIdeaActiva=id;$('pago_cliente').value=i.cliente||'';$('pago_descripcion').value=(i.numero?i.numero+' · ':'')+(i.descripcion||'');$('pago_total_edit').value=num(i.monto)>0?Number(num(i.monto)).toFixed(2):'';$('pago_monto').value='';$('pago_metodo').value='Efectivo USD';$('pago_nota').value='';pintarPagoModal(i);$('pagoBackdrop').style.display='flex'}
-function pintarPagoModal(i){const total=num($('pago_total_edit').value||i.monto);const d=deudaInfo({...i,monto:total});$('pago_total').textContent=money(total);$('pago_pagado').textContent=money(d.pagado);$('pago_saldo').textContent=money(d.deuda);pintarHistorialPago(i);calcularPagoLocal()}
-function calcularPagoLocal(){const i=ideas.find(x=>x.id===pagoIdeaActiva);if(!i)return;const total=num($('pago_total_edit').value||0);const d=deudaInfo({...i,monto:total});const recibido=num($('pago_monto').value);$('pago_total').textContent=money(total);$('pago_pagado').textContent=money(d.pagado);$('pago_saldo').textContent=money(d.deuda);$('pago_resultado').textContent=money(Math.max(d.deuda-recibido,0))}
-function pintarHistorialPago(i){const box=$('pago_historial');const hist=Array.isArray(i.pagos)?i.pagos:[];box.innerHTML='<div class="pay-history-title">Historial de pagos / abonos</div>'+(hist.length?hist.slice().reverse().map(h=>`<div class="pay-history-row"><span>${money(h.monto)} · ${esc(h.metodo||'Pago')}</span><small>${esc((h.fecha||'').slice(0,10))}</small></div>`).join(''):'<div class="pay-history-row"><span>Sin pagos registrados</span><small>—</small></div>')}
-function guardarDeudaLocal(){const i=ideas.find(x=>x.id===pagoIdeaActiva);if(!i)return;i.monto=num($('pago_total_edit').value);i.pago=autoPago(i.monto,i.pagado);i.updated_at=new Date().toISOString();save();closeModal('pagoBackdrop');render();toast('Deuda guardada ✅')}
-function aplicarPagoLocal(){const i=ideas.find(x=>x.id===pagoIdeaActiva);if(!i)return;i.monto=num($('pago_total_edit').value);const recibido=num($('pago_monto').value);if(recibido<=0){guardarDeudaLocal();return}i.pagos=Array.isArray(i.pagos)?i.pagos:[];i.pagos.push({fecha:new Date().toISOString(),monto:recibido,metodo:$('pago_metodo').value,nota:$('pago_nota').value});i.pagado=num(i.pagado)+recibido;i.pago=autoPago(i.monto,i.pagado);i.updated_at=new Date().toISOString();save();closeModal('pagoBackdrop');render();toast('Pago aplicado ✅')}
-function closeModal(id){$(id).style.display='none'}function bdClick(e,id){if(e.target&&e.target.id===id)closeModal(id)}
-function abrirNotificaciones(){toast('Versión local sin notificaciones.')}
-function initMenuLocal(){const btn=$('mobileMenuBtn'), menu=$('authMenu'); if(btn&&menu){btn.onclick=function(){menu.classList.toggle('open')}}}
-function limpiarFiltros(){['searchInput','filterEstado','filterTipo','filterFechaDesde','filterFechaHasta'].forEach(id=>$(id).value='');render()}
-function exportarJSON(){const blob=new Blob([JSON.stringify(ideas,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='organizador_ideas_local.json';a.click();URL.revokeObjectURL(a.href)}
-function init(){llenarSelects();load();$('q_fecha').value=hoy();clearQuickEntry();render();initMenuLocal();document.documentElement.classList.remove('loading-menu');document.documentElement.classList.add('menu-ready')}
-window.addEventListener('DOMContentLoaded',init);
+<div class="backdrop" id="notiBackdrop" style="display:none" onclick="bdClick(event,'notiBackdrop')">
+  <div class="modal" style="max-width:660px">
+    <div class="modal-handle"></div><div class="modal-header"><span class="modal-title">NOTIFICACIONES</span><button class="modal-close" type="button" onclick="closeModal('notiBackdrop')">✕</button></div>
+    <div class="modal-body"><div class="noti-list" id="notiList"><div class="empty">Cargando notificaciones...</div></div></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=24"></script>
+<script src="js/auth.js?v=26"></script>
+<script src="js/menu.js?v=42"></script>
+<script>
+const TIPOS_LETRERO = [
+  "ACRILICO 3MM","ACRILICO 5MM","ACRILICO 8MM","ACRILICO LAMINADO","AUTOMOTRIZ 15MM","AUTOMOTRIZ 15MM BACKLIGHT","AUTOMOTRIZ 30MM","AUTOMOTRIZ 30MM BACKLIGHT","CAJA DE LUZ","FRONT LIT","FRONT LIT SIN LUZ","PVC 15MM + ACRILICO","PVC 15MM LAMINADO","PVC 3MM","PVC 5MM LAMINADO","SERVICIO DE CORTE 15MM","SERVICIO DE CORTE 9MM","SERVICIO GALVANIZADO","SERVICIO SS"
+];
+const MATERIAL_MARCA = "LETRERO";
+const ORIGEN_PAGO = "ORGANIZADOR_IDEAS";
+let pedidosDB = [];
+let clientesDB = [];
+let operadoresDB = [];
+let pedidoEditandoId = null;
+let deudaPedidoId = null;
+let archivoRapido = null;
+let paginaActual = 1;
+let pedidosPorPagina = 40;
+
+function db(){ return window.supabaseClient || window.db || null; }
+function $(id){ return document.getElementById(id); }
+function fechaISO(){ return new Date().toISOString().slice(0,10); }
+function num(v){ const n=Number(String(v??"").replace(/[^0-9,.-]/g,"").replace(",",".")); return Number.isFinite(n)?n:0; }
+function money(v){ return Number(num(v)).toFixed(2); }
+function esc(v){ return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
+function norm(v){ return String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim(); }
+function toast(msg){ const t=$("toast"); if(!t){console.log(msg); return;} t.textContent=msg; t.style.display="block"; setTimeout(()=>t.style.display="none",2200); }
+function setStatus(msg,ok=false){ const el=$("dbStatus"); if(el){ el.textContent=msg; el.style.color=ok?"#16a34a":"#64748b"; } }
+function operadorActualNombre(){ try{ const op=JSON.parse(localStorage.getItem("comanda_operador_actual")||"null"); return op&&op.nombre?op.nombre:""; }catch(e){ return ""; } }
+function uid(){ try{ return crypto.randomUUID(); }catch(e){ return String(Date.now())+Math.random(); } }
+
+function claseEstado(v){ const n=norm(v); if(n==="solicitud")return"estado-solicitud"; if(n==="en curso"||n==="encurso")return"estado-en-curso"; if(n==="revisado")return"estado-revisado"; if(n==="listo")return"estado-listo"; return""; }
+function estadoPagoDesdeMontos(total,pagado){ total=num(total); pagado=num(pagado); if(total<=0.009)return"SIN_MONTO"; if(pagado>=total-0.009)return"PAGADO"; if(pagado>0.009)return"ABONADO"; return"PENDIENTE"; }
+function estatusPagoSupabase(estado){ estado=String(estado||"").toUpperCase(); if(estado==="PAGADO")return"Pagado"; if(estado==="ABONADO")return"Abonado"; return"Pendiente"; }
+function resumenPedido(p){ const total=num(p.pago_simple_total ?? p.precio_total); const pagado=num(p.pago_simple_pagado ?? p.monto_abonado); const saldo=Math.max(total-pagado,0); const tipo=String(p.pago_simple_tipo|| (String(p.moneda_deuda||"").toUpperCase()==="BS"?"BCV":"DIVISA")).toUpperCase()==="BCV"?"BCV":"DIVISA"; const tasa=num(p.tasa_deuda||1)||1; const estado=estadoPagoDesdeMontos(total,pagado); return {total,pagado,saldo,tipo,tasa,estado}; }
+function textoTipo(r){ return r.tipo==="BCV" ? "BCV"+(r.tasa>1?" "+money(r.tasa):"") : "Divisa"; }
+function botonDeudaHtml(p){ const r=resumenPedido(p); let cls="sinmonto", titulo="Definir", sub="Sin monto"; if(r.total>0){ if(r.estado==="PAGADO"){cls="pagado";titulo="Pagado $"+money(r.total);sub=textoTipo(r)} else if(r.estado==="ABONADO"){cls="abonado";titulo="Debe $"+money(r.saldo);sub="Abonó $"+money(r.pagado)} else {cls="debe";titulo="Debe $"+money(r.total);sub=textoTipo(r)} } return `<button class="debt-btn ${cls}" type="button" onclick="abrirDeuda(${Number(p.id)})"><span>${esc(titulo)}</span><small>${esc(sub)}</small></button>`; }
+function payloadPagoSimple({monto,pagado,tipo,tasa,fecha,estado}){ const total=num(monto), pago=num(pagado); const t=String(tipo||"DIVISA").toUpperCase()==="BCV"?"BCV":"DIVISA"; const rate=t==="BCV" && num(tasa)>0 ? num(tasa) : 1; const st=estado || estadoPagoDesdeMontos(total,pago); return {precio_total:total,monto_abonado:pago,estatus_pago:estatusPagoSupabase(st),moneda_deuda:t==="BCV"?"BS":"USD",tipo_tasa_deuda:t==="BCV"?"BS_BCV":"USD_FIJO",tasa_deuda:rate,total_bs:t==="BCV"?total*rate:null,monto_abonado_bs:t==="BCV"?pago*rate:0,pago_simple_total:total,pago_simple_tipo:t,pago_simple_pagado:pago,pago_simple_saldo:Math.max(total-pago,0),pago_simple_a_favor:Math.max(pago-total,0),pago_simple_estado:st,pago_simple_fecha:fecha||fechaISO(),pago_simple_actualizado_en:new Date().toISOString()}; }
+
+function llenarSelectTipos(){ const opts=TIPOS_LETRERO.map(t=>`<option>${esc(t)}</option>`).join(""); ["q_tipo_letrero","f_tipo_letrero"].forEach(id=>{ if($(id)) $(id).innerHTML=opts; }); const f=$("filterTipo"); if(f) f.innerHTML='<option value="">Tipo de letrero</option>'+opts; }
+function llenarOperadores(){ const names=[...new Set(operadoresDB.map(x=>x.nombre||x).filter(Boolean))]; const actual=operadorActualNombre(); ["q_operador","f_operador","filterOperador"].forEach(id=>{ const el=$(id); if(!el)return; const first=id==="filterOperador"?"Operador":(id==="q_operador"?"Operador":"Seleccionar…"); el.innerHTML=`<option value="">${first}</option>`+names.map(n=>`<option ${n===actual?"selected":""}>${esc(n)}</option>`).join(""); }); }
+function llenarClientes(){ const dl=$("clientesDatalist"); if(!dl)return; dl.innerHTML=clientesDB.map(c=>`<option value="${esc(c.nombre||"")}"></option>`).join(""); }
+function ponerFechaHoy(){ ["q_fecha","f_fecha"].forEach(id=>{ if($(id) && !$(id).value) $(id).value=fechaISO(); }); }
+
+async function cargarTodo(manual=false){ if(!db()){ setStatus("Supabase no disponible. Revisa js/supabase.js"); return; } setStatus("Conectando con Supabase..."); try{ llenarSelectTipos(); const [clientes,operadores,pedidos]=await Promise.all([
+    db().from("clientes").select("id,nombre,telefono,correo,rif_cedula,activo").neq("activo",false).order("nombre"),
+    db().from("operadores").select("nombre,activo").order("nombre"),
+    db().from("pedidos").select("*").order("id",{ascending:false}).limit(2500)
+  ]);
+  if(clientes.error) throw clientes.error; if(operadores.error) console.warn(operadores.error); if(pedidos.error) throw pedidos.error;
+  clientesDB=clientes.data||[]; operadoresDB=(operadores.data||[]).filter(o=>o.activo!==false); pedidosDB=(pedidos.data||[]).filter(esPedidoLetrero);
+  llenarClientes(); llenarOperadores(); ponerFechaHoy(); renderPedidos(true); setStatus(`Supabase conectado · ${pedidosDB.length} ideas`,true); if(manual) toast("Actualizado ✅");
+ }catch(e){ console.error(e); setStatus("Error cargando: "+(e.message||e)); alert("Error cargando Organizador de Ideas: "+(e.message||e)); } }
+function esPedidoLetrero(p){ const mat=String(p.material||"").toUpperCase().trim(); const tipo=String(p.tipo_impresion||"").toUpperCase().trim(); return mat===MATERIAL_MARCA || TIPOS_LETRERO.includes(tipo); }
+function pedidoCumple(p){ const q=norm($("searchInput")?.value||""); const st=$("filterStatus")?.value||""; const tipo=$("filterTipo")?.value||""; const op=$("filterOperador")?.value||""; const desde=$("filterFechaDesde")?.value||""; const hasta=$("filterFechaHasta")?.value||""; const text=norm([p.id,p.fecha,p.operador,p.cliente,p.descripcion,p.cantidad,p.tipo_impresion,p.estatus_trabajo,p.fecha_entrega].join(" ")); if(q&&!text.includes(q))return false; if(st&&String(p.estatus_trabajo||"")!==st)return false; if(tipo&&String(p.tipo_impresion||"")!==tipo)return false; if(op&&String(p.operador||"")!==op)return false; if(desde&&String(p.fecha||"").slice(0,10)<desde)return false; if(hasta&&String(p.fecha||"").slice(0,10)>hasta)return false; return true; }
+function renderPedidos(reset=false){ const tbody=$("orderTableBody"), empty=$("emptyState"); if(!tbody)return; let data=pedidosDB.filter(pedidoCumple).sort((a,b)=>Number(b.id||0)-Number(a.id||0)); if(reset) paginaActual=1; const total=data.length; const paginas=Math.max(1,Math.ceil(total/pedidosPorPagina)); if(paginaActual>paginas) paginaActual=paginas; const inicio=(paginaActual-1)*pedidosPorPagina; const fin=Math.min(inicio+pedidosPorPagina,total); const page=data.slice(inicio,fin); if(!total){ tbody.innerHTML=""; if(empty) empty.style.display="block"; renderPaginacion(0,1,0,0); return; } if(empty) empty.style.display="none"; tbody.innerHTML=page.map(rowHtml).join(""); renderPaginacion(total,paginas,inicio,fin); }
+function rowHtml(p){ const id=Number(p.id); const archivo=p.archivo_url?`<a class="file-link-chip" href="${esc(p.archivo_url)}" target="_blank" onclick="event.stopPropagation()">📎 ${esc(p.archivo_nombre||"Archivo")}</a>`:"—"; const st=String(p.estatus_trabajo||"Solicitud"); return `<tr onclick="openEditOrder(${id})"><td>${esc(id)}</td><td>${esc(String(p.fecha||"").slice(0,10))}</td><td>${esc(p.operador||"")}</td><td class="client-name">${esc(p.cliente||"")}</td><td class="desc-cell" title="${esc(p.descripcion||"")}">${esc(p.descripcion||"")}</td><td>${esc(p.cantidad||"")}</td><td><span class="tipo-chip">${esc(p.tipo_impresion||"")}</span></td><td><select class="cell-select ${claseEstado(st)}" onchange="quickSetEstado(${id},this.value);this.className='cell-select '+claseEstado(this.value)" onclick="event.stopPropagation()"><option ${st==="Solicitud"?"selected":""}>Solicitud</option><option ${st==="En curso"?"selected":""}>En curso</option><option ${st==="Revisado"?"selected":""}>Revisado</option><option ${st==="Listo"?"selected":""}>Listo</option></select></td><td>${esc(p.fecha_entrega||"—")}</td><td>${botonDeudaHtml(p)}</td><td>${archivo}</td></tr>`; }
+function renderPaginacion(total,paginas,inicio,fin){ const bar=$("paginationBar"); if(!bar)return; if(!total){ bar.innerHTML='<span class="page-info">0 ideas</span>'; return; } bar.innerHTML=`<button class="page-btn" type="button" onclick="cambiarPagina(-1)" ${paginaActual<=1?"disabled":""}>← Anterior</button><span class="page-info">${inicio+1}-${fin} de ${total}</span><span class="page-info">Página ${paginaActual} / ${paginas}</span><button class="page-btn" type="button" onclick="cambiarPagina(1)" ${paginaActual>=paginas?"disabled":""}>Siguiente →</button><select class="page-select" onchange="cambiarTamanoPagina(this.value)"><option value="20" ${pedidosPorPagina===20?"selected":""}>1-20</option><option value="40" ${pedidosPorPagina===40?"selected":""}>1-40</option><option value="100" ${pedidosPorPagina===100?"selected":""}>1-100</option></select>`; }
+function cambiarPagina(d){ paginaActual+=Number(d||0); renderPedidos(false); }
+function cambiarTamanoPagina(v){ pedidosPorPagina=Number(v||40); paginaActual=1; renderPedidos(false); }
+
+async function ensureCliente(nombre){ nombre=String(nombre||"").trim(); if(!nombre)return null; const exact=clientesDB.find(c=>norm(c.nombre)===norm(nombre)); if(exact)return exact; const {data,error}=await db().from("clientes").insert([{nombre,activo:true,notas:"Creado desde Organizador de Ideas"}]).select("id,nombre,telefono,correo,rif_cedula,activo").single(); if(error){ alert("No se pudo crear cliente: "+error.message); return null; } clientesDB.push(data); llenarClientes(); return data; }
+async function subirArchivo(input){ const file=input?.files?.[0]||archivoRapido; if(!file)return {archivo_url:null,archivo_nombre:null}; try{ const ext=(file.name.split(".").pop()||"bin").toLowerCase(); const path=`ideas/${Date.now()}_${Math.random().toString(16).slice(2)}.${ext}`; const {error}=await db().storage.from("adjuntos-pedidos").upload(path,file,{upsert:false}); if(error) throw error; const {data}=db().storage.from("adjuntos-pedidos").getPublicUrl(path); return {archivo_url:data?.publicUrl||null,archivo_nombre:file.name}; }catch(e){ alert("No se pudo subir archivo. Se guardará sin adjunto.\n\n"+(e.message||e)); return {archivo_url:null,archivo_nombre:null}; } }
+function basePayload({fecha,operador,clienteObj,cliente,descripcion,cantidad,tipo,entrega,estado,archivo}){ return {fecha:fecha||fechaISO(),operador:operador||operadorActualNombre()||"",cliente_id:clienteObj?.id||null,cliente:clienteObj?.nombre||cliente||"Cliente sin nombre",descripcion:descripcion||"Sin descripción",cantidad:cantidad||"",material:MATERIAL_MARCA,tipo_impresion:tipo||TIPOS_LETRERO[0],tipo_entrega:"",estatus_trabajo:estado||"Solicitud",fecha_entrega:entrega||null,...payloadPagoSimple({monto:0,pagado:0,tipo:"DIVISA",tasa:1,fecha:fecha||fechaISO(),estado:"SIN_MONTO"}),archivo_url:archivo?.archivo_url||null,archivo_nombre:archivo?.archivo_nombre||null}; }
+async function saveQuickOrder(){ if(!db())return; let fecha=$("q_fecha").value||fechaISO(); let operador=$("q_operador").value||operadorActualNombre(); const cliente=$("q_cliente").value; const descripcion=$("q_descripcion").value; const cantidad=$("q_cantidad").value; const tipo=$("q_tipo_letrero").value; const estado=$("q_estatus_trabajo").value; const entrega=$("q_entrega").value; if(!cliente&&!descripcion){alert("Coloca cliente o descripción.");return;} const clienteObj=await ensureCliente(cliente); const archivo=await subirArchivo(null); const payload=basePayload({fecha,operador,clienteObj,cliente,descripcion,cantidad,tipo,entrega,estado,archivo}); const {data,error}=await db().from("pedidos").insert([payload]).select("id").single(); if(error){alert("Error guardando: "+error.message);return;} await registrarAuditoria(data?.id,"DEUDA_CREADA",{pago_simple_total:{etiqueta:"Monto de deuda",antes:null,despues:0}},"Idea creada desde Organizador",payload); archivoRapido=null; clearQuickEntry(); await cargarTodo(false); toast("Idea agregada ✅"); }
+function clearQuickEntry(){ ["q_cliente","q_descripcion","q_cantidad","q_entrega"].forEach(id=>{ if($(id))$(id).value=""; }); if($("q_estatus_trabajo"))$("q_estatus_trabajo").value="Solicitud"; if($("q_tipo_letrero"))$("q_tipo_letrero").value=TIPOS_LETRERO[0]; ponerFechaHoy(); archivoRapido=null; }
+function openQuickAttach(){ $("rowFileInput")?.click(); }
+function handleRowFileSelect(e){ archivoRapido=e.target.files?.[0]||null; toast(archivoRapido?"Archivo listo para adjuntar":"Sin archivo"); }
+function openNewOrder(){ pedidoEditandoId=null; $("orderModalTitle").textContent="NUEVA IDEA"; ["f_cliente","f_descripcion","f_cantidad","f_entrega"].forEach(id=>$(id).value=""); $("f_fecha").value=fechaISO(); $("f_operador").value=operadorActualNombre()||""; $("f_tipo_letrero").value=TIPOS_LETRERO[0]; if($("f_archivo"))$("f_archivo").value=""; $("orderBackdrop").style.display="flex"; }
+function openEditOrder(id){ const p=pedidosDB.find(x=>Number(x.id)===Number(id)); if(!p)return; pedidoEditandoId=id; $("orderModalTitle").textContent="EDITAR IDEA"; $("f_fecha").value=String(p.fecha||"").slice(0,10); $("f_operador").value=p.operador||""; $("f_cliente").value=p.cliente||""; $("f_descripcion").value=p.descripcion||""; $("f_cantidad").value=p.cantidad||""; $("f_entrega").value=p.fecha_entrega||""; $("f_tipo_letrero").value=TIPOS_LETRERO.includes(p.tipo_impresion)?p.tipo_impresion:TIPOS_LETRERO[0]; if($("f_archivo"))$("f_archivo").value=""; $("orderBackdrop").style.display="flex"; }
+async function saveOrder(){ const id=pedidoEditandoId; const cliente=$("f_cliente").value; const clienteObj=await ensureCliente(cliente); const archivo=await subirArchivo($("f_archivo")); const old=id?pedidosDB.find(x=>Number(x.id)===Number(id)):null; const payload={fecha:$("f_fecha").value||fechaISO(),operador:$("f_operador").value||operadorActualNombre(),cliente_id:clienteObj?.id||null,cliente:clienteObj?.nombre||cliente||"Cliente sin nombre",descripcion:$("f_descripcion").value||"Sin descripción",cantidad:$("f_cantidad").value||"",material:MATERIAL_MARCA,tipo_impresion:$("f_tipo_letrero").value||TIPOS_LETRERO[0],fecha_entrega:$("f_entrega").value||null}; if(archivo.archivo_url){ payload.archivo_url=archivo.archivo_url; payload.archivo_nombre=archivo.archivo_nombre; } let res; if(id) res=await db().from("pedidos").update(payload).eq("id",id); else res=await db().from("pedidos").insert([{...payload,estatus_trabajo:"Solicitud",...payloadPagoSimple({monto:0,pagado:0,tipo:"DIVISA",fecha:payload.fecha,estado:"SIN_MONTO"})}]).select("id").single(); if(res.error){alert("Error guardando: "+res.error.message);return;} const savedId=id||res.data?.id; await registrarAuditoria(savedId,"PEDIDO_EDITADO",{descripcion:{etiqueta:"Descripción",antes:old?.descripcion||null,despues:payload.descripcion}},id?"Editado desde Organizador":"Creado desde Organizador",payload); closeModal("orderBackdrop"); pedidoEditandoId=null; await cargarTodo(false); toast("Guardado ✅"); }
+async function quickSetEstado(id,estado){ const {error}=await db().from("pedidos").update({estatus_trabajo:estado}).eq("id",id); if(error){alert("No se pudo actualizar: "+error.message);return;} const p=pedidosDB.find(x=>Number(x.id)===Number(id)); if(p)p.estatus_trabajo=estado; renderPedidos(false); }
+function abrirDeuda(id){ const p=pedidosDB.find(x=>Number(x.id)===Number(id)); if(!p)return; deudaPedidoId=id; const r=resumenPedido(p); $("deuda_cliente").value=p.cliente||""; $("deuda_descripcion").value=`#${p.id} · ${p.descripcion||""}`; $("deuda_monto").value=r.total>0?money(r.total):""; $("deuda_tipo").value=r.tipo; $("deuda_tasa").value=r.tipo==="BCV"&&r.tasa>1?money(r.tasa):""; $("deuda_accion").value="PENDIENTE"; $("deuda_fecha").value=fechaISO(); $("deuda_abono").value=""; pintarDeudaModal(); $("deudaBackdrop").style.display="flex"; }
+function itemDeudaModal(){ const p=pedidosDB.find(x=>Number(x.id)===Number(deudaPedidoId))||{}; const base=resumenPedido(p); const monto=num($("deuda_monto")?.value||base.total); const tipo=$("deuda_tipo")?.value||base.tipo; const tasa=tipo==="BCV"?num($("deuda_tasa")?.value||base.tasa||1):1; const accion=$("deuda_accion")?.value||"PENDIENTE"; const abono=accion==="ABONO"?num($("deuda_abono")?.value||0):0; return {pedido:p,base,monto,tipo,tasa,accion,abono,fecha:$("deuda_fecha")?.value||fechaISO()}; }
+function pintarDeudaModal(){ const it=itemDeudaModal(); const wrapT=$("deuda_tasa_wrap"), wrapA=$("deuda_abono_wrap"); if(wrapT)wrapT.style.display=it.tipo==="BCV"?"":"none"; if(wrapA)wrapA.style.display=it.accion==="ABONO"?"":"none"; let pagado=it.base.pagado; if(it.accion==="ABONO") pagado+=it.abono; if(it.accion==="LISTO") pagado=Math.max(pagado,it.monto); const saldo=Math.max(it.monto-pagado,0); $("deuda_total").textContent="$"+money(it.monto); $("deuda_pagado").textContent="$"+money(pagado); $("deuda_saldo").textContent="$"+money(saldo); $("deuda_resultado_monto").textContent="$"+money(saldo); $("deuda_resultado_texto").textContent=it.monto<=0?"Sin monto definido":(saldo<=0.009?"Pedido pagado completo":(pagado>0?"Pedido abonado":"Pedido pendiente")); }
+async function guardarDeudaPedido(){ if(!deudaPedidoId)return; const it=itemDeudaModal(); if(it.monto<=0 && it.accion!=="PENDIENTE"){ alert("Coloca el monto que debe."); return; } let delta=0; if(it.accion==="ABONO"){ delta=it.abono; if(delta<=0){alert("Coloca el monto del abono.");return;} } if(it.accion==="LISTO") delta=Math.max(it.monto-it.base.pagado,0); const payload=payloadPagoSimple({monto:it.monto,pagado:it.base.pagado,tipo:it.tipo,tasa:it.tasa,fecha:it.fecha,estado:estadoPagoDesdeMontos(it.monto,it.base.pagado)}); const {error}=await db().from("pedidos").update(payload).eq("id",deudaPedidoId); if(error){alert("No se pudo guardar deuda: "+error.message);return;} const local=pedidosDB.find(x=>Number(x.id)===Number(deudaPedidoId)); if(local)Object.assign(local,payload); await registrarAuditoria(deudaPedidoId,"CAMBIO_FINANCIERO",{pago_simple_total:{etiqueta:"Monto de deuda",antes:it.base.total,despues:it.monto}},"Cambio desde Organizador",local||{}); if(delta>0.009){ const ok=await registrarPagoCliente(deudaPedidoId,delta,it); if(!ok)return; } closeModal("deudaBackdrop"); await cargarTodo(false); toast(delta>0?"Pago registrado ✅":"Deuda guardada ✅"); }
+async function registrarPagoCliente(pedidoId,delta,it){ const p=pedidosDB.find(x=>Number(x.id)===Number(pedidoId)); if(!p)return false; let clienteId=p.cliente_id; if(!clienteId){ const c=await ensureCliente(p.cliente); clienteId=c?.id||null; if(clienteId) await db().from("pedidos").update({cliente_id:clienteId}).eq("id",pedidoId); } if(!clienteId){ alert("No se pudo identificar el cliente."); return false; } const params={p_operacion_uuid:uid(),p_cliente_id:Number(clienteId),p_tipo_pago:it.tipo==="BCV"?"BCV":"DIVISA",p_monto:num(delta),p_metodo:it.accion==="LISTO"?"Listo desde Organizador":"Abono desde Organizador",p_referencia:"Pedido #"+pedidoId,p_nota:"Registrado desde Organizador de Ideas · Pedido #"+pedidoId,p_fecha:it.fecha||fechaISO(),p_registrado_por:operadorActualNombre()||null,p_origen:ORIGEN_PAGO,p_pedido_id:Number(pedidoId)}; const {error}=await db().rpc("registrar_pago_cliente_v1",params); if(error){alert("No se pudo registrar el pago: "+error.message);return false;} return true; }
+async function registrarAuditoria(id,tipo,cambios,detalle,pedido){ if(!id||!db())return; try{ await db().from("pedidos_auditoria").insert([{pedido_id:Number(id),cliente_id:pedido?.cliente_id||null,cliente_nombre:pedido?.cliente||null,tipo_evento:String(tipo||"CAMBIO").toUpperCase(),origen:"ORGANIZADOR_IDEAS",operador:operadorActualNombre()||null,cambios,detalle:detalle||null}]); }catch(e){ console.warn("Auditoría no guardada",e); } }
+function bdClick(e,id){ if(e.target&&e.target.id===id) closeModal(id); }
+function closeModal(id){ const el=$(id); if(el)el.style.display="none"; }
+
+document.addEventListener("DOMContentLoaded",()=>{ llenarSelectTipos(); ponerFechaHoy(); cargarTodo(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ ["orderBackdrop","deudaBackdrop","notiBackdrop"].forEach(closeModal); }});
 </script>
+<script src="js/notificaciones.js?v=35"></script>
 </body>
 </html>
