@@ -320,6 +320,7 @@ th:nth-child(12),td:nth-child(12){width:78px;text-align:center}
 
   <select class="filter-sel" id="filterStatus" onchange="render()">
     <option value="">Estado</option>
+    <option value="Procesos">⚙️ Procesos</option>
     <option value="Solicitud">🔴 Solicitud</option>
     <option value="En curso">⚫ En curso</option>
     <option value="Revisado">🟡 Revisado</option>
@@ -664,7 +665,12 @@ function filterRows(){
     const p=paymentInfo(x);
     const payState=p.total<=0.009?"Pendiente":p.rest<=0.009?"Pagado":p.pag>0.009?"Abonado":"Pendiente";
     const text=norm([x.folio,x.numero_pedido,x.cliente_nombre,x.descripcion,x.operador,x.tipo_nombre].join(" "));
-    return (!q||text.includes(q)) && (!st||x.estado===st) && (!pg||payState===pg) &&
+    const matchEstado =
+      !st ||
+      (st==="Procesos" && ["Solicitud","En curso","Revisado"].includes(x.estado)) ||
+      (st!=="Procesos" && x.estado===st);
+
+    return (!q||text.includes(q)) && matchEstado && (!pg||payState===pg) &&
            (!op||x.operador===op) && (!fd||String(x.fecha||"")>=fd) && (!fh||String(x.fecha||"")<=fh);
   });
 }
