@@ -124,6 +124,111 @@ th:nth-child(12),td:nth-child(12){width:78px;text-align:center}
 .empty{text-align:center;padding:60px 20px;color:#6b7280;font-family:var(--head);font-size:15px;letter-spacing:2px}
 .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#111827;color:#fff;border-radius:10px;padding:10px 16px;z-index:999999;display:none;box-shadow:0 12px 35px #0008;font-family:var(--head);font-size:13px;font-weight:800;letter-spacing:.35px;text-transform:uppercase;max-width:90vw;text-align:center}
 
+
+/* PAGO REAL · MISMO CONCEPTO DEL INDEX */
+.payment-action-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:center;
+  gap:3px;
+  width:100%;
+  min-width:0;
+}
+.pay-cell-btn{
+  width:100%;
+  min-width:0;
+  min-height:34px;
+  padding:5px 7px;
+  border-radius:10px;
+  border:1px solid #153bff;
+  background:#153bff;
+  color:#fff;
+  cursor:pointer;
+  font-family:var(--head);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.45px;
+  text-transform:uppercase;
+  line-height:1.05;
+  white-space:nowrap;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  overflow:hidden;
+}
+.pay-cell-btn span,.pay-cell-btn small{
+  display:block;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.pay-cell-btn small{font-size:7px;opacity:.92;letter-spacing:.25px}
+.pay-cell-btn.pay-debe{background:#ed262a;border-color:#ed262a;color:#fff}
+.pay-cell-btn.pay-abonado{background:#f59e0b;border-color:#f59e0b;color:#111827}
+.pay-cell-btn.pay-pagado{background:#16a34a;border-color:#16a34a;color:#fff}
+.pay-cell-btn.pay-sinmonto{background:#64748b;border-color:#64748b;color:#fff}
+.pay-cell-btn:hover{filter:brightness(.97)}
+.pay-summary{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:0;
+  border:1px solid #d9deea;
+  border-radius:12px;
+  overflow:hidden;
+  background:#f8f9ff;
+}
+.pay-summary-box{padding:12px;border-right:1px solid #d9deea}
+.pay-summary-box:last-child{border-right:0}
+.pay-summary-label{
+  font-family:var(--head);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.55px;
+  color:#6b7280;
+  text-transform:uppercase;
+  margin-bottom:5px;
+}
+.pay-summary-value{
+  font-family:var(--mono);
+  font-size:17px;
+  font-weight:900;
+  color:#111827;
+}
+.pay-summary-value.ok{color:#16a34a}
+.inline-note{
+  padding:9px 10px;
+  border:1px solid #d9deea;
+  border-radius:10px;
+  background:#f8f9ff;
+  color:#64748b;
+  font-size:11px;
+  line-height:1.4;
+}
+.split-line{height:1px;background:#e4e8f2;margin:4px 0}
+.section-title{
+  font-family:var(--head);
+  font-size:10px;
+  font-weight:900;
+  color:#153bff;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+.client-hint{margin-top:4px;font-size:10px;color:#64748b}
+.client-hint.bad{color:#dc2626;font-weight:800}
+.loading-row td{
+  text-align:center!important;
+  padding:32px!important;
+  color:#64748b!important;
+  font-family:var(--head)!important;
+  font-weight:900!important;
+  letter-spacing:.5px!important;
+  text-transform:uppercase!important;
+}
+
 /* RESPONSIVE */
 @media(min-width:600px){.backdrop{align-items:center;padding:16px}.modal{border-radius:12px}}
 @media(max-width:1280px){
@@ -264,7 +369,7 @@ th:nth-child(12),td:nth-child(12){width:78px;text-align:center}
             <option value="">Operador</option>
           </select>
         </th>
-        <th><input class="quick-input" id="q_cliente" type="text" placeholder="Cliente"/></th>
+        <th><input class="quick-input" id="q_cliente" type="text" placeholder="Cliente" list="clientesDatalist" autocomplete="off"/><div class="client-hint" id="q_cliente_hint"></div></th>
         <th><textarea class="quick-input quick-textarea" id="q_descripcion" placeholder="Descripción"></textarea></th>
         <th><input class="quick-input" id="q_cantidad" type="text" value="1"/></th>
         <th>
@@ -272,9 +377,8 @@ th:nth-child(12),td:nth-child(12){width:78px;text-align:center}
         </th>
         <th>
           <select class="quick-select" id="q_instalacion">
-            <option>Por definir</option>
-            <option>Sí</option>
             <option>No</option>
+            <option>Sí</option>
           </select>
         </th>
         <th>
@@ -286,13 +390,7 @@ th:nth-child(12),td:nth-child(12){width:78px;text-align:center}
           </select>
         </th>
         <th><input class="quick-input" id="q_entrega" type="date"/></th>
-        <th>
-          <select class="quick-select" id="q_pago">
-            <option>Pendiente</option>
-            <option>Abonado</option>
-            <option>Pagado</option>
-          </select>
-        </th>
+        <th><button class="pay-cell-btn pay-sinmonto" type="button" disabled><span>DEFINIR</span><small>AL GUARDAR</small></button></th>
         <th><button class="quick-btn add-symbol-btn" type="button" onclick="saveQuick()">+</button></th>
       </tr>
     </thead>
@@ -316,21 +414,21 @@ th:nth-child(12),td:nth-child(12){width:78px;text-align:center}
         <div class="field"><label>Operador</label><select id="f_operador"></select></div>
       </div>
 
-      <div class="field"><label>Cliente</label><input type="text" id="f_cliente"/></div>
+      <div class="field"><label>Cliente</label><input type="text" id="f_cliente" list="clientesDatalist" autocomplete="off"/><div class="client-hint" id="f_cliente_hint">Debe ser un cliente existente.</div></div>
       <div class="field"><label>Descripción</label><textarea id="f_descripcion"></textarea></div>
 
       <div class="form-grid">
         <div class="field"><label>Cantidad</label><input type="text" id="f_cantidad" value="1"/></div>
         <div class="field"><label>Corpóreo</label><select id="f_corporeo"></select></div>
         <div class="field"><label>Instalación</label>
-          <select id="f_instalacion"><option>Por definir</option><option>Sí</option><option>No</option></select>
+          <select id="f_instalacion"><option>No</option><option>Sí</option></select>
         </div>
         <div class="field"><label>Estatus</label>
           <select id="f_estatus"><option>Solicitud</option><option>En curso</option><option>Revisado</option><option>Listo</option></select>
         </div>
         <div class="field"><label>Fecha entrega</label><input type="date" id="f_entrega"/></div>
         <div class="field"><label>Pago</label>
-          <select id="f_pago"><option>Pendiente</option><option>Abonado</option><option>Pagado</option></select>
+          <input type="text" id="f_pago_resumen" value="Se gestiona desde el botón Pago" readonly/>
         </div>
       </div>
     </div>
@@ -341,10 +439,104 @@ th:nth-child(12),td:nth-child(12){width:78px;text-align:center}
   </div>
 </div>
 
+
+<datalist id="clientesDatalist"></datalist>
+
+<div class="backdrop" id="paymentBackdrop" style="display:none" onclick="if(event.target===this)closePayment()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">REGISTRAR PAGO</span>
+      <button class="modal-close" type="button" onclick="closePayment()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="field">
+        <label>Cliente</label>
+        <input id="pay_cliente" type="text" readonly/>
+      </div>
+
+      <div class="field">
+        <label>Pedido / descripción</label>
+        <textarea id="pay_descripcion" rows="2" readonly></textarea>
+      </div>
+
+      <div class="pay-summary">
+        <div class="pay-summary-box">
+          <div class="pay-summary-label">Total</div>
+          <div class="pay-summary-value" id="pay_total">$0.00</div>
+        </div>
+        <div class="pay-summary-box">
+          <div class="pay-summary-label">Pagado</div>
+          <div class="pay-summary-value ok" id="pay_pagado">$0.00</div>
+        </div>
+        <div class="pay-summary-box">
+          <div class="pay-summary-label">Saldo</div>
+          <div class="pay-summary-value" id="pay_saldo">$0.00</div>
+        </div>
+      </div>
+
+      <div class="section-title">Deuda del pedido</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Monto total</label>
+          <input id="pay_deuda_total" type="number" min="0" step="0.01" oninput="refreshPaymentPreview()"/>
+        </div>
+        <div class="field">
+          <label>Cuenta</label>
+          <select id="pay_tipo" onchange="refreshPaymentPreview()">
+            <option value="USD_FIJO">DIVISA ($)</option>
+            <option value="BS_BCV">BCV</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-add secondary" type="button" onclick="saveDebtOnly()">Guardar deuda sin pago</button>
+
+      <div class="split-line"></div>
+
+      <div class="section-title">Registrar pago / abono</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Monto recibido</label>
+          <input id="pay_monto" type="number" min="0" step="0.01" placeholder="0.00"/>
+        </div>
+        <div class="field">
+          <label>Método</label>
+          <select id="pay_metodo">
+            <option>Efectivo USD</option>
+            <option>Efectivo Bs</option>
+            <option>Pago móvil</option>
+            <option>Transferencia</option>
+            <option>Zelle</option>
+            <option>Binance</option>
+            <option>Otro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Referencia / nota</label>
+        <textarea id="pay_nota" rows="3" placeholder="Referencia bancaria, observación, etc."></textarea>
+      </div>
+
+      <div class="inline-note">
+        Este botón usa la cuenta financiera real del cliente. El abono se registra en la misma lista de pagos de Clientes.
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-add secondary" type="button" onclick="closePayment()">Cerrar</button>
+      <button class="btn-add" type="button" onclick="applyRealPayment()">Aplicar pago</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=30"></script>
+<script src="js/auth.js?v=30"></script>
 <script>
-const STORAGE_KEY="tutto_corporeos_prototipo_v1";
 const CORPOREOS=[
 "ACRILICO 3MM","ACRILICO 5MM","ACRILICO 8MM","ACRILICO LAMINADO",
 "AUTOMOTRIZ 15MM","AUTOMOTRIZ 15MM BACKLIGHT","AUTOMOTRIZ 30MM","AUTOMOTRIZ 30MM BACKLIGHT",
@@ -352,113 +544,395 @@ const CORPOREOS=[
 "PVC 3MM","PVC 5MM LAMINADO","SERVICIO DE CORTE 15MM","SERVICIO DE CORTE 9MM",
 "SERVICIO GALVANIZADO","SERVICIO SS"
 ];
-const OPERADORES=["Roberto","Ricardo","Carlos","Chico","Rubén","Marie Gabriela"];
+
 let items=[];
+let clientes=[];
+let operadores=[];
+let tiposMap=new Map();
 let editId=null;
+let paymentId=null;
+let busy=false;
 
 function $(id){return document.getElementById(id)}
 function today(){return new Date().toISOString().slice(0,10)}
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim()}
-function toast(msg){const t=$("toast");t.textContent=msg;t.style.display="block";clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.style.display="none",1800)}
+function num(v){const n=Number(String(v??"").replace(/[^0-9,.-]/g,"").replace(",","."));return Number.isFinite(n)?n:0}
+function toast(msg){const t=$("toast");t.textContent=msg;t.style.display="block";clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.style.display="none",2200)}
 function estadoClass(v){const n=norm(v);if(n==="solicitud")return"estado-solicitud";if(n==="en curso")return"estado-en-curso";if(n==="revisado")return"estado-revisado";if(n==="listo")return"estado-listo";return""}
-function pagoClass(v){const n=norm(v);if(n==="pendiente")return"pago-pendiente";if(n==="abonado")return"pago-abonado";if(n==="pagado")return"pago-pagado";return""}
-function id(){return Date.now()+Math.floor(Math.random()*1000)}
+function fmtDate(f){if(!f)return"—";const p=String(f).slice(0,10).split("-");return p.length===3?`${p[2]}/${p[1]}`:String(f)}
+function tipoCuenta(x){return String(x?.pago_tipo_deuda||"USD_FIJO").toUpperCase()==="BS_BCV"?"BS_BCV":"USD_FIJO"}
+function money(v,tipo="USD_FIJO"){const n=num(v);return tipo==="BS_BCV"?"BCV "+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}):"$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function saldo(x){return Math.max(num(x?.pago_total)-num(x?.pago_abonado),0)}
+function uuid(){return crypto?.randomUUID?crypto.randomUUID():"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c==="x"?r:(r&3|8);return v.toString(16)})}
+function wait(ms){return new Promise(r=>setTimeout(r,ms))}
 
-function load(){
-  try{items=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}catch(e){items=[]}
+async function ready(){
+  for(let i=0;i<100;i++){
+    if(window.supabaseClient)break;
+    await wait(50);
+  }
+  const db=window.supabaseClient;
+  if(!db)throw new Error("Supabase no está disponible");
+
+  if(window.authReady){
+    const ok=await window.authReady;
+    if(ok===false)throw new Error("Sesión no válida");
+  }
+
+  const {data,error}=await db.auth.getSession();
+  if(error)throw error;
+  if(!data?.session?.user){
+    location.href="login.html";
+    throw new Error("Sesión vencida");
+  }
+  return db;
 }
-function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(items))}
 
 function fillSelect(id,values,first){
-  const el=$(id); if(!el)return;
-  el.innerHTML=(first?`<option value="">${first}</option>`:"")+values.map(v=>`<option>${esc(v)}</option>`).join("");
+  const el=$(id);if(!el)return;
+  el.innerHTML=(first?`<option value="">${first}</option>`:"")+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("");
 }
-function init(){
+
+function clienteExacto(nombre){
+  const k=norm(nombre);
+  return clientes.find(c=>norm(c.nombre)===k)||null;
+}
+function validateClient(inputId,hintId){
+  const c=clienteExacto($(inputId).value);
+  if(hintId){
+    const h=$(hintId);
+    h.textContent=c?`Cliente enlazado · #${c.id}`:"Debe ser un cliente existente.";
+    h.classList.toggle("bad",!c);
+  }
+  return c;
+}
+
+async function loadCatalogs(){
+  const db=await ready();
+  const [rc,ro,rt]=await Promise.all([
+    db.from("clientes").select("id,nombre,activo").eq("activo",true).order("nombre",{ascending:true}),
+    db.from("operadores").select("id,nombre,activo").eq("activo",true).order("nombre",{ascending:true}),
+    db.from("prod_tipos_letrero").select("id,nombre,categoria,activo").eq("activo",true)
+  ]);
+  if(rc.error)throw rc.error;
+  if(ro.error)throw ro.error;
+  if(rt.error)throw rt.error;
+
+  clientes=rc.data||[];
+  operadores=(ro.data||[]).map(x=>x.nombre).filter(Boolean);
+  tiposMap=new Map((rt.data||[]).map(t=>[norm(t.nombre),t]));
+
+  $("clientesDatalist").innerHTML=clientes.map(c=>`<option value="${esc(c.nombre)}"></option>`).join("");
   fillSelect("q_corporeo",CORPOREOS,"Corpóreo");
   fillSelect("f_corporeo",CORPOREOS,"Seleccionar...");
-  fillSelect("q_operador",OPERADORES,"Operador");
-  fillSelect("f_operador",OPERADORES,"Seleccionar...");
-  fillSelect("filterOperador",OPERADORES,"Operador");
-  $("q_fecha").value=today(); $("f_fecha").value=today();
+  fillSelect("q_operador",operadores,"Operador");
+  fillSelect("f_operador",operadores,"Seleccionar...");
+  fillSelect("filterOperador",operadores,"Operador");
+}
 
-  $("mobileMenuBtn").addEventListener("click",()=>$("authMenu").classList.toggle("open"));
-  load(); render();
+async function loadRows(){
+  const db=await ready();
+  $("orderTableBody").innerHTML=`<tr class="loading-row"><td colspan="12">Cargando pedidos...</td></tr>`;
+  const {data,error}=await db.from("prod_pedidos")
+    .select("id,folio,numero_pedido,fecha,operador,cliente_id,cliente_nombre,descripcion,cantidad,tipo_id,tipo_nombre,categoria,instalacion,estado,fecha_entrega,pago_estado,pago_total,pago_abonado,pago_tipo_deuda,pago_tasa_deuda,pago_total_bs,pago_ultimo_metodo,pago_ultima_moneda,pago_ultima_referencia,pago_ultima_nota,pago_ultima_fecha,archivado,created_at,updated_at")
+    .eq("archivado",false)
+    .order("fecha",{ascending:false})
+    .order("folio",{ascending:false})
+    .limit(500);
+
+  if(error)throw error;
+  items=data||[];
+  render();
+}
+
+function paymentInfo(x){
+  const total=num(x.pago_total),pag=num(x.pago_abonado),rest=Math.max(total-pag,0),tipo=tipoCuenta(x);
+  let cls="pay-sinmonto",main="DEFINIR";
+  if(total>0.009 && rest<=0.009){cls="pay-pagado";main="PAGADO"}
+  else if(total>0.009 && pag>0.009){cls="pay-abonado";main="DEBE "+money(rest,tipo)}
+  else if(total>0.009){cls="pay-debe";main="DEBE "+money(rest,tipo)}
+  const acct=tipo==="BS_BCV"?"BCV":"DIVISA";
+  const f=fmtDate(x.pago_ultima_fecha||x.fecha);
+  return {cls,main,sub:`${acct} · ${f}`,total,pag,rest,tipo};
+}
+
+function filterRows(){
+  const q=norm($("searchInput").value),st=$("filterStatus").value,pg=$("filterPago").value,
+        op=$("filterOperador").value,fd=$("filterFechaDesde").value,fh=$("filterFechaHasta").value;
+  return items.filter(x=>{
+    const p=paymentInfo(x);
+    const payState=p.total<=0.009?"Pendiente":p.rest<=0.009?"Pagado":p.pag>0.009?"Abonado":"Pendiente";
+    const text=norm([x.folio,x.numero_pedido,x.cliente_nombre,x.descripcion,x.operador,x.tipo_nombre].join(" "));
+    return (!q||text.includes(q)) && (!st||x.estado===st) && (!pg||payState===pg) &&
+           (!op||x.operador===op) && (!fd||String(x.fecha||"")>=fd) && (!fh||String(x.fecha||"")<=fh);
+  });
+}
+
+function render(){
+  const list=filterRows();
+  $("emptyState").style.display=list.length?"none":"block";
+  $("orderTableBody").innerHTML=list.map(x=>{
+    const p=paymentInfo(x);
+    return `<tr onclick="openModal('${x.id}')">
+      <td>${esc(x.folio||"")}</td>
+      <td>${esc(fmtDate(x.fecha))}</td>
+      <td>${esc(x.operador||"—")}</td>
+      <td>${esc(x.cliente_nombre||"—")}</td>
+      <td title="${esc(x.descripcion||"")}">${esc(x.descripcion||"—")}</td>
+      <td>${esc(x.cantidad||"1")}</td>
+      <td>${esc(x.tipo_nombre||"—")}</td>
+      <td>
+        <select class="cell-select" onclick="event.stopPropagation()" onchange="changeInstall('${x.id}',this.value)">
+          <option value="0" ${x.instalacion?"":"selected"}>No</option>
+          <option value="1" ${x.instalacion?"selected":""}>Sí</option>
+        </select>
+      </td>
+      <td>
+        <select class="cell-select ${estadoClass(x.estado)}" onclick="event.stopPropagation()" onchange="changeStatus('${x.id}',this.value)">
+          ${["Solicitud","En curso","Revisado","Listo"].map(v=>`<option ${x.estado===v?"selected":""}>${v}</option>`).join("")}
+        </select>
+      </td>
+      <td>${esc(fmtDate(x.fecha_entrega))}</td>
+      <td>
+        <div class="payment-action-wrap">
+          <button class="pay-cell-btn ${p.cls}" type="button" onclick="event.stopPropagation();openPayment('${x.id}')">
+            <span>${esc(p.main)}</span>
+            <small>${esc(p.sub)}</small>
+          </button>
+        </div>
+      </td>
+      <td><button class="action-btn" type="button" onclick="event.stopPropagation();openModal('${x.id}')">•••</button></td>
+    </tr>`;
+  }).join("");
+}
+
+async function changeStatus(id,value){
+  const db=await ready();
+  const {error}=await db.from("prod_pedidos").update({estado:value,updated_at:new Date().toISOString()}).eq("id",id);
+  if(error){toast("No se pudo cambiar el estatus");return}
+  const x=items.find(r=>r.id===id);if(x)x.estado=value;render();
+}
+
+async function changeInstall(id,value){
+  const db=await ready();
+  const install=value==="1";
+  const {error}=await db.from("prod_pedidos").update({instalacion:install,updated_at:new Date().toISOString()}).eq("id",id);
+  if(error){toast("No se pudo cambiar instalación");return}
+  const x=items.find(r=>r.id===id);if(x)x.instalacion=install;render();
 }
 
 function clearQuick(){
   $("q_fecha").value=today();$("q_operador").value="";$("q_cliente").value="";$("q_descripcion").value="";
-  $("q_cantidad").value="1";$("q_corporeo").value="";$("q_instalacion").value="Por definir";
-  $("q_estatus").value="Solicitud";$("q_entrega").value="";$("q_pago").value="Pendiente";
+  $("q_cantidad").value="1";$("q_corporeo").value="";$("q_instalacion").value="No";
+  $("q_estatus").value="Solicitud";$("q_entrega").value="";
+  $("q_cliente_hint").textContent="";
 }
 
-function saveQuick(){
-  const cliente=$("q_cliente").value.trim(), desc=$("q_descripcion").value.trim();
-  if(!cliente){toast("Falta cliente");return}
-  if(!desc){toast("Falta descripción");return}
-  items.unshift({
-    id:id(),fecha:$("q_fecha").value||today(),operador:$("q_operador").value,cliente,descripcion:desc,
-    cantidad:$("q_cantidad").value||"1",corporeo:$("q_corporeo").value,instalacion:$("q_instalacion").value,
-    estatus:$("q_estatus").value,entrega:$("q_entrega").value,pago:$("q_pago").value
-  });
-  save();clearQuick();render();toast("Pedido agregado");
-}
+async function saveQuick(){
+  if(busy)return;
+  const cliente=validateClient("q_cliente","q_cliente_hint");
+  const tipo=$("q_corporeo").value;
+  if(!cliente){toast("Selecciona un cliente existente");return}
+  if(!$("q_descripcion").value.trim()){toast("Falta descripción");return}
+  if(!tipo){toast("Selecciona Corpóreo");return}
 
-function render(){
-  const q=norm($("searchInput").value), st=$("filterStatus").value, pg=$("filterPago").value,
-        op=$("filterOperador").value, fd=$("filterFechaDesde").value, fh=$("filterFechaHasta").value;
-  const list=items.filter(x=>{
-    const matchQ=!q||norm([x.cliente,x.descripcion,x.operador,x.corporeo,x.instalacion].join(" ")).includes(q);
-    return matchQ && (!st||x.estatus===st) && (!pg||x.pago===pg) && (!op||x.operador===op) &&
-           (!fd||x.fecha>=fd) && (!fh||x.fecha<=fh);
-  });
-  $("emptyState").style.display=list.length?"none":"block";
-  $("orderTableBody").innerHTML=list.map((x,i)=>`
-    <tr onclick="openModal('${x.id}')">
-      <td>${i+1}</td>
-      <td>${esc(x.fecha||"")}</td>
-      <td>${esc(x.operador||"")}</td>
-      <td>${esc(x.cliente||"")}</td>
-      <td title="${esc(x.descripcion||"")}">${esc(x.descripcion||"")}</td>
-      <td>${esc(x.cantidad||"")}</td>
-      <td>${esc(x.corporeo||"")}</td>
-      <td>${esc(x.instalacion||"")}</td>
-      <td><select class="cell-select ${estadoClass(x.estatus)}" onclick="event.stopPropagation()" onchange="updateField('${x.id}','estatus',this.value);this.className='cell-select '+estadoClass(this.value)">
-        ${["Solicitud","En curso","Revisado","Listo"].map(v=>`<option ${x.estatus===v?"selected":""}>${v}</option>`).join("")}
-      </select></td>
-      <td>${esc(x.entrega||"")}</td>
-      <td><select class="cell-select ${pagoClass(x.pago)}" onclick="event.stopPropagation()" onchange="updateField('${x.id}','pago',this.value);this.className='cell-select '+pagoClass(this.value)">
-        ${["Pendiente","Abonado","Pagado"].map(v=>`<option ${x.pago===v?"selected":""}>${v}</option>`).join("")}
-      </select></td>
-      <td><button class="action-btn" onclick="event.stopPropagation();openModal('${x.id}')">•••</button></td>
-    </tr>`).join("");
-}
-
-function updateField(itemId,key,val){
-  const x=items.find(i=>String(i.id)===String(itemId));if(!x)return;x[key]=val;save();
+  busy=true;
+  try{
+    const db=await ready();
+    const t=tiposMap.get(norm(tipo));
+    const op=$("q_operador").value||window.getSesionOperador?.()?.nombre||"";
+    const payload={
+      fecha:$("q_fecha").value||today(),
+      operador:op,
+      cliente_id:cliente.id,
+      cliente_nombre:cliente.nombre,
+      descripcion:$("q_descripcion").value.trim(),
+      cantidad:$("q_cantidad").value.trim()||"1",
+      tipo_id:t?.id||null,
+      tipo_nombre:tipo,
+      categoria:t?.categoria||"LETRERO",
+      instalacion:$("q_instalacion").value==="Sí",
+      estado:$("q_estatus").value||"Solicitud",
+      fecha_entrega:$("q_entrega").value||null,
+      pago_estado:"No pagó",
+      pago_total:0,
+      pago_abonado:0,
+      pago_tipo_deuda:"USD_FIJO",
+      pago_tasa_deuda:1,
+      origen_registro:"ORGANIZADOR",
+      archivado:false,
+      updated_at:new Date().toISOString()
+    };
+    const {error}=await db.from("prod_pedidos").insert(payload);
+    if(error)throw error;
+    clearQuick();await loadRows();toast("Pedido agregado");
+  }catch(e){console.error(e);toast("No se pudo guardar: "+(e.message||e))}
+  finally{busy=false}
 }
 
 function openModal(itemId){
   editId=itemId||null;
-  const x=items.find(i=>String(i.id)===String(itemId));
+  const x=items.find(i=>i.id===itemId);
   $("modalTitle").textContent=x?"EDITAR PEDIDO":"NUEVO PEDIDO";
-  $("f_fecha").value=x?.fecha||today();$("f_operador").value=x?.operador||"";$("f_cliente").value=x?.cliente||"";
-  $("f_descripcion").value=x?.descripcion||"";$("f_cantidad").value=x?.cantidad||"1";$("f_corporeo").value=x?.corporeo||"";
-  $("f_instalacion").value=x?.instalacion||"Por definir";$("f_estatus").value=x?.estatus||"Solicitud";
-  $("f_entrega").value=x?.entrega||"";$("f_pago").value=x?.pago||"Pendiente";
+  $("f_fecha").value=x?.fecha||today();
+  $("f_operador").value=x?.operador||window.getSesionOperador?.()?.nombre||"";
+  $("f_cliente").value=x?.cliente_nombre||"";
+  $("f_descripcion").value=x?.descripcion||"";
+  $("f_cantidad").value=x?.cantidad||"1";
+  $("f_corporeo").value=x?.tipo_nombre||"";
+  $("f_instalacion").value=x?.instalacion?"Sí":"No";
+  $("f_estatus").value=x?.estado||"Solicitud";
+  $("f_entrega").value=x?.fecha_entrega||"";
+  $("f_pago_resumen").value=x?paymentInfo(x).main:"Se gestiona desde el botón Pago";
+  validateClient("f_cliente","f_cliente_hint");
   $("orderBackdrop").style.display="flex";
 }
 function closeModal(){$("orderBackdrop").style.display="none";editId=null}
-function saveModal(){
-  const data={fecha:$("f_fecha").value||today(),operador:$("f_operador").value,cliente:$("f_cliente").value.trim(),
-    descripcion:$("f_descripcion").value.trim(),cantidad:$("f_cantidad").value||"1",corporeo:$("f_corporeo").value,
-    instalacion:$("f_instalacion").value,estatus:$("f_estatus").value,entrega:$("f_entrega").value,pago:$("f_pago").value};
-  if(!data.cliente){toast("Falta cliente");return} if(!data.descripcion){toast("Falta descripción");return}
-  if(editId){const x=items.find(i=>String(i.id)===String(editId));Object.assign(x,data)}
-  else items.unshift({id:id(),...data});
-  save();closeModal();render();toast("Guardado");
+
+async function saveModal(){
+  if(busy)return;
+  const cliente=validateClient("f_cliente","f_cliente_hint");
+  const tipo=$("f_corporeo").value;
+  if(!cliente){toast("Selecciona un cliente existente");return}
+  if(!$("f_descripcion").value.trim()){toast("Falta descripción");return}
+  if(!tipo){toast("Selecciona Corpóreo");return}
+
+  busy=true;
+  try{
+    const db=await ready();
+    const t=tiposMap.get(norm(tipo));
+    const payload={
+      fecha:$("f_fecha").value||today(),
+      operador:$("f_operador").value||window.getSesionOperador?.()?.nombre||"",
+      cliente_id:cliente.id,
+      cliente_nombre:cliente.nombre,
+      descripcion:$("f_descripcion").value.trim(),
+      cantidad:$("f_cantidad").value.trim()||"1",
+      tipo_id:t?.id||null,
+      tipo_nombre:tipo,
+      categoria:t?.categoria||"LETRERO",
+      instalacion:$("f_instalacion").value==="Sí",
+      estado:$("f_estatus").value||"Solicitud",
+      fecha_entrega:$("f_entrega").value||null,
+      updated_at:new Date().toISOString()
+    };
+
+    if(editId){
+      const {error}=await db.from("prod_pedidos").update(payload).eq("id",editId);
+      if(error)throw error;
+    }else{
+      Object.assign(payload,{
+        pago_estado:"No pagó",pago_total:0,pago_abonado:0,pago_tipo_deuda:"USD_FIJO",
+        pago_tasa_deuda:1,origen_registro:"ORGANIZADOR",archivado:false
+      });
+      const {error}=await db.from("prod_pedidos").insert(payload);
+      if(error)throw error;
+    }
+
+    closeModal();await loadRows();toast("Guardado");
+  }catch(e){console.error(e);toast("No se pudo guardar: "+(e.message||e))}
+  finally{busy=false}
 }
-document.addEventListener("DOMContentLoaded",init);
+
+/* ===== PAGO REAL ===== */
+function openPayment(id){
+  const x=items.find(r=>r.id===id);if(!x)return;
+  paymentId=id;
+  const p=paymentInfo(x);
+  $("pay_cliente").value=x.cliente_nombre||"";
+  $("pay_descripcion").value=x.descripcion||"";
+  $("pay_deuda_total").value=num(x.pago_total)||"";
+  $("pay_tipo").value=p.tipo;
+  $("pay_monto").value="";
+  $("pay_nota").value="";
+  refreshPaymentPreview();
+  $("paymentBackdrop").style.display="flex";
+}
+function closePayment(){$("paymentBackdrop").style.display="none";paymentId=null}
+function refreshPaymentPreview(){
+  const x=items.find(r=>r.id===paymentId);if(!x)return;
+  const tipo=$("pay_tipo").value;
+  const total=num($("pay_deuda_total").value);
+  const paid=num(x.pago_abonado);
+  const rest=Math.max(total-paid,0);
+  $("pay_total").textContent=money(total,tipo);
+  $("pay_pagado").textContent=money(paid,tipo);
+  $("pay_saldo").textContent=money(rest,tipo);
+}
+async function saveDebtOnly(){
+  if(busy)return;
+  const x=items.find(r=>r.id===paymentId);if(!x)return;
+  const total=num($("pay_deuda_total").value),paid=num(x.pago_abonado),tipo=$("pay_tipo").value;
+  if(total<0){toast("Monto inválido");return}
+  if(total+0.009<paid){toast("El total no puede ser menor que lo ya pagado");return}
+  if(paid>0.009 && tipo!==tipoCuenta(x)){toast("No puedes cambiar la cuenta después de registrar pagos");return}
+
+  busy=true;
+  try{
+    const db=await ready();
+    const estado=total<=0.009?"No pagó":paid>=total-0.009?"Pagado":paid>0.009?"Abonado":"No pagó";
+    const payload={
+      pago_total:total,
+      pago_tipo_deuda:tipo,
+      pago_total_bs:tipo==="BS_BCV"?total:null,
+      pago_estado:estado,
+      updated_at:new Date().toISOString()
+    };
+    const {error}=await db.from("prod_pedidos").update(payload).eq("id",paymentId);
+    if(error)throw error;
+    Object.assign(x,payload);refreshPaymentPreview();render();toast("Deuda actualizada");
+  }catch(e){console.error(e);toast("No se pudo actualizar la deuda")}
+  finally{busy=false}
+}
+async function applyRealPayment(){
+  if(busy)return;
+  const x=items.find(r=>r.id===paymentId);if(!x)return;
+  const monto=num($("pay_monto").value);
+  if(num(x.pago_total)<=0.009){toast("Primero guarda el monto de la deuda");return}
+  if(monto<=0){toast("Indica el monto recibido");return}
+
+  busy=true;
+  try{
+    const db=await ready();
+    const nota=$("pay_nota").value.trim();
+    const {data,error}=await db.rpc("registrar_pago_organizador_v1",{
+      p_operacion_uuid:uuid(),
+      p_prod_pedido_id:x.id,
+      p_monto:monto,
+      p_metodo:$("pay_metodo").value,
+      p_referencia:nota||null,
+      p_nota:nota||null,
+      p_fecha:today()
+    });
+    if(error)throw error;
+    await loadRows();
+    closePayment();
+    toast(data?.saldo_a_favor>0?"Pago aplicado · saldo a favor":"Pago aplicado correctamente");
+  }catch(e){console.error(e);toast("No se pudo registrar el pago: "+(e.message||e))}
+  finally{busy=false}
+}
+
+document.addEventListener("DOMContentLoaded",async()=>{
+  try{
+    $("q_fecha").value=today();
+    $("mobileMenuBtn").addEventListener("click",()=>$("authMenu").classList.toggle("open"));
+    await ready();
+    await loadCatalogs();
+    await loadRows();
+    const op=window.getSesionOperador?.();
+    if(op?.nombre){
+      $("q_operador").value=op.nombre;
+      $("f_operador").value=op.nombre;
+    }
+  }catch(e){
+    console.error("CORPOREOS:",e);
+    $("orderTableBody").innerHTML="";
+    $("emptyState").style.display="block";
+    $("emptyState").textContent="— NO SE PUDO CARGAR —";
+    toast("Error al cargar: "+(e.message||e));
+  }
+});
 </script>
 </body>
 </html>
