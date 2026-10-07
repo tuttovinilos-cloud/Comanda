@@ -34,15 +34,28 @@ html{scroll-behavior:smooth;background:var(--bg);color-scheme:light}body{backgro
 <body>
 <header class="header">
   <div class="logo"><img src="Logo tutto1.svg" alt="Tutto Vinilos"><small>COMANDA</small></div>
-  <button class="noti-btn" id="notiBtnGlobal" type="button" onclick="abrirNotificaciones && abrirNotificaciones()">🔔 <span class="noti-count empty" id="notiCount">0</span></button>
+  <button class="noti-btn" id="notiBtnGlobal" type="button" onclick="typeof abrirNotificaciones==='function' && abrirNotificaciones()">🔔 <span class="noti-count empty" id="notiCount">0</span></button>
   <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menú">☰ Menú</button>
-  <nav class="header-tabs" data-auth-menu id="authMenu"></nav>
+  <nav class="header-tabs" id="authMenu">
+    <a class="tab-btn" href="index.html">Pedido</a>
+    <a class="tab-btn" href="precios.html">Precio</a>
+    <a class="tab-btn" href="clientes.html">Cliente</a>
+    <a class="tab-btn" href="label.html">Label</a>
+    <a class="tab-btn" href="cotizador.html">Cotizador</a>
+    <a class="tab-btn active" href="ideas.html">Organizador</a>
+    <a class="tab-btn" href="estadisticas.html">Estadísticas</a>
+    <a class="tab-btn" href="marketing.html">Marketing</a>
+    <a class="tab-btn" href="materiales.html">Materiales</a>
+    <a class="tab-btn" href="compras.html">Compras</a>
+    <a class="tab-btn" href="contabilidad.html">Contabilidad</a>
+    <a class="tab-btn" href="configuracion.html">Configuración</a>
+  </nav>
 </header>
 
 <div class="idea-head">
   <div>
     <div class="idea-title">Organizador de Ideas</div>
-    <div class="idea-sub">Vista tipo Index para corpóreos/letreros. Guarda en pedidos para que Clientes vea la deuda.</div>
+    <div class="idea-sub">Vista tipo Index para corpóreos/letreros. Separado de Index: no guarda en pedidos.</div>
     <div class="db-status" id="dbStatus">Conectando con Supabase...</div>
   </div>
   <div class="idea-actions">
@@ -79,7 +92,7 @@ html{scroll-behavior:smooth;background:var(--bg);color-scheme:light}body{backgro
         <th><select class="quick-select" id="q_tipo_letrero"></select></th>
         <th><select class="quick-select" id="q_estatus_trabajo"><option>Solicitud</option><option>En curso</option><option>Revisado</option><option>Listo</option></select></th>
         <th><input class="quick-input" id="q_entrega" type="date"/></th>
-        <th><div class="quick-hint">Luego en Deuda</div></th>
+        <th><div class="quick-hint">Luego en deuda</div></th>
         <th><button class="quick-mini-btn" type="button" title="Adjuntar archivo" onclick="openQuickAttach()">📎</button><button class="quick-btn add-symbol-btn" type="button" onclick="saveQuickOrder()" style="margin-top:5px" title="Guardar">+</button></th>
       </tr>
     </thead>
@@ -114,10 +127,10 @@ html{scroll-behavior:smooth;background:var(--bg);color-scheme:light}body{backgro
 <div class="backdrop" id="deudaBackdrop" style="display:none" onclick="bdClick(event,'deudaBackdrop')">
   <div class="modal" style="max-width:580px">
     <div class="modal-handle"></div>
-    <div class="modal-header"><span class="modal-title">DEUDA DEL PEDIDO</span><button class="modal-close" type="button" onclick="closeModal('deudaBackdrop')">✕</button></div>
+    <div class="modal-header"><span class="modal-title">DEUDA DE LA IDEA</span><button class="modal-close" type="button" onclick="closeModal('deudaBackdrop')">✕</button></div>
     <div class="modal-body">
       <div class="field"><label>Cliente</label><input class="pay-readonly" type="text" id="deuda_cliente" readonly/></div>
-      <div class="field"><label>Pedido / descripción</label><textarea class="pay-readonly" id="deuda_descripcion" rows="3" readonly></textarea></div>
+      <div class="field"><label>Idea / descripción</label><textarea class="pay-readonly" id="deuda_descripcion" rows="3" readonly></textarea></div>
       <div class="pay-summary">
         <div class="pay-summary-box"><div class="pay-summary-label">Total</div><div class="pay-summary-value" id="deuda_total">$0.00</div></div>
         <div class="pay-summary-box"><div class="pay-summary-label">Pagado</div><div class="pay-summary-value ok" id="deuda_pagado">$0.00</div></div>
@@ -149,90 +162,98 @@ html{scroll-behavior:smooth;background:var(--bg);color-scheme:light}body{backgro
 </div>
 <div class="toast" id="toast"></div>
 
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=24"></script>
-<script src="js/auth.js?v=26"></script>
-<script src="js/menu.js?v=42"></script>
 <script>
+const TABLE_IDEAS = "organizador_ideas";
+const BUCKET_ARCHIVOS = "adjuntos-pedidos";
 const TIPOS_LETRERO = [
-  "ACRILICO 3MM","ACRILICO 5MM","ACRILICO 8MM","ACRILICO LAMINADO","AUTOMOTRIZ 15MM","AUTOMOTRIZ 15MM BACKLIGHT","AUTOMOTRIZ 30MM","AUTOMOTRIZ 30MM BACKLIGHT","CAJA DE LUZ","FRONT LIT","FRONT LIT SIN LUZ","PVC 15MM + ACRILICO","PVC 15MM LAMINADO","PVC 3MM","PVC 5MM LAMINADO","SERVICIO DE CORTE 15MM","SERVICIO DE CORTE 9MM","SERVICIO GALVANIZADO","SERVICIO SS"
+  "ACRILICO 3MM","ACRILICO 5MM","ACRILICO 8MM","ACRILICO LAMINADO",
+  "AUTOMOTRIZ 15MM","AUTOMOTRIZ 15MM BACKLIGHT","AUTOMOTRIZ 30MM","AUTOMOTRIZ 30MM BACKLIGHT",
+  "CAJA DE LUZ","FRONT LIT","FRONT LIT SIN LUZ","PVC 15MM + ACRILICO","PVC 15MM LAMINADO",
+  "PVC 3MM","PVC 5MM LAMINADO","SERVICIO DE CORTE 15MM","SERVICIO DE CORTE 9MM","SERVICIO GALVANIZADO","SERVICIO SS"
 ];
-const MATERIAL_MARCA = "LETRERO";
-const ORIGEN_PAGO = "ORGANIZADOR_IDEAS";
-let pedidosDB = [];
-let clientesDB = [];
-let operadoresDB = [];
-let pedidoEditandoId = null;
-let deudaPedidoId = null;
-let archivoRapido = null;
-let paginaActual = 1;
-let pedidosPorPagina = 40;
+const PAGE_SIZE = 60;
+let ideasDB = [], clientesDB = [], operadoresDB = [], currentPage = 1;
+let pedidoEditandoId = null, deudaPedidoId = null, archivoRapido = null;
 
-function db(){ return window.supabaseClient || window.db || null; }
 function $(id){ return document.getElementById(id); }
-function fechaISO(){ return new Date().toISOString().slice(0,10); }
+function db(){ return window.supabaseClient || window.db || null; }
+function esc(v){ return String(v ?? "").replace(/[&<>\"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
+function norm(v){ return String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim(); }
 function num(v){ const n=Number(String(v??"").replace(/[^0-9,.-]/g,"").replace(",",".")); return Number.isFinite(n)?n:0; }
 function money(v){ return Number(num(v)).toFixed(2); }
-function esc(v){ return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
-function norm(v){ return String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim(); }
-function toast(msg){ const t=$("toast"); if(!t){console.log(msg); return;} t.textContent=msg; t.style.display="block"; setTimeout(()=>t.style.display="none",2200); }
-function setStatus(msg,ok=false){ const el=$("dbStatus"); if(el){ el.textContent=msg; el.style.color=ok?"#16a34a":"#64748b"; } }
-function operadorActualNombre(){ try{ const op=JSON.parse(localStorage.getItem("comanda_operador_actual")||"null"); return op&&op.nombre?op.nombre:""; }catch(e){ return ""; } }
-function uid(){ try{ return crypto.randomUUID(); }catch(e){ return String(Date.now())+Math.random(); } }
+function uid(){ return (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now())+Math.random().toString(16).slice(2); }
+function fechaISO(){ return new Date().toISOString().slice(0,10); }
+function toast(msg){ const t=$("toast"); if(!t){console.log(msg);return;} t.textContent=msg; t.style.display="block"; setTimeout(()=>t.style.display="none",2200); }
+function setStatus(msg, ok=false){ const el=$("dbStatus"); if(el) el.innerHTML = ok ? `<b>${msg}</b>` : msg; }
+function operadorActualNombre(){ try{ const op=JSON.parse(localStorage.getItem("comanda_operador_actual")||"null"); return op?.nombre || op?.name || ""; }catch(e){ return ""; } }
+function estadoClase(v){ const n=norm(v); if(n==="listo")return"estado-listo"; if(n==="revisado")return"estado-revisado"; if(n==="en curso"||n==="encurso")return"estado-en-curso"; return"estado-solicitud"; }
+function fechaCorta(f){ if(!f)return""; const d=new Date(String(f).slice(0,10)+"T00:00:00"); if(isNaN(d))return String(f); return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0"); }
+function resumenIdea(p){ const total=num(p.deuda_total); const pagado=num(p.deuda_pagado); const saldo=Math.max(total-pagado,0); const estado = total<=0 ? "SIN_MONTO" : (saldo<=0.009 ? "PAGADO" : (pagado>0 ? "ABONADO" : "PENDIENTE")); return {total,pagado,saldo,estado,tipo:p.deuda_tipo||"DIVISA",tasa:num(p.deuda_tasa||1)||1}; }
+function deudaBtn(p){ const r=resumenIdea(p); let cls="pay-sinmonto", title="Definir", sub="Sin monto"; if(r.total>0){ if(r.estado==="PAGADO"){cls="pay-pagado"; title="Pagado"; sub="$"+money(r.total);} else if(r.estado==="ABONADO"){cls="pay-abonado"; title="Debe $"+money(r.saldo); sub="Abonó $"+money(r.pagado);} else {cls="pay-debe"; title="Debe $"+money(r.total); sub=r.tipo;} } return `<button class="pay-cell-btn ${cls}" type="button" onclick="abrirDeuda('${p.id}')"><span>${esc(title)}</span><small>${esc(sub)}</small></button>`; }
 
-function claseEstado(v){ const n=norm(v); if(n==="solicitud")return"estado-solicitud"; if(n==="en curso"||n==="encurso")return"estado-en-curso"; if(n==="revisado")return"estado-revisado"; if(n==="listo")return"estado-listo"; return""; }
-function estadoPagoDesdeMontos(total,pagado){ total=num(total); pagado=num(pagado); if(total<=0.009)return"SIN_MONTO"; if(pagado>=total-0.009)return"PAGADO"; if(pagado>0.009)return"ABONADO"; return"PENDIENTE"; }
-function estatusPagoSupabase(estado){ estado=String(estado||"").toUpperCase(); if(estado==="PAGADO")return"Pagado"; if(estado==="ABONADO")return"Abonado"; return"Pendiente"; }
-function resumenPedido(p){ const total=num(p.pago_simple_total ?? p.precio_total); const pagado=num(p.pago_simple_pagado ?? p.monto_abonado); const saldo=Math.max(total-pagado,0); const tipo=String(p.pago_simple_tipo|| (String(p.moneda_deuda||"").toUpperCase()==="BS"?"BCV":"DIVISA")).toUpperCase()==="BCV"?"BCV":"DIVISA"; const tasa=num(p.tasa_deuda||1)||1; const estado=estadoPagoDesdeMontos(total,pagado); return {total,pagado,saldo,tipo,tasa,estado}; }
-function textoTipo(r){ return r.tipo==="BCV" ? "BCV"+(r.tasa>1?" "+money(r.tasa):"") : "Divisa"; }
-function botonDeudaHtml(p){ const r=resumenPedido(p); let cls="sinmonto", titulo="Definir", sub="Sin monto"; if(r.total>0){ if(r.estado==="PAGADO"){cls="pagado";titulo="Pagado $"+money(r.total);sub=textoTipo(r)} else if(r.estado==="ABONADO"){cls="abonado";titulo="Debe $"+money(r.saldo);sub="Abonó $"+money(r.pagado)} else {cls="debe";titulo="Debe $"+money(r.total);sub=textoTipo(r)} } return `<button class="debt-btn ${cls}" type="button" onclick="abrirDeuda(${Number(p.id)})"><span>${esc(titulo)}</span><small>${esc(sub)}</small></button>`; }
-function payloadPagoSimple({monto,pagado,tipo,tasa,fecha,estado}){ const total=num(monto), pago=num(pagado); const t=String(tipo||"DIVISA").toUpperCase()==="BCV"?"BCV":"DIVISA"; const rate=t==="BCV" && num(tasa)>0 ? num(tasa) : 1; const st=estado || estadoPagoDesdeMontos(total,pago); return {precio_total:total,monto_abonado:pago,estatus_pago:estatusPagoSupabase(st),moneda_deuda:t==="BCV"?"BS":"USD",tipo_tasa_deuda:t==="BCV"?"BS_BCV":"USD_FIJO",tasa_deuda:rate,total_bs:t==="BCV"?total*rate:null,monto_abonado_bs:t==="BCV"?pago*rate:0,pago_simple_total:total,pago_simple_tipo:t,pago_simple_pagado:pago,pago_simple_saldo:Math.max(total-pago,0),pago_simple_a_favor:Math.max(pago-total,0),pago_simple_estado:st,pago_simple_fecha:fecha||fechaISO(),pago_simple_actualizado_en:new Date().toISOString()}; }
-
-function llenarSelectTipos(){ const opts=TIPOS_LETRERO.map(t=>`<option>${esc(t)}</option>`).join(""); ["q_tipo_letrero","f_tipo_letrero"].forEach(id=>{ if($(id)) $(id).innerHTML=opts; }); const f=$("filterTipo"); if(f) f.innerHTML='<option value="">Tipo de letrero</option>'+opts; }
-function llenarOperadores(){ const names=[...new Set(operadoresDB.map(x=>x.nombre||x).filter(Boolean))]; const actual=operadorActualNombre(); ["q_operador","f_operador","filterOperador"].forEach(id=>{ const el=$(id); if(!el)return; const first=id==="filterOperador"?"Operador":(id==="q_operador"?"Operador":"Seleccionar…"); el.innerHTML=`<option value="">${first}</option>`+names.map(n=>`<option ${n===actual?"selected":""}>${esc(n)}</option>`).join(""); }); }
+function llenarSelectTipos(){ ["q_tipo_letrero","f_tipo_letrero","filterTipo"].forEach(id=>{ const el=$(id); if(!el)return; const first = id==="filterTipo" ? '<option value="">Tipo de letrero</option>' : ''; el.innerHTML = first + TIPOS_LETRERO.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join(""); }); }
+function llenarOperadores(){ const names=[...new Set([operadorActualNombre(), ...operadoresDB.map(o=>o.nombre||o.name).filter(Boolean), "Roberto","Ricardo","Marie Gabriela","Rubén","Carlos","Chico","Alejandro"].filter(Boolean))]; ["q_operador","f_operador","filterOperador"].forEach(id=>{ const el=$(id); if(!el)return; const old=el.value; const first = id==="filterOperador" ? '<option value="">Operador</option>' : '<option value="">Operador</option>'; el.innerHTML = first + names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join(""); if(old) el.value=old; else if(id!=="filterOperador") el.value=operadorActualNombre()||""; }); }
 function llenarClientes(){ const dl=$("clientesDatalist"); if(!dl)return; dl.innerHTML=clientesDB.map(c=>`<option value="${esc(c.nombre||"")}"></option>`).join(""); }
-function ponerFechaHoy(){ ["q_fecha","f_fecha"].forEach(id=>{ if($(id) && !$(id).value) $(id).value=fechaISO(); }); }
+function ponerFechaHoy(){ ["q_fecha","f_fecha","deuda_fecha"].forEach(id=>{ const el=$(id); if(el&&!el.value) el.value=fechaISO(); }); }
 
-async function cargarTodo(manual=false){ if(!db()){ setStatus("Supabase no disponible. Revisa js/supabase.js"); return; } setStatus("Conectando con Supabase..."); try{ llenarSelectTipos(); const [clientes,operadores,pedidos]=await Promise.all([
-    db().from("clientes").select("id,nombre,telefono,correo,rif_cedula,activo").neq("activo",false).order("nombre"),
-    db().from("operadores").select("nombre,activo").order("nombre"),
-    db().from("pedidos").select("*").order("id",{ascending:false}).limit(2500)
+async function cargarTodo(manual=false){ if(!db()){ setStatus("Supabase no disponible. Revisa js/supabase.js"); return; } try{ setStatus("Conectando con Supabase..."); const [ideasRes, clientesRes, opsRes] = await Promise.all([
+    db().from(TABLE_IDEAS).select("*").neq("activo", false).order("created_at", {ascending:false}),
+    db().from("clientes").select("id,nombre,telefono,rif_cedula,activo").neq("activo", false).order("nombre"),
+    db().from("operadores").select("nombre,activo").order("nombre")
   ]);
-  if(clientes.error) throw clientes.error; if(operadores.error) console.warn(operadores.error); if(pedidos.error) throw pedidos.error;
-  clientesDB=clientes.data||[]; operadoresDB=(operadores.data||[]).filter(o=>o.activo!==false); pedidosDB=(pedidos.data||[]).filter(esPedidoLetrero);
-  llenarClientes(); llenarOperadores(); ponerFechaHoy(); renderPedidos(true); setStatus(`Supabase conectado · ${pedidosDB.length} ideas`,true); if(manual) toast("Actualizado ✅");
- }catch(e){ console.error(e); setStatus("Error cargando: "+(e.message||e)); alert("Error cargando Organizador de Ideas: "+(e.message||e)); } }
-function esPedidoLetrero(p){ const mat=String(p.material||"").toUpperCase().trim(); const tipo=String(p.tipo_impresion||"").toUpperCase().trim(); return mat===MATERIAL_MARCA || TIPOS_LETRERO.includes(tipo); }
-function pedidoCumple(p){ const q=norm($("searchInput")?.value||""); const st=$("filterStatus")?.value||""; const tipo=$("filterTipo")?.value||""; const op=$("filterOperador")?.value||""; const desde=$("filterFechaDesde")?.value||""; const hasta=$("filterFechaHasta")?.value||""; const text=norm([p.id,p.fecha,p.operador,p.cliente,p.descripcion,p.cantidad,p.tipo_impresion,p.estatus_trabajo,p.fecha_entrega].join(" ")); if(q&&!text.includes(q))return false; if(st&&String(p.estatus_trabajo||"")!==st)return false; if(tipo&&String(p.tipo_impresion||"")!==tipo)return false; if(op&&String(p.operador||"")!==op)return false; if(desde&&String(p.fecha||"").slice(0,10)<desde)return false; if(hasta&&String(p.fecha||"").slice(0,10)>hasta)return false; return true; }
-function renderPedidos(reset=false){ const tbody=$("orderTableBody"), empty=$("emptyState"); if(!tbody)return; let data=pedidosDB.filter(pedidoCumple).sort((a,b)=>Number(b.id||0)-Number(a.id||0)); if(reset) paginaActual=1; const total=data.length; const paginas=Math.max(1,Math.ceil(total/pedidosPorPagina)); if(paginaActual>paginas) paginaActual=paginas; const inicio=(paginaActual-1)*pedidosPorPagina; const fin=Math.min(inicio+pedidosPorPagina,total); const page=data.slice(inicio,fin); if(!total){ tbody.innerHTML=""; if(empty) empty.style.display="block"; renderPaginacion(0,1,0,0); return; } if(empty) empty.style.display="none"; tbody.innerHTML=page.map(rowHtml).join(""); renderPaginacion(total,paginas,inicio,fin); }
-function rowHtml(p){ const id=Number(p.id); const archivo=p.archivo_url?`<a class="file-link-chip" href="${esc(p.archivo_url)}" target="_blank" onclick="event.stopPropagation()">📎 ${esc(p.archivo_nombre||"Archivo")}</a>`:"—"; const st=String(p.estatus_trabajo||"Solicitud"); return `<tr onclick="openEditOrder(${id})"><td>${esc(id)}</td><td>${esc(String(p.fecha||"").slice(0,10))}</td><td>${esc(p.operador||"")}</td><td class="client-name">${esc(p.cliente||"")}</td><td class="desc-cell" title="${esc(p.descripcion||"")}">${esc(p.descripcion||"")}</td><td>${esc(p.cantidad||"")}</td><td><span class="tipo-chip">${esc(p.tipo_impresion||"")}</span></td><td><select class="cell-select ${claseEstado(st)}" onchange="quickSetEstado(${id},this.value);this.className='cell-select '+claseEstado(this.value)" onclick="event.stopPropagation()"><option ${st==="Solicitud"?"selected":""}>Solicitud</option><option ${st==="En curso"?"selected":""}>En curso</option><option ${st==="Revisado"?"selected":""}>Revisado</option><option ${st==="Listo"?"selected":""}>Listo</option></select></td><td>${esc(p.fecha_entrega||"—")}</td><td>${botonDeudaHtml(p)}</td><td>${archivo}</td></tr>`; }
-function renderPaginacion(total,paginas,inicio,fin){ const bar=$("paginationBar"); if(!bar)return; if(!total){ bar.innerHTML='<span class="page-info">0 ideas</span>'; return; } bar.innerHTML=`<button class="page-btn" type="button" onclick="cambiarPagina(-1)" ${paginaActual<=1?"disabled":""}>← Anterior</button><span class="page-info">${inicio+1}-${fin} de ${total}</span><span class="page-info">Página ${paginaActual} / ${paginas}</span><button class="page-btn" type="button" onclick="cambiarPagina(1)" ${paginaActual>=paginas?"disabled":""}>Siguiente →</button><select class="page-select" onchange="cambiarTamanoPagina(this.value)"><option value="20" ${pedidosPorPagina===20?"selected":""}>1-20</option><option value="40" ${pedidosPorPagina===40?"selected":""}>1-40</option><option value="100" ${pedidosPorPagina===100?"selected":""}>1-100</option></select>`; }
-function cambiarPagina(d){ paginaActual+=Number(d||0); renderPedidos(false); }
-function cambiarTamanoPagina(v){ pedidosPorPagina=Number(v||40); paginaActual=1; renderPedidos(false); }
+  if(ideasRes.error) throw ideasRes.error;
+  ideasDB = ideasRes.data || [];
+  clientesDB = clientesRes.error ? [] : (clientesRes.data||[]);
+  operadoresDB = opsRes.error ? [] : (opsRes.data||[]).filter(x=>x.activo!==false);
+  llenarSelectTipos(); llenarOperadores(); llenarClientes(); ponerFechaHoy(); renderPedidos(manual); setStatus(`Conectado · ${ideasDB.length} ideas`, true); if(manual) toast("Actualizado ✅");
+ }catch(e){ console.error(e); setStatus("Error: "+(e.message||e)+" · Si falta la tabla, ejecuta el SQL de organizador_ideas."); }
+}
 
-async function ensureCliente(nombre){ nombre=String(nombre||"").trim(); if(!nombre)return null; const exact=clientesDB.find(c=>norm(c.nombre)===norm(nombre)); if(exact)return exact; const {data,error}=await db().from("clientes").insert([{nombre,activo:true,notas:"Creado desde Organizador de Ideas"}]).select("id,nombre,telefono,correo,rif_cedula,activo").single(); if(error){ alert("No se pudo crear cliente: "+error.message); return null; } clientesDB.push(data); llenarClientes(); return data; }
-async function subirArchivo(input){ const file=input?.files?.[0]||archivoRapido; if(!file)return {archivo_url:null,archivo_nombre:null}; try{ const ext=(file.name.split(".").pop()||"bin").toLowerCase(); const path=`ideas/${Date.now()}_${Math.random().toString(16).slice(2)}.${ext}`; const {error}=await db().storage.from("adjuntos-pedidos").upload(path,file,{upsert:false}); if(error) throw error; const {data}=db().storage.from("adjuntos-pedidos").getPublicUrl(path); return {archivo_url:data?.publicUrl||null,archivo_nombre:file.name}; }catch(e){ alert("No se pudo subir archivo. Se guardará sin adjunto.\n\n"+(e.message||e)); return {archivo_url:null,archivo_nombre:null}; } }
-function basePayload({fecha,operador,clienteObj,cliente,descripcion,cantidad,tipo,entrega,estado,archivo}){ return {fecha:fecha||fechaISO(),operador:operador||operadorActualNombre()||"",cliente_id:clienteObj?.id||null,cliente:clienteObj?.nombre||cliente||"Cliente sin nombre",descripcion:descripcion||"Sin descripción",cantidad:cantidad||"",material:MATERIAL_MARCA,tipo_impresion:tipo||TIPOS_LETRERO[0],tipo_entrega:"",estatus_trabajo:estado||"Solicitud",fecha_entrega:entrega||null,...payloadPagoSimple({monto:0,pagado:0,tipo:"DIVISA",tasa:1,fecha:fecha||fechaISO(),estado:"SIN_MONTO"}),archivo_url:archivo?.archivo_url||null,archivo_nombre:archivo?.archivo_nombre||null}; }
-async function saveQuickOrder(){ if(!db())return; let fecha=$("q_fecha").value||fechaISO(); let operador=$("q_operador").value||operadorActualNombre(); const cliente=$("q_cliente").value; const descripcion=$("q_descripcion").value; const cantidad=$("q_cantidad").value; const tipo=$("q_tipo_letrero").value; const estado=$("q_estatus_trabajo").value; const entrega=$("q_entrega").value; if(!cliente&&!descripcion){alert("Coloca cliente o descripción.");return;} const clienteObj=await ensureCliente(cliente); const archivo=await subirArchivo(null); const payload=basePayload({fecha,operador,clienteObj,cliente,descripcion,cantidad,tipo,entrega,estado,archivo}); const {data,error}=await db().from("pedidos").insert([payload]).select("id").single(); if(error){alert("Error guardando: "+error.message);return;} await registrarAuditoria(data?.id,"DEUDA_CREADA",{pago_simple_total:{etiqueta:"Monto de deuda",antes:null,despues:0}},"Idea creada desde Organizador",payload); archivoRapido=null; clearQuickEntry(); await cargarTodo(false); toast("Idea agregada ✅"); }
+function filtrarIdeas(){ const q=norm($("searchInput")?.value||""); const est=$("filterStatus")?.value||""; const tipo=$("filterTipo")?.value||""; const desde=$("filterFechaDesde")?.value||""; const hasta=$("filterFechaHasta")?.value||""; const op=$("filterOperador")?.value||""; return ideasDB.filter(p=>{ const texto=norm([p.numero,p.fecha,p.operador,p.cliente_nombre,p.descripcion,p.cantidad,p.tipo_letrero,p.estatus,p.fecha_entrega].join(" ")); if(q && !texto.includes(q))return false; if(est && p.estatus!==est)return false; if(tipo && p.tipo_letrero!==tipo)return false; if(op && p.operador!==op)return false; const f=String(p.fecha||"").slice(0,10); if(desde && f<desde)return false; if(hasta && f>hasta)return false; return true; }); }
+function renderPedidos(reset=false){ if(reset) currentPage=1; const data=filtrarIdeas(); const tbody=$("orderTableBody"), empty=$("emptyState"); if(!tbody)return; const pages=Math.max(1,Math.ceil(data.length/PAGE_SIZE)); currentPage=Math.min(currentPage,pages); const start=(currentPage-1)*PAGE_SIZE; const page=data.slice(start,start+PAGE_SIZE); empty.style.display = data.length ? "none" : "block"; tbody.innerHTML = page.map(rowHTML).join(""); renderPagination(data.length,pages); }
+function rowHTML(p){ return `<tr ondblclick="openEditOrder('${p.id}')">
+  <td>${esc(p.numero||("IDEA-"+p.id))}</td>
+  <td>${esc(fechaCorta(p.fecha))}</td>
+  <td>${esc(p.operador||"")}</td>
+  <td class="client-name">${esc(p.cliente_nombre||"")}</td>
+  <td class="desc-cell" title="${esc(p.descripcion||"")}">${esc(p.descripcion||"")}</td>
+  <td>${esc(p.cantidad||"")}</td>
+  <td>${esc(p.tipo_letrero||"")}</td>
+  <td><select class="cell-select ${estadoClase(p.estatus)}" onchange="quickSetEstado('${p.id}',this.value)"><option ${p.estatus==='Solicitud'?'selected':''}>Solicitud</option><option ${p.estatus==='En curso'?'selected':''}>En curso</option><option ${p.estatus==='Revisado'?'selected':''}>Revisado</option><option ${p.estatus==='Listo'?'selected':''}>Listo</option></select></td>
+  <td>${esc(fechaCorta(p.fecha_entrega))}</td>
+  <td>${deudaBtn(p)}</td>
+  <td><button class="quick-mini-btn" type="button" onclick="openEditOrder('${p.id}')">✎</button> ${p.archivo_url?`<a class="file-link-chip" href="${esc(p.archivo_url)}" target="_blank">Ver</a>`:""}</td>
+</tr>`; }
+function renderPagination(total,pages){ const bar=$("paginationBar"); if(!bar)return; bar.innerHTML = `<button class="page-btn" ${currentPage<=1?'disabled':''} onclick="currentPage--;renderPedidos(false)">Anterior</button><span class="page-info">${total} ideas · página ${currentPage}/${pages}</span><button class="page-btn" ${currentPage>=pages?'disabled':''} onclick="currentPage++;renderPedidos(false)">Siguiente</button>`; }
+
+async function ensureCliente(nombre){ nombre=String(nombre||"").trim(); if(!nombre)return null; let ex=clientesDB.find(c=>norm(c.nombre)===norm(nombre)); if(ex)return ex; const payload={nombre,activo:true}; const {data,error}=await db().from("clientes").insert([payload]).select("id,nombre,telefono,rif_cedula,activo").single(); if(error){ console.warn(error); return {id:null,nombre}; } clientesDB.push(data); llenarClientes(); return data; }
+async function subirArchivo(input){ try{ const file = input?.files?.[0] || archivoRapido; if(!file) return {}; const ext=(file.name.split(".").pop()||"bin").toLowerCase(); const path=`organizador_ideas/${Date.now()}_${uid()}.${ext}`; const {error}=await db().storage.from(BUCKET_ARCHIVOS).upload(path,file,{upsert:false}); if(error)throw error; const pub=db().storage.from(BUCKET_ARCHIVOS).getPublicUrl(path); return {archivo_url:pub.data?.publicUrl||null, archivo_nombre:file.name}; }catch(e){ alert("No se pudo subir archivo: "+(e.message||e)); return {}; } }
+function nextNumero(){ const nums=ideasDB.map(p=>String(p.numero||"").match(/(\d+)$/)).filter(Boolean).map(m=>parseInt(m[1],10)); return "IDEA-"+String((nums.length?Math.max(...nums):0)+1).padStart(5,"0"); }
+function payloadBase({fecha,operador,clienteObj,cliente,descripcion,cantidad,tipo,estado,entrega,archivo}){ return {numero:nextNumero(), fecha:fecha||fechaISO(), operador:operador||operadorActualNombre()||"", cliente_id:clienteObj?.id||null, cliente_nombre:clienteObj?.nombre||cliente||"Cliente sin nombre", descripcion:descripcion||"Sin descripción", cantidad:cantidad||"", tipo_letrero:tipo||TIPOS_LETRERO[0], estatus:estado||"Solicitud", fecha_entrega:entrega||null, deuda_total:0, deuda_pagado:0, deuda_tipo:"DIVISA", deuda_tasa:1, archivo_url:archivo?.archivo_url||null, archivo_nombre:archivo?.archivo_nombre||null, activo:true}; }
+async function saveQuickOrder(){ if(!db())return; const cliente=$("q_cliente").value; const descripcion=$("q_descripcion").value; if(!cliente && !descripcion){ alert("Coloca cliente o descripción."); return; } const clienteObj=await ensureCliente(cliente); const archivo=await subirArchivo(null); const payload=payloadBase({fecha:$("q_fecha").value, operador:$("q_operador").value, clienteObj, cliente, descripcion, cantidad:$("q_cantidad").value, tipo:$("q_tipo_letrero").value, estado:$("q_estatus_trabajo").value, entrega:$("q_entrega").value, archivo}); const {error}=await db().from(TABLE_IDEAS).insert([payload]); if(error){ alert("Error guardando: "+error.message); return; } archivoRapido=null; clearQuickEntry(); await cargarTodo(false); toast("Idea agregada ✅"); }
 function clearQuickEntry(){ ["q_cliente","q_descripcion","q_cantidad","q_entrega"].forEach(id=>{ if($(id))$(id).value=""; }); if($("q_estatus_trabajo"))$("q_estatus_trabajo").value="Solicitud"; if($("q_tipo_letrero"))$("q_tipo_letrero").value=TIPOS_LETRERO[0]; ponerFechaHoy(); archivoRapido=null; }
 function openQuickAttach(){ $("rowFileInput")?.click(); }
 function handleRowFileSelect(e){ archivoRapido=e.target.files?.[0]||null; toast(archivoRapido?"Archivo listo para adjuntar":"Sin archivo"); }
 function openNewOrder(){ pedidoEditandoId=null; $("orderModalTitle").textContent="NUEVA IDEA"; ["f_cliente","f_descripcion","f_cantidad","f_entrega"].forEach(id=>$(id).value=""); $("f_fecha").value=fechaISO(); $("f_operador").value=operadorActualNombre()||""; $("f_tipo_letrero").value=TIPOS_LETRERO[0]; if($("f_archivo"))$("f_archivo").value=""; $("orderBackdrop").style.display="flex"; }
-function openEditOrder(id){ const p=pedidosDB.find(x=>Number(x.id)===Number(id)); if(!p)return; pedidoEditandoId=id; $("orderModalTitle").textContent="EDITAR IDEA"; $("f_fecha").value=String(p.fecha||"").slice(0,10); $("f_operador").value=p.operador||""; $("f_cliente").value=p.cliente||""; $("f_descripcion").value=p.descripcion||""; $("f_cantidad").value=p.cantidad||""; $("f_entrega").value=p.fecha_entrega||""; $("f_tipo_letrero").value=TIPOS_LETRERO.includes(p.tipo_impresion)?p.tipo_impresion:TIPOS_LETRERO[0]; if($("f_archivo"))$("f_archivo").value=""; $("orderBackdrop").style.display="flex"; }
-async function saveOrder(){ const id=pedidoEditandoId; const cliente=$("f_cliente").value; const clienteObj=await ensureCliente(cliente); const archivo=await subirArchivo($("f_archivo")); const old=id?pedidosDB.find(x=>Number(x.id)===Number(id)):null; const payload={fecha:$("f_fecha").value||fechaISO(),operador:$("f_operador").value||operadorActualNombre(),cliente_id:clienteObj?.id||null,cliente:clienteObj?.nombre||cliente||"Cliente sin nombre",descripcion:$("f_descripcion").value||"Sin descripción",cantidad:$("f_cantidad").value||"",material:MATERIAL_MARCA,tipo_impresion:$("f_tipo_letrero").value||TIPOS_LETRERO[0],fecha_entrega:$("f_entrega").value||null}; if(archivo.archivo_url){ payload.archivo_url=archivo.archivo_url; payload.archivo_nombre=archivo.archivo_nombre; } let res; if(id) res=await db().from("pedidos").update(payload).eq("id",id); else res=await db().from("pedidos").insert([{...payload,estatus_trabajo:"Solicitud",...payloadPagoSimple({monto:0,pagado:0,tipo:"DIVISA",fecha:payload.fecha,estado:"SIN_MONTO"})}]).select("id").single(); if(res.error){alert("Error guardando: "+res.error.message);return;} const savedId=id||res.data?.id; await registrarAuditoria(savedId,"PEDIDO_EDITADO",{descripcion:{etiqueta:"Descripción",antes:old?.descripcion||null,despues:payload.descripcion}},id?"Editado desde Organizador":"Creado desde Organizador",payload); closeModal("orderBackdrop"); pedidoEditandoId=null; await cargarTodo(false); toast("Guardado ✅"); }
-async function quickSetEstado(id,estado){ const {error}=await db().from("pedidos").update({estatus_trabajo:estado}).eq("id",id); if(error){alert("No se pudo actualizar: "+error.message);return;} const p=pedidosDB.find(x=>Number(x.id)===Number(id)); if(p)p.estatus_trabajo=estado; renderPedidos(false); }
-function abrirDeuda(id){ const p=pedidosDB.find(x=>Number(x.id)===Number(id)); if(!p)return; deudaPedidoId=id; const r=resumenPedido(p); $("deuda_cliente").value=p.cliente||""; $("deuda_descripcion").value=`#${p.id} · ${p.descripcion||""}`; $("deuda_monto").value=r.total>0?money(r.total):""; $("deuda_tipo").value=r.tipo; $("deuda_tasa").value=r.tipo==="BCV"&&r.tasa>1?money(r.tasa):""; $("deuda_accion").value="PENDIENTE"; $("deuda_fecha").value=fechaISO(); $("deuda_abono").value=""; pintarDeudaModal(); $("deudaBackdrop").style.display="flex"; }
-function itemDeudaModal(){ const p=pedidosDB.find(x=>Number(x.id)===Number(deudaPedidoId))||{}; const base=resumenPedido(p); const monto=num($("deuda_monto")?.value||base.total); const tipo=$("deuda_tipo")?.value||base.tipo; const tasa=tipo==="BCV"?num($("deuda_tasa")?.value||base.tasa||1):1; const accion=$("deuda_accion")?.value||"PENDIENTE"; const abono=accion==="ABONO"?num($("deuda_abono")?.value||0):0; return {pedido:p,base,monto,tipo,tasa,accion,abono,fecha:$("deuda_fecha")?.value||fechaISO()}; }
-function pintarDeudaModal(){ const it=itemDeudaModal(); const wrapT=$("deuda_tasa_wrap"), wrapA=$("deuda_abono_wrap"); if(wrapT)wrapT.style.display=it.tipo==="BCV"?"":"none"; if(wrapA)wrapA.style.display=it.accion==="ABONO"?"":"none"; let pagado=it.base.pagado; if(it.accion==="ABONO") pagado+=it.abono; if(it.accion==="LISTO") pagado=Math.max(pagado,it.monto); const saldo=Math.max(it.monto-pagado,0); $("deuda_total").textContent="$"+money(it.monto); $("deuda_pagado").textContent="$"+money(pagado); $("deuda_saldo").textContent="$"+money(saldo); $("deuda_resultado_monto").textContent="$"+money(saldo); $("deuda_resultado_texto").textContent=it.monto<=0?"Sin monto definido":(saldo<=0.009?"Pedido pagado completo":(pagado>0?"Pedido abonado":"Pedido pendiente")); }
-async function guardarDeudaPedido(){ if(!deudaPedidoId)return; const it=itemDeudaModal(); if(it.monto<=0 && it.accion!=="PENDIENTE"){ alert("Coloca el monto que debe."); return; } let delta=0; if(it.accion==="ABONO"){ delta=it.abono; if(delta<=0){alert("Coloca el monto del abono.");return;} } if(it.accion==="LISTO") delta=Math.max(it.monto-it.base.pagado,0); const payload=payloadPagoSimple({monto:it.monto,pagado:it.base.pagado,tipo:it.tipo,tasa:it.tasa,fecha:it.fecha,estado:estadoPagoDesdeMontos(it.monto,it.base.pagado)}); const {error}=await db().from("pedidos").update(payload).eq("id",deudaPedidoId); if(error){alert("No se pudo guardar deuda: "+error.message);return;} const local=pedidosDB.find(x=>Number(x.id)===Number(deudaPedidoId)); if(local)Object.assign(local,payload); await registrarAuditoria(deudaPedidoId,"CAMBIO_FINANCIERO",{pago_simple_total:{etiqueta:"Monto de deuda",antes:it.base.total,despues:it.monto}},"Cambio desde Organizador",local||{}); if(delta>0.009){ const ok=await registrarPagoCliente(deudaPedidoId,delta,it); if(!ok)return; } closeModal("deudaBackdrop"); await cargarTodo(false); toast(delta>0?"Pago registrado ✅":"Deuda guardada ✅"); }
-async function registrarPagoCliente(pedidoId,delta,it){ const p=pedidosDB.find(x=>Number(x.id)===Number(pedidoId)); if(!p)return false; let clienteId=p.cliente_id; if(!clienteId){ const c=await ensureCliente(p.cliente); clienteId=c?.id||null; if(clienteId) await db().from("pedidos").update({cliente_id:clienteId}).eq("id",pedidoId); } if(!clienteId){ alert("No se pudo identificar el cliente."); return false; } const params={p_operacion_uuid:uid(),p_cliente_id:Number(clienteId),p_tipo_pago:it.tipo==="BCV"?"BCV":"DIVISA",p_monto:num(delta),p_metodo:it.accion==="LISTO"?"Listo desde Organizador":"Abono desde Organizador",p_referencia:"Pedido #"+pedidoId,p_nota:"Registrado desde Organizador de Ideas · Pedido #"+pedidoId,p_fecha:it.fecha||fechaISO(),p_registrado_por:operadorActualNombre()||null,p_origen:ORIGEN_PAGO,p_pedido_id:Number(pedidoId)}; const {error}=await db().rpc("registrar_pago_cliente_v1",params); if(error){alert("No se pudo registrar el pago: "+error.message);return false;} return true; }
-async function registrarAuditoria(id,tipo,cambios,detalle,pedido){ if(!id||!db())return; try{ await db().from("pedidos_auditoria").insert([{pedido_id:Number(id),cliente_id:pedido?.cliente_id||null,cliente_nombre:pedido?.cliente||null,tipo_evento:String(tipo||"CAMBIO").toUpperCase(),origen:"ORGANIZADOR_IDEAS",operador:operadorActualNombre()||null,cambios,detalle:detalle||null}]); }catch(e){ console.warn("Auditoría no guardada",e); } }
+function openEditOrder(id){ const p=ideasDB.find(x=>String(x.id)===String(id)); if(!p)return; pedidoEditandoId=id; $("orderModalTitle").textContent="EDITAR IDEA"; $("f_fecha").value=String(p.fecha||"").slice(0,10); $("f_operador").value=p.operador||""; $("f_cliente").value=p.cliente_nombre||""; $("f_descripcion").value=p.descripcion||""; $("f_cantidad").value=p.cantidad||""; $("f_entrega").value=p.fecha_entrega||""; $("f_tipo_letrero").value=TIPOS_LETRERO.includes(p.tipo_letrero)?p.tipo_letrero:TIPOS_LETRERO[0]; if($("f_archivo"))$("f_archivo").value=""; $("orderBackdrop").style.display="flex"; }
+async function saveOrder(){ const id=pedidoEditandoId; const cliente=$("f_cliente").value; const clienteObj=await ensureCliente(cliente); const archivo=await subirArchivo($("f_archivo")); const payload={fecha:$("f_fecha").value||fechaISO(), operador:$("f_operador").value||operadorActualNombre(), cliente_id:clienteObj?.id||null, cliente_nombre:clienteObj?.nombre||cliente||"Cliente sin nombre", descripcion:$("f_descripcion").value||"Sin descripción", cantidad:$("f_cantidad").value||"", tipo_letrero:$("f_tipo_letrero").value||TIPOS_LETRERO[0], fecha_entrega:$("f_entrega").value||null}; if(archivo.archivo_url){ payload.archivo_url=archivo.archivo_url; payload.archivo_nombre=archivo.archivo_nombre; } let res; if(id) res=await db().from(TABLE_IDEAS).update(payload).eq("id",id); else res=await db().from(TABLE_IDEAS).insert([{...payload, numero:nextNumero(), estatus:"Solicitud", deuda_total:0, deuda_pagado:0, deuda_tipo:"DIVISA", deuda_tasa:1, activo:true}]); if(res.error){ alert("Error guardando: "+res.error.message); return; } closeModal("orderBackdrop"); pedidoEditandoId=null; await cargarTodo(false); toast("Guardado ✅"); }
+async function quickSetEstado(id,estado){ const {error}=await db().from(TABLE_IDEAS).update({estatus:estado}).eq("id",id); if(error){ alert("No se pudo actualizar: "+error.message); return; } const p=ideasDB.find(x=>String(x.id)===String(id)); if(p)p.estatus=estado; renderPedidos(false); }
+
+function abrirDeuda(id){ const p=ideasDB.find(x=>String(x.id)===String(id)); if(!p)return; deudaPedidoId=id; const r=resumenIdea(p); $("deuda_cliente").value=p.cliente_nombre||""; $("deuda_descripcion").value=`${p.numero||p.id} · ${p.descripcion||""}`; $("deuda_monto").value=r.total>0?money(r.total):""; $("deuda_tipo").value=r.tipo||"DIVISA"; $("deuda_tasa").value=r.tipo==="BCV"&&r.tasa>1?money(r.tasa):""; $("deuda_accion").value="PENDIENTE"; $("deuda_fecha").value=fechaISO(); $("deuda_abono").value=""; pintarDeudaModal(); $("deudaBackdrop").style.display="flex"; }
+function itemDeudaModal(){ const p=ideasDB.find(x=>String(x.id)===String(deudaPedidoId))||{}; const base=resumenIdea(p); const monto=num($("deuda_monto")?.value||base.total); const tipo=$("deuda_tipo")?.value||base.tipo; const tasa=tipo==="BCV"?num($("deuda_tasa")?.value||base.tasa||1):1; const accion=$("deuda_accion")?.value||"PENDIENTE"; const abono=accion==="ABONO"?num($("deuda_abono")?.value||0):0; return {p,base,monto,tipo,tasa,accion,abono}; }
+function pintarDeudaModal(){ const it=itemDeudaModal(); const wt=$("deuda_tasa_wrap"), wa=$("deuda_abono_wrap"); if(wt)wt.style.display=it.tipo==="BCV"?"":"none"; if(wa)wa.style.display=it.accion==="ABONO"?"":"none"; let pagado=it.base.pagado; if(it.accion==="ABONO") pagado+=it.abono; if(it.accion==="LISTO") pagado=Math.max(pagado,it.monto); const saldo=Math.max(it.monto-pagado,0); $("deuda_total").textContent="$"+money(it.monto); $("deuda_pagado").textContent="$"+money(pagado); $("deuda_saldo").textContent="$"+money(saldo); $("deuda_resultado_monto").textContent="$"+money(saldo); $("deuda_resultado_texto").textContent=it.monto<=0?"Sin monto definido":(saldo<=0.009?"Idea pagada completo":(pagado>0?"Idea abonada":"Idea pendiente")); }
+async function guardarDeudaPedido(){ if(!deudaPedidoId)return; const it=itemDeudaModal(); let pagado=it.base.pagado; if(it.accion==="ABONO"){ if(it.abono<=0){alert("Coloca el monto del abono.");return;} pagado+=it.abono; } if(it.accion==="LISTO") pagado=Math.max(pagado,it.monto); const payload={deuda_total:it.monto, deuda_pagado:pagado, deuda_tipo:it.tipo, deuda_tasa:it.tasa}; const {error}=await db().from(TABLE_IDEAS).update(payload).eq("id",deudaPedidoId); if(error){alert("No se pudo guardar deuda: "+error.message);return;} closeModal("deudaBackdrop"); await cargarTodo(false); toast("Deuda guardada ✅"); }
 function bdClick(e,id){ if(e.target&&e.target.id===id) closeModal(id); }
 function closeModal(id){ const el=$(id); if(el)el.style.display="none"; }
 
+const menuBtn = document.getElementById("mobileMenuBtn");
+if(menuBtn){ menuBtn.addEventListener("click",()=>document.getElementById("authMenu")?.classList.toggle("open")); }
+document.documentElement.classList.remove("loading-menu"); document.documentElement.classList.add("menu-ready");
 document.addEventListener("DOMContentLoaded",()=>{ llenarSelectTipos(); ponerFechaHoy(); cargarTodo(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ ["orderBackdrop","deudaBackdrop","notiBackdrop"].forEach(closeModal); }});
 </script>
-<script src="js/notificaciones.js?v=35"></script>
 </body>
 </html>
