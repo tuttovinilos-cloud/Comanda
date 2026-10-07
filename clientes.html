@@ -3524,7 +3524,7 @@ html.menu-ready .header-tabs,.header.menu-ready .header-tabs{opacity:1!important
           <div class="form-grid">
             <div class="field">
               <label>Monto recibido ($ equivalente)</label>
-              <input id="deudaPagoMonto" type="number" step="0.01" placeholder="0.00" oninput="calcularPagoGlobalCliente()"/>
+              <input id="deudaPagoMonto" type="text" inputmode="decimal" placeholder="2.000,25" oninput="calcularPagoGlobalCliente()" onblur="if(montoValidoCliente(this.value)&&this.value.trim())this.value=money(numeroSeguro(this.value))"/>
             </div>
             <div class="field">
               <label>Tipo de pago</label>
@@ -3629,6 +3629,8 @@ console.log("CLIENTES HTML conectado v80 · filtro de estado corregido + ID visi
 
 let clientesDB = [];
 let pedidosDB = [];
+let prodPedidosDB = [];
+let errorPedidosProduccion = null;
 let pedidosPorClienteIdMap = new Map();
 let pedidosPorNombreMap = new Map();
 let clientesDeudaMap = new Map();
@@ -3725,7 +3727,9 @@ function numeroCliente(valor){
 
 function money(valor){
   const n = Number(valor || 0);
-  return Number.isFinite(n) ? n.toFixed(2) : "0.00";
+  if(!Number.isFinite(n)) return "0,00";
+  const [entero,decimales] = n.toFixed(2).split(".");
+  return entero.replace(/\B(?=(\d{3})+(?!\d))/g,".") + "," + decimales;
 }
 
 function escapeHtml(valor){
@@ -3793,8 +3797,31 @@ function obtenerPedidosClienteIndexados(nombre, clienteId = null){
   return porNombre;
 }
 
+function obtenerPedidosProduccionCliente(nombre, clienteId = null){
+  const id = Number(clienteId || 0);
+  const claveNombre = normalizar(nombre);
+  const porId = id ? prodPedidosDB.filter(p => Number(p?.cliente_id || 0) === id) : [];
+  const legacySinId = claveNombre
+    ? prodPedidosDB.filter(p => !Number(p?.cliente_id || 0) && normalizar(p?.cliente_nombre) === claveNombre)
+    : [];
+  const unicos = new Map();
+  porId.forEach(p => unicos.set(String(p.id), p));
+  legacySinId.forEach(p => unicos.set(String(p.id), p));
+  return [...unicos.values()];
+}
+
+function todosPedidosCliente(cliente){
+  if(!cliente) return [];
+  const indice = obtenerPedidosClienteIndexados(cliente.nombre, cliente.id)
+    .map(p => ({ ...p, __origenCuenta:"INDEX" }));
+  const produccion = obtenerPedidosProduccionCliente(cliente.nombre, cliente.id)
+    .map(p => ({ ...p, __origenCuenta:"PRODUCCION" }));
+  return [...indice, ...produccion];
+}
+
 function contarPedidosCliente(nombre, clienteId = null){
-  return obtenerPedidosClienteIndexados(nombre, clienteId).length;
+  return obtenerPedidosClienteIndexados(nombre, clienteId).length +
+    obtenerPedidosProduccionCliente(nombre, clienteId).length;
 }
 
 function estadoPagoSimpleCliente(total, pagado){
@@ -3817,34 +3844,37 @@ function estadoLabelPagoSimple(estado){
 }
 
 function resumenPagoSimpleCliente(pedido){
-  const total = numeroSeguro(pedido?.pago_simple_total || 0);
-  const pagado = numeroSeguro(pedido?.pago_simple_pagado || 0);
+  const esProduccion = pedido?.__origenCuenta === "PRODUCCION";
+  const total = numeroSeguro(esProduccion ? pedido?.pago_total : (pedido?.pago_simple_total || 0));
+  const pagado = numeroSeguro(esProduccion ? pedido?.pago_abonado : (pedido?.pago_simple_pagado || 0));
   const saldo = Math.max(total - pagado, 0);
   const aFavor = Math.max(pagado - total, 0);
   let estado = String(pedido?.pago_simple_estado || "").toUpperCase();
   if(!estado || estado === "PENDIENTE_PAGO") estado = estadoPagoSimpleCliente(total, pagado);
-  const tipo = String(pedido?.pago_simple_tipo || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA";
+  const tipo = esProduccion
+    ? (String(pedido?.pago_tipo_deuda || "").toUpperCase() === "BS_BCV" ? "BCV" : "DIVISA")
+    : (String(pedido?.pago_simple_tipo || "DIVISA").toUpperCase() === "BCV" ? "BCV" : "DIVISA");
 
   return {
     pedido,
-    id:Number(pedido?.id || 0),
+    id:esProduccion ? (pedido?.numero_pedido || pedido?.folio || pedido?.id || "") : Number(pedido?.id || 0),
     total,
     pagado,
     saldo,
     aFavor,
     estado,
     tipo,
-    fecha:String(pedido?.pago_simple_fecha || pedido?.fecha || "").slice(0,10)
+    fecha:String(esProduccion ? (pedido?.pago_ultima_fecha || pedido?.fecha || "") : (pedido?.pago_simple_fecha || pedido?.fecha || "")).slice(0,10)
   };
 }
 
 function pedidosEstadoCuentaCliente(cliente, soloConMonto = true){
   if(!cliente) return [];
 
-  return obtenerPedidosClienteIndexados(cliente.nombre, cliente.id)
+  return todosPedidosCliente(cliente)
     .map(p => resumenPagoSimpleCliente(p))
     .filter(x => !soloConMonto || x.total > 0.009 || x.pagado > 0.009)
-    .sort((a,b) => Number(b.id || 0) - Number(a.id || 0));
+    .sort((a,b) => String(b.fecha || "").localeCompare(String(a.fecha || "")) || String(b.id || "").localeCompare(String(a.id || ""), "es", { numeric:true }));
 }
 
 function deudaCliente(cliente){
@@ -3911,7 +3941,7 @@ function deudaClienteHtml(cliente){
     }
 
     if(!tags.length){
-      tags.push(`<span class="deuda-estado-tag cero">$0.00</span>`);
+      tags.push(`<span class="deuda-estado-tag cero">$0,00</span>`);
     }
 
     return `
@@ -4044,6 +4074,35 @@ async function cargarPedidos(){
   construirIndicePedidos();
 }
 
+async function cargarPedidosProduccion(){
+  const { data, error } = await db()
+    .from("prod_pedidos")
+    .select("id, folio, numero_pedido, fecha, operador, cliente_id, cliente_nombre, descripcion, cantidad, tipo_nombre, estado, fecha_entrega, fecha_listo, pago_estado, pago_total, pago_abonado, pago_tipo_deuda, pago_tasa_deuda, pago_total_bs, pago_ultimo_metodo, pago_ultima_moneda, pago_ultima_referencia, pago_ultima_nota, pago_ultima_fecha, origen_registro, archivado, created_at, updated_at")
+    .eq("archivado", false)
+    .in("origen_registro", ["ORGANIZADOR", "MIGRADO_PEDIDOS"])
+    .order("fecha", { ascending:false })
+    .order("folio", { ascending:false })
+    .limit(2000);
+
+  if(error){
+    console.warn("No se pudieron cargar pedidos del Organizador:", error);
+    errorPedidosProduccion = error;
+    prodPedidosDB = [];
+    return false;
+  }
+
+  errorPedidosProduccion = null;
+  prodPedidosDB = data || [];
+  return true;
+}
+
+async function recargarPedidosCliente(){
+  const resultados = await Promise.all([cargarPedidos(), cargarPedidosProduccion()]);
+  if(resultados[1] === false){
+    mostrarToast("Aviso: no se pudieron cargar los saldos del Organizador");
+  }
+}
+
 async function crearClientesDesdePedidos(){
   const nombresPedidos = [...new Set(
     pedidosDB
@@ -4145,8 +4204,13 @@ async function inicializarClientes(){
   // Pedidos y clientes viajan al mismo tiempo, en vez de esperar una consulta y luego la otra.
   await Promise.all([
     cargarPedidos(),
+    cargarPedidosProduccion(),
     cargarClientes()
   ]);
+
+  if(errorPedidosProduccion){
+    mostrarToast("Aviso: no se pudieron cargar los saldos del Organizador");
+  }
 
   // Solo repite la consulta de clientes cuando realmente se creó alguno desde pedidos antiguos.
   const clientesCreados = await crearClientesDesdePedidos();
@@ -4360,7 +4424,7 @@ async function deshacerUltimaFusionClientes(){
 
     limpiarBackupFusionClientes();
     limpiarSeleccionClientes(false);
-    await cargarPedidos();
+    await recargarPedidosCliente();
     await cargarClientes();
     await cargarContactosParaBusqueda();
     await cargarSaldosFavorClientes();
@@ -5390,7 +5454,7 @@ async function guardarClienteModal(){
     if(clienteIdGuardado) await guardarContactosCliente(clienteIdGuardado);
 
     cerrarModalCliente();
-    await cargarPedidos();
+    await recargarPedidosCliente();
     await cargarClientes();
     await cargarDeudasClientes();
     filtrarClientes();
@@ -5476,7 +5540,7 @@ async function fusionarClientesSeleccionados(){
     );
 
     limpiarSeleccionClientes(false);
-    await cargarPedidos();
+    await recargarPedidosCliente();
     await cargarClientes();
     await cargarContactosParaBusqueda();
     await cargarSaldosFavorClientes();
@@ -5592,7 +5656,7 @@ async function eliminarCliente(id){
 
     try{
       await desactivarClienteSeguro(id);
-      await cargarPedidos();
+      await recargarPedidosCliente();
       await cargarClientes();
       await cargarDeudasClientes();
       filtrarClientes();
@@ -5658,7 +5722,7 @@ async function eliminarCliente(id){
   try{
     const resultado = await eliminarClienteFisicoOOcultar(id, "", historial);
 
-    await cargarPedidos();
+    await recargarPedidosCliente();
     await cargarClientes();
     await cargarDeudasClientes();
     filtrarClientes();
@@ -5679,8 +5743,29 @@ let deudaClienteActualId = null;
 const PAGO_SIMPLE_CLIENTES_NOTA = "PAGO_SIMPLE_V58";
 
 function numeroSeguro(valor){
-  const n = Number(String(valor ?? "").replace(/[^0-9,.-]/g, "").replace(",", "."));
+  if(typeof valor === "number") return Number.isFinite(valor) ? valor : 0;
+  const n = Number(normalizarNumeroCliente(valor));
   return Number.isFinite(n) ? n : 0;
+}
+
+function normalizarNumeroCliente(valor){
+  let s = String(valor ?? "").replace(/\s/g, "").replace(/[^0-9,.-]/g, "");
+  if(!s) return "";
+  const coma = s.lastIndexOf(",");
+  const punto = s.lastIndexOf(".");
+  if(coma >= 0 && punto >= 0){
+    s = coma > punto ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  }else if(coma >= 0){
+    s = /^[+-]?\d{1,3}(,\d{3})+$/.test(s) ? s.replace(/,/g, "") : s.replace(",", ".");
+  }else if(punto >= 0 && /^[+-]?\d{1,3}(\.\d{3})+$/.test(s)){
+    s = s.replace(/\./g, "");
+  }
+  return s;
+}
+
+function montoValidoCliente(valor){
+  const original = String(valor ?? "").trim();
+  return !original || /^[+-]?\d+(?:\.\d+)?$/.test(normalizarNumeroCliente(original));
 }
 
 function fechaISOCliente(){
@@ -5701,6 +5786,7 @@ function fechaPagoVisiblePedido(pedido, item = null){
   return String(
     pedido?.pago_simple_fecha ||
     pedido?.pago_simple_actualizado_en ||
+    pedido?.pago_ultima_fecha ||
     ""
   ).slice(0,10);
 }
@@ -5834,7 +5920,7 @@ function pedidosPendientesCliente(cliente, tipo = null){
 
   return pedidosEstadoCuentaCliente(cliente, true)
     .filter(x => x.saldo > 0.009 && (!tipoNormalizado || x.tipo === tipoNormalizado))
-    .sort((a,b) => Number(a.id || 0) - Number(b.id || 0));
+    .sort((a,b) => String(a.fecha || "").localeCompare(String(b.fecha || "")) || String(a.id || "").localeCompare(String(b.id || ""), "es", { numeric:true }));
 }
 
 function pintarDeudaModal(cliente){
@@ -5890,11 +5976,11 @@ function pintarDeudaModal(cliente){
         ? `A favor ${tipoCuenta} $${money(item.aFavor)}`
         : (item.saldo > 0.009
             ? `Debe ${tipoCuenta} $${money(item.saldo)}`
-            : `Saldo ${tipoCuenta} $0.00`);
+            : `Saldo ${tipoCuenta} $0,00`);
 
       return `
         <div class="deuda-pedido-row estado-${clase}">
-          <div class="deuda-pedido-id">#${escapeHtml(pedido.id)}</div>
+          <div class="deuda-pedido-id">#${escapeHtml(pedido.numero_pedido || pedido.id)}</div>
           <div class="deuda-pedido-desc">
             <strong>${escapeHtml(pedido.descripcion || "Sin descripción")}</strong>
             <small>${escapeHtml(textoFechaPago)} · ${escapeHtml(tipoTextoCuenta(item))} · ${escapeHtml(estadoLabelPagoSimple(item.estado))}</small>
@@ -6027,7 +6113,7 @@ async function anularEntradaPagoCliente(pagoId, clienteId = null){
       (favorRevertido > 0.009 ? ` · $${money(favorRevertido)} de favor eliminado` : "")
     );
 
-    await cargarPedidos();
+    await recargarPedidosCliente();
     await cargarDeudasClientes();
     filtrarClientes(false);
 
@@ -6275,7 +6361,12 @@ function calcularPagoGlobalCliente(){
   const saldo = numeroSeguro(cuentaNeta.saldo || 0);
   const favorActual = numeroSeguro(cuentaNeta.aFavor || 0);
 
-  const monto = numeroSeguro(document.getElementById("deudaPagoMonto")?.value || 0);
+  const montoCapturado = document.getElementById("deudaPagoMonto")?.value || "";
+  if(!montoValidoCliente(montoCapturado)){
+    alert("Monto inválido. Usa el formato 2.000,25.");
+    return;
+  }
+  const monto = numeroSeguro(montoCapturado);
   const aplicado = Math.min(monto, saldo);
   const restante = Math.max(saldo - aplicado, 0);
   const excedenteNuevo = Math.max(monto - saldo, 0);
@@ -6290,7 +6381,7 @@ function calcularPagoGlobalCliente(){
         `Cuenta ${tipoPago}: a favor $${money(favorActual)} · no tiene deuda`;
     }else{
       resultado.textContent =
-        `Cuenta ${tipoPago}: sin deuda $0.00`;
+        `Cuenta ${tipoPago}: sin deuda $0,00`;
     }
     return;
   }
@@ -6314,7 +6405,7 @@ function calcularPagoGlobalCliente(){
   }
 
   resultado.textContent =
-    `Cuenta ${tipoPago}: aplicará $${money(aplicado)} · Quedará sin deuda $0.00`;
+    `Cuenta ${tipoPago}: aplicará $${money(aplicado)} · Quedará sin deuda $0,00`;
 }
 
 function generarUuidPagoCliente(){
@@ -6486,7 +6577,7 @@ async function aplicarPagoGlobalCliente(){
     // Solo se descarta el UUID después de una respuesta confirmada.
     pagoGlobalClienteOperacionPendiente = null;
 
-    await cargarPedidos();
+    await recargarPedidosCliente();
     await cargarClientes();
     await cargarDeudasClientes();
     filtrarClientes();
@@ -7085,7 +7176,7 @@ function tarjetaMovimientoRealHtml(pg, aplicaciones){
   const tipo = normalizarTipoCuentaCliente(pg.tipo_pago || "DIVISA");
   const anulado = String(pg.estado || "ACTIVO").toUpperCase() === "ANULADO";
   const origen = String(pg.origen || "").toUpperCase();
-  const origenTxt = origen === "INDEX" ? "Pago desde Index" : (origen === "CLIENTES" ? "Pago general en Clientes" : "Pago recibido");
+  const origenTxt = origen === "INDEX" ? "Pago desde Index" : (origen === "ORGANIZADOR" ? "Pago desde Organizador" : (origen === "CLIENTES" ? "Pago general en Clientes" : "Pago recibido"));
   const meta = [
     pg.metodo_pago,
     pg.referencia ? `Ref. ${pg.referencia}` : "",
@@ -7135,34 +7226,37 @@ function tarjetaMovimientoLegacyHtml(pg){
 // de una obligación; los pagos siguen siendo entradas reales.
 // ============================================================
 function datosPedidoMovimiento(pedido){
-  const totalSimple = numeroSeguro(pedido?.pago_simple_total || 0);
+  const esProduccion = pedido?.__origenCuenta === "PRODUCCION";
+  const totalSimple = numeroSeguro(esProduccion ? pedido?.pago_total : (pedido?.pago_simple_total || 0));
   const total = totalSimple > 0.009 ? totalSimple : numeroSeguro(pedido?.precio_total || 0);
 
-  const pagadoSimple = numeroSeguro(pedido?.pago_simple_pagado || 0);
-  const pagadoLegacy = numeroSeguro(pedido?.monto_abonado || 0);
+  const pagadoSimple = numeroSeguro(esProduccion ? pedido?.pago_abonado : (pedido?.pago_simple_pagado || 0));
+  const pagadoLegacy = esProduccion ? 0 : numeroSeguro(pedido?.monto_abonado || 0);
   const pagado = pagadoSimple > 0.009 ? pagadoSimple : pagadoLegacy;
   const saldo = Math.max(total - pagado, 0);
 
   const tipoSimple = String(pedido?.pago_simple_tipo || "").toUpperCase();
   const monedaDeuda = String(pedido?.moneda_deuda || "").toUpperCase();
   const tipoTasa = String(pedido?.tipo_tasa_deuda || "").toUpperCase();
-  const tipo = tipoSimple === "BCV" || monedaDeuda === "BS" || tipoTasa === "BS_BCV" ? "BCV" : "DIVISA";
+  const tipo = esProduccion
+    ? (String(pedido?.pago_tipo_deuda || "").toUpperCase() === "BS_BCV" ? "BCV" : "DIVISA")
+    : (tipoSimple === "BCV" || monedaDeuda === "BS" || tipoTasa === "BS_BCV" ? "BCV" : "DIVISA");
 
   return {
     pedido,
-    id:Number(pedido?.id || 0),
+    id:esProduccion ? (pedido?.numero_pedido || pedido?.folio || pedido?.id || "") : Number(pedido?.id || 0),
     total,
     pagado,
     saldo,
     tipo,
     fecha:String(pedido?.fecha || "").slice(0,10),
     descripcion:String(pedido?.descripcion || "").trim(),
-    estado:String(pedido?.estatus_pago || pedido?.pago_simple_estado || "Pendiente").trim()
+    estado:String(esProduccion ? (pedido?.pago_estado || "Pendiente") : (pedido?.estatus_pago || pedido?.pago_simple_estado || "Pendiente")).trim()
   };
 }
 
 function pedidosEmitidosMovimientoCliente(cliente){
-  return obtenerPedidosClienteIndexados(cliente?.nombre, cliente?.id)
+  return todosPedidosCliente(cliente)
     .map(datosPedidoMovimiento)
     .filter(x => x.id && x.total > 0.009);
 }
@@ -7302,7 +7396,7 @@ function estadoNetoCuentaV70(resumen){
   const favor = numeroSeguro(resumen?.aFavor || resumen?.a_favor || 0);
   if(debe > 0.009) return { clase:"debe", texto:`DEBE $${money(debe)}` };
   if(favor > 0.009) return { clase:"favor", texto:`A FAVOR +$${money(favor)}` };
-  return { clase:"ok", texto:"SIN DEUDA $0.00" };
+  return { clase:"ok", texto:"SIN DEUDA $0,00" };
 }
 
 function pintarDeudaModal(cliente){
@@ -7341,8 +7435,8 @@ async function verHistorialCliente(id){
   const cliente = clientesDB.find(c => Number(c.id) === Number(id));
   if(!cliente){ alert("No se encontró el cliente."); return; }
 
-  const pedidos = obtenerPedidosClienteIndexados(cliente.nombre, cliente.id)
-    .sort((a,b) => Number(b.id || 0) - Number(a.id || 0));
+  const pedidos = todosPedidosCliente(cliente)
+    .sort((a,b) => String(b.fecha || "").localeCompare(String(a.fecha || "")) || String(b.numero_pedido || b.id || "").localeCompare(String(a.numero_pedido || a.id || ""), "es", { numeric:true }));
 
   document.getElementById("historyTitle").textContent = `Pedidos · ${cliente.nombre}`;
   const body = document.getElementById("historyBody");
@@ -7356,12 +7450,12 @@ async function verHistorialCliente(id){
     return `
       <div class="history-item">
         <div class="history-top">
-          <span>#${escapeHtml(p.id)} · ${escapeHtml(p.fecha || "")}</span>
-          <span>${escapeHtml(p.estatus_trabajo || "")} / ${escapeHtml(estado)}</span>
+          <span>#${escapeHtml(p.numero_pedido || p.id)} · ${escapeHtml(p.fecha || "")}</span>
+          <span>${escapeHtml(p.estatus_trabajo || p.estado || "")} / ${escapeHtml(estado)}</span>
         </div>
         <div class="history-desc">
           <strong>${escapeHtml(p.descripcion || "Sin descripción")}</strong><br>
-          Cantidad: ${escapeHtml(p.cantidad || "—")} · Material: ${escapeHtml(p.material || "—")}<br>
+          Cantidad: ${escapeHtml(p.cantidad || "—")} · Material: ${escapeHtml(p.material || p.tipo_nombre || "—")}<br>
           Total: $${money(item.total)} · Pagado: $${money(item.pagado)} · <strong>${escapeHtml(estadoCuenta)}</strong>
         </div>
       </div>`;
@@ -7670,7 +7764,7 @@ function estadoSaldoMovimientoV79(valor){
   const n = numeroSeguro(valor || 0);
   if(n > 0.009) return { clase:"debe", texto:`DEBE $${money(n)}` };
   if(n < -0.009) return { clase:"favor", texto:`A FAVOR $${money(Math.abs(n))}` };
-  return { clase:"ok", texto:"$0.00" };
+  return { clase:"ok", texto:"$0,00" };
 }
 
 function estadoActualTextoV79(resumen){
@@ -7678,7 +7772,7 @@ function estadoActualTextoV79(resumen){
   const favor = numeroSeguro(resumen?.aFavor || 0);
   if(saldo > 0.009) return { clase:"debe", texto:`DEBE $${money(saldo)}` };
   if(favor > 0.009) return { clase:"favor", texto:`A FAVOR $${money(favor)}` };
-  return { clase:"ok", texto:"SIN DEUDA $0.00" };
+  return { clase:"ok", texto:"SIN DEUDA $0,00" };
 }
 
 function saldoFirmadoActualV82(resumen){
@@ -7816,7 +7910,7 @@ async function construirEstadoCuentaClienteV79(cliente){
     const anulado = String(pg.estado || "ACTIVO").toUpperCase() === "ANULADO";
     const aplicaciones = porPago.get(Number(pg.id || 0)) || [];
     const origen = String(pg.origen || "").toUpperCase();
-    const titulo = origen === "INDEX" ? "Pago desde pedido" : "Pago general en Clientes";
+    const titulo = origen === "INDEX" ? "Pago desde Index" : (origen === "ORGANIZADOR" ? "Pago desde Organizador" : "Pago general en Clientes");
     const detalle = [
       pg.metodo_pago || "Método no indicado",
       pg.registrado_por ? `Operador: ${pg.registrado_por}` : "",
