@@ -55,7 +55,7 @@ th:nth-child(1),td:nth-child(1){width:44px;text-align:center}th:nth-child(2),td:
 </style>
 
 <style>
-/* V10 · Organizador real en prod_pedidos · visual alineado con Index */
+/* V11 · Organizador real en prod_pedidos · auth robusta + diagnóstico visible */
 .hero{padding-top:12px}.hero h1{font-size:20px}.hero p{max-width:760px}
 .stats{grid-template-columns:repeat(6,minmax(0,1fr))}
 .toolbar{grid-template-columns:minmax(250px,1.5fr) 135px 190px 135px 120px 120px auto}
@@ -232,8 +232,8 @@ th:nth-child(11),td:nth-child(11){width:86px;text-align:center}
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=24"></script>
-<script src="js/auth.js?v=26"></script>
+<script src="js/supabase.js?v=30"></script>
+<script src="js/auth.js?v=30"></script>
 <script src="js/menu.js?v=45"></script>
 <script>
 const TIPOS_LETRERO=[
@@ -262,7 +262,20 @@ function bdClick(e,id){if(e.target===e.currentTarget)closeModal(id)}
 function closeModal(id){$(id).style.display='none'}
 function wait(ms){return new Promise(r=>setTimeout(r,ms))}
 async function waitForDb(){for(let i=0;i<100;i++){if(window.supabaseClient)return window.supabaseClient;await wait(50)}throw new Error('Supabase no está disponible')}
-async function ready(){if(window.authReady)await window.authReady;return await waitForDb()}
+async function ready(){
+  const db=await waitForDb();
+  for(let i=0;i<80&&typeof window.authReady==='undefined';i++) await wait(50);
+  if(window.authReady){const ok=await window.authReady;if(ok===false)throw new Error('Sesión de Comanda no válida')}
+  const {data,error}=await db.auth.getSession();
+  if(error)throw error;
+  if(!data?.session?.user){
+    try{const op=await window.obtenerOperadorAutenticado?.();if(!op)throw new Error('Sesión Supabase no autenticada')}catch(_e){
+      location.href='login.html';
+      throw new Error('Sesión vencida. Inicia sesión nuevamente.');
+    }
+  }
+  return db;
+}
 
 function clienteExacto(nombre){const k=norm(nombre);return clientes.find(c=>norm(c.nombre)===k)||null}
 function clienteNombre(id){return clientes.find(c=>String(c.id)===String(id))?.nombre||''}
@@ -311,7 +324,7 @@ async function guardarDeuda(){if(busy)return;const x=trabajos.find(r=>r.id===deb
 function uuid(){return crypto?.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c==='x'?r:(r&3|8);return v.toString(16)})}
 async function registrarPago(){if(busy)return;const x=trabajos.find(r=>r.id===debtId);if(!x)return;const monto=n($('d_pago_monto').value);if(monto<=0){toast('Indica el monto recibido');return}if(n(x.pago_total)<=0.009){toast('Primero configura la deuda');return}busy=true;try{const db=await ready();const nota=$('d_nota').value.trim();const {data,error}=await db.rpc('registrar_pago_organizador_v1',{p_operacion_uuid:uuid(),p_prod_pedido_id:x.id,p_monto:monto,p_metodo:$('d_metodo').value,p_referencia:nota||null,p_nota:nota||null,p_fecha:hoy()});if(error)throw error;await cargarTrabajos();closeModal('debtBackdrop');toast(data?.saldo_a_favor>0?'Pago aplicado. Sobra saldo a favor.':'Pago aplicado correctamente')}catch(e){console.error(e);toast('No se pudo registrar el pago: '+(e.message||e))}finally{busy=false}}
 
-document.addEventListener('DOMContentLoaded',async()=>{try{$('q_fecha').value=hoy();llenarTipos();await ready();await cargarCatalogos();await cargarTrabajos();const op=window.getSesionOperador?.();if(op?.nombre){if($('q_operador'))$('q_operador').value=op.nombre;if($('f_operador'))$('f_operador').value=op.nombre}}catch(e){console.error(e);$('loadingState').style.display='none';toast('No se pudo cargar el Organizador')}});
+document.addEventListener('DOMContentLoaded',async()=>{try{$('q_fecha').value=hoy();llenarTipos();await ready();await cargarCatalogos();await cargarTrabajos();const op=window.getSesionOperador?.();if(op?.nombre){if($('q_operador'))$('q_operador').value=op.nombre;if($('f_operador'))$('f_operador').value=op.nombre}}catch(e){console.error('ORGANIZADOR V11:',e);$('loadingState').style.display='none';toast('Error al cargar: '+(e?.message||e||'desconocido'))}});
 </script>
 <script src="js/notificaciones.js?v=35"></script>
 </body>
