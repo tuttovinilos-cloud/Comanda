@@ -107,6 +107,8 @@ html.loading-menu .header-tabs{opacity:0;visibility:hidden}html.menu-ready .head
 @media(max-width:1280px){.header{grid-template-columns:130px 42px minmax(0,1fr);padding:10px 12px}.logo{width:130px;min-width:130px;max-width:130px}.logo img{max-width:118px;height:31px}.header-tabs .tab-btn,.header-tabs .storage-pill{font-size:8.7px;padding:0 7px}}
 @media(max-width:980px){.header{grid-template-columns:1fr 36px auto;height:auto;min-height:48px;overflow:visible;padding:7px 9px;gap:6px}.logo{grid-column:1;grid-row:1;width:118px;min-width:118px;max-width:118px;height:31px}.logo img{height:26px;max-width:112px}.noti-btn,#notiBtnGlobal{grid-column:2;grid-row:1;width:32px;min-width:32px;max-width:32px;height:31px;min-height:31px;max-height:31px;font-size:12px}.mobile-menu-btn{grid-column:3;grid-row:1;display:inline-flex;align-items:center;justify-content:center}.header-tabs{grid-column:1 / -1;grid-row:2;display:none;width:100%;height:auto;margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,.22);overflow:visible;grid-template-columns:1fr 1fr;gap:6px}.header-tabs.open{display:grid}.header-tabs .tab-btn,.header-tabs .storage-pill,.tab-btn{width:100%;min-height:31px;height:31px;font-size:8.5px;padding:0 7px;border-radius:7px;letter-spacing:.8px}}
 
+.btn:disabled,input:disabled,select:disabled{opacity:.6;cursor:wait}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #ff8616;outline-offset:2px}
 </style>
 </head>
 
@@ -147,29 +149,30 @@ html.loading-menu .header-tabs{opacity:0;visibility:hidden}html.menu-ready .head
       <h2>Importar SVG</h2>
       <div class="grid3">
         <div>
-          <label>Archivo SVG</label>
+          <label for="fileInput">Archivo SVG</label>
           <input type="file" id="fileInput" accept=".svg,image/svg+xml">
         </div>
         <div>
-          <label>Escalar por</label>
+          <label for="scaleMode">Escalar por</label>
           <select id="scaleMode">
             <option value="width" selected>Ancho</option>
             <option value="height">Alto</option>
           </select>
         </div>
         <div>
-          <label>Medida en cm</label>
-          <input id="manualCm" type="number" value="60" step="0.01">
+          <label for="manualCm">Medida en cm</label>
+          <input id="manualCm" min="0.0001" max="100000" type="number" value="60" step="0.01">
         </div>
       </div>
       <br>
       <div class="rowBtns">
-        <button class="btn" onclick="calcularSVG()">Calcular SVG</button>
-        <button class="btn light" onclick="descargarSVGActual()">Descargar SVG escalado</button>
+        <button id="analyzeButton" class="btn" onclick="calcularSVG()">Calcular SVG</button>
+        <button id="cancelAnalysisButton" class="btn light hidden" onclick="cancelAnalysis()">Cancelar</button>
+        <button id="downloadSvgButton" class="btn light" onclick="descargarSVGActual()">Descargar SVG escalado</button>
         <button class="btn orange" onclick="crearPDF()">Crear PDF</button>
       </div>
       <div class="progress"><div class="bar" id="bar"></div></div>
-      <p class="hint" id="status">Listo.</p>
+      <p class="hint" id="status" role="status" aria-live="polite">Listo.</p>
     </div>
 
     <div class="grid2">
@@ -192,6 +195,7 @@ html.loading-menu .header-tabs{opacity:0;visibility:hidden}html.menu-ready .head
         </div>
         <br>
         <p class="hint" id="method">Sube un SVG para analizar.</p>
+        <p class="hint" style="margin-top:8px">Perímetro: suma de contornos vectoriales, incluidos huecos. Los trazos se miden por su eje; convierte a objetos los trazos que representen material. Los solapamientos se suman por objeto. Las áreas y piezas se estiman sobre la imagen y cuentan también los objetos blancos.</p>
       </div>
     </div>
 
@@ -303,7 +307,7 @@ function fmtM(v){ return (Number(v)||0).toFixed(4)+" m"; }
 function fmtM2(v){ return (Number(v)||0).toFixed(4)+" m²"; }
 function qty(v){ return (Math.abs(v)>=100 ? Number(v).toFixed(0) : Number(v).toFixed(4)).replace(/\.0000$/,""); }
 function esc(s){ return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
-function setStatus(txt,pct=0){ $("status").innerHTML=txt; $("bar").style.width=Math.max(0,Math.min(100,pct))+"%"; }
+function setStatus(txt,pct=0){ $("status").textContent=txt; $("bar").style.width=Math.max(0,Math.min(100,pct))+"%"; }
 
 function switchTab(tab){
   $("tabAnalyzer").classList.toggle("hidden",tab!=="analyzer");
@@ -319,10 +323,10 @@ function parseLength(raw){
   if(!raw) return null;
   raw=String(raw).trim();
   if(raw.endsWith("%")) return null;
-  const m=raw.match(/^([-+]?\d*\.?\d+(?:e[-+]?\d+)?)\s*([a-zA-Z]*)$/);
+  const m=raw.match(/^([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*([a-zA-Z]*)$/);
   if(!m) return null;
   const value=Number(m[1]), unit=(m[2]||"px").toLowerCase();
-  if(!isFinite(value)||!UNITS[unit]) return null;
+  if(!isFinite(value)||value<=0||!UNITS[unit]) return null;
   return {value,unit,meters:value*UNITS[unit]};
 }
 
@@ -352,217 +356,438 @@ function detectRealSize(svg){
   return {vb,realWm,realHm,method,scaleX:realWm/vb.width,scaleY:realHm/vb.height};
 }
 
-function cargarPreview(text){
-  $("preview").innerHTML=text;
-  svgDoc=$("preview").querySelector("svg");
-  if(svgDoc){
-    svgDoc.setAttribute("preserveAspectRatio","xMidYMid meet");
-    svgDoc.style.width="100%"; svgDoc.style.height="100%";
+function cleanSvgXml(raw){
+  const literals=new Map(),blocked=new Set();
+  let cleaned='',pos=0;
+  const protectedToken=/<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\?[\s\S]*?\?>|<!DOCTYPE\b/gi;
+  let match;
+  while((match=protectedToken.exec(raw))){
+    cleaned+=raw.slice(pos,match.index);
+    if(!/^<!DOCTYPE\b/i.test(match[0])){cleaned+=match[0];pos=protectedToken.lastIndex;continue;}
+    let i=protectedToken.lastIndex,depth=0,quote='',end=-1;
+    for(;i<raw.length;i++){
+      const ch=raw[i];
+      if(quote){if(ch===quote)quote='';continue;}
+      if(raw.startsWith('<!--',i)){const j=raw.indexOf('-->',i+4);if(j<0)break;i=j+2;continue;}
+      if(ch==='"'||ch==="'"){quote=ch;continue;}
+      if(ch==='[')depth++;
+      else if(ch===']')depth--;
+      else if(ch==='>'&&depth===0){end=i+1;break;}
+    }
+    if(end<0||depth!==0)throw new Error('La declaración XML del SVG está incompleta. Vuelve a guardar el archivo.');
+    const declaration=raw.slice(match.index,end).replace(/<!--[\s\S]*?-->/g,'');
+    const entities=declaration.match(/<!ENTITY\s+(?:[^>"']|"[^"]*"|'[^']*')*>/gi)||[];
+    for(const entity of entities){
+      if(/^<!ENTITY\s+%/i.test(entity))continue;
+      const literal=entity.match(/^<!ENTITY\s+([A-Za-z_][\w.:-]*)\s+(["'])([\s\S]*)\2\s*>$/i);
+      const name=entity.match(/^<!ENTITY\s+([A-Za-z_][\w.:-]*)/i)?.[1];
+      if(!name)throw new Error('El SVG contiene una declaración de entidad XML inválida.');
+      if(literals.has(name)||blocked.has(name))continue; // XML utiliza la primera declaración.
+      if(literal&&!/[<%]/.test(literal[3]))literals.set(name,literal[3]);else blocked.add(name);
+      if(literals.size+blocked.size>256)throw new Error('El SVG contiene demasiadas entidades XML.');
+    }
+    pos=end;protectedToken.lastIndex=end;
   }
+  cleaned+=raw.slice(pos);
+  const predefined={amp:'&',lt:'<',gt:'>',quot:'"',apos:"'"},cache=new Map();
+  function replaceRefs(value,pattern,convert,limit){
+    const chunks=[];let last=0,size=0,m;
+    const push=part=>{size+=part.length;if(size>limit)throw new Error('Las entidades XML del SVG superan el tamaño permitido.');chunks.push(part);};
+    while((m=pattern.exec(value))){push(value.slice(last,m.index));push(convert(m[0],m[1]));last=pattern.lastIndex;}
+    push(value.slice(last));return chunks.join('');
+  }
+  const decode=(value,chain=[])=>replaceRefs(value,/&(#x[\da-f]+|#\d+|[A-Za-z_][\w.:-]*);/gi,(reference,name)=>{
+    if(Object.prototype.hasOwnProperty.call(predefined,name))return predefined[name];
+    if(name[0]==='#'){
+      const code=name[1].toLowerCase()==='x'?parseInt(name.slice(2),16):Number(name.slice(1));
+      if(!(code===9||code===10||code===13||code>=32&&code<=0xd7ff||code>=0xe000&&code<=0xfffd||code>=0x10000&&code<=0x10ffff))throw new Error('El SVG contiene un carácter XML inválido.');
+      return String.fromCodePoint(code);
+    }
+    return resolve(name,chain);
+  },65536);
+  function resolve(name,chain=[]){
+    if(cache.has(name))return cache.get(name);
+    if(chain.includes(name)||chain.length>=16)throw new Error('El SVG contiene entidades XML circulares o demasiado anidadas.');
+    if(!literals.has(name))throw new Error(`La entidad «${name}» depende de una definición externa o no está declarada. Guarda el SVG incluyendo el dibujo y sus estilos dentro del archivo.`);
+    const value=decode(literals.get(name),[...chain,name]);
+    if(value.length>65536)throw new Error('Una entidad XML del SVG es demasiado grande.');
+    cache.set(name,value);return value;
+  }
+  const escapeXml=value=>value.replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[ch]));
+  // Los comentarios, CDATA e instrucciones XML no contienen referencias XML activas.
+  const parts=cleaned.split(/(<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\?[\s\S]*?\?>)/g);
+  let size=0;
+  for(let i=0;i<parts.length;i++){
+    if(!/^(?:<!--|<!\[CDATA\[|<\?)/.test(parts[i]))parts[i]=replaceRefs(parts[i],/&([A-Za-z_][\w.:-]*);/g,(ref,name)=>Object.prototype.hasOwnProperty.call(predefined,name)?ref:escapeXml(resolve(name)),8*1024*1024-size);
+    size+=parts[i].length;
+    if(size>8*1024*1024)throw new Error('El SVG expandido supera 8 MB. Simplifica el archivo.');
+  }
+  return parts.join('');
+}
+
+// Geometría en metros y análisis de imagen, ejecutados en un Worker.
+function svgAnalysisEngine(){
+  const TAU=2*Math.PI;
+  const gx=[.09501250983763744,.2816035507792589,.4580167776572274,.6178762444026438,.755404408355003,.8656312023878318,.9445750230732326,.9894009349916499];
+  const gw=[.1894506104550685,.1826034150449236,.16915651939500254,.14959598881657673,.12462897125553387,.09515851168249278,.06225352393864789,.027152459411754095];
+  function gauss(f,a,b){const mid=(a+b)/2,half=(b-a)/2;let s=0;for(let i=0;i<8;i++)s+=gw[i]*(f(mid-half*gx[i])+f(mid+half*gx[i]));return half*s;}
+  function integrate(f,a=0,b=1,tol=1e-9,depth=0){const whole=gauss(f,a,b),mid=(a+b)/2,left=gauss(f,a,mid),right=gauss(f,mid,b),split=left+right;if(depth>=14||Math.abs(split-whole)<=tol+1e-9*split)return split;return integrate(f,a,mid,tol/2,depth+1)+integrate(f,mid,b,tol/2,depth+1);}
+  function measureShape(shape){
+    const {type,attrs:v,m,fill}=shape;
+    const distance=(x,y)=>Math.hypot(m[0]*x+m[2]*y,m[1]*x+m[3]*y);
+    function cubic(x0,y0,x1,y1,x2,y2,x3,y3){return integrate(t=>{const u=1-t;return distance(3*(u*u*(x1-x0)+2*u*t*(x2-x1)+t*t*(x3-x2)),3*(u*u*(y1-y0)+2*u*t*(y2-y1)+t*t*(y3-y2)));});}
+    function quad(x0,y0,x1,y1,x2,y2){return integrate(t=>distance(2*((1-t)*(x1-x0)+t*(x2-x1)),2*((1-t)*(y1-y0)+t*(y2-y1))));}
+    function ellipse(rx,ry,phi,start,delta){const cp=Math.cos(phi),sp=Math.sin(phi);return integrate(t=>{const angle=start+delta*t,dx=-rx*Math.sin(angle)*delta,dy=ry*Math.cos(angle)*delta;return distance(cp*dx-sp*dy,sp*dx+cp*dy);});}
+    function arc(x0,y0,rx,ry,rotation,large,sweep,x1,y1){
+      rx=Math.abs(rx);ry=Math.abs(ry);if(x0===x1&&y0===y1)return 0;if(!rx||!ry)return distance(x1-x0,y1-y0);
+      const phi=rotation*Math.PI/180,cp=Math.cos(phi),sp=Math.sin(phi),dx=(x0-x1)/2,dy=(y0-y1)/2,xp=cp*dx+sp*dy,yp=-sp*dx+cp*dy;
+      const ratio=xp*xp/(rx*rx)+yp*yp/(ry*ry);if(ratio>1){const k=Math.sqrt(ratio);rx*=k;ry*=k;}
+      const denom=rx*rx*yp*yp+ry*ry*xp*xp;
+      const k=(large===sweep?-1:1)*Math.sqrt(Math.max(0,(rx*rx*ry*ry-denom)/denom));
+      const cxp=k*rx*yp/ry,cyp=-k*ry*xp/rx;
+      const ux=(xp-cxp)/rx,uy=(yp-cyp)/ry,vx=(-xp-cxp)/rx,vy=(-yp-cyp)/ry;
+      const start=Math.atan2(uy,ux);let delta=Math.atan2(ux*vy-uy*vx,ux*vx+uy*vy);if(!sweep&&delta>0)delta-=TAU;if(sweep&&delta<0)delta+=TAU;
+      return ellipse(rx,ry,phi,start,delta);
+    }
+    if(type==='line')return distance(v.x2-v.x1,v.y2-v.y1);
+    if(type==='circle')return ellipse(v.r,v.r,0,0,TAU);
+    if(type==='ellipse')return ellipse(v.rx,v.ry,0,0,TAU);
+    if(type==='rect'){
+      const w=v.width,h=v.height,rx=Math.min(v.rx||0,w/2),ry=Math.min(v.ry||0,h/2);
+      if(!rx||!ry)return 2*distance(w,0)+2*distance(0,h);
+      return 2*distance(w-2*rx,0)+2*distance(0,h-2*ry)+ellipse(rx,ry,0,0,TAU);
+    }
+    if(type==='polygon'||type==='polyline'){
+      let sum=0;const p=v.points;for(let i=2;i<p.length;i+=2)sum+=distance(p[i]-p[i-2],p[i+1]-p[i-1]);
+      if(p.length>=4&&(type==='polygon'||fill))sum+=distance(p[0]-p[p.length-2],p[1]-p[p.length-1]);return sum;
+    }
+    // Se analiza cada segmento por separado: M nunca se convierte en una línea.
+    const input=v.d||'';let pos=0,command='',x=0,y=0,startX=0,startY=0,cx=0,cy=0,qx=0,qy=0,previous='',sum=0,open=false,segments=0;
+    const number=/[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:[eE][-+]?\d+)?/y;
+    function skip(){while(pos<input.length&&/[\s,]/.test(input[pos]))pos++;}
+    function read(){skip();number.lastIndex=pos;const found=number.exec(input);if(!found)throw new Error('Curva SVG incompleta o inválida.');pos=number.lastIndex;const n=Number(found[0]);if(!Number.isFinite(n))throw new Error('Coordenada SVG inválida.');return n;}
+    function flag(){skip();const f=input[pos++];if(f!=='0'&&f!=='1')throw new Error('Arco SVG inválido.');return Number(f);}
+    function closeFill(){if(open&&fill)sum+=distance(startX-x,startY-y);open=false;}
+    while(true){
+      skip();if(pos>=input.length)break;
+      if(/[a-zA-Z]/.test(input[pos]))command=input[pos++];
+      if(!command||!/[MmLlHhVvCcSsQqTtAaZz]/.test(command))throw new Error('Comando SVG no compatible.');
+      if(++segments>250000)throw new Error('El SVG contiene demasiados segmentos.');
+      const upper=command.toUpperCase(),relative=command!==upper,ox=x,oy=y;
+      const px=n=>n+(relative?ox:0),py=n=>n+(relative?oy:0);
+      if(upper==='Z'){if(open)sum+=distance(startX-x,startY-y);x=startX;y=startY;open=false;previous='Z';command='';continue;}
+      if(upper==='M'){closeFill();x=px(read());y=py(read());startX=x;startY=y;open=true;command=relative?'l':'L';}
+      else if(upper==='L'){x=px(read());y=py(read());sum+=distance(x-ox,y-oy);open=true;}
+      else if(upper==='H'){x=px(read());sum+=distance(x-ox,0);open=true;}
+      else if(upper==='V'){y=py(read());sum+=distance(0,y-oy);open=true;}
+      else if(upper==='C'){
+        const x1=px(read()),y1=py(read());cx=px(read());cy=py(read());x=px(read());y=py(read());sum+=cubic(ox,oy,x1,y1,cx,cy,x,y);open=true;
+      }else if(upper==='S'){
+        const x1=/[CS]/.test(previous)?2*ox-cx:ox,y1=/[CS]/.test(previous)?2*oy-cy:oy;cx=px(read());cy=py(read());x=px(read());y=py(read());sum+=cubic(ox,oy,x1,y1,cx,cy,x,y);open=true;
+      }else if(upper==='Q'){
+        qx=px(read());qy=py(read());x=px(read());y=py(read());sum+=quad(ox,oy,qx,qy,x,y);open=true;
+      }else if(upper==='T'){
+        qx=/[QT]/.test(previous)?2*ox-qx:ox;qy=/[QT]/.test(previous)?2*oy-qy:oy;x=px(read());y=py(read());sum+=quad(ox,oy,qx,qy,x,y);open=true;
+      }else if(upper==='A'){
+        const rx=read(),ry=read(),rotation=read(),large=flag(),sweep=flag();x=px(read());y=py(read());sum+=arc(ox,oy,rx,ry,rotation,large,sweep,x,y);open=true;
+      }
+      previous=upper;
+    }
+    closeFill();if(!Number.isFinite(sum))throw new Error('La longitud de una curva no es válida.');return sum;
+  }
+  function convexHull(points){
+    points.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+    const cross=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+    const lower=[],upper=[];for(const p of points){while(lower.length>=2&&cross(lower[lower.length-2],lower[lower.length-1],p)<=0)lower.pop();lower.push(p);}
+    for(let i=points.length-1;i>=0;i--){const p=points[i];while(upper.length>=2&&cross(upper[upper.length-2],upper[upper.length-1],p)<=0)upper.pop();upper.push(p);}
+    lower.pop();upper.pop();return lower.concat(upper);
+  }
+  function frameArea(boundary,sx,sy){
+    const hull=convexHull(boundary);if(hull.length<=1)return sx*sy;let best=Infinity;
+    // Rectángulo mínimo: los lados candidatos son paralelos a una arista del casco.
+    for(let i=0;i<hull.length;i++){
+      const p=hull[i],q=hull[(i+1)%hull.length],dx=(q[0]-p[0])*sx,dy=(q[1]-p[1])*sy,len=Math.hypot(dx,dy);if(!len)continue;
+      const ca=dx/len,sa=dy/len;let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+      for(const v of hull){const x=v[0]*sx,y=v[1]*sy,rx=x*ca+y*sa,ry=-x*sa+y*ca;minX=Math.min(minX,rx);maxX=Math.max(maxX,rx);minY=Math.min(minY,ry);maxY=Math.max(maxY,ry);}
+      const padX=Math.abs(ca)*sx+Math.abs(sa)*sy,padY=Math.abs(sa)*sx+Math.abs(ca)*sy;
+      best=Math.min(best,(maxX-minX+padX)*(maxY-minY+padY));
+    }
+    return best;
+  }
+  function analysePixels(rgba,w,h,realW,realH){
+    const n=w*h,mask=new Uint8Array(n),queue=new Int32Array(n),sx=realW/w,sy=realH/h;let count=0,pieces=0,frames=0,discarded=0;
+    for(let i=0;i<n;i++){if(rgba[4*i+3]>=128){mask[i]=1;count++;}}
+    for(let start=0;start<n;start++){
+      if(mask[start]!==1)continue;let head=0,tail=1;queue[0]=start;mask[start]=2;const boundary=[];
+      while(head<tail){
+        const at=queue[head++],x=at%w,y=(at/w)|0;
+        if(x===0||x===w-1||y===0||y===h-1||!mask[at-1]||!mask[at+1]||!mask[at-w]||!mask[at+w])boundary.push([x,y]);
+        for(let yy=Math.max(0,y-1);yy<=Math.min(h-1,y+1);yy++){
+          for(let xx=Math.max(0,x-1);xx<=Math.min(w-1,x+1);xx++){
+            const next=yy*w+xx;if(mask[next]===1){mask[next]=2;queue[tail++]=next;}
+          }
+        }
+      }
+      if(tail>=3){pieces++;frames+=frameArea(boundary,sx,sy);}else discarded++;
+      if(pieces>20000)throw new Error('Demasiadas piezas: divide el archivo en detalles.');
+    }
+    return {piezas:pieces,areaRellenoM2:count*sx*sy,areaMarcoM2:frames,discarded};
+  }
+  return {measureShape,analysePixels};
+}
+
+function svgAnalysisWorkerMain(){
+  const engine=svgAnalysisEngine();
+  self.onmessage=event=>{
+    try{
+      const {shapes,rgba,w,h,realW,realH}=event.data;let perimeter=0;
+      for(const shape of shapes)perimeter+=engine.measureShape(shape);
+      self.postMessage({stage:'pixels'});
+      const result=engine.analysePixels(new Uint8ClampedArray(rgba),w,h,realW,realH);
+      self.postMessage({result:{...result,perimetroM:perimeter}});
+    }catch(error){self.postMessage({error:error.message||String(error)});}
+  };
+}
+
+const SVG_NS='http://www.w3.org/2000/svg';
+let svgRevision=0,analysisCache=null,analysisBusy=false,currentWorker=null,cancelRequested=false,importBusy=false;
+const previewShadow=$('preview').attachShadow({mode:'open'});
+
+function resetAnalysis(){
+  lastResults=null;
+  for(const id of ['rAncho','rAlto','rPiezas','rPerimetro','rRelleno','rMarco','rSeleccion','rEscala'])$(id).textContent='—';
+  renderQuote();
+}
+function setAnalysisBusy(busy){
+  analysisBusy=busy;
+  for(const id of ['fileInput','manualCm','scaleMode','analyzeButton','downloadSvgButton'])$(id).disabled=busy;
+  $('analyzeButton').textContent=busy?'Analizando…':'Calcular SVG';
+  $('cancelAnalysisButton').classList.toggle('hidden',!busy);
+}
+function cancelAnalysis(){
+  cancelRequested=true;
+  if(currentWorker)currentWorker.cancel();
+}
+
+function prepareSvg(raw){
+  if(raw.length>8*1024*1024)throw new Error('El SVG supera 8 MB. Divide el diseño en detalles.');
+  const parsed=new DOMParser().parseFromString(cleanSvgXml(raw),'image/svg+xml'),root=parsed.documentElement;
+  if(parsed.querySelector('parsererror')||root.localName!=='svg'||root.namespaceURI!==SVG_NS)throw new Error('El archivo no es un SVG válido.');
+  root.querySelectorAll('metadata,title,desc').forEach(el=>el.remove());
+  const refs=new Map();for(const el of [root,...root.querySelectorAll('[id]')])if(el.id&&!refs.has(el.id))refs.set(el.id,el);
+  let expanded=0;
+  function expand(parent,chain=[]){
+    for(const el of [...parent.children]){
+      if(el.localName==='defs'||el.localName==='symbol')continue;
+      if(el.localName!=='use'){expand(el,chain);continue;}
+      const href=el.getAttribute('href')||el.getAttributeNS('http://www.w3.org/1999/xlink','href')||'';
+      if(!href.startsWith('#'))throw new Error('Los clones deben referirse a objetos incluidos en el mismo SVG.');
+      const key=href.slice(1),source=refs.get(key);
+      if(!source)throw new Error('Un clon apunta a un objeto que no existe.');
+      if(chain.includes(key)||chain.length>=24||++expanded>5000)throw new Error('El SVG contiene clones circulares o demasiadas copias.');
+      const group=parsed.createElementNS(SVG_NS,'g');
+      for(const attr of el.attributes)if(!['href','x','y','width','height'].includes(attr.localName))group.setAttribute(attr.name,attr.value);
+      let clone;
+      if(source.localName==='symbol'||source.localName==='svg'){
+        clone=parsed.createElementNS(SVG_NS,'svg');
+        for(const attr of source.attributes)if(!['x','y','width','height'].includes(attr.localName))clone.setAttribute(attr.name,attr.value);
+        for(const child of source.childNodes)clone.appendChild(child.cloneNode(true));
+        clone.setAttribute('x',el.getAttribute('x')||'0');clone.setAttribute('y',el.getAttribute('y')||'0');
+        clone.setAttribute('width',el.getAttribute('width')||source.getAttribute('width')||'100%');
+        clone.setAttribute('height',el.getAttribute('height')||source.getAttribute('height')||'100%');
+        group.appendChild(clone);
+      }else{
+        const position=parsed.createElementNS(SVG_NS,'svg');position.setAttribute('x',el.getAttribute('x')||'0');position.setAttribute('y',el.getAttribute('y')||'0');position.setAttribute('overflow','visible');
+        clone=source.cloneNode(true);position.appendChild(clone);group.appendChild(position);
+      }
+      el.replaceWith(group);expand(group,[...chain,key]);
+    }
+  }
+  expand(root);
+  root.querySelectorAll('symbol').forEach(el=>el.remove());
+  const styles=[...root.querySelectorAll('style')];
+  for(const style of styles)style.remove();
+  for(const defs of [...root.querySelectorAll('defs')]){
+    defs.remove();
+  }
+  root.prepend(...styles);
+  const allowed=new Set(['svg','g','style','path','rect','circle','ellipse','polygon','polyline','line']);
+  const attrs=new Set(['id','class','style','viewBox','width','height','x','y','x1','y1','x2','y2','cx','cy','r','rx','ry','d','points','transform','fill','fill-rule','fill-opacity','stroke','stroke-width','stroke-opacity','stroke-linecap','stroke-linejoin','stroke-miterlimit','stroke-dasharray','stroke-dashoffset','opacity','display','visibility','color','preserveAspectRatio','version','overflow','clip-path','mask','filter','vector-effect']);
+  for(const el of [root,...root.querySelectorAll('*')]){
+    if(el.namespaceURI!==SVG_NS||!allowed.has(el.localName))throw new Error(`Elemento <${el.localName}> no medible. Exporta el dibujo vectorial con textos convertidos a curvas.`);
+    for(const attr of [...el.attributes])if(!attrs.has(attr.name))el.removeAttributeNode(attr);
+    const css=el.localName==='style'?el.textContent:el.getAttribute('style')||'';
+    if(/@|url\s*\(|expression\s*\(|[<>]|\\|animation\s*:|transition\s*:|position\s*:|(?:^|[;{\s])d\s*:/i.test(css))throw new Error('El SVG contiene estilos externos, animaciones o efectos. Exporta curvas de colores planos.');
+    for(const key of ['fill','stroke'])if(/url\s*\(/i.test(el.getAttribute(key)||''))throw new Error('Expande degradados y patrones a objetos de colores planos.');
+    for(const key of ['clip-path','mask','filter','vector-effect'])if(!['','none'].includes(el.getAttribute(key)||''))throw new Error('Expande recortes, máscaras y efectos antes de medir.');
+  }
+  if(root.hasAttribute('transform')){
+    const g=parsed.createElementNS(SVG_NS,'g');g.setAttribute('transform',root.getAttribute('transform'));root.removeAttribute('transform');
+    for(const child of [...root.children])if(child.localName!=='style')g.appendChild(child);root.appendChild(g);
+  }
+  const vb=getViewBox(root);
+  if(!vb){
+    const w=parseLength(root.getAttribute('width')),h=parseLength(root.getAttribute('height'));
+    if(!w||!h)throw new Error('El SVG necesita un viewBox o medidas válidas.');
+    root.setAttribute('viewBox',`0 0 ${w.meters/UNITS.px} ${h.meters/UNITS.px}`);
+  }
+  if(root.querySelectorAll('path,rect,circle,ellipse,polygon,polyline,line').length>10000)throw new Error('Máximo 10000 objetos por SVG. Divide el diseño.');
+  return new XMLSerializer().serializeToString(root);
+}
+
+function cargarPreview(text){
+  const parsed=new DOMParser().parseFromString(text,'image/svg+xml');
+  if(parsed.querySelector('parsererror'))throw new Error('No se pudo abrir el SVG.');
+  svgDoc=document.importNode(parsed.documentElement,true);
+  svgDoc.setAttribute('preserveAspectRatio','xMidYMid meet');
+  svgDoc.style.setProperty('width','100%','important');svgDoc.style.setProperty('height','100%','important');svgDoc.style.display='block';
+  previewShadow.replaceChildren(svgDoc);
 }
 
 function escalarSVG(){
-  if(!svgText||!svgDoc){ alert("Primero sube un SVG."); return false; }
-  const cm=Number($("manualCm").value||0), mode=$("scaleMode").value, vb=getViewBox(svgDoc);
-  if(!cm||!vb){ alert("Medida o viewBox inválido."); return false; }
-  let anchoCm,altoCm;
-  if(mode==="height"){ altoCm=cm; anchoCm=altoCm*(vb.width/vb.height); }
-  else{ anchoCm=cm; altoCm=anchoCm*(vb.height/vb.width); }
-  const doc=new DOMParser().parseFromString(svgText,"image/svg+xml");
-  const svg=doc.querySelector("svg");
-  svg.setAttribute("viewBox",`${vb.x} ${vb.y} ${vb.width} ${vb.height}`);
-  svg.setAttribute("width",`${anchoCm.toFixed(4)}cm`);
-  svg.setAttribute("height",`${altoCm.toFixed(4)}cm`);
-  svgText=new XMLSerializer().serializeToString(svg);
-  cargarPreview(svgText);
-  return true;
+  if(!svgText||!svgDoc)throw new Error('Primero sube un SVG.');
+  const cm=Number($('manualCm').value),mode=$('scaleMode').value,vb=getViewBox(svgDoc);
+  if(!Number.isFinite(cm)||cm<=0||cm>100000||!vb)throw new Error('Coloca una medida mayor que cero y menor o igual a 100000 cm.');
+  const width=mode==='height'?cm*vb.width/vb.height:cm,height=mode==='height'?cm:cm*vb.height/vb.width;
+  const parsed=new DOMParser().parseFromString(svgText,'image/svg+xml'),root=parsed.documentElement;
+  root.setAttribute('width',width+'cm');root.setAttribute('height',height+'cm');
+  svgText=new XMLSerializer().serializeToString(root);cargarPreview(svgText);
+  return {vb,realWm:width*.01,realHm:height*.01,scaleX:width*.01/vb.width,scaleY:height*.01/vb.height,method:'Medida aplicada por '+(mode==='height'?'alto':'ancho')+'.'};
 }
 
-$("fileInput").addEventListener("change",async e=>{
-  const f=e.target.files[0]; if(!f) return;
-  currentFileName=f.name;
-  svgText=await f.text();
-  cargarPreview(svgText);
+$('fileInput').addEventListener('change',async event=>{
+  const file=event.target.files[0];if(!file||analysisBusy)return;
+  const revision=++svgRevision;analysisCache=null;resetAnalysis();importBusy=true;$('analyzeButton').disabled=true;
   try{
-    const i=detectRealSize(svgDoc);
-    $("manualCm").value=($("scaleMode").value==="height"?i.realHm:i.realWm)*100;
-    $("method").textContent=i.method;
-    setStatus("SVG cargado.",0);
-  }catch(err){ setStatus("SVG cargado. Coloca medida manual.",0); }
+    if(file.size>8*1024*1024)throw new Error('El SVG supera 8 MB.');
+    const raw=await file.text();if(revision!==svgRevision)return;
+    const text=prepareSvg(raw);svgText=text;currentFileName=file.name;cargarPreview(text);
+    const info=detectRealSize(svgDoc);
+    $('manualCm').value=Number((($('scaleMode').value==='height'?info.realHm:info.realWm)*100).toPrecision(12));
+    $('method').textContent='Archivo listo. Confirma la medida antes de calcular.';setStatus('SVG cargado.',0);
+  }catch(error){if(revision!==svgRevision)return;svgText='';svgDoc=null;currentFileName='';previewShadow.replaceChildren();setStatus(error.message,0);}
+  finally{if(revision===svgRevision){importBusy=false;$('analyzeButton').disabled=false;}}
+});
+$('manualCm').addEventListener('input',()=>{if(svgDoc){resetAnalysis();setStatus('Medida modificada. Pulsa Calcular SVG.',0);}});
+$('scaleMode').addEventListener('change',()=>{
+  if(!svgDoc)return;const vb=getViewBox(svgDoc),cm=Number($('manualCm').value);
+  if(vb&&cm>0)$('manualCm').value=Number((cm*($('scaleMode').value==='height'?vb.height/vb.width:vb.width/vb.height)).toPrecision(12));
+  resetAnalysis();setStatus('Escala modificada. Pulsa Calcular SVG.',0);
 });
 
-async function calcularSVG(){
-  if(!escalarSVG()) return;
-  try{
-    setStatus("Analizando SVG...",15);
-    const info=detectRealSize(svgDoc);
-    const vectorPerM=getVectorLengthMeters(svgDoc,info.scaleX,info.scaleY);
-    setStatus("Rasterizando área...",40);
-    const maskData=await rasterMask(svgText,info.realWm,info.realHm);
-    const pixelArea=(info.realWm/maskData.w)*(info.realHm/maskData.h);
-    const areaRelleno=maskData.fgCount*pixelArea;
-    const maskPer=perimeterFromMask(maskData.mask,maskData.w,maskData.h,info.realWm/maskData.w,info.realHm/maskData.h);
-    setStatus("Detectando piezas...",70);
-    const comps=connectedComponents(maskData.mask,maskData.w,maskData.h);
-    const detail=calcMarcoComponents(comps,maskData.w,maskData.h,info.realWm/maskData.w,info.realHm/maskData.h);
-    const areaMarco=detail.reduce((s,d)=>s+d.marcoM2,0);
-    lastResults={anchoM:info.realWm,altoM:info.realHm,piezas:comps.length,perimetroM:vectorPerM||maskPer,areaRellenoM2:areaRelleno,areaMarcoM2:areaMarco,areaSeleccionM2:info.realWm*info.realHm};
-    renderResults(info,maskData,maskPer);
-    renderQuote();
-    setStatus("Análisis completado.",100);
-  }catch(err){ console.error(err); setStatus("Error: "+err.message,0); alert(err.message); }
-}
-
-function renderResults(info,maskData,maskPer){
-  $("rAncho").textContent=fmtCm(lastResults.anchoM);
-  $("rAlto").textContent=fmtCm(lastResults.altoM);
-  $("rPiezas").textContent=lastResults.piezas;
-  $("rPerimetro").textContent=fmtM(lastResults.perimetroM);
-  $("rRelleno").textContent=fmtM2(lastResults.areaRellenoM2);
-  $("rMarco").textContent=fmtM2(lastResults.areaMarcoM2);
-  $("rSeleccion").textContent=fmtM2(lastResults.areaSeleccionM2);
-  $("rEscala").textContent=(info.scaleX*100).toFixed(4)+" cm/u";
-  $("method").innerHTML=`${esc(info.method)}<br>Canvas: ${maskData.w} × ${maskData.h}px · Perímetro máscara: ${fmtM(maskPer)}`;
-}
-
-function getVectorLengthMeters(svg,sx,sy){
-  // Medir solamente geometría pintada, nunca las definiciones de biblioteca.
-  const visible=el=>{
-    if(el.closest('defs,symbol,clipPath,mask,pattern,marker'))return false;
+function collectGeometry(info){
+  const rootMatrix=svgDoc.getCTM();if(!rootMatrix)throw new Error('No se pudo interpretar la escala del dibujo.');
+  const inv=rootMatrix.inverse(),shapes=[];
+  for(const nested of svgDoc.querySelectorAll('svg[viewBox]')){
+    const vb=getViewBox(nested),box=nested.getBBox(),st=getComputedStyle(nested);
+    if(st.overflow!=='visible'&&vb&&(box.x<vb.x-1e-6||box.y<vb.y-1e-6||box.x+box.width>vb.x+vb.width+1e-6||box.y+box.height>vb.y+vb.height+1e-6||/slice/.test(nested.getAttribute('preserveAspectRatio')||'')))throw new Error('Un símbolo tiene un recorte activo. Expándelo a curvas antes de medir.');
+  }
+  for(const el of svgDoc.querySelectorAll('path,rect,circle,ellipse,polygon,polyline,line')){
+    let hidden=false;
     for(let p=el;p;p=p.parentElement){
-      const st=getComputedStyle(p);
-      if(st.display==='none'||Number(st.opacity)===0)return false;
-      if(p===svg)break;
+      const style=getComputedStyle(p);
+      if(style.display==='none'||Number(style.opacity)===0)hidden=true;
+      for(const key of ['clipPath','maskImage','filter'])if(style[key]&&style[key]!=='none')throw new Error('Expande los recortes, máscaras o efectos del dibujo antes de calcular.');
+      if(style.vectorEffect&&style.vectorEffect!=='none')throw new Error('Convierte los trazos con escala especial a objetos.');
+      if(p===svgDoc)break;
     }
-    const st=getComputedStyle(el);
-    return st.visibility!=='hidden'&&st.visibility!=='collapse';
-  };
-  if([...svg.querySelectorAll('use')].some(visible))
-    throw new Error('Este SVG contiene clones visibles. Convierte los clones a objetos antes de medir su perímetro.');
-  const rootMatrix=svg.getCTM();
-  if(!rootMatrix)throw new Error('No se pudo leer la escala del SVG.');
-  const inverse=rootMatrix.inverse();let total=0;
-  for(const el of svg.querySelectorAll('path,rect,circle,ellipse,polygon,polyline,line')){
-    if(!visible(el))continue;
-    const st=getComputedStyle(el);
-    const hasFill=el.localName!=='line'&&st.fill!=='none'&&Number(st.fillOpacity)>0;
-    const hasStroke=st.stroke!=='none'&&Number(st.strokeOpacity)>0&&parseFloat(st.strokeWidth)>0;
-    if(!hasFill&&!hasStroke)continue;
-    const len=el.getTotalLength?el.getTotalLength():basicLength(el);
-    if(!Number.isFinite(len))throw new Error('Una curva tiene longitud inválida.');
-    if(len===0)continue;
-    const matrix=el.getCTM();if(!matrix)throw new Error('No se pudo medir una curva.');
-    const m=inverse.multiply(matrix);
-    const a=m.a*sx,b=m.b*sy,c=m.c*sx,d=m.d*sy;
-    const u=Math.hypot(a,b),v=Math.hypot(c,d);
-    if(Math.abs(u-v)<=1e-9*Math.max(u,v)&&Math.abs(a*c+b*d)<=1e-9*u*v){total+=len*u;continue;}
-    // Escalas no uniformes: integrar la longitud en coordenadas físicas.
-    const steps=4096;let previous=el.getPointAtLength(0);
-    for(let i=1;i<=steps;i++){
-      const point=el.getPointAtLength(len*i/steps),dx=point.x-previous.x,dy=point.y-previous.y;
-      total+=Math.hypot(a*dx+c*dy,b*dx+d*dy);previous=point;
+    if(hidden)continue;
+    const st=getComputedStyle(el);if(['hidden','collapse'].includes(st.visibility))continue;
+    const painted=value=>value!=='none'&&value!=='transparent'&&!/^(?:rgba|hsla)\([^)]*,\s*0(?:\.0*)?\s*\)$|\/\s*0(?:\.0*)?%?\s*\)$/i.test(value);
+    const fill=el.localName!=='line'&&painted(st.fill)&&Number(st.fillOpacity)>0;
+    const stroke=painted(st.stroke)&&parseFloat(st.strokeWidth)>0&&Number(st.strokeOpacity)>0;
+    if(!fill&&!stroke)continue;
+    if(/url\s*\(/i.test(st.fill+' '+st.stroke))throw new Error('El dibujo contiene patrones o degradados sin expandir.');
+    const ct=el.getCTM();if(!ct)throw new Error('No se pudo interpretar una transformación.');
+    const matrix=inv.multiply(ct),m=[matrix.a*info.scaleX,matrix.b*info.scaleY,matrix.c*info.scaleX,matrix.d*info.scaleY];
+    if(!m.every(Number.isFinite))throw new Error('Una transformación tiene valores inválidos.');
+    const attrs={};
+    if(el.localName==='path')attrs.d=el.getAttribute('d')||'';
+    else if(el.localName==='polygon'||el.localName==='polyline')attrs.points=Array.from({length:el.points.numberOfItems},(_,i)=>el.points.getItem(i)).flatMap(p=>[p.x,p.y]);
+    else{
+      const names={rect:['width','height','rx','ry'],circle:['r'],ellipse:['rx','ry'],line:['x1','x2','y1','y2']}[el.localName];
+      for(const name of names)attrs[name]=el[name].baseVal.value;
+      if(el.localName==='rect'){
+        if(!el.hasAttribute('rx'))attrs.rx=attrs.ry;if(!el.hasAttribute('ry'))attrs.ry=attrs.rx;
+      }
+      if(Object.values(attrs).some(n=>!Number.isFinite(n)))throw new Error('Una figura tiene medidas inválidas.');
+      if(['rect','circle','ellipse'].includes(el.localName)){
+        if(Object.values(attrs).some(n=>n<0))throw new Error('Una figura tiene medidas negativas.');
+        if(el.localName==='rect'&&(!attrs.width||!attrs.height)||el.localName==='circle'&&!attrs.r||el.localName==='ellipse'&&(!attrs.rx||!attrs.ry))continue;
+      }
     }
+    shapes.push({type:el.localName,attrs,m,fill});
   }
-  return total;
+  if(!shapes.length)throw new Error('No se encontraron curvas visibles.');
+  return shapes;
 }
 
-function basicLength(el){
-  const t=el.tagName.toLowerCase();
-  if(t==="rect") return 2*((+el.getAttribute("width")||0)+(+el.getAttribute("height")||0));
-  if(t==="circle") return 2*Math.PI*(+el.getAttribute("r")||0);
-  if(t==="ellipse"){
-    const rx=+el.getAttribute("rx")||0, ry=+el.getAttribute("ry")||0;
-    return Math.PI*(3*(rx+ry)-Math.sqrt((3*rx+ry)*(rx+3*ry)));
-  }
-  if(t==="line") return Math.hypot((+el.getAttribute("x2")||0)-(+el.getAttribute("x1")||0),(+el.getAttribute("y2")||0)-(+el.getAttribute("y1")||0));
-  if(t==="polygon"||t==="polyline"){
-    const nums=(el.getAttribute("points")||"").trim().split(/[\s,]+/).map(Number).filter(Number.isFinite);
-    let p=0; for(let i=0;i<nums.length-3;i+=2) p+=Math.hypot(nums[i+2]-nums[i],nums[i+3]-nums[i+1]);
-    if(t==="polygon"&&nums.length>=4) p+=Math.hypot(nums[0]-nums[nums.length-2],nums[1]-nums[nums.length-1]);
-    return p;
-  }
-  return 0;
+async function rasterForAnalysis(text,info){
+  const longest=2400,ratio=info.realHm/info.realWm;
+  const w=ratio>=1?Math.round(longest/ratio):longest,h=ratio>=1?longest:Math.round(longest*ratio);
+  if(Math.min(w,h)<8)throw new Error('El diseño es demasiado alargado. Divide el archivo en detalles.');
+  const url=URL.createObjectURL(new Blob([text],{type:'image/svg+xml'})),img=new Image();
+  try{
+    await new Promise((resolve,reject)=>{
+      const timer=setTimeout(()=>reject(new Error('El SVG tardó demasiado en abrir.')),15000);
+      currentWorker={cancel:()=>{clearTimeout(timer);img.onload=img.onerror=null;img.src='';reject(new Error('Análisis cancelado.'));}};
+      img.onload=()=>{clearTimeout(timer);resolve();};img.onerror=()=>{clearTimeout(timer);reject(new Error('No se pudo dibujar el SVG.'));};img.src=url;
+    });
+    const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+    const context=canvas.getContext('2d',{willReadFrequently:true});if(!context)throw new Error('Tu navegador no permite analizar imágenes.');
+    context.drawImage(img,0,0,w,h);const rgba=context.getImageData(0,0,w,h).data;canvas.width=canvas.height=0;
+    return {rgba,w,h};
+  }finally{currentWorker=null;URL.revokeObjectURL(url);}
 }
 
-async function rasterMask(text,realWm,realHm){
-  const maxPx=3800, ratio=realHm/realWm;
-  let w,h; if(ratio>=1){ h=maxPx; w=Math.max(20,Math.round(maxPx/ratio)); } else { w=maxPx; h=Math.max(20,Math.round(maxPx*ratio)); }
-  const url=URL.createObjectURL(new Blob([text],{type:"image/svg+xml"}));
-  const img=new Image(); img.src=url;
-  await new Promise((res,rej)=>{img.onload=res; img.onerror=()=>rej(new Error("No se pudo rasterizar SVG."));});
-  const canvas=document.createElement("canvas"); canvas.width=w; canvas.height=h;
-  const ctx=canvas.getContext("2d",{willReadFrequently:true}); ctx.clearRect(0,0,w,h); ctx.drawImage(img,0,0,w,h); URL.revokeObjectURL(url);
-  const data=ctx.getImageData(0,0,w,h).data, mask=new Uint8Array(w*h);
-  let fgCount=0;
-  for(let i=0,p=0;i<data.length;i+=4,p++){
-    const r=data[i],g=data[i+1],b=data[i+2],a=data[i+3];
-    let fg=a>18;
-    if(fg && r>242&&g>242&&b>242) fg=false;
-    if(fg){ mask[p]=1; fgCount++; }
-  }
-  return {mask,w,h,fgCount};
-}
-
-function perimeterFromMask(mask,w,h,sx,sy){
-  let p=0;
-  for(let y=0;y<h;y++) for(let x=0;x<w;x++){
-    const i=y*w+x; if(!mask[i]) continue;
-    if(x===0||!mask[i-1]) p+=sy; if(x===w-1||!mask[i+1]) p+=sy;
-    if(y===0||!mask[i-w]) p+=sx; if(y===h-1||!mask[i+w]) p+=sx;
-  }
-  return p;
-}
-
-function connectedComponents(mask,w,h){
-  const seen=new Uint8Array(w*h), comps=[], minPixels=Math.max(8,Math.round(w*h*.000005));
-  for(let y=0;y<h;y++) for(let x=0;x<w;x++){
-    const start=y*w+x; if(!mask[start]||seen[start]) continue;
-    let head=0,tail=0,count=0,minX=x,maxX=x,minY=y,maxY=y;
-    const qx=[],qy=[],pts=[]; qx[tail]=x; qy[tail]=y; tail++; seen[start]=1;
-    while(head<tail){
-      const cx=qx[head],cy=qy[head]; head++; count++;
-      if(cx<minX)minX=cx;if(cx>maxX)maxX=cx;if(cy<minY)minY=cy;if(cy>maxY)maxY=cy;
-      const idx=cy*w+cx;
-      const border=cx===0||cy===0||cx===w-1||cy===h-1||!mask[idx-1]||!mask[idx+1]||!mask[idx-w]||!mask[idx+w];
-      if(border&&pts.length<24000) pts.push(cx,cy);
-      [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]].forEach(([nx,ny])=>{
-        if(nx>=0&&ny>=0&&nx<w&&ny<h){ const ni=ny*w+nx; if(mask[ni]&&!seen[ni]){seen[ni]=1;qx[tail]=nx;qy[tail]=ny;tail++;} }
-      });
-    }
-    if(count>=minPixels) comps.push({count,minX,maxX,minY,maxY,pts});
-  }
-  return comps.sort((a,b)=>b.count-a.count);
-}
-
-function calcMarcoComponents(comps,w,h,sx,sy){
-  return comps.map(c=>{
-    let minArea=Infinity,bw=0,bh=0;
-    const base=[c.minX,c.minY,c.maxX,c.minY,c.maxX,c.maxY,c.minX,c.maxY];
-    const pts=c.pts&&c.pts.length?base.concat(c.pts):base;
-    for(let a=0;a<90;a+=1){
-      const r=rotatedBBox(pts,a,sx,sy);
-      if(r.area<minArea){minArea=r.area;bw=r.width;bh=r.height;}
-    }
-    return {marcoM2:minArea,marcoW:bw,marcoH:bh};
+function analyseInWorker(shapes,raster,info){
+  return new Promise((resolve,reject)=>{
+    let worker,timer,url;
+    const finish=(error,result)=>{clearTimeout(timer);if(worker)worker.terminate();if(url)URL.revokeObjectURL(url);currentWorker=null;error?reject(error):resolve(result);};
+    try{
+      url=URL.createObjectURL(new Blob([svgAnalysisEngine.toString()+'\n('+svgAnalysisWorkerMain.toString()+')();'],{type:'application/javascript'}));
+      worker=new Worker(url);currentWorker={cancel:()=>finish(new Error('Análisis cancelado.'))};
+      timer=setTimeout(()=>finish(new Error('El análisis excedió 45 segundos. Divide el dibujo en detalles.')),45000);
+      worker.onerror=()=>finish(new Error('No se pudo iniciar el análisis en segundo plano. Reabre la página.'));
+      worker.onmessage=event=>{const data=event.data;if(data.error)finish(new Error(data.error));else if(data.result)finish(null,data.result);else if(data.stage==='pixels')setStatus('Midiendo áreas, piezas y marcos…',65);};
+      worker.postMessage({shapes,rgba:raster.rgba.buffer,w:raster.w,h:raster.h,realW:info.realWm,realH:info.realHm},[raster.rgba.buffer]);
+    }catch(error){finish(error);}
   });
 }
 
-function rotatedBBox(pts,ang,sx,sy){
-  const a=ang*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a);
-  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
-  for(let i=0;i<pts.length;i+=2){
-    const x=pts[i]*sx,y=pts[i+1]*sy,rx=x*ca-y*sa,ry=x*sa+y*ca;
-    if(rx<minX)minX=rx;if(rx>maxX)maxX=rx;if(ry<minY)minY=ry;if(ry>maxY)maxY=ry;
-  }
-  return {width:maxX-minX,height:maxY-minY,area:Math.abs((maxX-minX)*(maxY-minY))};
+async function calcularSVG(){
+  if(analysisBusy||importBusy)return;cancelRequested=false;setAnalysisBusy(true);const started=performance.now();
+  try{
+    const info=escalarSVG();resetAnalysis();setStatus('Preparando geometría…',10);
+    await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
+    if(cancelRequested)throw new Error('Análisis cancelado.');
+    let result,raster,cached=false;
+    if(analysisCache&&analysisCache.revision===svgRevision&&Math.abs(info.realWm/analysisCache.w-info.realHm/analysisCache.h)<1e-8){
+      const k=info.realWm/analysisCache.w;result={...analysisCache.result,perimetroM:analysisCache.result.perimetroM*k,areaRellenoM2:analysisCache.result.areaRellenoM2*k*k,areaMarcoM2:analysisCache.result.areaMarcoM2*k*k};raster=analysisCache.raster;cached=true;
+    }else{
+      const shapes=collectGeometry(info);setStatus('Preparando imagen de análisis…',25);
+      raster=await rasterForAnalysis(svgText,info);
+      if(cancelRequested)throw new Error('Análisis cancelado.');
+      result=await analyseInWorker(shapes,raster,info);
+      analysisCache={revision:svgRevision,w:info.realWm,h:info.realHm,result,raster:{w:raster.w,h:raster.h}};
+    }
+    lastResults={...result,anchoM:info.realWm,altoM:info.realHm,areaSeleccionM2:info.realWm*info.realHm};
+    renderResults(info,raster,(performance.now()-started)/1000,cached);renderQuote();setStatus('Análisis completado.',100);
+  }catch(error){resetAnalysis();setStatus(error.message,0);}
+  finally{setAnalysisBusy(false);}
+}
+
+function renderResults(info,raster,seconds,cached){
+  $('rAncho').textContent=fmtCm(lastResults.anchoM);$('rAlto').textContent=fmtCm(lastResults.altoM);$('rPiezas').textContent=lastResults.piezas;
+  $('rPerimetro').textContent=fmtM(lastResults.perimetroM);$('rRelleno').textContent=fmtM2(lastResults.areaRellenoM2);$('rMarco').textContent=fmtM2(lastResults.areaMarcoM2);$('rSeleccion').textContent=fmtM2(lastResults.areaSeleccionM2);$('rEscala').textContent=(info.scaleX*100).toFixed(4)+' cm/u';
+  $('method').textContent=info.method+' Perímetro vectorial. Áreas, piezas y marcos aproximados ('+raster.w+' × '+raster.h+' px). '+seconds.toFixed(2)+' s'+(cached?' · resultado reutilizado.':'.')+(lastResults.discarded?' Se omitieron '+lastResults.discarded+' fragmentos menores de 3 píxeles.':'');
 }
 
 function descargarSVGActual(){
-  if(!svgText){ alert("Primero sube un SVG."); return; }
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([svgText],{type:"image/svg+xml"}));
-  a.download=(currentFileName||"svg").replace(/\.[^.]+$/,"")+"_escalado.svg";
-  a.click();
+  try{
+    escalarSVG();const url=URL.createObjectURL(new Blob([svgText],{type:'image/svg+xml'})),a=document.createElement('a');
+    a.href=url;a.download=(currentFileName||'svg').replace(/\.[^.]+$/,'')+'_escalado.svg';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }catch(error){setStatus(error.message,0);}
 }
 
 async function loadBaseMaterials(){
@@ -937,6 +1162,7 @@ async function copiarResumen(){
 
 function crearPDF(){
   if(!lastResults){ alert("Primero analiza un SVG."); return; }
+  if(!window.jspdf?.jsPDF){toast("No se cargó la herramienta PDF. Revisa la conexión.");return;}
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:"portrait",unit:"pt",format:"letter"});
   let y=45,m=42;
