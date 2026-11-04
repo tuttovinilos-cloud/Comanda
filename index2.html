@@ -409,6 +409,23 @@ async function normaliseSvg(raw){
   raw=cleanSvgXml(raw);
   const doc=new DOMParser().parseFromString(raw,'image/svg+xml'),root=doc.documentElement;
   if(doc.querySelector('parsererror')||root.localName!=='svg'||root.namespaceURI!==SVG_NS)throw new Error('El archivo no es un SVG válido.');
+  // CorelDRAW puede exportar símbolos de biblioteca que no participan en el dibujo.
+  // No deben bloquear la importación ni sumarse al cálculo de material.
+  const referencedIds=new Set();
+  for(const element of root.querySelectorAll('*')){
+    for(const attribute of element.attributes){
+      if(attribute.localName==='href'&&attribute.value.trim().startsWith('#'))
+        referencedIds.add(attribute.value.trim().slice(1));
+      for(const match of attribute.value.matchAll(/url\(\s*["']?#([^\s"')]+)["']?\s*\)/gi))referencedIds.add(match[1]);
+    }
+    if(element.localName==='style'){
+      for(const match of element.textContent.matchAll(/url\(\s*["']?#([^\s"')]+)["']?\s*\)/gi))referencedIds.add(match[1]);
+    }
+  }
+  for(const symbol of [...root.querySelectorAll('symbol')]){
+    const ids=[symbol,...symbol.querySelectorAll('[id]')].map(el=>el.id).filter(Boolean);
+    if(!ids.some(id=>referencedIds.has(id)))symbol.remove();
+  }
   const allowed=new Set(['svg','g','defs','style','path','rect','circle','ellipse','polygon','polyline','line','title','desc','metadata']);
   const attrAllowed=new Set(['id','class','style','viewBox','width','height','x','y','x1','y1','x2','y2','cx','cy','r','rx','ry','d','points','transform','fill','fill-rule','fill-opacity','stroke','stroke-width','stroke-opacity','stroke-linecap','stroke-linejoin','stroke-miterlimit','stroke-dasharray','stroke-dashoffset','opacity','display','visibility','color','preserveAspectRatio','version','xmlns']);
   for(const el of [root,...root.querySelectorAll('*')]){
