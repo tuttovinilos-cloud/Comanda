@@ -426,14 +426,43 @@ function renderResults(info,maskData,maskPer){
 }
 
 function getVectorLengthMeters(svg,sx,sy){
-  let total=0;
-  svg.querySelectorAll("path,rect,circle,ellipse,polygon,polyline,line").forEach(el=>{
-    try{
-      let len=el.getTotalLength?el.getTotalLength():0;
-      if(!len) len=basicLength(el);
-      total+=len*((sx+sy)/2);
-    }catch(e){}
-  });
+  // Medir solamente geometría pintada, nunca las definiciones de biblioteca.
+  const visible=el=>{
+    if(el.closest('defs,symbol,clipPath,mask,pattern,marker'))return false;
+    for(let p=el;p;p=p.parentElement){
+      const st=getComputedStyle(p);
+      if(st.display==='none'||Number(st.opacity)===0)return false;
+      if(p===svg)break;
+    }
+    const st=getComputedStyle(el);
+    return st.visibility!=='hidden'&&st.visibility!=='collapse';
+  };
+  if([...svg.querySelectorAll('use')].some(visible))
+    throw new Error('Este SVG contiene clones visibles. Convierte los clones a objetos antes de medir su perímetro.');
+  const rootMatrix=svg.getCTM();
+  if(!rootMatrix)throw new Error('No se pudo leer la escala del SVG.');
+  const inverse=rootMatrix.inverse();let total=0;
+  for(const el of svg.querySelectorAll('path,rect,circle,ellipse,polygon,polyline,line')){
+    if(!visible(el))continue;
+    const st=getComputedStyle(el);
+    const hasFill=el.localName!=='line'&&st.fill!=='none'&&Number(st.fillOpacity)>0;
+    const hasStroke=st.stroke!=='none'&&Number(st.strokeOpacity)>0&&parseFloat(st.strokeWidth)>0;
+    if(!hasFill&&!hasStroke)continue;
+    const len=el.getTotalLength?el.getTotalLength():basicLength(el);
+    if(!Number.isFinite(len))throw new Error('Una curva tiene longitud inválida.');
+    if(len===0)continue;
+    const matrix=el.getCTM();if(!matrix)throw new Error('No se pudo medir una curva.');
+    const m=inverse.multiply(matrix);
+    const a=m.a*sx,b=m.b*sy,c=m.c*sx,d=m.d*sy;
+    const u=Math.hypot(a,b),v=Math.hypot(c,d);
+    if(Math.abs(u-v)<=1e-9*Math.max(u,v)&&Math.abs(a*c+b*d)<=1e-9*u*v){total+=len*u;continue;}
+    // Escalas no uniformes: integrar la longitud en coordenadas físicas.
+    const steps=4096;let previous=el.getPointAtLength(0);
+    for(let i=1;i<=steps;i++){
+      const point=el.getPointAtLength(len*i/steps),dx=point.x-previous.x,dy=point.y-previous.y;
+      total+=Math.hypot(a*dx+c*dy,b*dx+d*dy);previous=point;
+    }
+  }
   return total;
 }
 
