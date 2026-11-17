@@ -404,6 +404,69 @@ function cleanSvgXml(raw){
   return parts.join('');
 }
 
+function decodeSvgCssEscapes(value){
+  return value.replace(/\\(?:([\da-f]{1,6})(?:\r\n|[ \t\r\n\f])?|([^\r\n\f]))/gi,(_,hex,char)=>{
+    if(!hex)return char;
+    const code=parseInt(hex,16);
+    return code>0&&code<=0x10ffff&&!(code>=0xd800&&code<=0xdfff)?String.fromCodePoint(code):'\ufffd';
+  });
+}
+function cleanSvgCss(css){
+  // Separamos las cadenas de los comentarios: un @ o un url() dentro de
+  // un comentario o del nombre de una fuente no es un recurso del dibujo.
+  let source='',check='',i=0;
+  while(i<css.length){
+    if(css.slice(i,i+4)==='<!--'||css.slice(i,i+3)==='-->'){
+      const size=css[i]==='<'?4:3;source+=' ';check+=' ';i+=size;continue;
+    }
+    if(css.slice(i,i+2)==='/*'){
+      const end=css.indexOf('*/',i+2);
+      if(end<0)throw new Error('Hay un comentario CSS sin cerrar en el SVG. Vuelve a exportarlo.');
+      source+=' ';check+=' ';i=end+2;continue;
+    }
+    if(css[i]==='"'||css[i]==="'"){
+      const start=i,quote=css[i++];let closed=false;
+      while(i<css.length){if(css[i]==='\\'){i=Math.min(css.length,i+2);continue;}if(css[i++]===quote){closed=true;break;}}
+      if(!closed)throw new Error('Hay una cadena CSS sin cerrar en el SVG. Vuelve a exportarlo.');
+      const part=css.slice(start,i);source+=part;check+=' '.repeat(part.length);continue;
+    }
+    if(css[i]==='\\'){
+      const part=css.slice(i).match(/^\\(?:[\da-f]{1,6}(?:\r\n|[ \t\r\n\f])?|[\s\S])/i)?.[0]||'\\';
+      source+=part;check+=part;i+=part.length;continue;
+    }
+    source+=css[i];check+=css[i++];
+  }
+  // Las fuentes incrustadas no se usan: los textos deben estar en curvas.
+  // Se eliminan antes de montar el SVG para evitar cargar archivos externos.
+  const parts=[],checks=[],rule=/(^|[;{}])(\s*)@(font-face|charset)\b/gi;let last=0,match;
+  while((match=rule.exec(check))){
+    const start=match.index+match[1].length+match[2].length;let end=rule.lastIndex;
+    if(match[3].toLowerCase()==='charset'){
+      end=check.indexOf(';',end);
+      if(end<0)throw new Error('La regla CSS @charset está incompleta. Vuelve a exportar el SVG.');
+      end++;
+    }else{
+      while(/\s/.test(check[end]||'')&&end<check.length)end++;
+      if(check[end]!=='{')throw new Error('La regla CSS @font-face está incompleta. Vuelve a exportar el SVG.');
+      let depth=1;end++;
+      while(end<check.length&&depth){if(check[end]==='{')depth++;if(check[end]==='}')depth--;end++;}
+      if(depth)throw new Error('La regla CSS @font-face está incompleta. Vuelve a exportar el SVG.');
+    }
+    parts.push(source.slice(last,start));checks.push(check.slice(last,start));last=end;rule.lastIndex=end-1;
+  }
+  parts.push(source.slice(last));checks.push(check.slice(last));
+  source=parts.join('');check=decodeSvgCssEscapes(checks.join(''));
+  const atRule=check.match(/@([\w-]+)/);
+  if(atRule)throw new Error(`El SVG usa la regla CSS «@${atRule[1]}». Incluye los estilos directamente en el archivo, sin reglas externas ni condicionales.`);
+  if(/:host\b|:root\b|(?:^|[;{])\s*(?:position|z-index|content|(?:-webkit-)?(?:animation|transition)(?:-[\w-]+)?)\s*:/i.test(check))throw new Error('El SVG contiene estilos de página no compatibles. Exporta solo el dibujo.');
+  // none y los valores iniciales no aplican efectos y son habituales en Corel/Illustrator.
+  const effects=check.replace(/((?:^|[;{])\s*)(?:-(?:webkit|moz)-)?(?:clip-path|mask(?:-image)?|filter|vector-effect)\s*:\s*(?:none|initial|unset|revert|revert-layer)\s*(?:!\s*important\s*)?(?=[;}]|$)/gi,'$1');
+  const effect=effects.match(/(?:^|[;{])\s*((?:-(?:webkit|moz)-)?(?:clip-path|mask(?:-image)?|filter|vector-effect))\s*:\s*([^;}]*)/i);
+  if(effect)throw new Error(`El SVG aplica «${effect[1]}: ${effect[2].trim()}». Expande ese efecto antes de exportar para medir las curvas correctamente.`);
+  if(/\b(?:url|expression)\s*\(/i.test(check))throw new Error('El SVG usa un degradado, patrón o recurso mediante url(). Convierte los rellenos y trazos a colores planos y elimina enlaces externos.');
+  return source;
+}
+
 async function normaliseSvg(raw){
   if(raw.length>8*1024*1024)throw new Error('SVG demasiado grande (máximo 8 MB por detalle).');
   raw=cleanSvgXml(raw);
@@ -433,13 +496,12 @@ async function normaliseSvg(raw){
     if(el.namespaceURI!==SVG_NS||!allowed.has(el.localName))throw new Error(`Elemento <${el.localName}> no compatible. Convierte textos, clones y efectos a curvas de colores planos.`);
     if(el!==root&&el.localName==='svg')throw new Error('Desagrupa los SVG anidados antes de exportar.');
     for(const attr of [...el.attributes]){
-      if(['clip-path','mask','filter','vector-effect'].includes(attr.localName)&&!['none',''].includes(attr.value))throw new Error('Expande recortes, máscaras y efectos antes de exportar.');
+      if(['clip-path','mask','filter','vector-effect'].includes(attr.localName)&&attr.value.trim())cleanSvgCss(`${attr.localName}:${attr.value}`);
       if(!attrAllowed.has(attr.name))el.removeAttributeNode(attr);
     }
     const styles=el.localName==='style'?el.textContent:(el.getAttribute('style')||'');
-    if(/:host|:root|position\s*:|z-index\s*:|content\s*:|animation\s*:|transition\s*:/i.test(styles))throw new Error('El SVG contiene estilos de página no compatibles. Exporta solo el dibujo.');
-    if(/@|url\s*\(|expression\s*\(|[<>]|\\|clip-path\s*:|mask\s*:|filter\s*:|vector-effect\s*:/i.test(styles))throw new Error('El SVG contiene estilos o efectos no compatibles. Exporta colores planos sin enlaces externos.');
-    for(const a of ['fill','stroke'])if(/url\s*\(/i.test(el.getAttribute(a)||''))throw new Error('Convierte degradados y patrones a colores planos.');
+    if(styles){const clean=cleanSvgCss(styles);if(el.localName==='style')el.textContent=clean;else el.setAttribute('style',clean);}
+    for(const a of ['fill','stroke'])if(el.hasAttribute(a))cleanSvgCss(`${a}:${el.getAttribute(a)}`);
   }
   root.querySelectorAll('metadata,title,desc').forEach(x=>x.remove());
   let vb=(root.getAttribute('viewBox')||'').trim().split(/[\s,]+/).map(Number);
