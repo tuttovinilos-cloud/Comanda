@@ -409,6 +409,21 @@ function cleanSvgXml(raw){
   return parts.join('');
 }
 
+/* Quita del CSS lo que no afecta al material (fuentes, comentarios, efectos en "none")
+   y rechaza solo lo que de verdad cambia el dibujo o carga recursos externos. */
+function sanitizeSvgCss(css){
+  let s=String(css||'').replace(/\/\*[\s\S]*?\*\//g,'');
+  s=s.replace(/@font-face\s*\{[^{}]*\}/gi,'').replace(/@(?:charset|namespace)\b[^;{}]*;/gi,'');
+  s=s.replace(/(^|[;{\s])(?:font(?:-[a-z-]+)?|-inkscape-font-specification)\s*:(?:[^;{}"']|"[^"]*"|'[^']*')*/gi,'$1');
+  s=s.replace(/(^|[;{\s])(?:clip-path|mask|filter|vector-effect)\s*:\s*(?:none|normal)\s*(?:!important)?\s*(?=;|\}|$)/gi,'$1');
+  const at=s.match(/@[a-z-]+/i);
+  if(at)throw new Error(`El SVG contiene la regla de estilo «${at[0]}», que no es compatible. Exporta con estilos en atributos o en línea.`);
+  if(/url\s*\(\s*(?!["']?#)/i.test(s)||/expression\s*\(/i.test(s))throw new Error('El SVG contiene enlaces externos en sus estilos. Exporta colores planos sin enlaces externos.');
+  if(/[<\\]/.test(s))throw new Error('El SVG contiene caracteres especiales en sus estilos. Vuelve a exportarlo con colores planos.');
+  if(/(?:^|[;{\s])(?:clip-path|mask|filter|vector-effect)\s*:/i.test(s))throw new Error('Expande recortes, máscaras y efectos antes de exportar.');
+  return s;
+}
+
 async function normaliseSvg(raw){
   if(raw.length>8*1024*1024)throw new Error('SVG demasiado grande (máximo 8 MB por detalle).');
   raw=cleanSvgXml(raw);
@@ -441,9 +456,9 @@ async function normaliseSvg(raw){
       if(['clip-path','mask','filter','vector-effect'].includes(attr.localName)&&!['none',''].includes(attr.value))throw new Error('Expande recortes, máscaras y efectos antes de exportar.');
       if(!attrAllowed.has(attr.name))el.removeAttributeNode(attr);
     }
-    const styles=el.localName==='style'?el.textContent:(el.getAttribute('style')||'');
+    const styles=sanitizeSvgCss(el.localName==='style'?el.textContent:(el.getAttribute('style')||''));
+    if(el.localName==='style')el.textContent=styles;else if(el.hasAttribute('style')){if(styles.trim())el.setAttribute('style',styles);else el.removeAttribute('style');}
     if(/:host|:root|position\s*:|z-index\s*:|content\s*:|animation\s*:|transition\s*:/i.test(styles))throw new Error('El SVG contiene estilos de página no compatibles. Exporta solo el dibujo.');
-    if(/@|url\s*\(|expression\s*\(|[<>]|\\|clip-path\s*:|mask\s*:|filter\s*:|vector-effect\s*:/i.test(styles))throw new Error('El SVG contiene estilos o efectos no compatibles. Exporta colores planos sin enlaces externos.');
     for(const a of ['fill','stroke'])if(/url\s*\(/i.test(el.getAttribute(a)||''))throw new Error('Convierte degradados y patrones a colores planos.');
   }
   root.querySelectorAll('metadata,title,desc').forEach(x=>x.remove());
