@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/menu.css?v=35">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -290,6 +290,11 @@ function fmtM(v){ return (Number(v)||0).toFixed(4)+" m"; }
 function fmtM2(v){ return (Number(v)||0).toFixed(4)+" m²"; }
 function qty(v){ return (Math.abs(v)>=100 ? Number(v).toFixed(0) : Number(v).toFixed(4)).replace(/\.0000$/,""); }
 function esc(s){ return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+/* Identificadores de Supabase: funcionan igual si son números o textos (UUID). */
+function idKey(v){ return String(v??"").trim(); }
+function sameId(a,b){ const x=idKey(a); return x!=="" && x===idKey(b); }
+function idValue(v){ const s=idKey(v); return /^\d+$/.test(s)?Number(s):s; }
+function jsId(v){ return esc(JSON.stringify(idKey(v))); }
 /* Proyecto SVG v2 · varios detalles, escala individual y grupos de colores. */
 let details=[], activeDetailId=null, analyzing=false, importBusy=false, selectedGroupId=null;
 let detailSequence=0, saveTimer=0, analysisWorker=null, workerSequence=0;
@@ -404,69 +409,6 @@ function cleanSvgXml(raw){
   return parts.join('');
 }
 
-function decodeSvgCssEscapes(value){
-  return value.replace(/\\(?:([\da-f]{1,6})(?:\r\n|[ \t\r\n\f])?|([^\r\n\f]))/gi,(_,hex,char)=>{
-    if(!hex)return char;
-    const code=parseInt(hex,16);
-    return code>0&&code<=0x10ffff&&!(code>=0xd800&&code<=0xdfff)?String.fromCodePoint(code):'\ufffd';
-  });
-}
-function cleanSvgCss(css){
-  // Separamos las cadenas de los comentarios: un @ o un url() dentro de
-  // un comentario o del nombre de una fuente no es un recurso del dibujo.
-  let source='',check='',i=0;
-  while(i<css.length){
-    if(css.slice(i,i+4)==='<!--'||css.slice(i,i+3)==='-->'){
-      const size=css[i]==='<'?4:3;source+=' ';check+=' ';i+=size;continue;
-    }
-    if(css.slice(i,i+2)==='/*'){
-      const end=css.indexOf('*/',i+2);
-      if(end<0)throw new Error('Hay un comentario CSS sin cerrar en el SVG. Vuelve a exportarlo.');
-      source+=' ';check+=' ';i=end+2;continue;
-    }
-    if(css[i]==='"'||css[i]==="'"){
-      const start=i,quote=css[i++];let closed=false;
-      while(i<css.length){if(css[i]==='\\'){i=Math.min(css.length,i+2);continue;}if(css[i++]===quote){closed=true;break;}}
-      if(!closed)throw new Error('Hay una cadena CSS sin cerrar en el SVG. Vuelve a exportarlo.');
-      const part=css.slice(start,i);source+=part;check+=' '.repeat(part.length);continue;
-    }
-    if(css[i]==='\\'){
-      const part=css.slice(i).match(/^\\(?:[\da-f]{1,6}(?:\r\n|[ \t\r\n\f])?|[\s\S])/i)?.[0]||'\\';
-      source+=part;check+=part;i+=part.length;continue;
-    }
-    source+=css[i];check+=css[i++];
-  }
-  // Las fuentes incrustadas no se usan: los textos deben estar en curvas.
-  // Se eliminan antes de montar el SVG para evitar cargar archivos externos.
-  const parts=[],checks=[],rule=/(^|[;{}])(\s*)@(font-face|charset)\b/gi;let last=0,match;
-  while((match=rule.exec(check))){
-    const start=match.index+match[1].length+match[2].length;let end=rule.lastIndex;
-    if(match[3].toLowerCase()==='charset'){
-      end=check.indexOf(';',end);
-      if(end<0)throw new Error('La regla CSS @charset está incompleta. Vuelve a exportar el SVG.');
-      end++;
-    }else{
-      while(/\s/.test(check[end]||'')&&end<check.length)end++;
-      if(check[end]!=='{')throw new Error('La regla CSS @font-face está incompleta. Vuelve a exportar el SVG.');
-      let depth=1;end++;
-      while(end<check.length&&depth){if(check[end]==='{')depth++;if(check[end]==='}')depth--;end++;}
-      if(depth)throw new Error('La regla CSS @font-face está incompleta. Vuelve a exportar el SVG.');
-    }
-    parts.push(source.slice(last,start));checks.push(check.slice(last,start));last=end;rule.lastIndex=end-1;
-  }
-  parts.push(source.slice(last));checks.push(check.slice(last));
-  source=parts.join('');check=decodeSvgCssEscapes(checks.join(''));
-  const atRule=check.match(/@([\w-]+)/);
-  if(atRule)throw new Error(`El SVG usa la regla CSS «@${atRule[1]}». Incluye los estilos directamente en el archivo, sin reglas externas ni condicionales.`);
-  if(/:host\b|:root\b|(?:^|[;{])\s*(?:position|z-index|content|(?:-webkit-)?(?:animation|transition)(?:-[\w-]+)?)\s*:/i.test(check))throw new Error('El SVG contiene estilos de página no compatibles. Exporta solo el dibujo.');
-  // none y los valores iniciales no aplican efectos y son habituales en Corel/Illustrator.
-  const effects=check.replace(/((?:^|[;{])\s*)(?:-(?:webkit|moz)-)?(?:clip-path|mask(?:-image)?|filter|vector-effect)\s*:\s*(?:none|initial|unset|revert|revert-layer)\s*(?:!\s*important\s*)?(?=[;}]|$)/gi,'$1');
-  const effect=effects.match(/(?:^|[;{])\s*((?:-(?:webkit|moz)-)?(?:clip-path|mask(?:-image)?|filter|vector-effect))\s*:\s*([^;}]*)/i);
-  if(effect)throw new Error(`El SVG aplica «${effect[1]}: ${effect[2].trim()}». Expande ese efecto antes de exportar para medir las curvas correctamente.`);
-  if(/\b(?:url|expression)\s*\(/i.test(check))throw new Error('El SVG usa un degradado, patrón o recurso mediante url(). Convierte los rellenos y trazos a colores planos y elimina enlaces externos.');
-  return source;
-}
-
 async function normaliseSvg(raw){
   if(raw.length>8*1024*1024)throw new Error('SVG demasiado grande (máximo 8 MB por detalle).');
   raw=cleanSvgXml(raw);
@@ -496,12 +438,13 @@ async function normaliseSvg(raw){
     if(el.namespaceURI!==SVG_NS||!allowed.has(el.localName))throw new Error(`Elemento <${el.localName}> no compatible. Convierte textos, clones y efectos a curvas de colores planos.`);
     if(el!==root&&el.localName==='svg')throw new Error('Desagrupa los SVG anidados antes de exportar.');
     for(const attr of [...el.attributes]){
-      if(['clip-path','mask','filter','vector-effect'].includes(attr.localName)&&attr.value.trim())cleanSvgCss(`${attr.localName}:${attr.value}`);
+      if(['clip-path','mask','filter','vector-effect'].includes(attr.localName)&&!['none',''].includes(attr.value))throw new Error('Expande recortes, máscaras y efectos antes de exportar.');
       if(!attrAllowed.has(attr.name))el.removeAttributeNode(attr);
     }
     const styles=el.localName==='style'?el.textContent:(el.getAttribute('style')||'');
-    if(styles){const clean=cleanSvgCss(styles);if(el.localName==='style')el.textContent=clean;else el.setAttribute('style',clean);}
-    for(const a of ['fill','stroke'])if(el.hasAttribute(a))cleanSvgCss(`${a}:${el.getAttribute(a)}`);
+    if(/:host|:root|position\s*:|z-index\s*:|content\s*:|animation\s*:|transition\s*:/i.test(styles))throw new Error('El SVG contiene estilos de página no compatibles. Exporta solo el dibujo.');
+    if(/@|url\s*\(|expression\s*\(|[<>]|\\|clip-path\s*:|mask\s*:|filter\s*:|vector-effect\s*:/i.test(styles))throw new Error('El SVG contiene estilos o efectos no compatibles. Exporta colores planos sin enlaces externos.');
+    for(const a of ['fill','stroke'])if(/url\s*\(/i.test(el.getAttribute(a)||''))throw new Error('Convierte degradados y patrones a colores planos.');
   }
   root.querySelectorAll('metadata,title,desc').forEach(x=>x.remove());
   let vb=(root.getAttribute('viewBox')||'').trim().split(/[\s,]+/).map(Number);
@@ -543,18 +486,29 @@ async function normaliseSvg(raw){
     return {vb,nodes,colors,initialCm:originalW?originalW.meters*100:60};
   }finally{host.remove();}
 }
+/* Cada curva se interpreta una sola vez; el SVG completo se reutiliza mientras no cambie la medida. */
+const nodeElementCache=new WeakMap(),detailSvgCache=new WeakMap();
+function nodeElement(n){
+  let el=nodeElementCache.get(n);
+  if(!el){el=document.importNode(new DOMParser().parseFromString(n.xml,'image/svg+xml').documentElement,true);nodeElementCache.set(n,el);}
+  return el.cloneNode(true);
+}
 function svgForDetail(d,colors=null,mask=false){
+  const cacheKey=!colors&&!mask?`${d.mode}|${d.cm}|${d.vb.join(' ')}`:null;
+  if(cacheKey){const hit=detailSvgCache.get(d.nodes);if(hit&&hit.key===cacheKey)return hit.svg;}
   const root=document.createElementNS(SVG_NS,'svg');root.setAttribute('viewBox',d.vb.join(' '));root.setAttribute('width',`${detailDimensions(d).w*100}cm`);root.setAttribute('height',`${detailDimensions(d).h*100}cm`);
   const keys=colors?new Set(colors):null;
   for(const n of d.nodes){
     const fill=!keys||keys.has(n.fill),stroke=!keys||keys.has(n.stroke);
     if(!fill&&!stroke)continue;
-    const el=new DOMParser().parseFromString(n.xml,'image/svg+xml').documentElement;
+    const el=nodeElement(n);
     if(keys){el.setAttribute('fill',fill&&n.fill?(mask?'#000':n.fill):'none');el.setAttribute('stroke',stroke&&n.stroke?(mask?'#000':n.stroke):'none');}
     if(mask){el.setAttribute('opacity','1');el.setAttribute('fill-opacity','1');el.setAttribute('stroke-opacity','1');}
-    root.appendChild(document.importNode(el,true));
+    root.appendChild(el);
   }
-  return new XMLSerializer().serializeToString(root);
+  const svg=new XMLSerializer().serializeToString(root);
+  if(cacheKey)detailSvgCache.set(d.nodes,{key:cacheKey,svg});
+  return svg;
 }
 function detailDimensions(d){const cm=Number(d.cm)||0,ratio=d.vb[2]/d.vb[3];return d.mode==='height'?{w:cm*.01*ratio,h:cm*.01}:{w:cm*.01,h:cm*.01/ratio};}
 function makeGroups(colors,compoundId=''){return colors.map(color=>({id:nextId('g'),name:color,colors:[color],compoundId:String(compoundId||''),enabled:true,metrics:null}));}
@@ -596,7 +550,7 @@ function highlightGroup(id){selectedGroupId=id;renderPreview();}
 function renderDetailList(){
   $('detailList').innerHTML=details.length?details.map(d=>{const q=quoteDetail(d);return `<button class="detailPick ${d.id===activeDetailId?'active':''}" onclick="selectDetail('${d.id}')"><strong>${esc(d.name)}</strong><small>${d.groups.filter(g=>g.enabled).length} grupos · ${q.complete?money(q.sale):'Pendiente'}</small></button>`;}).join(''):'<p class="hint">Añade tu primer SVG para comenzar.</p>';
 }
-function compoundOptions(id){return `<option value="">Seleccionar compuesto…</option>`+(!compounds.some(c=>String(c.id)===String(id))&&id?`<option value="${esc(id)}" selected>Compuesto no disponible</option>`:'')+compounds.map(c=>`<option value="${c.id}" ${String(c.id)===String(id)?'selected':''}>${esc(c.nombre)}</option>`).join('');}
+function compoundOptions(id){return `<option value="">Seleccionar compuesto…</option>`+(!compounds.some(c=>sameId(c.id,id))&&idKey(id)?`<option value="${esc(id)}" selected>Compuesto no disponible</option>`:'')+compounds.map(c=>`<option value="${esc(c.id)}" ${sameId(c.id,id)?'selected':''}>${esc(c.nombre)}</option>`).join('');}
 function metricText(m){return `Ancho ${fmtCm(m.anchoM)} · Alto ${fmtCm(m.altoM)}<br>${m.piezas} piezas · Perímetro ${fmtM(m.perimetroM)}<br>Relleno ${fmtM2(m.areaRellenoM2)} · Marco ${fmtM2(m.areaMarcoM2)}<br>Selección ${fmtM2(m.areaSeleccionM2)}`;}
 function renderGroups(){
   const d=activeDetail();if(!d)return;
@@ -618,7 +572,7 @@ function splitSelectedGroups(){
 function quoteGroup(g){
   if(!g.enabled)return {complete:true,cost:0,sale:0,profit:0,rows:[]};
   if(!g.metrics)return {complete:false,reason:'Pendiente de calcular medidas',rows:[]};
-  const c=compounds.find(x=>String(x.id)===String(g.compoundId));
+  const c=compounds.find(x=>sameId(x.id,g.compoundId));
   if(!c)return {complete:false,reason:'Asigna un compuesto disponible',rows:[]};
   if(!c.componentes?.length)return {complete:false,reason:'El compuesto no tiene componentes',rows:[]};
   if(c.componentes.some(x=>!materialById(x.material_id)))return {complete:false,reason:'Faltan materiales del compuesto',rows:[]};
@@ -752,7 +706,7 @@ function toggleBreakdown(){$('breakdownBox').classList.toggle('show');}
 function buildResumen(){
   const total=projectQuote();const lines=['TUTTOVINILOS · COTIZACIÓN SVG','Proyecto: '+($('projectName').value||'Sin nombre'),''];
   for(const d of details){const q=quoteDetail(d),s=detailDimensions(d);lines.push(d.name,'Archivo: '+d.fileName,`Diseño completo: ${fmtCm(s.w)} x ${fmtCm(s.h)}`);
-    for(const g of d.groups){if(!g.enabled){lines.push('  '+g.name+': excluido');continue;}const c=compounds.find(c=>String(c.id)===String(g.compoundId)),p=quoteGroup(g);lines.push('  '+g.name+' · '+(c?.nombre||'Sin compuesto'));
+    for(const g of d.groups){if(!g.enabled){lines.push('  '+g.name+': excluido');continue;}const c=compounds.find(c=>sameId(c.id,g.compoundId)),p=quoteGroup(g);lines.push('  '+g.name+' · '+(c?.nombre||'Sin compuesto'));
       if(g.metrics){const m=g.metrics;lines.push(`  ${fmtCm(m.anchoM)} x ${fmtCm(m.altoM)} · ${m.piezas} piezas`,`  Perímetro: ${fmtM(m.perimetroM)} · Relleno: ${fmtM2(m.areaRellenoM2)}`,`  Marco: ${fmtM2(m.areaMarcoM2)} · Selección: ${fmtM2(m.areaSeleccionM2)}`);}
       lines.push('  Venta grupo: '+(p.complete?money(p.sale):'PENDIENTE'));
     }
@@ -768,8 +722,23 @@ function crearPDF(){
   for(const line of buildResumen().split('\n'))for(const row of doc.splitTextToSize(line||' ',528)){if(y>744){doc.addPage();y=45;}doc.text(row,42,y);y+=14;}
   doc.save('Tuttovinilos_proyecto_SVG.pdf');
 }
-function projectPayload(){return {format:'tuttovinilos-svg-v2',name:$('projectName').value,details:details.map(d=>({name:d.name,fileName:d.fileName,mode:d.mode,cm:d.cm,svg:svgForDetail({...d,cm:positive(d.cm)?d.cm:60}),groups:d.groups.map(g=>({name:g.name,colors:g.colors,compoundId:g.compoundId,enabled:g.enabled}))}))};}
-function scheduleProjectSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(PROJECT_KEY,JSON.stringify(projectPayload()));$('draftStatus').textContent='Borrador guardado en este navegador. Guarda también un archivo para conservarlo o moverlo a otro equipo.';}catch(e){$('draftStatus').textContent='No se pudo guardar el borrador local. Usa «Guardar proyecto en archivo».';}},600);}
+function projectPayload(){return {format:'tuttovinilos-svg-v2',name:$('projectName').value,details:details.map(d=>({name:d.name,fileName:d.fileName,mode:d.mode,cm:d.cm,svg:svgForDetail({...d,cm:positive(d.cm)?d.cm:60}),groups:d.groups.map(g=>({name:g.name,colors:g.colors,compoundId:g.compoundId,enabled:g.enabled,...(g.metrics&&positive(d.cm)?{metrics:g.metrics}:{})}))}))};}
+const METRIC_KEYS=['anchoM','altoM','piezas','perimetroM','areaRellenoM2','areaMarcoM2','areaSeleccionM2'];
+function validMetrics(m){if(!m||typeof m!=='object')return null;const r={};for(const k of METRIC_KEYS){const v=Number(m[k]);if(!Number.isFinite(v)||v<0)return null;r[k]=v;}return r.piezas>0?r:null;}
+const DRAFT_MAX_CHARS=4.5*1024*1024; // El navegador suele permitir unos 5 MB.
+function scheduleProjectSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{
+  let raw='';
+  try{
+    raw=JSON.stringify(projectPayload());
+    if(raw.length>DRAFT_MAX_CHARS)throw new Error('too-big');
+    localStorage.setItem(PROJECT_KEY,raw);
+    $('draftStatus').textContent='Borrador guardado en este navegador. Guarda también un archivo para conservarlo o moverlo a otro equipo.';
+  }catch(e){
+    // Evita recuperar después un borrador viejo que ya no coincide con el proyecto.
+    try{localStorage.removeItem(PROJECT_KEY);}catch(_){}
+    $('draftStatus').textContent=e.message==='too-big'?'El proyecto es demasiado grande para el borrador del navegador. Usa «Guardar proyecto en archivo» para no perder cambios.':'No se pudo guardar el borrador local. Usa «Guardar proyecto en archivo».';
+  }
+},600);}
 function exportProject(){downloadBlob(JSON.stringify(projectPayload(),null,2),($('projectName').value||'Proyecto_SVG').replace(/[^a-z0-9_-]/gi,'_')+'.json','application/json');}
 async function loadProjectPayload(payload){
   if(payload?.format!=='tuttovinilos-svg-v2'||!Array.isArray(payload.details)||payload.details.length>30)throw new Error('Archivo de proyecto no compatible.');
@@ -779,11 +748,14 @@ async function loadProjectPayload(payload){
     const n=await normaliseSvg(src.svg),available=new Set(n.colors),groups=[];
     for(const g of (Array.isArray(src.groups)?src.groups:[])){
       const colors=[...new Set((Array.isArray(g.colors)?g.colors:[]).filter(c=>available.has(c)))];if(!colors.length)continue;colors.forEach(c=>available.delete(c));
-      groups.push({id:nextId('g'),name:String(g.name||colors.join(' + ')).slice(0,120),colors,compoundId:String(g.compoundId||''),enabled:g.enabled!==false,metrics:null});
+      const sameColors=colors.length===(Array.isArray(g.colors)?g.colors.length:-1);
+      groups.push({id:nextId('g'),name:String(g.name||colors.join(' + ')).slice(0,120),colors,compoundId:idKey(g.compoundId),enabled:g.enabled!==false,metrics:sameColors?validMetrics(g.metrics):null});
     }
-    groups.push(...makeGroups([...available]));loaded.push({id:nextId('d'),name:String(src.name||'Detalle').slice(0,160),fileName:String(src.fileName||'detalle.svg').slice(0,200),mode:src.mode==='height'?'height':'width',cm:Number(src.cm),vb:n.vb,nodes:n.nodes,groups,revision:0,analyzedRevision:-1});
+    groups.push(...makeGroups([...available]));
+    const enabled=groups.filter(g=>g.enabled),ready=positive(src.cm)&&enabled.length>0&&enabled.every(g=>g.metrics);
+    loaded.push({id:nextId('d'),name:String(src.name||'Detalle').slice(0,160),fileName:String(src.fileName||'detalle.svg').slice(0,200),mode:src.mode==='height'?'height':'width',cm:Number(src.cm),vb:n.vb,nodes:n.nodes,groups,revision:0,analyzedRevision:ready?0:-1});
   }
-  details=loaded;$('projectName').value=String(payload.name||'').slice(0,160);selectDetail(details[0]?.id||null);scheduleProjectSave();toast('Proyecto abierto. Recalcula las medidas.');
+  details=loaded;$('projectName').value=String(payload.name||'').slice(0,160);selectDetail(details[0]?.id||null);scheduleProjectSave();toast(details.some(d=>d.groups.some(g=>g.enabled&&!g.metrics))?'Proyecto abierto. Calcula los detalles pendientes.':'Proyecto abierto con sus medidas.');
 }
 async function importProject(file){if(!file||analyzing||importBusy)return;if(file.size>24*1024*1024){alert('Proyecto demasiado grande (máximo 24 MB).');return;}if(details.length&&!confirm('¿Reemplazar el proyecto actual por el archivo seleccionado?'))return;importBusy=true;updateBusyUI();try{await loadProjectPayload(JSON.parse(await file.text()));}catch(e){alert(e.message);}finally{importBusy=false;updateBusyUI();$('projectInput').value='';}}
 function newProject(){if(analyzing||importBusy||!confirm('¿Iniciar un proyecto vacío? Guarda antes el proyecto actual si deseas conservarlo.'))return;clearTimeout(saveTimer);details=[];$('projectName').value='';selectDetail(null);scheduleProjectSave();}
@@ -837,7 +809,7 @@ function renderMaterialBaseList(){
   `).join("") || `<div class="hint">Sin materiales.</div>`;
 }
 
-function materialById(id){ return baseMaterials.find(m=>Number(m.id)===Number(id)); }
+function materialById(id){ return baseMaterials.find(m=>sameId(m.id,id)); }
 
 function baseParamOptions(selected="areaMarcoM2"){
   const opts=[
@@ -852,7 +824,7 @@ function baseParamOptions(selected="areaMarcoM2"){
 }
 
 function materialOptions(selected=""){
-  return baseMaterials.map(m=>`<option value="${m.id}" ${Number(m.id)===Number(selected)?"selected":""}>${esc(m.categoria)} · ${esc(m.nombre)} · ${esc(m.detalle_valor)} · ${money(m.precio_unitario)}/${m.tipo_medida==="M2"?"m²":m.tipo_medida==="M"?"m":"und"}</option>`).join("");
+  return baseMaterials.map(m=>`<option value="${esc(m.id)}" ${sameId(m.id,selected)?"selected":""}>${esc(m.categoria)} · ${esc(m.nombre)} · ${esc(m.detalle_valor)} · ${money(m.precio_unitario)}/${m.tipo_medida==="M2"?"m²":m.tipo_medida==="M"?"m":"und"}</option>`).join("");
 }
 
 function addComponentLine(data={}){
@@ -896,6 +868,11 @@ function addComponentLine(data={}){
     <div class="previewMini fullLine">Costo: $0.00<br>Venta: $0.00<br>Ganancia: $0.00</div>
     <button class="btn red" type="button" onclick="this.closest('.componentLine').remove();updateCompoundPreview()">Eliminar</button>
   `;
+  const sel=div.querySelector(".cMaterial");
+  if(idKey(data.material_id) && !materialById(data.material_id)){
+    sel.prepend(new Option("Material no disponible",idKey(data.material_id),true,true));
+    sel.value=idKey(data.material_id);
+  }
   $("componentLines").appendChild(div);
   updateCompoundPreview();
 }
@@ -904,7 +881,7 @@ function renderComponentMaterialOptions(){
   document.querySelectorAll(".cMaterial").forEach(sel=>{
     const val=sel.value;
     sel.innerHTML=materialOptions(val);
-    if(val && !baseMaterials.some(m=>String(m.id)===String(val))){
+    if(val && !baseMaterials.some(m=>sameId(m.id,val))){
       const opt=new Option("Material no disponible",val,true,true);sel.prepend(opt);sel.value=val;
     }
   });
@@ -913,14 +890,27 @@ function renderComponentMaterialOptions(){
 function readComponentLines(){
   return [...document.querySelectorAll(".componentLine")].map((line,idx)=>({
     tipo_componente:line.querySelector(".cTipoComp")?.value || "MATERIAL",
-    material_id:Number(line.querySelector(".cMaterial").value||0),
+    material_id:idValue(line.querySelector(".cMaterial").value),
     base_parametro:line.querySelector(".cBase").value,
     factor_consumo:Number(line.querySelector(".cFactorConsumo").value||0),
     fee:Number(line.querySelector(".cFee").value||0),
     factor_venta:Number(line.querySelector(".cFactorVenta").value||1),
     redondear:line.querySelector(".cRound").value==="true",
     orden:idx+1
-  })).filter(x=>x.material_id);
+  }));
+}
+
+/* Revisa las líneas antes de guardar para no perder componentes en silencio. */
+function validateComponents(components){
+  if(!components.length) return "Agrega componentes";
+  for(const [i,c] of components.entries()){
+    const n=i+1;
+    if(idKey(c.material_id)==="") return `Línea ${n}: selecciona un material o servicio`;
+    if(!Number.isFinite(c.factor_consumo)||c.factor_consumo<0) return `Línea ${n}: factor de consumo inválido`;
+    if(!Number.isFinite(c.factor_venta)||c.factor_venta<0) return `Línea ${n}: factor de venta inválido`;
+    if(!Number.isFinite(c.fee)) return `Línea ${n}: fee inválido`;
+  }
+  return "";
 }
 
 function baseValue(base,r=lastResults){
@@ -973,7 +963,7 @@ function updateCompoundPreview(){
   let cost=0,sale=0,profit=0;
   const lines=[...document.querySelectorAll(".componentLine")];
   lines.forEach((line,idx)=>{
-    const component={material_id:Number(line.querySelector(".cMaterial").value||0),tipo_componente:line.querySelector(".cTipoComp").value,base_parametro:line.querySelector(".cBase").value,factor_consumo:Number(line.querySelector(".cFactorConsumo").value),fee:Number(line.querySelector(".cFee").value),factor_venta:Number(line.querySelector(".cFactorVenta").value),redondear:line.querySelector(".cRound").value==="true"};
+    const component={material_id:idValue(line.querySelector(".cMaterial").value),tipo_componente:line.querySelector(".cTipoComp").value,base_parametro:line.querySelector(".cBase").value,factor_consumo:Number(line.querySelector(".cFactorConsumo").value),fee:Number(line.querySelector(".cFee").value),factor_venta:Number(line.querySelector(".cFactorVenta").value),redondear:line.querySelector(".cRound").value==="true"};
     const calc=calcComponent(component);
     const box=line.querySelector(".previewMini");
     box.textContent="Selecciona un material disponible";
@@ -987,34 +977,70 @@ function updateCompoundPreview(){
   $("editProfit").textContent=money(profit);
 }
 
+let compoundBusy=false;
+function setCompoundBusy(v){
+  compoundBusy=v;
+  document.querySelectorAll('button[onclick^="saveCompound"],#compoundTable button').forEach(b=>b.disabled=v);
+}
+
 async function saveCompound(){
+  if(compoundBusy) return;
   const client=sb();
   if(!client){ toast("No hay Supabase"); return; }
   const name=($("compoundName").value||"").trim().toUpperCase();
   if(!name){ toast("Falta nombre del grupo"); return; }
   const components=readComponentLines();
-  if(!components.length){ toast("Agrega componentes"); return; }
+  const invalid=validateComponents(components);
+  if(invalid){ toast(invalid); return; }
 
-  let compoundId=currentEditCompoundId;
-  const payload={nombre:name,descripcion:($("compoundDesc").value||"").trim(),activo:true,updated_at:new Date().toISOString()};
+  setCompoundBusy(true);
+  try{
+    let compoundId=currentEditCompoundId;
+    const isNew=!idKey(compoundId);
+    const payload={nombre:name,descripcion:($("compoundDesc").value||"").trim(),activo:true,updated_at:new Date().toISOString()};
 
-  if(compoundId){
-    const {error}=await client.from("materia_compuestos").update(payload).eq("id",compoundId);
-    if(error){ console.error(error); toast("Error actualizando compuesto"); return; }
-    await client.from("materia_compuesto_componentes").delete().eq("compuesto_id",compoundId);
-  }else{
-    const {data,error}=await client.from("materia_compuestos").insert(payload).select().single();
-    if(error){ console.error(error); toast("Error guardando compuesto. Revisa SQL."); return; }
-    compoundId=data.id;
+    let oldIds=[];
+    if(isNew){
+      const {data,error}=await client.from("materia_compuestos").insert(payload).select().single();
+      if(error){ console.error(error); toast("Error guardando compuesto. Revisa SQL."); return; }
+      compoundId=data.id;
+    }else{
+      const {data,error}=await client.from("materia_compuesto_componentes").select("id").eq("compuesto_id",compoundId);
+      if(error){ console.error(error); toast("Error leyendo componentes actuales"); return; }
+      oldIds=(data||[]).map(x=>x.id);
+    }
+
+    // Primero se insertan los componentes nuevos; los anteriores solo se borran si eso salió bien.
+    const rows=components.map(c=>({...c,compuesto_id:compoundId,activo:true}));
+    const {error:err2}=await client.from("materia_compuesto_componentes").insert(rows);
+    if(err2){
+      console.error(err2);
+      if(isNew) await client.from("materia_compuestos").update({activo:false,updated_at:new Date().toISOString()}).eq("id",compoundId);
+      toast(isNew?"Error en componentes: no se guardó el compuesto":"Error en componentes: se conservó la versión anterior");
+      return;
+    }
+
+    if(!isNew){
+      if(oldIds.length){
+        const {error:err3}=await client.from("materia_compuesto_componentes").delete().in("id",oldIds);
+        if(err3){
+          console.error(err3);
+          const {error:err4}=await client.from("materia_compuesto_componentes").update({activo:false}).in("id",oldIds);
+          if(err4){ console.error(err4); toast("Guardado, pero quedaron componentes anteriores duplicados. Revisa el compuesto."); await loadCompounds(); return; }
+        }
+      }
+      const {error}=await client.from("materia_compuestos").update(payload).eq("id",compoundId);
+      if(error){ console.error(error); toast("Componentes guardados, error actualizando nombre/descripción"); await loadCompounds(); return; }
+    }
+
+    toast("Grupo guardado");
+    clearCompoundForm();
+    await loadCompounds();
+  }catch(e){
+    console.error(e); toast("Error de conexión guardando el compuesto");
+  }finally{
+    setCompoundBusy(false);
   }
-
-  const rows=components.map(c=>({...c,compuesto_id:compoundId,activo:true}));
-  const {error:err2}=await client.from("materia_compuesto_componentes").insert(rows);
-  if(err2){ console.error(err2); toast("Compuesto guardado, error en componentes"); return; }
-
-  toast("Grupo guardado");
-  clearCompoundForm();
-  await loadCompounds();
 }
 
 function clearCompoundForm(){
@@ -1042,15 +1068,15 @@ function renderCompoundTable(){
       <td>${c.componentes.length}</td>
       <td>${esc(c.descripcion||"")}</td>
       <td>
-        <button class="btn light" onclick="editCompound(${c.id})">Editar</button>
-        <button class="btn light" onclick="duplicateCompound(${c.id})">Duplicar</button>
-        <button class="btn red" onclick="deleteCompound(${c.id})">Eliminar</button>
+        <button class="btn light" onclick="editCompound(${jsId(c.id)})">Editar</button>
+        <button class="btn light" onclick="duplicateCompound(${jsId(c.id)})">Duplicar</button>
+        <button class="btn red" onclick="deleteCompound(${jsId(c.id)})">Eliminar</button>
       </td>
     </tr>`).join("");
 }
 
 function editCompound(id){
-  const c=compounds.find(x=>Number(x.id)===Number(id)); if(!c) return;
+  const c=compounds.find(x=>sameId(x.id,id)); if(!c) return;
   currentEditCompoundId=c.id;
   $("compoundName").value=c.nombre||"";
   $("compoundDesc").value=c.descripcion||"";
@@ -1061,7 +1087,7 @@ function editCompound(id){
 }
 
 function duplicateCompound(id){
-  const c=compounds.find(x=>Number(x.id)===Number(id));
+  const c=compounds.find(x=>sameId(x.id,id));
   if(!c){
     toast("Compuesto no encontrado");
     return;
@@ -1094,12 +1120,25 @@ function duplicateCompound(id){
 }
 
 async function deleteCompound(id){
-  if(!confirm("¿Eliminar compuesto?")) return;
+  if(compoundBusy) return;
   const client=sb();
-  const {error}=await client.from("materia_compuestos").update({activo:false,updated_at:new Date().toISOString()}).eq("id",id);
-  if(error){ console.error(error); toast("Error eliminando"); return; }
-  toast("Compuesto eliminado");
-  await loadCompounds();
+  if(!client){ toast("No hay Supabase"); return; }
+  const c=compounds.find(x=>sameId(x.id,id));
+  const used=details.reduce((n,d)=>n+d.groups.filter(g=>sameId(g.compoundId,id)).length,0);
+  const msg=used?`«${c?.nombre||"Compuesto"}» está asignado a ${used} grupo(s) del proyecto abierto; quedarán sin precio. ¿Eliminar compuesto?`:"¿Eliminar compuesto?";
+  if(!confirm(msg)) return;
+  setCompoundBusy(true);
+  try{
+    const {error}=await client.from("materia_compuestos").update({activo:false,updated_at:new Date().toISOString()}).eq("id",id);
+    if(error){ console.error(error); toast("Error eliminando"); return; }
+    if(sameId(currentEditCompoundId,id)) currentEditCompoundId=null;
+    toast("Compuesto eliminado");
+    await loadCompounds();
+  }catch(e){
+    console.error(e); toast("Error de conexión eliminando");
+  }finally{
+    setCompoundBusy(false);
+  }
 }
 
 document.addEventListener("DOMContentLoaded",async()=>{
