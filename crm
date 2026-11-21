@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f7fb">
+<title>CRM · Tuttovinilos</title>
+<style>
+:root{
+  --bg:#f5f7fb;--panel:#fff;--ink:#162033;--muted:#748096;--line:#e8ecf3;
+  --blue:#2947e8;--blue-2:#eef2ff;--nav:#121a2b;--nav-muted:#9aa6bc;
+  --green:#17845b;--green-bg:#eaf7f0;--amber:#a76512;--amber-bg:#fff4df;
+  --red:#b64343;--red-bg:#fff0ef;--purple:#6f55cb;--shadow:0 7px 24px rgba(24,39,75,.055);
+  --radius:16px;--font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font)}
+button,input{font:inherit}
+button{cursor:pointer}
+.app-shell{min-height:100vh}
+.sidebar{position:fixed;inset:0 auto 0 0;width:238px;background:var(--nav);color:#fff;padding:24px 15px 18px;display:flex;flex-direction:column;z-index:5}
+.brand{display:flex;align-items:center;gap:11px;padding:0 10px 28px}
+.brand-mark{width:37px;height:37px;border-radius:11px;background:linear-gradient(145deg,#6e86ff,#2947e8);display:grid;place-items:center;font-weight:900;font-size:12px;letter-spacing:-.05em;box-shadow:0 5px 16px rgba(41,71,232,.32)}
+.brand-name{font-weight:750;font-size:15px;letter-spacing:-.02em}
+.brand-sub{font-size:10px;color:#9ca9bf;margin-top:2px;letter-spacing:.08em;text-transform:uppercase}
+.nav-label{font-size:10px;color:#73819a;letter-spacing:.11em;text-transform:uppercase;padding:0 11px;margin:12px 0 8px}
+.nav{display:grid;gap:4px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;text-decoration:none;color:var(--nav-muted);font-size:13px;font-weight:560;transition:.15s}
+.nav-item:hover{background:#1b263a;color:#fff}
+.nav-item.active{background:#263653;color:#fff;box-shadow:inset 3px 0 #8498ff}
+.nav-icon{width:18px;height:18px;display:grid;place-items:center;font-size:15px;opacity:.95}
+.nav-count{margin-left:auto;background:#35435c;color:#cbd5e1;border-radius:20px;padding:2px 7px;font-size:10px}
+.sidebar-bottom{margin-top:auto;border-top:1px solid #293247;padding:16px 9px 0}
+.account-user{display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#35466a;color:#e5ebff;font-size:11px;font-weight:800}
+.user-name{font-size:12px;font-weight:650;color:#f6f8fc}
+.user-role{font-size:10px;color:#8e9bb2;margin-top:2px}
+.local-chip{margin-top:14px;border:1px solid #344056;color:#acb8ca;border-radius:8px;padding:7px 9px;font-size:10px;display:flex;align-items:center;gap:7px}
+.local-dot{width:7px;height:7px;background:#7bd6a8;border-radius:50%}
+.main{margin-left:238px;min-height:100vh}
+.topbar{height:62px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.78);display:flex;align-items:center;justify-content:space-between;padding:0 34px;position:sticky;top:0;z-index:4;backdrop-filter:blur(10px)}
+.breadcrumb{font-size:12px;color:var(--muted)}
+.breadcrumb strong{color:#39445a;font-weight:650}
+.top-right{display:flex;align-items:center;gap:14px}
+.demo-pill{font-size:10px;letter-spacing:.06em;font-weight:750;color:#6a56b5;background:#f0edff;border:1px solid #e4ddff;border-radius:30px;padding:6px 10px;text-transform:uppercase}
+.help{border:1px solid var(--line);background:#fff;color:#637087;width:29px;height:29px;border-radius:50%;font-weight:700}
+main.content{max-width:1540px;margin:auto;padding:30px 34px 42px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:21px}
+.eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#8290a6;font-weight:750;margin-bottom:6px}
+h1{font-size:26px;line-height:1.2;letter-spacing:-.045em;margin:0;font-weight:760}
+.subtitle{color:var(--muted);font-size:13px;margin:7px 0 0}
+.primary-btn,.secondary-btn{border:0;border-radius:10px;padding:10px 14px;font-weight:680;font-size:12px;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.primary-btn{background:var(--blue);color:white;box-shadow:0 5px 12px rgba(41,71,232,.18)}
+.primary-btn:hover{background:#1e3bd3}
+.secondary-btn{background:#fff;color:#38445a;border:1px solid var(--line)}
+.secondary-btn:hover{border-color:#cdd5e5;background:#fafbfe}
+.demo-notice{display:flex;align-items:center;gap:9px;color:#62549a;background:#f3f0ff;border:1px solid #e8e1ff;border-radius:10px;padding:10px 13px;margin-bottom:20px;font-size:11px}
+.demo-notice strong{font-weight:750}
+.notice-mark{font-size:14px}
+.crm-layout{display:grid;grid-template-columns:290px minmax(0,1fr);gap:18px;align-items:start}
+.client-panel,.detail-panel,.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.client-panel{overflow:hidden;position:sticky;top:78px}
+.client-panel-head{padding:18px 17px 14px;border-bottom:1px solid var(--line)}
+.client-panel-title{display:flex;justify-content:space-between;align-items:center}
+.client-panel-title h2{font-size:14px;letter-spacing:-.02em;margin:0}
+.client-count{font-size:10px;color:#738096;background:#f2f4f8;border-radius:20px;padding:4px 8px}
+.search-wrap{position:relative;margin-top:14px}
+.search-icon{position:absolute;left:11px;top:8px;color:#8c97a9;font-size:14px}
+.search-input{height:35px;width:100%;border-radius:9px;border:1px solid #e3e8f0;padding:0 10px 0 33px;color:var(--ink);outline:none;background:#fbfcfe;font-size:11px}
+.search-input:focus{border-color:#aebcff;box-shadow:0 0 0 3px #eef1ff}
+.filters{display:flex;gap:5px;margin-top:11px}
+.filter-btn{border:0;background:transparent;color:#778398;padding:5px 8px;border-radius:6px;font-size:10px;font-weight:650}
+.filter-btn.active{color:#3348c8;background:#eef1ff}
+.client-list{padding:7px;max-height:calc(100vh - 265px);overflow:auto}
+.client-row{width:100%;border:0;background:transparent;text-align:left;padding:11px 10px;border-radius:10px;display:flex;gap:10px;align-items:flex-start;color:inherit}
+.client-row:hover{background:#f7f8fc}
+.client-row.selected{background:#f0f3ff;box-shadow:inset 2px 0 #4058eb}
+.client-avatar{flex:none;width:34px;height:34px;border-radius:10px;background:#edf0f7;color:#58657c;display:grid;place-items:center;font-size:10px;font-weight:800}
+.client-row.selected .client-avatar{background:#dce4ff;color:#3b51d4}
+.client-info{min-width:0;flex:1}
+.client-name{font-size:11px;font-weight:700;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.client-meta{color:#8994a6;font-size:10px;margin-top:3px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.client-side{text-align:right;flex:none}
+.client-balance{font-size:10px;font-weight:750;color:#b05a2a;white-space:nowrap}
+.client-state{font-size:9px;margin-top:4px;color:#8691a4}
+.empty-list{padding:23px 12px;text-align:center;color:#8994a6;font-size:11px}
+.detail-panel{padding:20px 21px 22px;min-width:0}
+.profile-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding-bottom:17px;border-bottom:1px solid var(--line)}
+.profile-main{display:flex;gap:13px;align-items:center;min-width:0}
+.profile-avatar{width:52px;height:52px;border-radius:15px;background:linear-gradient(145deg,#e8edff,#d7e0ff);color:#3b50cc;display:grid;place-items:center;font-weight:800;font-size:14px;flex:none}
+.profile-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.profile-name h2{font-size:18px;letter-spacing:-.035em;margin:0;font-weight:760}
+.status-active{font-size:9px;color:var(--green);background:var(--green-bg);padding:4px 7px;border-radius:20px;font-weight:750}
+.profile-sub{font-size:11px;color:#7b879a;margin-top:4px}
+.profile-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.profile-actions button{padding:8px 10px;font-size:10px}
+.profile-meta{display:flex;gap:18px;flex-wrap:wrap;padding:13px 0 15px;color:#6f7b8e;font-size:10px;border-bottom:1px solid var(--line)}
+.profile-meta span{display:flex;gap:6px;align-items:center}
+.profile-meta b{color:#364158;font-weight:650}
+.tabs{display:flex;gap:20px;border-bottom:1px solid var(--line);margin-bottom:17px;overflow:auto}
+.tab{border:0;background:none;color:#7b8798;padding:13px 1px 11px;font-size:11px;font-weight:680;white-space:nowrap;position:relative}
+.tab.active{color:#3047d2}
+.tab.active:after{content:"";position:absolute;bottom:-1px;left:0;right:0;height:2px;border-radius:2px;background:#4058eb}
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:2px 0 12px}
+.section-title h3{font-size:13px;margin:0;letter-spacing:-.015em}
+.section-hint{font-size:10px;color:#8994a6}
+.account-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.account-card{border:1px solid var(--line);background:#fff;border-radius:12px;padding:13px 14px;min-width:0}
+.account-card.primary{background:#f8f9ff;border-color:#e6eaff}
+.account-top{display:flex;justify-content:space-between;align-items:center;color:#68758b;font-size:10px;font-weight:700}
+.account-indicator{width:7px;height:7px;border-radius:50%;background:#6175ef}
+.account-indicator.gold{background:#db9a34}
+.account-value{font-size:21px;font-weight:760;letter-spacing:-.04em;margin-top:9px;white-space:nowrap}
+.account-caption{font-size:9px;color:#8994a5;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.credit-card .account-value{color:#21815a}
+.account-cards .account-value .minor{font-size:12px;letter-spacing:0;color:#7a8799;font-weight:600}
+.reconcile-bar{background:#f7faf9;border:1px solid #e2eee8;border-radius:10px;padding:10px 12px;margin-bottom:17px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.reconcile-left{display:flex;align-items:center;gap:9px;min-width:0}
+.check-circle{width:22px;height:22px;display:grid;place-items:center;background:#e2f3e9;color:#278257;border-radius:50%;font-weight:800;font-size:11px;flex:none}
+.reconcile-copy strong{font-size:10px;display:block}
+.reconcile-copy span{font-size:9px;color:#829083}
+.reconcile-status{background:#e4f4e9;color:#237951;padding:5px 8px;border-radius:20px;font-size:9px;font-weight:800;letter-spacing:.04em;white-space:nowrap}
+.split-grid{display:grid;grid-template-columns:1fr 1.13fr;gap:12px;align-items:start}
+.subcard{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;min-width:0}
+.subcard-head{padding:12px 13px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}
+.subcard-head h3{font-size:11px;margin:0;font-weight:720}
+.subcard-head span{font-size:9px;color:#8b96a7}
+.payment-list{padding:0 12px}
+.payment-item{padding:12px 0;border-bottom:1px solid #f0f2f6}
+.payment-item:last-child{border-bottom:0}
+.payment-line{display:flex;align-items:flex-start;justify-content:space-between;gap:9px}
+.payment-main{min-width:0}
+.payment-title{font-size:10px;font-weight:720}
+.payment-id{font-size:9px;color:#8792a4;margin-left:5px;font-weight:550}
+.payment-reference{font-size:9px;color:#6e7a8e;margin-top:4px}
+.payment-amount{text-align:right;white-space:nowrap}
+.payment-amount strong{font-size:11px;color:#20815a}
+.payment-amount small{display:block;color:#8d98a8;font-size:8px;margin-top:2px}
+.payment-breakdown{margin-top:9px;padding:8px 9px;background:#f8f9fc;border-radius:8px}
+.break-row{display:flex;justify-content:space-between;gap:10px;font-size:9px;color:#69768b;padding:2px 0}
+.break-row strong{color:#374258;font-size:9px;font-weight:680}
+.break-row.credit strong{color:#21815a}
+.order-list{padding:0 12px}
+.order-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;padding:12px 0;border-bottom:1px solid #f0f2f6}
+.order-item:last-child{border-bottom:0}
+.order-id{font-size:9px;color:#78859a;font-weight:650}
+.order-name{font-size:10px;font-weight:720;margin-top:3px}
+.order-details{font-size:9px;color:#8a95a6;margin-top:4px}
+.order-right{text-align:right;white-space:nowrap}
+.order-total{font-size:10px;font-weight:720}
+.order-balance{font-size:9px;color:#a65c35;margin-top:4px}
+.badge{display:inline-flex;padding:3px 6px;border-radius:20px;font-size:8px;font-weight:750;margin-top:5px}
+.badge.progress{background:#edf1ff;color:#4558c8}
+.badge.done{background:#e8f5ee;color:#30805a}
+.badge.review{background:#fff4df;color:#a36c20}
+.ledger-card{margin-top:16px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.ledger-head{padding:12px 14px;background:#fbfcfe;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.ledger-head h3{font-size:11px;margin:0}
+.ledger-head button{border:0;background:none;color:#4054d7;font-size:9px;font-weight:700}
+.ledger-summary{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
+.ledger-account{padding:11px 14px}
+.ledger-account+ .ledger-account{border-left:1px solid var(--line)}
+.ledger-label{font-size:9px;color:#7d899b;font-weight:700}
+.ledger-math{font-size:10px;color:#4d5a70;margin-top:5px}
+.ledger-math strong{color:#182337}
+.ledger-math .minus{color:#bb6334}
+.ledger-math .plus{color:#248257}
+.ledger-table{width:100%;border-collapse:collapse}
+.ledger-table th{text-align:left;background:#fff;color:#8a95a6;font-size:8px;text-transform:uppercase;letter-spacing:.06em;font-weight:750;padding:9px 12px;border-bottom:1px solid #eff1f5}
+.ledger-table td{font-size:9px;color:#526077;padding:9px 12px;border-bottom:1px solid #f1f3f6;vertical-align:top}
+.ledger-table tr:last-child td{border-bottom:0}
+.ledger-table td:first-child{white-space:nowrap;color:#7d899b}
+.ledger-table td strong{color:#28354b;font-size:9px}
+.money-in{color:#21815a!important;font-weight:700}
+.money-out{color:#a65d35!important;font-weight:700}
+.account-tag{font-size:8px;color:#8290a3;display:block;margin-top:2px}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.contact-box{padding:15px;border:1px solid var(--line);border-radius:12px}
+.contact-box h3{font-size:11px;margin:0 0 11px}
+.contact-person{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid #f0f2f6}
+.contact-person:last-child{border-bottom:0}
+.contact-initial{width:28px;height:28px;flex:none;border-radius:9px;background:#edf1ff;color:#5669d5;display:grid;place-items:center;font-size:9px;font-weight:800}
+.contact-person-info{min-width:0}
+.contact-person-info strong{display:block;font-size:10px;color:#344057}
+.contact-person-info small{display:block;color:#8490a2;font-size:9px;margin-top:3px;overflow-wrap:anywhere}
+.contact-field{margin-top:9px}
+.contact-field label{display:block;color:#8994a6;font-size:9px;margin-bottom:3px}
+.contact-field span{font-size:10px;color:#354157;font-weight:600}
+.note-box{margin-top:12px;padding:13px 14px;border-radius:10px;background:#fafbfe;color:#738096;font-size:10px;line-height:1.6}
+.orders-table-wrap{overflow:auto;border:1px solid var(--line);border-radius:11px}
+.orders-table{border-collapse:collapse;width:100%;min-width:600px}
+.orders-table th{text-align:left;font-size:8px;color:#8893a5;background:#fafbfe;text-transform:uppercase;letter-spacing:.06em;padding:10px;border-bottom:1px solid var(--line)}
+.orders-table td{font-size:9px;padding:11px 10px;border-bottom:1px solid #f0f2f6;color:#647188}
+.orders-table tr:last-child td{border-bottom:0}
+.orders-table td strong{color:#303d53}
+.timeline{position:relative;margin:2px 0 0 8px;padding-left:20px;border-left:1px solid #e6eaf2}
+.timeline-item{position:relative;padding:0 0 17px 4px}
+.timeline-item:last-child{padding-bottom:0}
+.timeline-dot{position:absolute;left:-25px;top:2px;width:9px;height:9px;border-radius:50%;background:#7184ed;border:2px solid #fff;box-shadow:0 0 0 1px #dce2ff}
+.timeline-dot.payment{background:#48a879;box-shadow:0 0 0 1px #d6efe0}
+.timeline-date{font-size:9px;color:#8792a4}
+.timeline-title{font-size:10px;font-weight:700;margin-top:2px}
+.timeline-detail{font-size:9px;color:#7b8798;margin-top:3px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);padding:11px 15px;background:#172238;color:#fff;border-radius:10px;font-size:11px;opacity:0;pointer-events:none;transition:.2s;z-index:20;box-shadow:0 8px 24px #17223833}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.footer-note{font-size:9px;color:#9aa4b4;text-align:center;margin-top:18px}
+.crm-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:0 0 18px}
+.kpi-card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px 15px;box-shadow:var(--shadow);min-width:0}
+.kpi-head{display:flex;align-items:center;justify-content:space-between;color:#7d899c;font-size:9px;font-weight:700;letter-spacing:.03em}
+.kpi-icon{width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:#eff2ff;color:#5267de;font-size:12px}
+.kpi-value{font-size:21px;font-weight:760;letter-spacing:-.04em;margin-top:8px;white-space:nowrap}
+.kpi-foot{font-size:9px;color:#8994a5;margin-top:3px}
+.kpi-change{color:#23825a;font-weight:700}
+.opportunity-strip{display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr .8fr 1fr;gap:9px;padding:12px 13px;margin:13px 0 0;background:#fafbff;border:1px solid #e9ecf7;border-radius:11px}
+.opp-field{min-width:0}
+.opp-field label{display:block;color:#929caf;font-size:8px;text-transform:uppercase;letter-spacing:.07em;font-weight:750;margin-bottom:4px}
+.opp-field strong{display:block;color:#38445a;font-size:9px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opp-stage{color:#4459d1!important}
+.opp-prob{display:flex;align-items:center;gap:6px}
+.opp-progress{height:4px;border-radius:9px;background:#e7eaf2;flex:1;min-width:18px;overflow:hidden}
+.opp-progress i{height:100%;display:block;background:#6b7ded;border-radius:9px}
+.opp-prob small{font-size:8px;color:#69768b}
+.quote-status{display:inline-flex;background:#f1efff;color:#6a57be;padding:3px 6px;border-radius:20px;font-size:8px;font-weight:750}
+@media(max-width:1200px){.crm-layout{grid-template-columns:260px minmax(0,1fr)}.split-grid{grid-template-columns:1fr}.client-panel{top:75px}.account-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1200px){.crm-layout{grid-template-columns:260px minmax(0,1fr)}.split-grid{grid-template-columns:1fr}.client-panel{top:75px}.account-cards{grid-template-columns:repeat(3,minmax(0,1fr))}.opportunity-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:900px){.sidebar{position:static;width:auto;height:auto;padding:12px 16px;display:flex;flex-direction:row;align-items:center;justify-content:space-between}.brand{padding:0}.brand-sub,.nav-label,.sidebar-bottom{display:none}.nav{display:flex;gap:3px}.nav-item{padding:9px 10px}.nav-item span:not(.nav-icon):not(.nav-count){display:none}.nav-count{margin-left:0}.main{margin-left:0}.topbar{height:52px;padding:0 18px}.content{padding:22px 18px!important}.crm-layout{grid-template-columns:1fr}.client-panel{position:static}.client-list{max-height:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.client-panel-head{padding-bottom:12px}.client-row{min-width:0}.detail-panel{padding:17px}.crm-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.sidebar{padding:10px 12px}.brand-mark{width:33px;height:33px}.brand-name{font-size:13px}.nav-item{padding:8px}.topbar{padding:0 14px}.demo-pill{font-size:8px;padding:5px 7px}.content{padding:17px 12px!important}.page-head{align-items:flex-start}.page-head h1{font-size:23px}.page-head .primary-btn{padding:9px 10px;font-size:10px}.subtitle{max-width:270px;font-size:11px}.client-list{grid-template-columns:1fr}.client-row{padding:9px}.profile-head{display:block}.profile-actions{justify-content:flex-start;margin-top:13px}.profile-name h2{font-size:16px}.profile-meta{gap:9px 14px}.detail-panel{padding:14px 12px}.tabs{gap:16px}.account-cards{grid-template-columns:1fr 1fr}.account-card:last-child{grid-column:span 2}.account-value{font-size:19px}.reconcile-bar{align-items:flex-start}.reconcile-copy span{display:block}.ledger-summary{grid-template-columns:1fr}.ledger-account+.ledger-account{border-left:0;border-top:1px solid var(--line)}.ledger-table{min-width:620px}.ledger-card{overflow:auto}.contact-grid{grid-template-columns:1fr}.split-grid{gap:10px}.crm-kpis{gap:7px}.kpi-card{padding:11px}.kpi-value{font-size:18px}.opportunity-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">TV</div>
+      <div><div class="brand-name">Tuttovinilos</div><div class="brand-sub">Comanda · CRM</div></div>
+    </div>
+    <div>
+      <div class="nav-label">Gestión</div>
+      <nav class="nav" aria-label="Navegación principal">
+        <a class="nav-item" href="#" data-toast="Panel general"><span class="nav-icon">◫</span><span>Panel general</span></a>
+        <a class="nav-item active" href="#" aria-current="page"><span class="nav-icon">♙</span><span>Clientes</span><span class="nav-count">08</span></a>
+        <a class="nav-item" href="#" data-toast="Embudo de oportunidades"><span class="nav-icon">◉</span><span>Oportunidades</span></a>
+        <a class="nav-item" href="#" data-toast="Pedidos"><span class="nav-icon">▤</span><span>Pedidos</span></a>
+        <a class="nav-item" href="#" data-toast="Pagos"><span class="nav-icon">＄</span><span>Pagos</span></a>
+        <a class="nav-item" href="#" data-toast="Conciliación"><span class="nav-icon">↔</span><span>Conciliación</span></a>
+        <div class="nav-label">Relación</div>
+        <a class="nav-item" href="#" data-toast="Cotizaciones"><span class="nav-icon">▧</span><span>Cotizaciones</span></a>
+        <a class="nav-item" href="#" data-toast="Historial"><span class="nav-icon">◷</span><span>Historial</span></a>
+      </nav>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="account-user"><div class="avatar">RO</div><div><div class="user-name">Roberto Ortiz</div><div class="user-role">Administrador</div></div></div>
+      <div class="local-chip"><span class="local-dot"></span>Maqueta local · datos ficticios</div>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="breadcrumb">Comanda <span style="color:#b1bac8">/</span> CRM <span style="color:#b1bac8">/</span> <strong>Clientes</strong></div>
+      <div class="top-right"><span class="demo-pill">Prototipo · sin conexión</span><button class="help" type="button" aria-label="Información" data-toast="Maqueta independiente: no está conectada a Supabase.">?</button></div>
+    </header>
+    <main class="content">
+      <section class="page-head">
+        <div><div class="eyebrow">Relación con clientes</div><h1>Clientes</h1><p class="subtitle">La ficha reúne contactos, pedidos y cuenta en una sola vista.</p></div>
+        <button class="primary-btn" type="button" data-toast="Acción visual de muestra. No se guarda información."><span>＋</span> Nuevo cliente</button>
+      </section>
+      <div class="demo-notice"><span class="notice-mark">ⓘ</span><span><strong>Datos sintéticos:</strong> nombres, RIF, teléfonos, referencias y montos inventados para mostrar una cartera realista. Este HTML funciona localmente y no lee ni modifica la base de datos.</span></div>
+      <section class="crm-kpis" aria-label="Resumen ficticio del CRM">
+        <article class="kpi-card"><div class="kpi-head"><span>CLIENTES EN CARTERA</span><span class="kpi-icon">♙</span></div><div class="kpi-value">486</div><div class="kpi-foot"><span class="kpi-change">+12</span> nuevos durante noviembre</div></article>
+        <article class="kpi-card"><div class="kpi-head"><span>OPORTUNIDADES ABIERTAS</span><span class="kpi-icon">◉</span></div><div class="kpi-value">23</div><div class="kpi-foot">8 requieren seguimiento esta semana</div></article>
+        <article class="kpi-card"><div class="kpi-head"><span>VALOR DEL EMBUDO</span><span class="kpi-icon">↗</span></div><div class="kpi-value">$18.450</div><div class="kpi-foot">Ponderado estimado: <span class="kpi-change">$11.720</span></div></article>
+        <article class="kpi-card"><div class="kpi-head"><span>SEGUIMIENTOS HOY</span><span class="kpi-icon">◷</span></div><div class="kpi-value">07</div><div class="kpi-foot">2 cotizaciones esperan respuesta</div></article>
+      </section>
+      <div class="crm-layout">
+        <section class="client-panel" aria-label="Lista de clientes">
+          <div class="client-panel-head">
+            <div class="client-panel-title"><h2>Cartera de clientes</h2><span class="client-count" id="clientCount">8 registros</span></div>
+            <div class="search-wrap"><span class="search-icon">⌕</span><input id="clientSearch" class="search-input" type="search" placeholder="Buscar cliente, contacto o RIF" autocomplete="off"></div>
+            <div class="filters" role="group" aria-label="Filtrar clientes">
+              <button class="filter-btn active" type="button" data-filter="all">Todos</button>
+              <button class="filter-btn" type="button" data-filter="balance">Con saldo</button>
+              <button class="filter-btn" type="button" data-filter="opportunity">Oportunidad</button>
+              <button class="filter-btn" type="button" data-filter="active">Activos</button>
+            </div>
+          </div>
+          <div class="client-list" id="clientList">
+            <button class="client-row selected" type="button" data-client="1"><span class="client-avatar">GA</span><span class="client-info"><span class="client-name">Grupo Arvento Comercial, C.A.</span><span class="client-meta">Mariana Figueroa · Empresa</span></span><span class="client-side"><span class="client-balance">$730 · Bs 18.600</span><span class="client-state">Seguimiento</span></span></button>
+            <button class="client-row" type="button" data-client="2"><span class="client-avatar">TS</span><span class="client-info"><span class="client-name">Taller Senda, C.A.</span><span class="client-meta">Luis Rivas · Empresa</span></span><span class="client-side"><span class="client-balance">$200</span><span class="client-state">Cotización enviada</span></span></button>
+            <button class="client-row" type="button" data-client="3"><span class="client-avatar">MA</span><span class="client-info"><span class="client-name">Estudio Marea Arquitectura</span><span class="client-meta">Camila Soto · Prospecto</span></span><span class="client-side"><span class="client-balance">Sin saldo</span><span class="client-state">Cotización en preparación</span></span></button>
+            <button class="client-row" type="button" data-client="4"><span class="client-avatar">IG</span><span class="client-info"><span class="client-name">Inversiones Granate, C.A.</span><span class="client-meta">Andrés Salcedo · Empresa</span></span><span class="client-side"><span class="client-balance">$240</span><span class="client-state">En atención</span></span></button>
+            <button class="client-row" type="button" data-client="5"><span class="client-avatar">CA</span><span class="client-info"><span class="client-name">Clínica Altavida, C.A.</span><span class="client-meta">Dra. Valeria León · Prospecto</span></span><span class="client-side"><span class="client-balance">Sin saldo</span><span class="client-state">Seguimiento</span></span></button>
+            <button class="client-row" type="button" data-client="6"><span class="client-avatar">VA</span><span class="client-info"><span class="client-name">Alimentos Valle Alto, C.A.</span><span class="client-meta">Daniela Moreno · Empresa</span></span><span class="client-side"><span class="client-balance">Bs 8.200</span><span class="client-state">Ganada · saldo pendiente</span></span></button>
+            <button class="client-row" type="button" data-client="7"><span class="client-avatar">ER</span><span class="client-info"><span class="client-name">Ferretería El Roble, C.A.</span><span class="client-meta">Miguel Ángel Ponce · Prospecto</span></span><span class="client-side"><span class="client-balance">$1.125</span><span class="client-state">Cliente nuevo</span></span></button>
+            <button class="client-row" type="button" data-client="8"><span class="client-avatar">HA</span><span class="client-info"><span class="client-name">Fundación Horizonte Abierto</span><span class="client-meta">Sofía Cárdenas · Organización</span></span><span class="client-side"><span class="client-balance">Al día</span><span class="client-state">Ganada</span></span></button>
+          </div>
+        </section>
+        <section class="detail-panel" aria-live="polite">
+          <div class="profile-head">
+            <div class="profile-main"><div class="profile-avatar" id="profileAvatar">GA</div><div><div class="profile-name"><h2 id="profileName">Grupo Arvento Comercial, C.A.</h2><span class="status-active" id="profileStatus">Activo</span></div><div class="profile-sub" id="profileSub">Empresa · Cliente activo · Contacto principal: Mariana Figueroa</div></div></div>
+            <div class="profile-actions">
+              <button class="secondary-btn" type="button" data-toast="Acción visual de muestra. No se guarda información.">Editar ficha</button>
+              <button class="primary-btn" type="button" data-toast="Vista de pago de demostración. No se registra ningún movimiento.">＋ Registrar pago</button>
+            </div>
+          </div>
+          <div class="profile-meta" id="profileMeta"><span>▣ <b>RIF</b> J412783654</span><span>☎ <b>Teléfono</b> +58 412-573-2846</span><span>✉ <b>Correo</b> administracion@arvento.example</span><span>⌖ <b>Ubicación</b> Zona Industrial Municipal, Valencia</span></div>
+          <section class="opportunity-strip" id="opportunityStrip" aria-label="Seguimiento comercial"><div class="opp-field"><label>Etapa comercial</label><strong class="opp-stage">Seguimiento</strong></div><div class="opp-field"><label>Origen del contacto</label><strong>Referido comercial</strong></div><div class="opp-field"><label>Responsable</label><strong>Roberto Ortiz</strong></div><div class="opp-field"><label>Oportunidad estimada</label><strong>$1.850,00</strong></div><div class="opp-field"><label>Probabilidad</label><strong>65%</strong></div><div class="opp-field"><label>Próximo seguimiento</label><strong>26 nov 2026 · COT-2026-184</strong></div></section>
+          <div class="tabs" role="tablist" aria-label="Secciones del cliente">
+            <button class="tab active" type="button" data-tab="account" role="tab" aria-selected="true">Cuenta y conciliación</button>
+            <button class="tab" type="button" data-tab="orders" role="tab" aria-selected="false">Pedidos</button>
+            <button class="tab" type="button" data-tab="quotes" role="tab" aria-selected="false">Cotizaciones</button>
+            <button class="tab" type="button" data-tab="contacts" role="tab" aria-selected="false">Contactos y notas</button>
+            <button class="tab" type="button" data-tab="history" role="tab" aria-selected="false">Historial</button>
+          </div>
+          <div id="tabContent">
+            <div class="section-title"><h3>Resumen de cuenta</h3><span class="section-hint">4 pedidos · 4 entradas de pago</span></div>
+            <div class="account-cards"><article class="account-card primary"><div class="account-top"><span>DIVISA · USD</span><i class="account-indicator"></i></div><div class="account-value">$730,00</div><div class="account-caption">$810,00 pendiente en pedidos · $80,00 a favor</div></article><article class="account-card"><div class="account-top"><span>BCV · BOLÍVARES</span><i class="account-indicator gold"></i></div><div class="account-value">Bs 18.600,00</div><div class="account-caption">Saldo pendiente en pedidos</div></article><article class="account-card credit-card"><div class="account-top"><span>SALDO A FAVOR</span><span>↗</span></div><div class="account-value">$80,00</div><div class="account-caption">Se mantiene dentro de la cuenta DIVISA</div></article></div>
+            <div class="reconcile-bar"><div class="reconcile-left"><span class="check-circle">✓</span><div class="reconcile-copy"><strong>Conciliación de muestra</strong><span>USD 1.865,00 emitidos − USD 1.055,00 aplicados − USD 80,00 a favor = USD 730,00 netos</span></div></div><span class="reconcile-status">USD / BCV SEPARADOS</span></div>
+            <div class="split-grid"><section class="subcard"><div class="subcard-head"><h3>Entradas de pago</h3><span>referencia y distribución</span></div><div class="payment-list">
+              <article class="payment-item"><div class="payment-line"><div class="payment-main"><div class="payment-title">Transferencia Zelle <span class="payment-id">PG-2026-058</span></div><div class="payment-reference">21 nov 2026 · Ref. ZL-842617</div></div><div class="payment-amount"><strong>+$500,00</strong><small>Recibido · DIVISA</small></div></div><div class="payment-breakdown"><div class="break-row"><span>Aplicado a TV-0264</span><strong>$420,00</strong></div><div class="break-row credit"><span>Queda a favor</span><strong>$80,00</strong></div></div></article>
+              <article class="payment-item"><div class="payment-line"><div class="payment-main"><div class="payment-title">Transferencia bancaria <span class="payment-id">PG-2026-054</span></div><div class="payment-reference">19 nov 2026 · Ref. TRF-731904</div></div><div class="payment-amount"><strong>+$260,00</strong><small>Aplicado · DIVISA</small></div></div><div class="payment-breakdown"><div class="break-row"><span>Aplicado a TV-0264</span><strong>$260,00</strong></div></div></article>
+              <article class="payment-item"><div class="payment-line"><div class="payment-main"><div class="payment-title">Zelle <span class="payment-id">PG-2026-051</span></div><div class="payment-reference">18 nov 2026 · Ref. ZL-705238</div></div><div class="payment-amount"><strong>+$375,00</strong><small>Aplicado · DIVISA</small></div></div><div class="payment-breakdown"><div class="break-row"><span>Aplicado a TV-0258</span><strong>$375,00</strong></div></div></article>
+              <article class="payment-item"><div class="payment-line"><div class="payment-main"><div class="payment-title">Pago móvil <span class="payment-id">PG-2026-049</span></div><div class="payment-reference">17 nov 2026 · Ref. PM-520184</div></div><div class="payment-amount"><strong>+Bs 24.000,00</strong><small>Aplicado · BCV</small></div></div><div class="payment-breakdown"><div class="break-row"><span>Aplicado a TV-0247</span><strong>Bs 24.000,00</strong></div></div></article>
+            </div></section><section class="subcard"><div class="subcard-head"><h3>Pedidos del cliente</h3><span>saldo individual por pedido</span></div><div class="order-list">
+              <article class="order-item"><div><div class="order-id">TV-0264 · 20 nov 2026 · DIVISA</div><div class="order-name">Letras corpóreas · fachada principal</div><div class="order-details">PVC 18 mm · En curso</div></div><div class="order-right"><div class="order-total">$1.280,00</div><div class="order-balance">Abonado $680 · debe $600</div><span class="badge progress">En curso</span></div></article>
+              <article class="order-item"><div><div class="order-id">TV-0258 · 18 nov 2026 · DIVISA</div><div class="order-name">Directorio de oficinas</div><div class="order-details">Acrílico 5 mm · Revisado</div></div><div class="order-right"><div class="order-total">$375,00</div><div class="order-balance">Pagado</div><span class="badge done">Revisado</span></div></article>
+              <article class="order-item"><div><div class="order-id">TV-0251 · 14 nov 2026 · DIVISA</div><div class="order-name">Vinil de seguridad para vitrinas</div><div class="order-details">Impresión UV + laminado · Solicitud</div></div><div class="order-right"><div class="order-total">$210,00</div><div class="order-balance">Pendiente $210</div><span class="badge review">Solicitud</span></div></article>
+              <article class="order-item"><div><div class="order-id">TV-0247 · 12 nov 2026 · BCV</div><div class="order-name">Señalización de almacén</div><div class="order-details">PVC impreso · Listo</div></div><div class="order-right"><div class="order-total">Bs 42.600,00</div><div class="order-balance">Abonado Bs 24.000 · debe Bs 18.600</div><span class="badge done">Listo</span></div></article>
+            </div></section></div>
+            <section class="ledger-card"><div class="ledger-head"><h3>Conciliación simple</h3><span class="section-hint">El saldo a favor no se suma a un pedido</span></div><div class="ledger-summary"><div class="ledger-account"><div class="ledger-label">CUENTA DIVISA · USD</div><div class="ledger-math">$1.865,00 emitidos − <span class="minus">$1.055,00</span> aplicados − <span class="plus">$80,00</span> a favor = <strong>$730,00</strong> netos</div></div><div class="ledger-account"><div class="ledger-label">CUENTA BCV · BOLÍVARES</div><div class="ledger-math">Bs 42.600,00 emitidos − <span class="minus">Bs 24.000,00</span> aplicados = <strong>Bs 18.600,00</strong> netos</div></div></div></section>
+          </div>
+          <div class="footer-note">Prototipo visual · no contiene conexión, credenciales ni escrituras a Supabase.</div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+"use strict";
+const clients = [
+  {
+    "id": 1,
+    "name": "Grupo Arvento Comercial, C.A.",
+    "initials": "GA",
+    "type": "Empresa · Cliente activo",
+    "rif": "J412783654",
+    "phone": "+58 412-573-2846",
+    "email": "administracion@arvento.example",
+    "address": "Zona Industrial Municipal, Valencia",
+    "contact": "Mariana Figueroa",
+    "role": "Compras · contacto principal",
+    "contactPhone": "+58 414-268-5173",
+    "contactEmail": "m.figueroa@arvento.example",
+    "contacts": [
+      {
+        "name": "Mariana Figueroa",
+        "role": "Compras · principal",
+        "phone": "+58 414-268-5173",
+        "email": "m.figueroa@arvento.example"
+      },
+      {
+        "name": "Javier Rojas",
+        "role": "Administración",
+        "phone": "+58 424-731-9062",
+        "email": "j.rojas@arvento.example"
+      }
+    ],
+    "origin": "Referido comercial",
+    "owner": "Roberto Ortiz",
+    "stage": "Seguimiento",
+    "opportunity": 1850,
+    "probability": 65,
+    "next": "26 nov 2026",
+    "quote": "COT-2026-184",
+    "active": true,
+    "note": "Validar arte final con Mariana antes de producir. La instalación de fachada depende de confirmar el punto eléctrico.",
+    "orders": [
+      {
+        "id": "TV-0264",
+        "date": "20 nov 2026",
+        "name": "Letras corpóreas · fachada principal",
+        "details": "PVC 18 mm · 1 juego · entrega 29 nov · Ricardo",
+        "status": "En curso",
+        "account": "USD",
+        "total": 1280,
+        "paid": 680
+      },
+      {
+        "id": "TV-0258",
+        "date": "18 nov 2026",
+        "name": "Directorio de oficinas",
+        "details": "Acrílico 5 mm · 5 placas · entrega 23 nov · Rubén",
+        "status": "Revisado",
+        "account": "USD",
+        "total": 375,
+        "paid": 375
+      },
+      {
+        "id": "TV-0251",
+        "date": "14 nov 2026",
+        "name": "Vinil de seguridad para vitrinas",
+        "details": "Impresión UV + laminado · 12 m² · entrega 26 nov",
+        "status": "Solicitud",
+        "account": "USD",
+        "total": 210,
+        "paid": 0
+      },
+      {
+        "id": "TV-0247",
+        "date": "12 nov 2026",
+        "name": "Señalización de almacén",
+        "details": "PVC impreso · 18 piezas · tasa fijada al emitir",
+        "status": "Listo",
+        "account": "BS",
+        "total": 42600,
+        "paid": 24000
+      }
+    ],
+    "payments": [
+      {
+        "id": "PG-2026-058",
+        "date": "21 nov 2026",
+        "account": "USD",
+        "received": 500,
+        "applied": 420,
+        "credit": 80,
+        "method": "Transferencia Zelle",
+        "ref": "ZL-842617",
+        "allocations": [
+          [
+            "TV-0264",
+            420
+          ]
+        ]
+      },
+      {
+        "id": "PG-2026-054",
+        "date": "19 nov 2026",
+        "account": "USD",
+        "received": 260,
+        "applied": 260,
+        "credit": 0,
+        "method": "Transferencia bancaria",
+        "ref": "TRF-731904",
+        "allocations": [
+          [
+            "TV-0264",
+            260
+          ]
+        ]
+      },
+      {
+        "id": "PG-2026-051",
+        "date": "18 nov 2026",
+        "account": "USD",
+        "received": 375,
+        "applied": 375,
+        "credit": 0,
+        "method": "Zelle",
+        "ref": "ZL-705238",
+        "allocations": [
+          [
+            "TV-0258",
+            375
+          ]
+        ]
+      },
+      {
+        "id": "PG-2026-049",
+        "date": "17 nov 2026",
+        "account": "BS",
+        "received": 24000,
+        "applied": 24000,
+        "credit": 0,
+        "method": "Pago móvil",
+        "ref": "PM-520184",
+        "allocations": [
+          [
+            "TV-0247",
+            24000
+          ]
+        ]
+      }
+    ],
+    "quotes": [
+      {
+        "number": "COT-2026-184",
+        "date": "19 nov 2026",
+        "title": "Fachada corpórea y directorio",
+        "amount": 1850,
+        "account": "USD",
+        "status": "En seguimiento",
+        "valid": "30 nov 2026"
+      },
+      {
+        "number": "COT-2026-159",
+        "date": "03 nov 2026",
+        "title": "Señalización de almacén",
+        "amount": 42600,
+        "account": "BS",
+        "status": "Aprobada",
+        "valid": "—"
+      }
+    ],
+    "history": [
+      {
+        "date": "21 nov 2026 · 10:42",
+        "kind": "payment",
+        "title": "Pago general recibido · PG-2026-058",
+        "detail": "USD 500,00 · Ref. ZL-842617 · USD 420,00 aplicado a TV-0264 y USD 80,00 quedan a favor."
+      },
+      {
+        "date": "20 nov 2026 · 15:10",
+        "kind": "order",
+        "title": "Pedido TV-0264 pasó a En curso",
+        "detail": "Letras corpóreas para fachada · fecha prevista de entrega 29 nov 2026."
+      },
+      {
+        "date": "19 nov 2026 · 09:28",
+        "kind": "payment",
+        "title": "Abono aplicado · PG-2026-054",
+        "detail": "USD 260,00 aplicados a TV-0264 · Ref. TRF-731904."
+      },
+      {
+        "date": "18 nov 2026 · 11:05",
+        "kind": "order",
+        "title": "Pedido TV-0258 revisado",
+        "detail": "Directorio de oficinas · USD 375,00 · saldo pagado."
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Taller Senda, C.A.",
+    "initials": "TS",
+    "type": "Empresa · Cliente activo",
+    "rif": "J408531276",
+    "phone": "+58 414-628-3915",
+    "email": "contacto@tallersenda.example",
+    "address": "Av. Don Julio Centeno, San Diego",
+    "contact": "Luis Rivas",
+    "role": "Gerencia · contacto principal",
+    "contactPhone": "+58 412-694-0872",
+    "contactEmail": "l.rivas@tallersenda.example",
+    "contacts": [
+      {
+        "name": "Luis Rivas",
+        "role": "Gerencia · principal",
+        "phone": "+58 412-694-0872",
+        "email": "l.rivas@tallersenda.example"
+      },
+      {
+        "name": "Paola Méndez",
+        "role": "Administración",
+        "phone": "+58 424-318-6507",
+        "email": "p.mendez@tallersenda.example"
+      }
+    ],
+    "origin": "Instagram",
+    "owner": "Ricardo Ortiz",
+    "stage": "Cotización enviada",
+    "opportunity": 635,
+    "probability": 50,
+    "next": "24 nov 2026",
+    "quote": "COT-2026-191",
+    "active": true,
+    "note": "Enviar alternativa con iluminación cálida y otra sin iluminación. Cliente prefiere comparar ambas opciones.",
+    "orders": [
+      {
+        "id": "TV-0261",
+        "date": "19 nov 2026",
+        "name": "Identificación de áreas",
+        "details": "Acrílico 3 mm · 6 unidades · entrega 25 nov",
+        "status": "En curso",
+        "account": "BS",
+        "total": 9000,
+        "paid": 9000
+      },
+      {
+        "id": "TV-0251",
+        "date": "14 nov 2026",
+        "name": "Letras para recepción",
+        "details": "PVC 15 mm · 1 juego · entrega por confirmar",
+        "status": "Solicitud",
+        "account": "USD",
+        "total": 325,
+        "paid": 125
+      }
+    ],
+    "payments": [
+      {
+        "id": "PG-2026-056",
+        "date": "20 nov 2026",
+        "account": "BS",
+        "received": 9000,
+        "applied": 9000,
+        "credit": 0,
+        "method": "Pago móvil",
+        "ref": "PM-781426",
+        "allocations": [
+          [
+            "TV-0261",
+            9000
+          ]
+        ]
+      },
+      {
+        "id": "PG-2026-045",
+        "date": "15 nov 2026",
+        "account": "USD",
+        "received": 125,
+        "applied": 125,
+        "credit": 0,
+        "method": "Efectivo USD",
+        "ref": "REC-2026-118",
+        "allocations": [
+          [
+            "TV-0251",
+            125
+          ]
+        ]
+      }
+    ],
+    "quotes": [
+      {
+        "number": "COT-2026-191",
+        "date": "20 nov 2026",
+        "title": "Letras para recepción · dos alternativas",
+        "amount": 635,
+        "account": "USD",
+        "status": "Enviada",
+        "valid": "27 nov 2026"
+      }
+    ],
+    "history": [
+      {
+        "date": "20 nov 2026 · 16:20",
+        "kind": "quote",
+        "title": "Cotización COT-2026-191 enviada",
+        "detail": "Dos alternativas para recepción · USD 635,00 · seguimiento previsto 24 nov."
+      },
+      {
+        "date": "20 nov 2026 · 14:05",
+        "kind": "payment",
+        "title": "Pago aplicado · PG-2026-056",
+        "detail": "Bs 9.000,00 aplicados a TV-0261 · Ref. PM-781426."
+      },
+      {
+        "date": "19 nov 2026 · 08:35",
+        "kind": "order",
+        "title": "Pedido TV-0261 listo para revisión",
+        "detail": "Identificación de áreas · 6 piezas en acrílico."
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Estudio Marea Arquitectura, C.A.",
+    "initials": "MA",
+    "type": "Empresa · Prospecto",
+    "rif": "J413005982",
+    "phone": "+58 424-715-6038",
+    "email": "proyectos@marea.example",
+    "address": "El Viñedo, Valencia",
+    "contact": "Camila Soto",
+    "role": "Arquitectura · contacto principal",
+    "contactPhone": "+58 412-906-3451",
+    "contactEmail": "c.soto@marea.example",
+    "contacts": [
+      {
+        "name": "Camila Soto",
+        "role": "Arquitectura · principal",
+        "phone": "+58 412-906-3451",
+        "email": "c.soto@marea.example"
+      }
+    ],
+    "origin": "Recomendación de arquitecto",
+    "owner": "Marie Gabriela",
+    "stage": "Cotización en preparación",
+    "opportunity": 870,
+    "probability": 35,
+    "next": "25 nov 2026",
+    "quote": "COT-2026-194",
+    "active": true,
+    "note": "Prospecto nuevo. Solicitó propuesta para logo de recepción y señalética de dos consultorios.",
+    "orders": [],
+    "payments": [],
+    "quotes": [
+      {
+        "number": "COT-2026-194",
+        "date": "21 nov 2026",
+        "title": "Logo de recepción y señalética",
+        "amount": 870,
+        "account": "USD",
+        "status": "En preparación",
+        "valid": "Por definir"
+      }
+    ],
+    "history": [
+      {
+        "date": "21 nov 2026 · 09:15",
+        "kind": "quote",
+        "title": "Solicitud de cotización registrada",
+        "detail": "Logo de recepción y señalética para dos consultorios · visita de medidas pendiente."
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Inversiones Granate, C.A.",
+    "initials": "IG",
+    "type": "Empresa · Cliente activo",
+    "rif": "J311824057",
+    "phone": "+58 412-845-2107",
+    "email": "compras@granate.example",
+    "address": "Zona Industrial El Recreo, Valencia",
+    "contact": "Andrés Salcedo",
+    "role": "Compras · contacto principal",
+    "contactPhone": "+58 414-372-9058",
+    "contactEmail": "a.salcedo@granate.example",
+    "contacts": [
+      {
+        "name": "Andrés Salcedo",
+        "role": "Compras · principal",
+        "phone": "+58 414-372-9058",
+        "email": "a.salcedo@granate.example"
+      },
+      {
+        "name": "Elena Pardo",
+        "role": "Administración",
+        "phone": "+58 424-557-1829",
+        "email": "e.pardo@granate.example"
+      }
+    ],
+    "origin": "Cliente recurrente",
+    "owner": "Roberto Ortiz",
+    "stage": "En atención",
+    "opportunity": 1100,
+    "probability": 40,
+    "next": "27 nov 2026",
+    "quote": "COT-2026-177",
+    "active": true,
+    "note": "La empresa suele aprobar por correo. Confirmar acabado automotriz y medidas antes de reservar producción.",
+    "orders": [
+      {
+        "id": "TV-0242",
+        "date": "16 nov 2026",
+        "name": "Logo para área de ventas",
+        "details": "PVC 18 mm · acabado negro mate · entrega 26 nov",
+        "status": "En curso",
+        "account": "USD",
+        "total": 840,
+        "paid": 600
+      },
+      {
+        "id": "TV-0240",
+        "date": "13 nov 2026",
+        "name": "Señales de seguridad",
+        "details": "PVC impreso · 12 unidades · instalado",
+        "status": "Pagado",
+        "account": "BS",
+        "total": 9500,
+        "paid": 9500
+      }
+    ],
+    "payments": [
+      {
+        "id": "PG-2026-047",
+        "date": "17 nov 2026",
+        "account": "USD",
+        "received": 600,
+        "applied": 600,
+        "credit": 0,
+        "method": "Transferencia bancaria",
+        "ref": "TRF-418620",
+        "allocations": [
+          [
+            "TV-0242",
+            600
+          ]
+        ]
+      },
+      {
+        "id": "PG-2026-042",
+        "date": "14 nov 2026",
+        "account": "BS",
+        "received": 9500,
+        "applied": 9500,
+        "credit": 0,
+        "method": "Pago móvil",
+        "ref": "PM-394816",
+        "allocations": [
+          [
+            "TV-0240",
+            9500
+          ]
+        ]
+      }
+    ],
+    "quotes": [
+      {
+        "number": "COT-2026-177",
+        "date": "11 nov 2026",
+        "title": "Logo para área de ventas",
+        "amount": 1100,
+        "account": "USD",
+        "status": "Aprobada",
+        "valid": "24 nov 2026"
+      }
+    ],
+    "history": [
+      {
+        "date": "17 nov 2026 · 12:40",
+        "kind": "payment",
+        "title": "Abono recibido · PG-2026-047",
+        "detail": "USD 600,00 aplicados a TV-0242 · Ref. TRF-418620."
+      },
+      {
+        "date": "16 nov 2026 · 10:25",
+        "kind": "order",
+        "title": "Pedido TV-0242 en producción",
+        "detail": "Logo para área de ventas · saldo del pedido USD 240,00."
+      },
+      {
+        "date": "14 nov 2026 · 13:18",
+        "kind": "payment",
+        "title": "Pedido TV-0240 pagado",
+        "detail": "Bs 9.500,00 recibidos por Pago móvil · Ref. PM-394816."
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Clínica Altavida, C.A.",
+    "initials": "CA",
+    "type": "Empresa · Prospecto",
+    "rif": "J412770813",
+    "phone": "+58 414-291-6840",
+    "email": "administracion@altavida.example",
+    "address": "Av. Universidad, Naguanagua",
+    "contact": "Dra. Valeria León",
+    "role": "Administración · contacto principal",
+    "contactPhone": "+58 424-630-4175",
+    "contactEmail": "v.leon@altavida.example",
+    "contacts": [
+      {
+        "name": "Dra. Valeria León",
+        "role": "Administración · principal",
+        "phone": "+58 424-630-4175",
+        "email": "v.leon@altavida.example"
+      },
+      {
+        "name": "Samuel Torres",
+        "role": "Mantenimiento",
+        "phone": "+58 412-550-7436",
+        "email": "s.torres@altavida.example"
+      }
+    ],
+    "origin": "WhatsApp empresarial",
+    "owner": "Marie Gabriela",
+    "stage": "Seguimiento",
+    "opportunity": 3250,
+    "probability": 45,
+    "next": "24 nov 2026",
+    "quote": "COT-2026-188",
+    "active": true,
+    "note": "Esperando aprobación de la dirección médica. Revisar disponibilidad de punto eléctrico para la chupeta iluminada.",
+    "orders": [],
+    "payments": [],
+    "quotes": [
+      {
+        "number": "COT-2026-188",
+        "date": "18 nov 2026",
+        "title": "Logo de recepción + chupeta iluminada",
+        "amount": 3250,
+        "account": "USD",
+        "status": "Enviada",
+        "valid": "02 dic 2026"
+      }
+    ],
+    "history": [
+      {
+        "date": "20 nov 2026 · 11:30",
+        "kind": "quote",
+        "title": "Seguimiento de COT-2026-188",
+        "detail": "La propuesta está en revisión de dirección. Próximo contacto previsto para 24 nov."
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Alimentos Valle Alto, C.A.",
+    "initials": "VA",
+    "type": "Empresa · Cliente activo",
+    "rif": "J403218945",
+    "phone": "+58 412-683-7194",
+    "email": "compras@vallealto.example",
+    "address": "Guacara, Carabobo",
+    "contact": "Daniela Moreno",
+    "role": "Mercadeo · contacto principal",
+    "contactPhone": "+58 414-830-2671",
+    "contactEmail": "d.moreno@vallealto.example",
+    "contacts": [
+      {
+        "name": "Daniela Moreno",
+        "role": "Mercadeo · principal",
+        "phone": "+58 414-830-2671",
+        "email": "d.moreno@vallealto.example"
+      },
+      {
+        "name": "José Manuel Pérez",
+        "role": "Operaciones",
+        "phone": "+58 424-192-5386",
+        "email": "jm.perez@vallealto.example"
+      }
+    ],
+    "origin": "Cliente recurrente",
+    "owner": "Ricardo Ortiz",
+    "stage": "Ganada",
+    "opportunity": 2200,
+    "probability": 100,
+    "next": "02 dic 2026",
+    "quote": "COT-2026-161",
+    "active": true,
+    "note": "Proyecto anterior cerrado. Consultar antes de enviar una nueva propuesta; coordinar instalación con operaciones.",
+    "orders": [
+      {
+        "id": "TV-0221",
+        "date": "10 nov 2026",
+        "name": "Identidad visual de exhibidores",
+        "details": "Impresión UV + laminado · 8 módulos · entregado",
+        "status": "Pagado",
+        "account": "USD",
+        "total": 2200,
+        "paid": 2200
+      },
+      {
+        "id": "TV-0218",
+        "date": "07 nov 2026",
+        "name": "Señalización de depósito",
+        "details": "PVC 5 mm · 14 placas · entrega parcial",
+        "status": "Listo",
+        "account": "BS",
+        "total": 38200,
+        "paid": 30000
+      }
+    ],
+    "payments": [
+      {
+        "id": "PG-2026-033",
+        "date": "11 nov 2026",
+        "account": "USD",
+        "received": 2200,
+        "applied": 2200,
+        "credit": 0,
+        "method": "Transferencia Zelle",
+        "ref": "ZL-172846",
+        "allocations": [
+          [
+            "TV-0221",
+            2200
+          ]
+        ]
+      },
+      {
+        "id": "PG-2026-028",
+        "date": "08 nov 2026",
+        "account": "BS",
+        "received": 30000,
+        "applied": 30000,
+        "credit": 0,
+        "method": "Transferencia",
+        "ref": "TRF-294751",
+        "allocations": [
+          [
+            "TV-0218",
+            30000
+          ]
+        ]
+      }
+    ],
+    "quotes": [
+      {
+        "number": "COT-2026-161",
+        "date": "05 nov 2026",
+        "title": "Exhibidores e identidad visual",
+        "amount": 2200,
+        "account": "USD",
+        "status": "Aprobada",
+        "valid": "10 nov 2026"
+      }
+    ],
+    "history": [
+      {
+        "date": "11 nov 2026 · 16:10",
+        "kind": "payment",
+        "title": "Pago final recibido · PG-2026-033",
+        "detail": "USD 2.200,00 aplicados a TV-0221 · Ref. ZL-172846."
+      },
+      {
+        "date": "10 nov 2026 · 17:30",
+        "kind": "order",
+        "title": "TV-0221 entregado",
+        "detail": "Ocho módulos de exhibición con identidad visual."
+      },
+      {
+        "date": "08 nov 2026 · 12:00",
+        "kind": "payment",
+        "title": "Abono recibido · PG-2026-028",
+        "detail": "Bs 30.000,00 aplicados a TV-0218 · saldo del pedido Bs 8.200,00."
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Ferretería El Roble, C.A.",
+    "initials": "ER",
+    "type": "Empresa · Prospecto",
+    "rif": "J502813764",
+    "phone": "+58 424-510-7283",
+    "email": "ventas@ferreteriaelroble.example",
+    "address": "Av. Bolívar, Los Guayos",
+    "contact": "Miguel Ángel Ponce",
+    "role": "Propietario · contacto principal",
+    "contactPhone": "+58 412-342-9016",
+    "contactEmail": "m.ponce@ferreteriaelroble.example",
+    "contacts": [
+      {
+        "name": "Miguel Ángel Ponce",
+        "role": "Propietario · principal",
+        "phone": "+58 412-342-9016",
+        "email": "m.ponce@ferreteriaelroble.example"
+      }
+    ],
+    "origin": "Visita comercial",
+    "owner": "Roberto Ortiz",
+    "stage": "Cliente nuevo",
+    "opportunity": 1125,
+    "probability": 25,
+    "next": "28 nov 2026",
+    "quote": "COT-2026-196",
+    "active": true,
+    "note": "Primer contacto realizado en tienda. Requiere letrero exterior y señalización de pasillos.",
+    "orders": [
+      {
+        "id": "TV-0267",
+        "date": "21 nov 2026",
+        "name": "Letrero exterior · primera fase",
+        "details": "ACM + letras PVC · 1 juego · fecha por coordinar",
+        "status": "Solicitud",
+        "account": "USD",
+        "total": 1125,
+        "paid": 0
+      }
+    ],
+    "payments": [],
+    "quotes": [
+      {
+        "number": "COT-2026-196",
+        "date": "21 nov 2026",
+        "title": "Letrero exterior y señalización",
+        "amount": 1125,
+        "account": "USD",
+        "status": "En preparación",
+        "valid": "Por definir"
+      }
+    ],
+    "history": [
+      {
+        "date": "21 nov 2026 · 12:05",
+        "kind": "order",
+        "title": "Solicitud TV-0267 registrada",
+        "detail": "Letrero exterior para Ferretería El Roble. Pendiente validar medidas en sitio."
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "Fundación Horizonte Abierto",
+    "initials": "HA",
+    "type": "Organización · Cliente activo",
+    "rif": "J400781236",
+    "phone": "+58 414-709-3165",
+    "email": "proyectos@horizonteabierto.example",
+    "address": "El Parral, Valencia",
+    "contact": "Sofía Cárdenas",
+    "role": "Coordinación · contacto principal",
+    "contactPhone": "+58 412-618-0497",
+    "contactEmail": "s.cardenas@horizonteabierto.example",
+    "contacts": [
+      {
+        "name": "Sofía Cárdenas",
+        "role": "Coordinación · principal",
+        "phone": "+58 412-618-0497",
+        "email": "s.cardenas@horizonteabierto.example"
+      },
+      {
+        "name": "Tomás Ibarra",
+        "role": "Administración",
+        "phone": "+58 424-286-1530",
+        "email": "t.ibarra@horizonteabierto.example"
+      }
+    ],
+    "origin": "Referido institucional",
+    "owner": "Marie Gabriela",
+    "stage": "Ganada",
+    "opportunity": 450,
+    "probability": 100,
+    "next": "03 dic 2026",
+    "quote": "COT-2026-153",
+    "active": true,
+    "note": "Entrega confirmada. Contactar la primera semana de diciembre para revisar nuevas necesidades de señalización.",
+    "orders": [
+      {
+        "id": "TV-0236",
+        "date": "12 nov 2026",
+        "name": "Placas para centro comunitario",
+        "details": "Acrílico grabado · 9 unidades · entregado",
+        "status": "Pagado",
+        "account": "USD",
+        "total": 450,
+        "paid": 450
+      }
+    ],
+    "payments": [
+      {
+        "id": "PG-2026-039",
+        "date": "13 nov 2026",
+        "account": "USD",
+        "received": 450,
+        "applied": 450,
+        "credit": 0,
+        "method": "Transferencia",
+        "ref": "TRF-609382",
+        "allocations": [
+          [
+            "TV-0236",
+            450
+          ]
+        ]
+      }
+    ],
+    "quotes": [
+      {
+        "number": "COT-2026-153",
+        "date": "08 nov 2026",
+        "title": "Placas para centro comunitario",
+        "amount": 450,
+        "account": "USD",
+        "status": "Aprobada",
+        "valid": "12 nov 2026"
+      }
+    ],
+    "history": [
+      {
+        "date": "13 nov 2026 · 10:20",
+        "kind": "payment",
+        "title": "Pago recibido · PG-2026-039",
+        "detail": "USD 450,00 aplicados a TV-0236 · Ref. TRF-609382."
+      },
+      {
+        "date": "12 nov 2026 · 15:45",
+        "kind": "order",
+        "title": "Pedido TV-0236 entregado",
+        "detail": "Nueve placas de acrílico grabado para el centro comunitario."
+      }
+    ]
+  }
+];
+let selectedId=1;
+let activeFilter="all";
+let activeTab="account";
+function esc(value){return String(value==null?"":value).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]);});}
+function number(value){return new Intl.NumberFormat("es-VE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(value)||0);}
+function fmt(value,account){return account==="BS"?"Bs "+number(value):"$"+number(value);}
+function accountLabel(account){return account==="BS"?"BCV · Bs":"DIVISA · USD";}
+function totals(client,account){
+  const orders=client.orders.filter(function(o){return o.account===account;});
+  const payments=client.payments.filter(function(p){return p.account===account;});
+  const charges=orders.reduce(function(s,o){return s+o.total;},0);
+  const paid=orders.reduce(function(s,o){return s+o.paid;},0);
+  const open=Math.max(charges-paid,0);
+  const credit=payments.reduce(function(s,p){return s+p.credit;},0);
+  return {charges:charges,paid:paid,open:open,credit:credit,due:Math.max(open-credit,0),favor:Math.max(credit-open,0)};
+}
+function clientById(id){return clients.find(function(c){return c.id===Number(id);});}
+function renderClientList(){
+  const q=document.getElementById("clientSearch").value.trim().toLowerCase();
+  let rows=clients.filter(function(c){
+    const searchable=[c.name,c.contact,c.rif,c.phone,c.email,c.stage,c.origin,c.owner,c.quote].join(" ").toLowerCase();
+    const match=searchable.includes(q);
+    const due=totals(c,"USD").due+totals(c,"BS").due>0;
+    const openOpportunity=Number(c.opportunity||0)>0&&c.stage!=="Ganada"&&c.stage!=="Perdida";
+    const filter=activeFilter==="balance"?due:activeFilter==="opportunity"?openOpportunity:activeFilter==="active"?c.active:true;
+    return match&&filter;
+  });
+  document.getElementById("clientCount").textContent=rows.length+" "+(rows.length===1?"registro":"registros");
+  document.getElementById("clientList").innerHTML=rows.length?rows.map(function(c){
+    const d=totals(c,"USD").due,b=totals(c,"BS").due;
+    const balance=d>0&&b>0?"$"+number(d)+" · Bs "+number(b):d>0?"$"+number(d):b>0?"Bs "+number(b):"Sin saldo";
+    const state=c.stage+(d+b>0?" · saldo pendiente":"");
+    return '<button class="client-row '+(c.id===selectedId?"selected":"")+'" type="button" data-client="'+c.id+'"><span class="client-avatar">'+esc(c.initials)+'</span><span class="client-info"><span class="client-name">'+esc(c.name)+'</span><span class="client-meta">'+esc(c.contact)+' · '+esc(c.type.split(" · ")[0])+'</span></span><span class="client-side"><span class="client-balance">'+balance+'</span><span class="client-state">'+state+'</span></span></button>';
+  }).join(""):'<div class="empty-list">No hay coincidencias.</div>';
+}
+function renderProfile(client){
+  const initials=client.initials;
+  document.getElementById("profileAvatar").textContent=initials;
+  document.getElementById("profileName").textContent=client.name;
+  document.getElementById("profileStatus").textContent=client.active?"Activo":"Inactivo";
+  document.getElementById("profileSub").textContent=client.type+" · Contacto principal: "+client.contact;
+  document.getElementById("profileMeta").innerHTML=
+    '<span>▣ <b>RIF/C.I.</b> '+esc(client.rif)+'</span>'+
+    '<span>☎ <b>Teléfono</b> '+esc(client.phone)+'</span>'+
+    '<span>✉ <b>Correo</b> '+esc(client.email)+'</span>'+
+    '<span>⌖ <b>Ubicación</b> '+esc(client.address)+'</span>';
+  const opportunity=Number(client.opportunity||0);
+  const probability=Math.max(0,Math.min(Number(client.probability||0),100));
+  document.getElementById("opportunityStrip").innerHTML=
+    '<div class="opp-field"><label>Etapa comercial</label><strong class="opp-stage">'+esc(client.stage)+'</strong></div>'+
+    '<div class="opp-field"><label>Origen del contacto</label><strong>'+esc(client.origin)+'</strong></div>'+
+    '<div class="opp-field"><label>Responsable</label><strong>'+esc(client.owner)+'</strong></div>'+
+    '<div class="opp-field"><label>Oportunidad estimada</label><strong>'+fmt(opportunity,"USD")+'</strong></div>'+
+    '<div class="opp-field"><label>Probabilidad</label><div class="opp-prob"><span class="opp-progress"><i style="width:'+probability+'%"></i></span><small>'+probability+'%</small></div></div>'+
+    '<div class="opp-field"><label>Próximo seguimiento</label><strong>'+esc(client.next)+' · '+esc(client.quote)+'</strong></div>';
+}
+function renderAccount(client){
+  const usd=totals(client,"USD"),bs=totals(client,"BS");
+  const orders=client.orders,payments=client.payments;
+  const usdCaption=fmt(usd.open,"USD")+" pendiente en pedidos · "+fmt(usd.credit,"USD")+" a favor";
+  const bsCaption=fmt(bs.open,"BS")+" pendiente en pedidos";
+  let allocationTotal=payments.reduce(function(sum,p){return sum+p.applied;},0);
+  const accountHTML=
+    '<div class="section-title"><h3>Resumen de cuenta</h3><span class="section-hint">Saldo neto por moneda · '+orders.length+' pedidos · '+payments.length+' entradas</span></div>'+
+    '<div class="account-cards">'+
+      '<article class="account-card primary"><div class="account-top"><span>DIVISA · USD</span><i class="account-indicator"></i></div><div class="account-value">'+fmt(usd.due,"USD")+'</div><div class="account-caption">'+esc(usdCaption)+'</div></article>'+
+      '<article class="account-card"><div class="account-top"><span>BCV · BOLÍVARES</span><i class="account-indicator gold"></i></div><div class="account-value">'+fmt(bs.due,"BS")+'</div><div class="account-caption">'+esc(bsCaption)+'</div></article>'+
+      '<article class="account-card credit-card"><div class="account-top"><span>SALDO A FAVOR</span><span>↗</span></div><div class="account-value">'+fmt(usd.favor,"USD")+' <span class="minor">/ '+fmt(bs.favor,"BS")+'</span></div><div class="account-caption">Crédito sin mezclar entre cuentas</div></article>'+
+    '</div>'+
+    '<div class="reconcile-bar"><div class="reconcile-left"><span class="check-circle">✓</span><div class="reconcile-copy"><strong>Conciliación de muestra</strong><span>Pedidos emitidos − pagos aplicados − saldo a favor = saldo neto</span></div></div><span class="reconcile-status">CUENTAS SEPARADAS</span></div>'+
+    '<div class="split-grid">'+
+      '<section class="subcard"><div class="subcard-head"><h3>Entradas de pago</h3><span>'+payments.length+' movimientos</span></div><div class="payment-list">'+renderPayments(client)+'</div></section>'+
+      '<section class="subcard"><div class="subcard-head"><h3>Pedidos del cliente</h3><span>'+orders.length+' pedidos</span></div><div class="order-list">'+renderOrderCards(client)+'</div></section>'+
+    '</div>'+
+    '<section class="ledger-card"><div class="ledger-head"><h3>Conciliación resumida</h3><button type="button" data-tab-link="history">Ver movimientos →</button></div>'+
+      '<div class="ledger-summary">'+
+        '<div class="ledger-account"><div class="ledger-label">CUENTA DIVISA · USD</div><div class="ledger-math">'+fmt(usd.charges,"USD")+' emitidos − <span class="minus">'+fmt(usd.paid,"USD")+'</span> aplicados − <span class="plus">'+fmt(usd.credit,"USD")+'</span> a favor = <strong>'+fmt(usd.due,"USD")+'</strong> neto</div></div>'+
+        '<div class="ledger-account"><div class="ledger-label">CUENTA BCV · BOLÍVARES</div><div class="ledger-math">'+fmt(bs.charges,"BS")+' emitidos − <span class="minus">'+fmt(bs.paid,"BS")+'</span> aplicados = <strong>'+fmt(bs.due,"BS")+'</strong> neto</div></div>'+
+      '</div>'+
+      '<div class="orders-table-wrap"><table class="ledger-table"><thead><tr><th>Fecha</th><th>Movimiento</th><th>Referencia</th><th>Cargo</th><th>Abono aplicado</th></tr></thead><tbody>'+renderLedgerRows(client)+'</tbody></table></div>'+
+    '</section>';
+  document.getElementById("tabContent").innerHTML=accountHTML;
+  document.querySelectorAll("[data-tab-link]").forEach(function(btn){btn.addEventListener("click",function(){setTab(btn.dataset.tabLink);});});
+}
+function renderPayments(client){
+  if(!client.payments.length)return '<div class="empty-list">Todavía no hay pagos asociados.</div>';
+  return client.payments.map(function(p){
+    const allocations=p.allocations.map(function(a){return '<div class="break-row"><span>Aplicado al pedido '+esc(a[0])+'</span><strong>'+fmt(a[1],p.account)+'</strong></div>';}).join("");
+    const credit=p.credit>0?'<div class="break-row credit"><span>Saldo a favor disponible</span><strong>'+fmt(p.credit,p.account)+'</strong></div>':"";
+    return '<article class="payment-item"><div class="payment-line"><div class="payment-main"><div class="payment-title">'+esc(p.method)+'<span class="payment-id">'+esc(p.id)+'</span></div><div class="payment-reference">'+esc(p.date)+' · Ref. '+esc(p.ref)+'</div></div><div class="payment-amount"><strong>+'+fmt(p.received,p.account)+'</strong><small>Recibido · '+(p.account==="BS"?"BCV":"DIVISA")+'</small></div></div><div class="payment-breakdown">'+
+      '<div class="break-row"><span>Aplicado a pedidos</span><strong>'+fmt(p.applied,p.account)+'</strong></div>'+credit+allocations+'</div></article>';
+  }).join("");
+}
+function renderOrderCards(client){
+  if(!client.orders.length)return '<div class="empty-list">Este cliente todavía no tiene pedidos.</div>';
+  return client.orders.map(function(o){
+    const due=Math.max(o.total-o.paid,0);
+    const badge=o.status==="Pagado"||due===0?"done":o.status==="Solicitud"?"review":"progress";
+    return '<article class="order-item"><div><div class="order-id">'+esc(o.id)+' · '+esc(o.date)+' · '+(o.account==="BS"?"BCV":"DIVISA")+'</div><div class="order-name">'+esc(o.name)+'</div><div class="order-details">'+esc(o.details)+'</div></div><div class="order-right"><div class="order-total">'+fmt(o.total,o.account)+'</div><div class="order-balance">'+(due>0?"Pendiente "+fmt(due,o.account):"Saldo cancelado")+'</div><span class="badge '+badge+'">'+esc(o.status)+'</span></div></article>';
+  }).join("");
+}
+function renderLedgerRows(client){
+  const rows=[];
+  client.orders.forEach(function(o){rows.push({date:o.date,title:"Pedido emitido · "+o.id,ref:o.id,charge:o.total,payment:0,account:o.account,kind:"order"});});
+  client.payments.forEach(function(p){rows.push({date:p.date,title:"Pago recibido · "+p.id,ref:p.ref,charge:0,payment:p.applied,account:p.account,kind:"payment"});});
+  rows.sort(function(a,b){return b.date.localeCompare(a.date);});
+  if(!rows.length)return '<tr><td colspan="5" style="text-align:center;color:#929daf;padding:18px">Sin movimientos de cuenta.</td></tr>';
+  return rows.slice(0,6).map(function(r){return '<tr><td>'+esc(r.date)+'</td><td><strong>'+esc(r.title)+'</strong><span class="account-tag">'+(r.account==="BS"?"BCV · bolívares":"DIVISA · USD")+'</span></td><td>'+esc(r.ref)+'</td><td class="money-out">'+(r.charge?fmt(r.charge,r.account):"—")+'</td><td class="money-in">'+(r.payment?fmt(r.payment,r.account):"—")+'</td></tr>';}).join("");
+}
+function renderOrders(client){
+  const rows=client.orders;
+  const body=rows.length?rows.map(function(o){const due=Math.max(o.total-o.paid,0);return '<tr><td><strong>'+esc(o.id)+'</strong><div class="account-tag">'+esc(o.date)+'</div></td><td><strong>'+esc(o.name)+'</strong><div class="account-tag">'+esc(o.details)+'</div></td><td>'+esc(o.status)+'</td><td>'+fmt(o.total,o.account)+'</td><td>'+fmt(o.paid,o.account)+'</td><td>'+(due?fmt(due,o.account):"—")+'</td></tr>';}).join(""):'<tr><td colspan="6" style="text-align:center;padding:25px;color:#8994a6">No hay pedidos registrados en esta ficha de ejemplo.</td></tr>';
+  document.getElementById("tabContent").innerHTML='<div class="section-title"><h3>Pedidos vinculados al cliente</h3><span class="section-hint">Identificador de pedido · estado de trabajo · cuenta</span></div><div class="orders-table-wrap"><table class="orders-table"><thead><tr><th>Pedido</th><th>Descripción</th><th>Trabajo</th><th>Total</th><th>Abonado</th><th>Saldo</th></tr></thead><tbody>'+body+'</tbody></table></div><div class="note-box">Los pedidos se asocian por el identificador del cliente. Los registros antiguos que no tengan ese vínculo deben revisarse por nombre antes de conciliarlos.</div>';
+}
+function renderContacts(client){
+  const people=(client.contacts||[]).map(function(c,index){return '<div class="contact-person"><span class="contact-initial">'+esc(c.name.split(" ").map(function(n){return n[0]||"";}).slice(0,2).join(""))+'</span><div class="contact-person-info"><strong>'+esc(c.name)+'</strong><small>'+esc(c.role)+(index===0?' · principal':'')+'</small><small>'+esc(c.phone)+' · '+esc(c.email)+'</small></div></div>';}).join("");
+  document.getElementById("tabContent").innerHTML='<div class="section-title"><h3>Datos del cliente</h3><span class="section-hint">Ficha principal y contactos vinculados</span></div><div class="contact-grid"><section class="contact-box"><h3>Empresa / persona</h3><div class="contact-field"><label>Razón social</label><span>'+esc(client.name)+'</span></div><div class="contact-field"><label>RIF / cédula</label><span>'+esc(client.rif)+'</span></div><div class="contact-field"><label>Teléfono general</label><span>'+esc(client.phone)+'</span></div><div class="contact-field"><label>Correo general</label><span>'+esc(client.email)+'</span></div><div class="contact-field"><label>Dirección</label><span>'+esc(client.address)+'</span></div></section><section class="contact-box"><h3>Personas de contacto · '+(client.contacts||[]).length+'</h3>'+people+'</section></div><div class="note-box"><strong style="color:#455168">Nota interna</strong><br>'+esc(client.note)+'</div>';
+}
+function renderQuotes(client){
+  const rows=(client.quotes||[]).map(function(q){return '<tr><td><strong>'+esc(q.number)+'</strong><div class="account-tag">'+esc(q.date)+'</div></td><td><strong>'+esc(q.title)+'</strong><div class="account-tag">Vence: '+esc(q.valid)+'</div></td><td><span class="quote-status">'+esc(q.status)+'</span></td><td>'+fmt(q.amount,q.account)+'</td></tr>';}).join("");
+  const body=rows||'<tr><td colspan="4" style="text-align:center;padding:25px;color:#8994a6">No hay cotizaciones asociadas en esta ficha.</td></tr>';
+  document.getElementById("tabContent").innerHTML='<div class="section-title"><h3>Cotizaciones del cliente</h3><span class="section-hint">Documento · etapa · monto · vigencia</span></div><div class="orders-table-wrap"><table class="orders-table"><thead><tr><th>Número / fecha</th><th>Descripción</th><th>Estado</th><th>Total</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+}
+function renderHistory(client){
+  const items=client.history;
+  if(!items.length){document.getElementById("tabContent").innerHTML='<div class="empty-list">Aún no hay actividad para mostrar.</div>';return;}
+  document.getElementById("tabContent").innerHTML='<div class="section-title"><h3>Actividad del cliente</h3><span class="section-hint">Pedidos, cambios y pagos en orden cronológico</span></div><div class="timeline">'+items.map(function(item){return '<div class="timeline-item"><span class="timeline-dot '+(item.kind==="payment"?"payment":"")+'"></span><div class="timeline-date">'+esc(item.date)+'</div><div class="timeline-title">'+esc(item.title)+'</div><div class="timeline-detail">'+esc(item.detail)+'</div></div>';}).join("")+'</div>';
+}
+function setTab(tab){
+  activeTab=tab;
+  document.querySelectorAll(".tab").forEach(function(btn){const on=btn.dataset.tab===tab;btn.classList.toggle("active",on);btn.setAttribute("aria-selected",on?"true":"false");});
+  renderTab();
+}
+function renderTab(){
+  const c=clientById(selectedId);
+  if(!c)return;
+  document.querySelectorAll(".tab").forEach(function(btn){const on=btn.dataset.tab===activeTab;btn.classList.toggle("active",on);btn.setAttribute("aria-selected",on?"true":"false");});
+  if(activeTab==="account")renderAccount(c);
+  if(activeTab==="orders")renderOrders(c);
+  if(activeTab==="quotes")renderQuotes(c);
+  if(activeTab==="contacts")renderContacts(c);
+  if(activeTab==="history")renderHistory(c);
+}
+function renderAll(){
+  renderClientList();
+  const c=clientById(selectedId);
+  if(c){renderProfile(c);renderTab();}
+}
+function showToast(message){
+  const el=document.getElementById("toast");el.textContent=message;el.classList.add("show");
+  window.clearTimeout(showToast.timer);showToast.timer=window.setTimeout(function(){el.classList.remove("show");},2600);
+}
+document.getElementById("clientSearch").addEventListener("input",renderClientList);
+document.querySelectorAll(".filter-btn").forEach(function(btn){btn.addEventListener("click",function(){activeFilter=btn.dataset.filter;document.querySelectorAll(".filter-btn").forEach(function(x){x.classList.toggle("active",x===btn);});renderClientList();});});
+document.querySelectorAll(".tab").forEach(function(btn){btn.addEventListener("click",function(){setTab(btn.dataset.tab);});});
+document.querySelectorAll("[data-toast]").forEach(function(btn){btn.addEventListener("click",function(event){event.preventDefault();showToast(btn.dataset.toast);});});
+document.getElementById("clientList").addEventListener("click",function(event){const btn=event.target.closest("[data-client]");if(btn){selectedId=Number(btn.dataset.client);activeTab="account";renderAll();}});
+renderAll();
+</script>
+</body>
+</html>
+
