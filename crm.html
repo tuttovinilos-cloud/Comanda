@@ -24,7 +24,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 input,select,textarea{font-size:16px}
 
 /* ================= Escenario de escritorio (marco del iPhone) ================= */
-.stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;gap:56px;padding:16px}
+.scene{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;gap:56px;padding:16px}
 .side{width:300px;color:#2a3142;font-size:13px;line-height:1.5}
 .side h1{font-size:26px;letter-spacing:-.03em;margin:0 0 4px}
 .side .sub{color:#6b7385;margin:0 0 18px}
@@ -47,7 +47,7 @@ input,select,textarea{font-size:16px}
 
 /* ================= Modo teléfono real (pantalla completa) ================= */
 body.native{background:var(--bg)}
-body.native .stage{padding:0;display:block}
+body.native .scene{padding:0;display:block}
 body.native .side,body.native .statusbar,body.native .island,body.native .home-ind{display:none}
 body.native .device-wrap{width:100%!important;height:100%!important}
 body.native .device{position:static;width:100%;height:100%;padding:0;border-radius:0;background:none;box-shadow:none;transform:none!important}
@@ -69,7 +69,8 @@ body.native{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,
 /* Encabezados */
 .lt-head{padding:6px 16px 8px;background:var(--bg)}
 .lt-row{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;min-height:44px}
-.lt{font-size:32px;font-weight:800;letter-spacing:-.03em;margin:0;line-height:1.1}
+.lt{font-size:32px;font-weight:800;letter-spacing:-.03em;margin:0;line-height:1.1;flex:1;min-width:0}
+.lt.sm{font-size:25px}
 .lt-sub{font-size:13px;color:var(--muted);margin-top:2px}
 .hbtn{height:34px;min-width:34px;border-radius:17px;background:var(--fill);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 11px;font-size:13px;font-weight:650;color:var(--ink2)}
 .hbtn.tint{background:var(--tint);color:#fff}
@@ -276,11 +277,11 @@ body.native{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,
 .schema b{color:#8fb3ff;font-weight:600}
 .info-p{margin:0 16px;background:#fff;border-radius:14px;padding:12px 14px;font-size:13.5px;color:var(--ink2);line-height:1.5}
 
-@media (max-width:1000px){.side{display:none}.stage{gap:0}}
+@media (max-width:1000px){.side{display:none}.scene{gap:0}}
 </style>
 </head>
 <body>
-<div class="stage" id="stageEl">
+<div class="scene" id="sceneEl">
   <aside class="side">
     <h1>Tuto CRM</h1>
     <p class="sub">Vista de app en iPhone 18 Pro · 402 × 874 pt</p>
@@ -840,7 +841,7 @@ function whenBadge(iso){const n=daysFrom(iso);if(n<0)return '<span class="badge 
 function empty(t){return '<div class="empty">'+esc(t)+'</div>';}
 const BACK_SVG='<svg viewBox="0 0 12 20"><path d="M10 2 2 10l8 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function navbar(title,right){return '<div class="navbar"><button class="back" data-back>'+BACK_SVG+'<span>Atrás</span></button><div class="ttl">'+esc(title)+'</div><div class="right">'+(right||"")+'</div></div>';}
-function largeHead(title,sub,right){return '<div class="lt-head"><div class="lt-row"><h1 class="lt">'+title+'</h1><div style="display:flex;gap:7px">'+(right||"")+'</div></div>'+(sub?'<div class="lt-sub">'+sub+'</div>':"")+'</div>';}
+function largeHead(title,sub,right){return '<div class="lt-head"><div class="lt-row"><h1 class="lt'+(String(title).length>14?' sm':'')+'">'+title+'</h1><div style="display:flex;gap:7px">'+(right||"")+'</div></div>'+(sub?'<div class="lt-sub">'+sub+'</div>':"")+'</div>';}
 function toast(msg){const el=$("toast");el.textContent=msg;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),2400);}
 function banner(title,text,convId){const b=$("banner");b.innerHTML='<span class="bi">✆</span><span class="bt"><b>'+esc(title)+'<small>ahora</small></b><span>'+esc(text)+'</span></span>';b.dataset.conv=convId;b.classList.add("show");clearTimeout(banner.t);banner.t=setTimeout(()=>b.classList.remove("show"),4200);}
 
@@ -855,7 +856,7 @@ const TABS=[
   {id:"ventas",label:"Ventas",svg:'<path d="M4 20V11M10 20V5M16 20v-6M2.5 20.5h19"/>'},
   {id:"mas",label:"Más",svg:'<circle cx="5.5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="18.5" cy="12" r="1.5" fill="currentColor"/>'}
 ];
-function top(){return state.stack[state.stack.length-1]||{name:state.tab};}
+function cur(){return state.stack[state.stack.length-1]||{name:state.tab};}
 function push(s){state.stack.push(s);state.anim="push";render();}
 function back(){state.stack.pop();state.anim="pop";render();}
 function setTab(t){if(state.tab===t&&!state.stack.length){const sc=$("scroll");if(sc)sc.scrollTo({top:0,behavior:"smooth"});return;}state.tab=t;state.stack=[];state.anim="";render();}
@@ -1385,7 +1386,7 @@ function simulate(){
   const m=addMsg(v.id,"in",inc.texto,inc.adjunto);state.fresh="m"+m.id;
   if(isNew)addEvent(ct.clienteId,"cliente","Número desconocido → ficha creada automáticamente · etiqueta Cliente nuevo","Tuto CRM (automático)");
   v.sugerencia=parsePayment(inc.texto);
-  const t=top();const viewing=t.name==="chat"&&+t.id===v.id;
+  const t=cur();const viewing=t.name==="chat"&&+t.id===v.id;
   if(!viewing)v.noLeidos++;
   save();render();
   if(!viewing)banner(contactName(ct),inc.texto,v.id);
@@ -1397,7 +1398,7 @@ function simulate(){
 const SCREENS={inicio:sInicio,chats:sChats,clientes:sClientes,ventas:sVentas,mas:sMas,chat:sChat,client:sClient,conciliacion:sConciliacion,seguimientos:sSeguimientos,historial:sHistorial,etiquetas:sEtiquetas,label:sLabel,basedatos:sBaseDatos};
 let lastKey="";
 function render(){
-  const s=top(),key=s.name+(s.id||"");
+  const s=cur(),key=s.name+(s.id||"");
   const sc=$("scroll"),keep=(key===lastKey&&sc)?sc.scrollTop:0;
   const isTabRoot=!state.stack.length;
   let html=SCREENS[s.name](s);
@@ -1414,9 +1415,9 @@ function render(){
 }
 function openConv(id){
   const v=convById(id);if(!v)return;
-  if(top().name!=="chat"||+top().id!==v.id){state.draft="";state.mode="reply";}
+  if(cur().name!=="chat"||+cur().id!==v.id){state.draft="";state.mode="reply";}
   v.noLeidos=0;save();closeSheet();
-  if(top().name==="chat"){state.stack.pop();}
+  if(cur().name==="chat"){state.stack.pop();}
   push({name:"chat",id:v.id});
 }
 function openClient(id){closeSheet();state.cTab="resumen";push({name:"client",id:+id});}
@@ -1445,12 +1446,12 @@ document.addEventListener("click",e=>{
   if(d.tab){closeSheet();setTab(d.tab);return;}
   if(d.push){if(d.push==="label")push({name:"label",id:+d.id});else push({name:d.push});return;}
   if(d.conv){openConv(d.conv);return;}
-  if(d.client){if(top().name==="client"&&+top().id===+d.client){closeSheet();return;}openClient(d.client);return;}
+  if(d.client){if(cur().name==="client"&&+cur().id===+d.client){closeSheet();return;}openClient(d.client);return;}
   if(d.order){openSheet("orderdetail",null,{id:d.order});return;}
   if(d.quote){openSheet("quotedetail",null,{id:d.quote});return;}
   if(d.startchat){const cid=+d.startchat,ct=primaryOf(cid);if(!ct)return;const v={id:++DB.seq.conversacion,clienteId:cid,contactoId:ct.id,noLeidos:0,sugerencia:null};DB.conversaciones.push(v);save();openConv(v.id);return;}
   if(d.togglemode!==undefined){state.mode=state.mode==="note"?"reply":"note";render();const i=$("draft");if(i)i.focus();return;}
-  if(d.dismiss!==undefined){const v=convById(top().id);if(v){v.sugerencia=null;save();}render();return;}
+  if(d.dismiss!==undefined){const v=convById(cur().id);if(v){v.sugerencia=null;save();}render();return;}
   if(d.chatfilter){state.chatFilter=d.chatfilter;render();return;}
   if(d.clientfilter){state.clientFilter=d.clientfilter;render();return;}
   if(d.ventas){if(state.tab!=="ventas"||state.stack.length){state.tab="ventas";state.stack=[];}state.ventas=d.ventas;render();return;}
@@ -1469,7 +1470,7 @@ document.addEventListener("change",e=>{if(e.target.id==="payAcc"&&state.sheetCid
 document.addEventListener("submit",e=>{
   e.preventDefault();
   if(e.target.id==="composer"){
-    const text=state.draft.trim();if(!text)return;const v=convById(top().id);if(!v)return;
+    const text=state.draft.trim();if(!text)return;const v=convById(cur().id);if(!v)return;
     if(state.mode==="note"){const ev=addEvent(v.clienteId,"nota",text);state.fresh="e"+ev.id;}else{const m=addMsg(v.id,"out",text);state.fresh="m"+m.id;}
     state.draft="";save();render();const i=$("draft");if(i&&!document.body.classList.contains("native"))i.focus();return;
   }
