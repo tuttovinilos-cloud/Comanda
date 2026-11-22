@@ -2,1010 +2,569 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#121a2b">
-<title>CRM · Tuttovinilos</title>
+<title>Tuto CRM · Bandeja de WhatsApp</title>
 <style>
 :root{
-  --bg:#f5f7fb;--panel:#fff;--ink:#162033;--muted:#748096;--line:#e8ecf3;
-  --blue:#2947e8;--blue-bg:#eef2ff;--nav:#121a2b;--nav-muted:#9aa6bc;
-  --green:#17845b;--green-bg:#eaf7f0;--amber:#a76512;--amber-bg:#fff4df;
-  --red:#b64343;--red-bg:#fff0ef;--purple:#6f55cb;--purple-bg:#f1efff;--gray-bg:#f1f3f7;
-  --wa:#1f8f5f;--wa-bg:#e7f6ee;--shadow:0 7px 24px rgba(24,39,75,.055);--r:14px;
+  --bg:#f3f5f9;--panel:#fff;--ink:#162033;--muted:#738096;--line:#e6eaf1;
+  --blue:#2947e8;--blue-bg:#eef2ff;--nav:#121a2b;
+  --green:#17845b;--green-bg:#e9f7ef;--wa:#1f8f5f;--wa-bubble:#d9fdd3;
+  --amber:#a76512;--amber-bg:#fff4df;--red:#b64343;--red-bg:#fff0ef;--purple:#6f55cb;--purple-bg:#f1efff;
+  --note:#fff6d6;--note-line:#f1dc94;
   --font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font)}
-button,input,select{font:inherit;color:inherit}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font);overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
-a{color:var(--blue);text-decoration:none}
-a:hover{text-decoration:underline}
 
-/* ---------- Sidebar ---------- */
-.sidebar{position:fixed;inset:0 auto 0 0;width:232px;background:var(--nav);color:#fff;padding:22px 14px 16px;display:flex;flex-direction:column;z-index:5;overflow:auto}
-.brand{display:flex;align-items:center;gap:11px;padding:0 8px 20px}
-.brand-mark{width:36px;height:36px;border-radius:11px;background:linear-gradient(145deg,#6e86ff,#2947e8);display:grid;place-items:center;font-weight:900;font-size:12px;box-shadow:0 5px 16px rgba(41,71,232,.32);flex:none}
-.brand-name{font-weight:750;font-size:15px;letter-spacing:-.02em}
-.brand-sub{font-size:10px;color:#9ca9bf;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
-.nav-label{font-size:10px;color:#73819a;letter-spacing:.11em;text-transform:uppercase;padding:0 10px;margin:12px 0 6px}
-.nav{display:grid;gap:3px}
-.nav-item{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:10px;border:0;background:none;color:var(--nav-muted);font-size:13px;font-weight:560;text-align:left;width:100%;white-space:nowrap}
-.nav-item:hover{background:#1b263a;color:#fff}
-.nav-item.active{background:#263653;color:#fff;box-shadow:inset 3px 0 #8498ff}
-.nav-icon{width:18px;text-align:center;flex:none}
-.nav-count{margin-left:auto;background:#35435c;color:#cbd5e1;border-radius:20px;padding:1px 7px;font-size:10px;font-weight:700}
-.nav-count.wa{background:var(--wa);color:#fff}
-.sidebar-bottom{margin-top:auto;border-top:1px solid #293247;padding:14px 8px 0}
-.account-user{display:flex;align-items:center;gap:10px}
-.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#35466a;color:#e5ebff;font-size:11px;font-weight:800}
-.user-name{font-size:12px;font-weight:650}
-.user-role{font-size:10px;color:#8e9bb2}
-.local-chip{margin-top:12px;border:1px solid #344056;color:#acb8ca;border-radius:8px;padding:7px 9px;font-size:10px;display:flex;align-items:center;gap:7px}
-.local-dot{width:7px;height:7px;background:#7bd6a8;border-radius:50%}
+/* ---------- Top bar ---------- */
+.top{height:56px;background:var(--nav);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand-mark{width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#6e86ff,#2947e8);display:grid;place-items:center;font-weight:900;font-size:11px;flex:none}
+.brand b{font-size:15px;white-space:nowrap}
+.brand small{display:block;font-size:10px;color:#9ca9bf;white-space:nowrap}
+.top-right{display:flex;align-items:center;gap:8px}
+.demo{font-size:10px;font-weight:750;letter-spacing:.05em;color:#cfc6ff;border:1px solid #3a3f6b;border-radius:20px;padding:4px 9px;white-space:nowrap}
+.sim{border:0;background:#25b36b;color:#fff;border-radius:20px;padding:8px 13px;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(37,179,107,.3)}
+.sim:active{transform:scale(.97)}
 
-/* ---------- Main ---------- */
-.main{margin-left:232px;min-height:100vh}
-.topbar{height:58px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.82);display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:sticky;top:0;z-index:4;backdrop-filter:blur(10px);gap:12px}
-.breadcrumb{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.breadcrumb strong{color:#39445a}
-.top-right{display:flex;align-items:center;gap:10px}
-.demo-pill{font-size:10px;letter-spacing:.06em;font-weight:750;color:#6a56b5;background:#f0edff;border:1px solid #e4ddff;border-radius:30px;padding:5px 10px;text-transform:uppercase;white-space:nowrap}
-.today-pill{font-size:11px;color:#56627a;background:#fff;border:1px solid var(--line);border-radius:30px;padding:5px 10px;white-space:nowrap}
-main.content{max-width:1500px;margin:auto;padding:26px 30px 40px}
-.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px}
-.eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#8290a6;font-weight:750;margin-bottom:5px}
-h1{font-size:25px;line-height:1.2;letter-spacing:-.04em;margin:0;font-weight:760}
-.subtitle{color:var(--muted);font-size:13px;margin:6px 0 0}
-.primary-btn,.secondary-btn,.wa-btn{border:0;border-radius:10px;padding:9px 13px;font-weight:680;font-size:12px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
-.primary-btn{background:var(--blue);color:#fff;box-shadow:0 5px 12px rgba(41,71,232,.18)}
-.primary-btn:hover{background:#1e3bd3}
-.secondary-btn{background:#fff;color:#38445a;border:1px solid var(--line)}
-.wa-btn{background:var(--wa-bg);color:var(--wa);border:1px solid #cfeadb}
-.link{border:0;background:none;color:#4054d7;font-size:11px;font-weight:700;padding:0}
-.footer-note{font-size:10px;color:#9aa4b4;text-align:center;margin-top:22px}
+/* ---------- Layout ---------- */
+.layout{display:grid;grid-template-columns:310px minmax(0,1fr) 330px;height:calc(100vh - 56px);height:calc(100dvh - 56px)}
+.pane{min-height:0;min-width:0;display:flex;flex-direction:column;background:var(--panel)}
+.list{border-right:1px solid var(--line)}
+.info{border-left:1px solid var(--line);overflow:auto;background:#fbfcfe}
 
-/* ---------- Generic ---------- */
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);min-width:0;overflow:hidden}
-.card-head{padding:13px 15px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
-.card-head h3{font-size:13px;margin:0;letter-spacing:-.01em}
-.card-head span{font-size:10px;color:#8b96a7}
-.card-body{padding:12px 15px}
-.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:14px}
-.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:11px;margin-bottom:16px}
-.kpis.k3{grid-template-columns:repeat(3,minmax(0,1fr))}
-.kpis.k4{grid-template-columns:repeat(4,minmax(0,1fr))}
-.kpi{background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px 14px;box-shadow:var(--shadow);min-width:0}
-.kpi-head{display:flex;align-items:center;justify-content:space-between;color:#7d899c;font-size:9px;font-weight:750;letter-spacing:.05em;text-transform:uppercase;gap:6px}
-.kpi-icon{width:24px;height:24px;display:grid;place-items:center;border-radius:8px;background:#eff2ff;color:#5267de;font-size:11px;flex:none}
-.kpi-value{font-size:20px;font-weight:760;letter-spacing:-.04em;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kpi-foot{font-size:10px;color:#8994a5;margin-top:2px}
-.badge{display:inline-flex;align-items:center;padding:3px 7px;border-radius:20px;font-size:9px;font-weight:750;white-space:nowrap}
-.badge.blue{background:var(--blue-bg);color:#4558c8}
-.badge.green{background:var(--green-bg);color:var(--green)}
-.badge.amber{background:var(--amber-bg);color:var(--amber)}
-.badge.red{background:var(--red-bg);color:var(--red)}
-.badge.purple{background:var(--purple-bg);color:var(--purple)}
-.badge.gray{background:var(--gray-bg);color:#5f6b80}
-.empty{padding:20px 12px;text-align:center;color:#8994a6;font-size:12px}
+/* ---------- Chat list ---------- */
+.list-head{padding:14px 14px 10px;border-bottom:1px solid var(--line)}
+.list-head h2{font-size:16px;margin:0 0 9px;display:flex;justify-content:space-between;align-items:center}
 .chips{display:flex;gap:5px;flex-wrap:wrap}
-.chip{border:1px solid transparent;background:transparent;color:#6f7b90;padding:5px 9px;border-radius:7px;font-size:11px;font-weight:650}
-.chip:hover{background:#f2f4f9}
-.chip.active{color:#3348c8;background:#eef1ff;border-color:#dfe5ff}
-.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
-.search-wrap{position:relative}
-.search-icon{position:absolute;left:11px;top:8px;color:#8c97a9;font-size:14px}
-.search-input{height:35px;width:100%;border-radius:9px;border:1px solid #e3e8f0;padding:0 10px 0 32px;outline:none;background:#fbfcfe;font-size:12px}
-.search-input:focus{border-color:#aebcff;box-shadow:0 0 0 3px #eef1ff}
-.toolbar .search-wrap{width:260px}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
-.table-wrap.flat{border:0;border-radius:0}
-table{border-collapse:collapse;width:100%;min-width:680px}
-th{text-align:left;font-size:9px;color:#8893a5;background:#fafbfe;text-transform:uppercase;letter-spacing:.06em;padding:10px 11px;border-bottom:1px solid var(--line);white-space:nowrap}
-td{font-size:12px;padding:10px 11px;border-bottom:1px solid #f0f2f6;color:#56637a;vertical-align:top}
-tr:last-child td{border-bottom:0}
-td strong{color:#27334a}
-th.r,td.r{text-align:right;white-space:nowrap}
-tfoot td{background:#fafbfe;font-weight:700;color:#27334a;border-top:1px solid var(--line)}
-.sub{display:block;font-size:10px;color:#8994a6;margin-top:2px}
-.money-in{color:var(--green)!important;font-weight:700}
-.money-out{color:#a65d35!important;font-weight:700}
-.due{color:#b05a2a;font-weight:700}
-.ok-text{color:var(--green);font-weight:700}
-.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);padding:11px 15px;background:#172238;color:#fff;border-radius:10px;font-size:12px;opacity:0;pointer-events:none;transition:.2s;z-index:30;box-shadow:0 8px 24px #17223833;max-width:90vw;text-align:center}
+.chip{border:1px solid transparent;background:#f1f3f7;color:#5f6b80;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:650}
+.chip.active{background:var(--green-bg);color:var(--wa);border-color:#cdeedb}
+.list-body{overflow:auto;flex:1}
+.ci{display:flex;gap:10px;padding:12px 14px;border:0;background:none;width:100%;text-align:left;border-bottom:1px solid #f0f2f6;align-items:center}
+.ci:hover{background:#f7faf8}
+.ci.active{background:#eef7f2}
+.av{width:42px;height:42px;border-radius:50%;background:#d8efe3;color:#1f7a50;display:grid;place-items:center;font-weight:800;font-size:12px;flex:none}
+.av.new{background:#fff0cf;color:#a76512}
+.ci-main{flex:1;min-width:0}
+.ci-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.ci-top strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-top time{font-size:10px;color:#8994a6;flex:none}
+.ci-top time.unread{color:#25b36b;font-weight:700}
+.ci-prev{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:2px}
+.ci-prev span{font-size:12px;color:#7b8798;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge-un{background:#25b36b;color:#fff;border-radius:20px;min-width:19px;height:19px;display:grid;place-items:center;font-size:10px;font-weight:800;padding:0 5px;flex:none}
+.stage{display:inline-flex;align-items:center;font-size:9px;font-weight:750;padding:2px 7px;border-radius:20px;white-space:nowrap;margin-top:4px}
+.s-nuevo{background:var(--amber-bg);color:var(--amber)}
+.s-atencion,.s-prep{background:#f1f3f7;color:#56637a}
+.s-enviada,.s-seg{background:var(--blue-bg);color:#4558c8}
+.s-ganada{background:var(--green-bg);color:var(--green)}
+.s-perdida{background:var(--red-bg);color:var(--red)}
+
+/* ---------- Conversation ---------- */
+.chat-head{padding:9px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;background:#fff}
+.back{display:none;border:0;background:none;font-size:20px;padding:2px 6px;color:#4d5a70}
+.chat-head .who{flex:1;min-width:0}
+.chat-head .who strong{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-head .who small{display:block;font-size:11px;color:#7b8798;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.info-btn{display:none;border:1px solid var(--line);background:#fff;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:650}
+.actions{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line);background:#fafbfd;overflow-x:auto;scrollbar-width:none}
+.actions::-webkit-scrollbar{display:none}
+.act{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 11px;font-size:12px;font-weight:650;white-space:nowrap;color:#38445a}
+.act:hover{border-color:#b9c4ff;background:#f7f8ff}
+.act.pay{border-color:#cdeedb;color:var(--wa)}
+.msgs{flex:1;overflow:auto;padding:14px 16px;background:#efeae2;background-image:radial-gradient(#e2dccf 1px,transparent 1px);background-size:18px 18px}
+.day{text-align:center;margin:10px 0}
+.day span{background:#fff;font-size:10px;padding:3px 9px;border-radius:8px;color:#6b7a86;box-shadow:0 1px 1px rgba(0,0,0,.05)}
+.b{max-width:72%;width:fit-content;padding:7px 10px 5px;border-radius:10px;margin:5px 0;font-size:13.5px;box-shadow:0 1px 1px rgba(0,0,0,.07);overflow-wrap:anywhere;animation:pop .18s ease-out}
+.b.in{background:#fff;border-top-left-radius:2px}
+.b.out{background:var(--wa-bubble);margin-left:auto;border-top-right-radius:2px}
+.b time{display:block;text-align:right;font-size:10px;color:#7d8a80;margin-top:2px}
+.b .from{display:block;font-size:10px;font-weight:750;color:#1f7a50;margin-bottom:1px}
+.attach{display:flex;align-items:center;gap:8px;background:#f1f4f2;border-radius:8px;padding:8px 10px;margin-bottom:5px;font-size:12px;color:#44524a}
+.attach i{font-style:normal;font-size:20px}
+.note{max-width:78%;margin:8px auto;background:var(--note);border:1px dashed var(--note-line);border-radius:10px;padding:7px 11px;font-size:12.5px;color:#5c4a12;animation:pop .18s ease-out}
+.note small{display:block;font-size:10px;font-weight:750;color:#8a6d12;margin-bottom:2px}
+.ev{display:flex;justify-content:center;margin:8px 0;animation:pop .18s ease-out}
+.ev span{background:rgba(255,255,255,.92);border:1px solid #dfe3ea;border-radius:9px;padding:5px 10px;font-size:11.5px;color:#3d4a60;text-align:center;max-width:88%}
+.ev span small{display:block;font-size:10px;color:#8a95a6;margin-top:1px}
+@keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.suggest{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff8e6;border-top:1px solid #f3e2b3;font-size:12px;color:#6b5113}
+.suggest span{flex:1}
+.suggest button{border:0;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:750}
+.suggest .yes{background:var(--wa);color:#fff}
+.suggest .no{background:transparent;color:#8a6d12}
+.composer{border-top:1px solid var(--line);background:#f7f8fa;padding:8px 10px 10px}
+.modes{display:flex;gap:6px;margin-bottom:7px}
+.mode{border:0;background:transparent;color:#6f7b90;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.mode.active{background:#fff;color:#27334a;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.mode.active.note-mode{background:var(--note);color:#7a5c0c}
+.compose-row{display:flex;gap:8px;align-items:center}
+.compose-row input{flex:1;min-width:0;height:42px;border-radius:21px;border:1px solid var(--line);padding:0 15px;background:#fff;outline:none}
+.compose-row input:focus{border-color:#9fd7b9}
+.composer.is-note .compose-row input{background:var(--note);border-color:var(--note-line)}
+.send{width:42px;height:42px;border-radius:50%;border:0;background:var(--wa);color:#fff;font-size:16px;flex:none}
+.composer.is-note .send{background:#c49a1c}
+.empty-chat{flex:1;display:grid;place-items:center;text-align:center;color:#8994a6;padding:30px;background:#f7f8fa}
+
+/* ---------- Info panel ---------- */
+.info-inner{padding:16px}
+.info-back{display:none;border:0;background:none;color:#4054d7;font-weight:700;font-size:13px;padding:0 0 10px}
+.card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px;margin-bottom:12px}
+.card h4{margin:0 0 9px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#7d899c;display:flex;justify-content:space-between;align-items:center}
+.card h4 button{border:0;background:none;color:#4054d7;font-size:11px;font-weight:700;text-transform:none;letter-spacing:0}
+.profile{display:flex;gap:11px;align-items:center}
+.profile .av{width:48px;height:48px;font-size:14px;border-radius:14px}
+.profile strong{display:block;font-size:15px}
+.profile small{display:block;font-size:11px;color:#7b8798}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:4px 0;color:#5f6b80}
+.kv b{color:#27334a;font-weight:650;text-align:right}
+.money{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.money div{background:#f8f9fc;border-radius:10px;padding:9px 10px}
+.money label{display:block;font-size:9px;font-weight:750;color:#7d899c;letter-spacing:.05em}
+.money strong{display:block;font-size:16px;letter-spacing:-.02em;margin-top:2px}
+.money .due{color:#b05a2a}.money .zero{color:#9aa4b4}.money .fav{color:var(--green)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #f0f2f6;font-size:12px}
+.row:last-child{border-bottom:0}
+.row small{display:block;font-size:10px;color:#8994a6}
+.row .r{text-align:right;white-space:nowrap}
+.r .due{color:#b05a2a;font-weight:700}.r .ok{color:var(--green);font-weight:700}
+.log{list-style:none;margin:0;padding:0}
+.log li{font-size:12px;padding:6px 0;border-bottom:1px solid #f0f2f6;color:#3d4a60}
+.log li:last-child{border-bottom:0}
+.log small{display:block;font-size:10px;color:#8994a6}
+.warn{background:#fff8e6;border:1px solid #f3e2b3;color:#6b5113;border-radius:12px;padding:11px 12px;font-size:12px;margin-bottom:12px}
+.warn button{margin-top:8px}
+.legend{font-size:11px;color:#6f7b8e;display:grid;gap:6px}
+.legend i{display:inline-block;width:22px;height:12px;border-radius:4px;vertical-align:middle;margin-right:7px}
+.btn{border:0;border-radius:9px;padding:8px 12px;font-size:12px;font-weight:700}
+.btn.primary{background:var(--blue);color:#fff}
+.btn.wa{background:var(--wa);color:#fff}
+.btn.ghost{background:#f1f3f7;color:#38445a}
+.empty{font-size:12px;color:#97a1b2;text-align:center;padding:8px 0}
+
+/* ---------- Modal ---------- */
+.overlay{position:fixed;inset:0;background:rgba(18,26,43,.45);display:flex;align-items:center;justify-content:center;z-index:40;padding:16px}
+.overlay[hidden]{display:none}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:420px;max-height:90vh;overflow:auto;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:pop .15s ease-out}
+.modal h3{margin:0 0 3px;font-size:17px}
+.mhint{font-size:12px;color:#7b8798;margin:0 0 14px}
+.modal label{display:block;font-size:11px;font-weight:700;color:#5f6b80;margin-bottom:10px}
+.modal input,.modal select,.modal textarea{display:block;width:100%;margin-top:4px;height:40px;border:1px solid var(--line);border-radius:9px;padding:0 11px;background:#fbfcfe;font-size:14px;outline:none}
+.modal textarea{height:70px;padding:9px 11px;resize:vertical}
+.modal input:focus,.modal select:focus,.modal textarea:focus{border-color:#aebcff;box-shadow:0 0 0 3px #eef1ff}
+.modal .check{display:flex;gap:8px;align-items:center;font-weight:600}
+.modal .check input{width:auto;height:auto;margin:0}
+.mactions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.merr{color:var(--red);font-size:12px;margin:-4px 0 10px;min-height:0}
+.stage-grid{display:grid;gap:7px}
+.stage-opt{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;text-align:left;font-weight:650;display:flex;justify-content:space-between;align-items:center}
+.stage-opt.cur{border-color:#9fb0ff;background:#f4f6ff}
+.toast{position:fixed;top:66px;left:50%;transform:translate(-50%,-10px);padding:10px 14px;background:#172238;color:#fff;border-radius:11px;font-size:12.5px;opacity:0;pointer-events:none;transition:.2s;z-index:50;box-shadow:0 8px 24px #17223844;max-width:92vw;text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
-/* ---------- Dashboard pieces ---------- */
-.funnel-row{display:grid;grid-template-columns:150px 1fr 130px;gap:10px;align-items:center;padding:6px 0;font-size:11px}
-.funnel-label{color:#4d5a70;font-weight:600}
-.funnel-bar{height:8px;background:#eef0f5;border-radius:9px;overflow:hidden}
-.funnel-bar i{display:block;height:100%;background:#6b7ded;border-radius:9px}
-.funnel-bar i.won{background:#3aa173}.funnel-bar i.lost{background:#d27d7d}
-.funnel-val{text-align:right;color:#56637a;white-space:nowrap}
-.row-btn{display:flex;align-items:center;gap:11px;width:100%;border:0;background:none;text-align:left;padding:9px 6px;border-radius:9px;border-bottom:1px solid #f1f3f6}
-.row-btn:last-child{border-bottom:0}
-.row-btn:hover{background:#f7f8fc}
-.date-chip{flex:none;width:42px;text-align:center;border:1px solid var(--line);border-radius:9px;padding:4px 0;font-size:9px;color:#7d899b;text-transform:uppercase;line-height:1.2}
-.date-chip b{display:block;font-size:15px;color:#27334a}
-.row-main{flex:1;min-width:0}
-.row-main strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row-main small{display:block;font-size:10px;color:#8994a6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row-side{text-align:right;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
-.row-side small{font-size:10px;color:#8994a6}
-.checks,.issues{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:12px;color:#4d5a70}
-.checks{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
-.checks li{display:flex;gap:8px;align-items:center}
-.ok{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:#e2f3e9;color:#278257;font-weight:800;font-size:10px;flex:none}
-.ok.bad{background:var(--red-bg);color:var(--red)}
-.issues{margin-top:12px;color:var(--red)}
-
-/* ---------- Timeline ---------- */
-.timeline{position:relative;margin:2px 0 0 8px;padding-left:20px;border-left:1px solid #e6eaf2}
-.tl-item{position:relative;padding:0 0 15px 4px}
-.tl-item:last-child{padding-bottom:0}
-.tl-dot{position:absolute;left:-25px;top:3px;width:9px;height:9px;border-radius:50%;background:#7184ed;border:2px solid #fff;box-shadow:0 0 0 1px #dce2ff}
-.tl-dot.payment{background:#48a879;box-shadow:0 0 0 1px #d6efe0}
-.tl-dot.quote{background:#9a84e6;box-shadow:0 0 0 1px #e6defc}
-.tl-dot.whatsapp{background:#25b36b;box-shadow:0 0 0 1px #cdeedb}
-.tl-date{font-size:10px;color:#8792a4}
-.tl-title{font-size:12px;font-weight:700;margin-top:2px}
-.tl-detail{font-size:11px;color:#7b8798;margin-top:2px}
-
-/* ---------- Clientes ---------- */
-.crm-layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
-.client-panel,.detail-panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
-.client-panel{overflow:hidden;position:sticky;top:74px}
-.client-panel-head{padding:16px 15px 12px;border-bottom:1px solid var(--line)}
-.client-panel-title{display:flex;justify-content:space-between;align-items:center}
-.client-panel-title h2{font-size:14px;margin:0}
-.pill{font-size:10px;color:#738096;background:#f2f4f8;border-radius:20px;padding:3px 8px}
-.client-panel .search-wrap{margin:12px 0 10px}
-.client-list{padding:6px;max-height:calc(100vh - 260px);overflow:auto}
-.client-row{width:100%;border:0;background:transparent;text-align:left;padding:10px;border-radius:10px;display:flex;gap:10px;align-items:flex-start}
-.client-row:hover{background:#f7f8fc}
-.client-row.selected{background:#f0f3ff;box-shadow:inset 2px 0 #4058eb}
-.client-avatar{flex:none;width:34px;height:34px;border-radius:10px;background:#edf0f7;color:#58657c;display:grid;place-items:center;font-size:10px;font-weight:800}
-.client-row.selected .client-avatar{background:#dce4ff;color:#3b51d4}
-.client-info{min-width:0;flex:1}
-.client-name{display:block;font-size:12px;font-weight:700;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
-.client-meta{display:block;color:#8994a6;font-size:10px;margin-top:2px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
-.client-meta.hit{color:#4054d7;font-weight:650}
-.client-side{text-align:right;flex:none;max-width:110px}
-.client-balance{display:block;font-size:10px;font-weight:750;white-space:nowrap}
-.client-balance.due{color:#b05a2a}.client-balance.credit{color:var(--green)}.client-balance.ok{color:#8691a4;font-weight:600}
-.client-state{display:block;font-size:9px;margin-top:3px;color:#8691a4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.detail-panel{padding:18px 20px 20px;min-width:0}
-.profile-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding-bottom:15px;border-bottom:1px solid var(--line)}
-.profile-main{display:flex;gap:13px;align-items:center;min-width:0}
-.profile-avatar{width:50px;height:50px;border-radius:15px;background:linear-gradient(145deg,#e8edff,#d7e0ff);color:#3b50cc;display:grid;place-items:center;font-weight:800;font-size:14px;flex:none}
-.profile-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.profile-name h2{font-size:18px;letter-spacing:-.03em;margin:0}
-.profile-sub{font-size:11px;color:#7b879a;margin-top:3px}
-.profile-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
-.profile-actions button{padding:8px 10px;font-size:11px}
-.profile-meta{display:flex;gap:8px 18px;flex-wrap:wrap;padding:12px 0;color:#6f7b8e;font-size:11px;border-bottom:1px solid var(--line)}
-.profile-meta b{color:#364158;font-weight:650}
-.opp-strip{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr .9fr 1.2fr;gap:9px;padding:11px 13px;margin-top:12px;background:#fafbff;border:1px solid #e9ecf7;border-radius:11px}
-.opp-field{min-width:0}
-.opp-field label{display:block;color:#929caf;font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:750;margin-bottom:3px}
-.opp-field strong{display:block;color:#38445a;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.prob{display:flex;align-items:center;gap:6px;font-size:10px;color:#69768b}
-.prob-bar{height:5px;border-radius:9px;background:#e7eaf2;flex:1;min-width:24px;overflow:hidden}
-.prob-bar i{height:100%;display:block;background:#6b7ded}
-.tabs{display:flex;gap:18px;border-bottom:1px solid var(--line);margin:4px 0 16px;overflow:auto}
-.tab{border:0;background:none;color:#7b8798;padding:12px 1px 10px;font-size:12px;font-weight:680;white-space:nowrap;position:relative}
-.tab.active{color:#3047d2}
-.tab.active:after{content:"";position:absolute;bottom:-1px;left:0;right:0;height:2px;border-radius:2px;background:#4058eb}
-.account-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
-.account-card{border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 13px;min-width:0}
-.account-card.primary{background:#f8f9ff;border-color:#e6eaff}
-.account-top{display:flex;justify-content:space-between;align-items:center;color:#68758b;font-size:10px;font-weight:700}
-.account-value{font-size:20px;font-weight:760;letter-spacing:-.04em;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.account-value .minor{font-size:12px;letter-spacing:0;color:#7a8799;font-weight:600}
-.account-card.credit .account-value{color:var(--green)}
-.account-caption{font-size:10px;color:#8994a5;margin-top:3px}
-.split-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:12px;align-items:start}
-.subcard{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;min-width:0}
-.subcard-head{padding:11px 13px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--line);background:#fbfcfe}
-.subcard-head h3{font-size:12px;margin:0}
-.subcard-head span{font-size:10px;color:#8b96a7;text-align:right}
-.pad{padding:0 12px}
-.item{padding:11px 0;border-bottom:1px solid #f0f2f6}
-.item:last-child{border-bottom:0}
-.item-line{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-.item-title{font-size:12px;font-weight:720}
-.item-id{font-size:10px;color:#8792a4;margin-left:5px;font-weight:550}
-.item-sub{font-size:10px;color:#7d899b;margin-top:2px}
-.item-right{text-align:right;white-space:nowrap}
-.item-right strong{font-size:12px}
-.item-right small{display:block;font-size:10px;color:#8d98a8;margin-top:2px}
-.breakdown{margin-top:8px;padding:7px 9px;background:#f8f9fc;border-radius:8px}
-.break-row{display:flex;justify-content:space-between;gap:10px;font-size:10px;color:#69768b;padding:1px 0}
-.break-row strong{color:#374258}
-.break-row.credit strong{color:var(--green)}
-.ledger{margin-top:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.ledger-summary{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
-.ledger-account{padding:11px 14px;font-size:11px;color:#4d5a70}
-.ledger-account+.ledger-account{border-left:1px solid var(--line)}
-.ledger-label{font-size:9px;color:#7d899b;font-weight:750;margin-bottom:4px;letter-spacing:.04em}
-.minus{color:#bb6334}.plus{color:#248257}
-.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.contact-box{padding:14px;border:1px solid var(--line);border-radius:12px}
-.contact-box h3{font-size:12px;margin:0 0 8px}
-.contact-field{margin-top:8px}
-.contact-field label{display:block;color:#8994a6;font-size:10px}
-.contact-field span{font-size:12px;color:#354157;font-weight:600}
-.person{display:flex;gap:9px;padding:9px 0;border-bottom:1px solid #f0f2f6}
-.person:last-child{border-bottom:0}
-.initial{width:30px;height:30px;flex:none;border-radius:9px;background:#edf1ff;color:#5669d5;display:grid;place-items:center;font-size:10px;font-weight:800}
-.person strong{display:block;font-size:12px}
-.person small{display:block;color:#8490a2;font-size:10px;margin-top:1px;overflow-wrap:anywhere}
-.note-box{margin-top:12px;padding:12px 14px;border-radius:10px;background:#fafbfe;border:1px solid var(--line);color:#5f6b80;font-size:12px}
-
-/* ---------- Kanban ---------- */
-.kanban{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);gap:11px;overflow-x:auto;padding-bottom:8px}
-.kcol{background:#eef1f6;border-radius:13px;padding:10px;min-height:200px}
-.kcol-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:750;color:#37435a}
-.kcol-head b{background:#fff;border-radius:20px;padding:1px 8px;font-size:10px;color:#5d6a80}
-.kcol-sum{font-size:10px;color:#7d899b;margin:2px 0 9px}
-.kcard{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:10px 11px;margin-bottom:8px;box-shadow:0 2px 6px rgba(24,39,75,.04)}
-.kcard:hover{border-color:#c9d2ff}
-.kcard .kc-client{font-size:12px;font-weight:720}
-.kcard .kc-title{font-size:11px;color:#6f7b8e;margin-top:2px}
-.kcard .kc-amount{font-size:15px;font-weight:760;margin:7px 0 5px;letter-spacing:-.03em}
-.kcard .kc-foot{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:8px;font-size:10px;color:#7d899b}
-.kempty{font-size:11px;color:#97a1b2;text-align:center;padding:16px 0}
-
-/* ---------- WhatsApp ---------- */
-.wa{display:grid;grid-template-columns:310px minmax(0,1fr);height:calc(100vh - 190px);min-height:540px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:var(--shadow)}
-.wa-list{border-right:1px solid var(--line);overflow:auto;background:#fff}
-.wa-list-head{padding:13px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:750;display:flex;justify-content:space-between;align-items:center}
-.wa-item{display:flex;gap:10px;padding:12px 14px;border:0;background:none;width:100%;text-align:left;border-bottom:1px solid #f0f2f6;align-items:center}
-.wa-item:hover{background:#f7faf8}
-.wa-item.active{background:#eef7f2}
-.wa-avatar{width:40px;height:40px;border-radius:50%;background:#d8efe3;color:#1f7a50;display:grid;place-items:center;font-weight:800;font-size:12px;flex:none}
-.wa-info{flex:1;min-width:0}
-.wa-info strong{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wa-info small{display:block;font-size:11px;color:#7b8798;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wa-meta{text-align:right;flex:none;font-size:10px;color:#8994a6;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
-.wa-unread{background:#25b36b;color:#fff;border-radius:20px;min-width:18px;height:18px;display:grid;place-items:center;font-size:10px;font-weight:800;padding:0 5px}
-.wa-conv{display:flex;flex-direction:column;min-width:0;min-height:0}
-.wa-head{padding:10px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff}
-.wa-head-main{display:flex;gap:10px;align-items:center;min-width:0}
-.wa-head-main strong{display:block;font-size:14px}
-.wa-head-main small{display:block;font-size:11px;color:#7b8798}
-.wa-context{display:flex;gap:6px 16px;flex-wrap:wrap;padding:8px 16px;border-bottom:1px solid var(--line);background:#fafbfe;font-size:11px;color:#6f7b8e}
-.wa-context b{color:#38445a;font-weight:650}
-.wa-msgs{flex:1;overflow:auto;padding:16px 18px;background:#efeae2;background-image:radial-gradient(#e2dccf 1px,transparent 1px);background-size:18px 18px}
-.bubble{max-width:72%;width:fit-content;padding:7px 10px 5px;border-radius:10px;margin:5px 0;font-size:13px;box-shadow:0 1px 1px rgba(0,0,0,.07);overflow-wrap:anywhere}
-.bubble.in{background:#fff;border-top-left-radius:2px}
-.bubble.out{background:#d9fdd3;margin-left:auto;border-top-right-radius:2px}
-.bubble time{display:block;text-align:right;font-size:10px;color:#7d8a80;margin-top:2px}
-.bubble .tpl{display:block;font-size:10px;font-weight:750;color:#1f7a50;margin-bottom:2px}
-.day-sep{text-align:center;margin:10px 0}
-.day-sep span{background:#fff;font-size:10px;padding:3px 9px;border-radius:8px;color:#6b7a86;box-shadow:0 1px 1px rgba(0,0,0,.05)}
-.window{font-size:10px;font-weight:750;padding:4px 9px;border-radius:20px;white-space:nowrap}
-.window.open{background:var(--wa-bg);color:var(--wa)}
-.window.closed{background:var(--amber-bg);color:var(--amber)}
-.wa-compose{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line);background:#f7f8fa;align-items:center}
-.wa-compose input,.wa-compose select{flex:1;min-width:0;height:40px;border-radius:20px;border:1px solid var(--line);padding:0 14px;background:#fff;outline:none}
-.wa-compose input:focus,.wa-compose select:focus{border-color:#9fd7b9}
-.send{width:40px;height:40px;border-radius:50%;border:0;background:var(--wa);color:#fff;font-size:16px;flex:none}
-.wa-hint{font-size:10px;color:var(--amber);padding:6px 14px 0;background:#f7f8fa}
-.quick{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px 0;background:#f7f8fa}
-.quick button{border:1px solid #cfeadb;background:#fff;color:#1f7a50;border-radius:20px;padding:4px 10px;font-size:11px}
-
-/* ---------- Responsive ---------- */
-@media(max-width:1250px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.opp-strip{grid-template-columns:repeat(3,minmax(0,1fr))}.split-grid{grid-template-columns:1fr}}
+/* ---------- Responsive: una pantalla a la vez en móvil ---------- */
+@media(max-width:1100px){.layout{grid-template-columns:290px minmax(0,1fr) 300px}}
 @media(max-width:900px){
-  .sidebar{position:sticky;top:0;width:auto;height:auto;padding:10px 12px;flex-direction:row;align-items:center;gap:12px;overflow:visible}
-  .brand{padding:0}.brand-sub,.nav-label,.sidebar-bottom{display:none}
-  .nav{display:flex;gap:4px;overflow-x:auto;flex:1;scrollbar-width:none}
-  .nav::-webkit-scrollbar{display:none}
-  .nav-item{padding:8px 10px;font-size:12px;width:auto}
-  .main{margin-left:0}
-  .topbar{position:static;height:auto;padding:10px 16px}
-  main.content{padding:18px 14px 34px}
-  .crm-layout{grid-template-columns:1fr}
-  .client-panel{position:static}
-  .client-list{max-height:330px}
-  .grid-2{grid-template-columns:1fr}
-  .wa{grid-template-columns:1fr;height:auto;min-height:0}
-  .wa-list{border-right:0;border-bottom:1px solid var(--line);max-height:250px}
-  .wa-msgs{height:420px;flex:none}
+  .layout{grid-template-columns:1fr}
+  .layout .pane{display:none}
+  .layout[data-pane="list"] .list,.layout[data-pane="chat"] .chat,.layout[data-pane="info"] .info{display:flex}
+  .back,.info-btn,.info-back{display:inline-block}
+  .demo{display:none}
+  .b{max-width:85%}
 }
-@media(max-width:600px){
-  .brand-name{display:none}
-  .demo-pill{display:none}
-  .page-head{flex-direction:column;align-items:flex-start}
-  h1{font-size:22px}
-  .kpis,.kpis.k3,.kpis.k4{grid-template-columns:1fr 1fr;gap:8px}
-  .kpi{padding:11px}.kpi-value{font-size:17px}
-  .detail-panel{padding:14px 12px}
-  .profile-head{display:block}.profile-actions{justify-content:flex-start;margin-top:12px}
-  .opp-strip{grid-template-columns:1fr 1fr}
-  .account-cards{grid-template-columns:1fr 1fr}.account-card.credit{grid-column:span 2}
-  .ledger-summary{grid-template-columns:1fr}.ledger-account+.ledger-account{border-left:0;border-top:1px solid var(--line)}
-  .contact-grid{grid-template-columns:1fr}
-  .funnel-row{grid-template-columns:110px 1fr;}.funnel-val{grid-column:span 2;text-align:left;margin-top:-4px}
-  .toolbar .search-wrap{width:100%}
-  .bubble{max-width:86%}
-}
+@media(max-width:420px){.brand small{display:none}.sim{padding:7px 10px;font-size:11px}}
 </style>
 </head>
 <body>
-<aside class="sidebar">
-  <div class="brand">
-    <div class="brand-mark">TV</div>
-    <div><div class="brand-name">Tuttovinilos</div><div class="brand-sub">Comanda · CRM</div></div>
-  </div>
-  <nav class="nav" id="nav" aria-label="Navegación principal"></nav>
-  <div class="sidebar-bottom">
-    <div class="account-user"><div class="avatar">RO</div><div><div class="user-name">Roberto Ortiz</div><div class="user-role">Administrador</div></div></div>
-    <div class="local-chip"><span class="local-dot"></span>Maqueta local · datos ficticios</div>
-  </div>
-</aside>
-<div class="main">
-  <header class="topbar">
-    <div class="breadcrumb">Comanda <span style="color:#b1bac8">/</span> CRM <span style="color:#b1bac8">/</span> <strong id="crumb">Panel general</strong></div>
-    <div class="top-right"><span class="today-pill">Hoy · 21 nov 2026</span><span class="demo-pill">Prototipo · sin conexión</span></div>
-  </header>
-  <main class="content" id="content"></main>
+<header class="top">
+  <div class="brand"><div class="brand-mark">TV</div><div><b>Tuto CRM</b><small>Bandeja de WhatsApp · Tuttovinilos</small></div></div>
+  <div class="top-right"><span class="demo">SIMULACIÓN · NADA SE ENVÍA</span><button class="sim" id="simBtn">📲 Simular mensaje</button></div>
+</header>
+<div class="layout" id="layout" data-pane="list">
+  <aside class="pane list" id="list"></aside>
+  <section class="pane chat" id="chat"></section>
+  <aside class="pane info" id="info"></aside>
 </div>
+<div class="overlay" id="overlay" hidden><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
 "use strict";
 /* =====================================================================
-   CRM TUTTOVINILOS · Maqueta local
-   Todo es ficticio. No hay conexión a Supabase, GitHub, Comanda ni WhatsApp.
-   Fechas en formato ISO para ordenar correctamente.
-   Los abonos de cada pedido se CALCULAN a partir de las distribuciones de
-   pago (no se guardan aparte), para que nunca se descuadren.
+   TUTO CRM · Maqueta de bandeja WhatsApp con botones de seguimiento
+   - Burbuja blanca: mensaje del cliente (llega por WhatsApp)
+   - Burbuja verde: tu respuesta (sale por WhatsApp)
+   - Nota amarilla: nota interna, el cliente NO la ve
+   - Recuadro gris centrado: registro que guarda el CRM al tocar un botón
+   Todo es ficticio y se pierde al cerrar la página.
    ===================================================================== */
 
-const TODAY = "2026-11-21";
-const NOW = new Date("2026-11-21T20:00:00");      // reloj simulado de la demo
-const MONTHS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const ME = "Roberto Ortiz";
 const STAGES = ["Cliente nuevo","En atención","Cotización en preparación","Cotización enviada","Seguimiento","Ganada","Perdida"];
-const OPEN_STAGES = STAGES.slice(0,5);
+const STAGE_CLASS = {"Cliente nuevo":"s-nuevo","En atención":"s-atencion","Cotización en preparación":"s-prep","Cotización enviada":"s-enviada","Seguimiento":"s-seg","Ganada":"s-ganada","Perdida":"s-perdida"};
+const MONTHS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const D = (y,m,d,h,mi) => new Date(y,m-1,d,h,mi);
+let clock = D(2026,11,21,20,55);
+function tick(min){clock=new Date(clock.getTime()+(min||1)*60000);return new Date(clock);}
+let quoteSeq = 198, orderSeq = 271, newSeq = 9;
 
 /* ---------------- Datos ficticios ---------------- */
-const clients = [
-  {id:1,name:"Grupo Arvento Comercial, C.A.",initials:"GA",kind:"Empresa",relation:"Cliente activo",rif:"J-41278365-4",phone:"+58 412-573-2846",email:"administracion@arvento.example",address:"Zona Industrial Municipal, Valencia",
-   note:"Validar arte final con Mariana antes de producir. La instalación de fachada depende de confirmar el punto eléctrico.",
-   contacts:[{name:"Mariana Figueroa",role:"Compras",phone:"+58 414-268-5173",email:"m.figueroa@arvento.example",primary:true},
-             {name:"Javier Rojas",role:"Administración",phone:"+58 424-731-9062",email:"j.rojas@arvento.example"}]},
-  {id:2,name:"Taller Senda, C.A.",initials:"TS",kind:"Empresa",relation:"Cliente activo",rif:"J-40853127-6",phone:"+58 414-628-3915",email:"contacto@tallersenda.example",address:"Av. Don Julio Centeno, San Diego",
-   note:"Enviar alternativa con iluminación cálida y otra sin iluminación. Cliente prefiere comparar ambas opciones.",
-   contacts:[{name:"Luis Rivas",role:"Gerencia",phone:"+58 412-694-0872",email:"l.rivas@tallersenda.example",primary:true},
-             {name:"Paola Méndez",role:"Administración",phone:"+58 424-318-6507",email:"p.mendez@tallersenda.example"}]},
-  {id:3,name:"Estudio Marea Arquitectura, C.A.",initials:"MA",kind:"Empresa",relation:"Prospecto",rif:"J-41300598-2",phone:"+58 424-715-6038",email:"proyectos@marea.example",address:"El Viñedo, Valencia",
-   note:"Prospecto nuevo. Solicitó propuesta para logo de recepción y señalética de dos consultorios.",
-   contacts:[{name:"Camila Soto",role:"Arquitectura",phone:"+58 412-906-3451",email:"c.soto@marea.example",primary:true}]},
-  {id:4,name:"Inversiones Granate, C.A.",initials:"IG",kind:"Empresa",relation:"Cliente activo",rif:"J-31182405-7",phone:"+58 412-845-2107",email:"compras@granate.example",address:"Zona Industrial El Recreo, Valencia",
-   note:"La empresa suele aprobar por correo. Confirmar acabado automotriz y medidas antes de reservar producción.",
-   contacts:[{name:"Andrés Salcedo",role:"Compras",phone:"+58 414-372-9058",email:"a.salcedo@granate.example",primary:true},
-             {name:"Elena Pardo",role:"Administración",phone:"+58 424-557-1829",email:"e.pardo@granate.example"}]},
-  {id:5,name:"Clínica Altavida, C.A.",initials:"CA",kind:"Empresa",relation:"Prospecto",rif:"J-41277081-3",phone:"+58 414-291-6840",email:"administracion@altavida.example",address:"Av. Universidad, Naguanagua",
-   note:"Esperando aprobación de la dirección médica. Revisar disponibilidad de punto eléctrico para la chupeta iluminada.",
-   contacts:[{name:"Dra. Valeria León",role:"Administración",phone:"+58 424-630-4175",email:"v.leon@altavida.example",primary:true},
-             {name:"Samuel Torres",role:"Mantenimiento",phone:"+58 412-550-7436",email:"s.torres@altavida.example"}]},
-  {id:6,name:"Alimentos Valle Alto, C.A.",initials:"VA",kind:"Empresa",relation:"Cliente activo",rif:"J-40321894-5",phone:"+58 412-683-7194",email:"compras@vallealto.example",address:"Guacara, Carabobo",
-   note:"Proyecto anterior cerrado. Consultar antes de enviar una nueva propuesta; coordinar instalación con operaciones.",
-   contacts:[{name:"Daniela Moreno",role:"Mercadeo",phone:"+58 414-830-2671",email:"d.moreno@vallealto.example",primary:true},
-             {name:"José Manuel Pérez",role:"Operaciones",phone:"+58 424-192-5386",email:"jm.perez@vallealto.example"}]},
-  {id:7,name:"Ferretería El Roble, C.A.",initials:"ER",kind:"Empresa",relation:"Prospecto",rif:"J-50281376-4",phone:"+58 424-510-7283",email:"ventas@ferreteriaelroble.example",address:"Av. Bolívar, Los Guayos",
-   note:"Primer contacto realizado en tienda. Requiere letrero exterior y señalización de pasillos. No se emite pedido hasta aprobar la cotización.",
-   contacts:[{name:"Miguel Ángel Ponce",role:"Propietario",phone:"+58 412-342-9016",email:"m.ponce@ferreteriaelroble.example",primary:true}]},
-  {id:8,name:"Fundación Horizonte Abierto",initials:"HA",kind:"Organización",relation:"Cliente activo",rif:"J-40078123-6",phone:"+58 414-709-3165",email:"proyectos@horizonteabierto.example",address:"El Parral, Valencia",
-   note:"Entrega confirmada. Contactar la primera semana de diciembre para revisar nuevas necesidades de señalización.",
-   contacts:[{name:"Sofía Cárdenas",role:"Coordinación",phone:"+58 412-618-0497",email:"s.cardenas@horizonteabierto.example",primary:true},
-             {name:"Tomás Ibarra",role:"Administración",phone:"+58 424-286-1530",email:"t.ibarra@horizonteabierto.example"}]}
-];
+const clients = {
+  c1:{id:"c1",name:"Mariana Figueroa",company:"Grupo Arvento Comercial, C.A.",phone:"+58 414-268-5173",stage:"Seguimiento",owner:"Roberto Ortiz",next:"2026-11-26",credit:{USD:0,BS:0},
+      orders:[{id:"TV-0264",name:"Letras corpóreas · fachada",acc:"USD",total:1280,paid:260},
+              {id:"TV-0251",name:"Vinil de seguridad vitrinas",acc:"USD",total:210,paid:0},
+              {id:"TV-0247",name:"Señalización de almacén",acc:"BS",total:42600,paid:24000}],
+      quotes:[{id:"COT-2026-184",name:"Fachada corpórea y directorio",acc:"USD",amount:1850,status:"En seguimiento"}]},
+  c2:{id:"c2",name:"Luis Rivas",company:"Taller Senda, C.A.",phone:"+58 412-694-0872",stage:"Cotización enviada",owner:"Ricardo Ortiz",next:"2026-11-24",credit:{USD:0,BS:0},
+      orders:[{id:"TV-0261",name:"Identificación de áreas",acc:"BS",total:9000,paid:9000}],
+      quotes:[{id:"COT-2026-191",name:"Letras recepción · 2 alternativas",acc:"USD",amount:635,status:"Enviada"}]},
+  c3:{id:"c3",name:"Dra. Valeria León",company:"Clínica Altavida, C.A.",phone:"+58 424-630-4175",stage:"Seguimiento",owner:"Marie Gabriela",next:"2026-11-24",credit:{USD:0,BS:0},
+      orders:[],quotes:[{id:"COT-2026-188",name:"Logo recepción + chupeta iluminada",acc:"USD",amount:3250,status:"Enviada"}]},
+  c4:{id:"c4",name:"Camila Soto",company:"Estudio Marea Arquitectura",phone:"+58 412-906-3451",stage:"Cotización en preparación",owner:"Marie Gabriela",next:"2026-11-25",credit:{USD:0,BS:0},
+      orders:[],quotes:[]}
+};
 
-/* Oportunidades separadas del cliente: un cliente puede tener varias */
-const opportunities = [
-  {id:"OP-01",clientId:1,title:"Fachada corpórea y directorio",stage:"Seguimiento",origin:"Referido comercial",owner:"Roberto Ortiz",amount:1850,probability:65,next:"2026-11-26",quote:"COT-2026-184"},
-  {id:"OP-02",clientId:2,title:"Letras para recepción · dos alternativas",stage:"Cotización enviada",origin:"Instagram",owner:"Ricardo Ortiz",amount:635,probability:50,next:"2026-11-24",quote:"COT-2026-191"},
-  {id:"OP-03",clientId:3,title:"Logo de recepción y señalética",stage:"Cotización en preparación",origin:"Recomendación de arquitecto",owner:"Marie Gabriela",amount:870,probability:35,next:"2026-11-25",quote:"COT-2026-194"},
-  {id:"OP-04",clientId:4,title:"Rotulación de flota · 3 camiones",stage:"En atención",origin:"Cliente recurrente",owner:"Roberto Ortiz",amount:1100,probability:40,next:"2026-11-27",quote:"COT-2026-197"},
-  {id:"OP-05",clientId:5,title:"Logo de recepción + chupeta iluminada",stage:"Seguimiento",origin:"WhatsApp empresarial",owner:"Marie Gabriela",amount:3250,probability:45,next:"2026-11-24",quote:"COT-2026-188"},
-  {id:"OP-06",clientId:6,title:"Exhibidores e identidad visual",stage:"Ganada",origin:"Cliente recurrente",owner:"Ricardo Ortiz",amount:2200,probability:100,next:"2026-12-02",quote:"COT-2026-161"},
-  {id:"OP-07",clientId:7,title:"Letrero exterior y señalización",stage:"Cliente nuevo",origin:"Visita comercial",owner:"Roberto Ortiz",amount:1125,probability:25,next:"2026-11-28",quote:"COT-2026-196"},
-  {id:"OP-08",clientId:8,title:"Placas para centro comunitario",stage:"Ganada",origin:"Referido institucional",owner:"Marie Gabriela",amount:450,probability:100,next:"2026-12-03",quote:"COT-2026-153"},
-  {id:"OP-09",clientId:2,title:"Rotulado de vehículo de servicio",stage:"Perdida",origin:"Instagram",owner:"Ricardo Ortiz",amount:400,probability:0,next:null,quote:"COT-2026-170"}
-];
-
-const quotes = [
-  {number:"COT-2026-184",clientId:1,date:"2026-11-19",title:"Fachada corpórea y directorio",amount:1850,account:"USD",status:"En seguimiento",valid:"2026-11-30",owner:"Roberto Ortiz"},
-  {number:"COT-2026-159",clientId:1,date:"2026-11-03",title:"Señalización de almacén",amount:42600,account:"BS",status:"Aprobada",valid:"2026-11-10",owner:"Roberto Ortiz"},
-  {number:"COT-2026-191",clientId:2,date:"2026-11-20",title:"Letras para recepción · dos alternativas",amount:635,account:"USD",status:"Enviada",valid:"2026-11-27",owner:"Ricardo Ortiz"},
-  {number:"COT-2026-170",clientId:2,date:"2026-11-06",title:"Rotulado de vehículo de servicio",amount:400,account:"USD",status:"Rechazada",valid:"2026-11-13",owner:"Ricardo Ortiz"},
-  {number:"COT-2026-194",clientId:3,date:"2026-11-21",title:"Logo de recepción y señalética",amount:870,account:"USD",status:"En preparación",valid:null,owner:"Marie Gabriela"},
-  {number:"COT-2026-177",clientId:4,date:"2026-11-11",title:"Logo para área de ventas",amount:840,account:"USD",status:"Aprobada",valid:"2026-11-24",owner:"Roberto Ortiz"},
-  {number:"COT-2026-197",clientId:4,date:"2026-11-21",title:"Rotulación de flota · 3 camiones",amount:1100,account:"USD",status:"En preparación",valid:null,owner:"Roberto Ortiz"},
-  {number:"COT-2026-188",clientId:5,date:"2026-11-18",title:"Logo de recepción + chupeta iluminada",amount:3250,account:"USD",status:"Enviada",valid:"2026-12-02",owner:"Marie Gabriela"},
-  {number:"COT-2026-161",clientId:6,date:"2026-11-05",title:"Exhibidores e identidad visual",amount:2200,account:"USD",status:"Aprobada",valid:"2026-11-10",owner:"Ricardo Ortiz"},
-  {number:"COT-2026-196",clientId:7,date:"2026-11-21",title:"Letrero exterior y señalización",amount:1125,account:"USD",status:"En preparación",valid:null,owner:"Roberto Ortiz"},
-  {number:"COT-2026-153",clientId:8,date:"2026-11-08",title:"Placas para centro comunitario",amount:450,account:"USD",status:"Aprobada",valid:"2026-11-12",owner:"Marie Gabriela"}
-];
-
-/* Estado de trabajo (producción) separado del estado de cobro */
-const orders = [
-  {id:"TV-0264",clientId:1,date:"2026-11-20",name:"Letras corpóreas · fachada principal",details:"PVC 18 mm · 1 juego · entrega 29 nov · Ricardo",status:"En curso",account:"USD",total:1280,quote:"COT-2026-184"},
-  {id:"TV-0258",clientId:1,date:"2026-11-18",name:"Directorio de oficinas",details:"Acrílico 5 mm · 5 placas · entrega 23 nov · Rubén",status:"Revisado",account:"USD",total:375,quote:"COT-2026-184"},
-  {id:"TV-0251",clientId:1,date:"2026-11-14",name:"Vinil de seguridad para vitrinas",details:"Impresión UV + laminado · 12 m² · entrega 26 nov",status:"En cola",account:"USD",total:210,quote:null},
-  {id:"TV-0247",clientId:1,date:"2026-11-12",name:"Señalización de almacén",details:"PVC impreso · 18 piezas · tasa fijada al emitir",status:"Listo",account:"BS",total:42600,quote:"COT-2026-159"},
-  {id:"TV-0261",clientId:2,date:"2026-11-19",name:"Identificación de áreas",details:"Acrílico 3 mm · 6 unidades · entrega 25 nov",status:"En curso",account:"BS",total:9000,quote:null},
-  {id:"TV-0252",clientId:2,date:"2026-11-14",name:"Letras para recepción",details:"PVC 15 mm · 1 juego · entrega por confirmar",status:"En cola",account:"USD",total:325,quote:null},
-  {id:"TV-0242",clientId:4,date:"2026-11-16",name:"Logo para área de ventas",details:"PVC 18 mm · acabado negro mate · entrega 26 nov",status:"En curso",account:"USD",total:840,quote:"COT-2026-177"},
-  {id:"TV-0240",clientId:4,date:"2026-11-13",name:"Señales de seguridad",details:"PVC impreso · 12 unidades · instalado",status:"Entregado",account:"BS",total:9500,quote:null},
-  {id:"TV-0221",clientId:6,date:"2026-11-10",name:"Identidad visual de exhibidores",details:"Impresión UV + laminado · 8 módulos",status:"Entregado",account:"USD",total:2200,quote:"COT-2026-161"},
-  {id:"TV-0218",clientId:6,date:"2026-11-07",name:"Señalización de depósito",details:"PVC 5 mm · 14 placas · entrega parcial",status:"Listo",account:"BS",total:38200,quote:null},
-  {id:"TV-0236",clientId:8,date:"2026-11-12",name:"Placas para centro comunitario",details:"Acrílico grabado · 9 unidades",status:"Entregado",account:"USD",total:450,quote:"COT-2026-153"}
-];
-
-/* Pagos: el saldo a favor = recibido − distribuido. Solo existe si no quedan pedidos pendientes en esa moneda. */
-const payments = [
-  {id:"PG-2026-058",clientId:1,at:"2026-11-21T10:42",method:"Transferencia Zelle",ref:"ZL-842617",account:"USD",received:500,allocations:[["TV-0264",420],["TV-0251",80]]},
-  {id:"PG-2026-054",clientId:1,at:"2026-11-19T09:28",method:"Transferencia bancaria",ref:"TRF-731904",account:"USD",received:260,allocations:[["TV-0264",260]]},
-  {id:"PG-2026-051",clientId:1,at:"2026-11-18T10:15",method:"Zelle",ref:"ZL-705238",account:"USD",received:375,allocations:[["TV-0258",375]]},
-  {id:"PG-2026-049",clientId:1,at:"2026-11-17T15:30",method:"Pago móvil",ref:"PM-520184",account:"BS",received:24000,allocations:[["TV-0247",24000]]},
-  {id:"PG-2026-056",clientId:2,at:"2026-11-20T14:05",method:"Pago móvil",ref:"PM-781426",account:"BS",received:9000,allocations:[["TV-0261",9000]]},
-  {id:"PG-2026-045",clientId:2,at:"2026-11-15T11:00",method:"Efectivo USD",ref:"REC-2026-118",account:"USD",received:125,allocations:[["TV-0252",125]]},
-  {id:"PG-2026-047",clientId:4,at:"2026-11-17T12:40",method:"Transferencia bancaria",ref:"TRF-418620",account:"USD",received:600,allocations:[["TV-0242",600]]},
-  {id:"PG-2026-042",clientId:4,at:"2026-11-14T13:18",method:"Pago móvil",ref:"PM-394816",account:"BS",received:9500,allocations:[["TV-0240",9500]]},
-  {id:"PG-2026-033",clientId:6,at:"2026-11-11T16:10",method:"Transferencia Zelle",ref:"ZL-172846",account:"USD",received:2200,allocations:[["TV-0221",2200]]},
-  {id:"PG-2026-028",clientId:6,at:"2026-11-08T12:00",method:"Transferencia",ref:"TRF-294751",account:"BS",received:30000,allocations:[["TV-0218",30000]]},
-  {id:"PG-2026-039",clientId:8,at:"2026-11-13T10:20",method:"Transferencia",ref:"TRF-609382",account:"USD",received:500,allocations:[["TV-0236",450]]}
-];
-
-const history = [
-  {clientId:1,at:"2026-11-21T10:42",kind:"payment",title:"Pago general recibido · PG-2026-058",detail:"USD 500,00 · Ref. ZL-842617 · USD 420,00 a TV-0264 y USD 80,00 a TV-0251."},
-  {clientId:1,at:"2026-11-20T15:10",kind:"order",title:"Pedido TV-0264 pasó a En curso",detail:"Letras corpóreas para fachada · entrega prevista 29 nov 2026."},
-  {clientId:1,at:"2026-11-19T09:28",kind:"payment",title:"Abono aplicado · PG-2026-054",detail:"USD 260,00 aplicados a TV-0264 · Ref. TRF-731904."},
-  {clientId:1,at:"2026-11-19T08:30",kind:"quote",title:"Cotización COT-2026-184 enviada",detail:"Fachada corpórea y directorio · USD 1.850,00 · vigente hasta 30 nov."},
-  {clientId:1,at:"2026-11-18T11:05",kind:"order",title:"Pedido TV-0258 revisado",detail:"Directorio de oficinas · USD 375,00 · saldo pagado."},
-  {clientId:2,at:"2026-11-21T09:40",kind:"whatsapp",title:"Mensaje entrante de Luis Rivas",detail:"Confirma que recibió ambas alternativas y las revisará con su socio."},
-  {clientId:2,at:"2026-11-20T16:20",kind:"quote",title:"Cotización COT-2026-191 enviada",detail:"Dos alternativas para recepción · USD 635,00 · seguimiento 24 nov."},
-  {clientId:2,at:"2026-11-20T14:05",kind:"payment",title:"Pago aplicado · PG-2026-056",detail:"Bs 9.000,00 aplicados a TV-0261 · Ref. PM-781426."},
-  {clientId:2,at:"2026-11-19T08:35",kind:"order",title:"Pedido TV-0261 en producción",detail:"Identificación de áreas · 6 piezas en acrílico."},
-  {clientId:2,at:"2026-11-13T17:00",kind:"quote",title:"Cotización COT-2026-170 rechazada",detail:"Rotulado de vehículo · el cliente pospuso el proyecto. Oportunidad marcada como Perdida."},
-  {clientId:3,at:"2026-11-21T10:05",kind:"whatsapp",title:"Camila Soto responde por WhatsApp",detail:"Enviará las medidas del logo y la señalética mañana."},
-  {clientId:3,at:"2026-11-21T09:15",kind:"quote",title:"Solicitud de cotización registrada",detail:"Logo de recepción y señalética para dos consultorios · visita de medidas pendiente."},
-  {clientId:4,at:"2026-11-21T11:20",kind:"quote",title:"Nueva solicitud · rotulación de flota",detail:"3 camiones · COT-2026-197 en preparación."},
-  {clientId:4,at:"2026-11-17T12:40",kind:"payment",title:"Abono recibido · PG-2026-047",detail:"USD 600,00 aplicados a TV-0242 · Ref. TRF-418620."},
-  {clientId:4,at:"2026-11-16T10:25",kind:"order",title:"Pedido TV-0242 en producción",detail:"Logo para área de ventas · saldo del pedido USD 240,00."},
-  {clientId:4,at:"2026-11-14T13:18",kind:"payment",title:"Pedido TV-0240 pagado",detail:"Bs 9.500,00 por Pago móvil · Ref. PM-394816."},
-  {clientId:5,at:"2026-11-20T11:30",kind:"quote",title:"Seguimiento de COT-2026-188",detail:"La propuesta está en revisión de dirección. Próximo contacto 24 nov."},
-  {clientId:6,at:"2026-11-11T16:10",kind:"payment",title:"Pago final recibido · PG-2026-033",detail:"USD 2.200,00 aplicados a TV-0221 · Ref. ZL-172846."},
-  {clientId:6,at:"2026-11-10T17:30",kind:"order",title:"TV-0221 entregado",detail:"Ocho módulos de exhibición con identidad visual."},
-  {clientId:6,at:"2026-11-08T12:00",kind:"payment",title:"Abono recibido · PG-2026-028",detail:"Bs 30.000,00 aplicados a TV-0218 · saldo del pedido Bs 8.200,00."},
-  {clientId:7,at:"2026-11-21T12:05",kind:"quote",title:"Primer contacto en tienda",detail:"Letrero exterior y señalización de pasillos · COT-2026-196 en preparación; validar medidas en sitio."},
-  {clientId:8,at:"2026-11-13T10:20",kind:"payment",title:"Pago recibido · PG-2026-039",detail:"USD 500,00 · USD 450,00 a TV-0236 · USD 50,00 quedan a favor (no hay otros pedidos pendientes)."},
-  {clientId:8,at:"2026-11-12T15:45",kind:"order",title:"Pedido TV-0236 entregado",detail:"Nueve placas de acrílico grabado para el centro comunitario."}
-];
-
-/* Teléfonos en E.164 para enlazar chat ↔ contacto */
 const chats = [
-  {id:"wa2",clientId:2,contact:"Luis Rivas",phone:"+584126940872",unread:1,messages:[
-    {dir:"in",at:"2026-11-20T15:30",text:"Hola, estamos evaluando unas letras para la recepción del taller."},
-    {dir:"out",at:"2026-11-20T15:44",text:"¡Hola Luis! Le podemos ofrecer dos alternativas: acrílico con luz cálida o PVC sin iluminación."},
-    {dir:"in",at:"2026-11-20T15:58",text:"Perfecto, envíenme ambas para compararlas."},
-    {dir:"out",at:"2026-11-20T16:21",text:"Listo, le enviamos la cotización COT-2026-191 con las dos opciones."},
-    {dir:"in",at:"2026-11-21T09:40",text:"Gracias, ya las recibí. Las reviso con mi socio y le confirmo."}]},
-  {id:"wa3",clientId:3,contact:"Camila Soto",phone:"+584129063451",unread:1,messages:[
-    {dir:"out",at:"2026-11-21T08:50",text:"Buenos días, Camila. Le escribimos para coordinar las medidas del logo y la señalética de los consultorios."},
-    {dir:"in",at:"2026-11-21T10:05",text:"Buenos días. Mañana le envío las medidas."}]},
-  {id:"wa5",clientId:5,contact:"Dra. Valeria León",phone:"+584246304175",unread:0,messages:[
-    {dir:"in",at:"2026-11-18T09:12",text:"Buenos días. Quisiera información para un logo de recepción y una señal tipo chupeta."},
-    {dir:"out",at:"2026-11-18T09:20",text:"¡Buenos días, Dra. León! ¿Nos indica medidas aproximadas y si la chupeta debe ir iluminada?"},
-    {dir:"in",at:"2026-11-18T10:02",text:"La recepción mide cerca de 2 metros. La chupeta sí debería ir iluminada."},
-    {dir:"out",at:"2026-11-18T10:15",text:"Perfecto. Preparamos la propuesta y coordinamos la revisión del punto eléctrico."},
-    {dir:"in",at:"2026-11-20T11:05",text:"Recibí la propuesta. La revisaré con la dirección y le aviso."}]}
+  {id:"ch1",clientId:"c1",unread:0,suggest:null,msgs:[
+    {type:"in",at:D(2026,11,19,9,10),text:"Buenos días, ¿cómo va lo de las letras de la fachada?"},
+    {type:"out",at:D(2026,11,19,9,15),text:"Buenos días Mariana, ya están en producción. Entrega prevista el 29 nov."},
+    {type:"event",at:D(2026,11,19,9,28),icon:"💵",text:"Pago registrado · $260,00 · Transferencia · Ref. TRF-731904 → TV-0264",by:"Administración"},
+    {type:"note",at:D(2026,11,19,9,30),text:"Confirmar el punto eléctrico antes de instalar.",by:"Roberto Ortiz"},
+    {type:"in",at:D(2026,11,21,18,40),text:"Perfecto, gracias. Les aviso cuando haga el resto del pago."}]},
+  {id:"ch2",clientId:"c2",unread:1,suggest:null,msgs:[
+    {type:"in",at:D(2026,11,20,15,30),text:"Hola, estamos evaluando letras para la recepción del taller."},
+    {type:"out",at:D(2026,11,20,15,44),text:"¡Hola Luis! Tenemos dos opciones: acrílico con luz cálida o PVC sin iluminación."},
+    {type:"out",at:D(2026,11,20,16,20),text:"📄 Cotización COT-2026-191 · Letras recepción (2 alternativas) · $635,00"},
+    {type:"event",at:D(2026,11,20,16,20),icon:"📄",text:"Cotización COT-2026-191 enviada · $635,00 · Etapa → Cotización enviada",by:"Ricardo Ortiz"},
+    {type:"in",at:D(2026,11,21,9,40),text:"Gracias, ya las recibí. Las reviso con mi socio."}]},
+  {id:"ch3",clientId:"c3",unread:0,suggest:null,msgs:[
+    {type:"in",at:D(2026,11,18,9,12),text:"Buenos días. Quisiera información para un logo de recepción y una señal tipo chupeta."},
+    {type:"out",at:D(2026,11,18,9,20),text:"¡Buenos días, Dra. León! ¿Nos indica medidas aproximadas y si la chupeta va iluminada?"},
+    {type:"in",at:D(2026,11,18,10,2),text:"La recepción mide cerca de 2 metros. La chupeta sí, iluminada."},
+    {type:"in",at:D(2026,11,20,11,5),text:"Recibí la propuesta. La reviso con la dirección y le aviso."},
+    {type:"event",at:D(2026,11,20,11,30),icon:"⏰",text:"Recordatorio: escribirle el 24 nov si no responde",by:"Marie Gabriela"}]},
+  {id:"ch4",clientId:"c4",unread:0,suggest:null,msgs:[
+    {type:"out",at:D(2026,11,21,8,50),text:"Buenos días, Camila. ¿Coordinamos las medidas del logo y la señalética?"},
+    {type:"in",at:D(2026,11,21,10,5),text:"Buenos días. Mañana le envío las medidas."}]}
 ];
 
-/* Plantillas tipo WhatsApp Business (fuera de la ventana de 24 h solo se permiten plantillas aprobadas) */
-const templates = [
-  {id:"seguimiento_cotizacion",label:"Seguimiento de cotización",text:"Hola {nombre}, le saludamos de Tuttovinilos. ¿Pudo revisar la cotización {cotizacion}? Quedamos atentos a cualquier ajuste."},
-  {id:"recordatorio_saldo",label:"Recordatorio de saldo",text:"Hola {nombre}, le recordamos que su cuenta presenta un saldo pendiente de {saldo}. Gracias por su atención."},
-  {id:"pedido_listo",label:"Pedido listo",text:"Hola {nombre}, su pedido está listo. Escríbanos para coordinar la entrega o instalación."}
+/* Mensajes que irán "llegando" al tocar Simular mensaje */
+const incoming = [
+  {phone:"+58 414-268-5173",text:"Listo, te hice el Zelle por $500. Ref. ZL-842617",attach:"captura_zelle.jpg"},
+  {phone:"+58 414-555-0199",text:"Hola, buenas noches. ¿Hacen letreros luminosos? Tengo una panadería en Naguanagua."},
+  {phone:"+58 412-694-0872",text:"Nos quedamos con la opción de luz cálida. ¿Cómo hacemos el anticipo?"},
+  {phone:"+58 424-630-4175",text:"Buenas noticias: la dirección aprobó la propuesta 👍"}
 ];
+let incomingIdx = 0;
+
+const state = {active:"ch1",pane:"list",mode:"reply",draft:"",filter:"all"};
 
 /* ---------------- Utilidades ---------------- */
 const $ = id => document.getElementById(id);
-const sum = (arr,f) => arr.reduce((s,x)=>s+f(x),0);
 const nf = new Intl.NumberFormat("es-VE",{minimumFractionDigits:2,maximumFractionDigits:2});
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function money(v,acc){return (acc==="BS"?"Bs ":"$")+nf.format(Number(v)||0);}
-function accName(acc){return acc==="BS"?"BCV":"DIVISA";}
-function fd(iso){if(!iso)return "—";const p=iso.slice(0,10).split("-");return p[2]+" "+MONTHS[+p[1]-1]+" "+p[0];}
-function fdt(iso){return fd(iso)+(iso&&iso.length>10?" · "+iso.slice(11,16):"");}
-function daysFrom(iso){return Math.round((new Date(iso.slice(0,10)+"T00:00:00")-new Date(TODAY+"T00:00:00"))/86400000);}
-function norm(s){return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();}
-const client = id => clients.find(c=>c.id===Number(id));
-const primary = c => c.contacts.find(x=>x.primary)||c.contacts[0];
-const byDesc = key => (a,b)=>String(b[key]).localeCompare(String(a[key]));
-function empty(t){return '<div class="empty">'+esc(t)+'</div>';}
-
-function paidOf(o){return sum(payments,p=>sum(p.allocations.filter(a=>a[0]===o.id),a=>a[1]));}
-function dueOf(o){return Math.max(o.total-paidOf(o),0);}
-function appliedOf(p){return sum(p.allocations,a=>a[1]);}
-function creditOf(p){return Math.max(p.received-appliedOf(p),0);}
-
-/* Cuenta de un cliente en UNA moneda. Nunca se convierten ni se mezclan. */
-function account(cid,acc){
-  const os=orders.filter(o=>o.clientId===cid&&o.account===acc);
-  const ps=payments.filter(p=>p.clientId===cid&&p.account===acc);
-  const issued=sum(os,o=>o.total), applied=sum(os,paidOf), credit=sum(ps,creditOf);
-  const open=issued-applied;
-  return {issued,applied,open,credit,net:open-credit,orders:os.length,payments:ps.length};
-}
-function netLabel(a,acc){return a.net>=0?money(a.net,acc):"a favor "+money(-a.net,acc);}
-
-function kpis(){
-  const open=opportunities.filter(o=>OPEN_STAGES.includes(o.stage));
-  let usd=0,bs=0,withBal=0,credUsd=0,credBs=0;
-  clients.forEach(c=>{
-    const u=account(c.id,"USD"),b=account(c.id,"BS");
-    if(u.net>0)usd+=u.net; if(b.net>0)bs+=b.net;
-    if(u.net<0)credUsd+=-u.net; if(b.net<0)credBs+=-b.net;
-    if(u.net>0||b.net>0)withBal++;
-  });
-  return {
-    openCount:open.length,
-    pipeline:sum(open,o=>o.amount),
-    weighted:sum(open,o=>o.amount*o.probability/100),
-    usd,bs,withBal,credUsd,credBs,
-    active:orders.filter(o=>o.status!=="Entregado").length,
-    fups:followItems().filter(o=>daysFrom(o.next)<=7).length
-  };
-}
-
-/* Controles de integridad (lo que debería validar la base real) */
-const CHECKS=[
-  {code:"dup",label:"Identificadores de pedido únicos"},
-  {code:"over_payment",label:"Ningún pago distribuye más de lo recibido"},
-  {code:"over_order",label:"Ningún pedido recibe más que su total"},
-  {code:"mix",label:"Pagos y pedidos en la misma moneda y cliente"},
-  {code:"credit",label:"Saldo a favor solo si no hay pedidos pendientes"}
-];
-function audit(){
-  const out=[],seen={};
-  orders.forEach(o=>{
-    if(seen[o.id])out.push({code:"dup",msg:"ID de pedido duplicado: "+o.id});
-    seen[o.id]=1;
-    if(paidOf(o)>o.total)out.push({code:"over_order",msg:o.id+" tiene abonos mayores a su total"});
-  });
-  payments.forEach(p=>{
-    if(appliedOf(p)>p.received)out.push({code:"over_payment",msg:p.id+" distribuye más de lo recibido"});
-    p.allocations.forEach(a=>{
-      const o=orders.find(x=>x.id===a[0]);
-      if(!o)out.push({code:"mix",msg:p.id+" apunta a un pedido inexistente ("+a[0]+")"});
-      else{
-        if(o.account!==p.account)out.push({code:"mix",msg:p.id+" mezcla monedas con "+o.id});
-        if(o.clientId!==p.clientId)out.push({code:"mix",msg:p.id+" está aplicado a un pedido de otro cliente"});
-      }
-    });
-  });
-  clients.forEach(c=>["USD","BS"].forEach(acc=>{
-    const a=account(c.id,acc);
-    if(a.credit>0&&a.open>0)out.push({code:"credit",msg:c.name+": "+money(a.credit,acc)+" a favor sin aplicar mientras hay pedidos pendientes"});
-  }));
-  return out;
-}
-
-function followItems(){return opportunities.filter(o=>o.next&&o.stage!=="Perdida").sort((a,b)=>a.next.localeCompare(b.next));}
-function mainOpp(cid){
-  const os=opportunities.filter(o=>o.clientId===cid);
-  return os.filter(o=>OPEN_STAGES.includes(o.stage)).sort((a,b)=>a.next.localeCompare(b.next))[0]||os.filter(o=>o.stage==="Ganada")[0]||os[0];
-}
-
-/* ---------------- Badges ---------------- */
-function orderBadge(s){const m={"Solicitud":"amber","En cola":"gray","En curso":"blue","Listo":"purple","Revisado":"green","Entregado":"green"};return '<span class="badge '+(m[s]||"gray")+'">'+esc(s)+'</span>';}
-function quoteBadge(s){const m={"En preparación":"gray","Enviada":"blue","En seguimiento":"purple","Aprobada":"green","Rechazada":"red"};return '<span class="badge '+(m[s]||"gray")+'">'+esc(s)+'</span>';}
-function stageBadge(s){return '<span class="badge '+(s==="Ganada"?"green":s==="Perdida"?"red":"blue")+'">'+esc(s)+'</span>';}
-function whenBadge(iso){
-  const n=daysFrom(iso);
-  if(n<0)return '<span class="badge red">Vencido hace '+(-n)+' d</span>';
-  if(n===0)return '<span class="badge amber">Hoy</span>';
-  if(n===1)return '<span class="badge amber">Mañana</span>';
-  return '<span class="badge gray">En '+n+' días</span>';
-}
-function probBar(p){return '<div class="prob"><span class="prob-bar"><i style="width:'+p+'%"></i></span>'+p+'%</div>';}
-function clientLink(id){const c=client(id);return '<a href="#" data-client="'+id+'">'+esc(c?c.name:"—")+'</a>';}
-
-/* ---------------- Estado y vistas ---------------- */
-const state={view:"dashboard",clientId:1,tab:"account",cfilter:"all",q:"",ofilter:"all",oq:"",hkind:"all",chatId:"wa2"};
-let clock=new Date(NOW);
-
-const VIEWS={
-  dashboard:{label:"Panel general",icon:"◫",group:"Gestión",fn:vDashboard},
-  clientes:{label:"Clientes",icon:"♙",group:"Gestión",fn:vClientes},
-  oportunidades:{label:"Oportunidades",icon:"◉",group:"Gestión",fn:vOpps},
-  pedidos:{label:"Pedidos",icon:"▤",group:"Gestión",fn:vOrders},
-  pagos:{label:"Pagos",icon:"＄",group:"Gestión",fn:vPayments},
-  conciliacion:{label:"Conciliación",icon:"↔",group:"Gestión",fn:vRecon},
-  cotizaciones:{label:"Cotizaciones",icon:"▧",group:"Relación",fn:vQuotes},
-  whatsapp:{label:"WhatsApp",icon:"✆",group:"Relación",fn:vWhatsApp},
-  seguimientos:{label:"Seguimientos",icon:"⚑",group:"Relación",fn:vFollow},
-  historial:{label:"Historial",icon:"◷",group:"Relación",fn:vHistory}
-};
-
-function head(eyebrow,title,sub,action){
-  return '<section class="page-head"><div><div class="eyebrow">'+eyebrow+'</div><h1>'+title+'</h1><p class="subtitle">'+sub+'</p></div>'+(action||"")+'</section>';
-}
-function kpi(label,value,foot,icon){
-  return '<article class="kpi"><div class="kpi-head"><span>'+label+'</span><span class="kpi-icon">'+icon+'</span></div><div class="kpi-value">'+value+'</div><div class="kpi-foot">'+foot+'</div></article>';
-}
-const FOOT='<div class="footer-note">Prototipo visual · datos ficticios · sin conexión, credenciales ni escrituras a Supabase, Comanda o WhatsApp.</div>';
-
-/* ---------- Panel general ---------- */
-function vDashboard(){
-  const k=kpis();
-  return head("Resumen","Panel general","Indicadores calculados en vivo a partir de los registros de muestra.")+
-  '<section class="kpis">'+
-    kpi("Clientes en cartera",clients.length,clients.filter(c=>c.relation==="Prospecto").length+" prospectos","♙")+
-    kpi("Oportunidades abiertas",k.openCount,k.fups+" seguimientos en 7 días","◉")+
-    kpi("Embudo abierto",money(k.pipeline,"USD"),"Ponderado: "+money(k.weighted,"USD"),"↗")+
-    kpi("Clientes con saldo",k.withBal,"Trabajo activo: "+k.active+" pedidos","＄")+
-    kpi("Por cobrar · Divisa",money(k.usd,"USD"),"A favor: "+money(k.credUsd,"USD"),"$")+
-    kpi("Por cobrar · BCV",money(k.bs,"BS"),"Cuenta en Bs, sin conversión","Bs")+
-  '</section>'+
-  '<div class="grid-2">'+
-    '<section class="card"><div class="card-head"><h3>Embudo por etapa</h3><span>monto estimado en USD</span></div><div class="card-body">'+funnel()+'</div></section>'+
-    '<section class="card"><div class="card-head"><h3>Próximos seguimientos</h3><button class="link" data-view="seguimientos">Ver todos →</button></div><div class="card-body">'+followItems().slice(0,5).map(followRow).join("")+'</div></section>'+
-    '<section class="card"><div class="card-head"><h3>Trabajo activo</h3><button class="link" data-view="pedidos">Pedidos →</button></div><div class="card-body">'+activeOrders()+'</div></section>'+
-    '<section class="card"><div class="card-head"><h3>Actividad reciente</h3><button class="link" data-view="historial">Historial →</button></div><div class="card-body">'+timeline(sortedHistory().slice(0,5),true)+'</div></section>'+
-  '</div>'+auditBox()+FOOT;
-}
-function funnel(){
-  const rows=STAGES.map(s=>{const os=opportunities.filter(o=>o.stage===s);return {s,n:os.length,amt:sum(os,o=>o.amount)};});
-  const max=Math.max(...rows.map(r=>r.amt),1);
-  return rows.map(r=>'<div class="funnel-row"><span class="funnel-label">'+r.s+'</span><span class="funnel-bar"><i class="'+(r.s==="Ganada"?"won":r.s==="Perdida"?"lost":"")+'" style="width:'+(r.amt/max*100)+'%"></i></span><span class="funnel-val">'+r.n+' · '+money(r.amt,"USD")+'</span></div>').join("");
-}
-function followRow(o){
-  const c=client(o.clientId);
-  return '<button class="row-btn" data-client="'+o.clientId+'"><span class="date-chip"><b>'+o.next.slice(8)+'</b>'+MONTHS[+o.next.slice(5,7)-1]+'</span><span class="row-main"><strong>'+esc(c.name)+'</strong><small>'+esc(o.title)+' · '+esc(o.owner)+'</small></span><span class="row-side">'+whenBadge(o.next)+'<small>'+esc(o.stage)+'</small></span></button>';
-}
-function activeOrders(){
-  const os=orders.filter(o=>o.status!=="Entregado").sort(byDesc("date"));
-  if(!os.length)return empty("Sin trabajo activo.");
-  return os.map(o=>{const due=dueOf(o);return '<button class="row-btn" data-client="'+o.clientId+'"><span class="row-main"><strong>'+esc(o.id)+' · '+esc(o.name)+'</strong><small>'+esc(client(o.clientId).name)+' · '+esc(o.details)+'</small></span><span class="row-side">'+orderBadge(o.status)+'<small class="'+(due?"due":"ok-text")+'">'+(due?"Debe "+money(due,o.account):"Pagado")+'</small></span></button>';}).join("");
-}
-function auditBox(){
-  const iss=audit();
-  return '<section class="card"><div class="card-head"><h3>Controles de integridad</h3><span class="badge '+(iss.length?"red":"green")+'">'+(iss.length?iss.length+" alertas":"Todo cuadra")+'</span></div><div class="card-body"><ul class="checks">'+
-    CHECKS.map(c=>{const bad=iss.some(i=>i.code===c.code);return '<li><span class="ok'+(bad?" bad":"")+'">'+(bad?"!":"✓")+'</span>'+c.label+'</li>';}).join("")+'</ul>'+
-    (iss.length?'<ul class="issues">'+iss.map(i=>'<li>⚠ '+esc(i.msg)+'</li>').join("")+'</ul>':"")+'</div></section>';
-}
-function sortedHistory(){return history.slice().sort(byDesc("at"));}
-function timeline(items,showClient){
-  if(!items.length)return empty("Sin actividad.");
-  return '<div class="timeline">'+items.map(h=>'<div class="tl-item"><span class="tl-dot '+h.kind+'"></span><div class="tl-date">'+fdt(h.at)+(showClient?' · '+clientLink(h.clientId):"")+'</div><div class="tl-title">'+esc(h.title)+'</div><div class="tl-detail">'+esc(h.detail)+'</div></div>').join("")+'</div>';
-}
-
-/* ---------- Clientes ---------- */
-function clientMatch(c,q){
-  if(!q)return {ok:true};
-  const nq=norm(q);
-  const base=norm([c.name,c.rif,c.rif.replace(/-/g,""),c.phone,c.email,c.address].join(" "));
-  if(base.includes(nq))return {ok:true};
-  const hit=c.contacts.find(x=>norm([x.name,x.role,x.phone,x.email].join(" ")).includes(nq));
-  return hit?{ok:true,via:hit.name}:{ok:false};
-}
-function filterOk(c){
-  const u=account(c.id,"USD"),b=account(c.id,"BS");
-  switch(state.cfilter){
-    case "balance":return u.net>0||b.net>0;
-    case "opportunity":return opportunities.some(o=>o.clientId===c.id&&OPEN_STAGES.includes(o.stage));
-    case "prospect":return c.relation==="Prospecto";
-    case "credit":return u.net<0||b.net<0;
-    default:return true;
-  }
-}
-function balanceLabel(c){
-  const u=account(c.id,"USD"),b=account(c.id,"BS"),parts=[];
-  if(u.net>0)parts.push(money(u.net,"USD"));
-  if(b.net>0)parts.push(money(b.net,"BS"));
-  if(parts.length)return {text:parts.join(" · "),cls:"due"};
-  if(u.net<0)return {text:"A favor "+money(-u.net,"USD"),cls:"credit"};
-  if(b.net<0)return {text:"A favor "+money(-b.net,"BS"),cls:"credit"};
-  return {text:"Al día",cls:"ok"};
-}
-function clientList(){
-  const rows=clients.map(c=>({c,m:clientMatch(c,state.q)})).filter(r=>r.m.ok&&filterOk(r.c));
-  const html=rows.length?rows.map(r=>{
-    const c=r.c,bal=balanceLabel(c),o=mainOpp(c.id);
-    const meta=r.m.via?'<span class="client-meta hit">Contacto: '+esc(r.m.via)+'</span>':'<span class="client-meta">'+esc(primary(c).name)+' · '+esc(c.relation)+'</span>';
-    return '<button class="client-row '+(c.id===state.clientId?"selected":"")+'" data-client="'+c.id+'"><span class="client-avatar">'+esc(c.initials)+'</span><span class="client-info"><span class="client-name">'+esc(c.name)+'</span>'+meta+'</span><span class="client-side"><span class="client-balance '+bal.cls+'">'+bal.text+'</span><span class="client-state">'+esc(o?o.stage:"—")+'</span></span></button>';
-  }).join(""):empty("No hay coincidencias.");
-  return {count:rows.length,html};
-}
-function vClientes(){
-  const r=clientList(),c=client(state.clientId);
-  const filters=[["all","Todos"],["balance","Con saldo"],["opportunity","Oportunidad"],["prospect","Prospectos"],["credit","A favor"]];
-  return head("Relación con clientes","Clientes","Ficha única: empresa, contactos, oportunidades, cotizaciones, pedidos y cuenta.",'<button class="primary-btn" data-toast="Demostración: no se crea ningún cliente.">＋ Nuevo cliente</button>')+
-  '<div class="crm-layout"><section class="client-panel"><div class="client-panel-head"><div class="client-panel-title"><h2>Cartera de clientes</h2><span class="pill" id="clientCount">'+r.count+' '+(r.count===1?"registro":"registros")+'</span></div>'+
-  '<div class="search-wrap"><span class="search-icon">⌕</span><input id="clientSearch" class="search-input" type="search" placeholder="Nombre, contacto, RIF o teléfono" value="'+esc(state.q)+'" autocomplete="off"></div>'+
-  '<div class="chips">'+filters.map(f=>'<button class="chip '+(state.cfilter===f[0]?"active":"")+'" data-cfilter="'+f[0]+'">'+f[1]+'</button>').join("")+'</div></div>'+
-  '<div class="client-list" id="clientList">'+r.html+'</div></section>'+
-  '<section class="detail-panel" id="detail">'+(c?clientDetail(c):empty("Selecciona un cliente."))+'</section></div>'+FOOT;
-}
-function clientDetail(c){
-  const p=primary(c),o=mainOpp(c.id),chat=chats.find(x=>x.clientId===c.id);
-  const tabs=[["account","Cuenta y conciliación"],["orders","Pedidos"],["quotes","Cotizaciones"],["opps","Oportunidades"],["contacts","Contactos y notas"],["history","Historial"]];
-  const T={account:tabAccount,orders:tabOrders,quotes:tabQuotes,opps:tabOpps,contacts:tabContacts,history:tabHistory};
-  return '<div class="profile-head"><div class="profile-main"><div class="profile-avatar">'+esc(c.initials)+'</div><div><div class="profile-name"><h2>'+esc(c.name)+'</h2><span class="badge '+(c.relation==="Prospecto"?"purple":"green")+'">'+esc(c.relation)+'</span></div><div class="profile-sub">'+esc(c.kind)+' · Contacto principal: '+esc(p.name)+' ('+esc(p.role)+')</div></div></div>'+
-    '<div class="profile-actions">'+(chat?'<button class="wa-btn" data-chat-client="'+c.id+'">✆ WhatsApp</button>':"")+'<button class="secondary-btn" data-toast="Demostración: la ficha no se edita.">Editar ficha</button><button class="primary-btn" data-toast="Demostración: no se registra ningún pago.">＋ Registrar pago</button></div></div>'+
-    '<div class="profile-meta"><span>▣ <b>RIF/C.I.</b> '+esc(c.rif)+'</span><span>☎ <b>Teléfono</b> '+esc(c.phone)+'</span><span>✉ <b>Correo</b> '+esc(c.email)+'</span><span>⌖ <b>Ubicación</b> '+esc(c.address)+'</span></div>'+
-    (o?oppStrip(o):"")+
-    '<div class="tabs" role="tablist">'+tabs.map(t=>'<button class="tab '+(state.tab===t[0]?"active":"")+'" data-tab="'+t[0]+'" role="tab" aria-selected="'+(state.tab===t[0])+'">'+t[1]+'</button>').join("")+'</div>'+
-    '<div>'+T[state.tab](c)+'</div>';
-}
-function oppStrip(o){
-  return '<section class="opp-strip"><div class="opp-field"><label>Etapa comercial</label><strong style="color:#4459d1">'+esc(o.stage)+'</strong></div><div class="opp-field"><label>Origen</label><strong>'+esc(o.origin)+'</strong></div><div class="opp-field"><label>Responsable</label><strong>'+esc(o.owner)+'</strong></div><div class="opp-field"><label>Monto estimado</label><strong>'+money(o.amount,"USD")+'</strong></div><div class="opp-field"><label>Probabilidad</label>'+probBar(o.probability)+'</div><div class="opp-field"><label>Próximo seguimiento</label><strong>'+(o.next?fd(o.next):"—")+' · '+esc(o.quote)+'</strong></div></section>';
-}
-function accCard(label,acc,a,cls){
-  return '<article class="account-card '+cls+'"><div class="account-top"><span>'+label+'</span><span>'+(acc==="BS"?"Bs":"$")+'</span></div><div class="account-value">'+money(Math.max(a.net,0),acc)+'</div><div class="account-caption">Pendiente en pedidos '+money(a.open,acc)+' · '+a.orders+' pedidos</div></article>';
-}
-function ledgerMath(label,a,acc){
-  return '<div class="ledger-account"><div class="ledger-label">'+label+'</div>'+money(a.issued,acc)+' emitidos − <span class="minus">'+money(a.applied,acc)+'</span> aplicados − <span class="plus">'+money(a.credit,acc)+'</span> a favor = <strong>'+netLabel(a,acc)+'</strong></div>';
-}
-function paymentItem(p){
-  const cr=creditOf(p);
-  return '<article class="item"><div class="item-line"><div><div class="item-title">'+esc(p.method)+'<span class="item-id">'+esc(p.id)+'</span></div><div class="item-sub">'+fdt(p.at)+' · Ref. '+esc(p.ref)+'</div></div><div class="item-right"><strong class="money-in">+'+money(p.received,p.account)+'</strong><small>Recibido · '+accName(p.account)+'</small></div></div>'+
-    '<div class="breakdown">'+p.allocations.map(a=>'<div class="break-row"><span>Aplicado a '+esc(a[0])+'</span><strong>'+money(a[1],p.account)+'</strong></div>').join("")+(cr?'<div class="break-row credit"><span>Queda a favor</span><strong>'+money(cr,p.account)+'</strong></div>':"")+'</div></article>';
-}
-function orderItem(o){
-  const paid=paidOf(o),due=dueOf(o);
-  return '<article class="item"><div class="item-line"><div><div class="item-sub" style="margin:0">'+esc(o.id)+' · '+fd(o.date)+' · '+accName(o.account)+'</div><div class="item-title">'+esc(o.name)+'</div><div class="item-sub">'+esc(o.details)+'</div></div><div class="item-right"><strong>'+money(o.total,o.account)+'</strong><small class="'+(due?"due":"ok-text")+'">'+(due?"Abonado "+money(paid,o.account)+" · debe "+money(due,o.account):"Pagado")+'</small><div style="margin-top:4px">'+orderBadge(o.status)+'</div></div></div></article>';
-}
-function ledgerRows(c){
-  const rows=[];
-  orders.filter(o=>o.clientId===c.id).forEach(o=>rows.push({at:o.date,title:"Pedido emitido · "+o.id,sub:o.name,ref:o.quote||"—",charge:o.total,pay:0,acc:o.account}));
-  payments.filter(p=>p.clientId===c.id).forEach(p=>{const cr=creditOf(p);rows.push({at:p.at,title:"Pago recibido · "+p.id,sub:"Aplicado "+money(appliedOf(p),p.account)+(cr?" · a favor "+money(cr,p.account):""),ref:p.ref,charge:0,pay:p.received,acc:p.account});});
-  rows.sort(byDesc("at"));
-  if(!rows.length)return '<tr><td colspan="5" class="empty">Sin movimientos de cuenta.</td></tr>';
-  return rows.map(r=>'<tr><td>'+fdt(r.at)+'</td><td><strong>'+esc(r.title)+'</strong><span class="sub">'+esc(r.sub)+' · '+(r.acc==="BS"?"BCV · bolívares":"DIVISA · USD")+'</span></td><td>'+esc(r.ref)+'</td><td class="r money-out">'+(r.charge?money(r.charge,r.acc):"—")+'</td><td class="r money-in">'+(r.pay?money(r.pay,r.acc):"—")+'</td></tr>').join("");
-}
-function tabAccount(c){
-  const u=account(c.id,"USD"),b=account(c.id,"BS");
-  const ps=payments.filter(p=>p.clientId===c.id).sort(byDesc("at"));
-  const os=orders.filter(o=>o.clientId===c.id).sort(byDesc("date"));
-  return '<div class="account-cards">'+accCard("DIVISA · USD","USD",u,"primary")+accCard("BCV · BOLÍVARES","BS",b,"")+
-    '<article class="account-card credit"><div class="account-top"><span>SALDO A FAVOR</span><span>↗</span></div><div class="account-value">'+money(u.credit,"USD")+' <span class="minor">/ '+money(b.credit,"BS")+'</span></div><div class="account-caption">Cada moneda conserva su propio crédito</div></article></div>'+
-    '<div class="split-grid"><section class="subcard"><div class="subcard-head"><h3>Entradas de pago</h3><span>'+ps.length+' movimientos</span></div><div class="pad">'+(ps.length?ps.map(paymentItem).join(""):empty("Sin pagos registrados."))+'</div></section>'+
-    '<section class="subcard"><div class="subcard-head"><h3>Pedidos del cliente</h3><span>saldo individual</span></div><div class="pad">'+(os.length?os.map(orderItem).join(""):empty("Este cliente todavía no tiene pedidos."))+'</div></section></div>'+
-    '<section class="ledger"><div class="subcard-head"><h3>Conciliación</h3><span>emitido − aplicado − a favor = neto</span></div><div class="ledger-summary">'+ledgerMath("CUENTA DIVISA · USD",u,"USD")+ledgerMath("CUENTA BCV · BOLÍVARES",b,"BS")+'</div>'+
-    '<div class="table-wrap flat"><table><thead><tr><th>Fecha</th><th>Movimiento</th><th>Referencia</th><th class="r">Cargo</th><th class="r">Recibido</th></tr></thead><tbody>'+ledgerRows(c)+'</tbody></table></div></section>';
-}
-function tabOrders(c){
-  const os=orders.filter(o=>o.clientId===c.id).sort(byDesc("date"));
-  return '<div class="table-wrap"><table><thead><tr><th>Pedido</th><th>Descripción</th><th>Trabajo</th><th class="r">Total</th><th class="r">Abonado</th><th class="r">Saldo</th></tr></thead><tbody>'+
-    (os.length?os.map(o=>{const d=dueOf(o);return '<tr><td><strong>'+esc(o.id)+'</strong><span class="sub">'+fd(o.date)+' · '+accName(o.account)+'</span></td><td><strong>'+esc(o.name)+'</strong><span class="sub">'+esc(o.details)+'</span></td><td>'+orderBadge(o.status)+'</td><td class="r">'+money(o.total,o.account)+'</td><td class="r">'+money(paidOf(o),o.account)+'</td><td class="r '+(d?"due":"")+'">'+(d?money(d,o.account):"—")+'</td></tr>';}).join(""):'<tr><td colspan="6" class="empty">Sin pedidos. Los pedidos se emiten solo después de aprobar una cotización.</td></tr>')+
-    '</tbody></table></div><div class="note-box">Los pedidos se vinculan por el identificador del cliente. En la integración real se usarían los IDs de Comanda para evitar duplicados.</div>';
-}
-function tabQuotes(c){
-  const qs=quotes.filter(q=>q.clientId===c.id).sort(byDesc("date"));
-  return quoteTable(qs,false);
-}
-function tabOpps(c){
-  const os=opportunities.filter(o=>o.clientId===c.id);
-  return os.length?'<div class="kanban" style="grid-auto-columns:minmax(230px,280px)">'+os.map(o=>'<div>'+oppCard(o,false)+'</div>').join("")+'</div>':empty("Sin oportunidades.");
-}
-function tabContacts(c){
-  const people=c.contacts.map(x=>'<div class="person"><span class="initial">'+esc(x.name.replace(/^Dra?\.\s*/,"").split(" ").map(n=>n[0]).slice(0,2).join(""))+'</span><div><strong>'+esc(x.name)+(x.primary?' <span class="badge blue">Principal</span>':"")+'</strong><small>'+esc(x.role)+'</small><small>'+esc(x.phone)+' · '+esc(x.email)+'</small></div></div>').join("");
-  return '<div class="contact-grid"><section class="contact-box"><h3>Empresa / persona</h3>'+
-    [["Razón social",c.name],["RIF / C.I.",c.rif],["Teléfono general",c.phone],["Correo general",c.email],["Dirección",c.address]].map(f=>'<div class="contact-field"><label>'+f[0]+'</label><span>'+esc(f[1])+'</span></div>').join("")+
-    '</section><section class="contact-box"><h3>Personas de contacto · '+c.contacts.length+'</h3>'+people+'</section></div><div class="note-box"><strong style="color:#455168">Nota interna</strong><br>'+esc(c.note)+'</div>';
-}
-function tabHistory(c){return timeline(history.filter(h=>h.clientId===c.id).sort(byDesc("at")),false);}
-
-/* ---------- Oportunidades ---------- */
-function oppCard(o,showClient){
-  const c=client(o.clientId);
-  return '<button class="kcard" data-client="'+o.clientId+'"><div class="kc-client">'+esc(c.name)+'</div><div class="kc-title">'+esc(o.title)+'</div><div class="kc-amount">'+money(o.amount,"USD")+'</div>'+probBar(o.probability)+
-    '<div class="kc-foot"><span>'+esc(o.owner)+' · '+esc(o.quote)+'</span>'+(o.next&&o.stage!=="Perdida"?whenBadge(o.next):stageBadge(o.stage))+'</div></button>';
-}
-function vOpps(){
-  const k=kpis();
-  return head("Embudo comercial","Oportunidades","Cada tarjeta muestra responsable, monto estimado, probabilidad y próximo contacto.")+
-  '<section class="kpis k4">'+kpi("Abiertas",k.openCount,"de "+opportunities.length+" registradas","◉")+kpi("Embudo abierto",money(k.pipeline,"USD"),"suma de montos estimados","↗")+kpi("Ponderado",money(k.weighted,"USD"),"monto × probabilidad","%")+kpi("Ganadas",money(sum(opportunities.filter(o=>o.stage==="Ganada"),o=>o.amount),"USD"),opportunities.filter(o=>o.stage==="Ganada").length+" oportunidades","✓")+'</section>'+
-  '<div class="kanban">'+STAGES.map(s=>{const os=opportunities.filter(o=>o.stage===s);return '<section class="kcol"><div class="kcol-head"><span>'+s+'</span><b>'+os.length+'</b></div><div class="kcol-sum">'+money(sum(os,o=>o.amount),"USD")+'</div>'+(os.map(o=>oppCard(o,true)).join("")||'<div class="kempty">Sin oportunidades</div>')+'</section>';}).join("")+'</div>'+FOOT;
-}
-
-/* ---------- Pedidos ---------- */
-function ordersFiltered(){
-  const q=norm(state.oq);
-  return orders.filter(o=>{
-    const f=state.ofilter;
-    const okF=f==="all"||(f==="USD"&&o.account==="USD")||(f==="BS"&&o.account==="BS")||(f==="due"&&dueOf(o)>0)||(f==="active"&&o.status!=="Entregado");
-    const okQ=!q||norm([o.id,o.name,o.details,client(o.clientId).name,o.status].join(" ")).includes(q);
-    return okF&&okQ;
-  }).sort(byDesc("date"));
-}
-function ordersBody(){
-  const os=ordersFiltered();
-  if(!os.length)return '<tr><td colspan="8" class="empty">No hay pedidos con ese filtro.</td></tr>';
-  const rows=os.map(o=>{const d=dueOf(o);return '<tr><td><strong>'+esc(o.id)+'</strong><span class="sub">'+fd(o.date)+'</span></td><td>'+clientLink(o.clientId)+'</td><td><strong>'+esc(o.name)+'</strong><span class="sub">'+esc(o.details)+'</span></td><td>'+orderBadge(o.status)+'</td><td>'+accName(o.account)+'</td><td class="r">'+money(o.total,o.account)+'</td><td class="r">'+money(paidOf(o),o.account)+'</td><td class="r '+(d?"due":"")+'">'+(d?money(d,o.account):"—")+'</td></tr>';}).join("");
-  const tot=acc=>{const xs=os.filter(o=>o.account===acc);return xs.length?'<tr><td colspan="5">Total '+accName(acc)+' ('+xs.length+')</td><td class="r">'+money(sum(xs,o=>o.total),acc)+'</td><td class="r">'+money(sum(xs,paidOf),acc)+'</td><td class="r">'+money(sum(xs,dueOf),acc)+'</td></tr>':"";};
-  return rows+'<tr><td colspan="8" style="padding:0;border:0"></td></tr>'+tot("USD")+tot("BS");
-}
-function vOrders(){
-  const f=[["all","Todos"],["active","Activos"],["due","Con saldo"],["USD","Divisa"],["BS","BCV"]];
-  return head("Producción y cobro","Pedidos","Estado de trabajo separado del estado de cobro. Totales por moneda, sin conversión.")+
-  '<div class="toolbar"><div class="chips">'+f.map(x=>'<button class="chip '+(state.ofilter===x[0]?"active":"")+'" data-ofilter="'+x[0]+'">'+x[1]+'</button>').join("")+'</div><div class="search-wrap"><span class="search-icon">⌕</span><input id="orderSearch" class="search-input" type="search" placeholder="Pedido, cliente o descripción" value="'+esc(state.oq)+'"></div></div>'+
-  '<div class="table-wrap"><table><thead><tr><th>Pedido</th><th>Cliente</th><th>Descripción</th><th>Trabajo</th><th>Cuenta</th><th class="r">Total</th><th class="r">Abonado</th><th class="r">Saldo</th></tr></thead><tbody id="ordersBody">'+ordersBody()+'</tbody></table></div>'+FOOT;
-}
-
-/* ---------- Pagos ---------- */
-function vPayments(){
-  const ps=payments.slice().sort(byDesc("at"));
-  const recv=acc=>sum(ps.filter(p=>p.account===acc),p=>p.received);
-  const cred=acc=>sum(ps.filter(p=>p.account===acc),creditOf);
-  return head("Entradas de dinero","Pagos","Un pago puede repartirse entre varios pedidos; lo que sobra queda a favor en la misma moneda.",'<button class="primary-btn" data-toast="Demostración: no se registra ningún pago.">＋ Registrar pago</button>')+
-  '<section class="kpis k4">'+kpi("Recibido · Divisa",money(recv("USD"),"USD"),ps.filter(p=>p.account==="USD").length+" pagos","$")+kpi("Recibido · BCV",money(recv("BS"),"BS"),ps.filter(p=>p.account==="BS").length+" pagos","Bs")+kpi("A favor · Divisa",money(cred("USD"),"USD"),"crédito disponible","↗")+kpi("A favor · BCV",money(cred("BS"),"BS"),"crédito disponible","↗")+'</section>'+
-  '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Pago</th><th>Cliente</th><th>Método · referencia</th><th class="r">Recibido</th><th class="r">Aplicado</th><th class="r">A favor</th><th>Distribución</th></tr></thead><tbody>'+
-  ps.map(p=>{const cr=creditOf(p);return '<tr><td>'+fdt(p.at)+'</td><td><strong>'+esc(p.id)+'</strong><span class="sub">'+accName(p.account)+'</span></td><td>'+clientLink(p.clientId)+'</td><td>'+esc(p.method)+'<span class="sub">Ref. '+esc(p.ref)+'</span></td><td class="r money-in">'+money(p.received,p.account)+'</td><td class="r">'+money(appliedOf(p),p.account)+'</td><td class="r '+(cr?"ok-text":"")+'">'+(cr?money(cr,p.account):"—")+'</td><td>'+p.allocations.map(a=>'<span class="badge gray" style="margin:0 4px 3px 0">'+esc(a[0])+' · '+money(a[1],p.account)+'</span>').join("")+'</td></tr>';}).join("")+
-  '</tbody></table></div>'+FOOT;
-}
-
-/* ---------- Conciliación ---------- */
-function vRecon(){
-  const rows=clients.map(c=>({c,u:account(c.id,"USD"),b:account(c.id,"BS")}));
-  const t=(k,acc)=>sum(rows,r=>r[acc][k]);
-  const net=(v,acc)=>v>0?'<span class="due">'+money(v,acc)+'</span>':v<0?'<span class="ok-text">a favor '+money(-v,acc)+'</span>':'<span style="color:#9aa4b4">'+money(0,acc)+'</span>';
-  return head("Cuentas por cliente","Conciliación","Divisa (USD) y BCV (Bs) se calculan por separado. Emitido − aplicado − a favor = neto.")+
-  '<div class="table-wrap" style="margin-bottom:14px"><table style="min-width:900px"><thead><tr><th>Cliente</th><th class="r">USD emitido</th><th class="r">USD aplicado</th><th class="r">USD a favor</th><th class="r">USD neto</th><th class="r">Bs emitido</th><th class="r">Bs aplicado</th><th class="r">Bs a favor</th><th class="r">Bs neto</th></tr></thead><tbody>'+
-  rows.map(r=>'<tr><td>'+clientLink(r.c.id)+'</td><td class="r">'+money(r.u.issued,"USD")+'</td><td class="r">'+money(r.u.applied,"USD")+'</td><td class="r">'+money(r.u.credit,"USD")+'</td><td class="r">'+net(r.u.net,"USD")+'</td><td class="r">'+money(r.b.issued,"BS")+'</td><td class="r">'+money(r.b.applied,"BS")+'</td><td class="r">'+money(r.b.credit,"BS")+'</td><td class="r">'+net(r.b.net,"BS")+'</td></tr>').join("")+
-  '</tbody><tfoot><tr><td>Total</td><td class="r">'+money(t("issued","u"),"USD")+'</td><td class="r">'+money(t("applied","u"),"USD")+'</td><td class="r">'+money(t("credit","u"),"USD")+'</td><td class="r">'+money(t("net","u"),"USD")+'</td><td class="r">'+money(t("issued","b"),"BS")+'</td><td class="r">'+money(t("applied","b"),"BS")+'</td><td class="r">'+money(t("credit","b"),"BS")+'</td><td class="r">'+money(t("net","b"),"BS")+'</td></tr></tfoot></table></div>'+
-  '<div class="note-box" style="margin:0 0 14px">El neto total combina deudas y saldos a favor de distintos clientes. Para cobranza usa "Por cobrar" del panel general, que solo suma saldos positivos.</div>'+
-  auditBox()+FOOT;
-}
-
-/* ---------- Cotizaciones ---------- */
-function quoteTable(qs,showClient){
-  if(!qs.length)return empty("No hay cotizaciones.");
-  return '<div class="table-wrap"><table><thead><tr><th>Número / fecha</th>'+(showClient?'<th>Cliente</th>':"")+'<th>Proyecto</th><th>Estado</th><th class="r">Monto</th><th>Responsable</th><th>Vigencia</th></tr></thead><tbody>'+
-  qs.map(q=>{
-    const live=q.status==="Enviada"||q.status==="En seguimiento";
-    const exp=q.valid&&live?whenBadge(q.valid).replace("Vencido","Vencida").replace("Hoy","Vence hoy"):"";
-    return '<tr><td><strong>'+esc(q.number)+'</strong><span class="sub">'+fd(q.date)+'</span></td>'+(showClient?'<td>'+clientLink(q.clientId)+'</td>':"")+'<td><strong>'+esc(q.title)+'</strong></td><td>'+quoteBadge(q.status)+'</td><td class="r">'+money(q.amount,q.account)+'</td><td>'+esc(q.owner)+'</td><td>'+(q.valid?fd(q.valid):"Por definir")+(exp?'<span class="sub">'+exp+'</span>':"")+'</td></tr>';
-  }).join("")+'</tbody></table></div>';
-}
-function vQuotes(){
-  const qs=quotes.slice().sort(byDesc("date"));
-  const cnt=s=>quotes.filter(q=>q.status===s).length;
-  return head("Propuestas","Cotizaciones","Número, cliente, proyecto, estado, monto, responsable y vigencia.",'<button class="primary-btn" data-toast="Demostración: no se crea ninguna cotización.">＋ Nueva cotización</button>')+
-  '<section class="kpis k4">'+kpi("En preparación",cnt("En preparación"),"por enviar","✎")+kpi("Enviadas / seguimiento",cnt("Enviada")+cnt("En seguimiento"),"esperan respuesta","➤")+kpi("Aprobadas",cnt("Aprobada"),"convertidas en pedido","✓")+kpi("Rechazadas",cnt("Rechazada"),"oportunidad perdida","✕")+'</section>'+
-  quoteTable(qs,true)+FOOT;
-}
-
-/* ---------- WhatsApp ---------- */
-function windowInfo(chat){
-  const ins=chat.messages.filter(m=>m.dir==="in");
-  if(!ins.length)return {open:false,left:0};
-  const hrs=(clock-new Date(ins[ins.length-1].at))/3600000;
-  return {open:hrs<24,left:Math.max(0,24-hrs)};
-}
-function timeShort(iso){return iso.slice(0,10)===TODAY?iso.slice(11,16):fd(iso).slice(0,6);}
-function vWhatsApp(){
-  const list=chats.slice().sort((a,b)=>b.messages[b.messages.length-1].at.localeCompare(a.messages[a.messages.length-1].at));
-  const chat=chats.find(c=>c.id===state.chatId)||list[0];
-  const c=client(chat.clientId),w=windowInfo(chat),o=mainOpp(c.id),bal=balanceLabel(c);
-  let last="";
-  const msgs=chat.messages.map(m=>{
-    const day=m.at.slice(0,10);let sep="";
-    if(day!==last){last=day;sep='<div class="day-sep"><span>'+(day===TODAY?"Hoy":fd(day))+'</span></div>';}
-    return sep+'<div class="bubble '+m.dir+'">'+(m.template?'<span class="tpl">Plantilla · '+esc(m.template)+'</span>':"")+esc(m.text)+'<time>'+m.at.slice(11,16)+(m.dir==="out"?" ✓✓":"")+'</time></div>';
-  }).join("");
-  const composer=w.open
-    ? '<div class="quick"><button type="button" data-quick="Gracias, quedamos atentos.">Gracias, quedamos atentos</button><button type="button" data-quick="¿Le parece si coordinamos una visita para tomar medidas?">Coordinar visita</button><button type="button" data-quick="Le comparto la cotización actualizada en un momento.">Cotización actualizada</button></div>'+
-      '<form class="wa-compose" id="waForm"><input id="waInput" placeholder="Escribe un mensaje (simulado)" autocomplete="off"><button class="send" aria-label="Enviar">➤</button></form>'
-    : '<div class="wa-hint">Ventana de 24 h cerrada: solo se pueden enviar plantillas aprobadas hasta que el cliente responda.</div>'+
-      '<form class="wa-compose" id="waForm"><select id="waTemplate">'+templates.map(t=>'<option value="'+t.id+'">'+esc(t.label)+'</option>').join("")+'</select><button class="send" aria-label="Enviar plantilla">➤</button></form>';
-  return head("Mensajería","WhatsApp","Bandeja de muestra enlazada a la ficha del cliente. No está conectada a WhatsApp y no envía mensajes.")+
-  '<div class="wa"><aside class="wa-list"><div class="wa-list-head">Chats <span class="pill">'+chats.length+'</span></div>'+
-  list.map(ch=>{const lm=ch.messages[ch.messages.length-1];const cc=client(ch.clientId);return '<button class="wa-item '+(ch.id===chat.id?"active":"")+'" data-chat="'+ch.id+'"><span class="wa-avatar">'+esc(cc.initials)+'</span><span class="wa-info"><strong>'+esc(ch.contact)+'</strong><small>'+(lm.dir==="out"?"Tú: ":"")+esc(lm.text)+'</small></span><span class="wa-meta">'+timeShort(lm.at)+(ch.unread?'<span class="wa-unread">'+ch.unread+'</span>':"")+'</span></button>';}).join("")+
-  '</aside><section class="wa-conv"><div class="wa-head"><div class="wa-head-main"><span class="wa-avatar">'+esc(c.initials)+'</span><div><strong>'+esc(chat.contact)+'</strong><small>'+esc(chat.phone)+' · '+clientLink(c.id)+'</small></div></div><span class="window '+(w.open?"open":"closed")+'">'+(w.open?"Ventana abierta · "+Math.floor(w.left)+" h":"Ventana cerrada")+'</span></div>'+
-  '<div class="wa-context"><span><b>Etapa</b> '+esc(o?o.stage:"—")+'</span><span><b>Cotización</b> '+esc(o?o.quote:"—")+'</span><span><b>Seguimiento</b> '+(o&&o.next?fd(o.next):"—")+'</span><span><b>Saldo</b> '+bal.text+'</span></div>'+
-  '<div class="wa-msgs" id="waMsgs">'+msgs+'</div>'+composer+'</section></div>'+FOOT;
-}
-function fillTemplate(t,chat){
-  const c=client(chat.clientId),o=mainOpp(c.id),u=account(c.id,"USD"),b=account(c.id,"BS");
-  const saldo=[u.net>0?money(u.net,"USD"):"",b.net>0?money(b.net,"BS"):""].filter(Boolean).join(" y ")||money(0,"USD");
-  return t.text.replace("{nombre}",chat.contact.replace(/^Dra?\.\s*/,"").split(" ")[0]).replace("{cotizacion}",o?o.quote:"").replace("{saldo}",saldo);
-}
-function tick(){clock=new Date(clock.getTime()+60000);const p=n=>String(n).padStart(2,"0");return clock.getFullYear()+"-"+p(clock.getMonth()+1)+"-"+p(clock.getDate())+"T"+p(clock.getHours())+":"+p(clock.getMinutes());}
-function sendMessage(){
-  const chat=chats.find(c=>c.id===state.chatId);if(!chat)return;
-  const w=windowInfo(chat);let text,tpl=null;
-  if(w.open){const inp=$("waInput");text=inp.value.trim();if(!text)return;}
-  else{const t=templates.find(x=>x.id===$("waTemplate").value);text=fillTemplate(t,chat);tpl=t.label;}
-  const at=tick();
-  chat.messages.push({dir:"out",at,text,template:tpl});
-  history.push({clientId:chat.clientId,at,kind:"whatsapp",title:"WhatsApp enviado a "+chat.contact+" (simulado)",detail:(tpl?"Plantilla "+tpl+": ":"")+text});
-  render();
-  toast("Mensaje simulado: queda solo mientras la página esté abierta.");
-}
-
-/* ---------- Seguimientos ---------- */
-function vFollow(){
-  const items=followItems();
-  const groups=[["Vencidos",o=>daysFrom(o.next)<0],["Hoy",o=>daysFrom(o.next)===0],["Próximos 7 días",o=>{const n=daysFrom(o.next);return n>0&&n<=7;}],["Más adelante",o=>daysFrom(o.next)>7]];
-  return head("Agenda comercial","Seguimientos","Próximas fechas de contacto por oportunidad, ordenadas por urgencia.")+
-  '<div class="grid-2">'+groups.map(g=>{const xs=items.filter(g[1]);return '<section class="card"><div class="card-head"><h3>'+g[0]+'</h3><span>'+xs.length+'</span></div><div class="card-body">'+(xs.length?xs.map(followRow).join(""):empty("Nada pendiente."))+'</div></section>';}).join("")+'</div>'+
-  '<section class="card"><div class="card-head"><h3>Cotizaciones por vencer</h3><span>enviadas o en seguimiento</span></div><div class="card-body">'+
-  (quotes.filter(q=>q.valid&&(q.status==="Enviada"||q.status==="En seguimiento")).sort((a,b)=>a.valid.localeCompare(b.valid)).map(q=>'<button class="row-btn" data-client="'+q.clientId+'"><span class="date-chip"><b>'+q.valid.slice(8)+'</b>'+MONTHS[+q.valid.slice(5,7)-1]+'</span><span class="row-main"><strong>'+esc(q.number)+' · '+esc(client(q.clientId).name)+'</strong><small>'+esc(q.title)+' · '+money(q.amount,q.account)+'</small></span><span class="row-side">'+whenBadge(q.valid)+'</span></button>').join("")||empty("Sin cotizaciones por vencer."))+
-  '</div></section>'+FOOT;
-}
-
-/* ---------- Historial ---------- */
-function vHistory(){
-  const kinds=[["all","Todo"],["payment","Pagos"],["order","Pedidos"],["quote","Cotizaciones"],["whatsapp","WhatsApp"]];
-  const items=sortedHistory().filter(h=>state.hkind==="all"||h.kind===state.hkind);
-  return head("Actividad","Historial","Eventos de cotizaciones, pagos, pedidos y mensajes, del más reciente al más antiguo.")+
-  '<div class="toolbar"><div class="chips">'+kinds.map(k=>'<button class="chip '+(state.hkind===k[0]?"active":"")+'" data-hkind="'+k[0]+'">'+k[1]+'</button>').join("")+'</div><span class="pill">'+items.length+' eventos</span></div>'+
-  '<section class="card"><div class="card-body" style="padding:18px 20px">'+timeline(items,true)+'</div></section>'+FOOT;
-}
-
-/* ---------------- Render y eventos ---------------- */
-function buildNav(){
-  let html="",g="";
-  Object.keys(VIEWS).forEach(k=>{
-    const v=VIEWS[k];
-    if(v.group!==g){g=v.group;html+='<div class="nav-label">'+g+'</div>';}
-    html+='<button class="nav-item" data-view="'+k+'"><span class="nav-icon">'+v.icon+'</span><span>'+v.label+'</span><span class="nav-count" id="count-'+k+'" hidden></span></button>';
-  });
-  $("nav").innerHTML=html;
-}
-function setCount(k,n,cls){const el=$("count-"+k);if(!el)return;el.hidden=!n;el.textContent=n;el.className="nav-count"+(cls?" "+cls:"");}
-function updateCounts(){
-  setCount("clientes",clients.length);
-  setCount("whatsapp",sum(chats,c=>c.unread),"wa");
-  setCount("seguimientos",followItems().filter(o=>daysFrom(o.next)<=7).length);
-}
-function render(){
-  document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===state.view));
-  $("crumb").textContent=VIEWS[state.view].label;
-  $("content").innerHTML=VIEWS[state.view].fn();
-  updateCounts();
-  const box=$("waMsgs");if(box)box.scrollTop=box.scrollHeight;
-}
-function go(view){state.view=view;render();window.scrollTo(0,0);}
+function hm(d){return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
+function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
+function dayLabel(d){if(sameDay(d,clock))return "Hoy";const y=new Date(clock);y.setDate(y.getDate()-1);if(sameDay(d,y))return "Ayer";return d.getDate()+" "+MONTHS[d.getMonth()];}
+function shortTime(d){return sameDay(d,clock)?hm(d):dayLabel(d);}
+function isoLabel(iso){if(!iso)return "—";const p=iso.split("-");return +p[2]+" "+MONTHS[+p[1]-1];}
+function initials(c){if(!c.name)return "?";return c.name.replace(/^Dra?\.\s*/,"").split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase();}
+function displayName(c){return c.name||c.phone;}
+function due(o){return Math.max(o.total-o.paid,0);}
+function balance(c,acc){return c.orders.filter(o=>o.acc===acc).reduce((s,o)=>s+due(o),0);}
+const activeChat = () => chats.find(c=>c.id===state.active);
+const clientOf = ch => clients[ch.clientId];
+const lastAt = ch => ch.msgs[ch.msgs.length-1].at;
+function lastConv(ch){for(let i=ch.msgs.length-1;i>=0;i--){const m=ch.msgs[i];if(m.type==="in"||m.type==="out")return m;}return null;}
+function stageChip(s){return '<span class="stage '+(STAGE_CLASS[s]||"")+'">'+esc(s)+'</span>';}
 function toast(msg){const el=$("toast");el.textContent=msg;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),2600);}
 
+/* Registro que crea el CRM al tocar un botón */
+function logEvent(ch,icon,text,by){ch.msgs.push({type:"event",at:tick(),icon,text,by:by||ME});}
+function sendOut(ch,text){ch.msgs.push({type:"out",at:tick(),text});}
+
+/* ---------------- Render: lista ---------------- */
+function renderList(){
+  const list=chats.slice().sort((a,b)=>lastAt(b)-lastAt(a)).filter(ch=>{
+    const c=clientOf(ch);
+    if(state.filter==="unread")return ch.unread>0;
+    if(state.filter==="balance")return balance(c,"USD")>0||balance(c,"BS")>0;
+    if(state.filter==="new")return c.stage==="Cliente nuevo";
+    return true;
+  });
+  const totalUnread=chats.reduce((s,c)=>s+c.unread,0);
+  const f=[["all","Todos"],["unread","No leídos"],["new","Nuevos"],["balance","Con saldo"]];
+  $("list").innerHTML='<div class="list-head"><h2>Chats '+(totalUnread?'<span class="badge-un">'+totalUnread+'</span>':"")+'</h2><div class="chips">'+
+    f.map(x=>'<button class="chip '+(state.filter===x[0]?"active":"")+'" data-filter="'+x[0]+'">'+x[1]+'</button>').join("")+'</div></div>'+
+    '<div class="list-body">'+(list.length?list.map(ch=>{
+      const c=clientOf(ch),m=lastConv(ch);
+      const prev=m?(m.type==="out"?"✓✓ ":"")+m.text:"";
+      return '<button class="ci '+(ch.id===state.active?"active":"")+'" data-chat="'+ch.id+'"><span class="av '+(c.isNew?"new":"")+'">'+esc(initials(c))+'</span><span class="ci-main"><span class="ci-top"><strong>'+esc(displayName(c))+'</strong><time class="'+(ch.unread?"unread":"")+'">'+shortTime(lastAt(ch))+'</time></span><span class="ci-prev"><span>'+esc(prev)+'</span>'+(ch.unread?'<span class="badge-un">'+ch.unread+'</span>':"")+'</span>'+stageChip(c.stage)+'</span></button>';
+    }).join(""):'<div class="empty" style="padding:24px">No hay chats con este filtro.</div>')+'</div>';
+}
+
+/* ---------------- Render: conversación ---------------- */
+function renderChat(){
+  const ch=activeChat();
+  if(!ch){$("chat").innerHTML='<div class="empty-chat">Selecciona un chat</div>';return;}
+  const c=clientOf(ch);
+  let last=null;
+  const body=ch.msgs.map(m=>{
+    let sep="";
+    if(!last||!sameDay(last,m.at)){sep='<div class="day"><span>'+dayLabel(m.at)+'</span></div>';}
+    last=m.at;
+    if(m.type==="in")return sep+'<div class="b in">'+(m.attach?'<div class="attach"><i>🖼</i>'+esc(m.attach)+'</div>':"")+esc(m.text)+'<time>'+hm(m.at)+'</time></div>';
+    if(m.type==="out")return sep+'<div class="b out">'+esc(m.text)+'<time>'+hm(m.at)+' ✓✓</time></div>';
+    if(m.type==="note")return sep+'<div class="note"><small>📝 Nota interna · '+esc(m.by)+' · '+hm(m.at)+' · el cliente no la ve</small>'+esc(m.text)+'</div>';
+    return sep+'<div class="ev"><span>'+m.icon+' '+esc(m.text)+'<small>Registrado en Tuto CRM · '+esc(m.by)+' · '+hm(m.at)+'</small></span></div>';
+  }).join("");
+  const sug=ch.suggest?'<div class="suggest"><span>💡 Este mensaje parece un pago'+(ch.suggest.amount?' de <b>'+money(ch.suggest.amount,ch.suggest.acc)+'</b>':"")+'. ¿Lo registras?</span><button class="no" data-dismiss>Ignorar</button><button class="yes" data-open="pay">Registrar pago</button></div>':"";
+  const note=state.mode==="note";
+  $("chat").innerHTML=
+    '<div class="chat-head"><button class="back" data-pane="list" aria-label="Volver">←</button><span class="av '+(c.isNew?"new":"")+'">'+esc(initials(c))+'</span><div class="who"><strong>'+esc(displayName(c))+'</strong><small>'+esc(c.company||"Contacto nuevo · sin ficha")+' · '+esc(c.phone)+'</small></div>'+stageChip(c.stage)+'<button class="info-btn" data-pane="info">Ficha ⓘ</button></div>'+
+    '<div class="actions">'+
+      '<button class="act" data-open="stage">🏷 Etapa</button>'+
+      '<button class="act pay" data-open="pay">💵 Registrar pago</button>'+
+      '<button class="act" data-open="quote">📄 Cotización</button>'+
+      '<button class="act" data-open="order">📦 Pedido</button>'+
+      '<button class="act" data-open="remind">⏰ Recordarme</button>'+
+      '<button class="act" data-mode="note">📝 Nota interna</button>'+
+    '</div>'+
+    '<div class="msgs" id="msgs">'+body+'</div>'+sug+
+    '<form class="composer '+(note?"is-note":"")+'" id="composer"><div class="modes"><button type="button" class="mode '+(!note?"active":"")+'" data-mode="reply">💬 Responder por WhatsApp</button><button type="button" class="mode note-mode '+(note?"active":"")+'" data-mode="note">📝 Nota interna</button></div>'+
+    '<div class="compose-row"><input id="draft" autocomplete="off" placeholder="'+(note?"Nota solo para tu equipo…":"Escribe un mensaje…")+'" value="'+esc(state.draft)+'"><button class="send" aria-label="Enviar">'+(note?"✎":"➤")+'</button></div></form>';
+  const box=$("msgs");box.scrollTop=box.scrollHeight;
+}
+
+/* ---------------- Render: ficha ---------------- */
+function renderInfo(){
+  const ch=activeChat();if(!ch){$("info").innerHTML="";return;}
+  const c=clientOf(ch);
+  const usd=balance(c,"USD"),bs=balance(c,"BS");
+  const cls=v=>v>0?"due":"zero";
+  const log=ch.msgs.filter(m=>m.type==="event"||m.type==="note").slice().reverse().slice(0,8);
+  $("info").innerHTML='<div class="info-inner"><button class="info-back" data-pane="chat">← Volver al chat</button>'+
+    (c.isNew?'<div class="warn">✨ <b>Número nuevo.</b> Tuto CRM creó este contacto automáticamente al recibir el mensaje.<br><button class="btn primary" data-open="profile">Completar ficha</button></div>':"")+
+    '<div class="card"><div class="profile"><span class="av '+(c.isNew?"new":"")+'">'+esc(initials(c))+'</span><div><strong>'+esc(displayName(c))+'</strong><small>'+esc(c.company||"Sin empresa")+'</small><small>'+esc(c.phone)+'</small></div></div></div>'+
+    '<div class="card"><h4>Seguimiento <button data-open="stage">Cambiar</button></h4>'+
+      '<div class="kv"><span>Etapa</span><b>'+stageChip(c.stage)+'</b></div>'+
+      '<div class="kv"><span>Responsable</span><b>'+esc(c.owner)+'</b></div>'+
+      '<div class="kv"><span>Próximo contacto</span><b>'+isoLabel(c.next)+'</b></div></div>'+
+    '<div class="card"><h4>Cuenta <button data-open="pay">+ Pago</button></h4><div class="money">'+
+      '<div><label>DIVISA · USD</label><strong class="'+cls(usd)+'">'+money(usd,"USD")+'</strong></div>'+
+      '<div><label>BCV · BS</label><strong class="'+cls(bs)+'">'+money(bs,"BS")+'</strong></div></div>'+
+      ((c.credit.USD||c.credit.BS)?'<div class="kv" style="margin-top:6px"><span>Saldo a favor</span><b class="fav" style="color:var(--green)">'+[c.credit.USD?money(c.credit.USD,"USD"):"",c.credit.BS?money(c.credit.BS,"BS"):""].filter(Boolean).join(" · ")+'</b></div>':"")+'</div>'+
+    '<div class="card"><h4>Pedidos <button data-open="order">+ Pedido</button></h4>'+
+      (c.orders.length?c.orders.map(o=>'<div class="row"><div><b>'+esc(o.id)+'</b><small>'+esc(o.name)+'</small></div><div class="r">'+money(o.total,o.acc)+'<small class="'+(due(o)?"due":"ok")+'">'+(due(o)?"Debe "+money(due(o),o.acc):"Pagado")+'</small></div></div>').join(""):'<div class="empty">Sin pedidos</div>')+'</div>'+
+    '<div class="card"><h4>Cotizaciones <button data-open="quote">+ Nueva</button></h4>'+
+      (c.quotes.length?c.quotes.map(q=>'<div class="row"><div><b>'+esc(q.id)+'</b><small>'+esc(q.name)+'</small></div><div class="r">'+money(q.amount,q.acc)+'<small>'+esc(q.status)+'</small></div></div>').join(""):'<div class="empty">Sin cotizaciones</div>')+'</div>'+
+    '<div class="card"><h4>Registro del CRM</h4>'+(log.length?'<ul class="log">'+log.map(m=>'<li>'+(m.type==="note"?"📝 "+esc(m.text):m.icon+" "+esc(m.text))+'<small>'+dayLabel(m.at)+' '+hm(m.at)+' · '+esc(m.by)+'</small></li>').join("")+'</ul>':'<div class="empty">Aún no hay registros</div>')+'</div>'+
+    '<div class="card"><h4>Cómo leer el chat</h4><div class="legend">'+
+      '<div><i style="background:#fff;border:1px solid #ddd"></i>Mensaje del cliente (llega por WhatsApp)</div>'+
+      '<div><i style="background:var(--wa-bubble)"></i>Tu respuesta (sale por WhatsApp)</div>'+
+      '<div><i style="background:var(--note);border:1px dashed var(--note-line)"></i>Nota interna (el cliente no la ve)</div>'+
+      '<div><i style="background:#f4f5f8;border:1px solid #dfe3ea"></i>Registro que guarda el CRM al tocar un botón</div></div></div>'+
+  '</div>';
+}
+
+function renderAll(){renderList();renderChat();renderInfo();$("layout").dataset.pane=state.pane;}
+
+/* ---------------- Mensajes entrantes simulados ---------------- */
+function parsePayment(text){
+  if(!/(\$|usd|bs\.?\s|zelle|pago m[oó]vil|transfer|abono|pagu[eé]|te hice)/i.test(text))return null;
+  let acc="USD",amount=null,m;
+  if((m=text.match(/(?:\$|usd\s?)\s?([\d.]+(?:,\d{1,2})?)/i)))amount=parseFloat(m[1].replace(/\./g,"").replace(",","."));
+  else if((m=text.match(/bs\.?\s?([\d.]+(?:,\d{1,2})?)/i))){acc="BS";amount=parseFloat(m[1].replace(/\./g,"").replace(",","."));}
+  const r=text.match(/ref\.?\s*:?\s*([A-Z0-9-]{4,})/i);
+  const method=/zelle/i.test(text)?"Zelle":/m[oó]vil/i.test(text)?"Pago móvil":/efectivo/i.test(text)?"Efectivo USD":"Transferencia";
+  return {acc,amount,ref:r?r[1]:"",method};
+}
+function simulate(){
+  if(incomingIdx>=incoming.length){toast("No hay más mensajes simulados. Recarga la página para repetir.");return;}
+  const inc=incoming[incomingIdx++];
+  let c=Object.values(clients).find(x=>x.phone===inc.phone);
+  let ch;
+  if(!c){
+    const id="c"+(newSeq++);
+    c=clients[id]={id,name:"",company:"",phone:inc.phone,stage:"Cliente nuevo",owner:ME,next:null,credit:{USD:0,BS:0},orders:[],quotes:[],isNew:true};
+    ch={id:"ch"+id,clientId:id,unread:0,suggest:null,msgs:[]};
+    chats.push(ch);
+    ch.msgs.push({type:"in",at:tick(),text:inc.text,attach:inc.attach});
+    logEvent(ch,"✨","Número desconocido → contacto creado automáticamente · Etapa: Cliente nuevo","Tuto CRM (automático)");
+  }else{
+    ch=chats.find(x=>x.clientId===c.id);
+    ch.msgs.push({type:"in",at:tick(),text:inc.text,attach:inc.attach});
+  }
+  ch.suggest=parsePayment(inc.text);
+  const viewing=ch.id===state.active&&(state.pane!=="list"||window.innerWidth>900);
+  if(!viewing)ch.unread++;
+  toast("📲 Nuevo WhatsApp de "+displayName(c)+": "+inc.text.slice(0,48)+(inc.text.length>48?"…":""));
+  renderAll();
+}
+
+/* ---------------- Modales (botones del CRM) ---------------- */
+function orderOptions(c,acc){
+  const os=c.orders.filter(o=>o.acc===acc&&due(o)>0);
+  return os.map(o=>'<option value="'+o.id+'">'+o.id+' · '+esc(o.name)+' · debe '+money(due(o),acc)+'</option>').join("")+'<option value="credit">Dejar como saldo a favor</option>';
+}
+function openModal(kind){
+  const ch=activeChat(),c=clientOf(ch);
+  const who='<p class="mhint">'+esc(displayName(c))+(c.company?" · "+esc(c.company):"")+'</p>';
+  const actions=(label,cls)=>'<div class="merr" id="merr"></div><div class="mactions"><button type="button" class="btn ghost" data-close>Cancelar</button><button class="btn '+(cls||"primary")+'">'+label+'</button></div>';
+  let html="";
+  if(kind==="stage"){
+    html='<h3>🏷 Cambiar etapa</h3>'+who+'<div class="stage-grid">'+STAGES.map(s=>'<button type="button" class="stage-opt '+(s===c.stage?"cur":"")+'" data-stage="'+s+'">'+s+(s===c.stage?' <small>actual</small>':stageChip(s))+'</button>').join("")+'</div><div class="mactions" style="margin-top:12px"><button type="button" class="btn ghost" data-close>Cerrar</button></div>';
+  }
+  if(kind==="pay"){
+    const s=ch.suggest||{};const acc=s.acc||"USD";
+    html='<form id="mform" data-kind="pay"><h3>💵 Registrar pago</h3>'+who+
+      '<label>Moneda<select name="acc" id="payAcc"><option value="USD"'+(acc==="USD"?" selected":"")+'>Divisa (USD)</option><option value="BS"'+(acc==="BS"?" selected":"")+'>BCV (Bs)</option></select></label>'+
+      '<label>Monto<input name="amount" type="number" step="0.01" min="0.01" required value="'+(s.amount||"")+'"></label>'+
+      '<label>Método<select name="method">'+["Zelle","Transferencia","Pago móvil","Efectivo USD"].map(m=>'<option'+(m===s.method?" selected":"")+'>'+m+'</option>').join("")+'</select></label>'+
+      '<label>Referencia<input name="ref" required value="'+esc(s.ref||"")+'" placeholder="Ej. ZL-842617"></label>'+
+      '<label>Aplicar a<select name="order" id="payOrder">'+orderOptions(c,acc)+'</select></label>'+
+      '<label class="check"><input type="checkbox" name="confirm" checked> Enviar confirmación al cliente por WhatsApp</label>'+
+      actions("Guardar pago","wa")+'</form>';
+  }
+  if(kind==="quote"){
+    html='<form id="mform" data-kind="quote"><h3>📄 Nueva cotización</h3>'+who+
+      '<label>Número<input name="id" value="COT-2026-'+quoteSeq+'" readonly></label>'+
+      '<label>Descripción<input name="name" required placeholder="Ej. Letrero luminoso para fachada"></label>'+
+      '<label>Moneda<select name="acc"><option value="USD">Divisa (USD)</option><option value="BS">BCV (Bs)</option></select></label>'+
+      '<label>Monto<input name="amount" type="number" step="0.01" min="0.01" required></label>'+
+      '<label class="check"><input type="checkbox" name="send" checked> Enviar al cliente por WhatsApp</label>'+
+      actions("Guardar cotización")+'</form>';
+  }
+  if(kind==="order"){
+    html='<form id="mform" data-kind="order"><h3>📦 Crear pedido</h3>'+who+
+      '<label>Número<input name="id" value="TV-0'+orderSeq+'" readonly></label>'+
+      '<label>Descripción<input name="name" required placeholder="Ej. Letras acrílico luz cálida"></label>'+
+      '<label>Moneda<select name="acc"><option value="USD">Divisa (USD)</option><option value="BS">BCV (Bs)</option></select></label>'+
+      '<label>Total<input name="total" type="number" step="0.01" min="0.01" required></label>'+
+      '<p class="mhint" style="margin-top:-2px">Al crear el pedido, la etapa pasa a <b>Ganada</b>.</p>'+
+      actions("Crear pedido")+'</form>';
+  }
+  if(kind==="remind"){
+    html='<form id="mform" data-kind="remind"><h3>⏰ Recordarme</h3>'+who+
+      '<label>Fecha<input name="date" type="date" required value="'+(c.next||"2026-11-24")+'" min="2026-11-21"></label>'+
+      '<label>¿Qué hay que hacer?<input name="text" required value="Escribirle para seguimiento"></label>'+
+      actions("Guardar recordatorio")+'</form>';
+  }
+  if(kind==="profile"){
+    html='<form id="mform" data-kind="profile"><h3>🗂 Completar ficha</h3><p class="mhint">'+esc(c.phone)+'</p>'+
+      '<label>Nombre del contacto<input name="name" required placeholder="Ej. Pedro Ramírez"></label>'+
+      '<label>Empresa o negocio<input name="company" placeholder="Ej. Panadería La Espiga"></label>'+
+      '<label>Responsable<select name="owner">'+["Roberto Ortiz","Ricardo Ortiz","Marie Gabriela"].map(o=>'<option>'+o+'</option>').join("")+'</select></label>'+
+      actions("Guardar ficha")+'</form>';
+  }
+  $("modal").innerHTML=html;$("overlay").hidden=false;
+  const first=$("modal").querySelector("input:not([readonly]),select");if(first&&window.innerWidth>900)first.focus();
+}
+function closeModal(){$("overlay").hidden=true;$("modal").innerHTML="";}
+function err(msg){const e=$("merr");if(e)e.textContent=msg;}
+
+function setStage(ch,stage,auto){
+  const c=clientOf(ch);if(c.stage===stage)return;
+  const prev=c.stage;c.stage=stage;
+  if(!auto)logEvent(ch,"🏷","Etapa: "+prev+" → "+stage);
+  return prev;
+}
+function submitModal(form){
+  const ch=activeChat(),c=clientOf(ch),f=Object.fromEntries(new FormData(form).entries()),kind=form.dataset.kind;
+  if(kind==="pay"){
+    const amount=parseFloat(f.amount),acc=f.acc;
+    if(!(amount>0))return err("Indica un monto válido.");
+    let text="Pago registrado · "+money(amount,acc)+" · "+f.method+" · Ref. "+f.ref;
+    if(f.order==="credit"){c.credit[acc]+=amount;text+=" → saldo a favor";}
+    else{
+      const o=c.orders.find(x=>x.id===f.order);
+      if(!o||o.acc!==acc)return err("Ese pedido no está en la moneda elegida.");
+      const apply=Math.min(amount,due(o)),rest=amount-apply;
+      o.paid+=apply;text+=" → "+o.id+" ("+money(apply,acc)+")";
+      if(rest>0){
+        // si sobra, se aplica a otros pedidos pendientes de la misma moneda antes de dejar crédito
+        let left=rest;
+        c.orders.filter(x=>x.acc===acc&&due(x)>0&&x!==o).forEach(x=>{if(left<=0)return;const a=Math.min(left,due(x));x.paid+=a;left-=a;text+=" + "+x.id+" ("+money(a,acc)+")";});
+        if(left>0){c.credit[acc]+=left;text+=" · a favor "+money(left,acc);}
+      }
+    }
+    logEvent(ch,"💵",text);
+    if(f.confirm)sendOut(ch,"✅ Recibimos su pago de "+money(amount,acc)+" (Ref. "+f.ref+"). ¡Gracias!");
+    ch.suggest=null;closeModal();renderAll();toast("Pago guardado en la cuenta del cliente");return;
+  }
+  if(kind==="quote"){
+    const amount=parseFloat(f.amount);if(!(amount>0))return err("Indica un monto válido.");
+    c.quotes.unshift({id:f.id,name:f.name,acc:f.acc,amount,status:f.send?"Enviada":"En preparación"});quoteSeq++;
+    if(f.send){sendOut(ch,"📄 Cotización "+f.id+" · "+f.name+" · "+money(amount,f.acc)+". Quedamos atentos a sus comentarios.");}
+    const prev=f.send?setStage(ch,"Cotización enviada",true):null;
+    logEvent(ch,"📄","Cotización "+f.id+" "+(f.send?"enviada":"creada")+" · "+money(amount,f.acc)+(prev?" · Etapa: "+prev+" → Cotización enviada":""));
+    closeModal();renderAll();toast("Cotización guardada");return;
+  }
+  if(kind==="order"){
+    const total=parseFloat(f.total);if(!(total>0))return err("Indica un total válido.");
+    c.orders.unshift({id:f.id,name:f.name,acc:f.acc,total,paid:0});orderSeq++;
+    const prev=setStage(ch,"Ganada",true);
+    logEvent(ch,"📦","Pedido "+f.id+" creado · "+f.name+" · "+money(total,f.acc)+(prev?" · Etapa: "+prev+" → Ganada":""));
+    closeModal();renderAll();toast("Pedido creado y vinculado al cliente");return;
+  }
+  if(kind==="remind"){
+    c.next=f.date;logEvent(ch,"⏰","Recordatorio "+isoLabel(f.date)+": "+f.text);
+    closeModal();renderAll();toast("Recordatorio guardado");return;
+  }
+  if(kind==="profile"){
+    c.name=f.name.trim();c.company=f.company.trim();c.owner=f.owner;c.isNew=false;
+    logEvent(ch,"🗂","Ficha completada · "+c.name+(c.company?" · "+c.company:"")+" · Responsable: "+c.owner);
+    closeModal();renderAll();toast("Ficha guardada");return;
+  }
+}
+
+/* ---------------- Eventos ---------------- */
 document.addEventListener("click",e=>{
-  const t=e.target.closest("button,a");if(!t)return;
+  if(e.target.id==="overlay"){closeModal();return;}
+  const t=e.target.closest("button");if(!t)return;
   const d=t.dataset;
-  if(t.tagName==="A"&&t.getAttribute("href")==="#")e.preventDefault();
-  if(d.toast){toast(d.toast);return;}
-  if(d.view){go(d.view);return;}
-  if(d.client){
-    const id=+d.client,changed=id!==state.clientId||state.view!=="clientes";
-    state.clientId=id;if(changed)state.tab="account";
-    const from=state.view;state.view="clientes";render();
-    if(from!=="clientes")window.scrollTo(0,0);
-    else if(window.innerWidth<900)$("detail").scrollIntoView({behavior:"smooth",block:"start"});
+  if(t.id==="simBtn"){simulate();return;}
+  if(d.close!==undefined){closeModal();return;}
+  if(d.filter){state.filter=d.filter;renderList();return;}
+  if(d.chat){
+    if(state.active!==d.chat){state.draft="";state.mode="reply";}
+    state.active=d.chat;state.pane="chat";
+    const ch=activeChat();ch.unread=0;renderAll();return;
+  }
+  if(d.pane){state.pane=d.pane;$("layout").dataset.pane=state.pane;if(d.pane==="chat"){const b=$("msgs");if(b)b.scrollTop=b.scrollHeight;}return;}
+  if(d.mode){state.mode=d.mode;renderChat();const i=$("draft");if(i)i.focus();return;}
+  if(d.open){openModal(d.open);return;}
+  if(d.dismiss!==undefined){activeChat().suggest=null;renderChat();return;}
+  if(d.stage){setStage(activeChat(),d.stage);closeModal();renderAll();toast("Etapa actualizada");return;}
+});
+document.addEventListener("input",e=>{if(e.target.id==="draft")state.draft=e.target.value;});
+document.addEventListener("change",e=>{
+  if(e.target.id==="payAcc"){const c=clientOf(activeChat());$("payOrder").innerHTML=orderOptions(c,e.target.value);}
+});
+document.addEventListener("submit",e=>{
+  e.preventDefault();
+  if(e.target.id==="composer"){
+    const text=state.draft.trim();if(!text)return;
+    const ch=activeChat();
+    if(state.mode==="note")ch.msgs.push({type:"note",at:tick(),text,by:ME});
+    else sendOut(ch,text);
+    state.draft="";renderAll();const i=$("draft");if(i)i.focus();
+    if(state.mode==="reply")toast("Mensaje simulado: no se envió a WhatsApp");
     return;
   }
-  if(d.tab){state.tab=d.tab;render();return;}
-  if(d.cfilter){state.cfilter=d.cfilter;render();return;}
-  if(d.ofilter){state.ofilter=d.ofilter;render();return;}
-  if(d.hkind){state.hkind=d.hkind;render();return;}
-  if(d.chat){state.chatId=d.chat;const ch=chats.find(c=>c.id===d.chat);if(ch)ch.unread=0;render();return;}
-  if(d.chatClient){const ch=chats.find(c=>c.clientId===+d.chatClient);if(ch){state.chatId=ch.id;ch.unread=0;go("whatsapp");}return;}
-  if(d.quick){const inp=$("waInput");if(inp){inp.value=d.quick;inp.focus();}return;}
+  if(e.target.id==="mform")submitModal(e.target);
 });
-document.addEventListener("input",e=>{
-  if(e.target.id==="clientSearch"){state.q=e.target.value;const r=clientList();$("clientList").innerHTML=r.html;$("clientCount").textContent=r.count+" "+(r.count===1?"registro":"registros");}
-  if(e.target.id==="orderSearch"){state.oq=e.target.value;$("ordersBody").innerHTML=ordersBody();}
-});
-document.addEventListener("submit",e=>{if(e.target.id==="waForm"){e.preventDefault();sendMessage();}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("overlay").hidden)closeModal();});
 
-buildNav();
-render();
+/* En escritorio se abre directo el primer chat */
+if(window.innerWidth>900)state.pane="chat";
+renderAll();
+setTimeout(()=>toast("Toca «📲 Simular mensaje» para recibir un WhatsApp"),600);
 </script>
 </body>
 </html>
