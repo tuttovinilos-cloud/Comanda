@@ -1,32 +1,430 @@
-SUBIDEAS INTERNAS EN LA RED DE IDEAS
-Recomendación: sí, pero dentro de la tarjeta, no como un lienzo dentro de otro.
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Red de ideas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style id="css">
+/* VOICE: herramienta de taller, tranquila, que se usa a diario.
+   IDEA: una mesa de trabajo con fichas clavadas y hilos que muestran de dónde viene cada idea.
+   PICTURE: el propio lienzo con la red de ejemplo, ocupando toda la pantalla.
+   COLOUR and TYPE: blanco y tinta, azul intenso para el origen, ámbar y verde para explorar; Archivo + Inter.
+   LAYOUT: barra superior fina, lienzo a pantalla completa, barra de acciones flotante abajo, panel lateral para desarrollar. */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#111217);--dot:light-dark(#d5d7de,#2a2d36);--ink:light-dark(#15161c,#eceef3);--mute:light-dark(#5d6170,#9ba0ae);
+--card:light-dark(#ffffff,#1b1d24);--line:light-dark(#dfe1e7,#2e313b);--bar:light-dark(#ffffffee,#17181eee);
+--acc:light-dark(#153bff,#7088ff);--accbg:light-dark(#eef1ff,#1e2550);--rel:light-dark(#8a8e9c,#6f7484);
+--o:light-dark(#153bff,#7088ff);--r:light-dark(#c76a00,#f0a040);--d:light-dark(#0b8a5c,#3cc98f);--danger:light-dark(#c92a2a,#ff8080);
+--s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--rad:12px}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;min-height:40px;padding:0 var(--s3);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+button:hover{border-color:var(--mute)}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+button.on{background:var(--accbg);border-color:var(--acc);color:var(--acc)}
+button.ico{width:40px;padding:0;justify-content:center;font-size:18px}
+input,select,textarea{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:0 var(--s3);min-height:40px;font-size:16px}
+textarea{padding:var(--s2) var(--s3);resize:vertical;line-height:1.5}
+header{position:fixed;inset:0 0 auto;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2);padding:var(--s2) var(--s3);background:var(--bar);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+#multi .sm{display:none}
+header h1{font:800 18px/1.2 Archivo,sans-serif;margin:0 var(--s2) 0 0;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+#modal p.msg{margin:0;font-size:14px}#modal p.ok{color:var(--d)}#modal p.bad{color:var(--danger)}
+#stage.drop{outline:3px dashed var(--acc);outline-offset:-12px}
+#q{flex:1 1 180px;max-width:320px}
+#chips{display:flex;gap:6px;overflow-x:auto;flex:1 1 200px;scrollbar-width:none}
+.chip{min-height:32px;border-radius:999px;font-size:13px;padding:0 10px}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block}
+#status{font-size:13px;color:var(--mute)}
+.sp{flex:1}
+#stage{position:fixed;inset:0;touch-action:none;background-image:radial-gradient(var(--dot) 1.2px,transparent 1.3px);cursor:grab}
+#stage.panning{cursor:grabbing}
+#world{position:absolute;left:0;top:0;transform-origin:0 0}
+#edges{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible}
+#edges path{fill:none;stroke-width:2.2;transition:opacity .15s}
+#edges .origen{stroke:var(--acc)}#edges .rel{stroke:var(--rel);stroke-dasharray:6 5;stroke-width:1.8}
+#edges .dim,.elab.dim{opacity:.12}
+.elab{position:absolute;transform:translate(-50%,-50%);background:var(--bg);border:1px solid var(--line);color:var(--mute);font-size:12px;padding:1px 8px;border-radius:999px;white-space:nowrap;pointer-events:none}
+.card{position:absolute;width:220px;background:var(--card);border:1px solid var(--line);border-radius:var(--rad);padding:var(--s3);cursor:pointer;user-select:none;transition:opacity .15s,box-shadow .15s;box-shadow:0 1px 2px #0000000f}
+.card:hover{border-color:var(--mute)}
+.card.sel{border-color:var(--acc);box-shadow:0 0 0 3px var(--accbg),0 6px 18px #0000001a}
+.card.dim{opacity:.18}
+.card.hl-o{box-shadow:0 0 0 3px var(--o)}.card.hl-r{box-shadow:0 0 0 3px var(--r)}.card.hl-d{box-shadow:0 0 0 3px var(--d)}
+.card.match{box-shadow:0 0 0 3px #f5c400}
+.card .tp{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mute);margin-bottom:6px;min-height:16px}
+.card h3{font:700 15px/1.25 Archivo,sans-serif;margin:0 0 4px;overflow-wrap:anywhere}
+.card p{margin:0;font-size:13px;color:var(--mute);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .ft{display:flex;gap:10px;font-size:12px;color:var(--mute);margin-top:8px;flex-wrap:wrap}
+.card .combo{color:var(--acc);font-weight:600}
+#marquee{position:fixed;border:1.5px dashed var(--acc);background:#153bff14;display:none;pointer-events:none;z-index:5}
+#bar{position:fixed;left:50%;bottom:calc(var(--s4) + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:var(--s2);padding:var(--s2);background:var(--bar);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 30px #0000001f;backdrop-filter:blur(8px);max-width:calc(100vw - 24px)}
+#bar .hint{font-size:13px;color:var(--mute);padding:0 var(--s2)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;border-radius:0;min-height:38px;font-size:13px}
+.seg button+button{border-left:1px solid var(--line)}
+#zoom{position:fixed;right:var(--s3);bottom:calc(var(--s4) + env(safe-area-inset-bottom));z-index:19;display:flex;flex-direction:column;gap:6px}
+#zoom span{font-size:12px;text-align:center;color:var(--mute)}
+#panel{position:fixed;top:var(--hh,57px);right:0;bottom:0;width:min(440px,100vw);z-index:30;background:var(--card);border-left:1px solid var(--line);box-shadow:-10px 0 40px #00000024;overflow-y:auto;padding:var(--s4) var(--s5) var(--s5);display:none;flex-direction:column;gap:var(--s4)}
+#panel.open{display:flex}#panel>*{flex-shrink:0}
+#panel .row,#modal .row{display:flex;gap:var(--s2);align-items:center;flex-wrap:wrap}
+#panel label,#panel h4,#modal label,#modal h4{font-size:12px;font-weight:600;color:var(--mute);margin:0;letter-spacing:.2px}
+#panel .f,#modal .f{display:flex;flex-direction:column;gap:6px}
+#pTitle{font:800 22px/1.2 Archivo,sans-serif;border:0;padding:0;min-height:0;background:none}
+#pTitle:focus-visible{outline:none;box-shadow:0 2px 0 var(--acc)}
+.imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:var(--s2)}
+.imgs figure{margin:0;position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;aspect-ratio:4/3;background:#fff}
+.imgs img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.x{position:absolute;top:4px;right:4px;min-height:28px;width:28px;padding:0;justify-content:center;border-radius:50%;font-size:14px}
+.refs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.refs li,.conn li{display:flex;align-items:center;gap:var(--s2);font-size:14px}
+.refs li span,.refs li a{flex:1;overflow-wrap:anywhere}
+.refs a{color:var(--acc)}
+.conn{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.conn button.go{flex:1;justify-content:flex-start;min-height:36px;font-size:14px;white-space:normal;text-align:left}
+.conn select{min-height:36px;font-size:14px;max-width:150px}
+.conn .x{position:static;flex:none}
+.empty{font-size:13px;color:var(--mute)}
+#sketch{width:100%;height:220px;border:1px dashed var(--line);border-radius:10px;background:#fff;touch-action:none;display:block}
+.danger{color:var(--danger)}
+#modal{position:fixed;inset:0;z-index:40;background:#00000059;display:none;align-items:center;justify-content:center;padding:var(--s4)}
+#modal.open{display:flex}
+#modal .box{background:var(--card);border-radius:16px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;padding:var(--s5);display:flex;flex-direction:column;gap:var(--s3)}
+#modal h2{font:800 20px/1.2 Archivo,sans-serif;margin:0}
+.sug{border:1px solid var(--line);border-radius:12px;padding:var(--s3);display:flex;flex-direction:column;gap:6px}
+.sug b{font-family:Archivo,sans-serif;font-size:16px}.sug small{color:var(--acc);font-weight:600}
+.sug p{margin:0;font-size:14px;color:var(--mute)}
+#viewer{max-width:100%;max-height:75vh;border-radius:10px}
+.legend{display:flex;gap:var(--s3);font-size:12px;color:var(--mute);align-items:center;flex-wrap:wrap}
+@media(max-width:700px){
+ header{padding:var(--s2)}#q{max-width:none;order:3;flex-basis:100%}#chips{order:4;flex-basis:100%}
+ #panel{top:auto;height:88vh;width:100vw;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:var(--s4)}
+ #bar{bottom:calc(var(--s3) + env(safe-area-inset-bottom));border-radius:14px}
+ #bar .hint{display:none}#zoom{bottom:auto;top:calc(var(--hh,120px) + 8px)}#zin,#zout,#zv{display:none!important}
+ #status{display:none}header h1{font-size:17px;flex:1}#multi .lg{display:none}#multi .sm{display:inline}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<template id="ui">
+<main id="stage" aria-label="Lienzo de ideas"><div id="world"><svg id="edges" aria-hidden="true"><defs>
+<marker id="ma" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--acc)"/></marker>
+<marker id="mr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--rel)"/></marker>
+</defs><g id="eg"></g></svg><div id="labels"></div><div id="cards"></div></div></main>
+<div id="marquee"></div>
+<header class="ui">
+ <h1>Red de ideas</h1>
+ <input id="q" type="search" placeholder="Buscar ideas…" aria-label="Buscar ideas">
+ <div id="chips" aria-label="Temas"></div>
+ <button id="proj" title="Exportar o importar el proyecto">Proyecto</button>
+ <button id="undo" class="ico" title="Deshacer (Ctrl+Z)" aria-label="Deshacer">↶</button>
+ <button id="redo" class="ico" title="Rehacer (Ctrl+Mayús+Z)" aria-label="Rehacer">↷</button>
+ <button id="multi" title="Tocar varias tarjetas para seleccionarlas"><span class="lg">Selección múltiple</span><span class="sm">Varias</span></button>
+ <span id="status"></span>
+ <button id="save" class="pri">Guardar</button>
+</header>
+<div id="bar" class="ui"></div>
+<div id="zoom" class="ui"><button class="ico" id="zin" aria-label="Acercar">+</button><span id="zv">100%</span><button class="ico" id="zout" aria-label="Alejar">−</button><button class="ico" id="zfit" aria-label="Ver todo" title="Ver todo">⤢</button></div>
+<aside id="panel" class="ui" aria-label="Detalle de la idea"></aside>
+<div id="modal" class="ui"><div class="box" id="mbox"></div></div>
+<input type="file" id="file" accept="image/*" multiple hidden>
+<input type="file" id="impFile" accept=".json,application/json,.txt" hidden>
+</template>
+<script type="application/json" id="estado">{"stamp":"inicial","topics":[{"id":"t1","name":"Materiales","color":"#d9480f"},{"id":"t2","name":"Técnicas","color":"#7048e8"},{"id":"t3","name":"Productos","color":"#0c8599"}],"cards":[{"id":"c1","x":0,"y":0,"title":"Acrílico","desc":"Lámina rígida y transparente, fácil de cortar y pulir.","topic":"t1","body":"Espesores habituales de 3, 5 y 8 mm. Admite corte láser y cantos pulidos.","images":[],"refs":[]},{"id":"c2","x":300,"y":0,"title":"Impresión UV","desc":"Tinta curada al instante sobre superficies rígidas.","topic":"t2","body":"Permite imprimir directo sobre acrílico, madera o metal, con blanco y barniz selectivo.","images":[],"refs":[{"text":"Probar capa de blanco + color en acrílico de 3 mm","url":""}]},{"id":"c3","x":-320,"y":240,"title":"Base de exhibidor","desc":"Soporte de pie o de mesa para sostener paneles.","topic":"t1","body":"","images":[],"refs":[]},{"id":"c4","x":620,"y":240,"title":"Iluminación LED","desc":"Tiras LED de bajo consumo para retroiluminar.","topic":"t2","body":"","images":[],"refs":[]},{"id":"c9","x":640,"y":0,"title":"Señalización","desc":"Letreros y rótulos para locales y oficinas.","topic":"t3","body":"","images":[],"refs":[]},{"id":"c5","x":150,"y":240,"title":"Panel personalizado","desc":"Acrílico impreso en UV con el diseño del cliente.","topic":"t3","body":"Producto base para varias líneas: decoración, señalización y exhibición.","images":[],"refs":[]},{"id":"c6","x":-110,"y":480,"title":"Exhibidor personalizado","desc":"Panel personalizado montado sobre una base.","topic":"t3","body":"","images":[],"refs":[]},{"id":"c7","x":410,"y":480,"title":"Panel con luz","desc":"Panel personalizado retroiluminado con LED.","topic":"t3","body":"","images":[],"refs":[]},{"id":"c8","x":150,"y":720,"title":"Exhibidor con luz","desc":"Exhibidor personalizado que integra el panel iluminado.","topic":"t3","body":"Ideal para mostradores y ferias.","images":[],"refs":[]}],"edges":[{"id":"e1","from":"c1","to":"c5","kind":"origen"},{"id":"e2","from":"c2","to":"c5","kind":"origen"},{"id":"e3","from":"c5","to":"c7","kind":"origen"},{"id":"e4","from":"c4","to":"c7","kind":"origen"},{"id":"e5","from":"c5","to":"c6","kind":"origen"},{"id":"e6","from":"c3","to":"c6","kind":"origen"},{"id":"e7","from":"c7","to":"c8","kind":"origen"},{"id":"e8","from":"c6","to":"c8","kind":"origen"},{"id":"e9","from":"c2","to":"c9","kind":"rel","label":"complementa"},{"id":"e10","from":"c9","to":"c4","kind":"rel","label":"necesita"}]}</script>
+<script id="app">
+{
+const TPL=document.getElementById('ui').innerHTML, CSS=document.getElementById('css').textContent, APP=document.getElementById('app').textContent;
+document.body.insertAdjacentHTML('afterbegin',TPL);
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const LABELS=['complementa','necesita','mejora','es alternativa de',''];
+const COLORS=['#d9480f','#7048e8','#0c8599','#c2255c','#5c940d','#1971c2','#495057'];
+const DKEY='red-ideas-borrador',VKEY='red-ideas-vista';
+const use=n=>window.claude&&claude.use?claude.use(n):Promise.resolve(null);
+let S=JSON.parse(document.getElementById('estado').textContent);
+const STAMP=S.stamp;
+try{const d=JSON.parse(localStorage.getItem(DKEY)||'null');if(d&&d.base===STAMP&&d.state)S=d.state;else localStorage.removeItem(DKEY)}catch(e){}
+let downloads=null,pending=null;
+let V={x:0,y:0,k:1},sel=new Set(),mode='todo',filter=null,query='',multi=false,dirty=false,openId=null,artifact=null,sampler=null,canPublish=true;
+let past=[],future=[],sizes={},drag=null,ptrs=new Map(),matchIdx=0,sketchOn=false,confirmDel=false;
+const stage=$('#stage'),world=$('#world');
+const card=id=>S.cards.find(c=>c.id===id);
+const topic=id=>S.topics.find(t=>t.id===id);
+const parents=id=>S.edges.filter(e=>e.kind==='origen'&&e.to===id).map(e=>e.from);
+const children=id=>S.edges.filter(e=>e.kind==='origen'&&e.from===id).map(e=>e.to);
+const related=id=>S.edges.filter(e=>e.kind==='rel'&&(e.from===id||e.to===id)).map(e=>e.from===id?e.to:e.from);
+function walk(id,f){const out=new Set(),st=[id];while(st.length){for(const n of f(st.pop()))if(!out.has(n)){out.add(n);st.push(n)}}return out}
 
-POR QUÉ NO UN LIENZO DENTRO DE OTRO
-La fuerza de la herramienta está en ver de dónde sale cada idea. Si "Panel personalizado"
-guarda adentro su propia red, esas subideas no se pueden combinar con ideas de afuera ni
-aparecen al explorar Origen o Derivadas. Terminas con ideas escondidas que no participan
-en la red, que es justo lo contrario de lo que se busca.
+/* ---------- guardar ---------- */
+function snap(){past.push(JSON.stringify(S));if(past.length>80)past.shift();future=[]}
+function changed(){dirty=true;try{localStorage.setItem(DKEY,JSON.stringify({base:STAMP,state:S}))}catch(e){}status()}
+function status(){$('#status').textContent=!canPublish?'Solo lectura · cambios en este navegador':dirty?(artifact?'Cambios sin guardar':'Guardado en este navegador'):'Todo guardado';$('#save').hidden=!artifact||!canPublish;$('#save').disabled=!dirty;$('#undo').disabled=!past.length;$('#redo').disabled=!future.length}
+function buildHTML(st){const j=JSON.stringify(st).replace(/</g,'\\u003c');
+return '<!DOCTYPE html>\n<html lang="es">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Red de ideas</title>\n<link rel="preconnect" href="https://fonts.googleapis.com">\n<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">\n<style id="css">'+CSS+'</style>\n</head>\n<body>\n<template id="ui">'+TPL+'</template>\n<script type="application/json" id="estado">'+j+'<\/script>\n<script id="app">'+APP+'<\/script>\n</body>\n</html>\n'}
+async function save(){if(!artifact||!dirty)return;const st=JSON.parse(JSON.stringify(S));st.stamp=Date.now().toString(36);
+ try{sessionStorage.setItem(VKEY,JSON.stringify({V,sel:[...sel],open:openId}))}catch(e){}
+ $('#save').disabled=true;$('#status').textContent='Guardando…';
+ try{await artifact.publish(buildHTML(st))}catch(e){if(e&&(e.code==='not_granted'||e.code==='not_writer')){canPublish=false}status()}}
 
-LO QUE SÍ FUNCIONA BIEN: UNA SECCIÓN "PARTES"
-Dentro de cada tarjeta, una lista para lo que es componente de la idea y no una idea
-independiente. Ejemplo en "Exhibidor con luz":
-  - Base de 30 cm
-  - Canal para la tira LED
-  - Cable oculto por detrás
-  - Panel de 5 mm
+/* ---------- vista ---------- */
+function applyView(){world.style.transform=`translate(${V.x}px,${V.y}px) scale(${V.k})`;const g=24*V.k;stage.style.backgroundSize=`${g}px ${g}px`;stage.style.backgroundPosition=`${V.x}px ${V.y}px`;$('#zv').textContent=Math.round(V.k*100)+'%'}
+function toWorld(sx,sy){return{x:(sx-V.x)/V.k,y:(sy-V.y)/V.k}}
+function zoomAt(sx,sy,k){k=Math.min(2.5,Math.max(.15,k));V.x=sx-(sx-V.x)*k/V.k;V.y=sy-(sy-V.y)*k/V.k;V.k=k;applyView()}
+function bounds(list){let a=1e9,b=1e9,c=-1e9,d=-1e9;for(const n of list){const s=sizes[n.id]||{w:220,h:110};a=Math.min(a,n.x);b=Math.min(b,n.y);c=Math.max(c,n.x+s.w);d=Math.max(d,n.y+s.h)}return{a,b,c,d}}
+function fit(list=S.cards){if(!list.length){V={x:innerWidth/2,y:innerHeight/2,k:1};return applyView()}
+ const {a,b,c,d}=bounds(list),top=$('header').offsetHeight+20,bot=90,W=innerWidth-40,H=innerHeight-top-bot;
+ const k=Math.min(1.2,Math.max(.2,Math.min(W/(c-a),H/(d-b))));V.k=k;V.x=20+(W-(c-a)*k)/2-a*k;V.y=top+(H-(d-b)*k)/2-b*k;applyView()}
+function centerOn(n){const s=sizes[n.id]||{w:220,h:110};V.x=innerWidth/2-(n.x+s.w/2)*V.k;V.y=innerHeight/2-(n.y+s.h/2)*V.k;applyView()}
 
-Cada parte:
-  - Una línea corta.
-  - Nota opcional.
-  - Casilla de "resuelto".
+/* ---------- foco y filtros ---------- */
+function focus(){let set=null,cls='';
+ if(sel.size===1&&mode!=='todo'){const id=[...sel][0];
+  set=mode==='origen'?walk(id,parents):mode==='deriv'?walk(id,children):new Set(related(id));set.add(id);cls={origen:'hl-o',rel:'hl-r',deriv:'hl-d'}[mode]}
+ return{set,cls}}
+const hitQ=c=>!query||(c.title+' '+c.desc+' '+c.body).toLowerCase().includes(query);
+function cardState(c,f){const dim=(f.set&&!f.set.has(c.id))||(filter&&c.topic!==filter)||(query&&!hitQ(c));
+ return['card',sel.has(c.id)?'sel':'',dim?'dim':'',f.set&&f.set.has(c.id)&&!sel.has(c.id)?f.cls:'',query&&hitQ(c)?'match':''].join(' ')}
 
-En el lienzo, la tarjeta muestra solo un resumen, por ejemplo: "4 partes · 2 resueltas".
-Así el lienzo no se llena.
+/* ---------- dibujo ---------- */
+function cardHTML(c){const t=topic(c.topic),np=parents(c.id).length,nc=children(c.id).length,nr=related(c.id).length;
+ return `<div class="card" data-id="${esc(c.id)}" style="left:${+c.x}px;top:${+c.y}px"><div class="tp">${t?`<span class="dot" style="background:${esc(t.color)}"></span>${esc(t.name)}`:''}</div><h3>${esc(c.title||'Sin título')}</h3>${c.desc?`<p>${esc(c.desc)}</p>`:''}<div class="ft">${np>1?`<span class="combo">Combina ${np} ideas</span>`:np===1?'<span>Deriva de 1</span>':''}${nc?`<span>${nc} derivada${nc>1?'s':''}</span>`:''}${nr?`<span>${nr} relación${nr>1?'es':''}</span>`:''}${c.images.length?`<span>▣ ${c.images.length}</span>`:''}${c.refs.length?`<span>↗ ${c.refs.length}</span>`:''}</div></div>`}
+function renderCards(){$('#cards').innerHTML=S.cards.map(cardHTML).join('');sizes={};
+ for(const el of document.querySelectorAll('.card'))sizes[el.dataset.id]={w:el.offsetWidth,h:el.offsetHeight};paint()}
+function paint(){const f=focus();for(const el of document.querySelectorAll('.card')){const c=card(el.dataset.id);if(c)el.className=cardState(c,f)}renderEdges(f);renderBar()}
+function clip(n,tx,ty){const s=sizes[n.id]||{w:220,h:110},cx=n.x+s.w/2,cy=n.y+s.h/2,dx=tx-cx,dy=ty-cy,hw=s.w/2+6,hh=s.h/2+6;
+ const t=Math.min(Math.abs(dx)>1e-6?hw/Math.abs(dx):1e9,Math.abs(dy)>1e-6?hh/Math.abs(dy):1e9);return[cx+dx*t,cy+dy*t]}
+function ctr(n){const s=sizes[n.id]||{w:220,h:110};return[n.x+s.w/2,n.y+s.h/2]}
+function renderEdges(f=focus()){let p='',l='';const one=sel.size===1?[...sel][0]:null;
+ for(const e of S.edges){const a=card(e.from),b=card(e.to);if(!a||!b)continue;const[ax,ay]=ctr(a),[bx,by]=ctr(b),p1=clip(a,bx,by),p2=clip(b,ax,ay);
+  let dim=false;if(f.set){if(mode==='rel')dim=!(e.kind==='rel'&&(e.from===one||e.to===one));else dim=!(e.kind==='origen'&&f.set.has(e.from)&&f.set.has(e.to))}
+  if(filter&&(a.topic!==filter||b.topic!==filter))dim=true;
+  p+=`<path class="${e.kind}${dim?' dim':''}" d="M${p1[0]} ${p1[1]}L${p2[0]} ${p2[1]}" marker-end="url(#${e.kind==='origen'?'ma':'mr'})"/>`;
+  if(e.kind==='rel'&&e.label)l+=`<div class="elab${dim?' dim':''}" style="left:${(p1[0]+p2[0])/2}px;top:${(p1[1]+p2[1])/2}px">${esc(e.label)}</div>`}
+ $('#eg').innerHTML=p;$('#labels').innerHTML=l}
+function renderChips(){$('#chips').innerHTML=S.topics.map(t=>`<button class="chip${filter===t.id?' on':''}" data-t="${esc(t.id)}"><span class="dot" style="background:${esc(t.color)}"></span>${esc(t.name)}</button>`).join('')}
+function renderBar(){const b=$('#bar'),n=sel.size;let h='';
+ if(!n)h=`<button class="pri" data-a="new">＋ Nueva idea</button><span class="hint">Doble clic en el lienzo crea una idea · Mayús + arrastrar selecciona varias</span>`;
+ else if(n===1){const id=[...sel][0],o=walk(id,parents).size,r=related(id).length,d=walk(id,children).size;
+  h=`<button data-a="open">Abrir</button><div class="seg" role="group" aria-label="Explorar"><button data-m="todo" class="${mode==='todo'?'on':''}">Todo</button><button data-m="origen" class="${mode==='origen'?'on':''}">Origen ${o}</button><button data-m="rel" class="${mode==='rel'?'on':''}">Relacionadas ${r}</button><button data-m="deriv" class="${mode==='deriv'?'on':''}">Derivadas ${d}</button></div>${sampler?'<button data-a="ai">✦ Sugerir con IA</button>':''}<button data-a="del" class="danger">${confirmDel?'¿Eliminar? Sí':'Eliminar'}</button>`}
+ else{h=`<button class="pri" data-a="combine">Crear idea a partir de estas (${n})</button>`;
+  if(n===2)h+=`<select id="rlab" aria-label="Tipo de relación"><option value="origen">… da origen a …</option>${LABELS.map(x=>`<option value="${esc(x)}">${x||'relación general'}</option>`).join('')}</select><button data-a="relate">Conectar</button>`;
+  h+=`${sampler?'<button data-a="ai">✦ Sugerir con IA</button>':''}<button data-a="clear">Quitar selección</button><button data-a="del" class="danger">${confirmDel?'¿Eliminar '+n+'? Sí':'Eliminar'}</button>`}
+ b.innerHTML=h}
 
-LA CLAVE: BOTÓN "SACAR AL LIENZO"
-Si una parte crece y quieres combinarla con otras ideas, la conviertes en tarjeta.
-Queda conectada a la idea de donde salió y entra a la red como cualquier otra.
+/* ---------- acciones ---------- */
+function overlaps(x,y,skip){return S.cards.some(c=>c.id!==skip&&Math.abs(c.x-x)<230&&Math.abs(c.y-y)<(sizes[c.id]?.h||110)+20)}
+function addCard(x,y,data={}){const n={id:uid(),x:Math.round(x),y:Math.round(y),title:'',desc:'',topic:'',body:'',images:[],refs:[],...data};
+ let g=0;while(overlaps(n.x,n.y)&&g++<40)n.y+=60;S.cards.push(n);return n}
+function newIdea(x,y){snap();const n=addCard(x,y,{title:'Nueva idea'});sel=new Set([n.id]);changed();renderCards();openPanel(n.id,true)}
+function fromSelection(data){const ps=[...sel].map(card).filter(Boolean);const cx=ps.reduce((s,p)=>s+p.x,0)/ps.length;
+ const y=Math.max(...ps.map(p=>p.y+(sizes[p.id]?.h||110)))+110;const tps=new Set(ps.map(p=>p.topic));
+ const n=addCard(cx,y,{topic:tps.size===1?ps[0].topic:'',...data});ps.forEach(p=>S.edges.push({id:uid(),from:p.id,to:n.id,kind:'origen'}));return n}
+function combine(){snap();const ps=[...sel].map(card);const n=fromSelection({title:ps.map(p=>p.title).join(' + '),desc:''});sel=new Set([n.id]);mode='todo';changed();renderCards();centerOn(n);openPanel(n.id,true)}
+function relate(){const[a,b]=[...sel],v=$('#rlab').value;if(S.edges.some(e=>e.from===a&&e.to===b&&(v==='origen'?e.kind==='origen':e.kind==='rel')))return;
+ snap();S.edges.push(v==='origen'?{id:uid(),from:a,to:b,kind:'origen'}:{id:uid(),from:a,to:b,kind:'rel',label:v});changed();renderCards()}
+function delSel(){if(!confirmDel){confirmDel=true;renderBar();setTimeout(()=>{confirmDel=false;renderBar()},3000);return}
+ confirmDel=false;snap();const ids=new Set(sel);S.cards=S.cards.filter(c=>!ids.has(c.id));S.edges=S.edges.filter(e=>!ids.has(e.from)&&!ids.has(e.to));
+ if(ids.has(openId))closePanel();sel.clear();changed();renderCards()}
+function undo(){if(!past.length)return;future.push(JSON.stringify(S));S=JSON.parse(past.pop());after()}
+function redo(){if(!future.length)return;past.push(JSON.stringify(S));S=JSON.parse(future.pop());after()}
+function after(){renderTitle();sel=new Set([...sel].filter(card));if(openId&&!card(openId))closePanel();changed();renderChips();renderCards();if(openId)openPanel(openId)}
 
-REGLA
-Adentro va lo que describe la idea.
-Afuera va lo que puede generar ideas nuevas.
+/* ---------- panel ---------- */
+function openPanel(id,focusTitle){const c=card(id);if(!c)return;openId=id;sketchOn=false;const P=$('#panel');P.classList.add('open');
+ const conn=(ids,kind)=>ids.length?`<ul class="conn">${ids.map(o=>{const x=card(o);return x?`<li><button class="go" data-go="${esc(o)}">${esc(x.title||'Sin título')}</button><button class="x" data-unlink="${esc(kind)}|${esc(o)}" aria-label="Quitar conexión">×</button></li>`:''}).join('')}</ul>`:'<span class="empty">Ninguna todavía</span>';
+ const rels=S.edges.filter(e=>e.kind==='rel'&&(e.from===id||e.to===id));
+ P.innerHTML=`<div class="row"><select id="pTopic" aria-label="Tema"><option value="">Sin tema</option>${S.topics.map(t=>`<option value="${esc(t.id)}"${t.id===c.topic?' selected':''}>${esc(t.name)}</option>`).join('')}<option value="__new">Nuevo tema…</option></select><span class="sp"></span><button class="ico" id="pClose" aria-label="Cerrar">×</button></div>
+ <div class="row" id="newTopic" hidden><input id="ntName" placeholder="Nombre del tema" style="flex:1"><button id="ntAdd">Crear tema</button></div>
+ <input id="pTitle" value="${esc(c.title)}" placeholder="Título de la idea" aria-label="Título">
+ <div class="f"><label for="pDesc">Descripción breve · se ve en el lienzo</label><textarea id="pDesc" rows="2" maxlength="160">${esc(c.desc)}</textarea></div>
+ <div class="f"><label for="pBody">Desarrollo</label><textarea id="pBody" rows="7" placeholder="Explica la idea, cómo se haría, para quién, qué falta resolver…">${esc(c.body)}</textarea></div>
+ <div class="f"><h4>Imágenes y bocetos</h4>${c.images.length?`<div class="imgs">${c.images.map((s,i)=>`<figure><img src="${esc(s)}" alt="Imagen ${i+1}" data-view="${i}"><button class="x" data-rmimg="${i}" aria-label="Quitar imagen">×</button></figure>`).join('')}</div>`:''}
+  <div class="row"><button id="addImg">Subir imagen</button><button id="sk">${sketchOn?'Cerrar boceto':'Dibujar boceto'}</button></div><div id="skWrap"></div></div>
+ <div class="f"><h4>Enlaces y referencias</h4>${c.refs.length?`<ul class="refs">${c.refs.map((r,i)=>`<li>${/^https:\/\//.test(r.url)?`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.text||r.url)}</a>`:`<span>${esc(r.text)}${r.url?' · '+esc(r.url):''}</span>`}<button class="x" style="position:static" data-rmref="${i}" aria-label="Quitar">×</button></li>`).join('')}</ul>`:''}
+  <div class="row"><input id="rText" placeholder="Nota o título" style="flex:1 1 140px"><input id="rUrl" placeholder="https://…" style="flex:1 1 140px"><button id="rAdd">Añadir</button></div></div>
+ <div class="f"><h4>Surgió de</h4>${conn(parents(id),'p')}</div>
+ <div class="f"><h4>Relacionadas</h4>${rels.length?`<ul class="conn">${rels.map(e=>{const o=card(e.from===id?e.to:e.from);return o?`<li><select data-lab="${esc(e.id)}" aria-label="Tipo de relación">${LABELS.map(x=>`<option value="${esc(x)}"${x===(e.label||'')?' selected':''}>${(e.from===id?'':'← ')+(x||'relación general')}</option>`).join('')}</select><button class="go" data-go="${esc(o.id)}">${esc(o.title||'Sin título')}</button><button class="x" data-rmedge="${esc(e.id)}" aria-label="Quitar relación">×</button></li>`:''}).join('')}</ul>`:'<span class="empty">Selecciona esta idea y otra para conectarlas</span>'}</div>
+ <div class="f"><h4>Dio origen a</h4>${conn(children(id),'c')}</div>
+ <div class="legend"><span>Flecha continua: originó una idea</span><span>Flecha discontinua: relación</span></div>
+ <button id="pDel" class="danger">Eliminar esta idea</button>`;
+ if(focusTitle){const t=$('#pTitle');t.focus();t.select()}}
+function closePanel(){openId=null;$('#panel').classList.remove('open')}
+function sketchPad(){const w=$('#skWrap');if(!sketchOn){w.innerHTML='';return}
+ w.innerHTML='<canvas id="sketch"></canvas><div class="row" style="margin-top:8px"><button id="skClear">Borrar</button><button class="pri" id="skSave">Añadir boceto</button></div>';
+ const cv=$('#sketch'),r=cv.getBoundingClientRect(),dpr=devicePixelRatio||1;cv.width=r.width*dpr;cv.height=r.height*dpr;const g=cv.getContext('2d');
+ g.scale(dpr,dpr);g.fillStyle='#fff';g.fillRect(0,0,r.width,r.height);g.lineCap=g.lineJoin='round';g.lineWidth=2.5;g.strokeStyle='#15161c';let on=false;
+ cv.onpointerdown=e=>{on=true;cv.setPointerCapture(e.pointerId);g.beginPath();g.moveTo(e.offsetX,e.offsetY)};
+ cv.onpointermove=e=>{if(on){g.lineTo(e.offsetX,e.offsetY);g.stroke()}};cv.onpointerup=()=>on=false;
+ $('#skClear').onclick=()=>{g.fillStyle='#fff';g.fillRect(0,0,r.width,r.height)};
+ $('#skSave').onclick=()=>{const c=card(openId);snap();c.images.push(cv.toDataURL('image/png'));changed();sketchOn=false;renderCards();openPanel(openId)}}
+function shrink(file){return new Promise(res=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const m=900,s=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement('canvas');
+ cv.width=Math.round(im.width*s);cv.height=Math.round(im.height*s);const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,cv.width,cv.height);g.drawImage(im,0,0,cv.width,cv.height);res(cv.toDataURL('image/jpeg',.82))};im.onerror=()=>res(null);im.src=fr.result};fr.readAsDataURL(file)})}
+
+/* ---------- IA ---------- */
+function modal(h){$('#mbox').innerHTML=h;$('#modal').classList.add('open')}
+function closeModal(){$('#modal').classList.remove('open')}
+let sugs=[],sugFrom=[];
+async function suggest(){sugFrom=[...sel];const ideas=sugFrom.map(card).map(c=>({titulo:c.title,resumen:c.desc,desarrollo:(c.body||'').slice(0,600)}));
+ const otras=S.cards.filter(c=>!sel.has(c.id)).slice(0,60).map(c=>c.title);
+ modal('<h2>Sugerencias</h2><p class="empty">Pensando combinaciones a partir de '+esc(ideas.map(i=>i.titulo).join(', '))+'…</p>');
+ const prompt=`Ayudas a desarrollar ideas en un lienzo donde las ideas se combinan para crear otras nuevas.
+Ideas seleccionadas: ${JSON.stringify(ideas)}
+Ideas que ya existen en la red (no las repitas): ${JSON.stringify(otras)}
+Propón de 3 a 5 ideas nuevas que surjan de las seleccionadas: combinaciones entre ellas, mejoras o posibilidades nuevas. Sé concreto y práctico.
+Responde solo con JSON, en español: {"sugerencias":[{"tipo":"combinación"|"mejora"|"posibilidad","titulo":"máximo 6 palabras","resumen":"una frase de máximo 20 palabras","desarrollo":"2 o 3 frases"}]}`;
+ try{let r=await sampler.json(prompt,{modelTier:'default'});if(typeof r==='string')r=JSON.parse(r);sugs=(r&&r.sugerencias||[]).slice(0,6);
+  modal('<h2>Sugerencias</h2>'+(sugs.length?sugs.map((s,i)=>`<div class="sug"><small>${esc(s.tipo)}</small><b>${esc(s.titulo)}</b><p>${esc(s.resumen)}</p><p>${esc(s.desarrollo)}</p><div class="row"><button class="pri" data-addsug="${i}">Añadir como idea</button></div></div>`).join(''):'<p class="empty">No llegaron sugerencias. Prueba otra vez.</p>')+'<button data-a="closem">Cerrar</button>')}
+ catch(e){modal('<h2>Sugerencias</h2><p class="empty">'+(e&&e.code==='rate_limited'?'Demasiadas solicitudes seguidas. Espera un momento.':e&&e.code==='not_granted'?'La IA no está disponible para esta página.':'No se pudieron generar sugerencias.')+'</p><button data-a="closem">Cerrar</button>');if(e&&e.code==='not_granted'){sampler=null;renderBar()}}}
+function addSug(i,btn){const s=sugs[i];if(!s)return;sel=new Set(sugFrom.filter(card));if(!sel.size)return;snap();
+ const n=fromSelection({title:String(s.titulo||'Idea sugerida').slice(0,80),desc:String(s.resumen||'').slice(0,160),body:String(s.desarrollo||'')});
+ changed();renderCards();btn.textContent='Añadida';btn.disabled=true;sel=new Set(sugFrom);paint()}
+
+
+/* ---------- exportar / importar ---------- */
+const FORMATO='red-de-ideas',VERSION=1;
+function renderTitle(){const n=S.name||'Red de ideas';$('header h1').textContent=n;document.title=n}
+function slug(t){return(t||'red-de-ideas').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'red-de-ideas'}
+function exportText(){return JSON.stringify({formato:FORMATO,version:VERSION,nombre:S.name||'Red de ideas',exportado:new Date().toISOString(),topics:S.topics,cards:S.cards,edges:S.edges},null,2)}
+function msg(id,t,ok){const m=$('#'+id);if(m){m.textContent=t;m.className='msg '+(ok?'ok':'bad')}}
+function projectModal(){pending=null;modal(`<h2>Proyecto</h2>
+<div class="f"><label for="pjName">Nombre del proyecto</label><input id="pjName" value="${esc(S.name||'')}" placeholder="Red de ideas" maxlength="80"></div>
+<div class="f"><h4>Exportar</h4><span class="empty">Un archivo .json con ideas, conexiones, temas, posiciones, imágenes y referencias (${S.cards.length} ideas, ${S.edges.length} conexiones).</span>
+<div class="row"><button class="pri" data-p="exp">Descargar .json</button><button data-p="copy">Copiar datos</button></div><p class="msg" id="expMsg"></p></div>
+<div class="f"><h4>Importar</h4><span class="empty">Elige un archivo exportado, arrástralo al lienzo o pega su contenido.</span>
+<div class="row"><button data-p="pick">Elegir archivo</button></div>
+<textarea id="impTxt" rows="4" placeholder="Pega aquí el contenido de un proyecto exportado"></textarea>
+<div class="row"><button class="pri" data-p="merge">Añadir al lienzo</button><button data-p="replace">Reemplazar lienzo</button></div><p class="msg" id="impMsg"></p></div>
+<button data-a="closem">Cerrar</button>`)}
+function parseProject(txt){let o;try{o=JSON.parse(txt)}catch(e){throw'El contenido no es un JSON válido.'}
+ if(!o||o.formato!==FORMATO||!Array.isArray(o.cards))throw'No es un proyecto de Red de ideas.';
+ if(+o.version>VERSION)throw'Este archivo es de una versión más nueva de la herramienta.';
+ const str=(v,n)=>String(v??'').slice(0,n),num=v=>Number.isFinite(+v)?Math.round(+v):0,arr=v=>Array.isArray(v)?v:[];
+ const topics=arr(o.topics).map(t=>({id:str(t&&t.id,40)||uid(),name:str(t&&t.name,40)||'Tema',color:/^#[0-9a-fA-F]{3,8}$/.test(t&&t.color)?t.color:COLORS[6]}));
+ const tids=new Set(topics.map(t=>t.id)),ids=new Set();
+ const cards=o.cards.filter(c=>c&&typeof c==='object').map(c=>{let id=str(c.id,40)||uid();if(ids.has(id))id=uid();ids.add(id);
+  return{id,x:num(c.x),y:num(c.y),title:str(c.title,200),desc:str(c.desc,160),topic:tids.has(c.topic)?c.topic:'',body:str(c.body,50000),
+   images:arr(c.images).filter(v=>typeof v==='string'&&/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(v)),
+   refs:arr(c.refs).filter(r=>r&&typeof r==='object').map(r=>({text:str(r.text,300),url:str(r.url,1000)}))}});
+ const edges=arr(o.edges).filter(e=>e&&ids.has(e.from)&&ids.has(e.to)&&e.from!==e.to&&(e.kind==='origen'||e.kind==='rel'))
+  .map(e=>e.kind==='rel'?{id:uid(),from:e.from,to:e.to,kind:'rel',label:str(e.label,40)}:{id:uid(),from:e.from,to:e.to,kind:'origen'});
+ return{name:str(o.nombre,80),topics,cards,edges}}
+function loadImportFile(f){const fr=new FileReader();fr.onload=()=>{try{pending=parseProject(fr.result);const t=$('#impTxt');if(t)t.value='';
+ msg('impMsg',`Listo para importar «${f.name}»: ${pending.cards.length} ideas y ${pending.edges.length} conexiones.`,true)}catch(err){pending=null;msg('impMsg',String(err),false)}};
+ fr.onerror=()=>msg('impMsg','No se pudo leer el archivo.',false);fr.readAsText(f)}
+function getPending(){if(pending)return pending;const t=$('#impTxt').value.trim();if(!t)throw'Elige un archivo o pega el contenido primero.';return parseProject(t)}
+function importProject(p,how){snap();
+ if(how==='replace'){S={stamp:S.stamp,name:p.name,topics:p.topics,cards:p.cards,edges:p.edges};sel.clear();filter=null;mode='todo';closePanel()}
+ else{const tmap={},cmap={};
+  for(const t of p.topics){const ex=S.topics.find(x=>x.name.toLowerCase()===t.name.toLowerCase());if(ex)tmap[t.id]=ex.id;else{const nt={...t,id:uid()};S.topics.push(nt);tmap[t.id]=nt.id}}
+  const cur=S.cards.length?bounds(S.cards):null,inc=p.cards.length?bounds(p.cards):null;const dx=cur&&inc?cur.c-inc.a+200:0,dy=cur&&inc?cur.b-inc.b:0;
+  const added=p.cards.map(c=>{const n={...c,id:uid(),x:c.x+dx,y:c.y+dy,topic:c.topic?tmap[c.topic]||'':''};cmap[c.id]=n.id;return n});
+  S.cards.push(...added);for(const e of p.edges)S.edges.push({...e,id:uid(),from:cmap[e.from],to:cmap[e.to]});sel=new Set(added.map(c=>c.id))}
+ changed();renderTitle();renderChips();renderCards();fit(how==='replace'?S.cards:S.cards.filter(c=>sel.has(c.id)));closeModal()}
+async function projAction(a){
+ if(a==='pick')$('#impFile').click();
+ if(a==='merge'||a==='replace'){try{const p=getPending();if(!p.cards.length)throw'El proyecto no tiene ideas.';importProject(p,a)}catch(err){msg('impMsg',String(err),false)}}
+ if(a==='copy'){try{await navigator.clipboard.writeText(exportText());msg('expMsg','Datos copiados. Pégalos en un archivo .json o en otro lienzo.',true)}catch(e){msg('expMsg','No se pudo copiar en este navegador.',false)}}
+ if(a==='exp'){const name=slug(S.name)+'.json',data=exportText();
+  if(downloads){try{await downloads.save({filename:name,data});msg('expMsg','Proyecto exportado.',true)}catch(e){const c=e&&e.code;msg('expMsg',c==='declined'?'Descarga cancelada.':c==='rate_limited'?'Espera un momento y vuelve a intentarlo.':c==='host_unavailable'?'Esta app no puede guardar archivos. Usa «Copiar datos» o abre la página en un navegador.':'No se pudo descargar. Usa «Copiar datos».',false)}}
+  else{try{const u=URL.createObjectURL(new Blob([data],{type:'application/json'})),l=document.createElement('a');l.href=u;l.download=name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);msg('expMsg','Proyecto exportado.',true)}catch(e){msg('expMsg','No se pudo descargar. Usa «Copiar datos».',false)}}}}
+/* ---------- eventos del lienzo ---------- */
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+stage.addEventListener('pointerdown',e=>{if(e.button>0)return;stage.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(ptrs.size===2){const[a,b]=[...ptrs.values()];drag={t:'pinch',d:dist(a,b),k:V.k};return}
+ const el=e.target.closest('.card');
+ if(el){const id=el.dataset.id,add=e.shiftKey||e.metaKey||e.ctrlKey||multi;let fresh=false;
+  if(add){if(sel.has(id))sel.delete(id);else sel.add(id)}else if(!sel.has(id)){sel=new Set([id]);fresh=true}
+  confirmDel=false;drag={t:'move',id,sx:e.clientX,sy:e.clientY,moved:false,add,fresh,start:[...sel].map(i=>({c:card(i),x:card(i).x,y:card(i).y}))};paint()}
+ else if(e.shiftKey){drag={t:'box',sx:e.clientX,sy:e.clientY,base:new Set(sel)}}
+ else{drag={t:'pan',sx:e.clientX,sy:e.clientY,vx:V.x,vy:V.y,moved:false};stage.classList.add('panning')}});
+stage.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});if(!drag)return;
+ if(drag.t==='pinch'){if(ptrs.size<2)return;const[a,b]=[...ptrs.values()];zoomAt((a.x+b.x)/2,(a.y+b.y)/2,drag.k*dist(a,b)/drag.d);return}
+ const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
+ if(drag.t==='pan'){if(Math.abs(dx)+Math.abs(dy)>3)drag.moved=true;V.x=drag.vx+dx;V.y=drag.vy+dy;applyView()}
+ else if(drag.t==='move'){if(!drag.moved&&Math.abs(dx)+Math.abs(dy)<4)return;if(!drag.moved){drag.moved=true;snap()}
+  for(const s of drag.start){s.c.x=Math.round(s.x+dx/V.k);s.c.y=Math.round(s.y+dy/V.k);const el=document.querySelector(`.card[data-id="${CSS_ESC(s.c.id)}"]`);if(el){el.style.left=s.c.x+'px';el.style.top=s.c.y+'px'}}renderEdges()}
+ else if(drag.t==='box'){const m=$('#marquee'),x=Math.min(e.clientX,drag.sx),y=Math.min(e.clientY,drag.sy),w=Math.abs(dx),h=Math.abs(dy);
+  Object.assign(m.style,{display:'block',left:x+'px',top:y+'px',width:w+'px',height:h+'px'});const A=toWorld(x,y),B=toWorld(x+w,y+h);sel=new Set(drag.base);
+  for(const c of S.cards){const s=sizes[c.id]||{w:220,h:110};if(c.x<B.x&&c.x+s.w>A.x&&c.y<B.y&&c.y+s.h>A.y)sel.add(c.id)}paint()}});
+function endPtr(e){ptrs.delete(e.pointerId);if(!drag)return;if(drag.t==='pinch'){if(ptrs.size<2)drag=null;return}
+ if(drag.t==='move'){if(drag.moved)changed();else if(!drag.add&&!drag.fresh){sel=new Set([drag.id]);paint();if(openId)openPanel(drag.id)}else if(!drag.add&&openId)openPanel(drag.id)}
+ if(drag.t==='pan'&&!drag.moved&&sel.size){sel.clear();mode='todo';paint()}
+ if(drag.t==='box')$('#marquee').style.display='none';stage.classList.remove('panning');drag=null}
+stage.addEventListener('pointerup',endPtr);stage.addEventListener('pointercancel',endPtr);
+const CSS_ESC=s=>window.CSS&&CSS.escape?CSS.escape(s):s;
+stage.addEventListener('dblclick',e=>{const el=document.elementFromPoint(e.clientX,e.clientY)?.closest('.card');if(el)openPanel(el.dataset.id);else{const p=toWorld(e.clientX,e.clientY);newIdea(p.x-110,p.y-40)}});
+stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,V.k*Math.exp(-e.deltaY*(e.ctrlKey?.01:.0015)))},{passive:false});
+
+/* ---------- eventos de la interfaz ---------- */
+$('#bar').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const a=b.dataset.a;
+ if(b.dataset.m){mode=b.dataset.m;paint();return}
+ if(a==='new'){const p=toWorld(innerWidth/2,innerHeight/2);newIdea(p.x-110,p.y-60)}
+ if(a==='open')openPanel([...sel][0]);if(a==='combine')combine();if(a==='relate')relate();if(a==='del')delSel();if(a==='ai')suggest();if(a==='clear'){sel.clear();paint()}});
+$('#chips').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(!b)return;filter=filter===b.dataset.t?null:b.dataset.t;renderChips();paint();if(filter)fit(S.cards.filter(c=>c.topic===filter))});
+$('#q').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();matchIdx=0;paint()});
+$('#q').addEventListener('keydown',e=>{if(e.key!=='Enter'||!query)return;const m=S.cards.filter(hitQ);if(!m.length)return;const c=m[matchIdx++%m.length];sel=new Set([c.id]);centerOn(c);paint()});
+$('#proj').onclick=projectModal;
+$('#impFile').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(f)loadImportFile(f)});
+stage.addEventListener('dragover',e=>{if([...e.dataTransfer.items].some(i=>i.kind==='file')){e.preventDefault();stage.classList.add('drop')}});
+stage.addEventListener('dragleave',()=>stage.classList.remove('drop'));
+stage.addEventListener('drop',e=>{e.preventDefault();stage.classList.remove('drop');const f=[...e.dataTransfer.files].find(f=>/\.(json|txt)$/i.test(f.name));if(f){projectModal();loadImportFile(f)}});
+$('#undo').onclick=undo;$('#redo').onclick=redo;$('#save').onclick=save;
+$('#multi').onclick=()=>{multi=!multi;$('#multi').classList.toggle('on',multi)};
+$('#zin').onclick=()=>zoomAt(innerWidth/2,innerHeight/2,V.k*1.25);$('#zout').onclick=()=>zoomAt(innerWidth/2,innerHeight/2,V.k/1.25);$('#zfit').onclick=()=>fit();
+$('#modal').addEventListener('input',e=>{if(e.target.id==='pjName'){S.name=e.target.value.slice(0,80);renderTitle();changed()}if(e.target.id==='impTxt')pending=null});
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal'||e.target.closest('[data-a="closem"]'))closeModal();const pa=e.target.closest('[data-p]');if(pa)projAction(pa.dataset.p);const s=e.target.closest('[data-addsug]');if(s)addSug(+s.dataset.addsug,s)});
+const P=$('#panel');let typing=false;
+P.addEventListener('focusin',e=>{if(e.target.matches('#pTitle,#pDesc,#pBody')&&!typing){typing=true;snap()}});
+P.addEventListener('focusout',e=>{if(e.target.matches('#pTitle,#pDesc,#pBody'))typing=false});
+let rt;P.addEventListener('input',e=>{const c=card(openId);if(!c)return;const t=e.target;
+ if(t.id==='pTitle')c.title=t.value;else if(t.id==='pDesc')c.desc=t.value;else if(t.id==='pBody')c.body=t.value;else return;
+ changed();clearTimeout(rt);rt=setTimeout(renderCards,120)});
+P.addEventListener('change',e=>{const c=card(openId),t=e.target;if(!c)return;
+ if(t.id==='pTopic'){if(t.value==='__new'){$('#newTopic').hidden=false;$('#ntName').focus();t.value=c.topic;return}snap();c.topic=t.value;changed();renderCards()}
+ if(t.dataset.lab){const ed=S.edges.find(x=>x.id===t.dataset.lab);if(ed){snap();ed.label=t.value;changed();renderEdges()}}});
+P.addEventListener('click',async e=>{const c=card(openId),b=e.target.closest('button,img');if(!b||!c)return;
+ if(b.id==='pClose')closePanel();
+ if(b.id==='ntAdd'){const nm=$('#ntName').value.trim();if(!nm)return;snap();const t={id:uid(),name:nm.slice(0,40),color:COLORS[S.topics.length%COLORS.length]};S.topics.push(t);c.topic=t.id;changed();renderChips();renderCards();openPanel(openId)}
+ if(b.id==='addImg')$('#file').click();
+ if(b.id==='sk'){sketchOn=!sketchOn;b.textContent=sketchOn?'Cerrar boceto':'Dibujar boceto';sketchPad()}
+ if(b.dataset.rmimg){snap();c.images.splice(+b.dataset.rmimg,1);changed();renderCards();openPanel(openId)}
+ if(b.dataset.view){modal(`<img id="viewer" src="${esc(c.images[+b.dataset.view])}" alt=""><button data-a="closem">Cerrar</button>`)}
+ if(b.id==='rAdd'){const tx=$('#rText').value.trim(),u=$('#rUrl').value.trim();if(!tx&&!u)return;snap();c.refs.push({text:tx,url:u});changed();renderCards();openPanel(openId)}
+ if(b.dataset.rmref){snap();c.refs.splice(+b.dataset.rmref,1);changed();renderCards();openPanel(openId)}
+ if(b.dataset.go){const o=card(b.dataset.go);sel=new Set([o.id]);centerOn(o);paint();openPanel(o.id)}
+ if(b.dataset.unlink){const[k,o]=b.dataset.unlink.split('|');snap();S.edges=S.edges.filter(x=>!(x.kind==='origen'&&(k==='p'?x.from===o&&x.to===openId:x.from===openId&&x.to===o)));changed();renderCards();openPanel(openId)}
+ if(b.dataset.rmedge){snap();S.edges=S.edges.filter(x=>x.id!==b.dataset.rmedge);changed();renderCards();openPanel(openId)}
+ if(b.id==='pDel'){sel=new Set([openId]);confirmDel=true;delSel()}});
+$('#file').addEventListener('change',async e=>{const c=card(openId);if(!c)return;const fs=[...e.target.files];e.target.value='';if(!fs.length)return;snap();
+ for(const f of fs){const d=await shrink(f);if(d)c.images.push(d)}changed();renderCards();openPanel(openId)});
+document.addEventListener('keydown',e=>{const typingNow=e.target.matches('input,textarea,select');const mod=e.ctrlKey||e.metaKey;
+ if(mod&&e.key.toLowerCase()==='s'){e.preventDefault();save();return}
+ if(mod&&e.key.toLowerCase()==='z'&&!typingNow){e.preventDefault();e.shiftKey?redo():undo();return}
+ if(e.key==='Escape'){if($('#modal').classList.contains('open'))closeModal();else if(openId)closePanel();else{sel.clear();mode='todo';paint()}return}
+ if(typingNow)return;
+ if((e.key==='Delete'||e.key==='Backspace')&&sel.size){e.preventDefault();confirmDel=true;delSel()}
+ if(e.key==='Enter'&&sel.size===1)openPanel([...sel][0]);
+ if(e.key.toLowerCase()==='c'&&sel.size>1)combine()});
+addEventListener('beforeunload',e=>{if(dirty&&artifact&&canPublish){e.preventDefault()}});
+
+/* ---------- inicio ---------- */
+renderTitle();renderChips();renderCards();
+let restored=null;try{restored=JSON.parse(sessionStorage.getItem(VKEY)||'null');sessionStorage.removeItem(VKEY)}catch(e){}
+if(restored&&restored.V){V=restored.V;applyView();sel=new Set((restored.sel||[]).filter(card));paint();if(restored.open&&card(restored.open))openPanel(restored.open)}else fit();
+try{if(localStorage.getItem(DKEY))dirty=true}catch(e){}
+status();
+use('artifact').then(a=>{artifact=a;status()});
+use('sample').then(s=>{sampler=s;renderBar()});
+use('downloads').then(d=>{downloads=d});
+const hh=()=>document.documentElement.style.setProperty('--hh',$('header').offsetHeight+'px');hh();
+addEventListener('resize',()=>{hh();if(!drag)applyView()});
+}
+</script>
+</body>
+</html>
